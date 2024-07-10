@@ -1,0 +1,23 @@
+[
+  {
+    "type": "ep",
+    "rule": "0",
+    "name": "全部",
+    "description": "可以查看，可以编辑",
+    "code": "&VE"
+  },
+  {
+    "type": "ep",
+    "rule": "1",
+    "name": "不可编辑",
+    "description": "可以查看，不可以编辑",
+    "code": "&OV"
+  },
+  {
+    "type": "ep",
+    "rule": "2",
+    "name": "不可查看",
+    "description": "不可以查看，不可以编辑",
+    "code": "&NO"
+  }
+]

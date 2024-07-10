@@ -1,0 +1,23 @@
+[
+  {
+    "type": "mp",
+    "rule": "Insert",
+    "name": "创建",
+    "description": "可以新增数据",
+    "code": "&insert"
+  },
+  {
+    "type": "mp",
+    "rule": "Update",
+    "name": "修改",
+    "description": "可以修改数据",
+    "code": "&update"
+  },
+  {
+    "type": "mp",
+    "rule": "Delete",
+    "name": "删除",
+    "description": "可以删除数据",
+    "code": "&delete"
+  }
+]

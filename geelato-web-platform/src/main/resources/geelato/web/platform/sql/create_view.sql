@@ -1,0 +1,2 @@
+CREATE VIEW platform_app_user AS
+SELECT app.*,ra.role_id,ru.user_id FROM platform_app app,platform_role_r_app ra,platform_role r,platform_role_r_user ru,platform_user u WHERE app.id=ra.app_id  AND ra.role_id=r.id AND ru.role_id=r.id AND u.id=ru.user_id

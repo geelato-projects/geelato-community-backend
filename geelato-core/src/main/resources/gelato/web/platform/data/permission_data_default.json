@@ -1,0 +1,30 @@
+[
+  {
+    "type": "dp",
+    "rule": "1=1",
+    "name": "看全部",
+    "description": "查看全部的数据",
+    "code": "&all"
+  },
+  {
+    "type": "dp",
+    "rule": "bu_id=#currentUser.deptId#",
+    "name": "看公司/事业部",
+    "description": "查看自己公司/事业部的数据",
+    "code": "&myBusiness"
+  },
+  {
+    "type": "dp",
+    "rule": "dept_id=#currentUser.deptId#",
+    "name": "看部门",
+    "description": "查看自己部门的数据",
+    "code": "&myDept"
+  },
+  {
+    "type": "dp",
+    "rule": "creator=#currentUser.userId#",
+    "name": "看自己",
+    "description": "查看创建人为自己的数据",
+    "code": "&myself"
+  }
+]

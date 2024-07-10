@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>cn.geelato</groupId>
+    <artifactId>geelato-parent</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0.0-SNAPSHOT</version>
+    <description>geelato community project</description>
+    <url>https://www.geelato.cn/</url>
+
+    <properties>
+        <geelato.version>1.0.0-SNAPSHOT</geelato.version>
+        <geelato-components.version>0.0.1-SNAPSHOT</geelato-components.version>
+        <java.version>17</java.version>
+        <springframework.version>6.0.0</springframework.version>
+        <spring-boot.version>3.0.0</spring-boot.version>
+        <lomok.version>1.18.28</lomok.version>
+        <easy-rules.version>3.2.0</easy-rules.version>
+        <fastjson2.version>2.0.19</fastjson2.version>
+        <jackson.version>2.14.1</jackson.version>
+        <resource.delimiter>@</resource.delimiter> <!-- delimiter that doesn't clash with Spring ${} placeholders -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <slf4j.version>2.0.5</slf4j.version>
+        <wagon-ssh.version>3.5.2</wagon-ssh.version>
+        <j2cache-version>2.8.5-release</j2cache-version>
+        <!--j2cache2.8.5,使用的是redis.clients.version2.9.0的版本，和新版的springboot有冲突-->
+        <redis.clients.version>2.9.0</redis.clients.version>
+        <ehcache-version>3.3.0</ehcache-version>
+        <fst-version>3.0.3</fst-version>
+        <commons-beanutils-version>1.9.4</commons-beanutils-version>
+        <java-jwt.version>4.2.1</java-jwt.version>
+        <shiro.version>1.10.1</shiro.version>
+        <commons-codec.version>1.15</commons-codec.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
+        <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
+        <apache.poi.version>5.2.3</apache.poi.version>
+        <dingtalk.sdk.version>1.5.10</dingtalk.sdk.version>
+        <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/</sonatypeOssDistMgmtSnapshotsUrl>
+        <arguments />
+        <junit.version>4.13.1</junit.version>
+        <javax.servlet.version>4.0.1</javax.servlet.version>
+    </properties>
+
+
+    <developers>
+        <developer>
+            <name>geelato</name>
+            <email>geelato@126.com</email>
+        </developer>
+    </developers>
+
+
+    <dependencyManagement>
+        <dependencies>
+            <!--spring dependency-->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!--base logging dependency-->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <!--external-->
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${commons-beanutils-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>${fastjson2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>${javax.servlet.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>${redis.clients.version}</version>
+            </dependency>
+            <!--project-->
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-lang</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-core</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-utils</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-web-platform</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <!--project components-->
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>logging-plugin</artifactId>
+                <version>${geelato-components.version}</version>
+            </dependency>
+            <!--unit test-->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.fastjson2</groupId>
+            <artifactId>fastjson2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+    </dependencies>
+</project>

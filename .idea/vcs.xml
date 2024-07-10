@@ -2,11 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/geelato-core" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/geelato-lang" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/geelato-parent" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/geelato-utils" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/geelato-web-platform" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/geelato-web-quickstart" vcs="Git" />
   </component>
 </project>

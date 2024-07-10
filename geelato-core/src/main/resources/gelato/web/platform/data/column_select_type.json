@@ -1,0 +1,329 @@
+[
+  {
+    "group": "字符串",
+    "label": "字符[1~255]",
+    "value": "char",
+    "mysql": "char",
+    "disabled": false,
+    "seqNo": 101
+  },
+  {
+    "group": "字符串",
+    "label": "单行文本[1~21845]",
+    "value": "varchar",
+    "mysql": "varchar",
+    "disabled": false,
+    "extent": 64,
+    "seqNo": 102
+  },
+  {
+    "group": "字符串",
+    "label": "多行文本[1~21854]",
+    "value": "remark",
+    "mysql": "varchar",
+    "disabled": false,
+    "fixed": false,
+    "extent": 1024,
+    "seqNo": 103
+  },
+  {
+    "group": "字符串",
+    "label": "数据字典[64]",
+    "value": "dictionary",
+    "mysql": "varchar",
+    "disabled": false,
+    "fixed": false,
+    "extent": 64,
+    "seqNo": 104
+  },
+  {
+    "group": "字符串",
+    "label": "单选框[64]",
+    "value": "radio",
+    "mysql": "varchar",
+    "disabled": false,
+    "fixed": true,
+    "extent": 64,
+    "seqNo": 105
+  },
+  {
+    "group": "字符串",
+    "label": "流水编码[64]",
+    "value": "code",
+    "mysql": "varchar",
+    "disabled": false,
+    "fixed": true,
+    "extent": 64,
+    "seqNo": 106
+  },
+  {
+    "group": "字符串",
+    "label": "颜色[64]",
+    "value": "color",
+    "mysql": "varchar",
+    "disabled": false,
+    "fixed": true,
+    "extent": 64,
+    "seqNo": 107
+  },
+  {
+    "group": "字符串",
+    "label": "实体字段[19]",
+    "value": "entity",
+    "mysql": "varchar",
+    "disabled": false,
+    "fixed": false,
+    "extent": 19,
+    "seqNo": 108
+  },
+  {
+    "group": "字符串",
+    "label": "组织[1~21845]",
+    "value": "org",
+    "mysql": "varchar",
+    "disabled": false,
+    "extent": 19,
+    "seqNo": 109
+  },
+  {
+    "group": "字符串",
+    "label": "用户[1~21845]",
+    "value": "user",
+    "mysql": "varchar",
+    "disabled": false,
+    "extent": 19,
+    "seqNo": 110
+  },
+  {
+    "group": "字符串",
+    "label": "上传[1~21845]",
+    "value": "upload",
+    "mysql": "varchar",
+    "disabled": false,
+    "extent": 19,
+    "seqNo": 111
+  },
+  {
+    "group": "字符串",
+    "label": "上传[Base64]",
+    "value": "base64",
+    "mysql": "longtext",
+    "disabled": false,
+    "fixed": true,
+    "extent": 4294967295,
+    "seqNo": 112
+  },
+  {
+    "group": "字符串",
+    "label": "内容[65535]",
+    "value": "text",
+    "mysql": "text",
+    "disabled": false,
+    "fixed": true,
+    "extent": 65535,
+    "seqNo": 113
+  },
+  {
+    "group": "字符串",
+    "label": "富文本[16777215]",
+    "value": "richText",
+    "mysql": "mediumtext",
+    "disabled": false,
+    "fixed": true,
+    "extent": 16777215,
+    "seqNo": 114
+  },
+  {
+    "group": "字符串",
+    "label": "脚本[4294967295]",
+    "value": "script",
+    "mysql": "longtext",
+    "disabled": false,
+    "fixed": true,
+    "extent": 4294967295,
+    "seqNo": 115
+  },
+  {
+    "group": "布尔值",
+    "label": "是否[1/0]",
+    "value": "bit",
+    "mysql": "tinyint",
+    "fixed": true,
+    "extent": 1,
+    "disabled": false,
+    "seqNo": 201
+  },
+  {
+    "group": "布尔值",
+    "label": "开关[1/0]",
+    "value": "switch",
+    "mysql": "tinyint",
+    "fixed": true,
+    "extent": 1,
+    "disabled": false,
+    "seqNo": 202
+  },
+  {
+    "group": "数值类型",
+    "label": "很小的整数[±127]",
+    "value": "tinyint",
+    "mysql": "tinyint",
+    "disabled": false,
+    "seqNo": 301
+  },
+  {
+    "group": "数值类型",
+    "label": "较小的整数[±32767]",
+    "value": "smallint",
+    "mysql": "smallint",
+    "disabled": false,
+    "seqNo": 302
+  },
+  {
+    "group": "数值类型",
+    "label": "中等的整数[±8388607]",
+    "value": "mediumint",
+    "mysql": "mediumint",
+    "disabled": false,
+    "seqNo": 303
+  },
+  {
+    "group": "数值类型",
+    "label": "普通的整数[±2147483647]",
+    "value": "int",
+    "mysql": "int",
+    "disabled": false,
+    "seqNo": 304
+  },
+  {
+    "group": "数值类型",
+    "label": "极大的整数[±8.08922E+21]",
+    "value": "bigint",
+    "mysql": "bigint",
+    "disabled": false,
+    "seqNo": 305
+  },
+  {
+    "group": "数值类型",
+    "label": "单精度小数[±3.4E+38]",
+    "value": "float",
+    "mysql": "float",
+    "disabled": false,
+    "seqNo": 306
+  },
+  {
+    "group": "数值类型",
+    "label": "双精度小数[±1.79E+308]",
+    "value": "double",
+    "mysql": "double",
+    "disabled": false,
+    "seqNo": 307
+  },
+  {
+    "group": "数值类型",
+    "label": "精准的小数[D(1~60,1~30)]",
+    "value": "decimal",
+    "mysql": "decimal",
+    "disabled": false,
+    "seqNo": 308
+  },
+  {
+    "group": "数值类型",
+    "label": "评分[D(1~5,1~2)]",
+    "value": "score",
+    "mysql": "decimal",
+    "disabled": false,
+    "extent": 100,
+    "seqNo": 309
+  },
+  {
+    "group": "日期时间",
+    "label": "年份[YYYY]",
+    "value": "year",
+    "mysql": "year",
+    "disabled": false,
+    "seqNo": 401
+  },
+  {
+    "group": "日期时间",
+    "label": "日期[YYYY-MM-DD]",
+    "value": "date",
+    "mysql": "date",
+    "disabled": false,
+    "seqNo": 402
+  },
+  {
+    "group": "日期时间",
+    "label": "时间点[HH:mm:ss]",
+    "value": "time",
+    "mysql": "time",
+    "disabled": false,
+    "seqNo": 403
+  },
+  {
+    "group": "日期时间",
+    "label": "时间段[HH:mm:ss~HH:mm:ss]",
+    "value": "times",
+    "mysql": "json",
+    "disabled": false,
+    "seqNo": 404
+  },
+  {
+    "group": "日期时间",
+    "label": "日期时间[YYYY-MM-DD HH:mm:ss]",
+    "value": "dateTime",
+    "mysql": "dateTime",
+    "disabled": false,
+    "seqNo": 405
+  },
+  {
+    "group": "日期时间",
+    "label": "时间戳[YYYY-MM-DD HH:mm:ss]",
+    "value": "timeStamp",
+    "mysql": "timeStamp",
+    "disabled": false,
+    "seqNo": 406
+  },
+  {
+    "group": "JSON",
+    "label": "Json",
+    "value": "json",
+    "mysql": "json",
+    "disabled": false,
+    "seqNo": 501
+  },
+  {
+    "group": "JSON",
+    "label": "多选框",
+    "value": "checkbox",
+    "mysql": "json",
+    "disabled": false,
+    "seqNo": 502
+  },
+  {
+    "group": "JSON",
+    "label": "多组件",
+    "value": "multiComponent",
+    "mysql": "json",
+    "disabled": false,
+    "seqNo": 503
+  },
+  {
+    "group": "JSON",
+    "label": "级联选择",
+    "value": "cascadeSelection",
+    "mysql": "json",
+    "disabled": false,
+    "seqNo": 504
+  },
+  {
+    "group": "二进制",
+    "label": "二进制[4294967295]",
+    "value": "longblob",
+    "mysql": "longblob",
+    "disabled": false,
+    "fixed": true,
+    "extent": 4294967296,
+    "seqNo": 601
+  }
+]

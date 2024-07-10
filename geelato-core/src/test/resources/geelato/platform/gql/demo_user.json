@@ -1,0 +1,11 @@
+{
+  "demo_user": {
+    "@p": "1,10",
+    //    "id": 1,
+    "age": "20",
+    "name|sw": "张",
+    "@fs": "id,name,age",
+    "@order": "age|+,name|-",
+    "@group": "age"
+  }
+}

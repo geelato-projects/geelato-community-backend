@@ -1,0 +1,22 @@
+{
+  "@biz": "myBizCode",
+  "platform_demo_entity": {
+    "name": "张三",
+    "code": "z3",
+    "description": "",
+    "#platform_demo_entity": [
+      {
+        "code": "$parent.code",
+        "name": "$parent.name"
+      },
+      {
+        "code": "code1234",
+        "name": "name1234",
+        "#platform_demo_entity": {
+          "code": "$parent.code",
+          "name": "$parent.$parent.name"
+        }
+      }
+    ]
+  }
+}

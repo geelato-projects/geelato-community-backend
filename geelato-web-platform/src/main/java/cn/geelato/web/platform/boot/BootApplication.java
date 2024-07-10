@@ -119,7 +119,7 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
 
     public void initMeta() throws IOException {
         MetaRelf.setApplicationContext(applicationContext);
-//        initClassPackageMeta();
+        initClassPackageMeta();
         initDataBaseMeta();
     }
 

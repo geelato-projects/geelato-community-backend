@@ -1,6 +1,5 @@
 package cn.geelato.orm.querydsl;
 
-import cn.geelato.orm.utils.DataTypeUtil;
 
 import java.sql.JDBCType;
 import java.sql.SQLType;

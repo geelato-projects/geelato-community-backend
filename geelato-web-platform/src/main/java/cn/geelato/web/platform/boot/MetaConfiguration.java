@@ -8,7 +8,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
+//@Configuration
 public class MetaConfiguration implements ApplicationContextAware {
     protected ApplicationContext applicationContext;
     public MetaConfiguration() {

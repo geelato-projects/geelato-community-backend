@@ -9,6 +9,5 @@ public class ExecutableQueryOperator {
 
     public ExecutableQueryOperator(EntityMeta entityMeta){
         this.entityMeta=entityMeta;
-        entityMeta
     }
 }

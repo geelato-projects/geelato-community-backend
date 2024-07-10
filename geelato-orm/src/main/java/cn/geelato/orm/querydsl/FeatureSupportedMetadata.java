@@ -3,8 +3,8 @@ package cn.geelato.orm.querydsl;
 import cn.geelato.orm.querydsl.Feature;
 import cn.geelato.orm.querydsl.FeatureId;
 import cn.geelato.orm.querydsl.FeatureType;
-import cn.geelato.orm.utils.CastUtil;
 import org.apache.commons.collections.MapUtils;
+import org.springframework.data.util.CastUtils;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -44,7 +44,7 @@ public interface FeatureSupportedMetadata {
                 .map(features -> features.values()
                         .stream()
                         .filter(feature -> feature.getType().equals(type))
-                        .map(CastUtil::<T>cast)
+                        .map(CastUtils::<T>cast)
                         .collect(Collectors.toList()))
                 .orElseGet(Collections::emptyList);
 

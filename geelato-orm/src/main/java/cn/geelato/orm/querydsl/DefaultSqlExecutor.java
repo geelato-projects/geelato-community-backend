@@ -9,7 +9,6 @@ import java.sql.ResultSetMetaData;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static cn.geelato.orm.utils.SqlUtil.printSql;
 
 public abstract class DefaultSqlExecutor {
     private Logger logger;

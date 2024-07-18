@@ -13,10 +13,4 @@
   <packaging>jar</packaging>
   <name>geelato-lang</name>
 
-  <dependencies>
-    <dependency>
-      <groupId>cn.geelato</groupId>
-      <artifactId>geelato-utils</artifactId>
-    </dependency>
-  </dependencies>
 </project>

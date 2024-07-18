@@ -8,7 +8,7 @@ import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.constants.ResourcesFiles;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.meta.model.field.ColumnMeta;
-import cn.geelato.core.util.FastJsonUtils;
+import cn.geelato.utils.FastJsonUtils;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import org.springframework.beans.factory.annotation.Autowired;

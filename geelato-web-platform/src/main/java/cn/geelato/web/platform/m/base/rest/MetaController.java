@@ -52,7 +52,7 @@ public class MetaController extends BaseController implements InitializingBean {
     @RequestMapping(value = {"multiList", "multiList/*"}, method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
     @ResponseBody
     public ApiMultiPagedResult multiList(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta, HttpServletRequest request) {
-        gql = getGql(request,"query");
+        gql = getGql(request,null);
         return ruleService.queryForMultiMapList(gql, withMeta);
     }
 

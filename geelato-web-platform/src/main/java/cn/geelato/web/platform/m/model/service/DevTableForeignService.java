@@ -6,7 +6,7 @@ import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaForeign;
-import cn.geelato.core.util.SchemaUtils;
+import cn.geelato.utils.SchemaUtils;
 import cn.geelato.web.platform.m.base.rest.MetaDdlController;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import org.slf4j.Logger;

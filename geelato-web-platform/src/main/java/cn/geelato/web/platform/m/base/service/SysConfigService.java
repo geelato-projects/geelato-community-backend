@@ -2,8 +2,8 @@ package cn.geelato.web.platform.m.base.service;
 
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.util.KeyUtils;
-import cn.geelato.core.util.Sm2Util;
+import cn.geelato.utils.KeyUtils;
+import cn.geelato.utils.Sm2Util;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

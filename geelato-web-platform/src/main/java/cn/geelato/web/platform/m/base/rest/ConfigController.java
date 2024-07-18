@@ -5,7 +5,7 @@ import cn.geelato.core.api.ApiResult;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.env.entity.SysConfig;
-import cn.geelato.core.util.StringUtils;
+import cn.geelato.utils.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 

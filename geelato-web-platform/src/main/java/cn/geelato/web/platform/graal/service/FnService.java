@@ -3,7 +3,7 @@ package cn.geelato.web.platform.graal.service;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.UserService;
 import cn.geelato.core.graal.GraalService;
-import cn.geelato.core.util.StringUtils;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.NumbChineseUtils;
 
 import java.text.ParseException;

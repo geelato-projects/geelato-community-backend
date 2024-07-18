@@ -9,7 +9,7 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.core.orm.SqlFiles;
 import cn.geelato.core.script.sql.SqlScriptManagerFactory;
-import cn.geelato.core.util.StringUtils;
+import cn.geelato.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;

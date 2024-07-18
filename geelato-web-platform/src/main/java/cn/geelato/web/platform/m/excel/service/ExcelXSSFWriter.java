@@ -9,7 +9,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
 import cn.geelato.core.script.js.JsProvider;
-import cn.geelato.core.util.StringUtils;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.enums.ExcelAlignmentEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

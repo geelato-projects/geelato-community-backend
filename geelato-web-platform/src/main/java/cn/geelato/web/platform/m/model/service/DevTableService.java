@@ -8,7 +8,7 @@ import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.ColumnMeta;
 import cn.geelato.core.meta.schema.SchemaTable;
-import cn.geelato.core.util.SchemaUtils;
+import cn.geelato.utils.SchemaUtils;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

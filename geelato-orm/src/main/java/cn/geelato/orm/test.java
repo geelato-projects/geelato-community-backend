@@ -1,19 +1,17 @@
 package cn.geelato.orm;
 
-import cn.geelato.orm.querydsl.DefaultOperator;
-import cn.geelato.orm.querydsl.Operator;
-import cn.geelato.orm.querydsl.ResultWrappers;
 
-import static cn.geelato.orm.querydsl.ResultWrapper.lowerCase;
+import cn.geelato.orm.query2.DefaultOperator;
+import cn.geelato.orm.query2.Operator;
+
+import java.util.List;
 
 public class test {
     public static void main(String[] args){
         Operator operator=new DefaultOperator();
-        operator.query("")
+        List<Object> list= operator.query("")
                 .select("id")
                 .where("id=1")
-                .fetch(lowerCase(ResultWrappers.singleMap()))
-                .sync();
-
+                .pageQueryList();
     }
 }

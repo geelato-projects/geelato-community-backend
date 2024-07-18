@@ -9,7 +9,7 @@ import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
-import cn.geelato.core.util.UUIDUtils;
+import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.enums.EncodingItemTypeEnum;
 import cn.geelato.web.platform.enums.EncodingSerialTypeEnum;
 

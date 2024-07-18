@@ -14,7 +14,7 @@ import cn.geelato.core.constants.ApiResultStatus;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
-import cn.geelato.core.util.UUIDUtils;
+import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.security.entity.DataItems;
 import cn.geelato.web.platform.m.security.service.UserService;

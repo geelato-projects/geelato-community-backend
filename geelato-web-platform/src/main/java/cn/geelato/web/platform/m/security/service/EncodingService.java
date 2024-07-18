@@ -7,7 +7,7 @@ import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
 import cn.geelato.core.constants.ApiErrorMsg;
 import cn.geelato.core.enums.EnableStatusEnum;
-import cn.geelato.core.util.UUIDUtils;
+import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.enums.EncodingItemTypeEnum;
 import cn.geelato.web.platform.enums.EncodingSerialTypeEnum;
 import cn.geelato.web.platform.m.base.entity.App;

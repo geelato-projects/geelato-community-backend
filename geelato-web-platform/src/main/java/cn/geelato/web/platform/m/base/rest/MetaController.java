@@ -178,7 +178,7 @@ public class MetaController extends BaseController implements InitializingBean {
         String gql=stringBuilder.toString();
         if(type!=null){
             EntityMeta entityMeta=ruleService.resolveEntity(gql,type);
-            DynamicDatasourceHolder.setDataSource(entityMeta.getTableMeta().getConnectId());
+            DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
         }
         return gql;
     }

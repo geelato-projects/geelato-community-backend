@@ -11,7 +11,7 @@ public class DataSourceInterceptor implements HandlerInterceptor {
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) {
         String tenant=request.getHeader("tenant");
         String app=request.getHeader("app");
-        DynamicDatasourceHolder.setDataSource(app);
+        DynamicDatasourceHolder.setDataSourceKey(app);
         return true;
     }
 }

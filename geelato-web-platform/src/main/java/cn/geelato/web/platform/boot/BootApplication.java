@@ -73,7 +73,6 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
         logger.info("[start application]...start");
         assertOS();
         parseStartArgs(args);
-        initDataSource();
         initMeta();
         resolveSqlScript(args);
         resolveGraalContext();
@@ -91,9 +90,6 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
 
 
 
-    private void initDataSource() {
-//        DataSourceManager.singleInstance().parseDataSourceMeta(this.dao);
-    }
 
 
     private void parseStartArgs(String... args) {
@@ -224,7 +220,7 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        dbGenerateDao.setDao(dao);
+//        dbGenerateDao.setDao(dao);
     }
 
 }

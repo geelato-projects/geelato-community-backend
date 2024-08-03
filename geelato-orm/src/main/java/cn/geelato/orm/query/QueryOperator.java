@@ -1,7 +1,5 @@
 package cn.geelato.orm.query;
 
-import cn.geelato.orm.querydsl.QueryResultOperator;
-import cn.geelato.orm.querydsl.ResultWrapper;
 
 import java.util.List;
 

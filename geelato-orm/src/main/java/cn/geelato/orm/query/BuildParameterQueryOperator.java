@@ -2,8 +2,6 @@ package cn.geelato.orm.query;
 
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
-import cn.geelato.orm.querydsl.QueryResultOperator;
-import cn.geelato.orm.querydsl.ResultWrapper;
 
 import java.util.List;
 

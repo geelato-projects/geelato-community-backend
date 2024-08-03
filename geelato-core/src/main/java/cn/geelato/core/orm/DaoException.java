@@ -1,15 +1,21 @@
 package cn.geelato.core.orm;
 
-import cn.geelato.core.exception.CoreException;
+
+import cn.geelato.lang.exception.CoreException;
 
 public class DaoException extends CoreException {
-    private static final int code=1000;
+    private static final int DEFAULT_CODE = 1000;
+    private static final String DEFAULT_MSG = "DaoException";
 
-    public DaoException(String msg) {
-        super(code,msg);
-    }
-    public DaoException(String msg,Throwable throwable) {
-        super(code,msg,throwable);
+    public DaoException() {
+        super(DEFAULT_CODE,DEFAULT_MSG);
     }
 
+    public DaoException(String message) {
+        super(DEFAULT_CODE, message);
+    }
+
+    public DaoException(String message, Throwable throwable) {
+        super(DEFAULT_CODE, message, throwable);
+    }
 }

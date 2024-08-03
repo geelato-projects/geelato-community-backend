@@ -28,7 +28,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <slf4j.version>2.0.5</slf4j.version>
+        <slf4j.version>2.0.6</slf4j.version>
         <wagon-ssh.version>3.5.2</wagon-ssh.version>
         <j2cache-version>2.8.5-release</j2cache-version>
         <!--j2cache2.8.5,使用的是redis.clients.version2.9.0的版本，和新版的springboot有冲突-->
@@ -47,6 +47,9 @@
         <arguments />
         <junit.version>4.13.1</junit.version>
         <javax.servlet.version>4.0.1</javax.servlet.version>
+        <pf4j.version>3.12.0</pf4j.version>
+        <pf4j-spring.version>0.9.0</pf4j-spring.version>
+        <pf4j-update.version>2.3.0</pf4j-update.version>
     </properties>
 
 
@@ -137,7 +140,17 @@
                 <artifactId>geelato-web-platform</artifactId>
                 <version>${geelato.version}</version>
             </dependency>
-            <!--project components-->
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-plugin-manager</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <!--project plugin-->
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>plugin-all</artifactId>
+                <version>${geelato-plugin.version}</version>
+            </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
                 <artifactId>logging-plugin</artifactId>
@@ -149,6 +162,23 @@
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
+            </dependency>
+
+            <!--plugin manager-->
+            <dependency>
+                <groupId>org.pf4j</groupId>
+                <artifactId>pf4j</artifactId>
+                <version>${pf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.pf4j</groupId>
+                <artifactId>pf4j-spring</artifactId>
+                <version>${pf4j-spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.pf4j</groupId>
+                <artifactId>pf4j-update</artifactId>
+                <version>${pf4j-update.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -183,5 +213,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
+
     </dependencies>
 </project>

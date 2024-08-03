@@ -1,9 +1,9 @@
 package cn.geelato.core.api;
 
+import cn.geelato.lang.exception.CoreException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cn.geelato.core.constants.ApiResultCode;
 import cn.geelato.core.constants.ApiResultStatus;
-import cn.geelato.core.exception.CoreException;
 
 /**
  * @author geemeta
@@ -15,6 +15,7 @@ public class ApiResult<E> {
     private E data;
 
     public ApiResult() {
+
     }
 
     public ApiResult(E result) {
@@ -61,7 +62,16 @@ public class ApiResult<E> {
         this.data = data;
         return this;
     }
-
+    /**
+     * 设置编码为ApiResultCode.SUCCESS
+     *
+     * @return ApiResult
+     */
+    public ApiResult<E> success() {
+        this.code = ApiResultCode.SUCCESS;
+        this.status = ApiResultStatus.SUCCESS;
+        return this;
+    }
     /**
      * 设置编码为ApiResultCode.ERROR
      *
@@ -90,16 +100,7 @@ public class ApiResult<E> {
         return this;
     }
 
-    /**
-     * 设置编码为ApiResultCode.SUCCESS
-     *
-     * @return ApiResult
-     */
-    public ApiResult<E> success() {
-        this.code = ApiResultCode.SUCCESS;
-        this.status = ApiResultStatus.SUCCESS;
-        return this;
-    }
+
 
     @JsonIgnore
     public boolean isSuccess() {
@@ -109,11 +110,6 @@ public class ApiResult<E> {
     @JsonIgnore
     public boolean isError() {
         return this.code == ApiResultCode.ERROR;
-    }
-
-    @JsonIgnore
-    public boolean isWarning() {
-        return this.code == ApiResultCode.WARNING;
     }
 
 }

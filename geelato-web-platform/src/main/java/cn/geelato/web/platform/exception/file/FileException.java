@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.exception.file;
 
-import cn.geelato.core.exception.CoreException;
+
+import cn.geelato.lang.exception.CoreException;
 
 /**
  * @author diabl

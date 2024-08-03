@@ -1,12 +1,19 @@
 package cn.geelato.web.platform;
 
-import cn.geelato.core.exception.CoreException;
+
+import cn.geelato.lang.exception.CoreException;
+import lombok.Getter;
+import lombok.Setter;
 
 public class PlatformRuntimeException {
 
     private CoreException coreException;
+    @Setter
+    @Getter
     private String logTag;
+    @Getter
     private final int errorCode;
+    @Getter
     private final String errorMsg;
 
     public PlatformRuntimeException(CoreException coreException) {
@@ -21,21 +28,6 @@ public class PlatformRuntimeException {
         this.errorMsg=msg;
     }
 
-    public int getErrorCode() {
-        return errorCode;
-    }
-
-    public String getErrorMsg() {
-        return errorMsg;
-    }
-
-    public String getLogTag() {
-        return logTag;
-    }
-
-    public void setLogTag(String logTag) {
-        this.logTag = logTag;
-    }
     public String getStackTraceDetail(){
         StringBuilder sb=new StringBuilder();
         for(StackTraceElement element:coreException.getStackTrace()){

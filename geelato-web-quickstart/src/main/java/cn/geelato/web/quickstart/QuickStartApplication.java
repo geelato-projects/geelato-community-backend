@@ -1,11 +1,14 @@
 package cn.geelato.web.quickstart;
 
+import cn.geelato.plugin.PluginConfiguration;
 import cn.geelato.web.platform.boot.BootApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication

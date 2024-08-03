@@ -22,5 +22,6 @@
         <module>geelato-utils</module>
         <module>geelato-web-platform</module>
         <module>geelato-web-quickstart</module>
+        <module>geelato-plugin-manager</module>
     </modules>
 </project>

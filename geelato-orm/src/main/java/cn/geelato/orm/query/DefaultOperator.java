@@ -5,6 +5,6 @@ public class DefaultOperator implements Operator {
 
     @Override
     public QueryOperator query(String tableOrView) {
-        return new BuildParameterQueryOperator(tableOrView);
+        return new QueryOperator(tableOrView);
     }
 }

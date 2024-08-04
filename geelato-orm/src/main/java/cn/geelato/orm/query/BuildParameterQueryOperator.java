@@ -21,15 +21,4 @@ public class BuildParameterQueryOperator extends QueryOperator {
         queryOperatorParameter.setFrom(entityMeta.getTableName());
     }
 
-    @Override
-    public QueryOperator select(String... columns) {
-        queryOperatorParameter.setSelect(List.of(columns));
-        return this;
-    }
-
-    @Override
-    public QueryOperator where(String... conditions) {
-        queryOperatorParameter.setWhere(List.of(conditions));
-        return this;
-    }
 }

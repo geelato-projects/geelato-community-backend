@@ -4,6 +4,7 @@ import cn.geelato.lang.constants.ApiResultCode;
 import cn.geelato.lang.constants.ApiResultStatus;
 import cn.geelato.lang.exception.CoreException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Builder;
 
 /**
  * @author geemeta

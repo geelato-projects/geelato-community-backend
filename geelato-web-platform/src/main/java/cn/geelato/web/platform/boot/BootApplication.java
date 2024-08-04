@@ -73,7 +73,7 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
         logger.info("[start application]...start");
         assertOS();
         parseStartArgs(args);
-        initMeta();
+//        initMeta();
         resolveSqlScript(args);
         resolveGraalContext();
         initEnvironment();

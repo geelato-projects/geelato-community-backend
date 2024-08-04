@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.pluginexample;
 
-import cn.geelato.core.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.example.Greeting;
 import cn.geelato.plugin.example.PluginInfo;

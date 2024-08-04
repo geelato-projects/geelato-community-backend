@@ -5,7 +5,7 @@ import cn.geelato.web.platform.m.excel.service.ExportExcelService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.api.ApiResult;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.graal.GraalService;
 
 import java.util.ArrayList;

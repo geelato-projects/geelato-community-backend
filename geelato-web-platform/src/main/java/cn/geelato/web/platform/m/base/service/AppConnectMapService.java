@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.web.platform.m.model.service.DevDbConnectService;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.web.platform.m.base.entity.App;

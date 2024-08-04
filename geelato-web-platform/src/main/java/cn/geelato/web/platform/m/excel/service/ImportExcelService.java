@@ -24,7 +24,7 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import cn.geelato.core.api.ApiResult;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.enums.MysqlDataTypeEnum;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;

@@ -18,7 +18,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import cn.geelato.core.Ctx;
-import cn.geelato.core.api.ApiResult;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.Base64Info;

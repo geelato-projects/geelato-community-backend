@@ -8,7 +8,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.subject.Subject;
-import cn.geelato.core.api.ApiResult;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.base.rest.RestException;
 import org.slf4j.Logger;

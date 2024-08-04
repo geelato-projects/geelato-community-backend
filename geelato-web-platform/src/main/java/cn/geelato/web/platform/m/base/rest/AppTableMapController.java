@@ -2,9 +2,9 @@ package cn.geelato.web.platform.m.base.rest;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.api.ApiPagedResult;
-import cn.geelato.core.api.ApiResult;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.web.platform.m.base.entity.App;

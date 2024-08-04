@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.security.service;
 import jakarta.annotation.Resource;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.web.platform.enums.AuthCodeAction;
 import cn.geelato.web.platform.enums.ValidTypeEnum;

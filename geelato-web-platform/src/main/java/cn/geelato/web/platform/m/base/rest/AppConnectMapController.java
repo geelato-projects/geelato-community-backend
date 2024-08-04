@@ -1,8 +1,8 @@
 package cn.geelato.web.platform.m.base.rest;
 
 import jakarta.servlet.http.HttpServletRequest;
-import cn.geelato.core.api.ApiPagedResult;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.web.platform.m.base.entity.AppConnectMap;
 import cn.geelato.web.platform.m.base.service.AppConnectMapService;
@@ -48,7 +48,6 @@ public class AppConnectMapController extends BaseController {
             result = appConnectMapService.pageQueryModel("page_query_platform_app_r_connect", params, pageQueryRequest);
         } catch (Exception e) {
             logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
         return result;

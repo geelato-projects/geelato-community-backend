@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.model.service;
 
 import cn.geelato.core.enums.*;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.meta.model.entity.TableMeta;

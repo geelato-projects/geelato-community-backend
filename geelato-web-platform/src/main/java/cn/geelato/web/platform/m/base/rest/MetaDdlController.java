@@ -5,7 +5,7 @@ import cn.geelato.web.platform.m.base.service.ViewService;
 import cn.geelato.web.platform.m.model.service.DevTableService;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
-import cn.geelato.core.api.ApiMetaResult;
+import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.enums.TableSourceTypeEnum;

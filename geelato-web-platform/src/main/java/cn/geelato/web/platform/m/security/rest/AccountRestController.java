@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.security.rest;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import jakarta.servlet.http.HttpServletRequest;
-import cn.geelato.core.api.ApiResult;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

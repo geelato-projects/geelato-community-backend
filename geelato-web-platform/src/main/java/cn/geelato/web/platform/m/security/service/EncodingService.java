@@ -5,7 +5,7 @@ import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.enums.EncodingItemTypeEnum;

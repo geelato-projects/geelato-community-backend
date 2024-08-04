@@ -1,7 +1,7 @@
 package cn.geelato.core.util;
 
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.enums.Dialects;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
 import org.springframework.util.Assert;

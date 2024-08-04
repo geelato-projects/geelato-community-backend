@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.base.service;
 
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.Resources;

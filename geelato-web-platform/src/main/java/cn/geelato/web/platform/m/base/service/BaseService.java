@@ -5,7 +5,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
-import cn.geelato.core.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;

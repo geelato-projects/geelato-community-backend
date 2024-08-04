@@ -6,7 +6,7 @@ import cn.geelato.web.platform.m.security.entity.RolePermissionMap;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.field.ColumnMeta;

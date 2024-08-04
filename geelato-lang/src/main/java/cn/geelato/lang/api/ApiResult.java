@@ -1,8 +1,9 @@
 package cn.geelato.lang.api;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import cn.geelato.lang.constants.ApiResultCode;
 import cn.geelato.lang.constants.ApiResultStatus;
+import cn.geelato.lang.exception.CoreException;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * @author geemeta
@@ -14,6 +15,7 @@ public class ApiResult<E> {
     private E data;
 
     public ApiResult() {
+
     }
 
     public ApiResult(E result) {
@@ -60,7 +62,16 @@ public class ApiResult<E> {
         this.data = data;
         return this;
     }
-
+    /**
+     * 设置编码为ApiResultCode.SUCCESS
+     *
+     * @return ApiResult
+     */
+    public ApiResult<E> success() {
+        this.code = ApiResultCode.SUCCESS;
+        this.status = ApiResultStatus.SUCCESS;
+        return this;
+    }
     /**
      * 设置编码为ApiResultCode.ERROR
      *
@@ -72,18 +83,24 @@ public class ApiResult<E> {
         return this;
     }
 
-
-
     /**
-     * 设置编码为ApiResultCode.SUCCESS
+     * 错误，异常处理
      *
-     * @return ApiResult
      */
-    public ApiResult<E> success() {
-        this.code = ApiResultCode.SUCCESS;
-        this.status = ApiResultStatus.SUCCESS;
+    public <T extends Exception> ApiResult<E> error(T exception) {
+        this.status = ApiResultStatus.FAIL;
+        if (exception instanceof CoreException) {
+            this.code = ((CoreException) exception).getErrorCode();
+            this.msg = ((CoreException) exception).getErrorMsg();
+        } else {
+            this.code = ApiResultCode.ERROR;
+            this.msg = exception.getMessage();
+        }
+
         return this;
     }
+
+
 
     @JsonIgnore
     public boolean isSuccess() {
@@ -93,11 +110,6 @@ public class ApiResult<E> {
     @JsonIgnore
     public boolean isError() {
         return this.code == ApiResultCode.ERROR;
-    }
-
-    @JsonIgnore
-    public boolean isWarning() {
-        return this.code == ApiResultCode.WARNING;
     }
 
 }

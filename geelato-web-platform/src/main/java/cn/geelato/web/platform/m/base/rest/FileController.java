@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.web.platform.m.base.entity.FileInfo;
 import jakarta.servlet.http.HttpServletRequest;
-import cn.geelato.core.api.ApiResult;
+import cn.geelato.lang.api.ApiResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

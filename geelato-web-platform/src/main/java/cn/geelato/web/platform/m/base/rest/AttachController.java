@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.core.api.ApiResult;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import org.slf4j.Logger;

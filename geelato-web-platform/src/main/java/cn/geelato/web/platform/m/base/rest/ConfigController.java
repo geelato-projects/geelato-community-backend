@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.rest;
 
 import jakarta.servlet.http.HttpServletRequest;
-import cn.geelato.core.api.ApiResult;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.env.entity.SysConfig;

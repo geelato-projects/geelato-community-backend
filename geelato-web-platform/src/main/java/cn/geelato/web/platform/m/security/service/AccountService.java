@@ -6,7 +6,7 @@ import net.oschina.j2cache.J2Cache;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import cn.geelato.core.api.ApiResult;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.Digests;
 import cn.geelato.utils.Encodes;

@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.web.platform.m.base.entity.DictItem;

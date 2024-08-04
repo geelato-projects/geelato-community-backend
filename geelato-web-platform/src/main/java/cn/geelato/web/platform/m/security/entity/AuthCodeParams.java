@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.security.entity;
 
 import cn.geelato.web.platform.m.security.service.AccountService;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.constants.ApiErrorMsg;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.Digests;
 import cn.geelato.utils.Encodes;
 import cn.geelato.web.platform.enums.ValidTypeEnum;

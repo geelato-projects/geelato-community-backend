@@ -2,8 +2,8 @@ package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.web.platform.m.base.entity.AppPage;
 import cn.geelato.core.Ctx;
-import cn.geelato.core.api.ApiPagedResult;
-import cn.geelato.core.api.ApiResult;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.env.entity.User;
 import cn.geelato.core.orm.DaoException;

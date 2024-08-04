@@ -6,7 +6,7 @@ import com.alibaba.fastjson2.JSONObject;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
 import cn.geelato.core.aop.annotation.MethodLog;
-import cn.geelato.core.api.ApiMultiPagedResult;
+import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.core.gql.execute.BoundPageSql;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.meta.model.CommonRowMapper;

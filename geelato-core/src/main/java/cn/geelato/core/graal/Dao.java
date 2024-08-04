@@ -1,7 +1,7 @@
 package cn.geelato.core.graal;
 
 import cn.geelato.core.Ctx;
-import cn.geelato.core.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.gql.GqlManager;
 import cn.geelato.core.gql.execute.BoundPageSql;

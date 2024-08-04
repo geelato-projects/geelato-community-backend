@@ -1,6 +1,8 @@
 package cn.geelato.orm.query;
 
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import java.util.List;
 
 public abstract class QueryOperator extends BaseOperator implements QueryOP {

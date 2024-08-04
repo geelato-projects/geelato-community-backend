@@ -11,7 +11,7 @@ public class DefaultOperatorTest {
     @Test
     public void query() {
         Operator operator=new DefaultOperator();
-        List<Object> list= operator.query("")
+        List<Object> list= operator.query("demo_entity")
                 .select("id")
                 .where("id=1")
                 .pageQueryList();

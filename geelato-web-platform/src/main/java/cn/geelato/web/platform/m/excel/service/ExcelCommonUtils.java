@@ -54,9 +54,6 @@ public class ExcelCommonUtils {
     @Qualifier("primaryDao")
     protected Dao dao;
     @Autowired
-    @Qualifier("secondaryDao")
-    protected Dao dao2;
-    @Autowired
     protected RuleService ruleService;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;

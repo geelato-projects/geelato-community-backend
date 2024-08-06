@@ -151,11 +151,6 @@
                 <artifactId>plugin-all</artifactId>
                 <version>${geelato-plugin.version}</version>
             </dependency>
-            <dependency>
-                <groupId>cn.geelato</groupId>
-                <artifactId>logging-plugin</artifactId>
-                <version>${geelato-plugin.version}</version>
-            </dependency>
             <!--unit test-->
             <dependency>
                 <groupId>junit</groupId>

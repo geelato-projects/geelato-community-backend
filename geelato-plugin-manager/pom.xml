@@ -43,5 +43,9 @@
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-lang</artifactId>
     </dependency>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-utils</artifactId>
+    </dependency>
   </dependencies>
 </project>

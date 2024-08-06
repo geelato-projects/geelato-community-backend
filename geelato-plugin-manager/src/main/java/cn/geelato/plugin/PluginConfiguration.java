@@ -19,7 +19,7 @@ import java.util.List;
 @Configuration
 public class PluginConfiguration {
     private SpringPluginManager springPluginManager;
-    private UpdateManager updateManager;
+//    private UpdateManager updateManager;
     @Bean
     public SpringPluginManager pluginManager() {
         SpringPluginManager spm=new SpringPluginManager(
@@ -31,13 +31,13 @@ public class PluginConfiguration {
         return spm;
     }
 
-    @Bean
-    @DependsOn("pluginManager")
-    public UpdateManager updateManager(){
-        UpdateManager um = new UpdateManager(springPluginManager);
-        List<UpdateRepository> pluginRepositories=um.getRepositories();
-        return um;
-    }
+//    @Bean
+//    @DependsOn("pluginManager")
+//    public UpdateManager updateManager(){
+//        UpdateManager um = new UpdateManager(springPluginManager);
+//        List<UpdateRepository> pluginRepositories=um.getRepositories();
+//        return um;
+//    }
 
 
     public PluginConfiguration(){

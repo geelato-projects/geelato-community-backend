@@ -1,9 +1,13 @@
 package cn.geelato.web.platform.m.base.rest;
 
 
+import cn.geelato.core.orm.Dao;
+import cn.geelato.web.platform.m.base.service.RuleService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.XSlf4j;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.lang.api.ApiMultiPagedResult;
@@ -31,11 +35,11 @@ import java.io.IOException;
  */
 @Controller
 @RequestMapping(value = "/api/meta/")
+@Slf4j
 public class MetaController extends BaseController implements InitializingBean {
 
     private final MetaManager metaManager = MetaManager.singleInstance();
 
-    private static final Logger logger = LoggerFactory.getLogger(MetaController.class);
 
     @RequestMapping(value = {"list", "list/*"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.JSON_UTF_8)
     @ResponseBody
@@ -164,7 +168,7 @@ public class MetaController extends BaseController implements InitializingBean {
         try {
             br = request.getReader();
         } catch (IOException e) {
-            logger.error("未能从httpServletRequest中获取gql的内容", e);
+            log.error("未能从httpServletRequest中获取gql的内容", e);
         }
         String str;
         try {
@@ -172,7 +176,7 @@ public class MetaController extends BaseController implements InitializingBean {
                 stringBuilder.append(str);
             }
         } catch (IOException e) {
-            logger.error("未能从httpServletRequest中获取gql的内容", e);
+            log.error("未能从httpServletRequest中获取gql的内容", e);
         }
         String gql=stringBuilder.toString();
         if(type!=null){

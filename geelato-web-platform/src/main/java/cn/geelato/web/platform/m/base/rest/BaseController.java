@@ -11,6 +11,7 @@ import cn.geelato.core.orm.Dao;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -23,7 +24,7 @@ import java.util.*;
 /**
  * @author geemeta
  */
-@ControllerAdvice
+@Controller
 public class BaseController implements InitializingBean {
     @Autowired
     @Qualifier("primaryDao")

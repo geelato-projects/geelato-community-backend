@@ -56,7 +56,7 @@ public class BusinessData {
 
     public Set<String> getTransitionValueString() {
         Set<String> stringSet = new LinkedHashSet<>();
-        if (this.transitionValue != null && this.transitionValue.size() > 0) {
+        if (this.transitionValue != null && !this.transitionValue.isEmpty()) {
             for (Object obj : this.transitionValue) {
                 stringSet.add(String.valueOf(obj));
             }

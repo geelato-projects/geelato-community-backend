@@ -7,7 +7,9 @@ import cn.geelato.core.meta.annotation.ForeignKey;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.web.platform.m.base.entity.App;
+import lombok.Setter;
 
+@Setter
 @Entity(name = "platform_role_r_app")
 @Title(title = "角色APP关系表")
 public class RoleAppMap extends BaseEntity {
@@ -23,19 +25,11 @@ public class RoleAppMap extends BaseEntity {
         return roleId;
     }
 
-    public void setRoleId(String roleId) {
-        this.roleId = roleId;
-    }
-
     @Title(title = "应用ID")
     @Col(name = "app_id", refTables = "platform_app", refColName = "platform_app.id")
     @ForeignKey(fTable = App.class)
     public String getAppId() {
         return appId;
-    }
-
-    public void setAppId(String appId) {
-        this.appId = appId;
     }
 
     @Title(title = "应用名称")
@@ -44,17 +38,10 @@ public class RoleAppMap extends BaseEntity {
         return appName;
     }
 
-    public void setAppName(String appName) {
-        this.appName = appName;
-    }
-
     @Title(title = "角色名称")
     @Col(name = "role_name", isRefColumn = true, refLocalCol = "roleId", refColName = "platform_role.name")
     public String getRoleName() {
         return roleName;
     }
 
-    public void setRoleName(String roleName) {
-        this.roleName = roleName;
-    }
 }

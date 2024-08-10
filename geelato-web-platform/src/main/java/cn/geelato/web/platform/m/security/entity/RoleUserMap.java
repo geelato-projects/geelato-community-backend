@@ -6,11 +6,13 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.ForeignKey;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Setter;
 
 /**
  * Created by hongxq on 2015/6/17.
  */
 
+@Setter
 @Entity(name = "platform_role_r_user")
 @Title(title = "角色用户关系表")
 public class RoleUserMap extends BaseEntity {
@@ -26,19 +28,11 @@ public class RoleUserMap extends BaseEntity {
         return roleId;
     }
 
-    public void setRoleId(String roleId) {
-        this.roleId = roleId;
-    }
-
     @Title(title = "用户ID")
     @Col(name = "user_id", refTables = "platform_user", refColName = "platform_user.id")
     @ForeignKey(fTable = User.class)
     public String getUserId() {
         return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
     }
 
     @Title(title = "用户名称")
@@ -47,17 +41,10 @@ public class RoleUserMap extends BaseEntity {
         return userName;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     @Title(title = "角色名称")
     @Col(name = "role_name", isRefColumn = true, refLocalCol = "roleId", refColName = "platform_role.name")
     public String getRoleName() {
         return roleName;
     }
 
-    public void setRoleName(String roleName) {
-        this.roleName = roleName;
-    }
 }

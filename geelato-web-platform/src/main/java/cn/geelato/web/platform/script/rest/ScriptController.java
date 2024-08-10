@@ -7,11 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.web.platform.graal.GraalContext;
-import cn.geelato.web.platform.graal.InstanceProxy;
+
 import cn.geelato.web.platform.script.entty.Api;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,9 +24,6 @@ import java.util.Map;
 @Controller
 @RequestMapping(value = "/api")
 public class ScriptController extends BaseController {
-    @Autowired
-    InstanceProxy instanceProxy;
-
     private GraalManager graalManager= GraalManager.singleInstance();
 
     @Resource

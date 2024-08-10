@@ -1,5 +1,10 @@
 package cn.geelato.web.platform;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class Tenant {
     public Tenant(String code){
         this.code=code;
@@ -7,19 +12,4 @@ public class Tenant {
     private String code;
     private String name;
 
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 }

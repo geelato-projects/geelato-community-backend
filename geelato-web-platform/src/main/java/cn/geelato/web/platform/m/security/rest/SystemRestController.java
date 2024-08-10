@@ -67,19 +67,6 @@ public class SystemRestController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/getPermCode")
-    @ResponseBody
-    public ApiResult getPermissionCode(HttpServletRequest req) {
-        try {
-            User user = this.getUserByToken(req);
-            // TODO 改从数据库中获取
-            String[] permissionCodes = new String[]{"1000", "3000", "5000"};
-
-            return new ApiResult().success().setData(permissionCodes);
-        } catch (Exception e) {
-            return new ApiResult().error();
-        }
-    }
 
 
     @RequestMapping(value = "/logout", method = RequestMethod.GET)

@@ -38,3 +38,6 @@ build/
 .DS_Store
 /log/
 /.idea/
+
+/geelato-web-service/
+/geelato-web-runtime/

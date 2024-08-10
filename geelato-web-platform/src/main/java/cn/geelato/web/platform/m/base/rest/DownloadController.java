@@ -25,6 +25,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author diabl
@@ -38,6 +40,13 @@ public class DownloadController extends BaseController {
     private DownloadService downloadService;
     @Autowired
     private AttachService attachService;
+
+    // 设置不常用的媒体类型
+    static final Map<String, String> EXT_MAP = new HashMap<>();
+    static {
+        // 前端基于esm文件打包的文件
+        EXT_MAP.put("mjs", "application/javascript");
+    }
 
     @RequestMapping(value = "/file", method = RequestMethod.GET)
     @ResponseBody
@@ -73,6 +82,10 @@ public class DownloadController extends BaseController {
                 // 编码
                 String encodeName = URLEncoder.encode(name, StandardCharsets.UTF_8);
                 String mineType = request.getServletContext().getMimeType(encodeName);
+                // 如果没有取到常用的媒体类型，则获取自配置的媒体类型
+                if(mineType==null){
+                    mineType = EXT_MAP.get(UploadService.getFileExtensionWithNoDot(name));
+                }
                 response.setContentType(mineType);
                 // 在线查看图片、pdf
                 if (isPreview && Strings.isNotBlank(mineType) && (mineType.startsWith("image/") || mineType.equalsIgnoreCase("application/pdf"))) {

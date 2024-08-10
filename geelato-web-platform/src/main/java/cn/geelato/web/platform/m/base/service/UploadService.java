@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.base.service;
 
+import cn.geelato.utils.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
 import cn.geelato.utils.UIDGenerator;
@@ -145,6 +146,22 @@ public class UploadService {
             int lastIndexOfDot = fileName.lastIndexOf('.');
             if (lastIndexOfDot != -1) {
                 return fileName.substring(lastIndexOfDot);
+            }
+        }
+
+        return "";
+    }
+
+    /**
+     * 文件后缀
+     * @param fileName 文件名称
+     * @return 例：xlsx，不包含.
+     */
+    public static String getFileExtensionWithNoDot(String fileName) {
+        if (StringUtils.isNotBlank(fileName)) {
+            int lastIndexOfDot = fileName.lastIndexOf('.');
+            if (lastIndexOfDot != -1) {
+                return fileName.substring(lastIndexOfDot+1);
             }
         }
 

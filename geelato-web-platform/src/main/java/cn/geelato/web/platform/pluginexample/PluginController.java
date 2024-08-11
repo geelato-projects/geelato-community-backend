@@ -5,6 +5,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.example.Greeting;
 import cn.geelato.plugin.example.PluginInfo;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.conditional.TestConditional;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,8 +19,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
-@RequestMapping(value = "/api/plugin")
+@ApiRestController("/plugin")
 @Slf4j
 public class PluginController extends BaseController {
 

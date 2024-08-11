@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -23,7 +24,7 @@ import java.util.Map;
  * @author diabl
  * @date 2024/4/16 9:55
  */
-@Controller
+@RestController
 @RequestMapping(value = "/api/app/connect")
 public class AppConnectMapController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();

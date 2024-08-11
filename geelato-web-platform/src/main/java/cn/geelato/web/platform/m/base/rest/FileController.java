@@ -4,6 +4,7 @@ package cn.geelato.web.platform.m.base.rest;
 import cn.geelato.web.platform.m.base.entity.FileInfo;
 import jakarta.servlet.http.HttpServletRequest;
 import cn.geelato.lang.api.ApiResult;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,7 @@ import java.util.Random;
 @Component
 @Controller
 @RequestMapping(value = "/api/file/")
+@Slf4j
 public class FileController extends BaseController {
 
     @Value(value = "${geelato.file.root.path}")
@@ -38,8 +40,6 @@ public class FileController extends BaseController {
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
     private Random random = new Random();
 
-
-    private static Logger logger = LoggerFactory.getLogger(FileController.class);
 
     /**
      * 处理文件上传
@@ -74,7 +74,7 @@ public class FileController extends BaseController {
             apiResult.success();
             apiResult.setMsg("上传文件成功！");
         } catch (IOException e) {
-            logger.error("上传文件失败！", e);
+            log.error("上传文件失败！", e);
             apiResult.error();
             apiResult.setMsg("上传文件失败！");
         }

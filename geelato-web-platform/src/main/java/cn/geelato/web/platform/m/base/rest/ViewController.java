@@ -17,16 +17,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
-@Controller
+@RestController
 @RequestMapping(value = "/api/view/")
 public class ViewController  extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(ViewController.class);
@@ -35,7 +32,7 @@ public class ViewController  extends BaseController {
 
 
     @RequestMapping(value = {"pageQuery/{view_name}"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
+    @PostMapping
     public ApiPagedResult pageQuery(@PathVariable("view_name") String viewName, HttpServletRequest req) {
         ApiPagedResult result = new ApiPagedResult();
         try {

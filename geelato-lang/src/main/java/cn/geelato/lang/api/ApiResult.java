@@ -5,14 +5,18 @@ import cn.geelato.lang.constants.ApiResultStatus;
 import cn.geelato.lang.exception.CoreException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author geemeta
  */
+@Getter
 public class ApiResult<E> {
-    private String msg = "";
-    private int code = ApiResultCode.SUCCESS;
-    private String status = ApiResultStatus.SUCCESS;
+    private String msg;
+    private int code;
+    @Setter
+    private String status;
     private E data;
 
     public ApiResult() {
@@ -23,42 +27,24 @@ public class ApiResult<E> {
         setData(result);
     }
 
+    @Deprecated
     public ApiResult(E result, String msg, int code) {
         setCode(code);
         setMsg(msg);
         setData(result);
     }
 
-    public String getMsg() {
-        return msg;
-    }
-
+    @Deprecated
     public ApiResult<E> setMsg(String msg) {
         this.msg = msg;
         return this;
     }
-
-    public int getCode() {
-        return code;
-    }
-
+    @Deprecated
     public ApiResult<E> setCode(int code) {
         this.code = code;
         return this;
     }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public E getData() {
-        return data;
-    }
-
+    @Deprecated
     public ApiResult<E> setData(E data) {
         this.data = data;
         return this;
@@ -68,6 +54,7 @@ public class ApiResult<E> {
      *
      * @return ApiResult
      */
+    @Deprecated
     public ApiResult<E> success() {
         this.code = ApiResultCode.SUCCESS;
         this.status = ApiResultStatus.SUCCESS;
@@ -97,7 +84,6 @@ public class ApiResult<E> {
             this.code = ApiResultCode.ERROR;
             this.msg = exception.getMessage();
         }
-
         return this;
     }
 
@@ -113,4 +99,31 @@ public class ApiResult<E> {
         return this.code == ApiResultCode.ERROR;
     }
 
+
+
+    public static <E> ApiResult<E> success2() {
+        return success(null);
+    }
+
+    public static <T> ApiResult<T> success(T data) {
+        ApiResult<T> apiResult = new ApiResult<>();
+        apiResult.setCode(ResultCode.RC200.getCode());
+        apiResult.setStatus(ApiResultStatus.SUCCESS);
+        apiResult.setMsg(ResultCode.RC200.getMessage());
+        apiResult.setData(data);
+        return apiResult;
+    }
+
+    public static <T> ApiResult<T> fail(String message) {
+        return fail(ResultCode.RC500.getCode(), message);
+    }
+
+
+    private static <T> ApiResult<T> fail(int code, String message) {
+        ApiResult<T> apiResult = new ApiResult<>();
+        apiResult.setCode(code);
+        apiResult.setStatus(ApiResultStatus.FAIL);
+        apiResult.setMsg(message);
+        return apiResult;
+    }
 }

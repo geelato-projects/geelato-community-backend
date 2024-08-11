@@ -1,5 +1,8 @@
 package cn.geelato.lang.api;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Map;
 
 /**
@@ -7,13 +10,15 @@ import java.util.Map;
  *
  * @author geemeta
  */
-public class ApiMultiPagedResult<E> extends ApiResult<Map<String,ApiMultiPagedResult.PageData>> {
+public class ApiMultiPagedResult<E> extends ApiResult<Map<String,ApiMultiPagedResult.PageData<E>>> {
 
     /**
      * 分页查询的返回结果
      *
      * @author geemeta
      */
+    @Setter
+    @Getter
     public static class PageData<E> {
         private long total;
         private long page;
@@ -25,53 +30,6 @@ public class ApiMultiPagedResult<E> extends ApiResult<Map<String,ApiMultiPagedRe
          */
         private Object meta;
 
-        public Object getMeta() {
-            return meta;
-        }
-
-        public void setMeta(Object meta) {
-            this.meta = meta;
-        }
-
-        public E getData() {
-            return data;
-        }
-
-        public void setData(E data) {
-            this.data = data;
-        }
-
-        public long getTotal() {
-            return total;
-        }
-
-        public void setTotal(long total) {
-            this.total = total;
-        }
-
-        public long getPage() {
-            return page;
-        }
-
-        public void setPage(long page) {
-            this.page = page;
-        }
-
-        public int getSize() {
-            return size;
-        }
-
-        public void setSize(int size) {
-            this.size = size;
-        }
-
-        public int getDataSize() {
-            return dataSize;
-        }
-
-        public void setDataSize(int dataSize) {
-            this.dataSize = dataSize;
-        }
     }
 
 }

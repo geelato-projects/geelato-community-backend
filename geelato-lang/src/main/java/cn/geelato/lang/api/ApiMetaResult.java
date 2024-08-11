@@ -1,9 +1,14 @@
 package cn.geelato.lang.api;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * @author geemeta
  *
  */
+@Setter
+@Getter
 public class ApiMetaResult<E> extends ApiResult<E>{
 
     /**
@@ -11,11 +16,4 @@ public class ApiMetaResult<E> extends ApiResult<E>{
      */
     private Object meta;
 
-    public Object getMeta() {
-        return meta;
-    }
-
-    public void setMeta(Object meta) {
-        this.meta = meta;
-    }
 }

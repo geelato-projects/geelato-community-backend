@@ -6,7 +6,6 @@ import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.example.Greeting;
 import cn.geelato.plugin.example.PluginInfo;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.conditional.TestConditional;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;

@@ -1,5 +1,7 @@
 package cn.geelato.web.platform.annotation;
 
+import cn.geelato.web.platform.conditional.DesigntimeServiceConditional;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +14,7 @@ import java.lang.annotation.*;
 @Documented
 @RestController
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+@Conditional(DesigntimeServiceConditional.class)
 public @interface ApiRestController {
     @AliasFor(annotation = RequestMapping.class)
     String name() default "";

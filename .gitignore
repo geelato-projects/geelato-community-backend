@@ -1,3 +1,5 @@
+*/geelato-web-service/*
+*/geelato-web-runtime/*
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -39,5 +41,4 @@ build/
 /log/
 /.idea/
 
-/geelato-web-service/
-/geelato-web-runtime/
+

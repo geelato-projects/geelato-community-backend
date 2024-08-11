@@ -1,13 +1,10 @@
 package cn.geelato.web.platform.m.base.rest;
 
 
-import cn.geelato.core.orm.Dao;
-import cn.geelato.web.platform.m.base.service.RuleService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import lombok.extern.slf4j.XSlf4j;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.lang.api.ApiMultiPagedResult;
@@ -28,21 +25,19 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 /**
- * getBizRuleScriptManager:
  *
  * @author itechgee@126.com
  * @date 2017/6/3.
  */
-@Controller
+@RestController
 @RequestMapping(value = "/api/meta/")
 @Slf4j
-public class MetaController extends BaseController implements InitializingBean {
+public class MetaController extends BaseController {
 
     private final MetaManager metaManager = MetaManager.singleInstance();
 
 
     @RequestMapping(value = {"list", "list/*"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiPagedResult list(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta, HttpServletRequest request) {
         String gql = getGql(request,"query");
         return ruleService.queryForMapList(gql, withMeta);
@@ -53,7 +48,6 @@ public class MetaController extends BaseController implements InitializingBean {
      *
      */
     @RequestMapping(value = {"multiList", "multiList/*"}, method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiMultiPagedResult multiList(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta, HttpServletRequest request) {
         String gql = getGql(request,null);
         return ruleService.queryForMultiMapList(gql, withMeta);
@@ -65,7 +59,6 @@ public class MetaController extends BaseController implements InitializingBean {
      * @return SaveResult
      */
     @RequestMapping(value = {"save/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiMetaResult save(@PathVariable("biz") String biz, HttpServletRequest request) throws DaoException {
         String gql =getGql(request,"save");
         ApiMetaResult result = new ApiMetaResult();
@@ -74,7 +67,6 @@ public class MetaController extends BaseController implements InitializingBean {
     }
 
     @RequestMapping(value = {"batchSave"}, method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiMetaResult batchSave(HttpServletRequest request) throws DaoException {
         String gql =getGql(request,"batchSave");
         ApiMetaResult result = new ApiMetaResult();
@@ -82,7 +74,6 @@ public class MetaController extends BaseController implements InitializingBean {
         return result;
     }
     @RequestMapping(value = {"multiSave"}, method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiMetaResult multiSave(HttpServletRequest request) {
         String gql = getGql(request,"multiSave");
         ApiMetaResult result = new ApiMetaResult();
@@ -90,7 +81,6 @@ public class MetaController extends BaseController implements InitializingBean {
         return result;
     }
     @RequestMapping(value = {"delete/{biz}/{id}"}, method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiMetaResult delete(@PathVariable("biz") String biz, @PathVariable("id") String id) {
         ApiMetaResult result = new ApiMetaResult();
         result.setData(ruleService.delete(biz, id));
@@ -98,7 +88,6 @@ public class MetaController extends BaseController implements InitializingBean {
     }
 
     @RequestMapping(value = {"delete2/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiMetaResult delete(@PathVariable("biz") String biz, HttpServletRequest request) {
         String gql = getGql(request,"delete");
         ApiMetaResult result = new ApiMetaResult();
@@ -112,7 +101,6 @@ public class MetaController extends BaseController implements InitializingBean {
      * @param entityOrQueryKey 实体名称或查询键
      */
     @RequestMapping(value = {"defined/{entityOrQueryKey}"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiMetaResult defined(@PathVariable("entityOrQueryKey") String entityOrQueryKey) {
         ApiMetaResult result = new ApiMetaResult();
         if (metaManager.containsEntity(entityOrQueryKey)) {
@@ -127,7 +115,6 @@ public class MetaController extends BaseController implements InitializingBean {
      *
      */
     @RequestMapping(value = {"entityNames"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiResult entityNames(@RequestParam String appCode) {
         ApiResult result = new ApiResult();
         result.setData(metaManager.getAllEntityNames());
@@ -140,7 +127,6 @@ public class MetaController extends BaseController implements InitializingBean {
      * @param appCode 应用编码
      */
     @RequestMapping(value = {"entityLiteMetas"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiResult queryLiteEntities(@RequestParam String appCode) {
         ApiResult result = new ApiResult();
         result.setData(metaManager.getAllEntityLiteMetas());
@@ -190,7 +176,6 @@ public class MetaController extends BaseController implements InitializingBean {
      *
      */
     @RequestMapping(value = {"uniqueness"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
     public ApiResult uniqueness(HttpServletRequest request) {
         ApiResult result = new ApiResult();
         String gql = getGql(request,null);

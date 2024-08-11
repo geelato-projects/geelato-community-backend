@@ -10,6 +10,7 @@ import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.core.orm.SqlFiles;
 import cn.geelato.core.script.sql.SqlScriptManagerFactory;
 import cn.geelato.utils.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -30,8 +31,8 @@ import java.util.Properties;
 // 在繼承的类中编写该注解
 //@SpringBootApplication
 @ComponentScan(basePackages = {"cn.geelato"})
-public class BootApplication implements CommandLineRunner, InitializingBean {
-    private static final Logger logger = LoggerFactory.getLogger(BootApplication.class);
+@Slf4j
+public class BootApplication implements CommandLineRunner {
     @Autowired
     protected ApplicationContext applicationContext;
 
@@ -59,7 +60,7 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
     private void assertOS() {
         Properties prop = System.getProperties();
         String os = prop.getProperty("os.name");
-        logger.info("[operate system]" + os);
+        log.info("[operate system]{}", os);
         isWinOS = os.toLowerCase().startsWith("win");
     }
 
@@ -68,16 +69,16 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
      */
     @Override
     public void run(String... args) throws Exception {
-        logger.info("[start args]：" + StringUtils.join(args, ","));
-        logger.info("[configuration file]：" + applicationContext.getEnvironment().getProperty("geelato.env"));
-        logger.info("[start application]...start");
+        log.info("[start args]：{}", StringUtils.join(args, ","));
+        log.info("[configuration file]：{}", applicationContext.getEnvironment().getProperty("geelato.env"));
+        log.info("[start application]...start");
         assertOS();
         parseStartArgs(args);
 //        initMeta();
         resolveSqlScript(args);
         resolveGraalContext();
         initEnvironment();
-        logger.info("[start application]...finish");
+        log.info("[start application]...finish");
     }
 
     private void resolveGraalContext() {
@@ -157,7 +158,7 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
         BizManagerFactory.getBizRuleScriptManager("rule").setDao(dao);
         BizManagerFactory.getBizRuleScriptManager("rule").loadFiles(path + "/geelato/web/platform/rule/");
         if (isNeedResetDb) {
-            logger.info("start reset database");
+            log.info("start reset database");
             //--3、创建表结构
             dbGenerateDao.createAllTables(true, ignoreEntityNamePrefixList);
             //--4、初始化表数据
@@ -188,7 +189,7 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
         BizManagerFactory.getBizRuleScriptManager("rule").setDao(dao);
         BizManagerFactory.getBizRuleScriptManager("rule").loadResource("/geelato/web/platform/rule/**/*.js");
         if (isNeedResetDb) {
-            logger.info("start reset database");
+            log.info("start reset database");
             //--3、创建表结构
             dbGenerateDao.createAllTables(true, ignoreEntityNamePrefixList);
             //--4、初始化表数据
@@ -204,7 +205,7 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
                             SqlFiles.loadAndExecute(is, dao.getJdbcTemplate(), isWinOS);
                         }
                     } catch (IOException e) {
-                        logger.error("加载、初始化数据（" + sqlFile + "）失败。", e);
+                        log.error("加载、初始化数据（{}）失败。", sqlFile, e);
                     }
                 }
             }
@@ -218,9 +219,5 @@ public class BootApplication implements CommandLineRunner, InitializingBean {
         return value == null ? defaultValue : value;
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-//        dbGenerateDao.setDao(dao);
-    }
 
 }

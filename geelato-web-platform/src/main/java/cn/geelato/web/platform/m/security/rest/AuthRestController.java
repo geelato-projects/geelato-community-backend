@@ -105,21 +105,6 @@ public class AuthRestController extends BaseController {
 
 
     /**
-     * 获取当前用户的菜单 TODO 待按当前用户过滤
-     *
-     */
-//    @RequestMapping(value = "/currentUserMenu", method = {RequestMethod.POST, RequestMethod.GET})
-//    @ResponseBody
-//    public ApiResult getCurrentUserMenu(HttpServletRequest req) {
-//        // 菜单
-//        Map map = new HashMap<>();
-//        map.put("userId", 1);
-//        List<Map<String, Object>> menuItemList = dao.queryForMapList("select_platform_menu", map);
-//
-//        return new ApiResult().setData(menuItemList);
-//    }
-
-    /**
      * 用于管理员重置密码
      *
      * @param userId         用户id

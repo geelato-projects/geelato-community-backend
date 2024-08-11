@@ -26,13 +26,20 @@ import java.util.*;
  */
 @Controller
 public class BaseController implements InitializingBean {
-    @Autowired
-    @Qualifier("primaryDao")
+
+
     protected Dao dao;
-
+    protected RuleService ruleService;
 
     @Autowired
-    protected RuleService ruleService;
+    protected void setDao(@Qualifier("primaryDao")Dao dao){
+        this.dao=dao;
+    }
+
+    @Autowired
+    protected void setRuleService(RuleService ruleService){
+        this.ruleService=ruleService;
+    }
     /**
      * 创建session、Request、Response等对象
      */

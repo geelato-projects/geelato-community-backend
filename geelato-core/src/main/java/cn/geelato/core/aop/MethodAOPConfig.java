@@ -19,6 +19,7 @@ public class MethodAOPConfig {
             System.out.println("method around...result:"+ret);
             return ret;
         } catch (Throwable throwable) {
+            
             throwable.printStackTrace();
         }
         return null;

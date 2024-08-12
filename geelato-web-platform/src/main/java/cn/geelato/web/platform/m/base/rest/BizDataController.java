@@ -9,6 +9,7 @@ import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.annotation.ApiRuntimeRestController;
 import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,7 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 
-@ApiRestController("/bizData/")
+@ApiRuntimeRestController("/bizData/")
 @Slf4j
 public class BizDataController extends BaseController {
 

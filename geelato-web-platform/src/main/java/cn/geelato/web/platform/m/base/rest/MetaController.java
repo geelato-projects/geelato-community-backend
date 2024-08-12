@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.base.rest;
 
 
+import cn.geelato.web.platform.annotation.ApiRestController;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,8 +30,7 @@ import java.io.IOException;
  * @author itechgee@126.com
  * @date 2017/6/3.
  */
-@RestController
-@RequestMapping(value = "/api/meta/")
+@ApiRestController("/meta/")
 @Slf4j
 public class MetaController extends BaseController {
 

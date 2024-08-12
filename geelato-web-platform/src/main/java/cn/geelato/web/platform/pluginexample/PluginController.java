@@ -22,9 +22,13 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class PluginController extends BaseController {
 
-    @Autowired
+
     PluginBeanProvider pluginBeanProvider;
 
+    @Autowired
+    public PluginController(PluginBeanProvider pluginBeanProvider){
+        this.pluginBeanProvider=pluginBeanProvider;
+    }
 
     @RequestMapping(value = "/example", method = RequestMethod.GET)
     public ApiResult<Greeting> example(HttpServletRequest req) {

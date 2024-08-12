@@ -24,7 +24,6 @@ import java.util.*;
 /**
  * @author geemeta
  */
-@Controller
 public class BaseController implements InitializingBean {
 
 

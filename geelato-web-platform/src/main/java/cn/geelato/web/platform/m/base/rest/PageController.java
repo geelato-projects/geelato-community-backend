@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.AppPage;
 import cn.geelato.core.Ctx;
 import cn.geelato.lang.api.ApiPagedResult;
@@ -7,6 +8,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.env.entity.User;
 import cn.geelato.core.orm.DaoException;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -23,10 +25,9 @@ import java.util.Map;
  * @author itechgee@126.com
  * @date 2017/7/7.
  */
-@Controller
-@RequestMapping(value = "/api/page/")
+@ApiRestController("/page/")
+@Slf4j
 public class PageController extends BaseController {
-    private static final Logger logger = LoggerFactory.getLogger(PageController.class);
 
 
     /**
@@ -84,7 +85,7 @@ public class PageController extends BaseController {
 
             apiResult.setData(pageMap);
         } catch (Exception e) {
-            logger.error("获取页面配置信息出错！", e);
+            log.error("获取页面配置信息出错！", e);
             apiResult.error(e);
         }
         return apiResult;

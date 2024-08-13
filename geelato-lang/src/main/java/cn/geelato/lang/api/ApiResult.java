@@ -4,7 +4,6 @@ import cn.geelato.lang.constants.ApiResultCode;
 import cn.geelato.lang.constants.ApiResultStatus;
 import cn.geelato.lang.exception.CoreException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,9 +13,9 @@ import lombok.Setter;
 @Getter
 public class ApiResult<E> {
     private String msg;
-    private int code;
+    private int code = ApiResultCode.SUCCESS;
     @Setter
-    private String status;
+    private String status = ApiResultStatus.SUCCESS;
     private E data;
 
     public ApiResult() {
@@ -39,16 +38,19 @@ public class ApiResult<E> {
         this.msg = msg;
         return this;
     }
+
     @Deprecated
     public ApiResult<E> setCode(int code) {
         this.code = code;
         return this;
     }
+
     @Deprecated
     public ApiResult<E> setData(E data) {
         this.data = data;
         return this;
     }
+
     /**
      * 设置编码为ApiResultCode.SUCCESS
      *
@@ -60,6 +62,7 @@ public class ApiResult<E> {
         this.status = ApiResultStatus.SUCCESS;
         return this;
     }
+
     /**
      * 设置编码为ApiResultCode.ERROR
      *
@@ -73,7 +76,6 @@ public class ApiResult<E> {
 
     /**
      * 错误，异常处理
-     *
      */
     public <T extends Exception> ApiResult<E> error(T exception) {
         this.status = ApiResultStatus.FAIL;
@@ -88,7 +90,6 @@ public class ApiResult<E> {
     }
 
 
-
     @JsonIgnore
     public boolean isSuccess() {
         return this.code == ApiResultCode.SUCCESS;
@@ -98,7 +99,6 @@ public class ApiResult<E> {
     public boolean isError() {
         return this.code == ApiResultCode.ERROR;
     }
-
 
 
     public static <E> ApiResult<E> success2() {

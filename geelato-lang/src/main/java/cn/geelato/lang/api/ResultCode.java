@@ -5,11 +5,11 @@ import lombok.Getter;
 @Getter
 public enum ResultCode {
     //todo，为了暂时不影响前端，先保留原先定义20000和-2的状态码
-    RC200(20000,"Success"),
+    RC200(20000,"success"),
 
-    RC403(403,"Not Authorized"),
+    RC403(403,"not authorized"),
 
-    RC500(-2,"Fail");
+    RC500(-2,"fail");
 
     private final int code;
 

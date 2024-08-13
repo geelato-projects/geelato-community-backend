@@ -26,12 +26,6 @@ public class ApiResult<E> {
         setData(result);
     }
 
-    @Deprecated
-    public ApiResult(E result, String msg, int code) {
-        setCode(code);
-        setMsg(msg);
-        setData(result);
-    }
 
     @Deprecated
     public ApiResult<E> setMsg(String msg) {
@@ -101,7 +95,7 @@ public class ApiResult<E> {
     }
 
 
-    public static <E> ApiResult<E> success2() {
+    public static <T> ApiResult<T> success2() {
         return success(null);
     }
 

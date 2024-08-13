@@ -2,6 +2,7 @@ package cn.geelato.web.platform.script.rest;
 
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.graal.GraalContext;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.script.entity.Api;
@@ -20,8 +21,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Map;
 
-@Controller
-@RequestMapping(value = "/api")
+
+@ApiRestController("/service")
 public class ScriptController extends BaseController {
     private final GraalManager graalManager = GraalManager.singleInstance();
 
@@ -64,16 +65,16 @@ public class ScriptController extends BaseController {
 
     private String scriptTemplate() {
         return "(function(parameter){\n" +
-                "\t var context={};\n" +
-                "\t context.parameter=parameter;\n" +
-                "\t context.result=null;\n" +
+                "\t var ctx={};\n" +
+                "\t ctx.parameter=parameter;\n" +
+                "\t ctx.result=null;\n" +
 //                "\t var $gl={};\n" +
 //                "\t $gl.dao=GqlService;\n" +
 //                "\t $gl.json=JsonService;\n" +
 //                "\t $gl.user=userVariable;\n" +
 //                "\t $gl.tenant=tenantVariable;\n" +
                 "\t #scriptContent# \n" +
-                "\t return context;\t\n" +
+                "\t return ctx;\t\n" +
                 "})";
     }
 

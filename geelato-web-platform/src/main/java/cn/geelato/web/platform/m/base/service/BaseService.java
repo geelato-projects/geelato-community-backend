@@ -1,28 +1,32 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.web.platform.m.security.entity.DataItems;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
-import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.orm.Dao;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.web.platform.m.security.entity.DataItems;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author diabl
  */
 @Service
 public class BaseService {
+    public static final String COMPARE_RESULT_ADD = "add";
+    public static final String COMPARE_RESULT_UPDATE = "update";
+    public static final String COMPARE_RESULT_DELETE = "delete";
     private static final String DEFAULT_ORDER_BY = "update_at DESC";
     @Autowired
     @Qualifier("primaryDao")
@@ -312,5 +316,33 @@ public class BaseService {
         }
 
         return list;
+    }
+
+    /**
+     * 旧集合与新集合对比，返回新增、更新、删除
+     *
+     * @param sources
+     * @param targets
+     * @param <T>
+     * @return
+     */
+    public <T extends BaseEntity> Map<String, List<T>> compareBaseEntity(List<T> sources, List<T> targets) {
+        Map<String, List<T>> result = new HashMap<>();
+        if (sources != null && sources.size() > 0 && targets != null && targets.size() > 0) {
+            List<String> sourceIds = sources.stream().map(T::getId).collect(Collectors.toList());
+            List<String> targetIds = targets.stream().map(T::getId).collect(Collectors.toList());
+            // 删除的，新的没有
+            result.put(COMPARE_RESULT_DELETE, sources.stream().filter(apiParam -> !targetIds.contains(apiParam.getId())).collect(Collectors.toList()));
+            // 更新的，旧的有的
+            result.put(COMPARE_RESULT_UPDATE, targets.stream().filter(apiParam -> sourceIds.contains(apiParam.getId())).collect(Collectors.toList()));
+            // 新增的，旧的没有
+            result.put(COMPARE_RESULT_ADD, targets.stream().filter(apiParam -> !sourceIds.contains(apiParam.getId())).collect(Collectors.toList()));
+        } else if (sources != null && sources.size() > 0) {
+            result.put(COMPARE_RESULT_DELETE, sources);
+        } else if (targets != null && targets.size() > 0) {
+            result.put(COMPARE_RESULT_ADD, targets);
+        }
+
+        return result;
     }
 }

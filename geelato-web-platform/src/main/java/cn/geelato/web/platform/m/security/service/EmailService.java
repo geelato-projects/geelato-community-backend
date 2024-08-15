@@ -107,6 +107,7 @@ public class EmailService {
                 if (config == null || Strings.isBlank(config.getConfigKey())) {
                     continue;
                 }
+                config.afterSet();
                 if (config.isEncrypted()) {
                     SysConfigService.decrypt(config);
                 }

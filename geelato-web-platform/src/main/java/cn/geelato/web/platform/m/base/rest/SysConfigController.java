@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.core.env.EnvManager;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.AttachService;
@@ -82,10 +83,14 @@ public class SysConfigController extends BaseController {
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
     @ResponseBody
-    public ApiResult get(@PathVariable(required = true) String id) {
+    public ApiResult get(@PathVariable(required = true) String id, boolean encrypt) {
         ApiResult result = new ApiResult();
         try {
             SysConfig model = sysConfigService.getModel(CLAZZ, id);
+            model.afterSet();
+            if (encrypt && model.isEncrypted()) {
+                SysConfigService.decrypt(model);
+            }
             model.setSm2Key(null);
             result.setData(model);
         } catch (Exception e) {
@@ -101,12 +106,14 @@ public class SysConfigController extends BaseController {
     public ApiResult createOrUpdate(@RequestBody SysConfig form) {
         ApiResult result = new ApiResult();
         try {
+            form.afterSet();
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
                 result.setData(sysConfigService.updateModel(form));
             } else {
                 result.setData(sysConfigService.createModel(form));
             }
+            EnvManager.singleInstance().refreshConfig(form.getConfigKey());
         } catch (Exception e) {
             logger.error(e.getMessage());
             result.error().setMsg(e.getMessage());

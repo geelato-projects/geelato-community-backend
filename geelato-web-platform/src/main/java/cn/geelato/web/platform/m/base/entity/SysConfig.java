@@ -7,6 +7,7 @@ import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
+import cn.geelato.web.platform.enums.SysConfigValueTypeEnum;
 
 /**
  * @Description 应用参数配置，
@@ -141,5 +142,10 @@ public class SysConfig extends BaseSortableEntity implements EntityEnableAble {
 
     public void setSm2Key(String sm2Key) {
         this.sm2Key = sm2Key;
+    }
+
+    @Override
+    public void afterSet() {
+        this.setEncrypted(SysConfigValueTypeEnum.ENCRYPT.getValue().equalsIgnoreCase(this.getValueType()));
     }
 }

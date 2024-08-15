@@ -3,6 +3,7 @@ package cn.geelato.core.script.sql;
 
 import cn.geelato.core.enums.TokenType;
 import cn.geelato.core.script.AbstractParser;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -18,8 +19,8 @@ import java.util.regex.Pattern;
  *
  * @author geemeta
  */
+@Slf4j
 public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
-    private static Logger logger = LoggerFactory.getLogger(SqlScriptParser.class);
     private Map<String, String> sqlMap = null;
     public final static String VAL_FLAG = "$";
     public final static String VAL_NAME = "$";
@@ -33,14 +34,14 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
         map.entrySet().forEach(entry -> {
             try {
                 sqlMap.put(entry.getKey(), toJsFunction(entry.getKey(), parseTokens(entry.getValue())));
-                if (logger.isDebugEnabled()) {
-                    logger.debug("-- @sql " + entry.getKey());
-                    logger.debug("\r\n" + sqlMap.get(entry.getKey()));
+                if (log.isDebugEnabled()) {
+                    log.debug("-- @sql {}", entry.getKey());
+                    log.debug("\r\n{}", sqlMap.get(entry.getKey()));
                 }
             } catch (Exception e) {
-                logger.error("", e);
+                log.error("", e);
             }
-            logger.debug("sqlMap:", sqlMap.size());
+            log.debug("sqlMap:{}", sqlMap.size());
         });
         return sqlMap;
     }
@@ -103,7 +104,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
         jsFunc.append("  var sql = new Array();");
         jsFunc.append("\r\n");
         jsFunc.append(content);
-//        jsFunc.append("\r\n");
         jsFunc.append("  return sql.join(' ');\r\n");
         jsFunc.append("}");
         return jsFunc.toString();
@@ -115,7 +115,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
         } else if (token.getTokenType() == TokenType.Close) {
             return new JsToken(true, "}", TokenType.Close);
         } else {
-            //TokenType.Open
             switch (token.getKeyword()) {
                 case ("for"):
                     return parseFor(token.getValue());
@@ -128,7 +127,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
     }
 
     /**
-     * @param template
      * @return e.g. CREATE TABLE IF NOT EXISTS "+param.tableName+" (id bigint(20) "
      */
     public String replace(String template, boolean isJsCode) {
@@ -155,7 +153,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
                 if (StringUtils.hasText(unReplace)) {
                     sb.append("+\"");
                     sb.append(replace(unReplace, isJsCode));
-//                    sb.append("\"");
                 }
                 return sb.toString().replaceAll("\"\"", "\"");
             }
@@ -169,7 +166,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
     /**
      * e.g. @for i,item in $addList
      *
-     * @return
      */
     public JsToken parseFor(String template) throws Exception {
         String[] w = template.split("[ ]+");
@@ -183,8 +179,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
                     //$addList
                     String val = replace(matcher.group().trim(), true);
                     String index = indexItem[0];
-//                    String item = indexItem[1];
-//                    String itemVal = val + "[" + index + "]";
 
                     StringBuilder sb = new StringBuilder();
                     sb.append("for(var ");
@@ -199,10 +193,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
                     sb.append(index);
                     sb.append("++");
                     sb.append("){");
-//                    sb.append(item);
-//                    sb.append("=");
-//                    sb.append(itemVal);
-//                    sb.append(";");
                     return new JsToken(true, sb.toString(), TokenType.Open);
                 }
             }
@@ -212,8 +202,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
 
     /**
      * @param template e.g. @if $addList[i].defaultValue!='' && $addList[i].defaultValue!=null
-     * @return
-     * @throws Exception
      */
     public JsToken parseIf(String template) throws Exception {
         //TODO 多个关键字时怎么处理，需for

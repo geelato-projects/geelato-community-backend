@@ -1,5 +1,8 @@
 package cn.geelato.core.script.js;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,9 +18,9 @@ import org.graalvm.polyglot.*;
  *
  * @author geemeta
  */
+@Slf4j
 public class JsProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(JsProvider.class);
     private final ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
 
     private final Map<String, JsFunctionInfo> jsFunctionInfoMap = new HashMap<>();
@@ -36,7 +39,7 @@ public class JsProvider {
         if (jsFuncMap == null){ return;}
         for (Map.Entry<String, String> entry : jsFuncMap.entrySet()) {
             if (jsFunctionInfoMap.containsKey(entry.getKey())) {
-                logger.warn("collection exists key：{}", entry.getKey());
+                log.warn("collection exists key：{}", entry.getKey());
             } else {
                 jsFunctionInfoMap.put(entry.getKey(), new JsFunctionInfo(entry.getKey(), entry.getValue(), ""));
             }
@@ -73,13 +76,6 @@ public class JsProvider {
     /**
      * @return 匹配脚本中的第一个function，取functionName(args..)，用于作调用function的执行脚本
      */
-//    private String matcherFnCallScript(String fnScriptText) {
-//        Matcher matcher = callScriptPattern.matcher(fnScriptText);
-//        if (matcher.find())
-//            return matcher.group();
-//        else
-//            throw new RuntimeException("未能匹配callScriptPattern，待匹配的fnScriptText为：" + fnScriptText);
-//    }
     public boolean contain(String functionName) {
         return jsFunctionInfoMap.containsKey(functionName);
     }
@@ -102,7 +98,7 @@ public class JsProvider {
                 result = value.execute(paramMap);
             }
         } catch (Exception e) {
-            logger.error("执行脚本方法" + functionName + "出错。", e);
+            log.error("执行脚本方法{}出错。", functionName, e);
         } finally {
             if (context != null) {
                 context.close();
@@ -120,7 +116,7 @@ public class JsProvider {
                 result = value.execute(paramMap).as(Object.class);
             }
         } catch (Exception e) {
-            logger.error("执行表达式" + expression + "出错。", e);
+            log.error("执行表达式{}出错。", expression, e);
         } finally {
             if (context != null) {
                 context.close();
@@ -132,6 +128,8 @@ public class JsProvider {
     /**
      * 编译的脚本信息
      */
+    @Setter
+    @Getter
     class JsFunctionInfo {
         private String functionName;
         private String description;
@@ -143,28 +141,5 @@ public class JsProvider {
             this.description = description;
         }
 
-        public String getFunctionName() {
-            return functionName;
-        }
-
-        public void setFunctionName(String functionName) {
-            this.functionName = functionName;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public String getContent() {
-            return content;
-        }
-
-        public void setContent(String content) {
-            this.content = content;
-        }
     }
 }

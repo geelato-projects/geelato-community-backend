@@ -29,7 +29,7 @@
 <!--    <logger name="handler.cn.geelato.web.platform.PlatformExceptionHandler" additivity="false">-->
 <!--        <appender-ref ref="custom"/>-->
 <!--    </logger>-->
-    <root level="info">
+    <root level="debug">
         <appender-ref ref="console"/>
         <appender-ref ref="logFile"/>
     </root>

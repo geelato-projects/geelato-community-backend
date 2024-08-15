@@ -37,8 +37,7 @@ public class AttachService extends BaseService {
         Map<String, Object> params = new HashMap<>();
         params.put("id", id);
         Map<String, Object> map = dao.queryForMap("platform_attachment_by_more", params);
-        Attach attach = JSON.parseObject(JSON.toJSONString(map), Attach.class);
-        return attach;
+        return JSON.parseObject(JSON.toJSONString(map), Attach.class);
     }
 
     /**
@@ -49,8 +48,7 @@ public class AttachService extends BaseService {
      */
     public List<Attach> list(Map<String, Object> params) {
         List<Map<String, Object>> mapList = dao.queryForMapList("platform_attachment_by_more", params);
-        List<Attach> attachList = JSON.parseArray(JSON.toJSONString(mapList), Attach.class);
-        return attachList;
+        return JSON.parseArray(JSON.toJSONString(mapList), Attach.class);
     }
 
     /**

@@ -486,7 +486,7 @@ public class WordXWPFWriter {
                             if (meta != null) {
                                 Object oValue = valueMap.get(meta.getVar());
                                 String value = oValue == null ? "" : String.valueOf(oValue);
-                                if (meta.isIsImage()) {
+                                if (meta.isImage()) {
                                     if (new File(value).exists()) {
                                         CTInline inline = runs.get(r).getCTR().addNewDrawing().addNewInline();
                                         try {

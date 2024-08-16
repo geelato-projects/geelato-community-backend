@@ -5,7 +5,9 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
+import lombok.Setter;
 
+@Setter
 @Entity(name = "platform_area")
 @Title(title = "区县")
 public class Area extends BaseSortableEntity {
@@ -19,18 +21,10 @@ public class Area extends BaseSortableEntity {
         return code;
     }
 
-    public void setCode(String code) {
-        this.code = code;
-    }
-
     @Title(title = "名称")
     @Col(name = "name", nullable = false)
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @Title(title = "省份")
@@ -47,9 +41,5 @@ public class Area extends BaseSortableEntity {
     @Col(name = "description", charMaxlength = 1024)
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 }

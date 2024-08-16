@@ -8,8 +8,8 @@ package cn.geelato.core.enums;
 public enum ColumnSyncedEnum {
     TRUE("已同步", true), FALSE("未同步", false);
 
-    private final String label;//选项内容
-    private final Boolean value;//选项值
+    private final String label;// 选项内容
+    private final Boolean value;// 选项值
 
     ColumnSyncedEnum(String label, Boolean value) {
         this.label = label;

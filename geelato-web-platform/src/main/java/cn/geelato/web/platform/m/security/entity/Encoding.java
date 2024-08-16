@@ -1,7 +1,5 @@
 package cn.geelato.web.platform.m.security.entity;
 
-import com.alibaba.fastjson2.JSON;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
@@ -12,6 +10,9 @@ import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.enums.EncodingItemTypeEnum;
 import cn.geelato.web.platform.enums.EncodingSerialTypeEnum;
+import com.alibaba.fastjson2.JSON;
+import lombok.Setter;
+import org.apache.logging.log4j.util.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.List;
  * @description: 编码
  * @date 2023/8/2 10:40
  */
+@Setter
 @Entity(name = "platform_encoding")
 @Title(title = "编码")
 public class Encoding extends BaseEntity implements EntityEnableAble {
@@ -44,18 +46,10 @@ public class Encoding extends BaseEntity implements EntityEnableAble {
         return title;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
     @Title(title = "模板")
     @Col(name = "template")
     public String getTemplate() {
         return template;
-    }
-
-    public void setTemplate(String template) {
-        this.template = template;
     }
 
     @Title(title = "分隔符")
@@ -64,18 +58,10 @@ public class Encoding extends BaseEntity implements EntityEnableAble {
         return separators;
     }
 
-    public void setSeparators(String separators) {
-        this.separators = separators;
-    }
-
     @Title(title = "示例")
     @Col(name = "example")
     public String getExample() {
         return example;
-    }
-
-    public void setExample(String example) {
-        this.example = example;
     }
 
     @Title(title = "描述")
@@ -84,18 +70,10 @@ public class Encoding extends BaseEntity implements EntityEnableAble {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     @Title(title = "应用id")
     @Col(name = "app_id")
     public String getAppId() {
         return appId;
-    }
-
-    public void setAppId(String appId) {
-        this.appId = appId;
     }
 
     @Override
@@ -105,18 +83,9 @@ public class Encoding extends BaseEntity implements EntityEnableAble {
         return enableStatus;
     }
 
-    @Override
-    public void setEnableStatus(int enableStatus) {
-        this.enableStatus = enableStatus;
-    }
-
     @Transient
     public String getFormatExample() {
         return formatExample;
-    }
-
-    public void setFormatExample(String formatExample) {
-        this.formatExample = formatExample;
     }
 
     @Transient
@@ -124,17 +93,9 @@ public class Encoding extends BaseEntity implements EntityEnableAble {
         return dateType;
     }
 
-    public void setDateType(String dateType) {
-        this.dateType = dateType;
-    }
-
     @Transient
     public int getSerialDigit() {
         return serialDigit;
-    }
-
-    public void setSerialDigit(int serialDigit) {
-        this.serialDigit = serialDigit;
     }
 
     @Transient
@@ -142,17 +103,9 @@ public class Encoding extends BaseEntity implements EntityEnableAble {
         return serialType;
     }
 
-    public void setSerialType(String serialType) {
-        this.serialType = serialType;
-    }
-
     @Transient
     public boolean isCoverPos() {
         return coverPos;
-    }
-
-    public void setCoverPos(boolean coverPos) {
-        this.coverPos = coverPos;
     }
 
     @Override

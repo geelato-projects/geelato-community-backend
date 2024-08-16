@@ -280,7 +280,7 @@ public class ExcelReader {
                         businessData.setPrimevalValue(cellValue);
                         businessData.setTransitionValue(cellValue);
                     } catch (Exception ex) {
-                        businessData.setErrorMsg(ex.getMessage());
+                        businessData.addErrorMsg(ex.getMessage());
                     }
                 }
                 businessDataMap.put(data.getName(), businessData);
@@ -310,7 +310,7 @@ public class ExcelReader {
                     BusinessData msgData = (mapSet.containsKey(key) && mapSet.get(key) != null) ? mapSet.get(key) : new BusinessData();
                     msgData.setYIndex(businessData.getYIndex());
                     msgData.setXIndex(businessData.getXIndex());
-                    msgData.setErrorMsgs(businessData.getErrorMsg());
+                    msgData.addAllErrorMsgs(businessData.getErrorMsg());
                     mapSet.put(key, msgData);
                 }
             }

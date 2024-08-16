@@ -5,11 +5,13 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Setter;
 
 /**
  * @author diabl
  * @date 2023/8/3 9:55
  */
+@Setter
 @Entity(name = "platform_encoding_log")
 @Title(title = "编码记录")
 public class EncodingLog extends BaseEntity {
@@ -26,18 +28,10 @@ public class EncodingLog extends BaseEntity {
         return encodingId;
     }
 
-    public void setEncodingId(String encodingId) {
-        this.encodingId = encodingId;
-    }
-
     @Title(title = "实例")
     @Col(name = "example")
     public String getExample() {
         return example;
-    }
-
-    public void setExample(String example) {
-        this.example = example;
     }
 
     @Title(title = "实例")
@@ -46,19 +40,10 @@ public class EncodingLog extends BaseEntity {
         return template;
     }
 
-    public void setTemplate(String template) {
-        this.template = template;
-    }
-
-
     @Title(title = "实例")
     @Col(name = "example_serial")
     public String getExampleSerial() {
         return exampleSerial;
-    }
-
-    public void setExampleSerial(String exampleSerial) {
-        this.exampleSerial = exampleSerial;
     }
 
     @Title(title = "实例")
@@ -67,17 +52,9 @@ public class EncodingLog extends BaseEntity {
         return exampleDate;
     }
 
-    public void setExampleDate(String exampleDate) {
-        this.exampleDate = exampleDate;
-    }
-
     @Title(title = "实例")
     @Col(name = "enable_status")
     public int getEnableStatus() {
         return enableStatus;
-    }
-
-    public void setEnableStatus(int enableStatus) {
-        this.enableStatus = enableStatus;
     }
 }

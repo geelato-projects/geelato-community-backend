@@ -1,6 +1,14 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.core.constants.ColumnDefault;
+import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.env.EnvManager;
+import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.AttachService;
@@ -8,13 +16,6 @@ import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.security.entity.DataItems;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.enums.EnableStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,7 +114,9 @@ public class SysConfigController extends BaseController {
             } else {
                 result.setData(sysConfigService.createModel(form));
             }
-            EnvManager.singleInstance().refreshConfig(form.getConfigKey());
+            if (ColumnDefault.ENABLE_STATUS_VALUE == form.getEnableStatus()) {
+                EnvManager.singleInstance().refreshConfig(form.getConfigKey());
+            }
         } catch (Exception e) {
             logger.error(e.getMessage());
             result.error().setMsg(e.getMessage());

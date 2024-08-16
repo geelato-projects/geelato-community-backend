@@ -6,12 +6,14 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
+import lombok.Setter;
 
 /**
  * @author diabl
  * @description: 导出文件模板
  * @date 2023/8/11 11:26
  */
+@Setter
 @Entity(name = "platform_export_template")
 @Title(title = "导出文件模板")
 public class ExportTemplate extends BaseEntity implements EntityEnableAble {
@@ -35,18 +37,10 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
         return appId;
     }
 
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
     @Title(title = "状态")
     @Col(name = "title")
     public String getTitle() {
         return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     @Title(title = "用途")
@@ -55,18 +49,10 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
         return useType;
     }
 
-    public void setUseType(String useType) {
-        this.useType = useType;
-    }
-
     @Title(title = "状态")
     @Col(name = "file_type")
     public String getFileType() {
         return fileType;
-    }
-
-    public void setFileType(String fileType) {
-        this.fileType = fileType;
     }
 
     @Title(title = "状态")
@@ -75,18 +61,10 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
         return fileCode;
     }
 
-    public void setFileCode(String fileCode) {
-        this.fileCode = fileCode;
-    }
-
     @Title(title = "状态")
     @Col(name = "template")
     public String getTemplate() {
         return template;
-    }
-
-    public void setTemplate(String template) {
-        this.template = template;
     }
 
     @Title(title = "状态")
@@ -95,18 +73,10 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
         return templateRule;
     }
 
-    public void setTemplateRule(String templateRule) {
-        this.templateRule = templateRule;
-    }
-
     @Title(title = "状态")
     @Col(name = "description")
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Override
@@ -116,19 +86,10 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
         return enableStatus;
     }
 
-    @Override
-    public void setEnableStatus(int enableStatus) {
-        this.enableStatus = enableStatus;
-    }
-
     @Title(title = "数据类型")
     @Col(name = "business_type_data")
     public String getBusinessTypeData() {
         return businessTypeData;
-    }
-
-    public void setBusinessTypeData(String businessTypeData) {
-        this.businessTypeData = businessTypeData;
     }
 
     @Title(title = "清洗规则")
@@ -137,17 +98,9 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
         return businessRuleData;
     }
 
-    public void setBusinessRuleData(String businessRuleData) {
-        this.businessRuleData = businessRuleData;
-    }
-
     @Title(title = "元数据")
     @Col(name = "business_meta_data")
     public String getBusinessMetaData() {
         return businessMetaData;
-    }
-
-    public void setBusinessMetaData(String businessMetaData) {
-        this.businessMetaData = businessMetaData;
     }
 }

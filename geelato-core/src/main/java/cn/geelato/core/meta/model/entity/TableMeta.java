@@ -5,12 +5,14 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.utils.StringUtils;
+import lombok.Setter;
 
 import java.util.Map;
 
 /**
  * @author geemeta
  */
+@Setter
 @Title(title = "实体信息")
 @Entity(name = "platform_dev_table")
 public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
@@ -67,18 +69,10 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         return appId;
     }
 
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
     @Col(name = "table_name")
     @Title(title = "表名", description = "与数据库中的表名一致")
     public String getTableName() {
         return tableName;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
     }
 
     @Col(name = "entity_name")
@@ -87,18 +81,10 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         return entityName;
     }
 
-    public void setEntityName(String entityName) {
-        this.entityName = entityName;
-    }
-
     @Col(name = "connect_id")
     @Title(title = "数据库连接id")
     public String getConnectId() {
         return connectId;
-    }
-
-    public void setConnectId(String connectId) {
-        this.connectId = connectId;
     }
 
     @Col(name = "table_type")
@@ -107,18 +93,10 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         return tableType;
     }
 
-    public void setTableType(String tableType) {
-        this.tableType = tableType;
-    }
-
     @Col(name = "table_comment")
     @Title(title = "备注")
     public String getTableComment() {
         return tableComment;
-    }
-
-    public void setTableComment(String tableComment) {
-        this.tableComment = tableComment;
     }
 
     @Col(name = "title")
@@ -127,28 +105,16 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         return title;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
     @Col(name = "linked")
     @Title(title = "已链接")
     public int getLinked() {
         return linked;
     }
 
-    public void setLinked(int linked) {
-        this.linked = linked;
-    }
-
     @Col(name = "description")
     @Title(title = "补充描述")
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Title(title = "启用状态", description = "1表示启用、0表示未启用")
@@ -158,19 +124,10 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         return this.enableStatus;
     }
 
-    @Override
-    public void setEnableStatus(int enableStatus) {
-        this.enableStatus = enableStatus;
-    }
-
     @Col(name = "view_sql")
     @Title(title = "视图语句")
     public String getViewSql() {
         return viewSql;
-    }
-
-    public void setViewSql(String viewSql) {
-        this.viewSql = viewSql;
     }
 
     @Col(name = "synced")
@@ -179,27 +136,15 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         return synced;
     }
 
-    public void setSynced(Boolean synced) {
-        this.synced = synced;
-    }
-
     @Col(name = "source_type")
     @Title(title = "来源类型", description = "system:系统;creation:创建;")
     public String getSourceType() {
         return sourceType;
     }
 
-    public void setSourceType(String sourceType) {
-        this.sourceType = sourceType;
-    }
-
     @Col(name = "pack_bus_data")
     @Title(title = "数据打包策略：0 不打包，1 增量，2 全量")
     public int getPackBusData() {
         return packBusData;
-    }
-
-    public void setPackBusData(int packBusData) {
-        this.packBusData = packBusData;
     }
 }

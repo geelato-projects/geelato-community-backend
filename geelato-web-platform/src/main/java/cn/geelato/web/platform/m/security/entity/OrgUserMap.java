@@ -6,11 +6,13 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.ForeignKey;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Setter;
 
 /**
  * Created by hongxq
+ * @author diabl
  */
-
+@Setter
 @Entity(name = "platform_org_r_user")
 @Title(title = "组织用户关系表")
 public class OrgUserMap extends BaseEntity {
@@ -30,19 +32,11 @@ public class OrgUserMap extends BaseEntity {
         return orgId;
     }
 
-    public void setOrgId(String orgId) {
-        this.orgId = orgId;
-    }
-
     @Title(title = "组织名称")
     @Col(name = "org_name")
     @ForeignKey(fTable = Org.class)
     public String getOrgName() {
         return orgName;
-    }
-
-    public void setOrgName(String orgName) {
-        this.orgName = orgName;
     }
 
     @Title(title = "用户ID")
@@ -52,10 +46,6 @@ public class OrgUserMap extends BaseEntity {
         return userId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
     @Title(title = "用户名称")
     @Col(name = "user_name")
     @ForeignKey(fTable = User.class)
@@ -63,17 +53,9 @@ public class OrgUserMap extends BaseEntity {
         return userName;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     @Title(title = "默认组织")
     @Col(name = "default_org")
     public int getDefaultOrg() {
         return defaultOrg;
-    }
-
-    public void setDefaultOrg(int defaultOrg) {
-        this.defaultOrg = defaultOrg;
     }
 }

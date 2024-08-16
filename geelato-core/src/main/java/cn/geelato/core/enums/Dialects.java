@@ -8,6 +8,6 @@ public enum Dialects {
     SQLSERVER,
     ORACLE,
     POSTGRESQL,
-    ELASTICsEARCH,
+    ELASTICSEARCH,
     MONGODB
 }

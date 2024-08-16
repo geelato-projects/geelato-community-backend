@@ -195,9 +195,9 @@ public class ImportExcelService {
                                 value = getValue(currentUUID, fieldMeta.getColumn(), meta, businessData, valueMap);
                                 // 验证值
                                 Set<String> errorMsg = validateValue(currentUUID, fieldMeta.getColumn(), businessData, value, columnNames);
-                                businessData.setErrorMsgs(errorMsg);
+                                businessData.addAllErrorMsgs(errorMsg);
                             } catch (Exception ex) {
-                                businessData.setErrorMsg(ex.getMessage());
+                                businessData.addErrorMsg(ex.getMessage());
                             }
                         } else if (meta.isEvaluationTypeConst()) {
                             value = meta.getConstValue();

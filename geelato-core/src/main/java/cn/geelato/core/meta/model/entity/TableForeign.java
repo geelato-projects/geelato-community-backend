@@ -4,6 +4,7 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
+import lombok.Setter;
 
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import java.util.Map;
  * @Description 实体外键关系
  * @Date 2020/3/20 14:42
  */
+@Setter
 @Title(title = "实体外键关系")
 @Entity(name = "platform_dev_table_foreign")
 public class TableForeign extends BaseSortableEntity implements EntityEnableAble {
@@ -51,18 +53,10 @@ public class TableForeign extends BaseSortableEntity implements EntityEnableAble
         return appId;
     }
 
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
     @Col(name = "main_table")
     @Title(title = "主表表名")
     public String getMainTable() {
         return mainTable;
-    }
-
-    public void setMainTable(String mainTable) {
-        this.mainTable = mainTable;
     }
 
     @Col(name = "main_table_col")
@@ -71,28 +65,16 @@ public class TableForeign extends BaseSortableEntity implements EntityEnableAble
         return mainTableCol;
     }
 
-    public void setMainTableCol(String mainTableCol) {
-        this.mainTableCol = mainTableCol;
-    }
-
     @Col(name = "foreign_table")
     @Title(title = "外键关联表表名")
     public String getForeignTable() {
         return foreignTable;
     }
 
-    public void setForeignTable(String foreignTable) {
-        this.foreignTable = foreignTable;
-    }
-
     @Col(name = "foreign_table_col")
     @Title(title = "外键关联表字段")
     public String getForeignTableCol() {
         return foreignTableCol;
-    }
-
-    public void setForeignTableCol(String foreignTableCol) {
-        this.foreignTableCol = foreignTableCol;
     }
 
     @Title(title = "启用状态", description = "1表示启用、0表示未启用")
@@ -102,21 +84,10 @@ public class TableForeign extends BaseSortableEntity implements EntityEnableAble
         return this.enableStatus;
     }
 
-    /**
-     */
-    @Override
-    public void setEnableStatus(int enableStatus) {
-        this.enableStatus = enableStatus;
-    }
-
     @Col(name = "description")
     @Title(title = "描述")
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Col(name = "delete_action")
@@ -125,18 +96,10 @@ public class TableForeign extends BaseSortableEntity implements EntityEnableAble
         return deleteAction;
     }
 
-    public void setDeleteAction(String deleteAction) {
-        this.deleteAction = deleteAction;
-    }
-
     @Col(name = "update_action")
     @Title(title = "更新时触发操作")
     public String getUpdateAction() {
         return updateAction;
-    }
-
-    public void setUpdateAction(String updateAction) {
-        this.updateAction = updateAction;
     }
 
     @Col(name = "main_table_schema")
@@ -144,17 +107,9 @@ public class TableForeign extends BaseSortableEntity implements EntityEnableAble
         return mainTableSchema;
     }
 
-    public void setMainTableSchema(String mainTableSchema) {
-        this.mainTableSchema = mainTableSchema;
-    }
-
     @Col(name = "main_table_id")
     public String getMainTableId() {
         return mainTableId;
-    }
-
-    public void setMainTableId(String mainTableId) {
-        this.mainTableId = mainTableId;
     }
 
     @Col(name = "foreign_table_schema")
@@ -162,16 +117,8 @@ public class TableForeign extends BaseSortableEntity implements EntityEnableAble
         return foreignTableSchema;
     }
 
-    public void setForeignTableSchema(String foreignTableSchema) {
-        this.foreignTableSchema = foreignTableSchema;
-    }
-
     @Col(name = "foreign_table_id")
     public String getForeignTableId() {
         return foreignTableId;
-    }
-
-    public void setForeignTableId(String foreignTableId) {
-        this.foreignTableId = foreignTableId;
     }
 }

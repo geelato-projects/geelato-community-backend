@@ -8,8 +8,8 @@ package cn.geelato.core.enums;
 public enum ViewTypeEnum {
     DEFAULT("default", "默认视图"), CUSTOM("custom", "自定义视图");
 
-    private String code;
-    private String name;
+    private final String code;
+    private final String name;
 
     ViewTypeEnum(String code, String name) {
         this.code = code;

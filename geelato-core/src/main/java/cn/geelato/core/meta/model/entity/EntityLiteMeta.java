@@ -1,12 +1,17 @@
 package cn.geelato.core.meta.model.entity;
 
 import cn.geelato.core.meta.EntityType;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- *  轻量的实体元数据信息。
- *  完整的实体信息
- *  @see EntityMeta
+ * 轻量的实体元数据信息。
+ * 完整的实体信息
+ *
+ * @see EntityMeta
  */
+@Setter
+@Getter
 public class EntityLiteMeta {
     // 实体的编码，如：user_info
     private String entityName;
@@ -16,30 +21,9 @@ public class EntityLiteMeta {
     private String entityType;
 
 
-    public EntityLiteMeta(String entityName, String entityTitle,EntityType entityType) {
+    public EntityLiteMeta(String entityName, String entityTitle, EntityType entityType) {
         this.entityName = entityName;
         this.entityTitle = entityTitle;
-        this.entityType=entityType.toString();
-    }
-
-    public String getEntityName() {
-        return entityName;
-    }
-
-    public void setEntityName(String entityName) {
-        this.entityName = entityName;
-    }
-
-    public String getEntityTitle() {
-        return entityTitle;
-    }
-
-    public void setEntityTitle(String entityTitle) {
-        this.entityTitle = entityTitle;
-    }
-
-
-    public String getEntityType() {
-        return entityType;
+        this.entityType = entityType.toString();
     }
 }

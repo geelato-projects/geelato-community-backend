@@ -1,5 +1,7 @@
 package cn.geelato.web.platform.m.excel.entity;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.web.platform.enums.ExcelColumnTypeRuleEnum;
 
@@ -13,6 +15,8 @@ import java.util.Set;
  * @description: 解析规则
  * @date 2023/10/30 10:28
  */
+@Getter
+@Setter
 public class BusinessTypeRuleData {
     // 列名
     private String columnName;
@@ -30,70 +34,6 @@ public class BusinessTypeRuleData {
     private Integer order;
 
     private String remark;
-
-    public String getColumnName() {
-        return columnName;
-    }
-
-    public void setColumnName(String columnName) {
-        this.columnName = columnName;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getRule() {
-        return rule;
-    }
-
-    public void setRule(String rule) {
-        this.rule = rule;
-    }
-
-    public String getGoal() {
-        return goal;
-    }
-
-    public void setGoal(String goal) {
-        this.goal = goal;
-    }
-
-    public boolean isPriority() {
-        return priority;
-    }
-
-    public void setPriority(boolean priority) {
-        this.priority = priority;
-    }
-
-    public boolean isRetain() {
-        return retain;
-    }
-
-    public void setRetain(boolean retain) {
-        this.retain = retain;
-    }
-
-    public Integer getOrder() {
-        return order;
-    }
-
-    public void setOrder(Integer order) {
-        this.order = order;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
-    }
 
     public boolean isRuleTypeDeletes() {
         return ExcelColumnTypeRuleEnum.DELETES.name().equalsIgnoreCase(this.type);

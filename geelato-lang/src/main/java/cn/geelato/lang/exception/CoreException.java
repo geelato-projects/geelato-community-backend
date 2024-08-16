@@ -18,6 +18,4 @@ public abstract class CoreException extends RuntimeException {
         this.errorMsg = msg;
         this.errorCode=code;
     }
-
-
 }

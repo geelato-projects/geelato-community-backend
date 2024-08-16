@@ -7,6 +7,7 @@ import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
+import lombok.Setter;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -14,6 +15,7 @@ import java.util.Set;
 /**
  * @author geelato
  */
+@Setter
 @Entity(name = "platform_dict")
 @Title(title = "数据字典")
 public class Dict extends BaseSortableEntity implements EntityEnableAble {
@@ -31,18 +33,10 @@ public class Dict extends BaseSortableEntity implements EntityEnableAble {
         return dictCode;
     }
 
-    public void setDictCode(String dictCode) {
-        this.dictCode = dictCode;
-    }
-
     @Col(name = "dict_name")
     @Title(title = "字典名称")
     public String getDictName() {
         return dictName;
-    }
-
-    public void setDictName(String dictName) {
-        this.dictName = dictName;
     }
 
     @Title(title = "应用Id")
@@ -51,20 +45,11 @@ public class Dict extends BaseSortableEntity implements EntityEnableAble {
         return appId;
     }
 
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
     @Col(name = "dict_remark")
     @Title(title = "字典备注")
     public String getDictRemark() {
         return dictRemark;
     }
-
-    public void setDictRemark(String dictRemark) {
-        this.dictRemark = dictRemark;
-    }
-
 
     @Col(name = "enable_status")
     @Title(title = "启用状态")
@@ -73,20 +58,8 @@ public class Dict extends BaseSortableEntity implements EntityEnableAble {
         return this.enableStatus;
     }
 
-    /**
-     * @param enableStatus
-     */
-    @Override
-    public void setEnableStatus(int enableStatus) {
-        this.enableStatus = enableStatus;
-    }
-
     @Transient
     public Set<DictItem> getDictItems() {
         return dictItems;
-    }
-
-    public void setDictItems(Set<DictItem> dictItems) {
-        this.dictItems = dictItems;
     }
 }

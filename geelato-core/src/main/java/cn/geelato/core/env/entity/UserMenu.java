@@ -1,13 +1,13 @@
 package cn.geelato.core.env.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * @author diabl
+ */
+@Getter
+@Setter
 public class UserMenu {
     private String menuUrl;
-
-    public String getMenuUrl() {
-        return menuUrl;
-    }
-
-    public void setMenuUrl(String menuUrl) {
-        this.menuUrl = menuUrl;
-    }
 }

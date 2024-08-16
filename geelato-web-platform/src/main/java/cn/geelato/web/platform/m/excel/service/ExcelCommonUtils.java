@@ -1,10 +1,5 @@
 package cn.geelato.web.platform.m.excel.service;
 
-import cn.geelato.web.platform.m.excel.entity.*;
-import com.alibaba.fastjson2.JSON;
-import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
@@ -14,11 +9,15 @@ import cn.geelato.core.meta.model.field.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.script.js.JsProvider;
+import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.web.platform.exception.file.FileException;
 import cn.geelato.web.platform.m.base.entity.Dict;
 import cn.geelato.web.platform.m.base.entity.DictItem;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.excel.entity.*;
+import com.alibaba.fastjson2.JSON;
+import jakarta.annotation.Resource;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,7 +101,7 @@ public class ExcelCommonUtils {
         List<List<List<Integer>>> limitSetMap = new LinkedList<>();
         int uniqueNum = 0; // 唯一约束的数据量
         for (CellMeta cellMeta : cellMetaList) {
-            if (cellMeta.getPlaceholderMeta().isIsMerge() && cellMeta.getPlaceholderMeta().isIsUnique()) {
+            if (cellMeta.getPlaceholderMeta().isMerge() && cellMeta.getPlaceholderMeta().isUnique()) {
                 uniqueNum += 1;
                 // 获取数据相同的行
                 List<List<Integer>> integerSet = getIntegerSet(cellMeta, valueMap, valueList);
@@ -189,7 +188,7 @@ public class ExcelCommonUtils {
         Object value = "";
         // 不是列表，且是变更
         if (meta.isValueComputeModeVar()) {
-            if (meta.isIsList()) {
+            if (meta.isList()) {
                 Object v = listValueMap.get(meta.getVar());
                 value = getCellValueByValueType(meta, v);
             } else {
@@ -201,7 +200,7 @@ public class ExcelCommonUtils {
         } else if (meta.isValueComputeModeConst()) {
             value = getCellValueByValueType(meta, meta.getConstValue());
         } else if (meta.isValueComputeModeExpression()) {
-            Object v = JsProvider.executeExpression(meta.getExpression(), meta.isIsList() ? listValueMap : valueMap);
+            Object v = JsProvider.executeExpression(meta.getExpression(), meta.isList() ? listValueMap : valueMap);
             value = getCellValueByValueType(meta, v);
         }
         return value;
@@ -415,7 +414,7 @@ public class ExcelCommonUtils {
                             data.setValue(multiValue[i < multiValue.length ? i : multiValue.length - 1]);
                             data.setPrimevalValue(data.getValue());
                             data.setBusinessTypeData(businessData.getBusinessTypeData());
-                            data.setErrorMsgs(businessData.getErrorMsg());
+                            data.addAllErrorMsgs(businessData.getErrorMsg());
                             symMap.put(businessDataEntry.getKey(), data);
                         }
                         symMapList.add(symMap);
@@ -502,7 +501,7 @@ public class ExcelCommonUtils {
                 data.setTransitionValues(businessData.getTransitionValue());
                 data.setTransitionValue(data.getValue());
                 data.setBusinessTypeData(businessData.getBusinessTypeData());
-                data.setErrorMsgs(businessData.getErrorMsg());
+                data.addAllErrorMsgs(businessData.getErrorMsg());
                 map.put(key, data);
             }
             mapList.add(map);
@@ -583,13 +582,13 @@ public class ExcelCommonUtils {
                                     if (Strings.isNotBlank(ruleData.getRule())) {
                                         newValue = oldValue.replaceAll(ruleData.getRule(), "");
                                     } else {
-                                        businessData.setErrorMsg("Rule resolution failure。[Deletes] Rule is empty！");
+                                        businessData.addErrorMsg("Rule resolution failure。[Deletes] Rule is empty！");
                                     }
                                 } else if (ruleData.isRuleTypeReplace()) {
                                     if (Strings.isNotBlank(ruleData.getRule()) && Strings.isNotBlank(ruleData.getGoal())) {
                                         newValue = oldValue.replaceAll(ruleData.getRule(), ruleData.getGoal());
                                     } else {
-                                        businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule or Goal is empty！");
+                                        businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule or Goal is empty！");
                                     }
                                 } else if (ruleData.isRuleTypeUpperCase()) {
                                     newValue = oldValue.toUpperCase(Locale.ENGLISH);
@@ -601,7 +600,7 @@ public class ExcelCommonUtils {
                                     if (Strings.isNotBlank(ruleData.getRule())) {
                                         newValue = JsProvider.executeExpression(ruleData.getRule(), valueMap);
                                     } else {
-                                        businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
+                                        businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
                                     }
                                 } else if (ruleData.isRuleTypeCheckBox()) {
                                     if (Strings.isNotBlank(ruleData.getRule())) {
@@ -620,7 +619,7 @@ public class ExcelCommonUtils {
                                             }
                                         }
                                     } else {
-                                        businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
+                                        businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
                                     }
                                 } else if (ruleData.isRuleTypeDictionary()) {
                                     if (Strings.isNotBlank(ruleData.getRule())) {
@@ -629,7 +628,7 @@ public class ExcelCommonUtils {
                                             newValue = redisValues.get(oldValue);
                                         }
                                     } else {
-                                        businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
+                                        businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
                                     }
                                 } else if (ruleData.isRuleTypeQueryGoal()) {
                                     String tableName = ruleData.getQueryRuleTable();
@@ -643,7 +642,7 @@ public class ExcelCommonUtils {
                                             newValue = businessData.getValue();
                                         }
                                     } else {
-                                        businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is Error Or Goal is Empty！");
+                                        businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is Error Or Goal is Empty！");
                                     }
                                 } else if (ruleData.isRuleTypeQueryRule()) {
                                     String tableName = ruleData.getQueryRuleTable();
@@ -657,7 +656,7 @@ public class ExcelCommonUtils {
                                             newValue = businessData.getValue();
                                         }
                                     } else {
-                                        businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is Error Or Goal is Empty！");
+                                        businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is Error Or Goal is Empty！");
                                     }
                                 } else {
                                     newValue = businessData.getValue();
@@ -667,7 +666,7 @@ public class ExcelCommonUtils {
                                 }
                                 businessData.setValue(newValue);
                             } catch (Exception ex) {
-                                businessData.setErrorMsg("Rule resolution failure。" + JSON.toJSONString(ruleData));
+                                businessData.addErrorMsg("Rule resolution failure。" + JSON.toJSONString(ruleData));
                             }
                         }
                     }
@@ -1202,7 +1201,7 @@ public class ExcelCommonUtils {
                                 logger.error(ex.getMessage(), ex);
                             }
                         } else {
-                            businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
+                            businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
                         }
                     }
                 }
@@ -1246,7 +1245,7 @@ public class ExcelCommonUtils {
                     data.setTransitionValues(businessData.getTransitionValue());
                     data.setTransitionValue(data.getValue());
                     data.setBusinessTypeData(businessData.getBusinessTypeData());
-                    data.setErrorMsgs(businessData.getErrorMsg());
+                    data.addAllErrorMsgs(businessData.getErrorMsg());
                     symMap.put(businessDataEntry.getKey(), data);
                 }
                 symMapList.add(symMap);
@@ -1270,14 +1269,14 @@ public class ExcelCommonUtils {
                     newValue = Strings.isNotBlank(oldValue) ? oldValue.replaceAll(ruleData.getRule(), "") : "";
                     newValue = Strings.isNotBlank(String.valueOf(newValue)) ? newValue : null;
                 } else {
-                    businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
+                    businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
                 }
             } else if (ruleData.isRuleTypeReplace()) {
                 if (Strings.isNotBlank(ruleData.getRule()) && Strings.isNotBlank(ruleData.getGoal())) {
                     newValue = Strings.isNotBlank(oldValue) ? oldValue.replaceAll(ruleData.getRule(), ruleData.getGoal()) : "";
                     newValue = Strings.isNotBlank(String.valueOf(newValue)) ? newValue : null;
                 } else {
-                    businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule or Goal is empty！");
+                    businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule or Goal is empty！");
                 }
             } else if (ruleData.isRuleTypeUpperCase()) {
                 newValue = Strings.isNotBlank(oldValue) ? oldValue.toUpperCase(Locale.ENGLISH) : null;
@@ -1289,7 +1288,7 @@ public class ExcelCommonUtils {
                 if (Strings.isNotBlank(ruleData.getRule())) {
                     newValue = JsProvider.executeExpression(ruleData.getRule(), valueMap);
                 } else {
-                    businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
+                    businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
                 }
             } else if (ruleData.isRuleTypeCheckBox()) {
                 if (Strings.isNotBlank(ruleData.getRule())) {
@@ -1308,7 +1307,7 @@ public class ExcelCommonUtils {
                         }
                     }
                 } else {
-                    businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
+                    businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
                 }
             } else if (ruleData.isRuleTypeDictionary()) {
                 if (Strings.isNotBlank(ruleData.getRule())) {
@@ -1317,7 +1316,7 @@ public class ExcelCommonUtils {
                         newValue = redisValues.get(oldValue);
                     }
                 } else {
-                    businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
+                    businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");
                 }
             } else if (ruleData.isRuleTypeQueryGoal()) {
                 String tableName = ruleData.getQueryRuleTable();
@@ -1328,7 +1327,7 @@ public class ExcelCommonUtils {
                         newValue = redisValues.get(oldValue);
                     }
                 } else {
-                    businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is Error Or Goal is Empty！");
+                    businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is Error Or Goal is Empty！");
                 }
             } else if (ruleData.isRuleTypeQueryRule()) {
                 String tableName = ruleData.getQueryRuleTable();
@@ -1339,7 +1338,7 @@ public class ExcelCommonUtils {
                         newValue = redisValues.get(oldValue);
                     }
                 } else {
-                    businessData.setErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is Error Or Goal is Empty！");
+                    businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is Error Or Goal is Empty！");
                 }
             }
             newValue = (ruleData.isRetain() && newValue == null) ? businessData.getValue() : newValue;

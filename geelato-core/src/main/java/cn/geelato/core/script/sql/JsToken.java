@@ -1,16 +1,17 @@
 package cn.geelato.core.script.sql;
 
 import cn.geelato.core.enums.TokenType;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author geemeta
- *
  */
+@Getter
+@Setter
 public class JsToken {
     private boolean jsCode;
-
     private String value;
-
     private TokenType type;
 
     public JsToken() {
@@ -20,29 +21,5 @@ public class JsToken {
         setJsCode(jsCode);
         setValue(value);
         setType(type);
-    }
-
-    public boolean isJsCode() {
-        return jsCode;
-    }
-
-    public void setJsCode(boolean jsCode) {
-        this.jsCode = jsCode;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public TokenType getType() {
-        return type;
-    }
-
-    public void setType(TokenType type) {
-        this.type = type;
     }
 }

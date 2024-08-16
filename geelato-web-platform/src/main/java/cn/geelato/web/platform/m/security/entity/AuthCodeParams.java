@@ -1,6 +1,8 @@
 package cn.geelato.web.platform.m.security.entity;
 
 import cn.geelato.web.platform.m.security.service.AccountService;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.Digests;
@@ -13,6 +15,8 @@ import org.springframework.util.Assert;
  * @description: 验证码
  * @date 2023/7/17 9:28
  */
+@Getter
+@Setter
 public class AuthCodeParams {
     private String action; // forgetPassword;updateMobile,updatePassword,updateEmail
     private String validType;// 验证方式，validType
@@ -20,54 +24,6 @@ public class AuthCodeParams {
     private String validBox;// 手机、邮箱
     private String authCode; // 验证码
     private String userId;// 用户id，
-
-    public String getAction() {
-        return action;
-    }
-
-    public void setAction(String action) {
-        this.action = action;
-    }
-
-    public String getValidType() {
-        return validType;
-    }
-
-    public void setValidType(String validType) {
-        this.validType = validType;
-    }
-
-    public String getPrefix() {
-        return prefix;
-    }
-
-    public void setPrefix(String prefix) {
-        this.prefix = prefix;
-    }
-
-    public String getValidBox() {
-        return validBox;
-    }
-
-    public void setValidBox(String validBox) {
-        this.validBox = validBox;
-    }
-
-    public String getAuthCode() {
-        return authCode;
-    }
-
-    public void setAuthCode(String authCode) {
-        this.authCode = authCode;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
 
     /**
      * 构建，缓存key值

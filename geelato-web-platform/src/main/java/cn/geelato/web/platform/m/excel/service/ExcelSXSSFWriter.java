@@ -44,7 +44,7 @@ public class ExcelSXSSFWriter {
                     BusinessData msgData = (mapSet.containsKey(key) && mapSet.get(key) != null) ? mapSet.get(key) : new BusinessData();
                     msgData.setYIndex(businessData.getYIndex());
                     msgData.setXIndex(businessData.getXIndex());
-                    msgData.setErrorMsgs(businessData.getErrorMsg());
+                    msgData.addAllErrorMsgs(businessData.getErrorMsg());
                     mapSet.put(key, msgData);
                 }
             }

@@ -1,6 +1,7 @@
 package cn.geelato.core.script.js;
 
 import cn.geelato.core.script.AbstractScriptLexer;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -11,10 +12,9 @@ import java.util.regex.Pattern;
  * @author geemeta
  *
  */
+@Slf4j
 public class JsScriptLexer extends AbstractScriptLexer {
 
-    private Logger logger = LoggerFactory.getLogger(JsScriptLexer.class);
-    // 格式例如：function funName(
     private static Pattern splitPattern = Pattern.compile("[ ]*function[ ]+[\\w]*[ ]*\\(");
 
     @Override

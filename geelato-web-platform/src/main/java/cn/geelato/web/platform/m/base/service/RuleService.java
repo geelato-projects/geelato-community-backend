@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.core.gql.parser.*;
+import lombok.Setter;
 import org.apache.commons.collections.map.HashedMap;
 import cn.geelato.core.Ctx;
 import cn.geelato.core.Fn;
@@ -41,6 +42,12 @@ import java.util.*;
 @Component
 public class RuleService {
 
+    /**
+     * -- SETTER --
+     *
+     * @param dao 设置dao，如primaryDao
+     */
+    @Setter
     @Autowired
     @Qualifier("dynamicDao")
     private Dao dao;
@@ -62,13 +69,6 @@ public class RuleService {
      * @see #setDao
      */
     public RuleService() {
-    }
-
-    /**
-     * @param dao 设置dao，如primaryDao
-     */
-    public void setDao(Dao dao) {
-        this.dao = dao;
     }
 
     public EntityMeta resolveEntity(String gql,String type) {

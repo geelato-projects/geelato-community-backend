@@ -2,6 +2,7 @@ package cn.geelato.core.script.sql;
 
 import cn.geelato.core.script.AbstractScriptManager;
 import cn.geelato.core.script.js.JsProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -22,11 +23,11 @@ import java.util.Map;
  *
  * @author geemeta
  */
+@Slf4j
 public class SqlScriptManager extends AbstractScriptManager {
-    private Logger logger = LoggerFactory.getLogger(SqlScriptManager.class);
 
-    private SqlScriptParser sqlScriptParser = new SqlScriptParser();
-    private JsProvider jsProvider = new JsProvider();
+    private final SqlScriptParser sqlScriptParser = new SqlScriptParser();
+    private final JsProvider jsProvider = new JsProvider();
 
 
     /**
@@ -55,7 +56,7 @@ public class SqlScriptManager extends AbstractScriptManager {
         try {
             jsProvider.compile(jsFuncMap);
         } catch (ScriptException e) {
-            logger.error("", e);
+            log.error("", e);
         }
     }
 
@@ -63,19 +64,17 @@ public class SqlScriptManager extends AbstractScriptManager {
     /**
      * @param id       sqlId or functionName
      * @param paramMap key value(key value)，值Object为key value的对象或字符串、数字等基本类型
-     * @return
-     * @throws ScriptException
      */
     public String generate(String id, Map<String, Object> paramMap) {
         if (jsProvider.contain(id)) {
             try {
                 String sql = jsProvider.execute(id, paramMap).asString();
-                if (logger.isInfoEnabled()) {
-                    logger.info("sql {} : {}", id, sql);
+                if (log.isInfoEnabled()) {
+                    log.info("sql {} : {}", id, sql);
                 }
                 return sql;
             } catch (ScriptException | NoSuchMethodException e) {
-                logger.error("sql脚本构建失败。", e);
+                log.error("sql脚本构建失败。", e);
                 return null;
             }
         } else {

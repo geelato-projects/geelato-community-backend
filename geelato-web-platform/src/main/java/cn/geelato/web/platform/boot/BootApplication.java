@@ -148,7 +148,7 @@ public class BootApplication implements CommandLineRunner {
      *
      */
     protected void initFromExploreFile(String... args) throws IOException {
-        //String path =applicationContext.getEnvironment().getProperty("geelato.res.path").trim();
+
         String path = this.getClass().getClassLoader().getResource("//").getPath();
         //由测试类启动时，修改资源目录为源码下的资源目录
         path = path.replace("test-classes", "classes");
@@ -170,7 +170,6 @@ public class BootApplication implements CommandLineRunner {
                     if (is != null) {
                         SqlFiles.loadAndExecute(is, dao.getJdbcTemplate(), isWinOS);
                     }
-
                 }
             }
         }

@@ -2,6 +2,8 @@ package cn.geelato.core.script;
 
 
 import cn.geelato.core.orm.Dao;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -16,26 +18,15 @@ import java.util.List;
 /**
  * @author geemeta
  */
+@Slf4j
 public abstract class AbstractScriptManager {
 
+
+    @Setter
     protected Dao dao;
-    private static final Logger logger = LoggerFactory.getLogger(AbstractScriptManager.class);
-    protected static final String RN_WIN = "\r\n";   // in WinOS
-    protected static final String RN_LINUX = "\n";    // in Linux
     protected ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-    /**
-     * @param dao {@link Dao}
-     */
-    public void setDao(Dao dao) {
-        this.dao = dao;
-    }
 
-    /**
-     * 使用之前需先{@link #setDao(Dao)}
-     *
-     * @param sqlId
-     */
     public abstract void loadDb(String sqlId);
 
     /**
@@ -60,11 +51,13 @@ public abstract class AbstractScriptManager {
     protected void parseDirectory(File file) throws IOException {
         Assert.isTrue(file.exists(), "不存在的目录：" + file.getPath());
         File[] files = file.listFiles();
-        for (File f : files) {
-            if (f.isDirectory()) {
-                parseDirectory(f);
-            } else {
-                parseFile(f);
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    parseDirectory(f);
+                } else {
+                    parseFile(f);
+                }
             }
         }
     }
@@ -84,7 +77,7 @@ public abstract class AbstractScriptManager {
                 parseStream(is);
             }
         } catch (IOException e) {
-            logger.error("加载、处理数据（" + locationPattern + "）失败。", e);
+            log.error("加载、处理数据（{}）失败。", locationPattern, e);
         }
     }
 
@@ -94,7 +87,7 @@ public abstract class AbstractScriptManager {
         String line = null;
         while ((line = reader.readLine()) != null) {
             lineList.add(line);
-            logger.debug("line:{}", line);
+            log.debug("line:{}", line);
         }
         return lineList;
     }

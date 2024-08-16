@@ -5,6 +5,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
 import cn.geelato.lang.api.ApiResult;
@@ -33,8 +34,6 @@ import cn.geelato.web.platform.m.syspackage.entity.AppMeta;
 import cn.geelato.web.platform.m.syspackage.entity.AppPackage;
 import cn.geelato.web.platform.m.syspackage.entity.AppVersion;
 import cn.geelato.web.platform.m.syspackage.service.AppVersionService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.TransactionStatus;
@@ -49,16 +48,17 @@ import java.util.*;
 
 @Controller
 @RequestMapping(value = "/package")
+@Slf4j
 public class PackageController extends BaseController {
     private DataSourceTransactionManager dataSourceTransactionManager;
     private TransactionStatus transactionStatus;
-    private static final Logger logger = LoggerFactory.getLogger(PackageController.class);
     private final String defaultPackageName = "geelatoApp";
 
     private final ArrayList<String> incrementMetas = new ArrayList<>();
 
     private final String[] incrementPlatformMetas = {"platform_dict", "platform_dict_item", "platform_sys_config",
             "platform_export_template", "platform_encoding", "platform_resources"};
+
     private final ArrayList<String> incrementBizMetas = new ArrayList<>();
 
 
@@ -346,7 +346,7 @@ public class PackageController extends BaseController {
             } else {
                 apiResult.setMsg("无法读取到应用包数据，请检查应用");
                 apiResult.setCode(ApiResultCode.ERROR);
-                logger.info("deploy error：无法读取到应用包数据，请检查应用包");
+                log.info("deploy error：无法读取到应用包数据，请检查应用包");
                 return apiResult;
             }
         }
@@ -365,18 +365,18 @@ public class PackageController extends BaseController {
     }
 
     private void backupCurrentVersion(String appId) {
-        logger.info("----------------------backup version start--------------------");
+        log.info("----------------------backup version start--------------------");
         Map<String, String> appMetaMap = appMetaMap(appId, "remove");
         for (String key : appMetaMap.keySet()) {
             String value = appMetaMap.get(key);
-//            logger.info(String.format("remove sql：%s ",value));
+//            log.info(String.format("remove sql：%s ",value));
 //            dao.getJdbcTemplate().execute(value);
         }
-        logger.info("----------------------backup version end--------------------");
+        log.info("----------------------backup version end--------------------");
     }
 
     private void deleteCurrentVersion(String appId) {
-        logger.info("----------------------delete version start--------------------");
+        log.info("----------------------delete version start--------------------");
         Map<String, String> appDataMap = new HashMap<>();
         Map<String, String> appMetaDataMap = appMetaMap(appId, "remove");
         Map<String, String> appBizDataMap = appBizDataMap(appId, "remove");
@@ -392,10 +392,10 @@ public class PackageController extends BaseController {
                 continue;
             }
 
-            logger.info(String.format("remove sql：%s ", value));
+            log.info(String.format("remove sql：%s ", value));
             dao.getJdbcTemplate().execute(value);
         }
-        logger.info("----------------------delete version end--------------------");
+        log.info("----------------------delete version end--------------------");
     }
 
 
@@ -558,11 +558,11 @@ public class PackageController extends BaseController {
     }
 
     private void deployAppPackageData(AppPackage appPackage) throws DaoException {
-        logger.info("----------------------deploy start--------------------");
+        log.info("----------------------deploy start--------------------");
         dataSourceTransactionManager = new DataSourceTransactionManager(dao.getJdbcTemplate().getDataSource());
         transactionStatus = TransactionHelper.beginTransaction(dataSourceTransactionManager);
         for (AppMeta appMeta : appPackage.getAppMetaList()) {
-            logger.info(String.format("开始处理元数据：%s", appMeta.getMetaName()));
+            log.info(String.format("开始处理元数据：%s", appMeta.getMetaName()));
             Map<String, Object> metaData = new HashMap<>();
             ArrayList<Map<String, Object>> metaDataArray = new ArrayList<>();
             String appMetaName = appMeta.getMetaName();
@@ -602,9 +602,9 @@ public class PackageController extends BaseController {
                 BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
                 String pkValue = dao.save(boundSql);
             }
-            logger.info(String.format("结束处理元数据：%s", appMeta.getMetaName()));
+            log.info(String.format("结束处理元数据：%s", appMeta.getMetaName()));
         }
         TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
-        logger.info("----------------------deploy end--------------------");
+        log.info("----------------------deploy end--------------------");
     }
 }

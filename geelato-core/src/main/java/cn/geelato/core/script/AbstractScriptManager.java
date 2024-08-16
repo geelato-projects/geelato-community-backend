@@ -49,7 +49,6 @@ public abstract class AbstractScriptManager {
     }
 
     protected void parseDirectory(File file) throws IOException {
-        Assert.isTrue(file.exists(), "不存在的目录：" + file.getPath());
         File[] files = file.listFiles();
         if (files != null) {
             for (File f : files) {

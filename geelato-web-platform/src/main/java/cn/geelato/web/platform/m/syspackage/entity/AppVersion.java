@@ -1,13 +1,18 @@
 package cn.geelato.web.platform.m.syspackage.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Setter;
 
 import java.util.Date;
 
+/**
+ * @author diabl
+ */
+@Setter
 @Entity(name = "platform_app_version", table = "platform_app_version")
 @Title(title = "应用版本")
 public class AppVersion extends BaseEntity {
@@ -26,16 +31,10 @@ public class AppVersion extends BaseEntity {
         return packagePath;
     }
 
-    public void setPackagePath(String packagePath) {
-        this.packagePath = packagePath;
-    }
-
+    @Col(name = "version")
+    @Title(title = "version")
     public String getVersion() {
         return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
     }
 
     @Col(name = "package_source")
@@ -44,18 +43,10 @@ public class AppVersion extends BaseEntity {
         return packageSource;
     }
 
-    public void setPackageSource(String packageSource) {
-        this.packageSource = packageSource;
-    }
-
     @Col(name = "app_id")
     @Title(title = "app_id")
     public String getAppId() {
         return appId;
-    }
-
-    public void setAppId(String appId) {
-        this.appId = appId;
     }
 
     @Col(name = "packet_time")
@@ -64,23 +55,15 @@ public class AppVersion extends BaseEntity {
         return packetTime;
     }
 
-    public void setPacketTime(Date packetTime) {
-        this.packetTime = packetTime;
-    }
-
+    @Col(name = "status")
+    @Title(title = "status")
     public String getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
+    @Col(name = "description")
+    @Title(title = "description")
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 }

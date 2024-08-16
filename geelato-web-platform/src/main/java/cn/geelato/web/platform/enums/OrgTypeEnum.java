@@ -4,7 +4,6 @@ import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
- * @date 2024/4/15 15:40
  */
 public enum OrgTypeEnum {
     ROOT("根组织", "root"),

@@ -8,7 +8,6 @@ import lombok.Setter;
 
 /**
  * @author itechgee@126.com
- * @date 2017/5/27.
  */
 @Setter
 @Entity(name = "platform_app_page", table = "platform_app_page")

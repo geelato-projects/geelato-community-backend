@@ -2,6 +2,7 @@ package cn.geelato.web.platform.m.excel.entity;
 
 import cn.geelato.core.Ctx;
 import cn.geelato.core.env.entity.User;
+import cn.geelato.utils.DateUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
@@ -14,7 +15,6 @@ import java.util.regex.Pattern;
 /**
  * @author diabl
  * @description: 水印
- * @date 2024/1/11 13:46
  */
 @Getter
 @Setter
@@ -26,9 +26,9 @@ public class WordWaterMarkMeta {
     public static final String FONT_COLOR = "#d8d8d8";
     public static final double FONT_SIZE = 20;
     private static final Pattern templatePatten = Pattern.compile("\\$\\{[\\\u4e00-\\\u9fa5,\\w,\\.]+\\}");
-    private static final SimpleDateFormat SDF_DATE = new SimpleDateFormat("yyyy-MM-dd");
-    private static final SimpleDateFormat SDF_TIME = new SimpleDateFormat("HH:mm:ss");
-    private static final SimpleDateFormat SDF_DATETIME = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat SDF_DATE = new SimpleDateFormat(DateUtils.DATE);
+    private static final SimpleDateFormat SDF_TIME = new SimpleDateFormat(DateUtils.TIME);
+    private static final SimpleDateFormat SDF_DATETIME = new SimpleDateFormat(DateUtils.DATETIME);
 
     private String defaultText;
     // 水印列距

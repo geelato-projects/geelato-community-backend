@@ -11,7 +11,6 @@ import lombok.Setter;
 /**
  * @author diabl
  * @description: 导出文件模板
- * @date 2023/8/11 11:26
  */
 @Setter
 @Entity(name = "platform_export_template")

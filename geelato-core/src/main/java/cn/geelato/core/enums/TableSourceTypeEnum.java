@@ -4,7 +4,6 @@ import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
- * @date 2024/1/30 16:38
  */
 public enum TableSourceTypeEnum {
     CREATION("模型创建", "creation"),

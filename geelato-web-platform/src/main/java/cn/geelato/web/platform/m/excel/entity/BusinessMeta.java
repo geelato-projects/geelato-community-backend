@@ -11,7 +11,6 @@ import java.util.List;
 /**
  * @author diabl
  * @description: 业务元数据
- * @date 2023/10/12 14:29
  */
 @Getter
 @Setter

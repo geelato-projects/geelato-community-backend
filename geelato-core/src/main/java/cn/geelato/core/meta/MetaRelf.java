@@ -1,20 +1,21 @@
 package cn.geelato.core.meta;
 
 
-import cn.geelato.core.meta.annotation.*;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.collections.map.HashedMap;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.enums.MysqlDataTypeEnum;
 import cn.geelato.core.enums.MysqlToJavaEnum;
 import cn.geelato.core.gql.TypeConverter;
+import cn.geelato.core.meta.annotation.*;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.view.ViewMeta;
+import cn.geelato.utils.DateUtils;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.collections.map.HashedMap;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -35,7 +36,7 @@ public class MetaRelf {
 
     private static ApplicationContext applicationContext;
     private static final Logger logger = LoggerFactory.getLogger(MetaRelf.class);
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat(DateUtils.DATETIME);
     // 一些类型默认的长度
     public static Map<String, Long> dataTypeDefaultMaxLengthMap = new HashedMap();
 

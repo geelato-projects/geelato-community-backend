@@ -3,7 +3,6 @@ package cn.geelato.core.enums;
 /**
  * @author diabl
  * @description: table、table_column 是否连接
- * @date 2023/6/25 14:05
  */
 public enum LinkedEnum {
     IS("已连接", 1), NO("未连接", 0);

@@ -1,18 +1,19 @@
 package cn.geelato.web.platform.m.model.service;
 
-import cn.geelato.core.enums.*;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MetaDaoSql;
+import cn.geelato.core.enums.*;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.ColumnMeta;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.util.ClassUtils;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -24,14 +25,13 @@ import java.util.*;
 /**
  * @author diabl
  * @description: 表单视图服务类
- * @date 2023/6/15 9:48
  */
 @Component
 public class DevViewService extends BaseSortableService {
     private static final String DELETE_COMMENT_PREFIX = "已删除；";
     private static final String UPDATE_COMMENT_PREFIX = "已变更；";
     private static final Logger logger = LoggerFactory.getLogger(DevViewService.class);
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
 
     public List<TableView> getTableView(String connectId, String entityName) {
         Map<String, Object> params = new HashMap<>();

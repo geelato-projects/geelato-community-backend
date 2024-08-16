@@ -26,7 +26,6 @@ import java.util.Properties;
 /**
  * @author diabl
  * @description: 发送邮件服务类
- * @date 2023/7/21 10:51
  */
 @Component
 public class EmailService {

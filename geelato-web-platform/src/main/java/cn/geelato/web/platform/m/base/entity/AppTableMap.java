@@ -11,7 +11,6 @@ import lombok.Setter;
 
 /**
  * @author diabl
- * @date 2024/4/17 16:24
  */
 @Setter
 @Entity(name = "platform_app_r_table")

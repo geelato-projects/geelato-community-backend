@@ -7,7 +7,6 @@ import lombok.Setter;
 
 /**
  * @author hongxq
- * @date 2015/6/17
  */
 @Setter
 @Entity(name = "platform_role_r_permission")

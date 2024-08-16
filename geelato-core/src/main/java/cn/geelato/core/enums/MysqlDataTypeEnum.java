@@ -9,7 +9,6 @@ import java.util.Locale;
 /**
  * @author diabl
  * @description: 数据库，数据类型
- * @date 2023/6/21 18:46
  */
 public enum MysqlDataTypeEnum {
     // 字符串类型

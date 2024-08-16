@@ -10,6 +10,7 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.exception.file.FileException;
 import cn.geelato.web.platform.m.base.entity.Dict;
 import cn.geelato.web.platform.m.base.entity.DictItem;
@@ -35,12 +36,11 @@ import java.util.stream.Collectors;
 
 /**
  * @author diabl
- * @date 2023/10/27 9:53
  */
 @Component
 public class ExcelCommonUtils {
-    public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-    public static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(DateUtils.DATE);
+    public static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat(DateUtils.DATETIME);
     public static final Pattern CELL_META_PATTERN = Pattern.compile("\\$\\{[\\\u4e00-\\\u9fa5,\\w,\\.\\(\\)\\（\\）]+\\}");
     public static final Pattern ROW_META_PATTERN = Pattern.compile("\\$\\{rowMeta\\.[\\w,\\.,\\=]+\\}");
     private static final int REDIS_TIME_OUT = 60;

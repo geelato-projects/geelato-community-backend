@@ -13,7 +13,6 @@ import java.util.Map;
 /**
  * @author diabl
  * @description: 系统枚举查询
- * @date 2023/6/25 10:21
  */
 public class ArcoUtils {
     private static Map<String, Class<? extends Enum>> enumMap = new HashMap<>();

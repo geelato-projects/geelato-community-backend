@@ -12,7 +12,6 @@ import java.util.Set;
 /**
  * @author diabl
  * @description: 导入业务数据，每列数据的类型
- * @date 2023/10/12 14:18
  */
 @Getter
 @Setter

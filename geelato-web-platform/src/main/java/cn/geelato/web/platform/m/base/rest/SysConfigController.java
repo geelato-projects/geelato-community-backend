@@ -27,7 +27,6 @@ import java.util.*;
 
 /**
  * @author diabl
- * @date 2023/9/15 10:49
  */
 @Controller
 @RequestMapping(value = "/api/sys/config")

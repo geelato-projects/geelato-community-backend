@@ -27,7 +27,6 @@ import java.util.*;
 
 /**
  * @author diabl
- * @date 2023/7/4 10:46
  */
 @Controller
 @RequestMapping(value = "/api/upload")

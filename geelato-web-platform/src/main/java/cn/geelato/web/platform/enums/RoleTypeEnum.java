@@ -4,7 +4,6 @@ import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
- * @date 2023/9/27 10:58
  */
 public enum RoleTypeEnum {
     PLATFORM("平台级角色", "platform"), APP("应用级角色", "app");

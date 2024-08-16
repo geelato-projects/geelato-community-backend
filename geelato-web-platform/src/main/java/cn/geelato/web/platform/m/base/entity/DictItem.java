@@ -13,7 +13,6 @@ import java.util.List;
 
 /**
  * @author liuwq
- * @Date 2020/4/10 18:12
  */
 @Setter
 @Entity(name = "platform_dict_item")

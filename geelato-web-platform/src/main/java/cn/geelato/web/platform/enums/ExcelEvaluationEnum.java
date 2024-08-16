@@ -3,7 +3,6 @@ package cn.geelato.web.platform.enums;
 /**
  * @author diabl
  * @description: 取值类型
- * @date 2023/10/12 14:54
  */
 public enum ExcelEvaluationEnum {
     CONST,// D列，常量取值；不需要变量。

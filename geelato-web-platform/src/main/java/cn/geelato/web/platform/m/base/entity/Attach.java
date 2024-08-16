@@ -15,7 +15,6 @@ import java.nio.file.Files;
 
 /**
  * @author diabl
- * @date 2023/7/5 10:57
  */
 @Setter
 @Entity(name = "platform_attach")

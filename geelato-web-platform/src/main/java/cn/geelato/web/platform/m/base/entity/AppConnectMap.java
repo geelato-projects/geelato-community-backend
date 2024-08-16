@@ -11,7 +11,6 @@ import lombok.Setter;
 /**
  * @author diabl
  * @description: 应用数据链接关系表
- * @date 2024/4/16 9:45
  */
 @Setter
 @Entity(name = "platform_app_r_connect")

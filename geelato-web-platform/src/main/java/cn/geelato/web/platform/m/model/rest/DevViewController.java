@@ -26,7 +26,6 @@ import java.util.*;
 /**
  * @author diabl
  * @description: 视图操作类
- * @date 2023/6/15 9:37
  */
 @Controller
 @RequestMapping(value = "/api/model/view")

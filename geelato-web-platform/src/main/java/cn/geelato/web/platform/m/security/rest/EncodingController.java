@@ -22,7 +22,6 @@ import java.util.*;
 
 /**
  * @author diabl
- * @date 2023/8/2 11:01
  */
 @Controller
 @RequestMapping(value = "/api/encoding")

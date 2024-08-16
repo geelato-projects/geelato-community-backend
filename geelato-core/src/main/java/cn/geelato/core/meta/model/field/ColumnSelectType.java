@@ -6,7 +6,6 @@ import lombok.Setter;
 /**
  * @author diabl
  * @description: 字段可供选择的数据类型
- * @date 2023/6/19 11:04
  */
 @Getter
 @Setter

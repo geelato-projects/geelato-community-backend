@@ -13,7 +13,6 @@ import java.util.Map;
 /**
  * @author diabl
  * @description: SELECT * FROM information_schema.tables
- * @date 2023/6/16 11:44
  */
 @Getter
 @Setter

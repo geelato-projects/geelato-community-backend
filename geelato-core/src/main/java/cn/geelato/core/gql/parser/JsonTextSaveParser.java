@@ -1,13 +1,13 @@
 package cn.geelato.core.gql.parser;
 
+import cn.geelato.core.Ctx;
+import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.utils.DateUtils;
+import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.entity.EntityMeta;
-import cn.geelato.core.meta.model.field.FieldMeta;
-import cn.geelato.core.Ctx;
-import cn.geelato.utils.UIDGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -26,10 +26,11 @@ public class JsonTextSaveParser extends JsonTextParser {
     private final static String SUB_ENTITY_FLAG = "#";
     private final static String KW_BIZ = "@biz";
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
 
 
     /**
+     *
      */
     public SaveCommand parse(String jsonText, Ctx ctx) {
         JSONObject jo = JSON.parseObject(jsonText);
@@ -51,6 +52,7 @@ public class JsonTextSaveParser extends JsonTextParser {
         String entityName = jo.keySet().iterator().next();
         return parseBatch(ctx, entityName, jo.getJSONArray(entityName), validator);
     }
+
     public List<SaveCommand> parseMulti(String jsonText, Ctx ctx) {
         JSONObject jo = JSON.parseObject(jsonText);
         CommandValidator validator = new CommandValidator();
@@ -59,8 +61,9 @@ public class JsonTextSaveParser extends JsonTextParser {
         }
         return parseMulti(ctx, jo, validator);
     }
-    private List<SaveCommand> parseMulti(Ctx ctx, JSONObject jo, CommandValidator validator){
-        List<SaveCommand> saveCommandList=new ArrayList<>();
+
+    private List<SaveCommand> parseMulti(Ctx ctx, JSONObject jo, CommandValidator validator) {
+        List<SaveCommand> saveCommandList = new ArrayList<>();
         for (String entityName : jo.keySet()) {
             String value = jo.getString(entityName);
             JSONObject o = JSONObject.parseObject(value);
@@ -69,10 +72,11 @@ public class JsonTextSaveParser extends JsonTextParser {
         }
         return saveCommandList;
     }
-    private List<SaveCommand> parseBatch(Ctx ctx, String commandName, JSONArray jsonArray, CommandValidator validator){
-        List<SaveCommand> saveCommandList=new ArrayList<>();
-        for (Object o:jsonArray) {
-            SaveCommand saveCommand=parse(ctx,commandName, (JSONObject) o,validator);
+
+    private List<SaveCommand> parseBatch(Ctx ctx, String commandName, JSONArray jsonArray, CommandValidator validator) {
+        List<SaveCommand> saveCommandList = new ArrayList<>();
+        for (Object o : jsonArray) {
+            SaveCommand saveCommand = parse(ctx, commandName, (JSONObject) o, validator);
             saveCommandList.add(saveCommand);
         }
         return saveCommandList;
@@ -80,9 +84,8 @@ public class JsonTextSaveParser extends JsonTextParser {
 
     /**
      * 递归解析保存操作命令，里面变更在执行期再解析，不在此解析
-     *
      */
-    private SaveCommand     parse(Ctx ctx, String commandName, JSONObject jo, CommandValidator validator) {
+    private SaveCommand parse(Ctx ctx, String commandName, JSONObject jo, CommandValidator validator) {
         Assert.isTrue(validator.validateEntity(commandName), validator.getMessage());
         SaveCommand command = new SaveCommand();
         command.setEntityName(commandName);
@@ -112,9 +115,9 @@ public class JsonTextSaveParser extends JsonTextParser {
                 // 对于boolean类型的值，转为数值，以值存到数据库
                 FieldMeta fieldMeta = entityMeta.getFieldMeta(key);
                 if (fieldMeta != null && (boolean.class.equals(fieldMeta.getFieldType())
-                        ||Boolean.class.equals(fieldMeta.getFieldType())
-                        ||"delStatus".equals(fieldMeta.getFieldName())
-                        ||"enableStatus".equals(fieldMeta.getFieldName())
+                        || Boolean.class.equals(fieldMeta.getFieldType())
+                        || "delStatus".equals(fieldMeta.getFieldName())
+                        || "enableStatus".equals(fieldMeta.getFieldName())
                 )) {
                     String v = jo.getString(key).toLowerCase();
                     params.put(key, "true".equals(v) ? 1 : ("false".equals(v) ? 0 : v));
@@ -131,7 +134,7 @@ public class JsonTextSaveParser extends JsonTextParser {
 
         String newDataString = simpleDateFormat.format(new Date());
         if (validator.hasPK(fields) && StringUtils.hasText(jo.getString(PK)) && !StringUtils.hasText(jo.getString("forceId"))) {
-            //update
+            // update
             FilterGroup fg = new FilterGroup();
             fg.addFilter(PK, jo.getString(PK));
             command.setWhere(fg);
@@ -152,13 +155,13 @@ public class JsonTextSaveParser extends JsonTextParser {
             command.setValueMap(params);
             command.setPK(jo.getString(PK));
         } else {
-            //insert
+            // insert
             command.setCommandType(CommandType.Insert);
             Map<String, Object> entity = metaManager.newDefaultEntity(commandName);
-            if(params.containsKey("forceId")){
-                entity.put(PK,params.get("forceId"));
+            if (params.containsKey("forceId")) {
+                entity.put(PK, params.get("forceId"));
                 params.remove("forceId");
-            }else{
+            } else {
                 entity.put(PK, UIDGenerator.generate());
                 params.remove(PK);
             }
@@ -185,7 +188,7 @@ public class JsonTextSaveParser extends JsonTextParser {
                 entity.put("tenantCode", ctx.get("tenantCode"));
             }
             if (entity.containsKey("buId")) {
-                entity.put("buId",ctx.getCurrentUser().getBuId());
+                entity.put("buId", ctx.getCurrentUser().getBuId());
             }
             if (entity.containsKey("deptId")) {
                 entity.put("deptId", ctx.getCurrentUser().getDefaultOrgId());

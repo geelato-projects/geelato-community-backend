@@ -6,7 +6,6 @@ import org.apache.logging.log4j.util.Strings;
 /**
  * @author diabl
  * @description: 数据类型范围
- * @date 2023/6/20 14:28
  */
 public enum DataTypeRadiusEnum {
     // 字符串，只需要填写最大值。限制字符串填写长度。

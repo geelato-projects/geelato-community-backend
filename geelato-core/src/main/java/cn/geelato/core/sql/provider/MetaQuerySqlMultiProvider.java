@@ -16,8 +16,6 @@ import java.util.*;
 
 /**
  * 多表查询
- *
- * @Date 2020-03-14
  * @author liuwq
  */
 @Component

@@ -20,7 +20,6 @@ import java.util.List;
 /**
  * @author diabl
  * @description: 编码
- * @date 2023/8/2 10:40
  */
 @Setter
 @Entity(name = "platform_encoding")

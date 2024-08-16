@@ -1,15 +1,16 @@
 package cn.geelato.web.platform.m.model.service;
 
-import cn.geelato.core.enums.*;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MetaDaoSql;
+import cn.geelato.core.enums.*;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.ColumnMeta;
 import cn.geelato.core.meta.schema.SchemaTable;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.SchemaUtils;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ public class DevTableService extends BaseSortableService {
     private static final String DELETE_COMMENT_PREFIX = "已删除；";
     private static final String UPDATE_COMMENT_PREFIX = "已变更；";
     private static final Logger logger = LoggerFactory.getLogger(DevTableService.class);
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
     @Lazy
     @Autowired
     private DevTableColumnService devTableColumnService;
@@ -109,7 +110,7 @@ public class DevTableService extends BaseSortableService {
             form.setTableName(form.getEntityName());
         }
         // 修正当前表
-        //form.setDescription(String.format("update %s from %s[%s]。\n", sdf.format(new Date()), model.getTitle(), model.getEntityName()) + form.getDescription());
+        // form.setDescription(String.format("update %s from %s[%s]。\n", sdf.format(new Date()), model.getTitle(), model.getEntityName()) + form.getDescription());
         // 备份原来的表
         model.setId(null);
         model.setLinked(LinkedEnum.NO.getValue());
@@ -122,7 +123,7 @@ public class DevTableService extends BaseSortableService {
         model.setDelStatus(DeleteStatusEnum.IS.getCode());
         model.setDeleteAt(new Date());
         model.setSeqNo(ColumnDefault.SEQ_NO_DELETE);
-        //dao.save(model);
+        // dao.save(model);
         // 数据库表修正
         sqlParams.put("newEntityName", form.getEntityName());// 新
         sqlParams.put("entityName", model.getEntityName());// 旧
@@ -202,7 +203,7 @@ public class DevTableService extends BaseSortableService {
         return tableList;
     }
 
-    public TableMeta copyTable(String tableId,String title, String entityName, String connectId,String tableComment,String appId,String tenantCode) {
+    public TableMeta copyTable(String tableId, String title, String entityName, String connectId, String tableComment, String appId, String tenantCode) {
         // 源模型
         TableMeta form = this.getModel(TableMeta.class, tableId);
         Assert.notNull(form, ApiErrorMsg.IS_NULL);
@@ -212,10 +213,18 @@ public class DevTableService extends BaseSortableService {
         form.setEntityName(entityName);
         form.setTitle(title);
         form.setTableName(null);
-        if (Strings.isNotBlank(connectId)){form.setConnectId(connectId);}
-        if (Strings.isNotBlank(tableComment)){form.setTableComment(tableComment);}
-        if (Strings.isNotBlank(appId)){form.setAppId(appId);}
-        if (Strings.isNotBlank(tenantCode)){form.setTenantCode(tenantCode);}
+        if (Strings.isNotBlank(connectId)) {
+            form.setConnectId(connectId);
+        }
+        if (Strings.isNotBlank(tableComment)) {
+            form.setTableComment(tableComment);
+        }
+        if (Strings.isNotBlank(appId)) {
+            form.setAppId(appId);
+        }
+        if (Strings.isNotBlank(tenantCode)) {
+            form.setTenantCode(tenantCode);
+        }
         form.setSynced(ColumnSyncedEnum.FALSE.getValue());
         form.setSourceType(TableSourceTypeEnum.CREATION.getValue());
         form.setPackBusData(0);

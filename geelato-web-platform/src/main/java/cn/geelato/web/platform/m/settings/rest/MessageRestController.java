@@ -22,7 +22,6 @@ import java.util.Map;
 /**
  * @author diabl
  * @description: 消息控制类
- * @date 2023/7/3 10:51
  */
 @Controller
 @RequestMapping(value = "/api/settings/message")

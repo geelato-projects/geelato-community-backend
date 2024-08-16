@@ -14,7 +14,6 @@ import java.util.Locale;
  * @author diabl
  * @description: 数据库中字段信息
  * SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE 1 = 1 AND TABLE_SCHEMA = '' AND TABLE_NAME = '';
- * @date 2023/6/16 13:28
  */
 @Getter
 @Setter

@@ -14,7 +14,6 @@ import java.nio.file.Files;
 
 /**
  * @author geelato
- * @date 2018/12/19
  */
 @Setter
 @Entity(name = "platform_resources", table = "platform_resources")

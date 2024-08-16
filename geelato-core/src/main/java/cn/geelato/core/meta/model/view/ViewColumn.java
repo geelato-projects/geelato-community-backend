@@ -7,7 +7,6 @@ import lombok.Setter;
 /**
  * @author diabl
  * @description: 视图字段
- * @date 2023/6/30 9:29
  */
 @Getter
 @Setter

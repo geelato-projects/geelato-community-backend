@@ -9,7 +9,6 @@ import lombok.Setter;
 
 /**
  * @author itechgee@126.com
- * @date 2017/9/8.
  */
 @Setter
 @Entity(name = "platform_tree_node", table = "platform_tree_node")

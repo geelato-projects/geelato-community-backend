@@ -9,7 +9,6 @@ import lombok.Setter;
 
 /**
  * @author diabl
- * @date 2023/8/3 9:55
  */
 @Setter
 @Entity(name = "platform_encoding_log")

@@ -3,7 +3,6 @@ package cn.geelato.core.enums;
 /**
  * @author diabl
  * @description: 字段是否需要加密
- * @date 2023/12/27 9:50
  */
 public enum ColumnEncryptedEnum {
     TRUE("需要加密", true), FALSE("不需要加密", false);

@@ -12,7 +12,6 @@ import java.util.Set;
 /**
  * @author diabl
  * @description: Mysql数据类型对应的Java对象
- * @date 2023/6/20 12:00
  */
 public enum MysqlToJavaEnum {
     // 字符串

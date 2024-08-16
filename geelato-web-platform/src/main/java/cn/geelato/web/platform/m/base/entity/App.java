@@ -10,7 +10,6 @@ import lombok.Setter;
 
 /**
  * @author itechgee@126.com
- * @date 2017/9/8.
  */
 @Setter
 @Entity(name = "platform_app", table = "platform_app")

@@ -8,6 +8,7 @@ import cn.geelato.core.gql.parser.*;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.sql.provider.*;
+import cn.geelato.utils.DateUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
@@ -22,7 +23,7 @@ import java.util.*;
  */
 public class SqlManager extends AbstractManager {
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(SqlManager.class);
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
     private static SqlManager instance;
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final MetaQuerySqlProvider metaQuerySqlProvider = new MetaQuerySqlProvider();
@@ -42,7 +43,7 @@ public class SqlManager extends AbstractManager {
         return instance;
     }
 
-    private SqlManager(){
+    private SqlManager() {
         logger.info("SqlManager Instancing...");
     }
 
@@ -66,12 +67,14 @@ public class SqlManager extends AbstractManager {
         boundPageSql.setCountSql(metaQueryTreeSqlProvider.buildCountSql(command));
         return boundPageSql;
     }
+
     public BoundPageSql generatePageQuerySqlMulti(QueryCommand command) {
         BoundPageSql boundPageSql = new BoundPageSql();
         boundPageSql.setBoundSql(metaQuerySqlMultiProvider.generate(command));
         boundPageSql.setCountSql(metaQuerySqlMultiProvider.buildCountSql(command));
         return boundPageSql;
     }
+
     public BoundSql generateSaveSql(SaveCommand command) {
         if (command.getCommandType() == CommandType.Update) {
             return metaUpdateSqlProvider.generate(command);
@@ -81,12 +84,13 @@ public class SqlManager extends AbstractManager {
     }
 
     public List<BoundSql> generateBatchSaveSql(List<SaveCommand> commandList) {
-        List<BoundSql> boundSqlList=new ArrayList<>();
-        for (SaveCommand saveCommand: commandList){
+        List<BoundSql> boundSqlList = new ArrayList<>();
+        for (SaveCommand saveCommand : commandList) {
             boundSqlList.add(generateSaveSql(saveCommand));
         }
         return boundSqlList;
     }
+
     public BoundSql generateDeleteSql(DeleteCommand command) {
         return metaDeleteSqlProvider.generate(command);
     }
@@ -144,7 +148,6 @@ public class SqlManager extends AbstractManager {
 
     /**
      * 删除服务
-     *
      */
     public BoundSql generateDeleteSql(Class clazz, FilterGroup filterGroup) {
         return generateDeleteSql(clazz, filterGroup, null);
@@ -164,12 +167,13 @@ public class SqlManager extends AbstractManager {
         Assert.isTrue(validator.validateEntity(entityName), validator.getMessage());
         return generateDeleteSql(entityName, filterGroup, validator);
     }
-    private BoundSql generateDeleteSql(String entityName, FilterGroup filterGroup,CommandValidator validator) {
+
+    private BoundSql generateDeleteSql(String entityName, FilterGroup filterGroup, CommandValidator validator) {
         DeleteCommand deleteCommand = new DeleteCommand();
         EntityMeta em = metaManager.getByEntityName(entityName);
         deleteCommand.setEntityName(em.getEntityName());
-        Ctx ctx=new Ctx();
-        Map<String,Object> params=new HashMap<>();
+        Ctx ctx = new Ctx();
+        Map<String, Object> params = new HashMap<>();
         String newDataString = simpleDateFormat.format(new Date());
         if (validator.hasKeyField("delStatus")) {
             params.put("delStatus", 1);
@@ -193,6 +197,7 @@ public class SqlManager extends AbstractManager {
         deleteCommand.setWhere(filterGroup);
         return metaDeleteSqlProvider.generate(deleteCommand);
     }
+
     public <T> BoundSql generatePageQuerySql(QueryCommand queryCommand, Class<T> clazz, boolean isArray, FilterGroup filterGroup, String[] fields) {
         EntityMeta em = metaManager.get(clazz);
         queryCommand.setEntityName(em.getEntityName());

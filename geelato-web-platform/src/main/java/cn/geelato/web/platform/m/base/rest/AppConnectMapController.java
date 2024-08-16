@@ -23,7 +23,6 @@ import java.util.Map;
 
 /**
  * @author diabl
- * @date 2024/4/16 9:55
  */
 @RestController
 @RequestMapping(value = "/api/app/connect")

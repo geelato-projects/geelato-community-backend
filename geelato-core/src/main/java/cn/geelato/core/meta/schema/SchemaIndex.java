@@ -12,7 +12,6 @@ import java.util.Map;
  * @author diabl
  * @description: 数据库表的索引信息
  * SHOW INDEX FROM `table_name`;
- * @date 2023/6/16 11:44
  */
 @Getter
 @Setter

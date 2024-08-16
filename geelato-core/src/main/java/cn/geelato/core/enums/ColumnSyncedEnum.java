@@ -3,7 +3,6 @@ package cn.geelato.core.enums;
 /**
  * @author diabl
  * @description: 模型字段是否同步
- * @date 2023/12/21 9:25
  */
 public enum ColumnSyncedEnum {
     TRUE("已同步", true), FALSE("未同步", false);

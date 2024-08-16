@@ -6,6 +6,7 @@ import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.web.platform.m.base.entity.Dict;
 import cn.geelato.web.platform.m.base.entity.DictItem;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 

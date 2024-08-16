@@ -9,6 +9,7 @@ import java.util.Map;
 
 @SuppressWarnings("ALL")
 public class SqlIdDao extends BaseDao{
+
     public void execute(String sqlId, Map<String, Object> paramMap) {
         jdbcTemplate.execute(sqlScriptManager.generate(sqlId, paramMap));
     }

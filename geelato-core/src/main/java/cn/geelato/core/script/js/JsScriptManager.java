@@ -1,6 +1,7 @@
 package cn.geelato.core.script.js;
 
 import cn.geelato.core.script.AbstractScriptManager;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -21,8 +22,8 @@ import java.util.Map;
  *
  * @author geemeta
  */
+@Slf4j
 public class JsScriptManager extends AbstractScriptManager {
-    private Logger logger = LoggerFactory.getLogger(JsScriptManager.class);
     private JsTemplateParser jsTemplateParser = new JsTemplateParser();
     private JsProvider jsProvider = new JsProvider();
 
@@ -46,7 +47,7 @@ public class JsScriptManager extends AbstractScriptManager {
             log(jsFuncMap);
             jsProvider.compile(jsFuncMap);
         } catch (ScriptException e) {
-            logger.error("", e);
+            log.error("", e);
         }
     }
 
@@ -54,19 +55,17 @@ public class JsScriptManager extends AbstractScriptManager {
     /**
      * @param id       sqlId or functionName
      * @param paramMap key value(key value)，值Object为key value的对象或字符串、数字等基本类型
-     * @return
-     * @throws ScriptException
      */
     public String generate(String id, Map<String, Object> paramMap) {
         if (jsProvider.contain(id)) {
             try {
                 String sql = jsProvider.execute(id, paramMap).asString();
-                if (logger.isInfoEnabled()) {
-                    logger.info("sql {} : {}", id, sql);
+                if (log.isInfoEnabled()) {
+                    log.info("sql {} : {}", id, sql);
                 }
                 return sql;
             } catch (ScriptException | NoSuchMethodException e) {
-                logger.error("sql脚本构建失败。", e);
+                log.error("sql脚本构建失败。", e);
                 return null;
             }
         } else {
@@ -81,10 +80,10 @@ public class JsScriptManager extends AbstractScriptManager {
     }
 
     private void log(Map<String, String> jsFuncMap) {
-        if (logger.isInfoEnabled()) {
+        if (log.isInfoEnabled()) {
             for (Map.Entry<String, String> entry : jsFuncMap.entrySet()) {
-                logger.info("将*.sql文件中的语句转换成javascript脚本，每个语名片段对应一个function");
-                logger.info("即sqlId：{} ，内容为:\r\n{}", entry.getKey(), entry.getValue());
+                log.info("将*.sql文件中的语句转换成javascript脚本，每个语名片段对应一个function");
+                log.info("即sqlId：{} ，内容为:\r\n{}", entry.getKey(), entry.getValue());
             }
         }
     }

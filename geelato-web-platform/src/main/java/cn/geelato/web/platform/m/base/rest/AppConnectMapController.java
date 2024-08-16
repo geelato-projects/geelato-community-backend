@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.web.platform.annotation.RuntimeMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.constants.ApiErrorMsg;

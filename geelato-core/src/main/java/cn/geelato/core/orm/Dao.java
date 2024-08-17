@@ -3,6 +3,7 @@ package cn.geelato.core.orm;
 import cn.geelato.core.gql.parser.*;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
 import cn.geelato.core.aop.annotation.MethodLog;
@@ -29,9 +30,9 @@ import java.util.Map;
 /**
  * @author geemeta
  */
+@Slf4j
 public class Dao extends SqlKeyDao {
 
-    private static final Logger logger = LoggerFactory.getLogger(Dao.class);
 
     private Boolean defaultFilterOption = false;
     private FilterGroup defaultFilterGroup;
@@ -73,7 +74,7 @@ public class Dao extends SqlKeyDao {
     }
 
     public List<Map<String, Object>> queryForMapList(BoundPageSql boundPageSql) {
-        logger.info(boundPageSql.getBoundSql().getSql());
+        log.info(boundPageSql.getBoundSql().getSql());
         QueryCommand command = (QueryCommand) boundPageSql.getBoundSql().getCommand();
         BoundSql boundSql = boundPageSql.getBoundSql();
         Object[] sqlParams = boundSql.getParams();
@@ -127,7 +128,7 @@ public class Dao extends SqlKeyDao {
     //todo rewrite
     public ApiMultiPagedResult.PageData queryForMapListToPageData(BoundPageSql boundPageSql, boolean withMeta) {
         QueryCommand command = (QueryCommand) boundPageSql.getBoundSql().getCommand();
-        logger.info(boundPageSql.getBoundSql().getSql());
+        log.info(boundPageSql.getBoundSql().getSql());
         List<Map<String, Object>> list = jdbcTemplate.queryForList(boundPageSql.getBoundSql().getSql(), boundPageSql.getBoundSql().getParams());
         ApiMultiPagedResult.PageData result = new ApiMultiPagedResult.PageData();
         result.setData(list);
@@ -154,7 +155,7 @@ public class Dao extends SqlKeyDao {
     public String save(BoundSql boundSql) throws DaoException {
         SaveCommand command = (SaveCommand) boundSql.getCommand();
         try {
-            logger.info(boundSql.getSql());
+            log.info(boundSql.getSql());
             jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
         } catch (DataAccessException e) {
             e.printStackTrace();
@@ -237,7 +238,7 @@ public class Dao extends SqlKeyDao {
     public <T> T queryForObject(Class<T> entityType, String fieldName, Object value) {
         FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
         BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, null);
-        logger.info(boundSql.toString());
+        log.info(boundSql.toString());
         return jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<T>());
     }
 
@@ -253,7 +254,7 @@ public class Dao extends SqlKeyDao {
     public <T> T queryForObject(Class<T> entityType, String fieldName1, Object value1, String fieldName2, Object value2) {
         FilterGroup filterGroup = new FilterGroup().addFilter(fieldName1, value1.toString()).addFilter(fieldName2, value2.toString());
         BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, null);
-        logger.info(boundSql.toString());
+        log.info(boundSql.toString());
         return jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<T>());
     }
 
@@ -323,7 +324,7 @@ public class Dao extends SqlKeyDao {
 
     public <E extends IdEntity> Map save(E entity) {
         BoundSql boundSql = entityManager.generateSaveSql(entity, new Ctx());
-        logger.info(boundSql.toString());
+        log.info(boundSql.toString());
         jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
         SaveCommand command = (SaveCommand) boundSql.getCommand();
         return command.getValueMap();
@@ -346,7 +347,7 @@ public class Dao extends SqlKeyDao {
             }
         }
         BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, orderBy);
-        logger.info(boundSql.toString());
+        log.info(boundSql.toString());
         return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<T>());
     }
 
@@ -392,7 +393,7 @@ public class Dao extends SqlKeyDao {
         command.setPageSize(request.getPageSize());
         command.setOrderBy(request.getOrderBy());
         BoundSql boundSql = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
-        logger.info(boundSql.toString());
+        log.info(boundSql.toString());
         return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<T>());
     }
 
@@ -431,14 +432,14 @@ public class Dao extends SqlKeyDao {
         command.setPageSize(pageSize);
         command.setViewName(viewName);
         BoundSql boundSql = sqlManager.generatePageQuerySql(command, entityName, true, filterGroup, null);
-        logger.info(boundSql.toString());
+        log.info(boundSql.toString());
         return jdbcTemplate.queryForList(boundSql.getSql());
     }
 
     public int delete(Class entityType, String fieldName, Object value) {
         FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
         BoundSql boundSql = sqlManager.generateDeleteSql(entityType, filterGroup);
-        logger.info(boundSql.toString());
+        log.info(boundSql.toString());
         return jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
     }
 }

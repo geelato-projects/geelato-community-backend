@@ -60,13 +60,7 @@ public class ResultSetMapper<T> {
             } else {
                 return null;
             }
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
+        } catch (IllegalAccessException | InvocationTargetException | InstantiationException | SQLException e) {
             e.printStackTrace();
         }
         return outputList;

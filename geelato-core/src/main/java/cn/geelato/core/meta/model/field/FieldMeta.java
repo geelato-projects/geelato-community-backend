@@ -1,13 +1,25 @@
 package cn.geelato.core.meta.model.field;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.Serializable;
 
 /**
  * @author geemeta
  */
 public class FieldMeta implements Serializable {
-    private ColumnMeta columnMeta;
+    private final ColumnMeta columnMeta;
+    /**
+     * -- GETTER --
+     *  驼峰式
+     *  columnMeta.getName()是数据库中的字段格式
+     */
+    @Setter
+    @Getter
     private String fieldName;
+    @Setter
+    @Getter
     private Class fieldType;
 
     public FieldMeta(String columnName, String fieldName, String title) {
@@ -28,27 +40,6 @@ public class FieldMeta implements Serializable {
 
     public void setColumnName(String columnName) {
         this.columnMeta.setName(columnName);
-    }
-
-    /**
-     * 驼峰式
-     * columnMeta.getName()是数据库中的字段格式
-     *
-     */
-    public String getFieldName() {
-        return fieldName;
-    }
-
-    public void setFieldName(String fieldName) {
-        this.fieldName = fieldName;
-    }
-
-    public Class getFieldType() {
-        return fieldType;
-    }
-
-    public void setFieldType(Class fieldType) {
-        this.fieldType = fieldType;
     }
 
     public String getTitle() {

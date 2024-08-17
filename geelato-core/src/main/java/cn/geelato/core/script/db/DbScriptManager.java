@@ -16,7 +16,7 @@ import java.util.Map;
 @Slf4j
 public class DbScriptManager extends AbstractScriptManager {
 
-    private Map<String,String> sqlMap=new HashMap<>();
+    private final Map<String,String> sqlMap=new HashMap<>();
 
     public String generate(String id, Map<String, Object> paramMap) {
         if (sqlMap.containsKey(id)) {

@@ -13,7 +13,7 @@ public class ResourcesFiles {
      */
     public static final String COLUMN_SELECT_TYPE_JSON = "gelato/web/platform/data/column_select_type.json";
     /**
-     * data permisson，数据权限，模型的查看权限、自定义权限。
+     * data permission，数据权限，模型的查看权限、自定义权限。
      */
     public static final String PERMISSION_DATA_DEFAULT_JSON = "gelato/web/platform/data/permission_data_default.json";
     /**

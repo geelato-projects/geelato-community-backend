@@ -32,13 +32,13 @@ import java.util.*;
 /**
  * Created by hongxueqian on 14-3-23.
  */
-public class MetaRelf {
+public class MetaReflex {
 
     private static ApplicationContext applicationContext;
-    private static final Logger logger = LoggerFactory.getLogger(MetaRelf.class);
+    private static final Logger logger = LoggerFactory.getLogger(MetaReflex.class);
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat(DateUtils.DATETIME);
     // 一些类型默认的长度
-    public static Map<String, Long> dataTypeDefaultMaxLengthMap = new HashedMap();
+    public static HashedMap dataTypeDefaultMaxLengthMap = new HashedMap();
 
     static {
         // 最大长度255个字元(2^8-1)

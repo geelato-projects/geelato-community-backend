@@ -1,6 +1,7 @@
 package cn.geelato.core.orm;
 
 import com.alibaba.fastjson2.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
@@ -30,9 +31,9 @@ import java.util.*;
  * @author geemeta
  */
 @Component
+@Slf4j
 public class DbGenerateDao {
 
-    private static final Logger logger = LoggerFactory.getLogger(DbGenerateDao.class);
     private static HashMap<String, Integer> defaultColumnLengthMap;
 
     @Autowired
@@ -61,7 +62,7 @@ public class DbGenerateDao {
     public void createAllTables(boolean dropBeforeCreate, List<String> ignoreEntityNameList) {
         Collection<EntityMeta> entityMetas = metaManager.getAll();
         if (entityMetas == null) {
-            logger.warn("实体元数据为空，可能还未解析元数据，请解析之后，再执行该方法(createAllTables)");
+            log.warn("实体元数据为空，可能还未解析元数据，请解析之后，再执行该方法(createAllTables)");
             return;
         }
         for (EntityMeta em : entityMetas) {
@@ -77,7 +78,7 @@ public class DbGenerateDao {
             if (!isIgnore) {
                 createOrUpdateOneTable(em, dropBeforeCreate);
             } else {
-                logger.info("ignore createTable for entity: {}.", em.getEntityName());
+                log.info("ignore createTable for entity: {}.", em.getEntityName());
             }
         }
         ConnectMeta connectMeta = new ConnectMeta();
@@ -196,7 +197,7 @@ public class DbGenerateDao {
                 }
             } catch (Exception e) {
                 if (e.getMessage().contains("Duplicate column name")) {
-                    logger.info("column " + fm.getColumnName() + " is exists，ignore.");
+                    log.info("column " + fm.getColumnName() + " is exists，ignore.");
                 } else {
                     throw e;
                 }
@@ -222,10 +223,10 @@ public class DbGenerateDao {
     private void createOrUpdateOneTable(EntityMeta em, boolean dropBeforeCreate) {
 
         if (dropBeforeCreate) {
-            logger.info("  drop entity " + em.getTableName());
+            log.info("  drop entity " + em.getTableName());
             dao.execute("dropOneTable", SqlParams.map("tableName", em.getTableName()));
         }
-        logger.info("  create or update an entity " + em.getTableName());
+        log.info("  create or update an entity " + em.getTableName());
 
         // 检查表是否存在，或取已存在的列元数据
         boolean isExistsTable = true;
@@ -271,7 +272,7 @@ public class DbGenerateDao {
                 }
             } catch (Exception e) {
                 if (e.getMessage().contains("Duplicate column name")) {
-                    logger.info("column " + fm.getColumnName() + " is exists，ignore.");
+                    log.info("column " + fm.getColumnName() + " is exists，ignore.");
                 } else {
                     throw e;
                 }

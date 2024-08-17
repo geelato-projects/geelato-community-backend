@@ -1,9 +1,10 @@
 package cn.geelato.core.orm;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import cn.geelato.utils.UIDGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.log;
+import org.slf4j.logFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.*;
@@ -19,8 +20,8 @@ import java.util.regex.Pattern;
  *
  * @author geemeta
  */
+@Slf4j
 public class SqlFiles {
-    private static final Logger logger = LoggerFactory.getLogger(SqlFiles.class);
     private static final Pattern newIdPattern = Pattern.compile("\\$newId[ ]*\\([ ]*\\)");
 
 
@@ -36,7 +37,7 @@ public class SqlFiles {
                 if (index >= 0) {
                     //新的语句开始，若存在老的语句，执行老的语句并清空
                     if (sb.length() > 1) {
-                        logger.debug("execute sql :{}", sb.toString());
+                        log.debug("execute sql :{}", sb);
                         jdbcTemplate.execute(sb.toString());
                     }
                     sb = new StringBuffer();
@@ -50,7 +51,7 @@ public class SqlFiles {
                 }
             }
             if (sb.length() > 1) {
-                logger.debug("execute sql :{}", sb.toString());
+                log.debug("execute sql :{}", sb);
                 jdbcTemplate.execute(sb.toString());
             }
         }
@@ -71,11 +72,11 @@ public class SqlFiles {
             String line = null;
             while ((line = reader.readLine()) != null) {
                 lineList.add(parseLine(line));
-                logger.debug("line:{}", line);
+                log.debug("line:{}", line);
             }
             loadAndExecute(lineList, jdbcTemplate, isWinOS);
         } catch (IOException e) {
-            logger.error("加载SQL流文件并执行出错！{}", e);
+            log.error("加载SQL流文件并执行出错！{}", e);
         }
     }
 
@@ -126,7 +127,7 @@ public class SqlFiles {
                 loadAndExecute(lines, jdbcTemplate, isWinOS);
             }
         } catch (IOException e) {
-            logger.error("加载SQL文件并执行出错！\r\n文件：" + path + "\r\n", e);
+            log.error("加载SQL文件并执行出错！\r\n文件：{}\r\n", path, e);
         }
     }
 }

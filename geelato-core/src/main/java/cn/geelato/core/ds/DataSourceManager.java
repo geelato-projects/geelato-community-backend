@@ -4,6 +4,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import cn.geelato.core.AbstractManager;
 import cn.geelato.core.orm.Dao;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
@@ -13,11 +15,11 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 
+@Slf4j
 public class DataSourceManager extends AbstractManager {
 
 
     private Dao dao;
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(DataSourceManager.class);
     private static DataSourceManager instance;
 
     private final static ConcurrentHashMap<String, DataSource> dataSourceMap=new ConcurrentHashMap<>();
@@ -34,7 +36,7 @@ public class DataSourceManager extends AbstractManager {
     }
 
     private DataSourceManager() {
-        logger.info("DataSourceManager Instancing...");
+        log.info("DataSourceManager Instancing...");
     }
 
 

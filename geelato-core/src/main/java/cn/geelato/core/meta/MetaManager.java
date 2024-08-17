@@ -21,8 +21,8 @@ import cn.geelato.utils.FastJsonUtils;
 import cn.geelato.utils.ClassScanner;
 import cn.geelato.utils.MapUtils;
 import com.alibaba.fastjson2.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -30,11 +30,11 @@ import java.util.*;
 /**
  * @author geemeta
  */
+@Slf4j
 public class MetaManager extends AbstractManager {
 
     private Dao dao;
     private static MetaManager instance;
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(MetaManager.class);
     private final HashMap<String, EntityMeta> entityMetadataMap = new HashMap<>();
     private final List<EntityLiteMeta> entityLiteMetaList = new ArrayList<>();
     private final HashMap<String, EntityMeta> tableNameMetadataMap = new HashMap<>();
@@ -51,7 +51,7 @@ public class MetaManager extends AbstractManager {
     }
 
     private MetaManager() {
-        logger.info("MetaManager Instancing...");
+        log.info("MetaManager Instancing...");
         // 解析内置的类
 
         parseOne(ColumnMeta.class);
@@ -72,7 +72,7 @@ public class MetaManager extends AbstractManager {
 
     public void parseDBMeta(Dao dao) {
         this.dao = dao;
-        logger.info("parse meta data in database...");
+        log.info("parse meta data in database...");
         List<Map<String, Object>> tableList = dao.getJdbcTemplate().queryForList(MetaDaoSql.SQL_TABLE_LIST);
         for (Map<String, Object> map : tableList) {
             List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
@@ -90,7 +90,7 @@ public class MetaManager extends AbstractManager {
      */
     public void parseDBMeta(Dao dao, Map<String, String> params) {
         this.dao = dao;
-        logger.info("parse meta data in database...", params);
+        log.info("parse meta data in database...", params);
         String sql = MetaDaoSql.SQL_TABLE_LIST;
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> entry : params.entrySet()) {
@@ -109,7 +109,7 @@ public class MetaManager extends AbstractManager {
     }
 
     public void refreshDBMeta(String entityName) {
-        logger.info("refresh meta..."+entityName);
+        log.info("refresh meta..."+entityName);
         refreshTableMeta(entityName);
         refreshViewMeta(entityName);
 
@@ -204,14 +204,14 @@ public class MetaManager extends AbstractManager {
 
 
     public EntityMeta get(Class clazz) {
-        String entityName = MetaRelf.getEntityName(clazz);
+        String entityName = MetaReflex.getEntityName(clazz);
         if (entityMetadataMap.containsKey(entityName)) {
             return entityMetadataMap.get(entityName);
         } else {
             Iterator<String> it = entityMetadataMap.keySet().iterator();
-            logger.warn("Key({}) not found in entityMetadataMap.keySet:", clazz.getName());
+            log.warn("Key({}) not found in entityMetadataMap.keySet:", clazz.getName());
             while (it.hasNext()) {
-                logger.warn(it.next());
+                log.warn(it.next());
             }
             return null;
         }
@@ -256,9 +256,9 @@ public class MetaManager extends AbstractManager {
             return entityMetadataMap.get(entityName);
         } else {
             Iterator<String> it = entityMetadataMap.keySet().iterator();
-            logger.warn("Key({}) not found in entityMetadataMap.keySet:", entityName);
+            log.warn("Key({}) not found in entityMetadataMap.keySet:", entityName);
             while (it.hasNext()) {
-                logger.warn(it.next());
+                log.warn(it.next());
             }
             return null;
         }
@@ -281,9 +281,9 @@ public class MetaManager extends AbstractManager {
             return tableNameMetadataMap.get(tableName);
         } else {
             Iterator<String> it = tableNameMetadataMap.keySet().iterator();
-            logger.warn("Key({}) not found in tableNameMetadataMap.keySet:", tableName);
+            log.warn("Key({}) not found in tableNameMetadataMap.keySet:", tableName);
             while (it.hasNext()) {
-                logger.warn(it.next());
+                log.warn(it.next());
             }
             return null;
         }
@@ -319,7 +319,7 @@ public class MetaManager extends AbstractManager {
      */
     private void scanAndParse(String parkeName) {
         // TODO 启动的时候扫描实体类，这里做个开关，如果开启，就默认将实体类更新至数据库。
-        logger.debug("开始从包{}中扫描到包含注解{}的实体......", parkeName, Entity.class);
+        log.debug("开始从包{}中扫描到包含注解{}的实体......", parkeName, Entity.class);
         List<Class<?>> classes = ClassScanner.scan(parkeName, true, Entity.class);
         for (Class<?> clazz : classes) {
             parseOne(clazz);
@@ -394,15 +394,15 @@ public class MetaManager extends AbstractManager {
      * @param clazz 待解析的类
      */
     public void parseOne(Class clazz) {
-        logger.info("parse meta from class :" + clazz.getName());
-        String entityName = MetaRelf.getEntityName(clazz);
+        log.info("parse meta from class :" + clazz.getName());
+        String entityName = MetaReflex.getEntityName(clazz);
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
-            EntityMeta entityMeta = MetaRelf.getEntityMeta(clazz);
+            EntityMeta entityMeta = MetaReflex.getEntityMeta(clazz);
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Class));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
-            if (logger.isDebugEnabled()) {
-                logger.debug("success in parsing class:{}", clazz.getName());
+            if (log.isDebugEnabled()) {
+                log.debug("success in parsing class:{}", clazz.getName());
                 for (FieldMeta fm : entityMeta.getFieldMetas()) {
                     if (!entityFieldNameTitleMap.containsKey(fm.getFieldName())) {
                         entityFieldNameTitleMap.put(fm.getFieldName(), fm.getTitle());
@@ -427,7 +427,7 @@ public class MetaManager extends AbstractManager {
     public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList, List<Map<String, Object>> foreignList) {
         String entityName = map.get("entity_name").toString();
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
-            EntityMeta entityMeta = MetaRelf.getEntityMetaByTable(map, columnList, viewList, foreignList);
+            EntityMeta entityMeta = MetaReflex.getEntityMetaByTable(map, columnList, viewList, foreignList);
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
@@ -446,7 +446,7 @@ public class MetaManager extends AbstractManager {
         if (viewType.equals("custom")) {
             String entityName = view.get("view_name").toString();
             if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
-                EntityMeta entityMeta = MetaRelf.getEntityMetaByView(view);
+                EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);
                 entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
                 removeLiteMeta(entityMeta.getEntityName());
                 entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.View));

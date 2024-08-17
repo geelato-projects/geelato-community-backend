@@ -1,5 +1,6 @@
 package cn.geelato.core.meta.model;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.Converter;
@@ -20,8 +21,8 @@ import java.util.Date;
 /**
  * @author geemeta
  */
+@Slf4j
 public class CommonRowMapper<T> implements RowMapper<T> {
-    private final Log logger = LogFactory.getLog(CommonRowMapper.class);
     private static final MetaManager metaManager = MetaManager.singleInstance();
 
     public CommonRowMapper() {
@@ -56,7 +57,7 @@ public class CommonRowMapper<T> implements RowMapper<T> {
                 }
                 return bean;
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                logger.error(e);
+                log.error(String.valueOf(e));
             }
         } else {
             //map?

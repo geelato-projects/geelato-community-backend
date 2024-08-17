@@ -5,9 +5,9 @@ package cn.geelato.core.meta;
  */
 
 import cn.geelato.utils.DateUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.Converter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
 
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
@@ -16,9 +16,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Locale;
 
+@Slf4j
 public class DateTimeConverter implements Converter {
 
-    private static final Log log = LogFactory.getLog(DateTimeConverter.class);
 
     @Override
     public Object convert(Class type, Object value) {
@@ -55,20 +55,20 @@ public class DateTimeConverter implements Converter {
                     }
 
                 } else if (type.equals(java.time.LocalDate.class)) {
-                    log.info("java.time.LocalDate类型，value:" + value);
+                    log.info("java.time.LocalDate类型，value:{}", value);
                     return new SimpleDateFormat(DateUtils.DATE, new DateFormatSymbols(Locale.CHINA)).parse(dateValue);
                 } else if (type.equals(java.time.LocalDateTime.class)) {
-                    log.info("java.time.LocalDateTime类型，value:" + value);
+                    log.info("java.time.LocalDateTime类型，value:{}", value);
                     return new SimpleDateFormat(DateUtils.DATETIME, new DateFormatSymbols(Locale.CHINA)).parse(dateValue);
                 } else if (type.equals(java.time.LocalTime.class)) {
-                    log.info("java.time.LocalTime类型，value:" + value);
+                    log.info("java.time.LocalTime类型，value:{}", value);
                     return value;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        log.info("【！！！】未识别的日期类型，type:" + type.toString() + " value:" + value);
+        log.info("【！！！】未识别的日期类型，type:{} value:{}", type.toString(), value);
         return value;
     }
 

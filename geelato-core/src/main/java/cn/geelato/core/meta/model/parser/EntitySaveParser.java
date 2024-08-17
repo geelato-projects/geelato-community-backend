@@ -21,7 +21,7 @@ import java.util.Map;
  * @author geemeta
  */
 public class EntitySaveParser {
-    private MetaManager metaManager = MetaManager.singleInstance();
+    private final MetaManager metaManager = MetaManager.singleInstance();
 
     public SaveCommand parse(IdEntity object, Ctx ctx) {
         EntityMeta entityMeta = metaManager.get(object.getClass());
@@ -90,11 +90,7 @@ public class EntitySaveParser {
                 command.setFields(insertFields);
                 command.setValueMap(entity);
             }
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
+        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             e.printStackTrace();
         }
 

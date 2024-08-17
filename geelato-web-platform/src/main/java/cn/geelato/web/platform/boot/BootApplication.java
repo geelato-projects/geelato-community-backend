@@ -4,29 +4,20 @@ import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.MetaRelf;
+import cn.geelato.core.meta.MetaReflex;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.orm.DbGenerateDao;
-import cn.geelato.core.orm.SqlFiles;
 import cn.geelato.core.script.db.DbScriptManagerFactory;
 import cn.geelato.core.script.sql.SqlScriptManagerFactory;
 import cn.geelato.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.core.io.support.ResourcePatternResolver;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Properties;
 
 // 在繼承的类中编写该注解
@@ -89,7 +80,7 @@ public class BootApplication implements CommandLineRunner {
 
 
     public void initMeta() throws IOException {
-        MetaRelf.setApplicationContext(applicationContext);
+        MetaReflex.setApplicationContext(applicationContext);
         initClassPackageMeta();
         initDataBaseMeta();
     }

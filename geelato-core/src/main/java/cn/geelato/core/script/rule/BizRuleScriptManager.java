@@ -21,9 +21,9 @@ import java.util.Map;
  */
 public class BizRuleScriptManager extends AbstractScriptManager {
 
-    private static Logger logger = LoggerFactory.getLogger(BizRuleScriptManager.class);
-    private JsTemplateParser jsTemplateParser = new JsTemplateParser();
-    private JsProvider jsProvider = new JsProvider();
+    private static final Logger logger = LoggerFactory.getLogger(BizRuleScriptManager.class);
+    private final JsTemplateParser jsTemplateParser = new JsTemplateParser();
+    private final JsProvider jsProvider = new JsProvider();
 
     /**
      * 解析*.js的文件

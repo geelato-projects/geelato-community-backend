@@ -24,13 +24,12 @@ import java.util.Map;
  */
 @Slf4j
 public class JsScriptManager extends AbstractScriptManager {
-    private JsTemplateParser jsTemplateParser = new JsTemplateParser();
-    private JsProvider jsProvider = new JsProvider();
+    private final JsTemplateParser jsTemplateParser = new JsTemplateParser();
+    private final JsProvider jsProvider = new JsProvider();
 
     /**
      * 解析*.js、*.sql的文件，支持两种格式
      *
-     * @param file
      */
     @Override
     public void parseFile(File file) throws IOException {

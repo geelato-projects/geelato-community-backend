@@ -14,7 +14,7 @@ import java.util.Map;
  * @author geemeta
  */
 public class BizMvelRuleManager extends AbstractScriptManager {
-    private final Map<String, Rule> ruleMap = new HashedMap();
+    private final HashedMap ruleMap = new HashedMap();
 
 
     public MVELRule getRule(String ruleCode) {

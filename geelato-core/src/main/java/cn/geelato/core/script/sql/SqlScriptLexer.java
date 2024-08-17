@@ -3,6 +3,7 @@ package cn.geelato.core.script.sql;
 import cn.geelato.core.enums.TokenType;
 import cn.geelato.core.script.AbstractScriptLexer;
 import cn.geelato.core.script.ScriptStatement;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,62 +17,20 @@ import java.util.regex.Pattern;
  * @author geemeta
  *
  */
+@Slf4j
 public class SqlScriptLexer extends AbstractScriptLexer {
-    private static Logger logger = LoggerFactory.getLogger(SqlScriptLexer.class);
-    private static String SQL_OPEN_FLAG = "@sql";
-    private static String KW_START_FLAG = "@";
-    private static String KW_END_FLAG = "@/";
+    private static final String SQL_OPEN_FLAG = "@sql";
+    private static final String KW_START_FLAG = "@";
+    private static final String KW_END_FLAG = "@/";
     // -- @sql
-    private static Pattern splitPattern = Pattern.compile("[ ]*--[ ]*@sql[\\s]+");
-    private static Pattern keywordStartPattern = Pattern.compile("[ ]*@[\\w]+[\\s]*");
-    private static Pattern keywordEndPattern = Pattern.compile("[ ]*@[\\/\\w]+[\\s]*");
+    private static final Pattern splitPattern = Pattern.compile("[ ]*--[ ]*@sql[\\s]+");
+    private static final Pattern keywordStartPattern = Pattern.compile("[ ]*@[\\w]+[\\s]*");
+    private static final Pattern keywordEndPattern = Pattern.compile("[ ]*@[\\/\\w]+[\\s]*");
 
     public HashMap<String, List<Token>> lexDeep(List<String> list) {
         return lexSqlContent(lex(list));
     }
 
-//    public List<ScriptStatement> lex(List<String> lines) {
-//        String sqlId = "";
-//        List<ScriptStatement> templateStatements = new ArrayList<>();
-//        ScriptStatement ScriptStatement = null;
-//        for (String l : lines) {
-//            String line = l.trim();
-//            if (line.length() == 0)
-//                continue;
-//            Matcher matcher = splitPattern.matcher(line);
-//            if (matcher.find()) {
-//                logger.debug("matcher:{}", matcher.group());
-//                //当前是sql语句分行
-//                if (sqlId != null) {
-//                    //新的sql语句行，先保存已有的sqlToken
-//                    if (ScriptStatement != null && ScriptStatement.getTree() != null && ScriptStatement.getTree().size() > 0)
-//                        templateStatements.add(ScriptStatement);
-//                }
-//                sqlId = line.replace(SQL_OPEN_FLAG, "").replace("-", "").trim();
-//                ScriptStatement = new ScriptStatement();
-//                ScriptStatement.setTree(new ArrayList());
-//                ScriptStatement.setId(sqlId);
-//            } else {
-//                //丢弃注解行，不进行add(line)
-//                switch (line.charAt(0)) {
-//                    case '*':
-//                        continue;
-//                    case '/':
-//                        continue;
-//                    case '-':
-//                        if (line.charAt(1) == '-')
-//                            continue;
-//                }
-//
-//                if (ScriptStatement != null)
-//                    ScriptStatement.getTree().add(line);
-//            }
-//        }
-//        //添加最后一个
-//        if (ScriptStatement != null && ScriptStatement.getTree() != null && ScriptStatement.getTree().size() > 0)
-//            templateStatements.add(ScriptStatement);
-//        return templateStatements;
-//    }
 
     public HashMap<String, List<Token>> lexSqlContent(List<ScriptStatement> scriptStatements) {
         HashMap<String, List<Token>> map = new HashMap<>(scriptStatements.size());

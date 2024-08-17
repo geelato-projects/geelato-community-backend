@@ -1,5 +1,6 @@
 package cn.geelato.core.script;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,14 +12,12 @@ import java.util.regex.Pattern;
 /**
  * @author geemeta
  */
+@Slf4j
 public abstract class AbstractScriptLexer {
-    private final Logger logger = LoggerFactory.getLogger(AbstractScriptLexer.class);
 
     /**
      * 简单解析，解析出模板内容段，便于下一步对模板内容段进一步解析
      *
-     * @param lines
-     * @return
      */
     public List<ScriptStatement> lex(List<String> lines) {
         String statementId = null;
@@ -26,18 +25,18 @@ public abstract class AbstractScriptLexer {
         ScriptStatement scriptStatement = null;
         for (String l : lines) {
             String line = l.trim();
-            if (line.length() == 0) {
+            if (line.isEmpty()) {
                 continue;
             }
             Matcher matcher = getSplitPattern().matcher(line);
             if (matcher.find()) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("matcher:{}", matcher.group());
+                if (log.isDebugEnabled()) {
+                    log.debug("matcher:{}", matcher.group());
                 }
                 //当前分行
                 if (statementId != null) {
                     //新的语句行，先保存已有的TemplateStatement
-                    if (scriptStatement != null && scriptStatement.getContent() != null && scriptStatement.getContent().size() > 0) {
+                    if (scriptStatement.getContent() != null && !scriptStatement.getContent().isEmpty()) {
                         scriptStatements.add(scriptStatement);
                     }
                 }
@@ -52,9 +51,7 @@ public abstract class AbstractScriptLexer {
             } else {
                 //丢弃注解行，不进行add(line)
                 switch (line.charAt(0)) {
-                    case '*':
-                        continue;
-                    case '/':
+                    case '*', '/':
                         continue;
                     case '-':
                         if (line.charAt(1) == '-') {
@@ -68,7 +65,7 @@ public abstract class AbstractScriptLexer {
             }
         }
         //添加最后一个
-        if (scriptStatement != null && scriptStatement.getContent() != null && scriptStatement.getContent().size() > 0) {
+        if (scriptStatement != null && scriptStatement.getContent() != null && !scriptStatement.getContent().isEmpty()) {
             scriptStatements.add(scriptStatement);
         }
         return scriptStatements;
@@ -77,7 +74,6 @@ public abstract class AbstractScriptLexer {
     /**
      * 匹配的分割行的正则表达式
      *
-     * @return
      */
     protected abstract Pattern getSplitPattern();
 

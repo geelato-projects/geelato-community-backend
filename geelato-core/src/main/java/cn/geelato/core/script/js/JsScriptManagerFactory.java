@@ -8,8 +8,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author geemeta
  */
 public class JsScriptManagerFactory {
-    private static Lock lock = new ReentrantLock();
-    private static HashMap<String, JsScriptManager> map = new HashMap<>();
+    private static final Lock lock = new ReentrantLock();
+    private static final HashMap<String, JsScriptManager> map = new HashMap<>();
 
     private JsScriptManagerFactory() {
     }

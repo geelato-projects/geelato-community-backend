@@ -24,7 +24,6 @@ public class JsProvider {
     private final ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
 
     private final Map<String, JsFunctionInfo> jsFunctionInfoMap = new HashMap<>();
-    // 格式例如：funName(a,b,c)
     private static final Pattern callScriptPattern = Pattern.compile("[\\S]*[\\s]?\\([\\S]*\\)");
 
 

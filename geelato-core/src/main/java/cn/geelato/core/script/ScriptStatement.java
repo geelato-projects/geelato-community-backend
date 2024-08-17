@@ -1,5 +1,8 @@
 package cn.geelato.core.script;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
 /**
@@ -7,24 +10,14 @@ import java.util.List;
  *
  * @author geemeta
  */
+@Setter
+@Getter
 public class ScriptStatement {
     private String id;
     private List<String> content;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public List<String> getContent() {
-        return content;
-    }
-
     public String getContentString() {
-        if (content == null || content.size() == 0) {
+        if (content == null || content.isEmpty()) {
             return "";
         }
         StringBuilder sb = new StringBuilder(content.size());
@@ -35,7 +28,4 @@ public class ScriptStatement {
         return sb.toString().trim();
     }
 
-    public void setContent(List<String> content) {
-        this.content = content;
-    }
 }

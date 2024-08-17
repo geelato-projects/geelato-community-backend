@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class JsScriptLexer extends AbstractScriptLexer {
 
-    private static Pattern splitPattern = Pattern.compile("[ ]*function[ ]+[\\w]*[ ]*\\(");
+    private static final Pattern splitPattern = Pattern.compile("[ ]*function[ ]+[\\w]*[ ]*\\(");
 
     @Override
     protected Pattern getSplitPattern() {

@@ -35,6 +35,7 @@ import java.util.*;
  * Created by hongxueqian on 14-3-23.
  */
 @Slf4j
+@SuppressWarnings({"rawtypes","unchecked"})
 public class MetaReflex {
 
     /**
@@ -120,6 +121,7 @@ public class MetaReflex {
         em.setTableMeta(getTableMeta(clazz));
         em.setEntityName(em.getTableMeta().getEntityName());
         em.setEntityTitle(em.getTableMeta().getTitle());
+        em.setEntityType(EntityType.Class);
         em.setClassType(clazz);
 
         Collection<TableForeign> tableForeigns = new ArrayList<>();

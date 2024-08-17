@@ -27,7 +27,7 @@ public class Base64Info {
             info.setType(attach.getType());
             info.setSize(attach.getSize());
             File aFile = new File(attach.getPath());
-            info.setFile((aFile != null && aFile.exists()) ? aFile : null);
+            info.setFile(aFile.exists() ? aFile : null);
         }
         return info;
     }

@@ -64,7 +64,7 @@ public class PageController extends BaseController {
             User user = Ctx.getCurrentUser();
             // 用户自定义信息
             ApiPagedResult apiPagedResult = ruleService.queryForMapList("{\"platform_my_page_custom\":{\"@fs\":\"id,cfg,pageId\",\"creator|eq\":\"" + user.getUserId() + "\",\"pageId|eq\":\""+page.getId()+"\",\"delStatus|eq\":0,\"@p\":\"1,1\"}}", false);
-            if (apiPagedResult.getSize() > 0) {
+            if (apiPagedResult.getDataSize() > 0) {
                 pageMap.put("pageCustom", ((List) apiPagedResult.getData()).get(0));
             }else{
                 pageMap.put("pageCustom", null);
@@ -88,10 +88,5 @@ public class PageController extends BaseController {
             apiResult.error(e);
         }
         return apiResult;
-    }
-    @RequestMapping(value = {"loggertest"}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
-    public ApiResult loggertest() {
-        throw new DaoException("test");
     }
 }

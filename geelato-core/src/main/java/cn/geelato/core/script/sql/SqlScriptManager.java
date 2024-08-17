@@ -84,7 +84,7 @@ public class SqlScriptManager extends AbstractScriptManager {
     }
 
     @Override
-    public void loadDb(String sqlId) {
+    public void loadDb() {
 
     }
 }

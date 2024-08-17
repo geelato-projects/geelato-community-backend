@@ -22,10 +22,9 @@ public class BizMvelRuleManager extends AbstractScriptManager {
     }
 
     /**
-     * @param sqlId 为空时，从默认的资源表platform_resources中获取
      */
     @Override
-    public void loadDb(String sqlId) {
+    public void loadDb() {
         //暂时不知道用法
 //        if (StringUtils.isEmpty(sqlId)) {
 //            List<Map<String, Object>> mapList = dao.queryForMapList(Resources.class, "type", "biz-rule-mvel");

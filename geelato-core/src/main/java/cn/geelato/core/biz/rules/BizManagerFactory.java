@@ -11,9 +11,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author geemeta
  */
 public class BizManagerFactory {
-    private static Lock lock = new ReentrantLock();
-    private static HashMap<String, BizRuleScriptManager> bizRuleScriptManagerHashMap = new HashMap<>();
-    private static HashMap<String, BizMvelRuleManager> bizMvelRuleManagerHashMap = new HashMap<>();
+    private static final Lock lock = new ReentrantLock();
+    private static final HashMap<String, BizRuleScriptManager> bizRuleScriptManagerHashMap = new HashMap<>();
+    private static final HashMap<String, BizMvelRuleManager> bizMvelRuleManagerHashMap = new HashMap<>();
 
     private BizManagerFactory() {
     }

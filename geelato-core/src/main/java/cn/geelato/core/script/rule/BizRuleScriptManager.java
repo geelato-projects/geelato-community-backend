@@ -54,7 +54,7 @@ public class BizRuleScriptManager extends AbstractScriptManager {
     }
 
     @Override
-    public void loadDb(String sqlId) {
+    public void loadDb() {
 
     }
 
@@ -63,7 +63,6 @@ public class BizRuleScriptManager extends AbstractScriptManager {
      * @param functionName functionName
      * @param paramMap     paramMap中put的key与函数的参数名称需一致，{@link Bindings}
      * @return 执行结果
-     * @throws ScriptException 脚本执行错误
      */
     public Object execute(String functionName, Map<String, Object> paramMap) {
         if (jsProvider.contain(functionName)) {

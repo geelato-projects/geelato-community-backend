@@ -27,7 +27,7 @@ public abstract class AbstractScriptManager {
     protected ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
 
-    public abstract void loadDb(String sqlId);
+    public abstract void loadDb();
 
     /**
      * @param path 文件存放目录,多个目录用逗号分隔，递归加载子目录
@@ -89,5 +89,10 @@ public abstract class AbstractScriptManager {
             log.debug("line:{}", line);
         }
         return lineList;
+    }
+
+    //todo 内容校验
+    protected Boolean validateContent(Object content){
+        return true;
     }
 }

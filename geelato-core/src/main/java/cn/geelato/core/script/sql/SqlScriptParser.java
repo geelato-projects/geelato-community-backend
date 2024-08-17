@@ -31,12 +31,12 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
     public Map<String, String> parse(List<String> lines) {
         HashMap<String, List<Token>> map = getLexer().lexDeep(lines);
         sqlMap = new HashMap<>(map.size());
-        map.entrySet().forEach(entry -> {
+        map.forEach((key, value) -> {
             try {
-                sqlMap.put(entry.getKey(), toJsFunction(entry.getKey(), parseTokens(entry.getValue())));
+                sqlMap.put(key, toJsFunction(key, parseTokens(value)));
                 if (log.isDebugEnabled()) {
-                    log.debug("-- @sql {}", entry.getKey());
-                    log.debug("\r\n{}", sqlMap.get(entry.getKey()));
+                    log.debug("-- @sql {}", key);
+                    log.debug("\r\n{}", sqlMap.get(key));
                 }
             } catch (Exception e) {
                 log.error("", e);
@@ -84,21 +84,16 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
     }
 
     private String tab(int tabCount) {
-        switch (tabCount) {
-            case (1):
-                return "  ";
-            case (2):
-                return "    ";
-            case (3):
-                return "      ";
-            default:
-                return "  ";
-        }
+        return switch (tabCount) {
+            case (2) -> "    ";
+            case (3) -> "      ";
+            default -> "  ";
+        };
     }
 
     private String toJsFunction(String sqlId, String content) {
         StringBuilder jsFunc = new StringBuilder();
-        jsFunc.append("function " + sqlId + "(");
+        jsFunc.append("function ").append(sqlId).append("(");
         jsFunc.append(VAL_NAME);
         jsFunc.append("){\r\n");
         jsFunc.append("  var sql = new Array();");
@@ -115,14 +110,11 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
         } else if (token.getTokenType() == TokenType.Close) {
             return new JsToken(true, "}", TokenType.Close);
         } else {
-            switch (token.getKeyword()) {
-                case ("for"):
-                    return parseFor(token.getValue());
-                case ("if"):
-                    return parseIf(token.getValue());
-                default:
-                    throw new Exception("未支持的关键字：" + token.getKeyword());
-            }
+            return switch (token.getKeyword()) {
+                case ("for") -> parseFor(token.getValue());
+                case ("if") -> parseIf(token.getValue());
+                default -> throw new Exception("未支持的关键字：" + token.getKeyword());
+            };
         }
     }
 
@@ -135,17 +127,12 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
             int startIndex = template.indexOf(VAL_FLAG, matcher.start());
 
             if (isJsCode) {
-                if (VAL_NAME.equals(VAL_FLAG)) {
-                    return template;
-                }
-                StringBuilder sb = new StringBuilder(template);
-                sb.replace(startIndex, startIndex + 1, VAL_NAME);
-                return replace(sb.toString(), isJsCode);
+                return template;
             } else {
                 StringBuilder sb = new StringBuilder();
                 if (startIndex > 0) {
                     sb.append("\"");
-                    sb.append(template.substring(0, startIndex));
+                    sb.append(template, 0, startIndex);
                     sb.append("\"+");
                 }
                 sb.append(matcher.group().replace(VAL_FLAG, VAL_NAME));

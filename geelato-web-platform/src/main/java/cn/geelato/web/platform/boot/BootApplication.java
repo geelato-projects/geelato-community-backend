@@ -44,11 +44,8 @@ public class BootApplication implements CommandLineRunner {
     protected DbGenerateDao dbGenerateDao;
 
     protected boolean isWinOS;
-
-    protected boolean isNeedResetDb = false;
     protected boolean isIgnoreInitData = false;
     // main 接受的参数
-    protected String MAIN_ARGS_RESET_DB = "reset_db";
     protected String MAIN_ARGS_IGNORE_INIT_DATA = "ignore_init_data";
     protected String IGNORE_ENTITY_PREFIX = "ignore_entity_prefix_";
     protected String RESET_ONLY_ENTITY_PREFIX = "reset_entity_only_";
@@ -94,12 +91,9 @@ public class BootApplication implements CommandLineRunner {
 
 
     private void parseStartArgs(String... args) {
-        isNeedResetDb = false;
         isIgnoreInitData = false;
         for (String arg : args) {
-            if (this.MAIN_ARGS_RESET_DB.equals(arg)) {
-                isNeedResetDb = true;
-            } else if (this.MAIN_ARGS_IGNORE_INIT_DATA.equals(arg)) {
+            if (this.MAIN_ARGS_IGNORE_INIT_DATA.equals(arg)) {
                 isIgnoreInitData = true;
             } else {
                 int index = arg.indexOf(IGNORE_ENTITY_PREFIX);
@@ -157,24 +151,8 @@ public class BootApplication implements CommandLineRunner {
         //--2、业务规则
         BizManagerFactory.getBizRuleScriptManager("rule").setDao(dao);
         BizManagerFactory.getBizRuleScriptManager("rule").loadFiles(path + "/geelato/web/platform/rule/");
-        if (isNeedResetDb) {
-            log.info("start reset database");
-            //--3、创建表结构
-            dbGenerateDao.createAllTables(true, ignoreEntityNamePrefixList);
-            //--4、初始化表数据
-            if (!isIgnoreInitData) {
-                String filePaths = getProperty("geelato.init.sql", "/geelato/web/platform/data/init.sql");
-                String[] sqlFiles = filePaths.split(",");
-                for (String sqlFile : sqlFiles) {
-                    InputStream is = this.getClass().getClassLoader().getResourceAsStream(sqlFile);
-                    if (is != null) {
-                        SqlFiles.loadAndExecute(is, dao.getJdbcTemplate(), isWinOS);
-                    }
-                }
-            }
-        }
         BizManagerFactory.getBizMvelRuleManager("mvelRule").setDao(dao);
-        BizManagerFactory.getBizMvelRuleManager("mvelRule").loadDb(null);
+        BizManagerFactory.getBizMvelRuleManager("mvelRule").loadDb();
     }
 
     /**
@@ -187,30 +165,8 @@ public class BootApplication implements CommandLineRunner {
         //--2、业务规则
         BizManagerFactory.getBizRuleScriptManager("rule").setDao(dao);
         BizManagerFactory.getBizRuleScriptManager("rule").loadResource("/geelato/web/platform/rule/**/*.js");
-        if (isNeedResetDb) {
-            log.info("start reset database");
-            //--3、创建表结构
-            dbGenerateDao.createAllTables(true, ignoreEntityNamePrefixList);
-            //--4、初始化表数据
-            if (!isIgnoreInitData) {
-                ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-                String filePaths = getProperty("geelato.init.sql", "/geelato/web/platform/data/init.sql");
-                String[] sqlFiles = filePaths.split(",");
-                for (String sqlFile : sqlFiles) {
-                    try {
-                        Resource[] resources = resolver.getResources(sqlFile);
-                        for (Resource resource : resources) {
-                            InputStream is = resource.getInputStream();
-                            SqlFiles.loadAndExecute(is, dao.getJdbcTemplate(), isWinOS);
-                        }
-                    } catch (IOException e) {
-                        log.error("加载、初始化数据（{}）失败。", sqlFile, e);
-                    }
-                }
-            }
-        }
         BizManagerFactory.getBizMvelRuleManager("mvelRule").setDao(dao);
-        BizManagerFactory.getBizMvelRuleManager("mvelRule").loadDb(null);
+        BizManagerFactory.getBizMvelRuleManager("mvelRule").loadDb();
     }
 
     protected String getProperty(String key, String defaultValue) {

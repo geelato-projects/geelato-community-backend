@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.base.rest;
 
 
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.FileInfo;
 import jakarta.servlet.http.HttpServletRequest;
 import cn.geelato.lang.api.ApiResult;
@@ -28,17 +29,15 @@ import java.util.Random;
  *
  * @author itechgee@126.com
  */
-@Component
-@Controller
-@RequestMapping(value = "/api/file/")
+@ApiRestController("/file/")
 @Slf4j
 public class FileController extends BaseController {
 
     @Value(value = "${geelato.file.root.path}")
     protected String fileRootPath;
 
-    private SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
-    private Random random = new Random();
+    private final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
+    private final Random random = new Random();
 
 
     /**
@@ -47,7 +46,6 @@ public class FileController extends BaseController {
      * @return 上传的字节数，-1表示上传失败
      */
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult uploadFile(@RequestParam("file") MultipartFile file,
                                     HttpServletRequest request) {
         String contentType = file.getContentType();

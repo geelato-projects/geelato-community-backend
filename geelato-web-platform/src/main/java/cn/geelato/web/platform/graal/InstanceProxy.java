@@ -6,9 +6,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class InstanceProxy {
-    @Autowired
-    protected RuleService ruleService;
 
+    private final RuleService ruleService;
+
+    @Autowired
+    public InstanceProxy(RuleService ruleService){
+        this.ruleService=ruleService;
+    }
     public RuleService getRuleService(){
         return  ruleService;
     }

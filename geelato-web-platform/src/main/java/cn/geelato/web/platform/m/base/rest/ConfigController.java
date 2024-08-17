@@ -1,6 +1,9 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.lang.api.NullResult;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.enums.SysConfigPurposeEnum;
+import com.oracle.truffle.js.runtime.objects.Null;
 import jakarta.servlet.http.HttpServletRequest;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.constants.MediaTypes;
@@ -13,15 +16,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
-@Controller
-@RequestMapping(value = "/api/config")
+@ApiRestController("/config")
 public class ConfigController extends BaseController {
 
 
     @RequestMapping(value = {""}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
-    public ApiResult list(HttpServletRequest request) {
-        ApiResult result = new ApiResult();
+    public ApiResult<Map<String, Object>> list(HttpServletRequest request) {
         String tenantCode = request.getParameter("tenantCode");
         String appId = request.getParameter("appId");
         Map<String, SysConfig> configMap = new HashMap<>();
@@ -31,7 +31,7 @@ public class ConfigController extends BaseController {
         Map<String, String> globalConfigMap = new HashMap<>();
         Map<String, String> tenantConfigMap = new HashMap<>();
         Map<String, String> appConfigMap = new HashMap<>();
-        if (configMap != null && !configMap.isEmpty()) {
+        if (!configMap.isEmpty()) {
             for (Map.Entry<String, SysConfig> entry : configMap.entrySet()) {
                 SysConfig config = entry.getValue();
                 if (StringUtils.isEmpty(config.getTenantCode())) {
@@ -49,16 +49,17 @@ public class ConfigController extends BaseController {
 
             }
         }
-        result.setData(rtnConfigMap);
-        return result;
+        return ApiResult.success(rtnConfigMap);
     }
 
     @RequestMapping(value = {"/refresh/{configKey}"}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
-    @ResponseBody
-    public ApiResult refresh(HttpServletRequest request,@PathVariable("configKey") String configKey) {
-        ApiResult result = new ApiResult();
-        EnvManager.singleInstance().refreshConfig(configKey);
-        return result;
+    public ApiResult<NullResult> refresh(@PathVariable("configKey") String configKey) {
+        try{
+            EnvManager.singleInstance().refreshConfig(configKey);
+            return ApiResult.successNoResult();
+        }catch (Exception ex){
+            return ApiResult.fail(ex.getMessage());
+        }
     }
 
     private void pullAll(Map<String, SysConfig> configMap, String purpose) {

@@ -1,5 +1,6 @@
 package cn.geelato.lang.api;
 
+import cn.geelato.lang.constants.ApiResultStatus;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,19 +16,37 @@ public class ApiPagedResult<E> extends ApiResult<E> {
     private long total;
 
     private long page;
-    /**
-     * -- GETTER --
-     *
-     */
+
     private int size;
-    /**
-     * -- GETTER --
-     *
-     */
-    private int dataSize;
-    /**
-     * 元数据信息，一般用于实体查询，对查询结果字段的定义信息
-     */
+
     private Object meta;
+
+    private int dataSize;
+
+    public static <T> ApiPagedResult<T> success(T data,long page,int size,int dataSize,long total) {
+        ApiPagedResult<T> apiPageResult = new ApiPagedResult<>();
+        apiPageResult.setCode(ResultCode.RC200.getCode());
+        apiPageResult.setStatus(ApiResultStatus.SUCCESS);
+        apiPageResult.setMsg(ResultCode.RC200.getMessage());
+        apiPageResult.setData(data);
+        apiPageResult.setPage(page);
+        apiPageResult.setSize(size);
+        apiPageResult.setDataSize(dataSize);
+        apiPageResult.setTotal(total);
+        return apiPageResult;
+    }
+
+    public static <T> ApiPagedResult<T> fail(String message) {
+        return fail(ResultCode.RC500.getCode(), message);
+    }
+
+
+    private static <T> ApiPagedResult<T> fail(int code, String message) {
+        ApiPagedResult<T> apiPagedResult = new ApiPagedResult<>();
+        apiPagedResult.setCode(code);
+        apiPagedResult.setStatus(ApiResultStatus.FAIL);
+        apiPagedResult.setMsg(message);
+        return apiPagedResult;
+    }
 
 }

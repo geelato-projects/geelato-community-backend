@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.security.rest;
 
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,17 +16,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 
-@Controller
-@RequestMapping(value = "/api/sys/account")
+@ApiRestController("/sys/account")
 public class AccountRestController extends BaseController {
 
     @Autowired
     protected AccountService accountService;
 
-    private Logger logger = LoggerFactory.getLogger(AccountRestController.class);
-
     @RequestMapping(method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult create(@RequestBody User user, HttpServletRequest req) {
         accountService.registerUser(user);
         return new ApiResult();

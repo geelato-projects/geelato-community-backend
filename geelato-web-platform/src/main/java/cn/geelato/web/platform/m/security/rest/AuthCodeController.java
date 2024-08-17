@@ -1,7 +1,9 @@
 package cn.geelato.web.platform.m.security.rest;
 
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.security.entity.AuthCodeParams;
 import cn.geelato.web.platform.m.security.service.AuthCodeService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
@@ -20,15 +22,13 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/code")
+@ApiRestController("/code")
+@Slf4j
 public class AuthCodeController extends BaseController {
-    private final Logger logger = LoggerFactory.getLogger(AuthCodeController.class);
     @Autowired
     private AuthCodeService authCodeService;
 
     @RequestMapping(value = "/generate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult generate(@RequestBody Map<String, Object> params) {
         ApiResult result = new ApiResult();
         try {
@@ -40,7 +40,7 @@ public class AuthCodeController extends BaseController {
                 result.error().setMsg(ApiErrorMsg.AUTH_CODE_GET_ERROR);
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
         }
 

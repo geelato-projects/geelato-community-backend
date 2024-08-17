@@ -8,6 +8,7 @@ import java.io.Serializable;
 /**
  * @author geemeta
  */
+@SuppressWarnings("rawtypes")
 public class FieldMeta implements Serializable {
     private final ColumnMeta columnMeta;
     /**

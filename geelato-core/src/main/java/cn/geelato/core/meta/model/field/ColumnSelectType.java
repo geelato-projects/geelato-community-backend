@@ -9,9 +9,10 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@SuppressWarnings("rawtypes")
 public class ColumnSelectType {
     private String group;// 分组名称
-    private String label;// 标题
+    private String label;// 标题S
     private String value;// 内容
     private String mysql;// 数据类型
     private Boolean disabled = false;// 是否禁用

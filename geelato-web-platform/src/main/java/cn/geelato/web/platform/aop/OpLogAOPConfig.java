@@ -33,7 +33,7 @@ public class OpLogAOPConfig {
     @Qualifier("primaryDao")
     private Dao dao;
 
-    private GqlManager gqlManager = GqlManager.singleInstance();
+    private final GqlManager gqlManager = GqlManager.singleInstance();
 
     @Around(value = "@annotation( cn.geelato.web.platform.aop.annotation.OpLog)")
     public Object around(ProceedingJoinPoint proceedingJoinPoint){

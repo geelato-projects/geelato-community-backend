@@ -1,10 +1,12 @@
 package cn.geelato.web.platform.enums;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
  */
+@Getter
 public enum EncodingSerialTypeEnum {
     ORDER("顺序", "order"),
     RANDOM("随机", "random");
@@ -28,11 +30,4 @@ public enum EncodingSerialTypeEnum {
         return null;
     }
 
-    public String getLabel() {
-        return label;
-    }
-
-    public String getValue() {
-        return value;
-    }
 }

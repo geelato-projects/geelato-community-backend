@@ -1,10 +1,12 @@
 package cn.geelato.web.platform.enums;
 
 import cn.geelato.utils.StringUtils;
+import lombok.Getter;
 
 /**
  * @author diabl
  */
+@Getter
 public enum RestfulConfigType {
     SQL("Structured Query Language", "sql"),
     JS("Javascript", "js");
@@ -28,11 +30,4 @@ public enum RestfulConfigType {
         return null;
     }
 
-    public String getLabel() {
-        return label;
-    }
-
-    public String getValue() {
-        return value;
-    }
 }

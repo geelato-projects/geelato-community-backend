@@ -1,11 +1,13 @@
 package cn.geelato.web.platform.enums;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
 /**
  * @author diabl
  */
+@Getter
 public enum ExcelAlignmentEnum {
     LEFT(HorizontalAlignment.LEFT, "left"),
     CENTER(HorizontalAlignment.CENTER, "center"),
@@ -17,14 +19,6 @@ public enum ExcelAlignmentEnum {
     ExcelAlignmentEnum(HorizontalAlignment label, String value) {
         this.label = label;
         this.value = value;
-    }
-
-    public HorizontalAlignment getLabel() {
-        return label;
-    }
-
-    public String getValue() {
-        return value;
     }
 
     public static HorizontalAlignment getLabel(String value) {

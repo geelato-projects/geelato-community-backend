@@ -1,10 +1,12 @@
 package cn.geelato.web.platform.enums;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
  */
+@Getter
 public enum AttachmentSourceEnum {
     PLATFORM_ATTACH("附件表", "attach"), PLATFORM_RESOURCES("资源表", "resources");
 
@@ -14,14 +16,6 @@ public enum AttachmentSourceEnum {
     AttachmentSourceEnum(String label, String value) {
         this.label = label;
         this.value = value;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public String getValue() {
-        return value;
     }
 
     public static String getLabel(String value) {

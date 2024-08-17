@@ -1,11 +1,13 @@
 package cn.geelato.web.platform.enums;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
  * @description: 应用版本来源
  */
+@Getter
 public enum PackageSourceEnum {
     PACKET("当前环境打包", "packet"),
     UPLOAD("版本包上传", "upload"),
@@ -17,14 +19,6 @@ public enum PackageSourceEnum {
     PackageSourceEnum(String label, String value) {
         this.label = label;
         this.value = value;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public String getValue() {
-        return value;
     }
 
     public static String getLabel(String value) {

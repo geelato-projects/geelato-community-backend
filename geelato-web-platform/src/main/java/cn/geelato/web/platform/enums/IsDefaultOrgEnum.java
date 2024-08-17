@@ -1,9 +1,12 @@
 package cn.geelato.web.platform.enums;
 
+import lombok.Getter;
+
 /**
  * @author diabl
  */
 
+@Getter
 public enum IsDefaultOrgEnum {
     IS(1, "是"), NO(0, "否");
 
@@ -15,11 +18,4 @@ public enum IsDefaultOrgEnum {
         this.name = name;
     }
 
-    public int getCode() {
-        return code;
-    }
-
-    public String getName() {
-        return name;
-    }
 }

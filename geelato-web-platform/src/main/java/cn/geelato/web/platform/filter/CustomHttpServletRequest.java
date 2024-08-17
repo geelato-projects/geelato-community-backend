@@ -4,12 +4,13 @@ import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
+import lombok.Getter;
 
 import java.io.*;
 
+@Getter
 public class CustomHttpServletRequest extends HttpServletRequestWrapper {
     private final String body;
-
     public CustomHttpServletRequest(HttpServletRequest request) {
         super(request);
         StringBuilder stringBuilder = new StringBuilder();
@@ -79,7 +80,4 @@ public class CustomHttpServletRequest extends HttpServletRequestWrapper {
         return new BufferedReader(new InputStreamReader(this.getInputStream()));
     }
 
-    public String getBody() {
-        return this.body;
-    }
 }

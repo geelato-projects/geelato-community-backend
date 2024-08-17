@@ -1,10 +1,12 @@
 package cn.geelato.web.platform.enums;
 
 import cn.geelato.utils.StringUtils;
+import lombok.Getter;
 
 /**
  * @author diabl
  */
+@Getter
 public enum SysConfigValueTypeEnum {
     STRING("字符串", "string"),
     NUMBER("数值", "number"),
@@ -34,11 +36,4 @@ public enum SysConfigValueTypeEnum {
         return null;
     }
 
-    public String getLabel() {
-        return label;
-    }
-
-    public String getValue() {
-        return value;
-    }
 }

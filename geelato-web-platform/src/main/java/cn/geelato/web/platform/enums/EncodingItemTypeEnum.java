@@ -1,10 +1,12 @@
 package cn.geelato.web.platform.enums;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
  */
+@Getter
 public enum EncodingItemTypeEnum {
     CONSTANT("固定字段", "constant"),
     VARIABLE("系统变量", "variable"),
@@ -31,11 +33,4 @@ public enum EncodingItemTypeEnum {
         return null;
     }
 
-    public String getLabel() {
-        return label;
-    }
-
-    public String getValue() {
-        return value;
-    }
 }

@@ -1,10 +1,12 @@
 package cn.geelato.web.platform.enums;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
  */
+@Getter
 public enum ValidTypeEnum {
     MOBILE("mobilePhone", "1"),
     MAIL("email", "2"),
@@ -16,14 +18,6 @@ public enum ValidTypeEnum {
     ValidTypeEnum(String label, String value) {
         this.label = label;
         this.value = value;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public String getValue() {
-        return value;
     }
 
     public static String getLabel(String value) {

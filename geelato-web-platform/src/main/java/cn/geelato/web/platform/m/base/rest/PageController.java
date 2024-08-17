@@ -76,7 +76,7 @@ public class PageController extends BaseController {
             params.put("appId", page.getAppId());
             params.put("type", "ep");
             List<Map<String, Object>> permsList = dao.queryForMapList("query_permission_code_and_rule_by_role_user", params);
-            if (permsList != null && permsList.size() > 0) {
+            if (permsList != null && !permsList.isEmpty()) {
                 pageMap.put("pagePerms", permsList);
             }else{
                 pageMap.put("pagePerms", null);

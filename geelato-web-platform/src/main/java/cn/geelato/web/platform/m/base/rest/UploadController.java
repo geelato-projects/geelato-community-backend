@@ -217,7 +217,7 @@ public class UploadController extends BaseController {
             params.put("tableName", tableName);
             // params.put("enableStatus", EnableStatusEnum.ENABLED.getCode());
             List<ColumnMeta> columnMetas = devTableColumnService.queryModel(ColumnMeta.class, params);
-            if (columnMetas != null && columnMetas.size() > 0) {
+            if (columnMetas != null && !columnMetas.isEmpty()) {
                 Set<String> fields = new LinkedHashSet<>();
                 for (ColumnMeta meta : columnMetas) {
                     fields.add(String.format("%s %s", meta.getName(), meta.getFieldName()));

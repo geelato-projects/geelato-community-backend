@@ -27,6 +27,8 @@ public class Api extends BaseEntity {
     private String sourceContent;
     private String releaseContent;
     private List<ApiParam> parameters;
+    private String outsideUrl;
+    private int outSideStatus = 0;
 
     @Col(name = "app_id")
     @Title(title = "所属应用")
@@ -80,6 +82,18 @@ public class Api extends BaseEntity {
     @Title(title = "生成的可执行javascript脚本")
     public String getReleaseContent() {
         return releaseContent;
+    }
+
+    @Col(name = "outside_url")
+    @Title(title = "第三方访问地址")
+    public String getOutsideUrl() {
+        return outsideUrl;
+    }
+
+    @Col(name = "outside_status")
+    @Title(title = "第三方访问状态")
+    public int getOutSideStatus() {
+        return outSideStatus;
     }
 
     @Transient

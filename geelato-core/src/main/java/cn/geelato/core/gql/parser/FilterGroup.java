@@ -82,7 +82,7 @@ public class FilterGroup {
         return childFilterGroup;
     }
 
-    public class Filter {
+    public static class Filter {
         public Filter() {
         }
 

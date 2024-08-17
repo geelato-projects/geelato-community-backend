@@ -13,6 +13,8 @@ import cn.geelato.core.meta.model.view.ViewMeta;
 import cn.geelato.utils.DateUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.logging.log4j.util.Strings;
@@ -32,10 +34,15 @@ import java.util.*;
 /**
  * Created by hongxueqian on 14-3-23.
  */
+@Slf4j
 public class MetaReflex {
 
+    /**
+     * -- SETTER --
+     *  如果在spring环境下，可以设置该值，以便可直接获取spring中已创建的bean，不需重新创建
+     */
+    @Setter
     private static ApplicationContext applicationContext;
-    private static final Logger logger = LoggerFactory.getLogger(MetaReflex.class);
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat(DateUtils.DATETIME);
     // 一些类型默认的长度
     public static HashedMap dataTypeDefaultMaxLengthMap = new HashedMap();
@@ -51,19 +58,12 @@ public class MetaReflex {
         dataTypeDefaultMaxLengthMap.put("longText", 4294967295L);
     }
 
-    /**
-     * 如果在spring环境下，可以设置该值，以便可直接获取spring中已创建的bean，不需重新创建
-     */
-    public static void setApplicationContext(ApplicationContext context) {
-        applicationContext = context;
-    }
-
     private static Object getBean(Class clazz) {
         if (applicationContext == null) {
             try {
                 return clazz.getDeclaredConstructor().newInstance();
             } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | InstantiationException e) {
-                logger.error("创建对象失败！", e);
+                log.error("创建对象失败！", e);
             }
             return null;
         } else {
@@ -342,7 +342,7 @@ public class MetaReflex {
                                         }
                                     }
                                 } catch (IllegalAccessException | InvocationTargetException e) {
-                                    logger.error("获取默认值失败:" + clazz.getName() + ">" + fieldName, e);
+                                    log.error("获取默认值失败:{}>{}", clazz.getName(), fieldName, e);
                                 }
 
                                 // 解析外键
@@ -372,7 +372,7 @@ public class MetaReflex {
                         }
                     }
                 } catch (RuntimeException e) {
-                    logger.error("解析" + clazz.getName() + "失败！method:" + method.getName());
+                    log.error("解析{}失败！method:{}", clazz.getName(), method.getName());
                     throw e;
                 }
             }
@@ -542,7 +542,7 @@ public class MetaReflex {
                         }
                     }
                 } catch (RuntimeException e) {
-                    logger.error("解析" + clazz.getName() + "失败！method:" + method.getName());
+                    log.error("解析{}失败！method:{}", clazz.getName(), method.getName());
                     throw e;
                 }
             }
@@ -584,10 +584,10 @@ public class MetaReflex {
                 if (!beforeValue.equals(afterValue)) {
                     jsonResult.append("{\"field\":\"");
                     jsonResult.append(field.getName());
-                    jsonResult.append("\",\"from\":\"" + beforeValue + "\",\"to\":\"" + afterValue + "\"},");
+                    jsonResult.append("\",\"from\":\"").append(beforeValue).append("\",\"to\":\"").append(afterValue).append("\"},");
                 }
             } catch (IllegalAccessException e) {
-                logger.error("", e);
+                log.error("", e);
             } finally {
                 field.setAccessible(false);
                 if (afterField != null) {

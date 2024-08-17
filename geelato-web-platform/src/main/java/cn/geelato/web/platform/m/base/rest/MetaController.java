@@ -2,6 +2,7 @@ package cn.geelato.web.platform.m.base.rest;
 
 
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import jakarta.servlet.http.HttpServletRequest;
@@ -148,22 +149,7 @@ public class MetaController extends BaseController {
 
 
     private String getGql(HttpServletRequest request,String type) {
-        StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader br = null;
-        try {
-            br = request.getReader();
-        } catch (IOException e) {
-            log.error("未能从httpServletRequest中获取gql的内容", e);
-        }
-        String str;
-        try {
-            while ((str = br.readLine()) != null) {
-                stringBuilder.append(str);
-            }
-        } catch (IOException e) {
-            log.error("未能从httpServletRequest中获取gql的内容", e);
-        }
-        String gql=stringBuilder.toString();
+        String gql= GqlUtil.resolveGql(request);
         if(type!=null){
             EntityMeta entityMeta=ruleService.resolveEntity(gql,type);
             DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());

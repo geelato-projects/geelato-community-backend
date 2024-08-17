@@ -12,9 +12,9 @@ import java.util.HashMap;
  */
 public class TypeConverter {
 
-    private static HashMap<Class<?>, String> javaTypeToSqlTypeMap;
+    private static final HashMap<Class<?>, String> javaTypeToSqlTypeMap;
 
-    private static HashMap<String, String> sqlTypeToUITypeMap;
+    private static final HashMap<String, String> sqlTypeToUITypeMap;
 
     private static HashMap<String, String> isNumericUITypeMap;
 

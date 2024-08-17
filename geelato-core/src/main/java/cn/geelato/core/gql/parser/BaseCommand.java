@@ -11,6 +11,7 @@ import java.util.List;
 /**
  * @author geemeta
  */
+@SuppressWarnings("rawtypes")
 public class BaseCommand<E extends BaseCommand> {
     /**
      * TODO 客户端生成的唯一标识，用于缓存

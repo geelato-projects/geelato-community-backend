@@ -1,5 +1,8 @@
-package cn.geelato.web.platform.interceptor;
+package cn.geelato.web.platform.boot;
 
+import cn.geelato.web.platform.interceptor.CacheInterceptor;
+import cn.geelato.web.platform.interceptor.DataSourceInterceptor;
+import cn.geelato.web.platform.interceptor.JWTInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;

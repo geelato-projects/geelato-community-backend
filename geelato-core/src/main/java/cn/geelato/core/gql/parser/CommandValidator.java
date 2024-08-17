@@ -39,7 +39,7 @@ public class CommandValidator {
         return true;
     }
 
-    public boolean validateField(String[] fields, String fieldDescription) {
+    public void validateField(String[] fields, String fieldDescription) {
         Assert.notNull(fields, "待验证的字段数组不能为空。");
         boolean isFail = false;
         for (String field : fields) {
@@ -47,11 +47,10 @@ public class CommandValidator {
                 isFail = true;
             }
         }
-        return !isFail;
     }
 
     public boolean isSuccess() {
-        return message.length() == 0;
+        return message.isEmpty();
     }
 
     public String getMessage() {
@@ -88,10 +87,7 @@ public class CommandValidator {
      */
     public boolean hasPK(String[] fields) {
         String name = entityMeta.getId().getFieldName();
-        if (Arrays.asList(fields).contains(name)) {
-            return true;
-        }
-        return false;
+        return Arrays.asList(fields).contains(name);
     }
 
     /**

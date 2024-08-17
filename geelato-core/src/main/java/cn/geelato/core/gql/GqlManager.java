@@ -32,7 +32,7 @@ public class GqlManager extends AbstractManager {
     }
 
     private  GqlManager() {
-        log.info("DataSourceManager Instancing...");
+        log.info("GqlManager Instancing...");
     }
     //========================================================
     //                  基于元数据  gql                      ==

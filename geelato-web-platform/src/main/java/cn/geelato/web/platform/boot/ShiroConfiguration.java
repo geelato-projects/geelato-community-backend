@@ -2,6 +2,7 @@ package cn.geelato.web.platform.boot;
 
 
 import cn.geelato.web.platform.m.security.service.ShiroDbRealm;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
@@ -22,9 +23,9 @@ import java.util.Map;
  * @author  hongxq
  */
 @Configuration
+@Slf4j
 public class ShiroConfiguration {
 
-    private static final Logger logger = LoggerFactory.getLogger(ShiroConfiguration.class);
 
     @Bean
     public ShiroFilterFactoryBean getShiroFilterFactoryBean(DefaultWebSecurityManager securityManager) {

@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.interceptor;
 
 import cn.geelato.web.platform.filter.CustomHttpServletResponse;
+import cn.geelato.web.platform.utils.GqlUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import cn.geelato.web.platform.cache.CacheService;
@@ -19,7 +20,7 @@ public class CacheInterceptor implements HandlerInterceptor {
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {
         boolean cacheOption= Boolean.parseBoolean(request.getHeader("cache"));
         if(cacheOption){
-            String gql=getGql(request);
+            String gql= GqlUtil.resolveGql(request);
             if(cacheService.getCache(gql)!=null) {
                 response.getWriter().write(cacheService.getCache(gql).toString());
                 return false;
@@ -30,10 +31,10 @@ public class CacheInterceptor implements HandlerInterceptor {
 
     @Override
     public void postHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler, ModelAndView modelAndView) throws Exception {
-        CustomHttpServletResponse customHttpServletResponse=(CustomHttpServletResponse)response;
         boolean cacheOption= Boolean.parseBoolean(request.getHeader("cache"));
         if(cacheOption){
-            String gql=getGql(request);
+            CustomHttpServletResponse customHttpServletResponse=(CustomHttpServletResponse)response;
+            String gql=GqlUtil.resolveGql(request);
             if(cacheService.getCache(gql)==null) {
                 String data= customHttpServletResponse.getData();
                 cacheService.putCache(gql,data);
@@ -49,20 +50,4 @@ public class CacheInterceptor implements HandlerInterceptor {
 
     }
 
-    private String getGql(HttpServletRequest request) {
-        StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader br = null;
-        try {
-            br = request.getReader();
-        } catch (IOException e) {
-        }
-        String str;
-        try {
-            while ((str = br.readLine()) != null) {
-                stringBuilder.append(str);
-            }
-        } catch (IOException e) {
-        }
-        return stringBuilder.toString();
-    }
 }

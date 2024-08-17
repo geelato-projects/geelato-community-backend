@@ -28,7 +28,6 @@ import java.io.IOException;
 /**
  *
  * @author itechgee@126.com
- * @date 2017/6/3.
  */
 @ApiRestController("/meta/")
 @Slf4j

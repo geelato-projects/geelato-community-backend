@@ -1,12 +1,11 @@
 package cn.geelato.core.enums;
 
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.meta.model.field.DataTypeRadius;
+import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
  * @description: 数据类型范围
- * @date 2023/6/20 14:28
  */
 public enum DataTypeRadiusEnum {
     // 字符串，只需要填写最大值。限制字符串填写长度。
@@ -29,8 +28,8 @@ public enum DataTypeRadiusEnum {
 
     DECIMAL(MysqlDataTypeEnum.DECIMAL, new DataTypeRadius(9223372036854775807L, -9223372036854775808L, 60, 60, 30));
 
-    private MysqlDataTypeEnum mysql;
-    private DataTypeRadius radius;
+    private final MysqlDataTypeEnum mysql;
+    private final DataTypeRadius radius;
 
     DataTypeRadiusEnum(MysqlDataTypeEnum mysql, DataTypeRadius radius) {
         this.mysql = mysql;

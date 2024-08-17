@@ -1,18 +1,18 @@
 package cn.geelato.web.platform.m.security.service;
 
-import cn.geelato.web.platform.m.security.entity.*;
-import com.alibaba.fastjson2.JSON;
-import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.enums.EnableStatusEnum;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.enums.EncodingItemTypeEnum;
 import cn.geelato.web.platform.enums.EncodingSerialTypeEnum;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.security.entity.*;
+import com.alibaba.fastjson2.JSON;
+import jakarta.annotation.Resource;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author diabl
- * @date 2023/8/2 11:02
  */
 @Component
 public class EncodingService extends BaseService {
@@ -87,7 +86,7 @@ public class EncodingService extends BaseService {
         List<Object> serials = querySerialsByEncodingLog(encoding);
         logger.info(redisItemKey + " 流水号：" + JSON.toJSONString(serials));
         redisTemplateListRightPush(redisItemKey, serials);
-        redisTemplate.expire(redisItemKey, timeInterval(encoding.getDateType()), TimeUnit.SECONDS);
+        redisTemplate.expire(redisItemKey, DateUtils.timeInterval(encoding.getDateType()), TimeUnit.SECONDS);
     }
 
     public List<Object> redisTemplateEncoding() {
@@ -293,37 +292,6 @@ public class EncodingService extends BaseService {
             serial = null;
         }
         return serial;
-    }
-
-    /**
-     * 时间间隔
-     *
-     * @param dateType（年、月、日）
-     * @return
-     */
-    private long timeInterval(String dateType) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.SECOND, 0); // 将秒数设置为0
-        calendar.set(Calendar.MILLISECOND, 0); // 将毫秒数设置为0
-        if (Arrays.asList(new String[]{"yyyy", "yy"}).contains(dateType)) {
-            calendar.add(Calendar.YEAR, 1); // 将当前时间加上一年
-            calendar.set(Calendar.DAY_OF_MONTH, 1); // 将天数设置为1,表示下个月的第一天
-            calendar.set(Calendar.HOUR_OF_DAY, 0); // 将小时数设置为0,表示当天的零点
-            calendar.set(Calendar.MINUTE, 0); // 将分钟数设置为0
-        } else if (Arrays.asList(new String[]{"yyyyMM", "yyMM"}).contains(dateType)) {
-            calendar.add(Calendar.MONTH, 1); // 将当前时间加上一个月
-            calendar.set(Calendar.DAY_OF_MONTH, 1); // 将天数设置为1,表示下个月的第一天
-            calendar.set(Calendar.HOUR_OF_DAY, 0); // 将小时数设置为0,表示当天的零点
-            calendar.set(Calendar.MINUTE, 0); // 将分钟数设置为0
-        } else if (Arrays.asList(new String[]{"yyyyMMdd", "yyMMdd"}).contains(dateType)) {
-            calendar.add(Calendar.HOUR_OF_DAY, 24); // 将当前时间加上一天
-        } else {
-            return -1;
-        }
-
-        Date tonight = calendar.getTime(); // 获取今天晚上的时间
-        long diff = tonight.getTime() - System.currentTimeMillis(); // 计算时间差(毫秒)
-        return diff / 1000;
     }
 
     /**

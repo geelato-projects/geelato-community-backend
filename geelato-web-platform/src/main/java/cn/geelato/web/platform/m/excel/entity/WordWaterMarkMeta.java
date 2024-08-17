@@ -1,8 +1,11 @@
 package cn.geelato.web.platform.m.excel.entity;
 
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
 import cn.geelato.core.env.entity.User;
+import cn.geelato.utils.DateUtils;
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.logging.log4j.util.Strings;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,8 +15,9 @@ import java.util.regex.Pattern;
 /**
  * @author diabl
  * @description: 水印
- * @date 2024/1/11 13:46
  */
+@Getter
+@Setter
 public class WordWaterMarkMeta {
     public static final int CELL_SPACE = 8;
     public static final int ROW_SPACE = 100;
@@ -22,22 +26,22 @@ public class WordWaterMarkMeta {
     public static final String FONT_COLOR = "#d8d8d8";
     public static final double FONT_SIZE = 20;
     private static final Pattern templatePatten = Pattern.compile("\\$\\{[\\\u4e00-\\\u9fa5,\\w,\\.]+\\}");
-    private static final SimpleDateFormat SDF_DATE = new SimpleDateFormat("yyyy-MM-dd");
-    private static final SimpleDateFormat SDF_TIME = new SimpleDateFormat("HH:mm:ss");
-    private static final SimpleDateFormat SDF_DATETIME = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat SDF_DATE = new SimpleDateFormat(DateUtils.DATE);
+    private static final SimpleDateFormat SDF_TIME = new SimpleDateFormat(DateUtils.TIME);
+    private static final SimpleDateFormat SDF_DATETIME = new SimpleDateFormat(DateUtils.DATETIME);
 
     private String defaultText;
-    //水印列距
+    // 水印列距
     private Integer cellSpace;
-    //水印行距
+    // 水印行距
     private Integer rowSpace;
-    //水印旋转角度
+    // 水印旋转角度
     private Double rotationAngle;
-    //字体名称
+    // 字体名称
     private String fontFamily;
-    //字体颜色
+    // 字体颜色
     private String fontColor;
-    //字体大小
+    // 字体大小
     private Double fontSize;
     private String template;
 
@@ -50,70 +54,6 @@ public class WordWaterMarkMeta {
         meta.setFontColor(WordWaterMarkMeta.FONT_COLOR);
         meta.setFontSize(WordWaterMarkMeta.FONT_SIZE);
         return meta;
-    }
-
-    public String getDefaultText() {
-        return defaultText;
-    }
-
-    public void setDefaultText(String defaultText) {
-        this.defaultText = defaultText;
-    }
-
-    public Integer getCellSpace() {
-        return cellSpace;
-    }
-
-    public void setCellSpace(Integer cellSpace) {
-        this.cellSpace = cellSpace;
-    }
-
-    public Integer getRowSpace() {
-        return rowSpace;
-    }
-
-    public void setRowSpace(Integer rowSpace) {
-        this.rowSpace = rowSpace;
-    }
-
-    public Double getRotationAngle() {
-        return rotationAngle;
-    }
-
-    public void setRotationAngle(Double rotationAngle) {
-        this.rotationAngle = rotationAngle;
-    }
-
-    public String getFontFamily() {
-        return fontFamily;
-    }
-
-    public void setFontFamily(String fontFamily) {
-        this.fontFamily = fontFamily;
-    }
-
-    public String getFontColor() {
-        return fontColor;
-    }
-
-    public void setFontColor(String fontColor) {
-        this.fontColor = fontColor;
-    }
-
-    public Double getFontSize() {
-        return fontSize;
-    }
-
-    public void setFontSize(Double fontSize) {
-        this.fontSize = fontSize;
-    }
-
-    public String getTemplate() {
-        return template;
-    }
-
-    public void setTemplate(String template) {
-        this.template = template;
     }
 
     public void afterSet() {

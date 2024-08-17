@@ -1,15 +1,30 @@
 package cn.geelato.utils;
 
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
  * @author geemeta
  */
 public class DateUtils {
+    public static final String YEAR = "yyyy";
+    public static final String MOTH = "yyyy-MM";
+    public static final String DATE = "yyyy-MM-dd";
+    public static final String TIME = "HH:mm:ss";
+    public static final String DATESTART = "yyyy-MM-dd 00:00:00";
+    public static final String DATEFINISH = "yyyy-MM-dd 23:59:59";
+    public static final String DATEVARIETY = "yyyyMMddHHmmss";
+    public static final String DATETIME = "yyyy-MM-dd HH:mm:ss";
+    public static final String TIMESTAMP = "yyyy-MM-dd HH:mm:ss.SSS";
+
+    public static final String TIMEZONE = "GMT+8";
+
     public static Date asDate(LocalDate localDate) {
         return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
@@ -24,5 +39,52 @@ public class DateUtils {
 
     public static LocalDateTime asLocalDateTime(Date date) {
         return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
+
+    /**
+     * 文件上传日期路径 yyyy/MM/dd/HH/mm/
+     *
+     * @return
+     */
+    public static String getAttachDatePath() {
+        Date date = new Date();
+        SimpleDateFormat yyyyFt = new SimpleDateFormat("yyyy");
+        SimpleDateFormat MMFt = new SimpleDateFormat("MM");
+        SimpleDateFormat ddFt = new SimpleDateFormat("dd");
+        SimpleDateFormat HHFt = new SimpleDateFormat("HH");
+        SimpleDateFormat mmFt = new SimpleDateFormat("mm");
+
+        return String.format("%s/%s/%s/%s/%s/", yyyyFt.format(date), MMFt.format(date), ddFt.format(date), HHFt.format(date), mmFt.format(date));
+    }
+
+    /**
+     * 时间间隔
+     *
+     * @param dateType（年、月、日）
+     * @return
+     */
+    public static long timeInterval(String dateType) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.SECOND, 0); // 将秒数设置为0
+        calendar.set(Calendar.MILLISECOND, 0); // 将毫秒数设置为0
+        if (Arrays.asList(new String[]{"yyyy", "yy"}).contains(dateType)) {
+            calendar.add(Calendar.YEAR, 1); // 将当前时间加上一年
+            calendar.set(Calendar.DAY_OF_MONTH, 1); // 将天数设置为1,表示下个月的第一天
+            calendar.set(Calendar.HOUR_OF_DAY, 0); // 将小时数设置为0,表示当天的零点
+            calendar.set(Calendar.MINUTE, 0); // 将分钟数设置为0
+        } else if (Arrays.asList(new String[]{"yyyyMM", "yyMM"}).contains(dateType)) {
+            calendar.add(Calendar.MONTH, 1); // 将当前时间加上一个月
+            calendar.set(Calendar.DAY_OF_MONTH, 1); // 将天数设置为1,表示下个月的第一天
+            calendar.set(Calendar.HOUR_OF_DAY, 0); // 将小时数设置为0,表示当天的零点
+            calendar.set(Calendar.MINUTE, 0); // 将分钟数设置为0
+        } else if (Arrays.asList(new String[]{"yyyyMMdd", "yyMMdd"}).contains(dateType)) {
+            calendar.add(Calendar.HOUR_OF_DAY, 24); // 将当前时间加上一天
+        } else {
+            return -1;
+        }
+
+        Date tonight = calendar.getTime(); // 获取今天晚上的时间
+        long diff = tonight.getTime() - System.currentTimeMillis(); // 计算时间差(毫秒)
+        return diff / 1000;
     }
 }

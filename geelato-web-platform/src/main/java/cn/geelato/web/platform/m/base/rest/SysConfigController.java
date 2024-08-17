@@ -1,5 +1,14 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.core.constants.ColumnDefault;
+import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.enums.EnableStatusEnum;
+import cn.geelato.core.env.EnvManager;
+import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.AttachService;
@@ -7,13 +16,6 @@ import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.security.entity.DataItems;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.enums.EnableStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +27,6 @@ import java.util.*;
 
 /**
  * @author diabl
- * @date 2023/9/15 10:49
  */
 @Controller
 @RequestMapping(value = "/api/sys/config")
@@ -82,10 +83,14 @@ public class SysConfigController extends BaseController {
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
     @ResponseBody
-    public ApiResult get(@PathVariable(required = true) String id) {
+    public ApiResult get(@PathVariable(required = true) String id, boolean encrypt) {
         ApiResult result = new ApiResult();
         try {
             SysConfig model = sysConfigService.getModel(CLAZZ, id);
+            model.afterSet();
+            if (encrypt && model.isEncrypted()) {
+                SysConfigService.decrypt(model);
+            }
             model.setSm2Key(null);
             result.setData(model);
         } catch (Exception e) {
@@ -101,11 +106,15 @@ public class SysConfigController extends BaseController {
     public ApiResult createOrUpdate(@RequestBody SysConfig form) {
         ApiResult result = new ApiResult();
         try {
+            form.afterSet();
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
                 result.setData(sysConfigService.updateModel(form));
             } else {
                 result.setData(sysConfigService.createModel(form));
+            }
+            if (ColumnDefault.ENABLE_STATUS_VALUE == form.getEnableStatus()) {
+                EnvManager.singleInstance().refreshConfig(form.getConfigKey());
             }
         } catch (Exception e) {
             logger.error(e.getMessage());

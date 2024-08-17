@@ -1,13 +1,13 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.platform.m.base.entity.CustomRestful;
-import cn.geelato.web.platform.m.base.service.RestfulService;
+import cn.geelato.web.platform.m.base.entity.App;
+import cn.geelato.web.platform.m.base.entity.AppSqlMap;
+import cn.geelato.web.platform.m.base.service.AppSqlMapService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -17,25 +17,28 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author diabl
  */
 @Controller
-@RequestMapping(value = "/api/restful/")
-public class RestfulController extends BaseController {
+@RequestMapping(value = "/api/app/sql")
+public class AppSqlMapController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
-    private static final Class<CustomRestful> CLAZZ = CustomRestful.class;
+    private static final Class<AppSqlMap> CLAZZ = AppSqlMap.class;
 
     static {
-        OPERATORMAP.put("contains", Arrays.asList("title", "keyName", "description"));
+        OPERATORMAP.put("contains", Arrays.asList("appName", "sqlTitle", "sqlKey"));
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private final Logger logger = LoggerFactory.getLogger(RestfulController.class);
+    private final Logger logger = LoggerFactory.getLogger(AppSqlMapController.class);
     @Autowired
-    private RestfulService restfulService;
+    private AppSqlMapService appSqlMapService;
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
     @ResponseBody
@@ -44,7 +47,23 @@ public class RestfulController extends BaseController {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = restfulService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            result = appSqlMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+        }
+
+        return result;
+    }
+
+    @RequestMapping(value = "/pageQueryOf", method = RequestMethod.GET)
+    @ResponseBody
+    public ApiPagedResult pageQueryOf(HttpServletRequest req) {
+        ApiPagedResult result = new ApiPagedResult();
+        try {
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
+            Map<String, Object> params = this.getQueryParameters(req);
+            result = appSqlMapService.pageQueryModel("page_query_platform_app_r_sql", params, pageQueryRequest);
         } catch (Exception e) {
             logger.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
@@ -56,11 +75,12 @@ public class RestfulController extends BaseController {
     @RequestMapping(value = "/query", method = RequestMethod.GET)
     @ResponseBody
     public ApiResult query(HttpServletRequest req) {
-        ApiResult result = new ApiResult();
+        ApiResult result = new ApiResult<>();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
-            result.setData(restfulService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
+            List<AppSqlMap> list = appSqlMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
+            result.setData(list);
         } catch (Exception e) {
             logger.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
@@ -74,7 +94,7 @@ public class RestfulController extends BaseController {
     public ApiResult get(@PathVariable(required = true) String id) {
         ApiResult result = new ApiResult();
         try {
-            result.setData(restfulService.getModel(CLAZZ, id));
+            result.setData(appSqlMapService.getModel(CLAZZ, id));
         } catch (Exception e) {
             logger.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
@@ -85,13 +105,15 @@ public class RestfulController extends BaseController {
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     @ResponseBody
-    public ApiResult createOrUpdate(@RequestBody CustomRestful form) {
+    public ApiResult createOrUpdate(@RequestBody AppSqlMap form) {
         ApiResult result = new ApiResult();
         try {
+            appSqlMapService.after(form);
+            // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
-                result.setData(restfulService.updateModel(form));
+                result.setData(appSqlMapService.updateModel(form));
             } else {
-                result.setData(restfulService.createModel(form));
+                result.setData(appSqlMapService.createModel(form));
             }
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -103,34 +125,15 @@ public class RestfulController extends BaseController {
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
     @ResponseBody
-    public ApiResult isDelete(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<App> isDelete(@PathVariable(required = true) String id) {
+        ApiResult<App> result = new ApiResult<>();
         try {
-            CustomRestful model = restfulService.getModel(CLAZZ, id);
+            AppSqlMap model = appSqlMapService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
-            restfulService.isDeleteModel(model);
+            appSqlMapService.isDeleteModel(model);
         } catch (Exception e) {
             logger.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
-        }
-
-        return result;
-    }
-
-    @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    @ResponseBody
-    public ApiResult validate(@RequestBody CustomRestful form) {
-        ApiResult result = new ApiResult();
-        try {
-            Map<String, String> params = new HashMap<>();
-            params.put("key_name", form.getKeyName());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
-            params.put("app_id", form.getAppId());
-            params.put("tenant_code", form.getTenantCode());
-            result.setData(restfulService.validate("platform_restful", form.getId(), params));
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.VALIDATE_FAIL);
         }
 
         return result;

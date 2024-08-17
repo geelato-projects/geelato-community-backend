@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.web.platform.m.base.entity.AppRestfulMap;
-import cn.geelato.web.platform.m.base.entity.CustomRestful;
+import cn.geelato.web.platform.m.base.entity.AppSqlMap;
+import cn.geelato.web.platform.m.base.entity.CustomSql;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -14,24 +14,24 @@ import java.util.Map;
  * @author diabl
  */
 @Component
-public class RestfulService extends BaseService {
+public class SqlService extends BaseService {
     @Lazy
     @Autowired
-    private AppRestfulMapService appRestfulMapService;
+    private AppSqlMapService appSqlMapService;
 
     /**
      * 逻辑删除
      *
      * @param model
      */
-    public void isDeleteModel(CustomRestful model) {
+    public void isDeleteModel(CustomSql model) {
         // 删除关联申请
         Map<String, Object> params = new HashMap<>();
         params.put("restfulId", model.getId());
-        List<AppRestfulMap> list = appRestfulMapService.queryModel(AppRestfulMap.class, params);
+        List<AppSqlMap> list = appSqlMapService.queryModel(AppSqlMap.class, params);
         if (list != null && list.size() > 0) {
-            for (AppRestfulMap map : list) {
-                appRestfulMapService.isDeleteModel(map);
+            for (AppSqlMap map : list) {
+                appSqlMapService.isDeleteModel(map);
             }
         }
         // 删除

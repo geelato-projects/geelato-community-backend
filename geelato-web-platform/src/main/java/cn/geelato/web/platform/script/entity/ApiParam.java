@@ -5,12 +5,14 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Setter;
 
 import java.util.List;
 
 /**
  * @author diabl
  */
+@Setter
 @Entity(name = "platform_api_param", table = "platform_api_param")
 @Title(title = "接口服务参数")
 public class ApiParam extends BaseEntity {
@@ -33,18 +35,10 @@ public class ApiParam extends BaseEntity {
         return appId;
     }
 
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
     @Col(name = "api_id")
     @Title(title = "所属接口")
     public String getApiId() {
         return apiId;
-    }
-
-    public void setApiId(String apiId) {
-        this.apiId = apiId;
     }
 
     @Col(name = "param_type")
@@ -53,18 +47,10 @@ public class ApiParam extends BaseEntity {
         return paramType;
     }
 
-    public void setParamType(String paramType) {
-        this.paramType = paramType;
-    }
-
     @Col(name = "name")
     @Title(title = "参数名称")
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @Col(name = "data_type")
@@ -73,18 +59,10 @@ public class ApiParam extends BaseEntity {
         return dataType;
     }
 
-    public void setDataType(String dataType) {
-        this.dataType = dataType;
-    }
-
     @Col(name = "default_value")
     @Title(title = "参数默认值")
     public String getDefaultValue() {
         return defaultValue;
-    }
-
-    public void setDefaultValue(String defaultValue) {
-        this.defaultValue = defaultValue;
     }
 
     @Col(name = "demo_value")
@@ -93,18 +71,10 @@ public class ApiParam extends BaseEntity {
         return demoValue;
     }
 
-    public void setDemoValue(String demoValue) {
-        this.demoValue = demoValue;
-    }
-
     @Col(name = "required")
     @Title(title = "是否必填")
     public boolean isRequired() {
         return required;
-    }
-
-    public void setRequired(boolean required) {
-        this.required = required;
     }
 
     @Col(name = "remark")
@@ -113,18 +83,10 @@ public class ApiParam extends BaseEntity {
         return remark;
     }
 
-    public void setRemark(String remark) {
-        this.remark = remark;
-    }
-
     @Col(name = "pid")
     @Title(title = "父级ID")
     public String getPid() {
         return pid;
-    }
-
-    public void setPid(String pid) {
-        this.pid = pid;
     }
 
     @Col(name = "body_type")
@@ -133,16 +95,8 @@ public class ApiParam extends BaseEntity {
         return bodyType;
     }
 
-    public void setBodyType(String bodyType) {
-        this.bodyType = bodyType;
-    }
-
     @Transient
     public List<ApiParam> getChildren() {
         return children;
-    }
-
-    public void setChildren(List<ApiParam> children) {
-        this.children = children;
     }
 }

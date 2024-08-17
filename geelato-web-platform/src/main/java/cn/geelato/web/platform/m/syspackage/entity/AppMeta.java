@@ -1,29 +1,20 @@
 package cn.geelato.web.platform.m.syspackage.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * @author diabl
+ */
+@Getter
+@Setter
 public class AppMeta {
 
-    public AppMeta(String metaName,Object metaData){
-        this.metaName=metaName;
-        this.metaData=metaData;
-    }
-
     private String metaName;
-
     private Object metaData;
 
-    public String getMetaName() {
-        return metaName;
-    }
-
-    public void setMetaName(String metaName) {
+    public AppMeta(String metaName, Object metaData) {
         this.metaName = metaName;
-    }
-
-    public Object getMetaData() {
-        return metaData;
-    }
-
-    public void setMetaData(Object metaData) {
         this.metaData = metaData;
     }
 }

@@ -5,13 +5,15 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Setter;
 
 /**
  * @author diabl
  */
-@Entity(name = "platform_restful")
+@Setter
+@Entity(name = "platform_sql")
 @Title(title = "自定义接口编排")
-public class CustomRestful extends BaseEntity {
+public class CustomSql extends BaseEntity {
     private String appId;
     private String title;
     private String keyName;
@@ -27,18 +29,10 @@ public class CustomRestful extends BaseEntity {
         return appId;
     }
 
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
     @Col(name = "title")
     @Title(title = "标题")
     public String getTitle() {
         return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     @Col(name = "key_name")
@@ -47,18 +41,10 @@ public class CustomRestful extends BaseEntity {
         return keyName;
     }
 
-    public void setKeyName(String keyName) {
-        this.keyName = keyName;
-    }
-
     @Col(name = "parameter_definition")
     @Title(title = "参数定义")
     public String getParameterDefinition() {
         return parameterDefinition;
-    }
-
-    public void setParameterDefinition(String parameterDefinition) {
-        this.parameterDefinition = parameterDefinition;
     }
 
     @Col(name = "description")
@@ -67,18 +53,10 @@ public class CustomRestful extends BaseEntity {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     @Col(name = "enable_status")
     @Title(title = "是否启用")
     public int getEnableStatus() {
         return enableStatus;
-    }
-
-    public void setEnableStatus(int enableStatus) {
-        this.enableStatus = enableStatus;
     }
 
     @Col(name = "config_type")
@@ -87,17 +65,9 @@ public class CustomRestful extends BaseEntity {
         return configType;
     }
 
-    public void setConfigType(String configType) {
-        this.configType = configType;
-    }
-
     @Col(name = "encoding_content")
     @Title(title = "编码内容")
     public String getEncodingContent() {
         return encodingContent;
-    }
-
-    public void setEncodingContent(String encodingContent) {
-        this.encodingContent = encodingContent;
     }
 }

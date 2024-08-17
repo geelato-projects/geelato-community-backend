@@ -74,6 +74,31 @@ public class ApiController extends BaseController {
         return result;
     }
 
+    @RequestMapping(value = "/queryGroupName", method = RequestMethod.GET)
+    @ResponseBody
+    public ApiResult queryGroupName(HttpServletRequest req) {
+        ApiResult result = new ApiResult();
+        try {
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
+            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            List<Api> list = apiService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
+            List<String> groupNames = new ArrayList<>();
+            if (list != null && list.size() > 0) {
+                for (Api api : list) {
+                    if (Strings.isNotBlank(api.getGroupName()) && !groupNames.contains(api.getGroupName())) {
+                        groupNames.add(api.getGroupName());
+                    }
+                }
+            }
+            result.setData(groupNames);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+        }
+
+        return result;
+    }
+
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
     @ResponseBody
     public ApiResult get(@PathVariable(required = true) String id) {

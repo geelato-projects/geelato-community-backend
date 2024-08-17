@@ -4,7 +4,6 @@ import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
- * @date 2023/9/27 11:09
  */
 public enum PermissionTypeEnum {
     DATA("数据权限", "dp"),

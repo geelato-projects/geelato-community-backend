@@ -6,6 +6,8 @@ import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.SimpleFieldMeta;
 import cn.geelato.core.meta.model.view.ViewMeta;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.util.Assert;
 
 import java.util.*;

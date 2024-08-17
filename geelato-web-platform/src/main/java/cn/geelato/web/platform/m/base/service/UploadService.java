@@ -1,11 +1,12 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.utils.StringUtils;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
+import cn.geelato.utils.DateUtils;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.base.entity.Attach;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
@@ -17,11 +18,10 @@ import java.util.Date;
 
 /**
  * @author diabl
- * @date 2023/7/4 10:48
  */
 @Component
 public class UploadService {
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
     public static final String ROOT_DIRECTORY = "upload";
     public static final String ROOT_CONFIG_DIRECTORY = "/upload/config";
     public static final String ROOT_CONVERT_DIRECTORY = "/upload/convert";
@@ -44,13 +44,7 @@ public class UploadService {
         }
 
         // 处理日期路径
-        Date date = new Date();
-        SimpleDateFormat yyyyFt = new SimpleDateFormat("yyyy");
-        SimpleDateFormat MMFt = new SimpleDateFormat("MM");
-        SimpleDateFormat ddFt = new SimpleDateFormat("dd");
-        SimpleDateFormat HHFt = new SimpleDateFormat("HH");
-        SimpleDateFormat mmFt = new SimpleDateFormat("mm");
-        String datePath = String.format("%s/%s/%s/%s/%s/", yyyyFt.format(date), MMFt.format(date), ddFt.format(date), HHFt.format(date), mmFt.format(date));
+        String datePath = DateUtils.getAttachDatePath();
 
         // 处理文件名称
         if (isRename) {
@@ -154,6 +148,7 @@ public class UploadService {
 
     /**
      * 文件后缀
+     *
      * @param fileName 文件名称
      * @return 例：xlsx，不包含.
      */
@@ -161,7 +156,7 @@ public class UploadService {
         if (StringUtils.isNotBlank(fileName)) {
             int lastIndexOfDot = fileName.lastIndexOf('.');
             if (lastIndexOfDot != -1) {
-                return fileName.substring(lastIndexOfDot+1);
+                return fileName.substring(lastIndexOfDot + 1);
             }
         }
 

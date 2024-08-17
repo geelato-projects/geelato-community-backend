@@ -34,7 +34,6 @@ import java.util.*;
 
 /**
  * @author diabl
- * @date 2024/4/29 10:27
  */
 @ApiRestController("/app/version")
 @Slf4j

@@ -13,7 +13,6 @@ import java.util.Map;
 
 /**
  * @author diabl
- * @date 2023/9/15 10:56
  */
 @Component
 public class SysConfigService extends BaseService {
@@ -84,6 +83,7 @@ public class SysConfigService extends BaseService {
      */
     public SysConfig updateModel(SysConfig model) throws Exception {
         SysConfig oldModel = this.getModel(SysConfig.class, model.getId());
+        oldModel.afterSet();
         if (Strings.isNotBlank(model.getConfigValue())) {
             if (model.isEncrypted() && oldModel.isEncrypted()) {// 重新加密
                 if (!model.getConfigValue().equals(oldModel.getConfigValue())) {

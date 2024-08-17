@@ -5,19 +5,21 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Setter;
 
 /**
  * @author diabl
  */
-@Entity(name = "platform_app_r_restful")
+@Setter
+@Entity(name = "platform_app_r_sql")
 @Title(title = "应用接口编码关系表")
-public class AppRestfulMap extends BaseEntity {
+public class AppSqlMap extends BaseEntity {
     private String appId;
     private String appName;
-    private String restfulId;
-    private String restfulTitle;
-    private String restfulKey;
-    private String restfulAppId;
+    private String sqlId;
+    private String sqlTitle;
+    private String sqlKey;
+    private String sqlAppId;
     private boolean approvalNeed = false;
     private String approvalStatus;
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
@@ -29,58 +31,34 @@ public class AppRestfulMap extends BaseEntity {
         return appId;
     }
 
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
     @Col(name = "app_name")
     @Title(title = "申请应用名称")
     public String getAppName() {
         return appName;
     }
 
-    public void setAppName(String appName) {
-        this.appName = appName;
-    }
-
-    @Col(name = "restful_id")
+    @Col(name = "sql_id")
     @Title(title = "接口编排主键")
-    public String getRestfulId() {
-        return restfulId;
+    public String getSqlId() {
+        return sqlId;
     }
 
-    public void setRestfulId(String restfulId) {
-        this.restfulId = restfulId;
-    }
-
-    @Col(name = "restful_title")
+    @Col(name = "sql_title")
     @Title(title = "接口编排标题")
-    public String getRestfulTitle() {
-        return restfulTitle;
+    public String getSqlTitle() {
+        return sqlTitle;
     }
 
-    public void setRestfulTitle(String restfulTitle) {
-        this.restfulTitle = restfulTitle;
-    }
-
-    @Col(name = "restful_key")
+    @Col(name = "sql_key")
     @Title(title = "接口编排键名称")
-    public String getRestfulKey() {
-        return restfulKey;
+    public String getSqlKey() {
+        return sqlKey;
     }
 
-    public void setRestfulKey(String restfulKey) {
-        this.restfulKey = restfulKey;
-    }
-
-    @Col(name = "restful_app_id")
+    @Col(name = "sql_app_id")
     @Title(title = "接口编排所属应用")
-    public String getRestfulAppId() {
-        return restfulAppId;
-    }
-
-    public void setRestfulAppId(String restfulAppId) {
-        this.restfulAppId = restfulAppId;
+    public String getSqlAppId() {
+        return sqlAppId;
     }
 
     @Col(name = "approval_need")
@@ -89,18 +67,10 @@ public class AppRestfulMap extends BaseEntity {
         return approvalNeed;
     }
 
-    public void setApprovalNeed(boolean approvalNeed) {
-        this.approvalNeed = approvalNeed;
-    }
-
     @Col(name = "approval_status")
     @Title(title = "审批状态")
     public String getApprovalStatus() {
         return approvalStatus;
-    }
-
-    public void setApprovalStatus(String approvalStatus) {
-        this.approvalStatus = approvalStatus;
     }
 
     @Col(name = "enable_status")
@@ -109,17 +79,9 @@ public class AppRestfulMap extends BaseEntity {
         return enableStatus;
     }
 
-    public void setEnableStatus(int enableStatus) {
-        this.enableStatus = enableStatus;
-    }
-
     @Col(name = "description")
     @Title(title = "描述")
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 }

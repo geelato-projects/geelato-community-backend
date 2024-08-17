@@ -26,7 +26,6 @@ import java.util.*;
 /**
  * @author diabl
  * @description: XSSFSheet, xlsx
- * @date 2023/10/16 9:43
  */
 @Component
 public class ExcelXSSFReader {
@@ -279,7 +278,7 @@ public class ExcelXSSFReader {
                         businessData.setPrimevalValue(cellValue);
                         businessData.setTransitionValue(cellValue);
                     } catch (Exception ex) {
-                        businessData.setErrorMsg(ex.getMessage());
+                        businessData.addErrorMsg(ex.getMessage());
                     }
                 }
                 businessDataMap.put(data.getName(), businessData);
@@ -310,7 +309,7 @@ public class ExcelXSSFReader {
                     BusinessData msgData = (mapSet.containsKey(key) && mapSet.get(key) != null) ? mapSet.get(key) : new BusinessData();
                     msgData.setYIndex(businessData.getYIndex());
                     msgData.setXIndex(businessData.getXIndex());
-                    msgData.setErrorMsgs(businessData.getErrorMsg());
+                    msgData.addAllErrorMsgs(businessData.getErrorMsg());
                     mapSet.put(key, msgData);
                 }
             }

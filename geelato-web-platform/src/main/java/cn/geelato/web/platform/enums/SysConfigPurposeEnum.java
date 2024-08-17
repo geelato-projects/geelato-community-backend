@@ -4,9 +4,9 @@ import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
- * @date 2024/3/14 9:42
  */
 public enum SysConfigPurposeEnum {
+    ALL("所有", "all"),
     WEBAPP("前端", "webapp"),
     ENDPOINT("后端", "endpoint"),
     WORKFLOW("工作流", "workflow"),

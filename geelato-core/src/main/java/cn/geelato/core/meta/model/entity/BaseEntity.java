@@ -1,9 +1,9 @@
 package cn.geelato.core.meta.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Title;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Setter;
 
 import java.util.Date;

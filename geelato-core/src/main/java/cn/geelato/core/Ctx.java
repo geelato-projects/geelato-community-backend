@@ -27,6 +27,7 @@ public class Ctx extends HashMap<String, String> {
     public static void setCurrentUser(User user){
         threadLocalUser.set(user);
     }
+
     public static void setCurrentTenant(String tenantCode){
         threadLocalTenantCode.set(tenantCode);
     }

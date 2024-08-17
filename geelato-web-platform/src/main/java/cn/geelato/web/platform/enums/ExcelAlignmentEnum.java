@@ -5,7 +5,6 @@ import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
 /**
  * @author diabl
- * @date 2024/5/24 15:42
  */
 public enum ExcelAlignmentEnum {
     LEFT(HorizontalAlignment.LEFT, "left"),

@@ -136,7 +136,7 @@ public class ExcelXSSFWriter {
                         logger.info("通过cellValue:" + cellValue + "获到不到元数据。");
                         continue;
                     }
-                    if (meta.isIsList()) {
+                    if (meta.isList()) {
                         if (!StringUtils.isEmpty(meta.getListVar())) {
                             List<CellMeta> cellMetaList = listCellMetaMap.get(meta.getListVar());
                             if (cellMetaList == null) {
@@ -247,7 +247,7 @@ public class ExcelXSSFWriter {
      */
     public void setMergeScope(XSSFSheet sheet, int rowIndex, List<CellMeta> cellMetaList, Map valueMap, List<Map> valueList, List<List<Integer>> mergeScope) {
         for (CellMeta cellMeta : cellMetaList) {
-            if (cellMeta.getPlaceholderMeta().isIsMerge()) {
+            if (cellMeta.getPlaceholderMeta().isMerge()) {
                 // 获取数据相同的行
                 List<List<Integer>> integerSet = ExcelCommonUtils.getIntegerSet(cellMeta, valueMap, valueList);
                 if (integerSet.size() > 0) {
@@ -284,7 +284,7 @@ public class ExcelXSSFWriter {
     private void setCellValue(XSSFCell cell, PlaceholderMeta meta, Map valueMap, Map listValueMap) {
         // 不是列表，且是变更
         if (meta.isValueComputeModeVar()) {
-            if (meta.isIsList()) {
+            if (meta.isList()) {
                 Object v = listValueMap.get(meta.getVar());
                 setCellValueByValueType(cell, meta, v);
             } else {
@@ -296,7 +296,7 @@ public class ExcelXSSFWriter {
         } else if (meta.isValueComputeModeConst()) {
             setCellValueByValueType(cell, meta, meta.getConstValue());
         } else if (meta.isValueComputeModeExpression()) {
-            Object v = JsProvider.executeExpression(meta.getExpression(), meta.isIsList() ? listValueMap : valueMap);
+            Object v = JsProvider.executeExpression(meta.getExpression(), meta.isList() ? listValueMap : valueMap);
             setCellValueByValueType(cell, meta, v);
         }
     }
@@ -504,10 +504,10 @@ public class ExcelXSSFWriter {
             placeholderMeta.setExpression(row.getCell(4).getStringCellValue());
             placeholderMeta.setValueType(row.getCell(5).getStringCellValue());
             placeholderMeta.setValueComputeMode(row.getCell(6).getStringCellValue());
-            placeholderMeta.setIsList(getBoolean(row.getCell(7)));
-            placeholderMeta.setIsMerge(getBoolean(row.getCell(8)));
-            placeholderMeta.setIsUnique(getBoolean(row.getCell(9)));
-            placeholderMeta.setIsImage(getBoolean(row.getCell(10)));
+            placeholderMeta.setList(getBoolean(row.getCell(7)));
+            placeholderMeta.setMerge(getBoolean(row.getCell(8)));
+            placeholderMeta.setUnique(getBoolean(row.getCell(9)));
+            placeholderMeta.setImage(getBoolean(row.getCell(10)));
             placeholderMeta.setImageWidth(row.getCell(11).getNumericCellValue());
             placeholderMeta.setImageHeight(row.getCell(12).getNumericCellValue());
             placeholderMeta.setDescription(row.getCell(13).getStringCellValue());

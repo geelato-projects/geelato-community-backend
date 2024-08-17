@@ -4,7 +4,6 @@ import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
- * @date 2023/8/2 11:00
  */
 public enum EncodingSerialTypeEnum {
     ORDER("顺序", "order"),

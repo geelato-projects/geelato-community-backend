@@ -4,7 +4,6 @@ import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
- * @date 2024/5/17 18:01
  */
 public enum AttachmentSourceEnum {
     PLATFORM_ATTACH("附件表", "attach"), PLATFORM_RESOURCES("资源表", "resources");

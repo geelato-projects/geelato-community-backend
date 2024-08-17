@@ -1,7 +1,20 @@
 package cn.geelato.web.platform.m.excel.service;
 
-import cn.geelato.web.platform.exception.file.*;
+import cn.geelato.core.enums.MysqlDataTypeEnum;
+import cn.geelato.core.meta.MetaManager;
+import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.core.script.js.JsProvider;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.utils.DateUtils;
+import cn.geelato.utils.UIDGenerator;
+import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.exception.file.FileNotFoundException;
+import cn.geelato.web.platform.exception.file.*;
+import cn.geelato.web.platform.m.base.entity.Attach;
+import cn.geelato.web.platform.m.base.entity.Base64Info;
+import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
@@ -24,20 +37,6 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.core.enums.MysqlDataTypeEnum;
-import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.entity.EntityMeta;
-import cn.geelato.core.meta.model.field.ColumnMeta;
-import cn.geelato.core.meta.model.field.FieldMeta;
-import cn.geelato.core.script.js.JsProvider;
-import cn.geelato.utils.UIDGenerator;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
-import cn.geelato.web.platform.exception.file.*;
-import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.entity.Base64Info;
-import cn.geelato.web.platform.m.base.service.AttachService;
-import cn.geelato.web.platform.m.excel.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +54,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author diabl
- * @date 2024/3/12 14:39
  */
 @Component
 public class ImportExcelService {
@@ -69,8 +67,11 @@ public class ImportExcelService {
     private final Logger logger = LoggerFactory.getLogger(ImportExcelService.class);
     private final MetaManager metaManager = MetaManager.singleInstance();
 
-    private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-    private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final SimpleDateFormat sdf_dv = new SimpleDateFormat(DateUtils.DATEVARIETY);
+    private final SimpleDateFormat sdf_y = new SimpleDateFormat(DateUtils.YEAR);
+    private final SimpleDateFormat sdf_d = new SimpleDateFormat(DateUtils.DATE);
+    private final SimpleDateFormat sdf_t = new SimpleDateFormat(DateUtils.TIME);
+    private final SimpleDateFormat sdf_dt = new SimpleDateFormat(DateUtils.DATETIME);
     @Autowired
     protected RuleService ruleService;
     @Autowired
@@ -136,7 +137,7 @@ public class ImportExcelService {
             if (Strings.isNotBlank(attachId)) {
                 businessFile = getFile(attachId);
                 ExcelCommonUtils.notNull(businessFile, new FileNotFoundException("Business Data File Not Found"));
-                logger.info(String.format("业务数据（%s[%s]）[%s]", businessFile.getName(), businessFile.getId(), sdf.format(new Date())));
+                logger.info(String.format("业务数据（%s[%s]）[%s]", businessFile.getName(), businessFile.getId(), sdf_dt.format(new Date())));
             }
             businessDataMapList = getBusinessData(businessFile, request, businessTypeDataMap, 0);
             // 忽略默认字段
@@ -146,21 +147,21 @@ public class ImportExcelService {
             // 业务数据清洗规则
             businessDataMapList = excelCommonUtils.handleBusinessDataRules(currentUUID, businessDataMapList, businessTypeRuleDataSet);
             System.gc();
-            logger.info(String.format("BusinessData Handle Rule [TRUE] = %s [%s]", (businessDataMapList == null ? 0 : businessDataMapList.size()), sdf.format(new Date())));
+            logger.info(String.format("BusinessData Handle Rule [TRUE] = %s [%s]", (businessDataMapList == null ? 0 : businessDataMapList.size()), sdf_dt.format(new Date())));
             // 需要转化的业务数据
             // businessDataMapList = excelCommonUtils.handleBusinessDataRule(currentUUID, businessDataMapList, true);
-            // logger.info(String.format("BusinessData Handle Rule [TRUE] = %s [%s]", (businessDataMapList == null ? 0 : businessDataMapList.size()), sdf.format(new Date())));
+            // logger.info(String.format("BusinessData Handle Rule [TRUE] = %s [%s]", (businessDataMapList == null ? 0 : businessDataMapList.size()), sdf_dt.format(new Date())));
             // 需要分割的业务数据，多值数据处理
             // businessDataMapList = excelCommonUtils.handleBusinessDataMultiScene(businessDataMapList);
-            // logger.info(String.format("BusinessData Handle Multi Scene = %s [%s]", (businessDataMapList == null ? 0 : businessDataMapList.size()), sdf.format(new Date())));
+            // logger.info(String.format("BusinessData Handle Multi Scene = %s [%s]", (businessDataMapList == null ? 0 : businessDataMapList.size()), sdf_dt.format(new Date())));
             // 需要转化的业务数据
             // businessDataMapList = excelCommonUtils.handleBusinessDataRule(currentUUID, businessDataMapList, false);
-            // logger.info(String.format("BusinessData Handle Rule [FALSE] = %s [%s]", (businessDataMapList == null ? 0 : businessDataMapList.size()), sdf.format(new Date())));
+            // logger.info(String.format("BusinessData Handle Rule [FALSE] = %s [%s]", (businessDataMapList == null ? 0 : businessDataMapList.size()), sdf_dt.format(new Date())));
             // 设置缓存
             List<String> cacheKeys = excelCommonUtils.setCache(currentUUID, businessMetaListMap, businessDataMapList);
-            logger.info(String.format("Redis Template [ADD] = %s [%s]", (cacheKeys == null ? 0 : cacheKeys.size()), sdf.format(new Date())));
+            logger.info(String.format("Redis Template [ADD] = %s [%s]", (cacheKeys == null ? 0 : cacheKeys.size()), sdf_dt.format(new Date())));
             // 获取
-            logger.info(String.format("业务数据解析-开始 [%s]", sdf.format(new Date())));
+            logger.info(String.format("业务数据解析-开始 [%s]", sdf_dt.format(new Date())));
             long parseStart = System.currentTimeMillis();
             Map<ColumnMeta, Map<Object, Long>> repeatedData = new HashMap<>();
             Map<String, List<Map<String, Object>>> tableData = new HashMap<>();
@@ -195,9 +196,9 @@ public class ImportExcelService {
                                 value = getValue(currentUUID, fieldMeta.getColumn(), meta, businessData, valueMap);
                                 // 验证值
                                 Set<String> errorMsg = validateValue(currentUUID, fieldMeta.getColumn(), businessData, value, columnNames);
-                                businessData.setErrorMsgs(errorMsg);
+                                businessData.addAllErrorMsgs(errorMsg);
                             } catch (Exception ex) {
-                                businessData.setErrorMsg(ex.getMessage());
+                                businessData.addErrorMsg(ex.getMessage());
                             }
                         } else if (meta.isEvaluationTypeConst()) {
                             value = meta.getConstValue();
@@ -219,15 +220,15 @@ public class ImportExcelService {
             logger.info(String.format("业务数据解析-结束 用时：%s ms", (System.currentTimeMillis() - parseStart)));
             // 释放缓存
             redisTemplate.delete(cacheKeys);
-            logger.info(String.format("Redis Template [DELETE] [%s]", sdf.format(new Date())));
+            logger.info(String.format("Redis Template [DELETE] [%s]", sdf_dt.format(new Date())));
             // 业务数据校验
             if (!validBusinessData(businessDataMapList) || repeatedData.size() > 0) {
                 Attach errorAttach = writeBusinessData(exportTemplate, businessFile, request, response, businessDataMapList, repeatedData, 0);
-                logger.info(String.format("业务数据校验-错误 [%s]", sdf.format(new Date())));
+                logger.info(String.format("业务数据校验-错误 [%s]", sdf_dt.format(new Date())));
                 return result.error(new FileContentValidFailedException("For more information, see the error file.")).setData(errorAttach);
             }
             // 插入数据 "@biz": "myBizCode",
-            logger.info(String.format("插入业务数据-开始 [%s]", sdf.format(new Date())));
+            logger.info(String.format("插入业务数据-开始 [%s]", sdf_dt.format(new Date())));
             long insertStart = System.currentTimeMillis();
             List<String> returnPks = new ArrayList<>();
             if (!tableData.isEmpty()) {
@@ -469,13 +470,13 @@ public class ImportExcelService {
         }
         if (value != null) {
             if (columnMeta.getDataType().equalsIgnoreCase("year")) {
-                value = new SimpleDateFormat("yyyy").format(value);
+                value = sdf_y.format(value);
             } else if (columnMeta.getDataType().equalsIgnoreCase("date")) {
-                value = new SimpleDateFormat("yyyy-MM-dd").format(value);
+                value = sdf_d.format(value);
             } else if (columnMeta.getDataType().equalsIgnoreCase("time")) {
-                value = new SimpleDateFormat("HH:mm:ss").format(value);
+                value = sdf_t.format(value);
             } else if (columnMeta.getDataType().equalsIgnoreCase("dateTime")) {
-                value = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(value);
+                value = sdf_dt.format(value);
             }
         }
 
@@ -765,7 +766,7 @@ public class ImportExcelService {
             String templateExt = fileName.substring(fileName.lastIndexOf("."));
             String templateName = fileName.substring(0, fileName.lastIndexOf("."));
             // 错误文件 upload/存放表/租户编码/应用Id
-            String errorFileName = String.format("%s：%s%s%s", templateName, "错误提示 ", dateTimeFormat.format(new Date()), templateExt);
+            String errorFileName = String.format("%s：%s%s%s", templateName, "错误提示 ", sdf_dv.format(new Date()), templateExt);
             String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), exportTemplate.getTenantCode(), exportTemplate.getAppId(), errorFileName, true);
             File errorFile = new File(directory);
             // 文件处理

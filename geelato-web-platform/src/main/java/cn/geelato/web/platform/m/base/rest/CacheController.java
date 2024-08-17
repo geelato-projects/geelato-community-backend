@@ -23,7 +23,6 @@ import java.util.*;
  * :
  *
  * @author itechgee@126.com
- * @date 2019/1/1.
  */
 @Controller
 @RequestMapping(value = "/api/cache/")

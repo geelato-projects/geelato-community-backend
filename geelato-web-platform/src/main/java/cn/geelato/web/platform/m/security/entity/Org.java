@@ -20,6 +20,7 @@ public class Org extends BaseSortableEntity {
     private String description;
 
     @Title(title = "编码")
+    @Col(name = "code")
     public String getCode() {
         return code;
     }
@@ -31,6 +32,7 @@ public class Org extends BaseSortableEntity {
     }
 
     @Title(title = "上级组织")
+    @Col(name = "pid")
     public String getPid() {
         return pid;
     }
@@ -48,15 +50,14 @@ public class Org extends BaseSortableEntity {
     }
 
     @Title(title = "状态", description = "0:停用|1:启用")
+    @Col(name = "status")
     public int getStatus() {
         return status;
     }
-
 
     @Title(title = "描述")
     @Col(name = "description", charMaxlength = 1024)
     public String getDescription() {
         return description;
     }
-
 }

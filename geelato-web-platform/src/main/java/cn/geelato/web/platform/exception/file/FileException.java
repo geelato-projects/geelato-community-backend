@@ -5,7 +5,6 @@ import cn.geelato.lang.exception.CoreException;
 
 /**
  * @author diabl
- * @date 2023/10/25 11:28
  */
 public class FileException extends CoreException {
     private static final String MESSAGE = "12 File Exception";

@@ -6,9 +6,14 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Setter;
 
 import java.util.List;
 
+/**
+ * @author diabl
+ */
+@Setter
 @Entity(name = "platform_api", table = "platform_api")
 @Title(title = "服务接口")
 public class Api extends BaseEntity {
@@ -22,15 +27,13 @@ public class Api extends BaseEntity {
     private String sourceContent;
     private String releaseContent;
     private List<ApiParam> parameters;
+    private String outsideUrl;
+    private int outSideStatus = 0;
 
     @Col(name = "app_id")
     @Title(title = "所属应用")
     public String getAppId() {
         return appId;
-    }
-
-    public void setAppId(String appId) {
-        this.appId = appId;
     }
 
     @Col(name = "name")
@@ -39,18 +42,10 @@ public class Api extends BaseEntity {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     @Col(name = "code")
     @Title(title = "接口编码")
     public String getCode() {
         return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
     }
 
     @Col(name = "remark")
@@ -59,18 +54,10 @@ public class Api extends BaseEntity {
         return remark;
     }
 
-    public void setRemark(String remark) {
-        this.remark = remark;
-    }
-
     @Col(name = "version")
     @Title(title = "版本号")
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(Integer version) {
-        this.version = version;
     }
 
     @Col(name = "group_name")
@@ -79,18 +66,10 @@ public class Api extends BaseEntity {
         return groupName;
     }
 
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
-    }
-
     @Col(name = "enable_status")
     @Title(title = "是否启用。0：禁用；1：启用。用于控制是否可以访问该接口服务。")
     public int getEnableStatus() {
         return enableStatus;
-    }
-
-    public void setEnableStatus(int enableStatus) {
-        this.enableStatus = enableStatus;
     }
 
     @Col(name = "source_content")
@@ -99,26 +78,26 @@ public class Api extends BaseEntity {
         return sourceContent;
     }
 
-    public void setSourceContent(String sourceContent) {
-        this.sourceContent = sourceContent;
-    }
-
     @Col(name = "release_content")
     @Title(title = "生成的可执行javascript脚本")
     public String getReleaseContent() {
         return releaseContent;
     }
 
-    public void setReleaseContent(String releaseContent) {
-        this.releaseContent = releaseContent;
+    @Col(name = "outside_url")
+    @Title(title = "第三方访问地址")
+    public String getOutsideUrl() {
+        return outsideUrl;
+    }
+
+    @Col(name = "outside_status")
+    @Title(title = "第三方访问状态")
+    public int getOutSideStatus() {
+        return outSideStatus;
     }
 
     @Transient
     public List<ApiParam> getParameters() {
         return parameters;
-    }
-
-    public void setParameters(List<ApiParam> parameters) {
-        this.parameters = parameters;
     }
 }

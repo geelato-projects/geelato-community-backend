@@ -8,11 +8,12 @@ import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
+import lombok.Setter;
 
 /**
  * Created by hongxueqian on 14-4-12.
  */
-
+@Setter
 @Entity(name = "platform_role")
 @Title(title = "角色")
 public class Role extends BaseSortableEntity implements EntityEnableAble {
@@ -33,17 +34,9 @@ public class Role extends BaseSortableEntity implements EntityEnableAble {
         return appId;
     }
 
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
     @Transient
     public String getAppName() {
         return appName;
-    }
-
-    public void setAppName(String appName) {
-        this.appName = appName;
     }
 
     @Transient
@@ -51,17 +44,10 @@ public class Role extends BaseSortableEntity implements EntityEnableAble {
         return appIds;
     }
 
-    public void setAppIds(String appIds) {
-        this.appIds = appIds;
-    }
-
     @Title(title = "编码")
+    @Col(name = "code")
     public String getCode() {
         return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
     }
 
     @Title(title = "名称")
@@ -70,27 +56,16 @@ public class Role extends BaseSortableEntity implements EntityEnableAble {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     @Title(title = "类型", description = "app | platform，即应用级角色、平台级角色")
+    @Col(name = "type")
     public String getType() {
         return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     @Title(title = "描述")
     @Col(name = "description", charMaxlength = 1024)
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Title(title = "启用状态", description = "1表示启用、0表示未启用")
@@ -100,28 +75,15 @@ public class Role extends BaseSortableEntity implements EntityEnableAble {
         return this.enableStatus;
     }
 
-    @Override
-    public void setEnableStatus(int enableStatus) {
-        this.enableStatus = enableStatus;
-    }
-
-    //    @Title(title = "权重")
-//    @Col(name = "weight")
+    @Title(title = "权重")
+    @Col(name = "weight")
     public Integer getWeight() {
         return weight;
-    }
-
-    public void setWeight(Integer weight) {
-        this.weight = weight;
     }
 
     @Title(title = "是否用于应用")
     @Col(name = "used_app")
     public boolean getUsedApp() {
         return usedApp;
-    }
-
-    public void setUsedApp(boolean usedApp) {
-        this.usedApp = usedApp;
     }
 }

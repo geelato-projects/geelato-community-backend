@@ -1,5 +1,7 @@
 package cn.geelato.web.platform.m.excel.entity;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.web.platform.enums.ExcelColumnTypeEnum;
 import cn.geelato.web.platform.enums.ExcelMultiSceneTypeEnum;
@@ -10,8 +12,9 @@ import java.util.Set;
 /**
  * @author diabl
  * @description: 导入业务数据，每列数据的类型
- * @date 2023/10/12 14:18
  */
+@Getter
+@Setter
 public class BusinessTypeData {
     //业务表格，第一行，每列名称
     private String name;
@@ -27,63 +30,6 @@ public class BusinessTypeData {
     private Set<BusinessTypeRuleData> typeRuleData = new LinkedHashSet<>();
     //备注
     private String remark;
-
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getFormat() {
-        return format;
-    }
-
-    public void setFormat(String format) {
-        this.format = format;
-    }
-
-    public String getMultiSeparator() {
-        return multiSeparator;
-    }
-
-    public void setMultiSeparator(String multiSeparator) {
-        this.multiSeparator = multiSeparator;
-    }
-
-    public String getMultiScene() {
-        return multiScene;
-    }
-
-    public void setMultiScene(String multiScene) {
-        this.multiScene = multiScene;
-    }
-
-    public Set<BusinessTypeRuleData> getTypeRuleData() {
-        return typeRuleData;
-    }
-
-    public void setTypeRuleData(Set<BusinessTypeRuleData> typeRuleData) {
-        this.typeRuleData = typeRuleData;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
-    }
 
     public boolean isMulti() {
         return Strings.isNotBlank(this.multiSeparator);

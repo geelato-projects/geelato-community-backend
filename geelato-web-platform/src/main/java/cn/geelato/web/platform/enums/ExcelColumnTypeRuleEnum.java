@@ -2,7 +2,6 @@ package cn.geelato.web.platform.enums;
 
 /**
  * @author diabl
- * @date 2023/11/1 16:30
  */
 public enum ExcelColumnTypeRuleEnum {
     DELETES,// 删除匹配的字段(rule)

@@ -3,11 +3,12 @@ package cn.geelato.web.platform.m.security.entity;
 
 import cn.geelato.core.meta.annotation.*;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Setter;
 
 /**
- * Created by hongxq on 2015/6/17.
+ * @author hongxq
  */
-
+@Setter
 @Entity(name = "platform_role_r_permission")
 @Title(title = "角色权限关系表")
 public class RolePermissionMap extends BaseEntity {
@@ -25,19 +26,11 @@ public class RolePermissionMap extends BaseEntity {
         return appId;
     }
 
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
     @Title(title = "角色ID")
     @Col(name = "role_id", refTables = "platform_role", refColName = "platform_role.id")
     @ForeignKey(fTable = Role.class)
     public String getRoleId() {
         return roleId;
-    }
-
-    public void setRoleId(String roleId) {
-        this.roleId = roleId;
     }
 
     @Title(title = "权限ID")
@@ -47,18 +40,10 @@ public class RolePermissionMap extends BaseEntity {
         return permissionId;
     }
 
-    public void setPermissionId(String permissionId) {
-        this.permissionId = permissionId;
-    }
-
     @Title(title = "角色所有的权限id")
     @Transient
     public String getPermissionIds() {
         return permissionIds;
-    }
-
-    public void setPermissionIds(String permissionIds) {
-        this.permissionIds = permissionIds;
     }
 
     @Title(title = "角色名称")
@@ -67,17 +52,9 @@ public class RolePermissionMap extends BaseEntity {
         return roleName;
     }
 
-    public void setRoleName(String roleName) {
-        this.roleName = roleName;
-    }
-
     @Title(title = "权限名称")
     @Col(name = "permission_name")
     public String getPermissionName() {
         return permissionName;
-    }
-
-    public void setPermissionName(String permissionName) {
-        this.permissionName = permissionName;
     }
 }

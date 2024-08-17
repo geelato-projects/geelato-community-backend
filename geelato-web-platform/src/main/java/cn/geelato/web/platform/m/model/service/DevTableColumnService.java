@@ -1,12 +1,8 @@
 package cn.geelato.web.platform.m.model.service;
 
-import cn.geelato.core.enums.*;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MetaDaoSql;
+import cn.geelato.core.enums.*;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.ColumnMeta;
@@ -14,11 +10,16 @@ import cn.geelato.core.meta.model.field.ColumnSelectType;
 import cn.geelato.core.meta.schema.SchemaColumn;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.util.ClassUtils;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.SchemaUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.arco.select.SelectOptionData;
 import cn.geelato.web.platform.arco.select.SelectOptionGroup;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -38,7 +39,7 @@ public class DevTableColumnService extends BaseSortableService {
     private static final String UPDATE_COMMENT_PREFIX = "已变更；";
     private static final String UPDATE_DESCRIPTION_PREFIX = "Already updated; ";
     private static final Logger logger = LoggerFactory.getLogger(DevTableColumnService.class);
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
 
     /**
      * 自动生成对于字段
@@ -416,7 +417,7 @@ public class DevTableColumnService extends BaseSortableService {
             changeParams.put("isColumn", true);
         }
         dao.execute("metaResetColumn", changeParams);
-        //dao.save(model);
+        // dao.save(model);
 
         return form;
     }

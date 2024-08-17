@@ -1,5 +1,13 @@
 package cn.geelato.web.platform.m.excel.service;
 
+import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.enums.EnableStatusEnum;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.DateUtils;
+import cn.geelato.web.platform.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.base.entity.Resources;
+import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.base.service.ResourcesService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
@@ -8,14 +16,6 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.enums.EnableStatusEnum;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
-import cn.geelato.web.platform.m.base.entity.Resources;
-import cn.geelato.web.platform.m.base.service.BaseService;
-import cn.geelato.web.platform.m.excel.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,14 +31,13 @@ import java.util.*;
 
 /**
  * @author diabl
- * @date 2023/8/11 15:05
  */
 @Component
 public class ExportTemplateService extends BaseService {
     public static final String[] EXPORT_META_HEADER = {"占位符", "变量", "列表变量", "常量值", "表达式", "值类型", "取值计算方式", "是否列表", "是否合并", "合并唯一约束", "是否图片", "图片宽度cm", "图片高度cm", "备注"};
     public static final String[] IMPORT_META_TYPE_HEADER = {"列名", "类型", "格式", "多值分隔符", "多值场景", "清洗规则", "备注"};
     public static final String[] IMPORT_META_META_HEADER = {"表格", "字段名称", "取值计算方式", "常量取值", "变量取值", "表达式取值", "数据字典取值", "模型取值", "备注"};
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
     private final Logger logger = LoggerFactory.getLogger(ExportTemplateService.class);
     @Autowired
     private UploadService uploadService;
@@ -387,10 +386,10 @@ public class ExportTemplateService extends BaseService {
             ExcelXSSFUtils.setCell(dRow, 4, cellStyle, metas.get(i).getExpression());
             ExcelXSSFUtils.setCell(dRow, 5, cellStyle, metas.get(i).getValueType());
             ExcelXSSFUtils.setCell(dRow, 6, cellStyle, metas.get(i).getValueComputeMode());
-            ExcelXSSFUtils.setCell(dRow, 7, cellStyle, metas.get(i).isIsList());
-            ExcelXSSFUtils.setCell(dRow, 8, cellStyle, metas.get(i).isIsMerge());
-            ExcelXSSFUtils.setCell(dRow, 9, cellStyle, metas.get(i).isIsUnique());
-            ExcelXSSFUtils.setCell(dRow, 10, cellStyle, metas.get(i).isIsImage());
+            ExcelXSSFUtils.setCell(dRow, 7, cellStyle, metas.get(i).isList());
+            ExcelXSSFUtils.setCell(dRow, 8, cellStyle, metas.get(i).isMerge());
+            ExcelXSSFUtils.setCell(dRow, 9, cellStyle, metas.get(i).isUnique());
+            ExcelXSSFUtils.setCell(dRow, 10, cellStyle, metas.get(i).isImage());
             ExcelXSSFUtils.setCell(dRow, 11, cellStyle, metas.get(i).getImageWidth());
             ExcelXSSFUtils.setCell(dRow, 12, cellStyle, metas.get(i).getImageHeight());
             ExcelXSSFUtils.setCell(dRow, 13, cellStyle, metas.get(i).getDescription());

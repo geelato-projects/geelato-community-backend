@@ -3,7 +3,6 @@ package cn.geelato.web.platform.exception.file;
 /**
  * @author diabl
  * @description: 12.6 文件内容校验失败异常
- * @date 2023/10/25 11:37
  */
 public class FileContentValidFailedException extends FileException {
     private static final String MESSAGE = "12.6 File Content Validate Failed Exception";

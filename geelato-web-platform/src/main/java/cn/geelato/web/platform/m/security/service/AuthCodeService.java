@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author diabl
- * @date 2023/7/17 9:10
  */
 @Component
 public class AuthCodeService {

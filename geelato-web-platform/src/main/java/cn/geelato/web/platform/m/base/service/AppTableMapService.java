@@ -17,7 +17,6 @@ import java.util.List;
 
 /**
  * @author diabl
- * @date 2024/4/17 16:24
  */
 @Component
 public class AppTableMapService extends BaseService {

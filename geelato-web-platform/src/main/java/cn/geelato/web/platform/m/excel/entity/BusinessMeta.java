@@ -1,5 +1,7 @@
 package cn.geelato.web.platform.m.excel.entity;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.web.platform.enums.ExcelEvaluationEnum;
 
@@ -9,8 +11,9 @@ import java.util.List;
 /**
  * @author diabl
  * @description: 业务元数据
- * @date 2023/10/12 14:29
  */
+@Getter
+@Setter
 public class BusinessMeta {
     //表格名称
     private String tableName;
@@ -30,78 +33,6 @@ public class BusinessMeta {
     private String primaryValue;
     //备注
     private String remark;
-
-    public String getTableName() {
-        return tableName;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
-    public String getColumnName() {
-        return columnName;
-    }
-
-    public void setColumnName(String columnName) {
-        this.columnName = columnName;
-    }
-
-    public String getEvaluation() {
-        return evaluation;
-    }
-
-    public void setEvaluation(String evaluation) {
-        this.evaluation = evaluation;
-    }
-
-    public String getConstValue() {
-        return constValue;
-    }
-
-    public void setConstValue(String constValue) {
-        this.constValue = constValue;
-    }
-
-    public String getVariableValue() {
-        return variableValue;
-    }
-
-    public void setVariableValue(String variableValue) {
-        this.variableValue = variableValue;
-    }
-
-    public String getExpression() {
-        return expression;
-    }
-
-    public void setExpression(String expression) {
-        this.expression = expression;
-    }
-
-    public String getDictCode() {
-        return dictCode;
-    }
-
-    public void setDictCode(String dictCode) {
-        this.dictCode = dictCode;
-    }
-
-    public String getPrimaryValue() {
-        return primaryValue;
-    }
-
-    public void setPrimaryValue(String primaryValue) {
-        this.primaryValue = primaryValue;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
-    }
 
     /**
      * 取值方式，常量

@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.web.platform.enums.SysConfigPurposeEnum;
 import jakarta.servlet.http.HttpServletRequest;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.constants.MediaTypes;
@@ -21,28 +22,32 @@ public class ConfigController extends BaseController {
     @ResponseBody
     public ApiResult list(HttpServletRequest request) {
         ApiResult result = new ApiResult();
-        String tenantCode=request.getParameter("tenantCode");
-        String appId=request.getParameter("appId");
-        Map<String, SysConfig> configMap=EnvManager.singleInstance().getConfigMap("webapp");
-        Map<String,Object> rtnConfigMap=new HashMap<>();
-        Map<String,String> globalConfigMap=new HashMap<>();
-        Map<String,String> tenantConfigMap=new HashMap<>();
-        Map<String,String> appConfigMap=new HashMap<>();
-        for (Map.Entry<String,SysConfig> entry: configMap.entrySet()) {
-            SysConfig config = entry.getValue();
-            if(StringUtils.isEmpty(config.getTenantCode())){
-                globalConfigMap.put(config.getConfigKey(),config.getConfigValue());
-                rtnConfigMap.put("sys",globalConfigMap);
-            }
-            if(!StringUtils.isEmpty(tenantCode)&&config.getTenantCode().equals(tenantCode)){
-                tenantConfigMap.put(config.getConfigKey(),config.getConfigValue());
-                rtnConfigMap.put("tenant",tenantConfigMap);
-            }
-            if(!StringUtils.isEmpty(appId)&&config.getAppId().equals(appId)){
-                appConfigMap.put(config.getConfigKey(),config.getConfigValue());
-                rtnConfigMap.put("app",appConfigMap);
-            }
+        String tenantCode = request.getParameter("tenantCode");
+        String appId = request.getParameter("appId");
+        Map<String, SysConfig> configMap = new HashMap<>();
+        pullAll(configMap, SysConfigPurposeEnum.WEBAPP.getValue());
+        pullAll(configMap, SysConfigPurposeEnum.ALL.getValue());
+        Map<String, Object> rtnConfigMap = new HashMap<>();
+        Map<String, String> globalConfigMap = new HashMap<>();
+        Map<String, String> tenantConfigMap = new HashMap<>();
+        Map<String, String> appConfigMap = new HashMap<>();
+        if (configMap != null && !configMap.isEmpty()) {
+            for (Map.Entry<String, SysConfig> entry : configMap.entrySet()) {
+                SysConfig config = entry.getValue();
+                if (StringUtils.isEmpty(config.getTenantCode())) {
+                    globalConfigMap.put(config.getConfigKey(), config.getConfigValue());
+                    rtnConfigMap.put("sys", globalConfigMap);
+                }
+                if (StringUtils.isNotEmpty(tenantCode) && config.getTenantCode().equals(tenantCode)) {
+                    tenantConfigMap.put(config.getConfigKey(), config.getConfigValue());
+                    rtnConfigMap.put("tenant", tenantConfigMap);
+                }
+                if (StringUtils.isNotEmpty(appId) && config.getAppId().equals(appId)) {
+                    appConfigMap.put(config.getConfigKey(), config.getConfigValue());
+                    rtnConfigMap.put("app", appConfigMap);
+                }
 
+            }
         }
         result.setData(rtnConfigMap);
         return result;
@@ -56,5 +61,13 @@ public class ConfigController extends BaseController {
         return result;
     }
 
-
+    private void pullAll(Map<String, SysConfig> configMap, String purpose) {
+        Map<String, SysConfig> map = null;
+        if (StringUtils.isNotEmpty(purpose)) {
+            map = EnvManager.singleInstance().getConfigMap(purpose);
+        }
+        if (map != null && !map.isEmpty()) {
+            configMap.putAll(map);
+        }
+    }
 }

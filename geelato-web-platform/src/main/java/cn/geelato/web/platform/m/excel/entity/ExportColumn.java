@@ -1,5 +1,8 @@
 package cn.geelato.web.platform.m.excel.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -8,8 +11,9 @@ import java.util.List;
 /**
  * @author diabl
  * @description: 导出excel表头
- * @date 2024/5/24 9:45
  */
+@Getter
+@Setter
 public class ExportColumn {
     private String dataIndex; // 数据key，对应导出excel中的var
     private String title; // 列标题，对应导出excel中的placeholder，不包括符号${}的部分
@@ -26,110 +30,6 @@ public class ExportColumn {
     private int lastRow; // 结束行
     private int firstCol; // 开始列
     private int lastCol; // 结束列
-
-    public String getDataIndex() {
-        return dataIndex;
-    }
-
-    public void setDataIndex(String dataIndex) {
-        this.dataIndex = dataIndex;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public long getWidth() {
-        return width;
-    }
-
-    public void setWidth(long width) {
-        this.width = width;
-    }
-
-    public String getAlign() {
-        return align;
-    }
-
-    public void setAlign(String align) {
-        this.align = align;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public List<ExportColumn> getChildren() {
-        return children;
-    }
-
-    public void setChildren(List<ExportColumn> children) {
-        this.children = children;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
-    }
-
-    public int getBreadth() {
-        return breadth;
-    }
-
-    public void setBreadth(int breadth) {
-        this.breadth = breadth;
-    }
-
-    public int getDepth() {
-        return depth;
-    }
-
-    public void setDepth(int depth) {
-        this.depth = depth;
-    }
-
-    public int getFirstRow() {
-        return firstRow;
-    }
-
-    public void setFirstRow(int firstRow) {
-        this.firstRow = firstRow;
-    }
-
-    public int getLastRow() {
-        return lastRow;
-    }
-
-    public void setLastRow(int lastRow) {
-        this.lastRow = lastRow;
-    }
-
-    public int getFirstCol() {
-        return firstCol;
-    }
-
-    public void setFirstCol(int firstCol) {
-        this.firstCol = firstCol;
-    }
-
-    public int getLastCol() {
-        return lastCol;
-    }
-
-    public void setLastCol(int lastCol) {
-        this.lastCol = lastCol;
-    }
 
     /**
      * 计算节点的

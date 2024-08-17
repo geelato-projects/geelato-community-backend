@@ -5,7 +5,6 @@ import org.apache.logging.log4j.util.Strings;
 /**
  * @author diabl
  * @description: 应用版本来源
- * @date 2024/6/18 14:28
  */
 public enum PackageSourceEnum {
     PACKET("当前环境打包", "packet"),

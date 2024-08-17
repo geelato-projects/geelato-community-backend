@@ -5,7 +5,6 @@ import org.apache.logging.log4j.util.Strings;
 /**
  * @author diabl
  * @description: 应用版本状态
- * @date 2024/6/18 14:31
  */
 public enum PackageStatusEnum {
     DRAFT("未发布", "draft"),

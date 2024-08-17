@@ -24,7 +24,6 @@ import java.util.Map;
 
 /**
  * @author diabl
- * @date 2024/4/17 16:24
  */
 @Controller
 @RequestMapping(value = "/api/app/view")

@@ -1,13 +1,14 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.orm.Dao;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.gql.parser.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
-import cn.geelato.core.orm.Dao;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,25 +25,27 @@ import java.util.*;
  */
 public class BaseController implements InitializingBean {
 
-
+    private final SimpleDateFormat SDF_DATE = new SimpleDateFormat(DateUtils.DATE);
+    private final SimpleDateFormat SDF_DATE_START = new SimpleDateFormat(DateUtils.DATESTART);
+    private final SimpleDateFormat SDF_DATE_FINISH = new SimpleDateFormat(DateUtils.DATEFINISH);
     protected Dao dao;
     protected RuleService ruleService;
-
-    @Autowired
-    protected void setDao(@Qualifier("primaryDao")Dao dao){
-        this.dao=dao;
-    }
-
-    @Autowired
-    protected void setRuleService(RuleService ruleService){
-        this.ruleService=ruleService;
-    }
     /**
      * 创建session、Request、Response等对象
      */
     protected HttpServletRequest request;
     protected HttpServletResponse response;
     protected HttpSession session;
+
+    @Autowired
+    protected void setDao(@Qualifier("primaryDao") Dao dao) {
+        this.dao = dao;
+    }
+
+    @Autowired
+    protected void setRuleService(RuleService ruleService) {
+        this.ruleService = ruleService;
+    }
 
     /**
      * 在每个子类方法调用之前先调用
@@ -143,8 +146,8 @@ public class BaseController implements InitializingBean {
                         }
                         String[] times = (String[]) params.get(list);
                         if (times != null && Strings.isNotBlank(times[1]) && Strings.isNotBlank(times[1])) {
-                            filterGroup.addFilter(list, FilterGroup.Operator.gte, new SimpleDateFormat("yyyy-MM-dd 00:00:00").format(new SimpleDateFormat("yyyy-MM-dd").parse(times[0])));
-                            filterGroup.addFilter(list, FilterGroup.Operator.lte, new SimpleDateFormat("yyyy-MM-dd 23:59:59").format(new SimpleDateFormat("yyyy-MM-dd").parse(times[1])));
+                            filterGroup.addFilter(list, FilterGroup.Operator.gte, SDF_DATE_START.format(SDF_DATE.parse(times[0])));
+                            filterGroup.addFilter(list, FilterGroup.Operator.lte, SDF_DATE_FINISH.format(SDF_DATE.parse(times[1])));
                             params.remove(list);
                         }
                     }

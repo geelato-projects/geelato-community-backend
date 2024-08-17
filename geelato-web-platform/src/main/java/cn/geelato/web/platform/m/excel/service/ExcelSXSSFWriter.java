@@ -22,7 +22,6 @@ import java.util.Map;
 /**
  * @author diabl
  * @description: SXSSF
- * @date 2024/1/4 15:44
  */
 @Component
 public class ExcelSXSSFWriter {
@@ -44,7 +43,7 @@ public class ExcelSXSSFWriter {
                     BusinessData msgData = (mapSet.containsKey(key) && mapSet.get(key) != null) ? mapSet.get(key) : new BusinessData();
                     msgData.setYIndex(businessData.getYIndex());
                     msgData.setXIndex(businessData.getXIndex());
-                    msgData.setErrorMsgs(businessData.getErrorMsg());
+                    msgData.addAllErrorMsgs(businessData.getErrorMsg());
                     mapSet.put(key, msgData);
                 }
             }

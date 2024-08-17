@@ -4,7 +4,6 @@ import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
- * @date 2023/8/2 10:56
  */
 public enum EncodingItemTypeEnum {
     CONSTANT("固定字段", "constant"),

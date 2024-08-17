@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.excel.service;
 
+import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.ExportColumn;
@@ -39,7 +40,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author diabl
- * @date 2024/3/12 14:39
  */
 @Component
 public class ExportExcelService {
@@ -49,7 +49,7 @@ public class ExportExcelService {
     private static final String WORD_DOCX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     private static final Pattern pattern = Pattern.compile("^[a-zA-Z0-9_\\-]+\\.[a-zA-Z0-9]{1,5}$");
     private final Logger logger = LoggerFactory.getLogger(ExportExcelService.class);
-    private final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+    private final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
     @Autowired
     private ExportTemplateService exportTemplateService;
     @Autowired

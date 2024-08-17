@@ -95,7 +95,7 @@ public class ApiResult<E> {
     }
 
 
-    public static <T> ApiResult<T> success2() {
+    public static <T> ApiResult<T> successNoResult() {
         return success(null);
     }
 

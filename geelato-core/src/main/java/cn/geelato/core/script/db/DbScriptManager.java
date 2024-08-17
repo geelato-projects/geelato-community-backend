@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -33,14 +34,15 @@ public class DbScriptManager extends AbstractScriptManager {
     @Override
     public void loadDb() {
         String sql="select key_name,encoding_content from platform_sql where enable_status=1 and del_status=0";
-        Map<String,Object> map = dao.getJdbcTemplate().queryForMap(sql);
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
-            if(validateContent(value)){
-                sqlMap.put(key,value.toString());
+        List<Map<String,Object>> list = dao.getJdbcTemplate().queryForList(sql);
+        for (Map<String,Object> map : list) {
+            String key= map.get("key_name").toString();
+            Object content=map.get("encoding_content");
+            if(validateContent(content)){
+                sqlMap.put(key,content.toString());
             }
         }
+
     }
 
     @Override

@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * @author geemeta
  */
-public class Dao extends SqlIdDao {
+public class Dao extends SqlKeyDao {
 
     private static final Logger logger = LoggerFactory.getLogger(Dao.class);
 

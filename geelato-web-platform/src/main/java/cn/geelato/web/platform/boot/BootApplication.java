@@ -8,6 +8,7 @@ import cn.geelato.core.meta.MetaRelf;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.core.orm.SqlFiles;
+import cn.geelato.core.script.db.DbScriptManagerFactory;
 import cn.geelato.core.script.sql.SqlScriptManagerFactory;
 import cn.geelato.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -45,14 +46,6 @@ public class BootApplication implements CommandLineRunner {
 
     protected boolean isWinOS;
     protected boolean isIgnoreInitData = false;
-    // main 接受的参数
-    protected String MAIN_ARGS_IGNORE_INIT_DATA = "ignore_init_data";
-    protected String IGNORE_ENTITY_PREFIX = "ignore_entity_prefix_";
-    protected String RESET_ONLY_ENTITY_PREFIX = "reset_entity_only_";
-    // 不重置DB的实体前缀
-    protected ArrayList ignoreEntityNamePrefixList = new ArrayList();
-    protected ArrayList resetOnlyEntityNamePrefixList = new ArrayList();
-
 
     private void assertOS() {
         Properties prop = System.getProperties();
@@ -92,19 +85,6 @@ public class BootApplication implements CommandLineRunner {
 
     private void parseStartArgs(String... args) {
         isIgnoreInitData = false;
-        for (String arg : args) {
-            if (this.MAIN_ARGS_IGNORE_INIT_DATA.equals(arg)) {
-                isIgnoreInitData = true;
-            } else {
-                int index = arg.indexOf(IGNORE_ENTITY_PREFIX);
-                if (index != -1) {
-                    String entityNamePrefix = arg.substring(index + IGNORE_ENTITY_PREFIX.length()).trim();
-                    if (!entityNamePrefix.isEmpty()) {
-                        ignoreEntityNamePrefixList.add(entityNamePrefix);
-                    }
-                }
-            }
-        }
     }
 
 
@@ -147,12 +127,15 @@ public class BootApplication implements CommandLineRunner {
         //由测试类启动时，修改资源目录为源码下的资源目录
         path = path.replace("test-classes", "classes");
         //--1、sql
-        SqlScriptManagerFactory.get(Dao.SQL_TEMPLATE_MANAGER).loadFiles(path + "/geelato/web/platform/sql/");
+        SqlScriptManagerFactory.get("sql").loadFiles(path + "/geelato/web/platform/sql/");
         //--2、业务规则
         BizManagerFactory.getBizRuleScriptManager("rule").setDao(dao);
         BizManagerFactory.getBizRuleScriptManager("rule").loadFiles(path + "/geelato/web/platform/rule/");
         BizManagerFactory.getBizMvelRuleManager("mvelRule").setDao(dao);
         BizManagerFactory.getBizMvelRuleManager("mvelRule").loadDb();
+
+        DbScriptManagerFactory.get("db").setDao(dao);
+        DbScriptManagerFactory.get("db").loadDb();
     }
 
     /**
@@ -161,12 +144,15 @@ public class BootApplication implements CommandLineRunner {
      */
     protected void initFromFatJar() throws IOException {
         //--1、sql
-        SqlScriptManagerFactory.get(Dao.SQL_TEMPLATE_MANAGER).loadResource("/geelato/web/platform/sql/**/*.sql");
+        SqlScriptManagerFactory.get("sql").loadResource("/geelato/web/platform/sql/**/*.sql");
         //--2、业务规则
         BizManagerFactory.getBizRuleScriptManager("rule").setDao(dao);
         BizManagerFactory.getBizRuleScriptManager("rule").loadResource("/geelato/web/platform/rule/**/*.js");
         BizManagerFactory.getBizMvelRuleManager("mvelRule").setDao(dao);
         BizManagerFactory.getBizMvelRuleManager("mvelRule").loadDb();
+
+        DbScriptManagerFactory.get("db").setDao(dao);
+        DbScriptManagerFactory.get("db").loadDb();
     }
 
     protected String getProperty(String key, String defaultValue) {

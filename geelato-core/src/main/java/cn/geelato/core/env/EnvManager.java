@@ -9,6 +9,7 @@ import cn.geelato.core.env.entity.User;
 import cn.geelato.core.env.entity.UserMenu;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.orm.Dao;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
@@ -17,15 +18,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class EnvManager  extends AbstractManager {
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(EnvManager.class);
     private final Map<String ,Map<String , SysConfig>> sysConfigClassifyMap;
     private final Map<String ,SysConfig> sysConfigMap;
     private Dao  EnvDao;
     private static EnvManager instance;
 
     private EnvManager(){
-        logger.info("EnvManager Instancing...");
+        log.info("EnvManager Instancing...");
         sysConfigMap=new HashMap<>();
         sysConfigClassifyMap=new HashMap<>();
     }

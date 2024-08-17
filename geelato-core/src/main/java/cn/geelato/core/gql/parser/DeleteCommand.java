@@ -1,5 +1,8 @@
 package cn.geelato.core.gql.parser;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Map;
 
 /**
@@ -7,24 +10,19 @@ import java.util.Map;
  * @author geemeta
  *
  */
+@Setter
+@Getter
 public class DeleteCommand extends BaseCommand<DeleteCommand> {
 
     public DeleteCommand(){
         setCommandType(CommandType.Delete);
     }
 
-    private Map<String, Object> valueMap;
-
     /**
-     * 与fields同步，冗余
+     * -- GETTER --
+     *  与fields同步，冗余
      */
-    public Map<String, Object> getValueMap() {
-        return valueMap;
-    }
-
-    public void setValueMap(Map<String, Object> valueMap) {
-        this.valueMap = valueMap;
-    }
+    private Map<String, Object> valueMap;
 
 
 }

@@ -2,28 +2,21 @@ package cn.geelato.core.env.entity;
 
 
 import cn.geelato.core.Ctx;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
 public class Permission {
 
+    @Setter
     private String entity;
 
     private String  rule;
 
     private Integer weight;
 
+    @Setter
     private Integer roleWeight;
-
-    public String getEntity() {
-        return entity;
-    }
-
-    public void setEntity(String entity) {
-        this.entity = entity;
-    }
-
-    public String getRule() {
-        return rule;
-    }
 
     public void setRule(String rule) {
         this.rule = rule;
@@ -53,15 +46,4 @@ public class Permission {
                .replace("#currentUser.cooperatingOrgId#",String.format("'%s'",Ctx.getCurrentUser().getCooperatingOrgId()));
     }
 
-    public Integer getWeight() {
-        return weight;
-    }
-
-    public Integer getRoleWeight() {
-        return roleWeight;
-    }
-
-    public void setRoleWeight(Integer roleWeight) {
-        this.roleWeight = roleWeight;
-    }
 }

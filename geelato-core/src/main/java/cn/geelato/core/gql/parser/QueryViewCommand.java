@@ -1,9 +1,13 @@
 package cn.geelato.core.gql.parser;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.collections.map.HashedMap;
 
 import java.util.Map;
 
+@Setter
+@Getter
 public class QueryViewCommand extends BaseCommand<QueryViewCommand> {
 
     private boolean queryForList = true;
@@ -35,68 +39,4 @@ public class QueryViewCommand extends BaseCommand<QueryViewCommand> {
     }
 
 
-    public boolean isQueryForList() {
-        return queryForList;
-    }
-
-    public void setQueryForList(boolean queryForList) {
-        this.queryForList = queryForList;
-    }
-
-    public int getPageNum() {
-        return pageNum;
-    }
-
-    public void setPageNum(int pageNum) {
-        this.pageNum = pageNum;
-    }
-
-    public int getPageSize() {
-        return pageSize;
-    }
-
-    public void setPageSize(int pageSize) {
-        this.pageSize = pageSize;
-    }
-
-
-    public String getOrderBy() {
-        return orderBy;
-    }
-
-    public void setOrderBy(String orderBy) {
-        this.orderBy = orderBy;
-    }
-
-    public String getGroupBy() {
-        return groupBy;
-    }
-
-    public void setGroupBy(String groupBy) {
-        this.groupBy = groupBy;
-    }
-
-    public FilterGroup getHaving() {
-        return having;
-    }
-
-    public void setHaving(FilterGroup having) {
-        this.having = having;
-    }
-
-    public Map getAlias() {
-        return alias;
-    }
-
-    public void setAlias(Map alias) {
-        this.alias = alias;
-    }
-
-    public String getViewName() {
-        return viewName;
-    }
-
-    public void setViewName(String viewName) {
-        this.viewName = viewName;
-    }
 }

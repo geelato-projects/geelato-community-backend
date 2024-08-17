@@ -1,5 +1,8 @@
 package cn.geelato.core.gql.parser;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Map;
 
 /**
@@ -7,39 +10,19 @@ import java.util.Map;
  * @author geemeta
  *
  */
+@Setter
+@Getter
 public class SaveCommand extends BaseCommand<SaveCommand> {
 
     // 主键的值，如19位的数字
     private String PK;
+    /**
+     * -- GETTER --
+     *  与fields同步，冗余。
+     *
+     */
     private Map<String, Object> valueMap;
 
     private Map<String,Object> originValueMap;
 
-    /**
-     * 与fields同步，冗余。
-     * @see #fields
-     */
-    public Map<String, Object> getValueMap() {
-        return valueMap;
-    }
-
-    public void setValueMap(Map<String, Object> valueMap) {
-        this.valueMap = valueMap;
-    }
-
-    public String getPK() {
-        return PK;
-    }
-
-    public void setPK(String PK) {
-        this.PK = PK;
-    }
-
-    public Map<String, Object> getOriginValueMap() {
-        return originValueMap;
-    }
-
-    public void setOriginValueMap(Map<String, Object> originValueMap) {
-        this.originValueMap = originValueMap;
-    }
 }

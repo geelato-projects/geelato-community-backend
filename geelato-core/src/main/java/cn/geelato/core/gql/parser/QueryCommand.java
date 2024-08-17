@@ -1,5 +1,7 @@
 package cn.geelato.core.gql.parser;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.collections.map.HashedMap;
 
 import java.util.Map;
@@ -9,23 +11,43 @@ import java.util.Map;
  */
 public class QueryCommand extends BaseCommand<QueryCommand> {
 
+    /**
+     * -- GETTER --
+     *  是查询单条记录还是多条记录，默认值为false，即查询单条记录
+     */
+    @Setter
+    @Getter
     private boolean queryForList = false;
 
+    @Getter
+    @Setter
     private int pageNum = -1;
 
+    @Getter
+    @Setter
     private int pageSize = -1;
 
     /**
      * 查询字段重命名
      */
+    @Setter
+    @Getter
     private Map alias = new HashedMap(10);
 
     /**
      * 查询语句
      */
+    @Setter
+    @Getter
     private String selectSql;
+    @Setter
+    @Getter
     private String groupBy;
+    @Setter
+    @Getter
     private String orderBy;
+    @Setter
+    @Getter
     private FilterGroup having;
     private String ACL;  //access control  list
 
@@ -37,71 +59,5 @@ public class QueryCommand extends BaseCommand<QueryCommand> {
         return pageNum > 0 && pageSize > 0;
     }
 
-    /**
-     * 是查询单条记录还是多条记录，默认值为false，即查询单条记录
-     */
-    public boolean isQueryForList() {
-        return queryForList;
-    }
 
-    public void setQueryForList(boolean queryForList) {
-        this.queryForList = queryForList;
-    }
-
-    public int getPageNum() {
-        return pageNum;
-    }
-
-    public void setPageNum(int pageNum) {
-        this.pageNum = pageNum;
-    }
-
-    public int getPageSize() {
-        return pageSize;
-    }
-
-    public void setPageSize(int pageSize) {
-        this.pageSize = pageSize;
-    }
-
-
-    public String getOrderBy() {
-        return orderBy;
-    }
-
-    public void setOrderBy(String orderBy) {
-        this.orderBy = orderBy;
-    }
-
-    public String getGroupBy() {
-        return groupBy;
-    }
-
-    public void setGroupBy(String groupBy) {
-        this.groupBy = groupBy;
-    }
-
-    public FilterGroup getHaving() {
-        return having;
-    }
-
-    public void setHaving(FilterGroup having) {
-        this.having = having;
-    }
-
-    public Map getAlias() {
-        return alias;
-    }
-
-    public void setAlias(Map alias) {
-        this.alias = alias;
-    }
-
-    public String getSelectSql() {
-        return selectSql;
-    }
-
-    public void setSelectSql(String selectSql) {
-        this.selectSql = selectSql;
-    }
 }

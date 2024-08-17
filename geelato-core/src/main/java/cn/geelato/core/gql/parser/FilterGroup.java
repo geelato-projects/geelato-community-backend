@@ -2,6 +2,8 @@ package cn.geelato.core.gql.parser;
 
 
 import com.alibaba.fastjson2.JSONArray;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -22,23 +24,20 @@ import java.util.Map;
  */
 public class FilterGroup {
 
+    @Setter
+    @Getter
     private Logic logic = Logic.and;
     private List<Filter> filters;
+    @Getter
     private HashMap<String, Object> params;
     private int renameIndex = 1;
 
+    @Setter
     private List<FilterGroup> childFilterGroup;
     public FilterGroup(){
     }
     public FilterGroup(Logic logic){
         this.logic=logic;
-    }
-    public Logic getLogic() {
-        return logic;
-    }
-
-    public void setLogic(Logic logic) {
-        this.logic = logic;
     }
 
     public List<Filter> getFilters() {
@@ -76,19 +75,11 @@ public class FilterGroup {
         return this;
     }
 
-    public HashMap<String, Object> getParams() {
-        return params;
-    }
-
     public List<FilterGroup> getChildFilterGroup() {
         if(childFilterGroup==null){
             childFilterGroup=new ArrayList<>();
         }
         return childFilterGroup;
-    }
-
-    public void setChildFilterGroup(List<FilterGroup> childFilterGroup) {
-        this.childFilterGroup = childFilterGroup;
     }
 
     public class Filter {
@@ -101,17 +92,17 @@ public class FilterGroup {
             this.setValue(value);
         }
 
+        @Getter
         private String field;
+        @Getter
         private Operator operator;
+        @Getter
         private String value;
 
         private Object[] arrayValue;
         private boolean isRefField;
+        @Getter
         private String refEntityName;
-
-        public String getField() {
-            return field;
-        }
 
         /**
          */
@@ -129,17 +120,9 @@ public class FilterGroup {
             return this;
         }
 
-        public Operator getOperator() {
-            return operator;
-        }
-
         public Filter setOperator(Operator operator) {
             this.operator = operator;
             return this;
-        }
-
-        public String getValue() {
-            return value;
         }
 
         /**
@@ -174,13 +157,10 @@ public class FilterGroup {
             return isRefField;
         }
 
-        public String getRefEntityName() {
-            return this.refEntityName;
-        }
-
     }
 
 
+    @Getter
     public enum Operator {
         eq("eq"),
         neq("neq"),
@@ -203,11 +183,8 @@ public class FilterGroup {
             this.text = text;
         }
 
-        public String getText() {
-            return this.text;
-        }
-
         private static final Map<String, Operator> stringToEnum = new HashMap<String, Operator>();
+        @Getter
         private static String operatorStrings = null;
 
         static {
@@ -227,10 +204,6 @@ public class FilterGroup {
             return stringToEnum.containsKey(symbol);
         }
 
-        public static String getOperatorStrings() {
-            return operatorStrings;
-        }
-
         public static Operator fromString(String symbol) {
             return stringToEnum.get(symbol.toLowerCase());
         }
@@ -241,15 +214,14 @@ public class FilterGroup {
         }
     }
 
+    @Getter
     public enum Logic {
         or("or"), and("and");
         private final String text;
         Logic(String text) {
             this.text = text;
         }
-        public String getText() {
-            return this.text;
-        }
+
         private static final Map<String, Logic> stringToEnum = new HashMap<String, Logic>();
         static {
             for (Logic logic : values()) {

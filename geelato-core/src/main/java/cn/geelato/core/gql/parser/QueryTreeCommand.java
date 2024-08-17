@@ -1,5 +1,7 @@
 package cn.geelato.core.gql.parser;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.collections.map.HashedMap;
 
 import java.util.Map;
@@ -7,8 +9,14 @@ import java.util.Map;
 /**
  * @author geemeta
  */
+@Setter
+@Getter
 public class QueryTreeCommand extends BaseCommand<QueryTreeCommand> {
 
+    /**
+     * -- GETTER --
+     *  是查询单条记录还是多条记录，默认值为false，即查询单条记录
+     */
     private boolean queryForList = false;
     /**
      * @param pageNum，第几页，从1开始。
@@ -25,6 +33,7 @@ public class QueryTreeCommand extends BaseCommand<QueryTreeCommand> {
     private Map alias = new HashedMap(10);
 
     private String groupBy;
+    //orderBy中的列，应该出现在group by子句中
     private String orderBy;
     private FilterGroup having;
 
@@ -37,65 +46,4 @@ public class QueryTreeCommand extends BaseCommand<QueryTreeCommand> {
     }
 
 
-
-    /**
-     * 是查询单条记录还是多条记录，默认值为false，即查询单条记录
-     */
-    public boolean isQueryForList() {
-        return queryForList;
-    }
-
-    public void setQueryForList(boolean queryForList) {
-        this.queryForList = queryForList;
-    }
-
-    public int getPageNum() {
-        return pageNum;
-    }
-
-    public void setPageNum(int pageNum) {
-        this.pageNum = pageNum;
-    }
-
-    public int getPageSize() {
-        return pageSize;
-    }
-
-    public void setPageSize(int pageSize) {
-        this.pageSize = pageSize;
-    }
-
-
-    public String getOrderBy() {
-        return orderBy;
-    }
-
-    public void setOrderBy(String orderBy) {
-        //orderBy中的列，应该出现在group by子句中
-        this.orderBy = orderBy;
-    }
-
-    public String getGroupBy() {
-        return groupBy;
-    }
-
-    public void setGroupBy(String groupBy) {
-        this.groupBy = groupBy;
-    }
-
-    public FilterGroup getHaving() {
-        return having;
-    }
-
-    public void setHaving(FilterGroup having) {
-        this.having = having;
-    }
-
-    public Map getAlias() {
-        return alias;
-    }
-
-    public void setAlias(Map alias) {
-        this.alias = alias;
-    }
 }

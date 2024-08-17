@@ -8,6 +8,7 @@ import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -20,9 +21,9 @@ import java.util.*;
  * @author geelato
  * 解析json字符串，并返回参数map
  */
+@Slf4j
 public class JsonTextSaveParser extends JsonTextParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(JsonTextSaveParser.class);
     private final static String SUB_ENTITY_FLAG = "#";
     private final static String KW_BIZ = "@biz";
 

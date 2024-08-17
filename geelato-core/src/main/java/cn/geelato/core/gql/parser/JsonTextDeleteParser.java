@@ -4,6 +4,7 @@ import cn.geelato.core.Ctx;
 import cn.geelato.utils.DateUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -18,8 +19,8 @@ import java.util.Map;
  * @author geelato
  * 解析json字符串，并返回参数map
  */
+@Slf4j
 public class JsonTextDeleteParser extends JsonTextParser {
-    private static Logger logger = LoggerFactory.getLogger(JsonTextDeleteParser.class);
 
     private final static String KW_BIZ = "@biz";
     private final static String KEYWORD_FLAG = "@";

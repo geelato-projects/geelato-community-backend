@@ -4,6 +4,7 @@ import cn.geelato.core.AbstractManager;
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.Ctx;
 import cn.geelato.core.gql.parser.*;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
@@ -14,8 +15,8 @@ import java.util.List;
  *
  * @author geemeta
  */
+@Slf4j
 public class GqlManager extends AbstractManager {
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(GqlManager.class);
     private static GqlManager instance;
     private final JsonTextQueryParser jsonTextQueryParser = new JsonTextQueryParser();
     private final JsonTextSaveParser jsonTextSaveParser = new JsonTextSaveParser();
@@ -31,7 +32,7 @@ public class GqlManager extends AbstractManager {
     }
 
     private  GqlManager() {
-        logger.info("DataSourceManager Instancing...");
+        log.info("DataSourceManager Instancing...");
     }
     //========================================================
     //                  基于元数据  gql                      ==

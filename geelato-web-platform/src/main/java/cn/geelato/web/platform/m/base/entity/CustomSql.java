@@ -11,9 +11,9 @@ import lombok.Setter;
  * @author diabl
  */
 @Setter
-@Entity(name = "platform_restful")
+@Entity(name = "platform_sql")
 @Title(title = "自定义接口编排")
-public class CustomRestful extends BaseEntity {
+public class CustomSql extends BaseEntity {
     private String appId;
     private String title;
     private String keyName;

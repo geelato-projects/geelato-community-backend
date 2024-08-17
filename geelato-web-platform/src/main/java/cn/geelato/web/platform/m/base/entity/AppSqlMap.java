@@ -11,15 +11,15 @@ import lombok.Setter;
  * @author diabl
  */
 @Setter
-@Entity(name = "platform_app_r_restful")
+@Entity(name = "platform_app_r_sql")
 @Title(title = "应用接口编码关系表")
-public class AppRestfulMap extends BaseEntity {
+public class AppSqlMap extends BaseEntity {
     private String appId;
     private String appName;
-    private String restfulId;
-    private String restfulTitle;
-    private String restfulKey;
-    private String restfulAppId;
+    private String sqlId;
+    private String sqlTitle;
+    private String sqlKey;
+    private String sqlAppId;
     private boolean approvalNeed = false;
     private String approvalStatus;
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
@@ -37,28 +37,28 @@ public class AppRestfulMap extends BaseEntity {
         return appName;
     }
 
-    @Col(name = "restful_id")
+    @Col(name = "sql_id")
     @Title(title = "接口编排主键")
-    public String getRestfulId() {
-        return restfulId;
+    public String getSqlId() {
+        return sqlId;
     }
 
-    @Col(name = "restful_title")
+    @Col(name = "sql_title")
     @Title(title = "接口编排标题")
-    public String getRestfulTitle() {
-        return restfulTitle;
+    public String getSqlTitle() {
+        return sqlTitle;
     }
 
-    @Col(name = "restful_key")
+    @Col(name = "sql_key")
     @Title(title = "接口编排键名称")
-    public String getRestfulKey() {
-        return restfulKey;
+    public String getSqlKey() {
+        return sqlKey;
     }
 
-    @Col(name = "restful_app_id")
+    @Col(name = "sql_app_id")
     @Title(title = "接口编排所属应用")
-    public String getRestfulAppId() {
-        return restfulAppId;
+    public String getSqlAppId() {
+        return sqlAppId;
     }
 
     @Col(name = "approval_need")

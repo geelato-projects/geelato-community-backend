@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.utils;
 
+import cn.geelato.utils.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.BufferedReader;
@@ -21,6 +22,5 @@ public class GqlUtil {
             throw new GqlResolveException();
         }
         return stringBuilder.toString();
-
     }
 }

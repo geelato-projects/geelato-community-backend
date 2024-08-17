@@ -1,7 +1,9 @@
 package cn.geelato.web.platform.m.base.rest;
 
 
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.utils.GqlResolveException;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
@@ -17,14 +19,9 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.orm.DaoException;
 import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Controller;
+
 import org.springframework.web.bind.annotation.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 
 /**
  *
@@ -150,6 +147,8 @@ public class MetaController extends BaseController {
 
     private String getGql(HttpServletRequest request,String type) {
         String gql= GqlUtil.resolveGql(request);
+        if(StringUtils.isEmpty(gql))
+            throw new GqlResolveException();
         if(type!=null){
             EntityMeta entityMeta=ruleService.resolveEntity(gql,type);
             DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());

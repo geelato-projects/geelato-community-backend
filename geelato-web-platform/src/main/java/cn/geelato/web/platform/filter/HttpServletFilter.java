@@ -3,6 +3,8 @@ package cn.geelato.web.platform.filter;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
 
@@ -18,8 +20,9 @@ public class HttpServletFilter implements Filter {
         boolean cacheOption=Boolean.parseBoolean(httpServletRequest.getHeader("cache"));
         if(cacheOption){
             CustomHttpServletRequest customHttpServletRequest = new CustomHttpServletRequest((HttpServletRequest) servletRequest);
-            CustomHttpServletResponse customHttpServletResponse = new CustomHttpServletResponse((HttpServletResponse)servletResponse);
-            filterChain.doFilter(customHttpServletRequest, customHttpServletResponse);
+            ContentCachingResponseWrapper contentCachingResponseWrapper=new ContentCachingResponseWrapper((HttpServletResponse) servletResponse);
+            filterChain.doFilter(customHttpServletRequest, contentCachingResponseWrapper);
+            contentCachingResponseWrapper.copyBodyToResponse();
         }else {
             filterChain.doFilter(servletRequest, servletResponse);
         }

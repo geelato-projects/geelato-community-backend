@@ -3,8 +3,6 @@ package cn.geelato.core.orm;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import cn.geelato.utils.UIDGenerator;
-import org.slf4j.log;
-import org.slf4j.logFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.*;

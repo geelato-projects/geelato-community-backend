@@ -37,7 +37,6 @@ public class ViewController  extends BaseController {
 
     @RequestMapping(value = {"/pageQuery/{view_name}"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
     public ApiPagedResult<?> pageQuery(@PathVariable("view_name") String viewName, HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             int pageNum = Strings.isNotBlank(req.getParameter("current")) ? Integer.parseInt(req.getParameter("current")) : -1;
             int pageSize = Strings.isNotBlank(req.getParameter("pageSize")) ? Integer.parseInt(req.getParameter("pageSize")) : -1;

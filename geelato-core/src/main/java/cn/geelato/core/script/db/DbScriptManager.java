@@ -2,6 +2,7 @@ package cn.geelato.core.script.db;
 
 import cn.geelato.core.script.AbstractScriptManager;
 import cn.geelato.core.script.js.JsProvider;
+import cn.geelato.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
+
 public class DbScriptManager extends AbstractScriptManager {
 
     private final Map<String,String> sqlMap=new HashMap<>();
@@ -31,6 +33,29 @@ public class DbScriptManager extends AbstractScriptManager {
         }
     }
 
+    @SuppressWarnings("ALL")
+    public void refresh(String sqlKey){
+        String selectSql=null;
+        if(StringUtils.isEmpty(sqlKey)){
+            selectSql="select key_name,encoding_content from platform_sql where enable_status=1 and del_status=0";
+        }else{
+            selectSql=String.format("select key_name,encoding_content from platform_sql where enable_status=1 and del_status=0 and key_name='%'",sqlKey);
+        }
+        List<Map<String,Object>> list = dao.getJdbcTemplate().queryForList(selectSql);
+        for (Map<String,Object> map : list) {
+            String key= map.get("key_name").toString();
+            String content= map.get("encoding_content").toString();
+            if(map.containsKey(key)){
+                if(validateContent(content)){
+                    map.replace(key,content);
+                }
+            }else {
+                if(validateContent(content)){
+                    map.put(key,content);
+                }
+            }
+        }
+    }
     @Override
     public void loadDb() {
         String sql="select key_name,encoding_content from platform_sql where enable_status=1 and del_status=0";

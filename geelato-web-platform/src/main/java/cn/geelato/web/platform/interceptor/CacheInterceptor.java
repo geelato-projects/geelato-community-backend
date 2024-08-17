@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.interceptor;
 
+import cn.geelato.web.platform.filter.CustomHttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import cn.geelato.web.platform.cache.CacheService;
@@ -16,29 +17,29 @@ public class CacheInterceptor implements HandlerInterceptor {
     CacheService<Object> cacheService=new CacheServiceImpl<>();
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {
-//        boolean cacheOption= Boolean.parseBoolean(request.getHeader("cache"));
-//        if(cacheOption){
-//            String gql=getGql(request);
-//            if(cacheService.getCache(gql)!=null) {
-//                response.getWriter().write(cacheService.getCache(gql).toString());
-//                return false;
-//            }
-//        }
+        boolean cacheOption= Boolean.parseBoolean(request.getHeader("cache"));
+        if(cacheOption){
+            String gql=getGql(request);
+            if(cacheService.getCache(gql)!=null) {
+                response.getWriter().write(cacheService.getCache(gql).toString());
+                return false;
+            }
+        }
         return true;
     }
 
     @Override
     public void postHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler, ModelAndView modelAndView) throws Exception {
-//        CustomHttpServletResponse customHttpServletResponse=(CustomHttpServletResponse)response;
-//        boolean cacheOption= Boolean.parseBoolean(request.getHeader("cache"));
-//        if(cacheOption){
-//            String gql=getGql(request);
-//            if(cacheService.getCache(gql)==null) {
-//                String data= customHttpServletResponse.getData();
-//                cacheService.putCache(gql,data);
-//                customHttpServletResponse.getWriter().write(data);
-//            }
-//        }
+        CustomHttpServletResponse customHttpServletResponse=(CustomHttpServletResponse)response;
+        boolean cacheOption= Boolean.parseBoolean(request.getHeader("cache"));
+        if(cacheOption){
+            String gql=getGql(request);
+            if(cacheService.getCache(gql)==null) {
+                String data= customHttpServletResponse.getData();
+                cacheService.putCache(gql,data);
+                customHttpServletResponse.getWriter().write(data);
+            }
+        }
     }
 
 

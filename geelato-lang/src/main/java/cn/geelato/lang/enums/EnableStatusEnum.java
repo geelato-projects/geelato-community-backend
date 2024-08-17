@@ -1,8 +1,11 @@
 package cn.geelato.lang.enums;
 
+import lombok.Getter;
+
 /**
  * @author diabl
  */
+@Getter
 public enum EnableStatusEnum {
     ENABLED(1, "启用", "enabled"), DISABLED(0, "禁用", "disabled");
 
@@ -16,15 +19,4 @@ public enum EnableStatusEnum {
         this.enName = enName;
     }
 
-    public int getCode() {
-        return code;
-    }
-
-    public String getCnName() {
-        return cnName;
-    }
-
-    public String getEnName() {
-        return enName;
-    }
 }

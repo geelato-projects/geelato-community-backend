@@ -1,9 +1,12 @@
 package cn.geelato.lang.enums;
 
+import lombok.Getter;
+
 /**
  * @author diabl
  * @description: 模型字段是否同步
  */
+@Getter
 public enum ColumnSyncedEnum {
     TRUE("已同步", true), FALSE("未同步", false);
 
@@ -15,11 +18,4 @@ public enum ColumnSyncedEnum {
         this.value = value;
     }
 
-    public String getLabel() {
-        return label;
-    }
-
-    public Boolean getValue() {
-        return value;
-    }
 }

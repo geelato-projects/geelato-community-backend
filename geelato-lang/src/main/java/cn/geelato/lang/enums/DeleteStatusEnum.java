@@ -1,9 +1,12 @@
 package cn.geelato.lang.enums;
 
+import lombok.Getter;
+
 /**
  * @author diabl
  */
 
+@Getter
 public enum DeleteStatusEnum {
     IS(1, "已删除"), NO(0, "未删除");
 
@@ -15,11 +18,4 @@ public enum DeleteStatusEnum {
         this.name = name;
     }
 
-    public int getCode() {
-        return code;
-    }
-
-    public String getName() {
-        return name;
-    }
 }

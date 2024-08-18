@@ -13,7 +13,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class BaseSortableEntity extends BaseEntity implements EntitySortable {
-
     @Title(title = "次序")
     @Col(name = "seq_no")
     protected long seqNo = ColumnDefault.SEQ_NO_VALUE;

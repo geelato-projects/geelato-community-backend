@@ -18,8 +18,6 @@ import lombok.Setter;
 @Title(title = "文件")
 public class FileInfo extends BaseEntity {
 
-    @Col(name = "name")
-    @Title(title = "名称")
     private String name;
 
     @Col(name = "saved_name")
@@ -30,17 +28,12 @@ public class FileInfo extends BaseEntity {
     @Title(title = "相对路径", description = "一般相对于文件存储根目录。")
     private String relativePath;
 
-    @Col(name = "size")
-    @Title(title = "大小", description = "单位Byte")
     private int size;
 
     @Col(name = "type")
     @Title(title = "文件类型", description = "文件后缀")
     private String fileType;
 
-    @Col(name = "description")
-    @Title(title = "描述")
     private String description;
-
 
 }

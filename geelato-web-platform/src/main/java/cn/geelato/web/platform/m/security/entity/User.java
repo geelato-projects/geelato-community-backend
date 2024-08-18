@@ -6,6 +6,7 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
+import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import lombok.Setter;

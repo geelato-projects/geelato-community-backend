@@ -13,7 +13,6 @@ public interface EntityEnableAble {
     int getEnableStatus();
 
     /**
-     * @param enableStatus
      */
     void setEnableStatus(int enableStatus);
 }

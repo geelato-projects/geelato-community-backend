@@ -51,8 +51,8 @@ public class ShiroDbRealm extends AuthorizingRealm {
      * 认证回调函数,登录时调用.
      */
     @Override
-        protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) throws AuthenticationException {
-        UsernamePasswordToken token = (UsernamePasswordToken) authcToken;
+        protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authToken) throws AuthenticationException {
+        UsernamePasswordToken token = (UsernamePasswordToken) authToken;
         User user = dao.queryForObject(User.class, "loginName", token.getUsername());
         if (user != null) {
             byte[] salt = Encodes.decodeHex(user.getSalt());

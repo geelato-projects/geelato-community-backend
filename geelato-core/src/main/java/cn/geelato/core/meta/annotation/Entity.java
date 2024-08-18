@@ -16,7 +16,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target(TYPE)
 @Retention(RUNTIME)
 @Documented
-@Component
 public @interface Entity {
     /**
      * (Optional) The name of the model.
@@ -49,25 +48,4 @@ public @interface Entity {
      * @return *
      */
     String schema() default "";
-
-
-//    /**
-//     * (Optional) Unique constraints that are to be placed on
-//     * the entity. These are only used if entity generation is in
-//     * effect. These constraints apply in addition to any constraints
-//     * specified by the <code>Column</code> and <code>JoinColumn</code>
-//     * annotations and constraints entailed by primary key mappings.
-//     *
-//     * Defaults to no additional constraints.
-    // * @return *
-//     */
-//    UniqueConstraint[] uniqueConstraints() default { };
-//
-//    /**
-//     * (Optional) Indexes for the entity. These are only used if entity generation is in effect.  Defaults to no
-//     * additional indexes.
-//     *
-//     * @return The indexes
-//     */
-//    Index[] indexes() default {};
 }

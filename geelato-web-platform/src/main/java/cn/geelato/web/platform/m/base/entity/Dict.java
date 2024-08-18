@@ -25,6 +25,8 @@ public class Dict extends BaseSortableEntity implements EntityEnableAble {
     private String dictName;
     private String dictRemark;
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
+
+    @Transient
     private Set<DictItem> dictItems = new LinkedHashSet<>();
 
     @Col(name = "dict_code")

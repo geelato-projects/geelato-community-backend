@@ -21,6 +21,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -288,8 +289,6 @@ public class MetaReflex {
     /**
      * 解析get**方法或is**方法的映射，其它的，如set**方法不解析
      *
-     * @param clazz
-     * @return *
      */
     public static HashMap<String, FieldMeta> getColumnFieldMetas(Class clazz) {
         return getColumnFieldMetas(clazz, null);
@@ -303,7 +302,85 @@ public class MetaReflex {
     public static HashMap<String, FieldMeta> getColumnFieldMetas(Class clazz, Collection<TableForeign> tableForeigns) {
         Object bean = getBean(clazz);
         HashMap<String, FieldMeta> map = new HashMap<>();
+        List<String> transientProp=new ArrayList<>();
         for (Class<?> searchType = clazz; searchType != Object.class; searchType = searchType.getSuperclass()) {
+            Field[] fields=searchType.getDeclaredFields();
+            for (Field field : fields) {
+                try {
+                    String fieldName = field.getName();
+                    fieldName = firstCharToLow(fieldName);
+                    if (!map.containsKey(fieldName)&&!transientProp.contains(fieldName)) {
+                        if (field.getAnnotation(Transient.class) == null) {
+                            // 列，可能包括名为id的列
+                            Col column = field.getAnnotation(Col.class);
+                            Title cn = field.getAnnotation(Title.class);
+                            String title = cn != null ? (Strings.isEmpty(cn.title()) ? fieldName : cn.title()) : fieldName;
+                            String description = cn != null ? cn.description() : "";
+                            FieldMeta cfm = null;
+                            if (column != null && column.name() != null) {
+                                cfm = new FieldMeta(column.name(), fieldName, title);
+
+                                if (column != null) {
+                                    cfm.getColumn().setNullable(column.nullable());
+                                    cfm.getColumn().setUniqued(column.unique());
+                                    cfm.getColumn().setName(column.name());
+                                    cfm.getColumn().setNumericPrecision(column.numericPrecision());
+                                    cfm.getColumn().setNumericScale(column.numericScale());
+                                    cfm.getColumn().setIsRefColumn(column.isRefColumn());
+                                    cfm.getColumn().setRefLocalCol(column.refLocalCol());
+                                    cfm.getColumn().setRefColName(column.refColName());
+                                    cfm.getColumn().setRefTables(column.refTables());
+                                    cfm.getColumn().setCharMaxLength(column.charMaxlength() > 0 ?
+                                            column.charMaxlength() : MapUtils.getLong(dataTypeDefaultMaxLengthMap, column.dataType(), 64L));
+                                    cfm.getColumn().setDataType(column.dataType());
+                                    try {
+                                        field.setAccessible(true);
+                                        Object defaultValue = field.get(bean);
+                                        if (defaultValue != null) {
+                                            if (defaultValue instanceof Boolean) {
+                                                cfm.getColumn().setDefaultValue(Boolean.parseBoolean(defaultValue.toString()) ? "1" : "0");
+                                            } else {
+                                                cfm.getColumn().setDefaultValue(String.valueOf(field.get(bean)));
+                                            }
+                                        }
+                                    } catch (IllegalAccessException e) {
+                                        log.error("获取默认值失败:{}>{}", clazz.getName(), fieldName, e);
+                                    }
+
+                                    // 解析外键
+                                    if (tableForeigns != null) {
+                                        ForeignKey foreignKey = field.getAnnotation(ForeignKey.class);
+                                        if (foreignKey != null) {
+                                            TableForeign tableForeign = new TableForeign();
+                                            tableForeign.setMainTable(getEntityName(clazz));
+                                            tableForeign.setMainTableCol(column.name());
+                                            tableForeign.setForeignTable(getEntityName(foreignKey.fTable()));
+                                            if (foreignKey.fCol().isEmpty()) {
+                                                tableForeign.setForeignTableCol(getId(clazz).getColumnName());
+                                            } else {
+                                                tableForeign.setForeignTableCol(foreignKey.fCol());
+                                            }
+                                            tableForeigns.add(tableForeign);
+                                        }
+                                    }
+                                }
+                                cfm.getColumn().setDescription(description);
+                                cfm.setFieldType(field.getType());
+                                if (Strings.isEmpty(cfm.getColumn().getDataType())) {
+                                    cfm.getColumn().setDataType(TypeConverter.toSqlTypeString(field.getType()));
+                                }
+                                cfm.getColumn().afterSet();
+                                map.put(fieldName, cfm);
+                            }
+                        }else{
+                            transientProp.add(fieldName);
+                        }
+                    }
+                } catch (RuntimeException e) {
+                    log.error("解析{}失败！method:{}", clazz.getName(), field.getName());
+                    throw e;
+                }
+            }
             Method[] methods = searchType.getDeclaredMethods();
             for (Method method : methods) {
                 try {
@@ -324,8 +401,6 @@ public class MetaReflex {
                         if (method.getAnnotation(Transient.class) == null) {
                             // 列，可能包括名为id的列
                             Col column = method.getAnnotation(Col.class);
-
-                            // 列的中文信息
                             Title cn = method.getAnnotation(Title.class);
                             String title = cn != null ? (Strings.isEmpty(cn.title()) ? fieldName : cn.title()) : fieldName;
                             String description = cn != null ? cn.description() : "";
@@ -335,7 +410,6 @@ public class MetaReflex {
                             } else {
                                 cfm = new FieldMeta(fieldName, fieldName, title);
                             }
-                            // cfm.setCol(column);
                             if (column != null) {
                                 cfm.getColumn().setNullable(column.nullable());
                                 cfm.getColumn().setUniqued(column.unique());
@@ -346,8 +420,8 @@ public class MetaReflex {
                                 cfm.getColumn().setRefLocalCol(column.refLocalCol());
                                 cfm.getColumn().setRefColName(column.refColName());
                                 cfm.getColumn().setRefTables(column.refTables());
-                                // charMaxlength 未设置值时，则依据dataType的获取length默认值
-                                cfm.getColumn().setCharMaxLength(column.charMaxlength() > 0 ? column.charMaxlength() : MapUtils.getLong(dataTypeDefaultMaxLengthMap, column.dataType(), 64L));
+                                cfm.getColumn().setCharMaxLength(column.charMaxlength() > 0 ?
+                                        column.charMaxlength() :  MapUtils.getLong(dataTypeDefaultMaxLengthMap, column.dataType(), 64L));
                                 cfm.getColumn().setDataType(column.dataType());
                                 try {
                                     Object defaultValue = method.invoke(bean);
@@ -386,6 +460,8 @@ public class MetaReflex {
                             }
                             cfm.getColumn().afterSet();
                             map.put(fieldName, cfm);
+                        }else{
+                            transientProp.add(fieldName);
                         }
                     }
                 } catch (RuntimeException e) {
@@ -393,6 +469,7 @@ public class MetaReflex {
                     throw e;
                 }
             }
+
         }
         return map;
     }

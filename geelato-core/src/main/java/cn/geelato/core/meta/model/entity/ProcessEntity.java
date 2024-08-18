@@ -10,7 +10,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class BizEntity extends BaseEntity {
+public class ProcessEntity extends BaseEntity {
 
     // 工作流实例id
     @Col(name = "proc_id", nullable = true)

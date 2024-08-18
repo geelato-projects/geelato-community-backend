@@ -2,7 +2,7 @@ package cn.geelato.web.platform.interceptor;
 
 import cn.geelato.web.platform.PlatformContext;
 import cn.geelato.web.platform.Tenant;
-import cn.geelato.web.platform.m.annotation.IgnoreJWTVerify;
+import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.m.security.service.JWTUtil;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,40 +26,33 @@ public class JWTInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {
 
-        // 如果不是映射到方法直接通过
-        if (!(handler instanceof HandlerMethod handlerMethod)) {
-            return true;
-        }
-        Method method = handlerMethod.getMethod();
+        //如果不是映射到方法直接通过
+        if (!(handler instanceof HandlerMethod handlerMethod)) return true;
         // 检查是否有IgnoreToken注释，有则跳过认证
-        if (method.isAnnotationPresent(IgnoreJWTVerify.class)) {
-            return true;
-        }
+        if (handlerMethod.getMethod().isAnnotationPresent(IgnoreJWTVerify.class)) return true;
 
         // 从请求头内获取token
         String token = request.getHeader("Authorization");
         // 执行认证
         if (token == null) {
-            throw new Exception("无效的token");
+            throw new Exception("invalid token");
         }
         token = token.replace("Bearer ", "");
-        // 验证令牌
-        JWTUtil.verify(token);
-
         // 获取载荷内容
         DecodedJWT verify = JWTUtil.verify(token);
         String loginName = verify.getClaim("loginName").asString();
         String id = verify.getClaim("id").asString();
         String passWord = verify.getClaim("passWord").asString();
+
         //初始化Core中的当前用户
         User currentUser= EnvManager.singleInstance().InitCurrentUser(loginName);
-
         PlatformContext.setCurrentUser(currentUser);
         PlatformContext.setCurrentTenant(new Tenant("geelato"));
 
         UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
         Subject subject = SecurityUtils.getSubject();
         subject.login(userToken);
+
         return true;
     }
 

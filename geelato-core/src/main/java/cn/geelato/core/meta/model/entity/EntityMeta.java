@@ -15,22 +15,57 @@ import java.util.*;
 /**
  * @author geelato
  */
+@SuppressWarnings("rawtypes")
 public class EntityMeta {
 
+    /**
+     * -- GETTER --
+     *  对于基于java类解析的实体，则返回类名（不包括包名）
+     *  对于基于页面配置的实体，则返回配置的实体名称
+     */
     // 实体的编码，如：user_info
+    @Setter
+    @Getter
     private String entityName;
     // 实体的中文名称，如：用户信息
+    @Setter
+    @Getter
     private String entityTitle;
+    @Setter
+    @Getter
     private Class classType;
+    /**
+     * -- GETTER --
+     *  对于基于java类解析的实体，则有具体的类类型
+     *  对于基于页面配置的实体，则返回值为空
+     */
+    @Setter
+    @Getter
     private EntityType entityType;
+    /**
+     * -- GETTER --
+     *  基于@Id获取实体中的主键字段名
+     */
+    @Getter
     private FieldMeta id;
+    @Setter
+    @Getter
     private TableMeta tableMeta;
+    @Getter
+    @Setter
     private String tableAlias;
+    @Getter
     private String[] fieldNames;
+    @Getter
     private Collection<FieldMeta> fieldMetas;
+    @Setter
+    @Getter
     private Collection<ViewMeta> viewMetas;
+    @Getter
     private Collection<TableForeign> tableForeigns;
 
+    @Getter
+    @Setter
     private Map<String, DictDataSource> dictDataSourceMap;
     // 冗余，用于快速获取列信息
     private LinkedHashMap<String, FieldMeta> fieldMetaMap;
@@ -39,6 +74,7 @@ public class EntityMeta {
     // 冗余，用于快速获取列元数据，json格式，用于对外展示，过滤掉了一些数据库字段
     private LinkedHashMap<String, SimpleFieldMeta> simpleFieldMetaMap;
     // 冗余，用于快速获取外键关系
+    @Getter
     private final Map<String, TableForeign> tableForeignsMap = new HashMap<>();
     // 不更新的字段
     private final Map<String, Boolean> ignoreUpdateFieldMap;
@@ -50,66 +86,11 @@ public class EntityMeta {
         ignoreUpdateFieldMap.put("creator", true);
     }
 
-    /**
-     * 对于基于java类解析的实体，则返回类名（不包括包名）
-     * 对于基于页面配置的实体，则返回配置的实体名称
-     */
-    public String getEntityName() {
-        return entityName;
-    }
-
-    public void setEntityName(String entityName) {
-        this.entityName = entityName;
-    }
-
-    public String getEntityTitle() {
-        return entityTitle;
-    }
-
-    public void setEntityTitle(String entityTitle) {
-        this.entityTitle = entityTitle;
-    }
-
-    /**
-     * 对于基于java类解析的实体，则有具体的类类型
-     * 对于基于页面配置的实体，则返回值为空
-     */
-    public EntityType getEntityType() {
-        return entityType;
-    }
-
-    public void setEntityType(EntityType entityType) {
-        this.entityType = entityType;
-    }
-
-    /**
-     * 基于@Id获取实体中的主键字段名
-     */
-    public FieldMeta getId() {
-        return id;
-    }
-
     public void setId(FieldMeta id) {
         this.id = id;
         if (id != null) {
             ignoreUpdateFieldMap.put(id.getFieldName(), true);
         }
-    }
-
-    public TableMeta getTableMeta() {
-        return tableMeta;
-    }
-
-    public void setTableMeta(TableMeta tableMeta) {
-        this.tableMeta = tableMeta;
-    }
-
-    public Collection<FieldMeta> getFieldMetas() {
-        return fieldMetas;
-    }
-
-    public String[] getFieldNames() {
-        return fieldNames;
     }
 
     public void setFieldMetas(Collection<FieldMeta> fieldMetas) {
@@ -225,14 +206,6 @@ public class EntityMeta {
         return meta;
     }
 
-    public Map<String, DictDataSource> getDictDataSourceMap() {
-        return dictDataSourceMap;
-    }
-
-    public void setDictDataSourceMap(Map<String, DictDataSource> dictDataSourceMap) {
-        this.dictDataSourceMap = dictDataSourceMap;
-    }
-
     public String getTableName() {
         return tableMeta.getTableName();
     }
@@ -295,31 +268,11 @@ public class EntityMeta {
         return ignoreUpdateFieldMap.containsKey(field);
     }
 
-    public void setTableAlias(String tableAlias) {
-        this.tableAlias = tableAlias;
-    }
-
-    public String getTableAlias() {
-        return tableAlias;
-    }
-
-    public Collection<TableForeign> getTableForeigns() {
-        return tableForeigns;
-    }
-
     public void setTableForeigns(Collection<TableForeign> tableForeigns) {
         this.tableForeigns = tableForeigns;
         for (TableForeign t : tableForeigns) {
             tableForeignsMap.put(t.getForeignTable(), t);
         }
-    }
-
-    public Map<String, TableForeign> getTableForeignsMap() {
-        return tableForeignsMap;
-    }
-
-    public Collection<ViewMeta> getViewMetas() {
-        return viewMetas;
     }
 
     public ViewMeta getViewMeta(String viewName) {
@@ -334,15 +287,4 @@ public class EntityMeta {
         return null;
     }
 
-    public void setViewMetas(Collection<ViewMeta> viewMetas) {
-        this.viewMetas = viewMetas;
-    }
-
-    public Class getClassType() {
-        return classType;
-    }
-
-    public void setClassType(Class classType) {
-        this.classType = classType;
-    }
 }

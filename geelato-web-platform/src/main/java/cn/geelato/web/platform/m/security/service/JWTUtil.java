@@ -65,7 +65,7 @@ public class JWTUtil {
      */
     public static DecodedJWT verify(String token) throws Exception {
         //如果token无效
-        if (token == null || "".equals(token)) {
+        if (token == null || token.isEmpty()) {
             throw new JWTDecodeException("无效的token！");
         }
         //解析token

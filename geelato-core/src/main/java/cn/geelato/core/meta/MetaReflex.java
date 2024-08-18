@@ -261,6 +261,21 @@ public class MetaReflex {
                     return new FieldMeta(columnName, fieldName, title);
                 }
             }
+            Field[] fields = searchType.getDeclaredFields();
+            for (Field field : fields) {
+                Id id = field.getAnnotation(Id.class);
+                if (id != null) {
+                    String fieldName = field.getName();
+                    Title cn = field.getAnnotation(Title.class);
+                    String title = cn != null ? (Strings.isEmpty(cn.title()) ? fieldName : cn.title()) : fieldName;
+                    String columnName = fieldName;
+                    Col col = field.getAnnotation(Col.class);
+                    if (col != null) {
+                        columnName = col.name();
+                    }
+                    return new FieldMeta(columnName, fieldName, title);
+                }
+            }
         }
         throw new RuntimeException("No @Id founded from " + clazz.getName() + "!");
     }

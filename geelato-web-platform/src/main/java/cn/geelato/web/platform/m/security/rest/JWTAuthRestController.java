@@ -10,7 +10,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.platform.m.annotation.IgnoreJWTVerify;
+import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.enums.ValidTypeEnum;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.base.service.AttachService;

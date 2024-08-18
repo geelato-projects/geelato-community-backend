@@ -111,7 +111,7 @@ public class BaseEntity extends IdEntity {
     /***
      * 其它属性设置之后，调用。可用于通用的增删改查功能中，特别字段的生成
      */
-    public void afterSet() {
+    public void afterSet(){
 
     }
 }

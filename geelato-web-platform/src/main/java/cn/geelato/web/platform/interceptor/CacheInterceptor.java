@@ -42,11 +42,4 @@ public class CacheInterceptor implements HandlerInterceptor {
         }
     }
 
-
-
-    @Override
-    public void afterCompletion(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler, Exception ex) throws Exception {
-
-    }
-
 }

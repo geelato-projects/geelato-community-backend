@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.annotation;
+package cn.geelato.web.platform.interceptor.annotation;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

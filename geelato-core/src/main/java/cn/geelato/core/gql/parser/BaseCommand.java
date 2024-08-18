@@ -11,61 +11,40 @@ import java.util.List;
 /**
  * @author geemeta
  */
+@Setter
+@Getter
 @SuppressWarnings("rawtypes")
 public class BaseCommand<E extends BaseCommand> {
     /**
      * TODO 客户端生成的唯一标识，用于缓存
      */
-    @Setter
-    @Getter
-    private String key;
+    private String cacheKey;
 
     /**
      * -- GETTER --
      *
-     * @return 如果是根命令，则返回null
      */
-    @Setter
-    @Getter
     protected BaseCommand<E> parentCommand;
 
-    @Setter
-    @Getter
     private Boolean execution;
 
-    @Setter
-    @Getter
     protected CommandType commandType;
     // 命令对应实体名称
-    @Setter
-    @Getter
     protected String entityName;
     // 指定字段
-    @Setter
-    @Getter
     protected String[] fields;
     // 指定条件
-    @Setter
-    @Getter
     protected FilterGroup where;
     //指定原始where语句
-    @Setter
-    @Getter
     protected String originalWhere;
     // 指定条件
-    @Getter
     protected StringBuilder from = new StringBuilder();
     // 子命令
-    @Setter
-    protected List<E> commands;
+    protected List<E> commands=new ArrayList<>();;
 
     /**
      * @return 获取子命令，若不存在，则创建一个空的命令列表
      */
-    public List<E> getCommands() {
-        if (commands == null){ commands = new ArrayList<>();}
-        return commands;
-    }
 
     public boolean hasCommands() {
         return commands != null && !commands.isEmpty();

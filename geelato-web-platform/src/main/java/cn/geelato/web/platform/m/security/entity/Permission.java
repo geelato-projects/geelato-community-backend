@@ -5,69 +5,32 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Getter;
 import lombok.Setter;
 
 /**
  * @author diabl
  */
 @Setter
+@Getter
 @Entity(name = "platform_permission")
 public class Permission extends BaseEntity {
 
+    @Title(title = "应用Id")
+    @Col(name = "app_id")
     private String appId;
+
     private String name;
     private String code;
     private String type;
     private String object;
-    private String rule;
-    private String description;
-    private boolean isDefault;
-
-    @Title(title = "应用Id")
-    @Col(name = "app_id")
-    public String getAppId() {
-        return appId;
-    }
-
-    @Title(title = "名称")
-    @Col(name = "name")
-    public String getName() {
-        return name;
-    }
-
-    @Title(title = "编码")
-    @Col(name = "code")
-    public String getCode() {
-        return code;
-    }
-
-    @Title(title = "类型")
-    @Col(name = "type")
-    public String getType() {
-        return type;
-    }
-
-    @Title(title = "")
-    @Col(name = "object")
-    public String getObject() {
-        return object;
-    }
 
     @Title(title = "规则")
     @Col(name = "rule", charMaxlength = 1024)
-    public String getRule() {
-        return rule;
-    }
+    private String rule;
 
-    @Title(title = "名称")
-    @Col(name = "description")
-    public String getDescription() {
-        return description;
-    }
+    private String description;
 
-    @Title(title = "默认权限")
     @Transient
-    public boolean isDefault() {
-        return isDefault;
-    }
+    private boolean isDefault;
 }

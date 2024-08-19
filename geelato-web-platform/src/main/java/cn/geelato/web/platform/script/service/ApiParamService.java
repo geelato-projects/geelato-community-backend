@@ -120,7 +120,6 @@ public class ApiParamService extends BaseService {
     }
 
     public List<ApiParam> batchCreateModel(Api api, String pid, List<ApiParam> records) {
-        System.out.println(pid);
         List<ApiParam> result = new ArrayList<>();
         if (records != null && records.size() > 0) {
             for (ApiParam param : records) {

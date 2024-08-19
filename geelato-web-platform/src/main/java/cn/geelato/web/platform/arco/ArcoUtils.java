@@ -1,8 +1,9 @@
 package cn.geelato.web.platform.arco;
 
-import cn.geelato.web.platform.arco.select.SelectOptionData;
 import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.web.platform.arco.tree.TreeNodeData;
+import cn.geelato.web.platform.arco.select.SelectOptionData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.Map;
  */
 public class ArcoUtils {
     private static Map<String, Class<? extends Enum>> enumMap = new HashMap<>();
+    private static final Logger logger = LoggerFactory.getLogger(ArcoUtils.class);
 
     public static synchronized Class<? extends Enum> getEnum(String enumName) {
         if (ArcoUtils.enumMap.isEmpty()) {
@@ -44,7 +46,7 @@ public class ArcoUtils {
                 optionDatas.add(optionData);
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            logger.error(e.getMessage());
         }
 
         return optionDatas.toArray(new SelectOptionData[]{});

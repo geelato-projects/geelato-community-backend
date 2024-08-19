@@ -33,4 +33,5 @@ public class Permission extends BaseEntity {
 
     @Transient
     private boolean isDefault;
+    private boolean workMark;
 }

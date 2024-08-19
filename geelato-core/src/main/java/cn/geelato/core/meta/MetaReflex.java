@@ -396,7 +396,7 @@ public class MetaReflex {
                     }
                     // 首字符变小写
                     fieldName = firstCharToLow(fieldName);
-                    if (!map.containsKey(fieldName)) {
+                    if (!map.containsKey(fieldName)&&!transientProp.contains(fieldName)) {
                         // 如果列中有@Transient，则跳过
                         if (method.getAnnotation(Transient.class) == null) {
                             // 列，可能包括名为id的列

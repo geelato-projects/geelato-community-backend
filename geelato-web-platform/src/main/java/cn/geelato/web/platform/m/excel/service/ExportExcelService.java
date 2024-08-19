@@ -127,7 +127,6 @@ public class ExportExcelService {
             Attach attachMap = attachService.createModel(attach);
             result.setData(attachMap);
         } catch (Exception e) {
-            logger.error("表单信息导出Excel出错。", e);
             result.error().setMsg(e.getMessage());
         }
 
@@ -152,12 +151,10 @@ public class ExportExcelService {
             }
             // 模板源数据
             Map<String, PlaceholderMeta> metaMap = getPlaceholderMeta(placeholderMetas);
-            logger.info("数据定义读取成功");
             // 生成导出模板
             String templateName = String.format("%s_%s%s", fileName, "导出模板", templateExt);
             Base64Info templateAttach = getTemplate(tenantCode, appId, templateName, exportColumns);
             Assert.notNull(templateAttach, "导出模板创建失败！");
-            logger.info("导出模板生成成功！" + templateAttach.getFile().getAbsolutePath());
             // 实体文件 upload/存放表/租户编码/应用Id
             String exportFileName = String.format("%s_%s%s", fileName, sdf.format(new Date()), templateExt);
             String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), tenantCode, appId, exportFileName, true);
@@ -176,7 +173,6 @@ public class ExportExcelService {
             Attach attachMap = attachService.createModel(attach);
             result.setData(attachMap);
         } catch (Exception e) {
-            logger.error("表单信息导出Excel出错。", e);
             result.error().setMsg(e.getMessage());
         }
 
@@ -464,7 +460,6 @@ public class ExportExcelService {
                         // 将临时文件吸入file
                         info = bi;
                         info.setFile(tempFile);
-                        logger.info(String.format("base64Name：%s；tempFilePath：%s", bi.getName(), info.getFile().getAbsolutePath()));
                     }
                 } catch (Exception ex) {
                     logger.info(ex.getMessage(), ex);
@@ -473,7 +468,6 @@ public class ExportExcelService {
                 Attach attach = getFile(template);
                 if (attach != null) {
                     info = Base64Info.getBase64InfoByAttach(attach);
-                    logger.info(String.format("AttachName：%s；tempFilePath：%s", attach.getName(), info.getFile().getAbsolutePath()));
                 }
             }
         }

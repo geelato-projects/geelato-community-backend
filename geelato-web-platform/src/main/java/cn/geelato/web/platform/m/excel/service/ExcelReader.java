@@ -44,7 +44,6 @@ public class ExcelReader {
     public Map<String, List<BusinessMeta>> readBusinessMeta(HSSFSheet sheet) {
         Map<String, List<BusinessMeta>> tableMaps = new HashMap<>();
         int lastRowIndex = sheet.getLastRowNum();
-        logger.info("BusinessMeta = " + lastRowIndex);
         List<BusinessMeta> columns = new ArrayList<>();
         List<String> tables = new ArrayList<>();
         // 跳过第一行，标题行
@@ -70,7 +69,6 @@ public class ExcelReader {
                     tables.add(meta.getTableName());
                 }
             } catch (Exception ex) {
-                logger.error(ex.getMessage(), ex);
                 throw new FileContentReadFailedException("Business Meta, Read Failed In (" + i + ").");
             }
         }
@@ -96,7 +94,6 @@ public class ExcelReader {
      */
     public Map<String, BusinessTypeData> readBusinessTypeData(HSSFSheet sheet) {
         int lastRowIndex = sheet.getLastRowNum();
-        logger.info("BusinessTypeData = " + lastRowIndex);
         Map<String, BusinessTypeData> metaMap = new HashMap<String, BusinessTypeData>(lastRowIndex);
         // 跳过第一行，标题行
         for (int i = 1; i <= lastRowIndex; i++) {
@@ -118,7 +115,6 @@ public class ExcelReader {
                 meta.setRemark(row.getCell(6).getStringCellValue());
                 metaMap.put(meta.getName(), meta);
             } catch (Exception ex) {
-                logger.error(ex.getMessage(), ex);
                 throw new FileContentReadFailedException("Business Data Type, Read Failed In (" + i + ").");
             }
         }
@@ -134,7 +130,6 @@ public class ExcelReader {
      */
     public Set<Map<Integer, BusinessTypeRuleData>> readBusinessTypeRuleData(HSSFSheet sheet) {
         int lastRowIndex = sheet.getLastRowNum();
-        logger.info("BusinessTypeRuleData = " + lastRowIndex);
         List<BusinessTypeRuleData> typeRuleDataList = new ArrayList<>();
         // 跳过第一行，标题行
         for (int i = 2; i <= lastRowIndex; i++) {
@@ -159,7 +154,6 @@ public class ExcelReader {
                 meta.setOrder((int) row.getCell(5).getNumericCellValue());
                 typeRuleDataList.add(meta);
             } catch (Exception ex) {
-                logger.error(ex.getMessage(), ex);
                 throw new FileContentReadFailedException("Business Data Type Rule, Read Failed In (" + i + ").");
             }
         }
@@ -191,13 +185,11 @@ public class ExcelReader {
     public List<Map<String, BusinessData>> readBusinessData(@NotNull HSSFSheet sheet, HSSFFormulaEvaluator evaluator, Map<String, BusinessTypeData> businessTypeDataMap) {
         int lastRowIndex = sheet.getLastRowNum();
         int lastCellNum = 0;
-        logger.info("BusinessData = " + lastRowIndex);
         // 第一行
         List<BusinessColumnMeta> headers = new ArrayList<>();
         HSSFRow firstRow = sheet.getRow(0);
         if (firstRow != null) {
             lastCellNum = firstRow.getLastCellNum();
-            logger.info("BusinessData Cells = " + lastCellNum);
             for (int i = 0; i < lastCellNum; i++) {
                 HSSFCell cell = firstRow.getCell(i);
                 if (cell != null) {

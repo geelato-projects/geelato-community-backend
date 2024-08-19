@@ -91,7 +91,6 @@ public class OfficeUtils {
                     // 如果字段不是public的，则需要先设置setAccessible(true)
                     field.setAccessible(true); // 允许访问私有字段
                     Object value = field.get(null); // static字段的实例为null
-                    System.out.println("Name: " + field.getName() + ", Value: " + value);
                     pageSizeMap.put(field.getName(), (Rectangle) value);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();

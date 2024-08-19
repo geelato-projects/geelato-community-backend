@@ -34,7 +34,6 @@ public class ExcelXSSFWriter {
      * @param valueMapList
      */
     public void writeSheet(XSSFSheet sheet, Map<String, PlaceholderMeta> placeholderMetaMap, List<Map> valueMapList, Map valueMap) {
-        System.out.println("writeData:" + sheet.getSheetName());
         int lastRowIndex = sheet.getLastRowNum();
         for (int rowIndex = 0; rowIndex <= lastRowIndex; rowIndex++) {
             // 按行扫描处理
@@ -42,10 +41,7 @@ public class ExcelXSSFWriter {
             if (row == null) {
                 break;
             }
-
             RowMeta rowMeta = parseTemplateRow(row, placeholderMetaMap);
-            logger.info(String.format("完成第%s行的元数据解析。List:%s", rowIndex, rowMeta.isMultiGroupRow()));
-
             int newRowCount = 0;
             if (rowMeta.isMultiGroupRow()) {
                 int listIndex = 0;
@@ -54,7 +50,6 @@ public class ExcelXSSFWriter {
                     // 完成列表的设置后，若创建了新行，则需要同步设置整个sheet当前的row索引值、最后一行的索引值
                     rowIndex += newRowCount;
                     lastRowIndex += newRowCount;
-                    // logger.info("当前为第" + rowIndex + "行，本次新增了" + newRowCount + "行。");
                     if (listIndex + 1 < valueMapList.size()) {
                         rowIndex += 1;
                         lastRowIndex += 1;
@@ -84,7 +79,6 @@ public class ExcelXSSFWriter {
      * @param valueMap
      */
     public void writeSheet(XSSFSheet sheet, Map<String, PlaceholderMeta> placeholderMetaMap, Map valueMap) {
-        System.out.println("writeData:" + sheet.getSheetName());
         int lastRowIndex = sheet.getLastRowNum();
         for (int rowIndex = 0; rowIndex <= lastRowIndex; rowIndex++) {
             // 按行扫描处理
@@ -92,10 +86,7 @@ public class ExcelXSSFWriter {
             if (row == null) {
                 break;
             }
-
             RowMeta rowMeta = parseTemplateRow(row, placeholderMetaMap);
-            logger.info("完成第" + rowIndex + "行的元数据解析。");
-
             int newRowCount = setRowValue(sheet, rowIndex, rowMeta, valueMap);
             // 完成列表的设置后，若创建了新行，则需要同步设置整个sheet当前的row索引值、最后一行的索引值
             rowIndex += newRowCount;
@@ -133,7 +124,6 @@ public class ExcelXSSFWriter {
                     // 从字典中取该占位符对应的元数据
                     PlaceholderMeta meta = placeholderMetaMap.get(cellValue);
                     if (meta == null) {
-                        logger.info("通过cellValue:" + cellValue + "获到不到元数据。");
                         continue;
                     }
                     if (meta.isList()) {
@@ -147,8 +137,6 @@ public class ExcelXSSFWriter {
                             cellMeta.setIndex(cellIndex);
                             cellMeta.setPlaceholderMeta(meta);
                             cellMetaList.add(cellMeta);
-                        } else {
-                            logger.error("源数据格式有问题meta.getListVar()为空。");
                         }
                     } else {
                         CellMeta cellMeta = new CellMeta();
@@ -188,7 +176,6 @@ public class ExcelXSSFWriter {
             List valueList = (List) valueMap.get(key);
             if (valueList == null) {
                 valueList = new ArrayList<>();
-                logger.error("从valueMap中，获取key(" + key + ")的值为null。");
             }
             listMaxRowCount = Math.max(valueList.size(), listMaxRowCount);
         }
@@ -227,7 +214,6 @@ public class ExcelXSSFWriter {
                 List<CellMeta> cellMetaList = rowMeta.getListCellMetaMap().get(key);
                 // 合并唯一约束 - 行范围
                 List<List<Integer>> mergeScope = ExcelCommonUtils.getMergeUniqueScope(cellMetaList, valueMap, valueList);
-                logger.info("合并唯一约束 - 行范围：" + JSON.toJSONString(mergeScope));
                 setMergeScope(sheet, rowIndex, cellMetaList, valueMap, valueList, mergeScope);
             }
         }
@@ -256,7 +242,6 @@ public class ExcelXSSFWriter {
                     if (mergeScope != null) {
                         ranges = ExcelCommonUtils.listRetain(integerSet, mergeScope);
                     }
-                    logger.info(cellMeta.getPlaceholderMeta().getPlaceholder() + " - 行范围: " + JSON.toJSONString(ranges));
                     // 合并单元格
                     if (ranges != null && ranges.size() > 0) {
                         for (List<Integer> range : ranges) {
@@ -341,7 +326,6 @@ public class ExcelXSSFWriter {
             sheet.shiftRows(rowIndex, lastRowNo, 1);
         }
         row = sheet.createRow(rowIndex);
-        logger.info("在第" + rowIndex + "行，创建新行。");
         return row;
     }
 
@@ -488,7 +472,6 @@ public class ExcelXSSFWriter {
      */
     public Map<String, PlaceholderMeta> readPlaceholderMeta(XSSFSheet sheet) {
         int lastRowIndex = sheet.getLastRowNum();
-        System.out.println(lastRowIndex);
         Map<String, PlaceholderMeta> map = new HashMap<String, PlaceholderMeta>(lastRowIndex);
         // 跳过第一行，标题行
         for (int i = 1; i <= lastRowIndex; i++) {

@@ -172,7 +172,6 @@ public class ExcelCommonUtils {
                 }
             }
         }
-        logger.info(cellMeta.getPlaceholderMeta().getPlaceholder() + ": " + JSON.toJSONString(integerSet));
         return integerSet;
     }
 
@@ -425,8 +424,6 @@ public class ExcelCommonUtils {
                 handleDataMapList.addAll(mergeData);
             }
         }
-        // logger.info(JSON.toJSONString(multiLoggers));
-
         return handleDataMapList;
     }
 
@@ -661,9 +658,6 @@ public class ExcelCommonUtils {
                                 } else {
                                     newValue = businessData.getValue();
                                 }
-                                if (newValue != null) {
-                                    logger.info(String.format("数据清洗[Y.%s,X.%s], [%s], %s => %s", businessData.getYIndex(), businessData.getXIndex(), ruleData.getType(), businessData.getValue(), newValue));
-                                }
                                 businessData.setValue(newValue);
                             } catch (Exception ex) {
                                 businessData.addErrorMsg("Rule resolution failure。" + JSON.toJSONString(ruleData));
@@ -782,7 +776,6 @@ public class ExcelCommonUtils {
                                 dictItems.put(dictItem.getItemName(), dictItem.getItemCode());
                             }
                         }
-                        logger.info(dictKey + " - " + dictItems.size());
                         redisTemplate.opsForValue().set(dictKey, dictItems, REDIS_TIME_OUT, TimeUnit.MINUTES);
                         dictKeys.add(dictKey);
                     }
@@ -812,10 +805,8 @@ public class ExcelCommonUtils {
                         columnNames.add(ruleData.getGoal());
                         columnNames.addAll(ruleData.getQueryRuleColumn());
                         String ggl = String.format(gglFormat, ruleData.getQueryRuleTable(), String.join(",", columnNames));
-                        logger.info(key + " - " + ggl);
                         ApiPagedResult page = ruleService.queryForMapList(ggl, false);
                         Map<String, Object> redisValue = pagedResultToMap(page, ruleData.getGoal(), ruleData.getQueryRuleColumn());
-                        logger.info(String.format("%s - %s => %s", key, page.getTotal(), (redisValue != null ? redisValue.size() : 0)));
                         redisTemplate.opsForValue().set(key, redisValue, REDIS_TIME_OUT, TimeUnit.MINUTES);
                         primaryKeys.add(key);
                     }
@@ -935,7 +926,6 @@ public class ExcelCommonUtils {
                                 dictItems.put(dictItem.getItemName(), dictItem.getItemCode());
                             }
                         }
-                        logger.info(dictKey + " - " + dictItems.size());
                         redisTemplate.opsForValue().set(dictKey, dictItems, REDIS_TIME_OUT, TimeUnit.MINUTES);
                         dictKeys.add(dictKey);
                     }
@@ -965,11 +955,8 @@ public class ExcelCommonUtils {
                         columnNames.add(meta.getGoalName());
                         columnNames.addAll(meta.getColumnNames());
                         String ggl = String.format(gglFormat, meta.getTableName(), String.join(",", columnNames));
-                        logger.info(key + " - " + ggl);
                         ApiPagedResult page = ruleService.queryForMapList(ggl, false);
-                        logger.info(key + " - " + page.getTotal());
                         Map<String, Object> redisValue = pagedResultToMap(page, meta.getGoalName(), meta.getColumnNames());
-                        logger.info(String.format("%s - %s => %s", key, page.getTotal(), (redisValue != null ? redisValue.size() : 0)));
                         redisTemplate.opsForValue().set(key, redisValue, REDIS_TIME_OUT, TimeUnit.MINUTES);
                         primaryKeys.add(key);
                     }
@@ -1058,7 +1045,6 @@ public class ExcelCommonUtils {
                 String ggl = String.format(gglFormat, tableName, String.join(",", uniqueColumns));
                 ApiPagedResult page = ruleService.queryForMapList(ggl, false);
                 Map<String, Set<Object>> redisValue = pageResultToMap(page, uniqueColumns);
-                logger.info(String.format("%s - %s => %s", key, page.getTotal(), (redisValue != null ? redisValue.size() : 0)));
                 redisTemplate.opsForValue().set(key, redisValue, REDIS_TIME_OUT, TimeUnit.MINUTES);
             }
         } catch (Exception ex) {
@@ -1195,7 +1181,6 @@ public class ExcelCommonUtils {
                                         maxLength = maxLength > multiValue.length ? maxLength : multiValue.length;
                                         dataValues.add(String.join(",", multiValue));
                                     }
-                                    logger.info(String.format("数据清洗[Y.%s,X.%s], [%s], [%s], %s => %s", businessData.getYIndex(), businessData.getXIndex(), columnName, ruleData.getType(), businessData.getValue(), JSON.toJSONString(multiValue)));
                                 }
                             } catch (Exception ex) {
                                 logger.error(ex.getMessage(), ex);
@@ -1346,7 +1331,6 @@ public class ExcelCommonUtils {
                 businessData.setValue(newValue);
                 businessData.setTransitionValue(newValue);
             }
-            logger.info(String.format("数据清洗[Y.%s,X.%s], [%s], [%s], %s => %s, (%s)", businessData.getYIndex(), businessData.getXIndex(), columnName, ruleData.getType(), oldValue, newValue, ruleData.getRule()));
         }
     }
 

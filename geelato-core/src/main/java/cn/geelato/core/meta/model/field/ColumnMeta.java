@@ -75,7 +75,7 @@ public class ColumnMeta extends BaseSortableEntity implements EntityEnableAble, 
     // COLUMN_DEFAULT
     // 数据字典编码、流水号id、实体id、多组件[{"label":"","code":"","value":""}]
     @Setter
-    @Col(name = "default_value")
+    @Col(name = "column_default")
     private String defaultValue = null;
     // COLUMN_TYPE  --varchar(100)
     @Setter
@@ -155,6 +155,7 @@ public class ColumnMeta extends BaseSortableEntity implements EntityEnableAble, 
     @Col(name = "foreign_table")
     private String refTables;
     @Setter
+
     private boolean abstractColumn;
     // 数据选择类型
     @Setter

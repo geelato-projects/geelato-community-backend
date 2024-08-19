@@ -32,6 +32,5 @@ public class Permission extends BaseEntity {
     private String description;
 
     @Transient
-    private boolean isDefault;
-    private boolean workMark;
+    private boolean perDefault;
 }

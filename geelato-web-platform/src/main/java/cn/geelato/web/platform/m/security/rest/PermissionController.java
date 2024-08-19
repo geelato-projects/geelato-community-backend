@@ -101,7 +101,7 @@ public class PermissionController extends BaseController {
         ApiResult result = new ApiResult();
         try {
             Permission model = permissionService.getModel(CLAZZ, id);
-            model.setDefault(permissionService.isDefault(model));
+            model.setPerDefault(permissionService.isDefault(model));
             result.setData(model);
         } catch (Exception e) {
             logger.error(e.getMessage());

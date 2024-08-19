@@ -1,18 +1,18 @@
 package cn.geelato.web.platform.m.security.service;
 
+import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.meta.MetaManager;
+import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.enums.PermissionTypeEnum;
+import cn.geelato.web.platform.m.base.service.BaseService;
+import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import cn.geelato.web.platform.m.security.entity.Permission;
 import cn.geelato.web.platform.m.security.entity.Role;
 import cn.geelato.web.platform.m.security.entity.RolePermissionMap;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.gql.parser.FilterGroup;
-import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.field.ColumnMeta;
-import cn.geelato.web.platform.enums.PermissionTypeEnum;
-import cn.geelato.web.platform.m.base.service.BaseService;
-import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -153,7 +153,7 @@ public class RolePermissionMapService extends BaseService {
         customPermissionMap.put("data", customPermissions);
         permissionMapSet.add(customPermissionMap);
         for (Permission model : permissions) {
-            if (model.isDefault()) {
+            if (model.isPerDefault()) {
                 boolean isEdit = false;
                 for (String clazz : PermissionService.PERMISSION_MODEL_CLASSIFY) {
                     if (String.format("%s&%s", model.getObject(), clazz).equalsIgnoreCase(model.getCode())) {
@@ -222,7 +222,7 @@ public class RolePermissionMapService extends BaseService {
         List<String> permissionIds = new ArrayList<>();
         if (permissions != null && permissions.size() > 0) {
             for (Permission model : permissions) {
-                model.setDefault(permissionService.isDefault(model, defaultPermissions));
+                model.setPerDefault(permissionService.isDefault(model, defaultPermissions));
                 permissionIds.add(model.getId());
             }
             Set<Map<String, Object>> permissionMap = permissionClassify(permissions);

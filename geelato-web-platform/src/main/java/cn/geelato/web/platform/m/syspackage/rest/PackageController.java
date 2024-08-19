@@ -1,15 +1,6 @@
 package cn.geelato.web.platform.m.syspackage.rest;
 
-import cn.geelato.utils.StringUtils;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
-import jakarta.annotation.Resource;
-import jakarta.validation.constraints.NotNull;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiResultCode;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.parser.JsonTextSaveParser;
@@ -20,6 +11,9 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.DaoException;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.sql.SqlManager;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiResultCode;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.enums.PackageSourceEnum;
@@ -34,6 +28,12 @@ import cn.geelato.web.platform.m.syspackage.entity.AppMeta;
 import cn.geelato.web.platform.m.syspackage.entity.AppPackage;
 import cn.geelato.web.platform.m.syspackage.entity.AppVersion;
 import cn.geelato.web.platform.m.syspackage.service.AppVersionService;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
+import jakarta.annotation.Resource;
+import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.TransactionStatus;
@@ -80,7 +80,7 @@ public class PackageController extends BaseController {
     /*
     打包应用
      */
-    @RequestMapping(value = {"/packet/{appId}"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/packet/{appId}"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult packetApp(@NotNull @PathVariable("appId") String appId, String version, String description,
                                @RequestBody(required = false) Map<String, String> appointMetas) throws IOException {
@@ -120,11 +120,11 @@ public class PackageController extends BaseController {
         appPackage.setAppMetaList(appMetaList);
         AppVersion av = new AppVersion();
         av.setAppId(appId);
-        String packageVersion=null;
+        String packageVersion = null;
         if (StringUtils.isEmpty(version)) {
-            packageVersion=generateVersionCode(appPackage.getAppCode());
+            packageVersion = generateVersionCode(appPackage.getAppCode());
         } else {
-            packageVersion=version;
+            packageVersion = version;
         }
         av.setVersion(packageVersion);
         appPackage.setVersion(packageVersion);
@@ -142,14 +142,15 @@ public class PackageController extends BaseController {
         apiResult.setData(appVersionService.createModel(av));
         return apiResult;
     }
-    @RequestMapping(value = {"/packet/merge"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+
+    @RequestMapping(value = {"/packet/merge"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult packetMergeApp(String appId, String version, String description,
-                               @RequestBody(required = false) Map<String,Map<String, String>> appointMetas) throws IOException {
+                                    @RequestBody(required = false) Map<String, Map<String, String>> appointMetas) throws IOException {
         ApiResult apiResult = new ApiResult();
-        String[] versionIds=appointMetas.keySet().toArray(new String[0]);
-        List<AppPackage> appPackages=getAppointAppPackage(versionIds);
-        AppPackage appPackage= mergePackage(appPackages,appointMetas);
+        String[] versionIds = appointMetas.keySet().toArray(new String[0]);
+        List<AppPackage> appPackages = getAppointAppPackage(versionIds);
+        AppPackage appPackage = mergePackage(appPackages, appointMetas);
 
         AppVersion av = new AppVersion();
         av.setAppId(appId);
@@ -174,16 +175,16 @@ public class PackageController extends BaseController {
     }
 
     private AppPackage mergePackage(List<AppPackage> sourceAppPackageList, Map<String, Map<String, String>> appointMetas) {
-        AppPackage appPackage=new AppPackage();
+        AppPackage appPackage = new AppPackage();
 
-        List<AppMeta> mergeAppMetaList=new ArrayList<>();
-        for (AppPackage pkg:sourceAppPackageList){
-            String pkgVersion=pkg.getVersion();
+        List<AppMeta> mergeAppMetaList = new ArrayList<>();
+        for (AppPackage pkg : sourceAppPackageList) {
+            String pkgVersion = pkg.getVersion();
             appPackage.setAppCode(pkg.getAppCode());
-            Map<String,String> pkgAppoints= appointMetas.get(pkgVersion);
-            for (AppMeta appMeta :pkg.getAppMetaList()) {
+            Map<String, String> pkgAppoints = appointMetas.get(pkgVersion);
+            for (AppMeta appMeta : pkg.getAppMetaList()) {
                 List<Map<String, Object>> metaData = (List<Map<String, Object>>) appMeta.getMetaData();
-                String metaName=appMeta.getMetaName();
+                String metaName = appMeta.getMetaName();
                 if (pkgAppoints.containsKey(metaName)) {
                     List<Map<String, Object>> appointMetaData = pickMetaData(metaData, pkgAppoints.get(metaName));
                     AppMeta pkgAppMeta = new AppMeta(metaName, appointMetaData);
@@ -196,27 +197,27 @@ public class PackageController extends BaseController {
     }
 
     private List<AppMeta> distinctMergrAppMetaList(List<AppMeta> waitMergeAppMetaList) {
-        List<AppMeta> distinctAppMetaList=new ArrayList<>();
-        for (AppMeta appMeta:waitMergeAppMetaList){
-           AppMeta mergeAppMeta= distinctAppMetaList.stream().filter(x->x.getMetaName().equals(appMeta.getMetaName())).findFirst().orElse(null);
-           if(mergeAppMeta==null){
-               distinctAppMetaList.add(appMeta);
-           }else {
-               List<Map<String, Object>> metaData=(List<Map<String, Object>>)mergeAppMeta.getMetaData();
-               for (Map<String,Object> map: (List<Map<String, Object>>)appMeta.getMetaData()){
-                   String id=map.get("id").toString();
-                   if(metaData.stream().noneMatch(x->x.get("id").toString().equals(id))){
-                       metaData.add(map);
-                   }
-               }
-           }
+        List<AppMeta> distinctAppMetaList = new ArrayList<>();
+        for (AppMeta appMeta : waitMergeAppMetaList) {
+            AppMeta mergeAppMeta = distinctAppMetaList.stream().filter(x -> x.getMetaName().equals(appMeta.getMetaName())).findFirst().orElse(null);
+            if (mergeAppMeta == null) {
+                distinctAppMetaList.add(appMeta);
+            } else {
+                List<Map<String, Object>> metaData = (List<Map<String, Object>>) mergeAppMeta.getMetaData();
+                for (Map<String, Object> map : (List<Map<String, Object>>) appMeta.getMetaData()) {
+                    String id = map.get("id").toString();
+                    if (metaData.stream().noneMatch(x -> x.get("id").toString().equals(id))) {
+                        metaData.add(map);
+                    }
+                }
+            }
         }
         return distinctAppMetaList;
     }
 
-    private List<AppPackage> getAppointAppPackage (String[] versions) {
-        List<AppPackage> appPackageList=new ArrayList<>();
-        for (String version:versions){
+    private List<AppPackage> getAppointAppPackage(String[] versions) {
+        List<AppPackage> appPackageList = new ArrayList<>();
+        for (String version : versions) {
             AppVersion appVersion = appVersionService.getAppVersionByVersion(version);
             String appPackageData = null;
             if (appVersion != null && !StringUtils.isEmpty(appVersion.getPackagePath())) {
@@ -259,7 +260,7 @@ public class PackageController extends BaseController {
     /*
     下载版本包
      */
-    @RequestMapping(value = {"/downloadPackage/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/downloadPackage/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public void downloadPackage(@PathVariable("versionId") String versionId) throws IOException {
         AppVersion appVersion = appVersionService.getModel(AppVersion.class, versionId);
@@ -267,7 +268,7 @@ public class PackageController extends BaseController {
         File file = new File(filePath);
         FileInputStream fileInputStream = new FileInputStream(file);
         response.setHeader("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"");
-        response.setContentType("application/octet-stream");
+        response.setContentType(MediaTypes.APPLICATION_OCTET_STREAM);
         OutputStream outputStream = response.getOutputStream();
         int bytesRead;
         byte[] buffer = new byte[4096];
@@ -281,7 +282,7 @@ public class PackageController extends BaseController {
     /*
     上传版本包
      */
-    @RequestMapping(value = {"/uploadPackage/{appId}"}, method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/uploadPackage/{appId}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult uploadPackage(@RequestParam("file") MultipartFile file, @PathVariable("appId") String appId) throws IOException {
         ApiResult apiResult = new ApiResult();
@@ -300,7 +301,7 @@ public class PackageController extends BaseController {
     /*
     部署版本包
      */
-    @RequestMapping(value = {"/deploy/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/deploy/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult deployPackage(@PathVariable("versionId") String versionId) throws DaoException {
         ApiResult apiResult = new ApiResult();
@@ -402,7 +403,7 @@ public class PackageController extends BaseController {
     /*
         获取打包进度
      */
-    @RequestMapping(value = {"/packet/progress/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/packet/progress/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult packetProcess(@PathVariable("versionId") String appId) {
         return null;
@@ -412,7 +413,7 @@ public class PackageController extends BaseController {
     /*
     获取部署进度
      */
-    @RequestMapping(value = {"/deploy/progress/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/deploy/progress/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult deployProcess(@PathVariable("versionId") String appId) {
         return null;
@@ -421,7 +422,7 @@ public class PackageController extends BaseController {
     /*
     获取指定应用的版本信息
     */
-    @RequestMapping(value = {"/queryVersion/{appId}"}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/queryVersion/{appId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult queryVersion(@PathVariable("appId") String appId) {
         return null;
@@ -430,7 +431,7 @@ public class PackageController extends BaseController {
     /*
     删除版本
     */
-    @RequestMapping(value = {"/deleteVersion/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/deleteVersion/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult deleteVersion(@PathVariable("versionId") String appId) {
         return null;

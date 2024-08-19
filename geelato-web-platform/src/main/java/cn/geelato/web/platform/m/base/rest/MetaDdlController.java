@@ -46,7 +46,7 @@ public class MetaDdlController extends BaseController {
      *
      * @param entity 实体名称
      */
-    @RequestMapping(value = {"/table/{entity}"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/table/{entity}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult recreate(@PathVariable("entity") String entity) {
         ApiMetaResult result = new ApiMetaResult();
         try {
@@ -58,7 +58,7 @@ public class MetaDdlController extends BaseController {
         return result;
     }
 
-    @RequestMapping(value = {"/tables/{appId}"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/tables/{appId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult recreates(@PathVariable("appId") String appId) {
         ApiMetaResult result = new ApiMetaResult();
         Map<String, Object> tableResult = new LinkedHashMap<>();
@@ -109,7 +109,7 @@ public class MetaDdlController extends BaseController {
         return result;
     }
 
-    @RequestMapping(value = {"/iews/{appId}"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/iews/{appId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult reViewCreates(@PathVariable("appId") String appId) {
         ApiMetaResult result = new ApiMetaResult();
         Map<String, Object> tableResult = new LinkedHashMap<>();
@@ -187,7 +187,7 @@ public class MetaDdlController extends BaseController {
         return result;
     }
 
-    @RequestMapping(value = {"/viewOne/{id}"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/viewOne/{id}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult reViewCreate(@PathVariable("id") String id) {
         ApiMetaResult result = new ApiMetaResult();
         String entityName = null;
@@ -239,14 +239,14 @@ public class MetaDdlController extends BaseController {
     /**
      * 新建更新视图
      */
-    @RequestMapping(value = {"/view/{view}"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/view/{view}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult recreate(@PathVariable("view") String view, @RequestBody Map<String, String> params) {
         ApiMetaResult result = new ApiMetaResult();
         dbGenerateDao.createOrUpdateView(view, params.get("sql"));
         return result;
     }
 
-    @RequestMapping(value = {"/view/valid/{connectId}"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/view/valid/{connectId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<Boolean> validateView(@PathVariable("connectId") String connectId, @RequestBody Map<String, String> params) {
         ApiMetaResult<Boolean> result = new ApiMetaResult();
         try {
@@ -259,7 +259,7 @@ public class MetaDdlController extends BaseController {
         return result;
     }
 
-    @RequestMapping(value = {"/redis/refresh"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/redis/refresh"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult refreshRedis(@RequestBody Map<String, String> params) {
         ApiMetaResult result = new ApiMetaResult();
         try {

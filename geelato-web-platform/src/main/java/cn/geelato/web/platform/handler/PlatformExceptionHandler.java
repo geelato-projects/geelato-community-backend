@@ -1,28 +1,24 @@
 package cn.geelato.web.platform.handler;
 
+import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiResultCode;
+import cn.geelato.lang.constants.ApiResultStatus;
 import cn.geelato.lang.exception.CoreException;
 import cn.geelato.lang.exception.UnSupportedVersionException;
 import cn.geelato.plugin.UnFoundPluginException;
+import cn.geelato.utils.BeanValidators;
+import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.PlatformRuntimeException;
 import cn.geelato.web.platform.m.base.rest.RestException;
 import com.alibaba.fastjson.JSON;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiResultStatus;
-import cn.geelato.core.constants.MediaTypes;
-import cn.geelato.utils.BeanValidators;
-import cn.geelato.utils.UIDGenerator;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.http.*;
-import org.springframework.lang.Nullable;
-import org.springframework.web.ErrorResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
@@ -58,34 +54,36 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {CoreException.class})
     public final ResponseEntity<?> handleException(CoreException ex, WebRequest request) {
-        ApiResult<PlatformRuntimeException> apiResult=new ApiResult<>();
+        ApiResult<PlatformRuntimeException> apiResult = new ApiResult<>();
         apiResult.setCode(ApiResultCode.ERROR);
         apiResult.setMsg(ex.getErrorMsg());
         apiResult.setStatus(ApiResultStatus.FAIL);
         apiResult.setData(coreException2PlatformException(ex));
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(MediaTypes.JSON_UTF_8));
+        headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
         return handleExceptionInternal(ex, apiResult, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
     private PlatformRuntimeException coreException2PlatformException(CoreException coreException) {
-        PlatformRuntimeException platformRuntimeException=new PlatformRuntimeException(coreException);
-        String logTag=Long.toString(UIDGenerator.generate());
-        log.error(logTag,coreException);
+        PlatformRuntimeException platformRuntimeException = new PlatformRuntimeException(coreException);
+        String logTag = Long.toString(UIDGenerator.generate());
+        log.error(logTag, coreException);
         platformRuntimeException.setLogTag(logTag);
         return platformRuntimeException;
     }
+
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {UnFoundPluginException.class})
     public final ResponseEntity<?> handleException(UnFoundPluginException ex, WebRequest request) {
-        ApiResult<UnSupportedVersionException> apiResult=new ApiResult<>();
-        UnSupportedVersionException unSupportedVersionException=new UnSupportedVersionException();
+        ApiResult<UnSupportedVersionException> apiResult = new ApiResult<>();
+        UnSupportedVersionException unSupportedVersionException = new UnSupportedVersionException();
         apiResult.setCode(unSupportedVersionException.getErrorCode());
         apiResult.setMsg(unSupportedVersionException.getErrorMsg());
         apiResult.setStatus(ApiResultStatus.FAIL);
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(MediaTypes.JSON_UTF_8));
+        headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
         return handleExceptionInternal(ex, apiResult, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
+
     /**
      * 处理除以上问题之后的其它问题
      */

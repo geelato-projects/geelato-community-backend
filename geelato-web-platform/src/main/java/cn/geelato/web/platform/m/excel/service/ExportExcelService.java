@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.excel.service;
 
+import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.base.service.UploadService;
@@ -43,10 +44,6 @@ import java.util.regex.Pattern;
  */
 @Component
 public class ExportExcelService {
-    private static final String WORD_DOC_CONTENT_TYPE = "application/msword";
-    private static final String EXCEL_XLS_CONTENT_TYPE = "application/vnd.ms-excel";
-    private static final String EXCEL_XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    private static final String WORD_DOCX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     private static final Pattern pattern = Pattern.compile("^[a-zA-Z0-9_\\-]+\\.[a-zA-Z0-9]{1,5}$");
     private final Logger logger = LoggerFactory.getLogger(ExportExcelService.class);
     private final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
@@ -233,13 +230,13 @@ public class ExportExcelService {
             // 读取文件
             fileInputStream = new FileInputStream(file);
             bufferedInputStream = new BufferedInputStream(fileInputStream);
-            if (EXCEL_XLS_CONTENT_TYPE.equals(contentType)) {
+            if (MediaTypes.APPLICATION_EXCEL_XLS.equals(contentType)) {
                 POIFSFileSystem fileSystem = new POIFSFileSystem(bufferedInputStream);
                 workbook = new HSSFWorkbook(fileSystem);
                 HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(0);
                 metaMap = excelWriter.readPlaceholderMeta(sheet);
                 workbook.close();
-            } else if (EXCEL_XLSX_CONTENT_TYPE.equals(contentType)) {
+            } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(0);
                 metaMap = excelXSSFWriter.readPlaceholderMeta(sheet);
@@ -316,7 +313,7 @@ public class ExportExcelService {
             // 读取文件
             fileInputStream = new FileInputStream(templateFile);
             bufferedInputStream = new BufferedInputStream(fileInputStream);
-            if (EXCEL_XLS_CONTENT_TYPE.equals(contentType)) {
+            if (MediaTypes.APPLICATION_EXCEL_XLS.equals(contentType)) {
                 POIFSFileSystem fileSystem = new POIFSFileSystem(bufferedInputStream);
                 workbook = new HSSFWorkbook(fileSystem);
                 // 替换占位符
@@ -329,7 +326,7 @@ public class ExportExcelService {
                 outputStream = new FileOutputStream(exportFile);
                 workbook.write(outputStream);
                 workbook.close();
-            } else if (EXCEL_XLSX_CONTENT_TYPE.equals(contentType)) {
+            } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 // 替换占位符
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(0);
@@ -345,7 +342,7 @@ public class ExportExcelService {
                 workbook.write(outputStream);
                 outputStream.flush();
                 workbook.close();
-            } else if (WORD_DOC_CONTENT_TYPE.equals(contentType)) {
+            } else if (MediaTypes.APPLICATION_WORD_DOC.equals(contentType)) {
                 POIFSFileSystem fileSystem = new POIFSFileSystem(bufferedInputStream);
                 HWPFDocument document = new HWPFDocument(fileSystem);
                 // 替换占位符
@@ -354,7 +351,7 @@ public class ExportExcelService {
                 document.write(outputStream);
                 outputStream.flush();
                 document.close();
-            } else if (WORD_DOCX_CONTENT_TYPE.equals(contentType)) {
+            } else if (MediaTypes.APPLICATION_WORD_DOCX.equals(contentType)) {
                 XWPFDocument document = new XWPFDocument(bufferedInputStream);
                 document.getParagraphs();
                 // 替换占位符

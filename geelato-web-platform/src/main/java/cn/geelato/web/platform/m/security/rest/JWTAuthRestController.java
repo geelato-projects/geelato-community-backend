@@ -1,5 +1,12 @@
 package cn.geelato.web.platform.m.security.rest;
 
+import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.enums.ValidTypeEnum;
+import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
+import cn.geelato.web.platform.m.base.rest.BaseController;
+import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.security.entity.*;
@@ -8,12 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
-import cn.geelato.web.platform.enums.ValidTypeEnum;
-import cn.geelato.web.platform.m.base.rest.BaseController;
-import cn.geelato.web.platform.m.base.service.AttachService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +50,7 @@ public class JWTAuthRestController extends BaseController {
     private RuleService ruleService;
 
     @IgnoreJWTVerify
-    @RequestMapping(value = "/login", method = RequestMethod.POST, produces = {"application/json;charset=UTF-8"})
+    @RequestMapping(value = "/login", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
     @ResponseBody
     public ApiResult login(@RequestBody LoginParams loginParams, HttpServletRequest req) {
         ApiResult apiResult = new ApiResult();

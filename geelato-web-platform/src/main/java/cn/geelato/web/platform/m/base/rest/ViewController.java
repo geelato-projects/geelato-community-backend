@@ -35,7 +35,7 @@ public class ViewController  extends BaseController {
         this.viewService=viewService;
     }
 
-    @RequestMapping(value = {"/pageQuery/{view_name}"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/pageQuery/{view_name}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiPagedResult<?> pageQuery(@PathVariable("view_name") String viewName, HttpServletRequest req) {
         try {
             int pageNum = Strings.isNotBlank(req.getParameter("current")) ? Integer.parseInt(req.getParameter("current")) : -1;
@@ -52,7 +52,7 @@ public class ViewController  extends BaseController {
         }
     }
 
-    @RequestMapping(value = {"/defined/{view_name}"}, method = {RequestMethod.GET}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/defined/{view_name}"}, method = {RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult export(@PathVariable("view_name") String viewName) {
         ApiMetaResult result = new ApiMetaResult();
         ViewMeta viewMeta= ViewManager.singleInstance().getByViewName(viewName);

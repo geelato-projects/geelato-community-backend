@@ -13,7 +13,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @RestController
-@RequestMapping(produces = MediaTypes.JSON_UTF_8)
+@RequestMapping(produces = MediaTypes.APPLICATION_JSON_UTF_8)
 @Conditional(DesigntimeServiceConditional.class)
 public @interface ApiRestController {
     @AliasFor(annotation = RequestMapping.class)

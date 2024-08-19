@@ -248,7 +248,7 @@ public class DevTableController extends BaseController {
     }
 
 
-    @RequestMapping(value = {"/reset/{tableId}"}, method = {RequestMethod.POST}, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/reset/{tableId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiMetaResult resetModelFormTable(@PathVariable("tableId") String tableId) {
         ApiMetaResult result = new ApiMetaResult();

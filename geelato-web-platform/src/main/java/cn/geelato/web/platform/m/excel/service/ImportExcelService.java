@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.excel.service;
 
+import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.enums.MysqlDataTypeEnum;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
@@ -57,8 +58,6 @@ import java.util.stream.Collectors;
  */
 @Component
 public class ImportExcelService {
-    private static final String EXCEL_XLS_CONTENT_TYPE = "application/vnd.ms-excel";
-    private static final String EXCEL_XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     private static final String REQUEST_FILE_PART = "file";
     private static final String IMPORT_ERROR_FILE_GENRE = "importErrorFile";
     private static final String REDIS_UNIQUE_KEY = "uniques";
@@ -483,13 +482,13 @@ public class ImportExcelService {
             // 读取文件
             fileInputStream = new FileInputStream(file);
             bufferedInputStream = new BufferedInputStream(fileInputStream);
-            if (EXCEL_XLS_CONTENT_TYPE.equals(contentType)) {
+            if (MediaTypes.APPLICATION_EXCEL_XLS.equals(contentType)) {
                 POIFSFileSystem fileSystem = new POIFSFileSystem(bufferedInputStream);
                 workbook = new HSSFWorkbook(fileSystem);
                 HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(sheetIndex);
                 businessMetaListMap = excelReader.readBusinessMeta(sheet);
                 workbook.close();
-            } else if (EXCEL_XLSX_CONTENT_TYPE.equals(contentType)) {
+            } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(sheetIndex);
                 businessMetaListMap = excelXSSFReader.readBusinessMeta(sheet);
@@ -533,13 +532,13 @@ public class ImportExcelService {
             // 读取文件
             fileInputStream = new FileInputStream(file);
             bufferedInputStream = new BufferedInputStream(fileInputStream);
-            if (EXCEL_XLS_CONTENT_TYPE.equals(contentType)) {
+            if (MediaTypes.APPLICATION_EXCEL_XLS.equals(contentType)) {
                 POIFSFileSystem fileSystem = new POIFSFileSystem(bufferedInputStream);
                 workbook = new HSSFWorkbook(fileSystem);
                 HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(sheetIndex);
                 businessTypeDataMap = excelReader.readBusinessTypeData(sheet);
                 workbook.close();
-            } else if (EXCEL_XLSX_CONTENT_TYPE.equals(contentType)) {
+            } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(sheetIndex);
                 businessTypeDataMap = excelXSSFReader.readBusinessTypeData(sheet);
@@ -583,13 +582,13 @@ public class ImportExcelService {
             // 读取文件
             fileInputStream = new FileInputStream(file);
             bufferedInputStream = new BufferedInputStream(fileInputStream);
-            if (EXCEL_XLS_CONTENT_TYPE.equals(contentType)) {
+            if (MediaTypes.APPLICATION_EXCEL_XLS.equals(contentType)) {
                 POIFSFileSystem fileSystem = new POIFSFileSystem(bufferedInputStream);
                 workbook = new HSSFWorkbook(fileSystem);
                 HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(sheetIndex);
                 typeRuleDataSet = excelReader.readBusinessTypeRuleData(sheet);
                 workbook.close();
-            } else if (EXCEL_XLSX_CONTENT_TYPE.equals(contentType)) {
+            } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(sheetIndex);
                 typeRuleDataSet = excelXSSFReader.readBusinessTypeRuleData(sheet);
@@ -642,7 +641,7 @@ public class ImportExcelService {
                 inputStream = filePart.getInputStream();
                 bufferedInputStream = new BufferedInputStream(inputStream);
             }
-            if (EXCEL_XLS_CONTENT_TYPE.equals(contentType)) {
+            if (MediaTypes.APPLICATION_EXCEL_XLS.equals(contentType)) {
                 POIFSFileSystem fileSystem = new POIFSFileSystem(bufferedInputStream);
                 workbook = new HSSFWorkbook(fileSystem);
                 HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(sheetIndex);
@@ -650,7 +649,7 @@ public class ImportExcelService {
                 HSSFFormulaEvaluator evaluator = (HSSFFormulaEvaluator) workbook.getCreationHelper().createFormulaEvaluator();
                 businessDataMapList = excelReader.readBusinessData(sheet, evaluator, businessTypeDataMap);
                 workbook.close();
-            } else if (EXCEL_XLSX_CONTENT_TYPE.equals(contentType)) {
+            } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(sheetIndex);
                 sheet.setForceFormulaRecalculation(true);
@@ -751,7 +750,7 @@ public class ImportExcelService {
             String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), exportTemplate.getTenantCode(), exportTemplate.getAppId(), errorFileName, true);
             File errorFile = new File(directory);
             // 文件处理
-            if (EXCEL_XLS_CONTENT_TYPE.equals(contentType)) {
+            if (MediaTypes.APPLICATION_EXCEL_XLS.equals(contentType)) {
                 POIFSFileSystem fileSystem = new POIFSFileSystem(bufferedInputStream);
                 workbook = new HSSFWorkbook(fileSystem);
                 HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(sheetIndex);
@@ -765,7 +764,7 @@ public class ImportExcelService {
                 outputStream = new FileOutputStream(errorFile);
                 workbook.write(outputStream);
                 workbook.close();
-            } else if (EXCEL_XLSX_CONTENT_TYPE.equals(contentType)) {
+            } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 ExcelXSSFUtils.reserveSheet((XSSFWorkbook) workbook, sheetIndex);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(0);

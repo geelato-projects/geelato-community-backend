@@ -1,15 +1,16 @@
 package cn.geelato.web.platform.m.security.rest;
 
+import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
+import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import cn.geelato.web.platform.m.security.service.OrgService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
-import cn.geelato.web.platform.m.base.rest.BaseController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class SystemRestController extends BaseController {
 
 
     @IgnoreJWTVerify
-    @RequestMapping(value = "/getRoleListByPage", method = RequestMethod.GET, produces = {"application/json;charset=UTF-8"})
+    @RequestMapping(value = "/getRoleListByPage", method = RequestMethod.GET, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
     @ResponseBody
     public ApiPagedResult getAccountList(HttpServletRequest req) {
         // 初始化返回值
@@ -65,7 +66,6 @@ public class SystemRestController extends BaseController {
             return new ApiResult().error().setMsg(e.getMessage());
         }
     }
-
 
 
     @RequestMapping(value = "/logout", method = RequestMethod.GET)

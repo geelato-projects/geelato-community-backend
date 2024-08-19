@@ -1,6 +1,9 @@
 package cn.geelato.web.platform.m.base.rest;
 
 
+import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.DownloadService;
@@ -9,8 +12,6 @@ import cn.geelato.web.platform.m.excel.entity.OfficeUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,9 +43,10 @@ public class DownloadController extends BaseController {
 
     // 设置不常用的媒体类型
     static final Map<String, String> EXT_MAP = new HashMap<>();
+
     static {
         // 前端基于esm文件打包的文件
-        EXT_MAP.put("mjs", "application/javascript");
+        EXT_MAP.put("mjs", MediaTypes.APPLICATION_JAVASCRIPT);
     }
 
     @RequestMapping(value = "/file", method = RequestMethod.GET)
@@ -82,12 +84,12 @@ public class DownloadController extends BaseController {
                 String encodeName = URLEncoder.encode(name, StandardCharsets.UTF_8);
                 String mineType = request.getServletContext().getMimeType(encodeName);
                 // 如果没有取到常用的媒体类型，则获取自配置的媒体类型
-                if(mineType==null){
+                if (mineType == null) {
                     mineType = EXT_MAP.get(UploadService.getFileExtensionWithNoDot(name));
                 }
                 response.setContentType(mineType);
                 // 在线查看图片、pdf
-                if (isPreview && Strings.isNotBlank(mineType) && (mineType.startsWith("image/") || mineType.equalsIgnoreCase("application/pdf"))) {
+                if (isPreview && Strings.isNotBlank(mineType) && (mineType.startsWith("image/") || mineType.equalsIgnoreCase(MediaTypes.APPLICATION_PDF))) {
                     //  file = downloadService.copyToFile(file, name);
                 } else {
                     response.setHeader("Content-Disposition", "attachment; filename=" + encodeName);

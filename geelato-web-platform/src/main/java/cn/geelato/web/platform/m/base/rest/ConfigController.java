@@ -20,7 +20,7 @@ import java.util.Map;
 public class ConfigController extends BaseController {
 
 
-    @RequestMapping(value = {""}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {""}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<Map<String, Object>> list(HttpServletRequest request) {
         String tenantCode = request.getParameter("tenantCode");
         String appId = request.getParameter("appId");
@@ -52,7 +52,7 @@ public class ConfigController extends BaseController {
         return ApiResult.success(rtnConfigMap);
     }
 
-    @RequestMapping(value = {"/refresh/{configKey}"}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"/refresh/{configKey}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<NullResult> refresh(@PathVariable("configKey") String configKey) {
         try{
             EnvManager.singleInstance().refreshConfig(configKey);

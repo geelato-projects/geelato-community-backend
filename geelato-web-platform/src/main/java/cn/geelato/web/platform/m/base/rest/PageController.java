@@ -36,7 +36,7 @@ public class PageController extends BaseController {
      * @param id     id值
      * @return {id,type,appId,code,releaseContent,pageCustom}，其中pageCustom为不同用户对该页面的自定义信息
      */
-    @RequestMapping(value = {"getPageAndCustom/{idType}/{id}", "getPageAndCustom/{idType}/{id}/*"}, method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+    @RequestMapping(value = {"getPageAndCustom/{idType}/{id}", "getPageAndCustom/{idType}/{id}/*"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult getPageAndCustom(@PathVariable String idType, @PathVariable String id) {
         ApiResult apiResult = new ApiResult();

@@ -113,14 +113,21 @@ public class ExportExcelService {
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
             // 保存文件信息
             BasicFileAttributes attributes = Files.readAttributes(exportFile.toPath(), BasicFileAttributes.class);
-            Attach attach = new Attach();
-            // attach.setObjectId(templateId);
-            attach.setAppId(exportTemplate.getAppId());
-            attach.setGenre("exportFile");
-            attach.setName(fileName);
-            attach.setType(Files.probeContentType(exportFile.toPath()));
-            attach.setSize(attributes.size());
-            attach.setPath(directory);
+//            Attach attach = new Attach();
+//            attach.setAppId(exportTemplate.getAppId());
+//            attach.setGenre("exportFile");
+//            attach.setName(fileName);
+//            attach.setType(Files.probeContentType(exportFile.toPath()));
+//            attach.setSize(attributes.size());
+//            attach.setPath(directory);
+            Attach attach=new Attach()
+                    .setAppId(exportTemplate.getAppId())
+                    .setGenre("exportFile")
+                    .setName(fileName)
+                    .setType(Files.probeContentType(exportFile.toPath()))
+                    .setSize(attributes.size())
+                    .setPath(directory);
+
             Attach attachMap = attachService.createModel(attach);
             result.setData(attachMap);
         } catch (Exception e) {

@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.excel.rest;
 
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.excel.entity.ExportColumn;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import com.alibaba.fastjson2.JSON;
@@ -30,8 +31,7 @@ import java.util.*;
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/export/file")
+@ApiRestController("/export/file")
 public class ExportExcelController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<Attach> CLAZZ = Attach.class;
@@ -48,7 +48,6 @@ public class ExportExcelController extends BaseController {
     private ExportExcelService exportExcelService;
 
     @RequestMapping(value = "/list", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQuery(HttpServletRequest req) {
         ApiPagedResult result = new ApiPagedResult();
         try {
@@ -73,7 +72,6 @@ public class ExportExcelController extends BaseController {
      * @param fileName   导出文件名称
      */
     @RequestMapping(value = "/{dataType}/{templateId}", method = {RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
     public ApiResult exportWps(HttpServletRequest request, HttpServletResponse response, @PathVariable String dataType, @PathVariable String templateId,
                                String fileName, String markText, String markKey, boolean readonly) {
         ApiResult result = new ApiResult();
@@ -100,7 +98,6 @@ public class ExportExcelController extends BaseController {
     }
 
     @RequestMapping(value = "/column/meta/list", method = {RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
     public ApiResult exportWps(HttpServletRequest request, HttpServletResponse response,
                                String appId, String fileName, String markText, String markKey, boolean readonly) {
         ApiResult result = new ApiResult();

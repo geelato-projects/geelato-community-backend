@@ -6,7 +6,10 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -16,10 +19,15 @@ import java.nio.file.Files;
 /**
  * @author diabl
  */
+@Getter
 @Setter
 @Entity(name = "platform_attach")
 @Title(title = "附件")
+@Accessors(chain = true)
 public class Attach extends BaseEntity {
+
+    @Col(name = "app_id")
+    @Title(title = "所属应用")
     private String appId;
     private String name;
     private String type;
@@ -27,11 +35,14 @@ public class Attach extends BaseEntity {
     private Long size;
     private String path;
     private String url;
+
+    @Col(name = "object_id")
+    @Title(title = "对象id")
     private String objectId;
+
+    @Transient
     private String source;
 
-    public Attach() {
-    }
 
     public Attach(MultipartFile file) {
         setDelStatus(DeleteStatusEnum.NO.getCode());
@@ -47,56 +58,8 @@ public class Attach extends BaseEntity {
         this.size = file.length();
     }
 
-    @Col(name = "app_id")
-    @Title(title = "所属应用")
-    public String getAppId() {
-        return appId;
-    }
 
-    @Col(name = "name")
-    @Title(title = "名称")
-    public String getName() {
-        return name;
-    }
+    public Attach() {
 
-    @Col(name = "type")
-    @Title(title = "类型")
-    public String getType() {
-        return type;
-    }
-
-    @Col(name = "genre")
-    @Title(title = "类别")
-    public String getGenre() {
-        return genre;
-    }
-
-    @Col(name = "size")
-    @Title(title = "大小")
-    public Long getSize() {
-        return size;
-    }
-
-    @Col(name = "path")
-    @Title(title = "绝对地址")
-    public String getPath() {
-        return path;
-    }
-
-    @Col(name = "url")
-    @Title(title = "相对地址")
-    public String getUrl() {
-        return url;
-    }
-
-    @Col(name = "object_id")
-    @Title(title = "对象id")
-    public String getObjectId() {
-        return objectId;
-    }
-
-    @Transient
-    public String getSource() {
-        return source;
     }
 }

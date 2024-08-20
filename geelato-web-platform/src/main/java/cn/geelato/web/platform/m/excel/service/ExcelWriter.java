@@ -6,6 +6,7 @@ import cn.geelato.web.platform.m.excel.entity.CellMeta;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.RowMeta;
 import com.alibaba.fastjson2.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -19,8 +20,8 @@ import java.math.BigDecimal;
 import java.util.*;
 
 @Component
+@Slf4j
 public class ExcelWriter {
-    private final Logger logger = LoggerFactory.getLogger(ExcelWriter.class);
 
     /**
      * 按多组值写入一个sheet
@@ -237,14 +238,14 @@ public class ExcelWriter {
             if (cellMeta.getPlaceholderMeta().isMerge()) {
                 // 获取数据相同的行
                 List<List<Integer>> integerSet = ExcelCommonUtils.getIntegerSet(cellMeta, valueMap, valueList);
-                if (integerSet.size() > 0) {
+                if (!integerSet.isEmpty()) {
                     // 集合交集
                     List<List<Integer>> ranges = integerSet;
                     if (mergeScope != null) {
                         ranges = ExcelCommonUtils.listRetain(integerSet, mergeScope);
                     }
                     // 合并单元格
-                    if (ranges != null && ranges.size() > 0) {
+                    if (!ranges.isEmpty()) {
                         for (List<Integer> range : ranges) {
                             Collections.sort(range);
                             CellRangeAddress region = new CellRangeAddress(rowIndex + range.get(0), rowIndex + range.get(range.size() - 1), cellMeta.getIndex(), cellMeta.getIndex());
@@ -273,7 +274,7 @@ public class ExcelWriter {
                 Object v = listValueMap.get(meta.getVar());
                 setCellValueByValueType(cell, meta, v);
             } else {
-                if (meta.getVar() != null && meta.getVar().trim().length() > 0) {
+                if (meta.getVar() != null && !meta.getVar().trim().isEmpty()) {
                     Object v = valueMap.get(meta.getVar());
                     setCellValueByValueType(cell, meta, v);
                 }
@@ -289,7 +290,7 @@ public class ExcelWriter {
     private void setCellValueByValueType(HSSFCell cell, PlaceholderMeta meta, Object value) {
         if (value != null) {
             if (meta.isValueTypeNumber()) {
-                if (value.toString().indexOf(".") == -1) {
+                if (!value.toString().contains(".")) {
                     cell.setCellValue(Long.parseLong(value.toString()));
                 } else {
                     cell.setCellValue(new BigDecimal(value.toString()).doubleValue());

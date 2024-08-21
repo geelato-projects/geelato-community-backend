@@ -31,7 +31,7 @@ public class ScriptController extends BaseController {
 
     @RequestMapping(value = "/exec/{scriptId}", method = RequestMethod.POST)
     @ResponseBody
-    public ApiResult<GraalContext> exec(@PathVariable("scriptId") String scriptId, HttpServletRequest request) {
+    public ApiResult<?> exec(@PathVariable("scriptId") String scriptId, HttpServletRequest request) {
         String parameter = getBody(request);
         String scriptContent = getScriptContent(scriptId);
         Context context = Context.newBuilder("js")
@@ -48,7 +48,7 @@ public class ScriptController extends BaseController {
             context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
         }
         Map result = context.eval("js", scriptContent).execute(parameter).as(Map.class);
-        return new ApiResult<>(new GraalContext(result.get("result"))).success();
+        return new ApiResult<>(result.get("result")).success();
     }
 
     private String getScriptContent(String scriptId) {
@@ -63,21 +63,28 @@ public class ScriptController extends BaseController {
 //                "return result;";
     }
 
+//    private String scriptTemplate() {
+//        return "(function(parameter){\n" +
+//                "\t var ctx={};\n" +
+//                "\t ctx.parameter=parameter;\n" +
+//                "\t ctx.result=null;\n" +
+////                "\t var $gl={};\n" +
+////                "\t $gl.dao=GqlService;\n" +
+////                "\t $gl.json=JsonService;\n" +
+////                "\t $gl.user=userVariable;\n" +
+////                "\t $gl.tenant=tenantVariable;\n" +
+//                "\t #scriptContent# \n" +
+//                "\t return ctx;\t\n" +
+//                "})";
+//    }
     private String scriptTemplate() {
         return "(function(parameter){\n" +
                 "\t var ctx={};\n" +
                 "\t ctx.parameter=parameter;\n" +
-                "\t ctx.result=null;\n" +
-//                "\t var $gl={};\n" +
-//                "\t $gl.dao=GqlService;\n" +
-//                "\t $gl.json=JsonService;\n" +
-//                "\t $gl.user=userVariable;\n" +
-//                "\t $gl.tenant=tenantVariable;\n" +
-                "\t #scriptContent# \n" +
+                "\t ctx.result=" +"#scriptContent# "+"();\n"+
                 "\t return ctx;\t\n" +
                 "})";
     }
-
     private String getBody(HttpServletRequest request) {
         StringBuilder stringBuilder = new StringBuilder();
         BufferedReader br = null;

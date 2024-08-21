@@ -141,14 +141,31 @@ public class BaseController implements InitializingBean {
                 if (intervals != null && !intervals.isEmpty()) {
                     for (String list : intervals) {
                         Object value = params.get(list);
-                        if (value instanceof String && Strings.isBlank(String.valueOf(value))) {
+                        if (value == null || Strings.isBlank(String.valueOf(value))) {
                             continue;
                         }
-                        String[] times = (String[]) params.get(list);
-                        if (times != null && Strings.isNotBlank(times[1]) && Strings.isNotBlank(times[1])) {
-                            filterGroup.addFilter(list, FilterGroup.Operator.gte, SDF_DATE_START.format(SDF_DATE.parse(times[0])));
-                            filterGroup.addFilter(list, FilterGroup.Operator.lte, SDF_DATE_FINISH.format(SDF_DATE.parse(times[1])));
-                            params.remove(list);
+                        String[] times = null;
+                        // 2024-08-01,2024-08-08; 2024-08-01,; ,2024-08-08
+                        if (value instanceof String) {
+                            times = String.valueOf(value).split(",");
+                            if (times != null && times.length == 2) {
+                                if (Strings.isNotBlank(times[0])) {
+                                    filterGroup.addFilter(list, FilterGroup.Operator.gte, SDF_DATE_START.format(SDF_DATE.parse(times[0])));
+                                }
+                                if (Strings.isNotBlank(times[1])) {
+                                    filterGroup.addFilter(list, FilterGroup.Operator.lte, SDF_DATE_FINISH.format(SDF_DATE.parse(times[1])));
+                                }
+                                params.remove(list);
+                            }
+                        }
+                        // ["2024-08-01", "2024-08-08"]
+                        if (value.getClass().isArray()) {
+                            times = (String[]) value;
+                            if (times != null && times.length == 2 && Strings.isNotBlank(times[0]) && Strings.isNotBlank(times[1])) {
+                                filterGroup.addFilter(list, FilterGroup.Operator.gte, SDF_DATE_START.format(SDF_DATE.parse(times[0])));
+                                filterGroup.addFilter(list, FilterGroup.Operator.lte, SDF_DATE_FINISH.format(SDF_DATE.parse(times[1])));
+                                params.remove(list);
+                            }
                         }
                     }
                 }

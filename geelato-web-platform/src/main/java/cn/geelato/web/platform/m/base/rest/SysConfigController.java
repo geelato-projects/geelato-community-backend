@@ -34,6 +34,7 @@ public class SysConfigController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<SysConfig> CLAZZ = SysConfig.class;
     private static final String CONFIG_TYPE_UPLOAD = "UPLOAD";
+    private static final String APP_IS_NULL = "nullApp";
 
     static {
         OPERATORMAP.put("contains", Arrays.asList("configKey", "configValue", "keyType", "remark"));
@@ -53,6 +54,9 @@ public class SysConfigController extends BaseController {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            if ("true".equalsIgnoreCase(req.getParameter(APP_IS_NULL))) {
+                filterGroup.addFilter("appId", FilterGroup.Operator.nil, "1");
+            }
             result = sysConfigService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
             DataItems<List<SysConfig>> dataItems = (DataItems<List<SysConfig>>) result.getData();
             setConfigAssist(dataItems.getItems());

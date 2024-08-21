@@ -9,6 +9,7 @@ import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.web.platform.enums.SysConfigValueTypeEnum;
 import lombok.Setter;
+import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
@@ -101,5 +102,8 @@ public class SysConfig extends BaseSortableEntity implements EntityEnableAble {
     @Override
     public void afterSet() {
         this.setEncrypted(SysConfigValueTypeEnum.ENCRYPT.getValue().equalsIgnoreCase(this.getValueType()));
+        if (Strings.isBlank(this.getAppId())) {
+            this.setAppId(null);
+        }
     }
 }

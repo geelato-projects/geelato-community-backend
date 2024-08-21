@@ -23,6 +23,7 @@ import java.util.*;
 /**
  * @author geemeta
  */
+@SuppressWarnings("rawtypes")
 public class BaseController implements InitializingBean {
 
     private final SimpleDateFormat SDF_DATE = new SimpleDateFormat(DateUtils.DATE);
@@ -105,8 +106,7 @@ public class BaseController implements InitializingBean {
      */
     public FilterGroup getFilterGroup(Class elementType, HttpServletRequest request, Map<String, List<String>> operatorMap) throws ParseException {
         Map<String, Object> params = this.getQueryParameters(elementType, request);
-        FilterGroup filterGroup = this.getFilterGroup(params, operatorMap);
-        return filterGroup;
+        return this.getFilterGroup(params, operatorMap);
     }
 
     /**

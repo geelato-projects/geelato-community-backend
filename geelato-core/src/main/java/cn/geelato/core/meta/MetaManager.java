@@ -31,6 +31,7 @@ import java.util.*;
  * @author geemeta
  */
 @Slf4j
+@SuppressWarnings("rawtypes")
 public class MetaManager extends AbstractManager {
 
     private Dao dao;
@@ -90,7 +91,7 @@ public class MetaManager extends AbstractManager {
      */
     public void parseDBMeta(Dao dao, Map<String, String> params) {
         this.dao = dao;
-        log.info("parse meta data in database...", params);
+        log.info("parse meta data in database...");
         String sql = MetaDaoSql.SQL_TABLE_LIST;
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> entry : params.entrySet()) {
@@ -209,7 +210,7 @@ public class MetaManager extends AbstractManager {
             return entityMetadataMap.get(entityName);
         } else {
             Iterator<String> it = entityMetadataMap.keySet().iterator();
-            log.warn("Key({}) not found in entityMetadataMap.keySet:", clazz.getName());
+            log.warn("Key({}) not found in entityMetadataMap by class", clazz.getName());
             while (it.hasNext()) {
                 log.warn(it.next());
             }
@@ -220,6 +221,8 @@ public class MetaManager extends AbstractManager {
     public Map<String, Object> newDefaultEntity(String entityName) {
         return newDefaultEntity(getByEntityName(entityName));
     }
+
+
 
     public Map<String, Object> newDefaultEntity(Class clazz) {
         return newDefaultEntity(get(clazz));
@@ -256,7 +259,7 @@ public class MetaManager extends AbstractManager {
             return entityMetadataMap.get(entityName);
         } else {
             Iterator<String> it = entityMetadataMap.keySet().iterator();
-            log.warn("Key({}) not found in entityMetadataMap.keySet:", entityName);
+            log.warn("Key({}) not found in entityMetadataMap by entityName", entityName);
             while (it.hasNext()) {
                 log.warn(it.next());
             }
@@ -281,7 +284,7 @@ public class MetaManager extends AbstractManager {
             return tableNameMetadataMap.get(tableName);
         } else {
             Iterator<String> it = tableNameMetadataMap.keySet().iterator();
-            log.warn("Key({}) not found in tableNameMetadataMap.keySet:", tableName);
+            log.warn("Key({}) not found in tableNameMetadataMap by tableName", tableName);
             while (it.hasNext()) {
                 log.warn(it.next());
             }

@@ -59,8 +59,6 @@ public class ScriptController extends BaseController {
     private String customContent(String id) {
         Api api = apiService.getModel(Api.class, id);
         return api.getReleaseContent();
-//        return "var result=$gl.dao.queryForMapList(gql,false);context.result=result;" +
-//                "return result;";
     }
 
 //    private String scriptTemplate() {

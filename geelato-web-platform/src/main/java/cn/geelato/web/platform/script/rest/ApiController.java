@@ -6,6 +6,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.lang.enums.DeleteStatusEnum;
+import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.script.entity.Api;
 import cn.geelato.web.platform.script.entity.ApiParam;
@@ -21,6 +22,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author diabl
@@ -167,5 +169,37 @@ public class ApiController extends BaseController {
         }
 
         return result;
+    }
+
+    @RequestMapping(value = "/generateOutside", method = RequestMethod.POST)
+    @ResponseBody
+    public ApiResult generateOutside(@RequestBody Api form) {
+        ApiResult result = new ApiResult();
+        try {
+            FilterGroup filters = new FilterGroup();
+            if (Strings.isNotBlank(form.getId())) {
+                filters.addFilter("id", FilterGroup.Operator.neq, form.getId());
+            }
+            filters.addFilter("appId", form.getAppId());
+            filters.addFilter("tenantCode", form.getTenantCode());
+            List<Api> apis = apiService.queryModel(Api.class, filters);
+            List<String> outsideUrls = new ArrayList<>();
+            if (apis != null) {
+                outsideUrls = apis.stream().map(Api::getOutsideUrl).collect(Collectors.toList());
+            }
+            result.setData(generate(outsideUrls, 10));
+        } catch (Exception e) {
+            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+        }
+
+        return result;
+    }
+
+    private String generate(List<String> existList, int limit) {
+        String random = "/" + UUIDUtils.generateLowerChars(1) + UUIDUtils.generateNumberAndLowerChars(9);
+        if (existList != null && existList.contains(random) && limit > 0) {
+            return generate(existList, limit - 1);
+        }
+        return random;
     }
 }

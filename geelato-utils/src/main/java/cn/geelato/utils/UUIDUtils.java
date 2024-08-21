@@ -60,4 +60,50 @@ public class UUIDUtils {
         return sb.toString();
     }
 
+    /**
+     * 生成随机字符串
+     *
+     * @param extent
+     * @param chars
+     * @return
+     */
+    public static String generate(int extent, String chars) {
+        extent = extent > 0 ? extent : 8;
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < extent; i++) {
+            int randomIndex = (int) Math.floor(Math.random() * chars.length());
+            sb.append(chars.charAt(randomIndex));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 生成随机字符串（小写字母）
+     *
+     * @param extent
+     * @return
+     */
+    public static String generateLowerChars(int extent) {
+        return generate(extent, CHARS_LOWERCASE_LETTER);
+    }
+
+    /**
+     * 生成随机字符串（数值+小写字母）
+     *
+     * @param extent
+     * @return
+     */
+    public static String generateNumberAndLowerChars(int extent) {
+        return generate(extent, CHARS_NUMBER + CHARS_LOWERCASE_LETTER);
+    }
+
+    /**
+     * 生成随机字符串（数值+字母）
+     *
+     * @param extent
+     * @return
+     */
+    public static String generateNumberAndChars(int extent) {
+        return generate(extent, CHARS_NUMBER + CHARS_CAPITAL_LETTER + CHARS_LOWERCASE_LETTER);
+    }
 }

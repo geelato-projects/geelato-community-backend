@@ -1,17 +1,17 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.lang.api.NullResult;
-import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.enums.SysConfigPurposeEnum;
-import com.oracle.truffle.js.runtime.objects.Null;
-import jakarta.servlet.http.HttpServletRequest;
-import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.env.entity.SysConfig;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
 import cn.geelato.utils.StringUtils;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.enums.SysConfigPurposeEnum;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,11 +38,11 @@ public class ConfigController extends BaseController {
                     globalConfigMap.put(config.getConfigKey(), config.getConfigValue());
                     rtnConfigMap.put("sys", globalConfigMap);
                 }
-                if (StringUtils.isNotEmpty(tenantCode) && config.getTenantCode().equals(tenantCode)) {
+                if (StringUtils.isNotEmpty(tenantCode) && tenantCode.equals(config.getTenantCode())) {
                     tenantConfigMap.put(config.getConfigKey(), config.getConfigValue());
                     rtnConfigMap.put("tenant", tenantConfigMap);
                 }
-                if (StringUtils.isNotEmpty(appId) && config.getAppId().equals(appId)) {
+                if (StringUtils.isNotEmpty(appId) && appId.equals(config.getAppId())) {
                     appConfigMap.put(config.getConfigKey(), config.getConfigValue());
                     rtnConfigMap.put("app", appConfigMap);
                 }
@@ -54,10 +54,10 @@ public class ConfigController extends BaseController {
 
     @RequestMapping(value = {"/refresh/{configKey}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<NullResult> refresh(@PathVariable("configKey") String configKey) {
-        try{
+        try {
             EnvManager.singleInstance().refreshConfig(configKey);
             return ApiResult.successNoResult();
-        }catch (Exception ex){
+        } catch (Exception ex) {
             return ApiResult.fail(ex.getMessage());
         }
     }

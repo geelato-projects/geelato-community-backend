@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.core.env.entity.User;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
@@ -24,8 +25,7 @@ import java.util.*;
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/app")
+@ApiRestController("/app")
 public class AppController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<App> CLAZZ = App.class;
@@ -41,7 +41,6 @@ public class AppController extends BaseController {
     private AppService appService;
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQuery(HttpServletRequest req) {
         ApiPagedResult result = new ApiPagedResult();
         try {
@@ -57,7 +56,6 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult<List<App>> query(HttpServletRequest req) {
         ApiResult<List<App>> result = new ApiResult<>();
         try {
@@ -73,7 +71,6 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/queryByUser", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult queryByUser(String tenantCode, String userId) {
         ApiResult result = new ApiResult<>();
         try {
@@ -98,7 +95,6 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult get(@PathVariable(required = true) String id) {
         ApiResult result = new ApiResult();
         try {
@@ -114,7 +110,6 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult createOrUpdate(@RequestBody App form) {
         ApiResult result = new ApiResult();
         try {
@@ -133,7 +128,6 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    @ResponseBody
     public ApiResult<App> isDelete(@PathVariable(required = true) String id) {
         ApiResult<App> result = new ApiResult<>();
         try {
@@ -167,7 +161,6 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/queryPermissionByPage", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult queryPermissionByPage(HttpServletRequest req) {
         ApiResult result = new ApiResult();
         try {
@@ -183,7 +176,6 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/queryRolePermissionByPage", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult queryRolePermissionByPage(HttpServletRequest req) {
         ApiResult result = new ApiResult();
         try {

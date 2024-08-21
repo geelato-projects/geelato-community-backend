@@ -27,7 +27,7 @@ public class SqlService extends BaseService {
     public void isDeleteModel(CustomSql model) {
         // 删除关联申请
         Map<String, Object> params = new HashMap<>();
-        params.put("restfulId", model.getId());
+        params.put("sqlId", model.getId());
         List<AppSqlMap> list = appSqlMapService.queryModel(AppSqlMap.class, params);
         if (list != null && list.size() > 0) {
             for (AppSqlMap map : list) {

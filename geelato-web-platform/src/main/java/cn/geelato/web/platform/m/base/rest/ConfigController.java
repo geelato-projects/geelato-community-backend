@@ -8,6 +8,7 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.enums.SysConfigPurposeEnum;
+import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +35,7 @@ public class ConfigController extends BaseController {
         if (!configMap.isEmpty()) {
             for (Map.Entry<String, SysConfig> entry : configMap.entrySet()) {
                 SysConfig config = entry.getValue();
+                System.out.println(JSON.toJSONString(config));
                 if (StringUtils.isEmpty(config.getTenantCode())) {
                     globalConfigMap.put(config.getConfigKey(), config.getConfigValue());
                     rtnConfigMap.put("sys", globalConfigMap);

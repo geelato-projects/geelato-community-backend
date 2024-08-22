@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @ApiRestController("/config")
 public class ConfigController extends BaseController {
@@ -39,11 +38,11 @@ public class ConfigController extends BaseController {
                     globalConfigMap.put(config.getConfigKey(), config.getConfigValue());
                     rtnConfigMap.put("sys", globalConfigMap);
                 }
-                if (StringUtils.isNotEmpty(tenantCode) && Objects.equals(config.getTenantCode(), tenantCode)) {
+                if (StringUtils.isNotEmpty(tenantCode) && StringUtils.isNotBlank(config.getTenantCode()) && config.getTenantCode().equals(tenantCode)) {
                     tenantConfigMap.put(config.getConfigKey(), config.getConfigValue());
                     rtnConfigMap.put("tenant", tenantConfigMap);
                 }
-                if (StringUtils.isNotEmpty(appId) && Objects.equals(config.getAppId(), appId)) {
+                if (StringUtils.isNotEmpty(appId) && StringUtils.isNotBlank(config.getAppId()) && config.getAppId().equals(appId)) {
                     appConfigMap.put(config.getConfigKey(), config.getConfigValue());
                     rtnConfigMap.put("app", appConfigMap);
                 }

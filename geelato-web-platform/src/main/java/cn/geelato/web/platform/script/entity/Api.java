@@ -6,6 +6,7 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
@@ -13,91 +14,43 @@ import java.util.List;
 /**
  * @author diabl
  */
+@Getter
 @Setter
-@Entity(name = "platform_api", table = "platform_api")
+@Entity(name = "platform_api")
 @Title(title = "服务接口")
 public class Api extends BaseEntity {
+    @Title(title = "所属应用")
+    @Col(name = "app_id")
     private String appId;
     private String name;
     private String code;
     private String remark;
     private Integer version;
-    private String groupName;
-    private int enableStatus = 1;
-    private String sourceContent;
-    private String releaseContent;
-    private List<ApiParam> parameters;
-    private String outsideUrl;
-    private int outSideStatus = 0;
-
-    @Col(name = "app_id")
-    @Title(title = "所属应用")
-    public String getAppId() {
-        return appId;
-    }
-
-    @Col(name = "name")
-    @Title(title = "名称")
-    public String getName() {
-        return name;
-    }
-
-    @Col(name = "code")
-    @Title(title = "接口编码")
-    public String getCode() {
-        return code;
-    }
-
-    @Col(name = "remark")
-    @Title(title = "备注")
-    public String getRemark() {
-        return remark;
-    }
-
-    @Col(name = "version")
-    @Title(title = "版本号")
-    public Integer getVersion() {
-        return version;
-    }
-
-    @Col(name = "group_name")
     @Title(title = "分组名称")
-    public String getGroupName() {
-        return groupName;
-    }
-
-    @Col(name = "enable_status")
+    @Col(name = "group_name")
+    private String groupName;
     @Title(title = "是否启用。0：禁用；1：启用。用于控制是否可以访问该接口服务。")
-    public int getEnableStatus() {
-        return enableStatus;
-    }
-
-    @Col(name = "source_content")
+    @Col(name = "enable_status")
+    private int enableStatus = 1;
     @Title(title = "对于GlPage的组件树字符串")
-    public String getSourceContent() {
-        return sourceContent;
-    }
-
-    @Col(name = "release_content")
+    @Col(name = "source_content")
+    private String sourceContent;
     @Title(title = "生成的可执行javascript脚本")
-    public String getReleaseContent() {
-        return releaseContent;
-    }
-
-    @Col(name = "outside_url")
+    @Col(name = "release_content")
+    private String releaseContent;
     @Title(title = "第三方访问地址")
-    public String getOutsideUrl() {
-        return outsideUrl;
-    }
-
-    @Col(name = "outside_status")
+    @Col(name = "outside_url")
+    private String outsideUrl;
     @Title(title = "第三方访问状态")
-    public int getOutSideStatus() {
-        return outSideStatus;
-    }
-
+    @Col(name = "outside_status")
+    private int outSideStatus = 0;
+    @Title(title = "响应参数类型")
+    @Col(name = "response_type")
+    private String responseType;
+    @Title(title = "请求参数")
     @Transient
-    public List<ApiParam> getParameters() {
-        return parameters;
-    }
+    private List<ApiParam> requestParams;
+    @Title(title = "响应参数")
+    @Transient
+    private List<ApiParam> responseParams;
 }

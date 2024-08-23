@@ -65,60 +65,6 @@ public class ApiParamService extends BaseService {
         return parentList;
     }
 
-    /**
-     * 创建
-     *
-     * @param api
-     * @return
-     */
-    public List<ApiParam> createModelByApi(Api api) {
-        List<ApiParam> result = new ArrayList<>();
-        // 创建
-        if (api.getParameters() != null && api.getParameters().size() > 0) {
-            for (ApiParam apiParam : api.getParameters()) {
-                apiParam.setId(null);
-                apiParam.setApiId(api.getId());
-                apiParam.setAppId(api.getAppId());
-                apiParam.setTenantCode(api.getTenantCode());
-                result.add(this.createModel(apiParam));
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * 批量处理
-     *
-     * @param api
-     * @return
-     */
-    public List<ApiParam> batchHandleModelByApi(Api api) {
-        List<ApiParam> result = new ArrayList<>();
-        // 已存在
-        List<ApiParam> existList = this.queryModelsByApi(api.getId(), null, null);
-        // 比较
-        Map<String, List<ApiParam>> compareMap = this.compareBaseEntity(existList, api.getParameters());
-        // 创建、更新、删除
-        for (Map.Entry<String, List<ApiParam>> entry : compareMap.entrySet()) {
-            for (ApiParam apiParam : entry.getValue()) {
-                apiParam.setApiId(api.getId());
-                apiParam.setAppId(api.getAppId());
-                apiParam.setTenantCode(api.getTenantCode());
-                if (COMPARE_RESULT_ADD.equalsIgnoreCase(entry.getKey())) {
-                    apiParam.setId(null);
-                    result.add(this.createModel(apiParam));
-                } else if (COMPARE_RESULT_UPDATE.equalsIgnoreCase(entry.getKey())) {
-                    result.add(this.updateModel(apiParam));
-                } else if (COMPARE_RESULT_DELETE.equalsIgnoreCase(entry.getKey())) {
-                    this.isDeleteModel(apiParam);
-                }
-            }
-        }
-
-        return result;
-    }
-
     public List<ApiParam> batchCreateModel(Api api, String pid, List<ApiParam> records) {
         List<ApiParam> result = new ArrayList<>();
         if (records != null && records.size() > 0) {
@@ -140,20 +86,12 @@ public class ApiParamService extends BaseService {
         return result;
     }
 
-    public List<ApiParam> batchHandleModelByApis(Api api) {
-        List<ApiParam> result = new ArrayList<>();
-        // 删除
-        Map<String, Object> params = new HashMap<>();
-        params.put("apiId", api.getId());
-        List<ApiParam> apiParams = this.queryModel(ApiParam.class, params);
+    public void isDeleteModels(Api model) {
+        List<ApiParam> apiParams = this.queryModelsByApi(model.getId(), null, null);
         if (apiParams != null && apiParams.size() > 0) {
             for (ApiParam param : apiParams) {
                 this.isDeleteModel(param);
             }
         }
-        // 添加
-        result = batchCreateModel(api, null, api.getParameters());
-
-        return result;
     }
 }

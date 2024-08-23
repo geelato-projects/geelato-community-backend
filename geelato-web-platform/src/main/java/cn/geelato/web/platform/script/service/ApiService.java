@@ -2,14 +2,9 @@ package cn.geelato.web.platform.script.service;
 
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.script.entity.Api;
-import cn.geelato.web.platform.script.entity.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author diabl
@@ -30,9 +25,12 @@ public class ApiService extends BaseService {
     public Api createModel(Api model) {
         // 创建api
         Api api = super.createModel(model);
-        // 创建apiParam
-        api.setParameters(model.getParameters());
-        api.setParameters(apiParamService.batchHandleModelByApis(api));
+        // 删除接口参数
+        apiParamService.isDeleteModels(model);
+        // 创建接口参数，请求参数
+        api.setRequestParams(apiParamService.batchCreateModel(api, null, model.getRequestParams()));
+        // 创建接口参数，请求参数
+        api.setResponseParams(apiParamService.batchCreateModel(api, null, model.getResponseParams()));
 
         return api;
     }
@@ -46,9 +44,11 @@ public class ApiService extends BaseService {
     public Api updateModel(Api model) {
         // 更新api
         Api api = super.updateModel(model);
-        // 更新apiParam
-        api.setParameters(model.getParameters());
-        api.setParameters(apiParamService.batchHandleModelByApis(api));
+        // 删除接口参数
+        apiParamService.isDeleteModels(model);
+        // 创建apiParam
+        api.setRequestParams(apiParamService.batchCreateModel(api, null, model.getRequestParams()));
+        api.setResponseParams(apiParamService.batchCreateModel(api, null, model.getResponseParams()));
 
         return api;
     }
@@ -59,15 +59,8 @@ public class ApiService extends BaseService {
      * @param model
      */
     public void isDeleteModel(Api model) {
-        // 删除关联申请
-        Map<String, Object> params = new HashMap<>();
-        params.put("apiId", model.getId());
-        List<ApiParam> list = apiParamService.queryModel(ApiParam.class, params);
-        if (list != null && list.size() > 0) {
-            for (ApiParam map : list) {
-                apiParamService.isDeleteModel(map);
-            }
-        }
+        // 删除接口参数
+        apiParamService.isDeleteModels(model);
         // 删除
         super.isDeleteModel(model);
     }

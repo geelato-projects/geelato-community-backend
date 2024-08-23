@@ -5,17 +5,19 @@ import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.entity.AppSqlMap;
 import cn.geelato.web.platform.m.base.service.AppSqlMapService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -25,8 +27,8 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/app/sql")
+@ApiRestController("/app/sql")
+@Slf4j
 public class AppSqlMapController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<AppSqlMap> CLAZZ = AppSqlMap.class;
@@ -36,12 +38,14 @@ public class AppSqlMapController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private final Logger logger = LoggerFactory.getLogger(AppSqlMapController.class);
-    @Autowired
     private AppSqlMapService appSqlMapService;
 
+    @Autowired
+    public AppSqlMapController(AppSqlMapService appSqlMapService) {
+        this.appSqlMapService = appSqlMapService;
+    }
+
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQuery(HttpServletRequest req) {
         ApiPagedResult result = new ApiPagedResult();
         try {
@@ -49,7 +53,7 @@ public class AppSqlMapController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
             result = appSqlMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -57,7 +61,6 @@ public class AppSqlMapController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQueryOf", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQueryOf(HttpServletRequest req) {
         ApiPagedResult result = new ApiPagedResult();
         try {
@@ -65,7 +68,7 @@ public class AppSqlMapController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(req);
             result = appSqlMapService.pageQueryModel("page_query_platform_app_r_sql", params, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -73,7 +76,6 @@ public class AppSqlMapController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult query(HttpServletRequest req) {
         ApiResult result = new ApiResult<>();
         try {
@@ -82,7 +84,7 @@ public class AppSqlMapController extends BaseController {
             List<AppSqlMap> list = appSqlMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             result.setData(list);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -90,13 +92,12 @@ public class AppSqlMapController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult get(@PathVariable(required = true) String id) {
         ApiResult result = new ApiResult();
         try {
             result.setData(appSqlMapService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -104,7 +105,6 @@ public class AppSqlMapController extends BaseController {
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult createOrUpdate(@RequestBody AppSqlMap form) {
         ApiResult result = new ApiResult();
         try {
@@ -116,7 +116,7 @@ public class AppSqlMapController extends BaseController {
                 result.setData(appSqlMapService.createModel(form));
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
         }
 
@@ -124,7 +124,6 @@ public class AppSqlMapController extends BaseController {
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    @ResponseBody
     public ApiResult<App> isDelete(@PathVariable(required = true) String id) {
         ApiResult<App> result = new ApiResult<>();
         try {
@@ -132,7 +131,7 @@ public class AppSqlMapController extends BaseController {
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             appSqlMapService.isDeleteModel(model);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
         }
 

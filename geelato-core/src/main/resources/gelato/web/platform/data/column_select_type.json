@@ -28,7 +28,7 @@
   },
   {
     "group": "字符串",
-    "label": "数据字典[64]",
+    "label": "数据字典",
     "value": "dictionary",
     "mysql": "varchar",
     "disabled": false,
@@ -38,7 +38,7 @@
   },
   {
     "group": "字符串",
-    "label": "单选框[64]",
+    "label": "单选框",
     "value": "radio",
     "mysql": "varchar",
     "disabled": false,
@@ -48,7 +48,7 @@
   },
   {
     "group": "字符串",
-    "label": "流水编码[64]",
+    "label": "流水编码",
     "value": "code",
     "mysql": "varchar",
     "disabled": false,
@@ -58,7 +58,7 @@
   },
   {
     "group": "字符串",
-    "label": "颜色[64]",
+    "label": "颜色",
     "value": "color",
     "mysql": "varchar",
     "disabled": false,
@@ -68,7 +68,7 @@
   },
   {
     "group": "字符串",
-    "label": "实体字段[19]",
+    "label": "实体字段",
     "value": "entity",
     "mysql": "varchar",
     "disabled": false,

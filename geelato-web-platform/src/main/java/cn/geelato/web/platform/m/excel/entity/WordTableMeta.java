@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.excel.entity;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
-import cn.geelato.web.platform.enums.WordTableLoopTypeEnum;
+import cn.geelato.web.platform.m.excel.enums.WordTableLoopTypeEnum;
 
 import java.util.List;
 import java.util.Map;

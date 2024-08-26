@@ -7,7 +7,7 @@ import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.Digests;
 import cn.geelato.utils.Encodes;
-import cn.geelato.web.platform.enums.ValidTypeEnum;
+import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import org.springframework.util.Assert;
 
 /**

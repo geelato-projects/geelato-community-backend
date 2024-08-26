@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.enums;
+package cn.geelato.web.platform.m.security.enums;
 
 import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
@@ -7,24 +7,20 @@ import org.apache.logging.log4j.util.Strings;
  * @author diabl
  */
 @Getter
-public enum SysConfigPurposeEnum {
-    ALL("所有", "all"),
-    WEBAPP("前端", "webapp"),
-    ENDPOINT("后端", "endpoint"),
-    WORKFLOW("工作流", "workflow"),
-    SCHEDULE("调度", " schedule");
+public enum RoleTypeEnum {
+    PLATFORM("平台级角色", "platform"), APP("应用级角色", "app");
 
     private final String label;//选项内容
     private final String value;//选项值
 
-    SysConfigPurposeEnum(String label, String value) {
+    RoleTypeEnum(String label, String value) {
         this.label = label;
         this.value = value;
     }
 
     public static String getLabel(String value) {
         if (Strings.isNotBlank(value)) {
-            for (SysConfigPurposeEnum enums : SysConfigPurposeEnum.values()) {
+            for (RoleTypeEnum enums : RoleTypeEnum.values()) {
                 if (enums.getValue().equals(value)) {
                     return enums.getLabel();
                 }

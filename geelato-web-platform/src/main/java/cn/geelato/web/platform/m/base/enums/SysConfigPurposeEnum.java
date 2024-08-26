@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.enums;
+package cn.geelato.web.platform.m.base.enums;
 
 import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
@@ -7,21 +7,24 @@ import org.apache.logging.log4j.util.Strings;
  * @author diabl
  */
 @Getter
-public enum EncodingSerialTypeEnum {
-    ORDER("顺序", "order"),
-    RANDOM("随机", "random");
+public enum SysConfigPurposeEnum {
+    ALL("所有", "all"),
+    WEBAPP("前端", "webapp"),
+    ENDPOINT("后端", "endpoint"),
+    WORKFLOW("工作流", "workflow"),
+    SCHEDULE("调度", " schedule");
 
     private final String label;//选项内容
     private final String value;//选项值
 
-    EncodingSerialTypeEnum(String label, String value) {
+    SysConfigPurposeEnum(String label, String value) {
         this.label = label;
         this.value = value;
     }
 
     public static String getLabel(String value) {
         if (Strings.isNotBlank(value)) {
-            for (EncodingSerialTypeEnum enums : EncodingSerialTypeEnum.values()) {
+            for (SysConfigPurposeEnum enums : SysConfigPurposeEnum.values()) {
                 if (enums.getValue().equals(value)) {
                     return enums.getLabel();
                 }
@@ -29,5 +32,4 @@ public enum EncodingSerialTypeEnum {
         }
         return null;
     }
-
 }

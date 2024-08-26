@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.enums;
+package cn.geelato.web.platform.m.security.enums;
 
 import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
@@ -7,20 +7,21 @@ import org.apache.logging.log4j.util.Strings;
  * @author diabl
  */
 @Getter
-public enum RoleTypeEnum {
-    PLATFORM("平台级角色", "platform"), APP("应用级角色", "app");
+public enum EncodingSerialTypeEnum {
+    ORDER("顺序", "order"),
+    RANDOM("随机", "random");
 
     private final String label;//选项内容
     private final String value;//选项值
 
-    RoleTypeEnum(String label, String value) {
+    EncodingSerialTypeEnum(String label, String value) {
         this.label = label;
         this.value = value;
     }
 
     public static String getLabel(String value) {
         if (Strings.isNotBlank(value)) {
-            for (RoleTypeEnum enums : RoleTypeEnum.values()) {
+            for (EncodingSerialTypeEnum enums : EncodingSerialTypeEnum.values()) {
                 if (enums.getValue().equals(value)) {
                     return enums.getLabel();
                 }
@@ -28,4 +29,5 @@ public enum RoleTypeEnum {
         }
         return null;
     }
+
 }

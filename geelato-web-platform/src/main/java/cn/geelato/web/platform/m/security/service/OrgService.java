@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.security.service;
 
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.web.platform.enums.OrgTypeEnum;
+import cn.geelato.web.platform.m.security.enums.OrgTypeEnum;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import cn.geelato.web.platform.m.security.entity.Org;
 import cn.geelato.web.platform.m.security.entity.OrgUserMap;

@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.enums;
+package cn.geelato.web.platform.m.base.enums;
 
 import cn.geelato.utils.StringUtils;
 import lombok.Getter;

@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.security.rest;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.platform.enums.ValidTypeEnum;
+import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.base.service.AttachService;

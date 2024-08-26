@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.enums;
+package cn.geelato.web.platform.m.syspackage.enums;
 
 import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;

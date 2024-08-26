@@ -3,8 +3,8 @@ package cn.geelato.web.platform.m.excel.entity;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.web.platform.enums.ExcelColumnTypeEnum;
-import cn.geelato.web.platform.enums.ExcelMultiSceneTypeEnum;
+import cn.geelato.web.platform.m.excel.enums.ExcelColumnTypeEnum;
+import cn.geelato.web.platform.m.excel.enums.ExcelMultiSceneTypeEnum;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

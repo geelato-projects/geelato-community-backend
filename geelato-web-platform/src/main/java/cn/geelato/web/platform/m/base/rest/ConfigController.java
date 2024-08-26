@@ -7,7 +7,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.enums.SysConfigPurposeEnum;
+import cn.geelato.web.platform.m.base.enums.SysConfigPurposeEnum;
 import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PathVariable;

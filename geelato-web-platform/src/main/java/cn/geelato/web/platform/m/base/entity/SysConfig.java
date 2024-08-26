@@ -7,7 +7,7 @@ import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
-import cn.geelato.web.platform.enums.SysConfigValueTypeEnum;
+import cn.geelato.web.platform.m.base.enums.SysConfigValueTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;

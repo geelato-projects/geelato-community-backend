@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.excel.entity;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.web.platform.enums.ExcelColumnTypeRuleEnum;
+import cn.geelato.web.platform.m.excel.enums.ExcelColumnTypeRuleEnum;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;

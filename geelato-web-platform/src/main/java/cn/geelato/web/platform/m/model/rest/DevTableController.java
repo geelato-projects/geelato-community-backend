@@ -1,14 +1,5 @@
 package cn.geelato.web.platform.m.model.rest;
 
-import cn.geelato.web.platform.m.model.service.DevTableService;
-import cn.geelato.web.platform.m.model.service.DevViewService;
-import cn.geelato.web.platform.m.security.service.PermissionService;
-import jakarta.servlet.http.HttpServletRequest;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiMetaResult;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.enums.ColumnSyncedEnum;
 import cn.geelato.core.enums.DeleteStatusEnum;
@@ -18,9 +9,18 @@ import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
+import cn.geelato.lang.api.ApiMetaResult;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
+import cn.geelato.web.platform.m.model.service.DevTableService;
+import cn.geelato.web.platform.m.model.service.DevViewService;
+import cn.geelato.web.platform.m.security.service.PermissionService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +38,7 @@ import java.util.*;
 public class DevTableController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<TableMeta> CLAZZ = TableMeta.class;
+    private static final String APP_IS_NULL = "nullApp";
 
     static {
         OPERATORMAP.put("contains", Arrays.asList("title", "tableName", "entityName", "description"));
@@ -63,6 +64,9 @@ public class DevTableController extends BaseController {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            if ("true".equalsIgnoreCase(req.getParameter(APP_IS_NULL))) {
+                filterGroup.addFilter("appId", FilterGroup.Operator.nil, "1");
+            }
             result = devTableService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             logger.error(e.getMessage());

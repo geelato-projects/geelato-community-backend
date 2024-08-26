@@ -181,8 +181,8 @@ public class ApiController extends BaseController {
             if (Strings.isNotBlank(form.getId())) {
                 filters.addFilter("id", FilterGroup.Operator.neq, form.getId());
             }
-            filters.addFilter("appId", form.getAppId());
-            filters.addFilter("tenantCode", form.getTenantCode());
+            // filters.addFilter("appId", form.getAppId());
+            // filters.addFilter("tenantCode", form.getTenantCode());
             List<Api> apis = apiService.queryModel(Api.class, filters);
             List<String> outsideUrls = new ArrayList<>();
             if (apis != null) {

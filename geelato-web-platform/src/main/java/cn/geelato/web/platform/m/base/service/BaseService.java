@@ -280,6 +280,34 @@ public class BaseService {
         // 排除本身
         map.put("id", Strings.isNotBlank(id) ? id : null);
         // 条件限制
+        map.put("condition", formatParameter(params));
+
+        List<Map<String, Object>> vlist = dao.queryForMapList("platform_validate", map);
+        return vlist.isEmpty();
+    }
+
+    public boolean validate(String tableName, String id, Map<String, String> params, Map<String, String> lowers) {
+        Map<String, Object> map = new HashMap<>();
+        // 租户编码
+        if (Strings.isBlank(params.get("tenant_code"))) {
+            params.put("tenant_code", getSessionTenantCode());
+        }
+        // 查询表格
+        if (Strings.isBlank(tableName)) {
+            return false;
+        }
+        map.put("tableName", tableName);
+        // 排除本身
+        map.put("id", Strings.isNotBlank(id) ? id : null);
+        // 条件限制
+        map.put("condition", formatParameter(params));
+        map.put("lowers", formatParameter(lowers));
+
+        List<Map<String, Object>> vlist = dao.queryForMapList("platform_validate_lowers", map);
+        return vlist.isEmpty();
+    }
+
+    private List<JSONObject> formatParameter(Map<String, String> params) {
         List<JSONObject> list = new ArrayList<>();
         for (Map.Entry<String, String> param : params.entrySet()) {
             Map<String, String> jParams = new HashMap<>();
@@ -289,9 +317,8 @@ public class BaseService {
                 list.add(JSONObject.parseObject(JSON.toJSONString(jParams)));
             }
         }
-        map.put("condition", list);
-        List<Map<String, Object>> vlist = dao.queryForMapList("platform_validate", map);
-        return vlist.isEmpty();
+
+        return list;
     }
 
     /**

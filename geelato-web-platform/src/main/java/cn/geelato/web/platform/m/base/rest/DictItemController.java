@@ -1,25 +1,27 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.web.platform.m.base.service.DictService;
-import jakarta.servlet.http.HttpServletRequest;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.Dict;
 import cn.geelato.web.platform.m.base.entity.DictItem;
 import cn.geelato.web.platform.m.base.service.DictItemService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cn.geelato.web.platform.m.base.service.DictService;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,8 +29,8 @@ import java.util.stream.Collectors;
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/dict/item")
+@ApiRestController("/dict/item")
+@Slf4j
 public class DictItemController extends BaseController {
     private static final String DICT_CODE = "dictCode";
     private static final String DICT_ID = "dictId";
@@ -42,14 +44,16 @@ public class DictItemController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private final Logger logger = LoggerFactory.getLogger(DictItemController.class);
+    private final DictService dictService;
+    private final DictItemService dictItemService;
+
     @Autowired
-    private DictService dictService;
-    @Autowired
-    private DictItemService dictItemService;
+    public DictItemController(DictService dictService, DictItemService dictItemService) {
+        this.dictService = dictService;
+        this.dictItemService = dictItemService;
+    }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQuery(HttpServletRequest req) {
         ApiPagedResult result = new ApiPagedResult();
         try {
@@ -57,7 +61,7 @@ public class DictItemController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
             result = dictItemService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -65,7 +69,6 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult query(HttpServletRequest req) {
         ApiResult result = new ApiResult();
         try {
@@ -73,7 +76,7 @@ public class DictItemController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
             result.setData(dictItemService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -81,13 +84,12 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult get(@PathVariable(required = true) String id) {
         ApiResult result = new ApiResult();
         try {
             result.setData(dictItemService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -95,7 +97,6 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult createOrUpdate(@RequestBody DictItem form) {
         ApiResult result = new ApiResult();
         try {
@@ -106,7 +107,7 @@ public class DictItemController extends BaseController {
                 result.setData(dictItemService.createModel(form));
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
         }
 
@@ -114,13 +115,12 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/batchCreateOrUpdate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult batchCreateOrUpdate(@RequestBody List<DictItem> forms, String dictId, String parentId) {
         ApiResult result = new ApiResult();
         try {
             dictItemService.batchCreateOrUpdate(dictId, parentId, forms);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
         }
 
@@ -128,7 +128,6 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    @ResponseBody
     public ApiResult isDelete(@PathVariable(required = true) String id) {
         ApiResult result = new ApiResult();
         try {
@@ -137,7 +136,7 @@ public class DictItemController extends BaseController {
             model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
             dictItemService.isDeleteModel(model);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
         }
 
@@ -145,7 +144,6 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/queryItemByDictCode/{dictCode}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult queryItemByDictCode(@PathVariable(required = true) String dictCode) {
         ApiResult result = new ApiResult();
         List<DictItem> iResult = new ArrayList<>();
@@ -163,7 +161,7 @@ public class DictItemController extends BaseController {
             }
             result.setData(buildTree(iResult));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -191,18 +189,18 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult validate(@RequestBody DictItem form) {
         ApiResult result = new ApiResult();
         try {
+            Map<String, String> lowers = new HashMap<>();
+            lowers.put("item_code", form.getItemCode());
             Map<String, String> params = new HashMap<>();
-            params.put("item_code", form.getItemCode());
             params.put("dict_id", form.getDictId());
             params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
             params.put("tenant_code", form.getTenantCode());
-            result.setData(dictService.validate("platform_dict_item", form.getId(), params));
+            result.setData(dictService.validate("platform_dict_item", form.getId(), params, lowers));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.VALIDATE_FAIL);
         }
 
@@ -210,7 +208,6 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/createDictAndItems", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult createDictAndItems(@RequestBody Dict form) {
         ApiResult result = new ApiResult();
         try {
@@ -232,7 +229,7 @@ public class DictItemController extends BaseController {
                 }
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
         }
 

@@ -40,11 +40,11 @@ import java.util.*;
 public class DevTableController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<TableMeta> CLAZZ = TableMeta.class;
-    private static final String APP_IS_NULL = "nullApp";
 
     static {
         OPERATORMAP.put("contains", Arrays.asList("title", "tableName", "entityName", "description"));
         OPERATORMAP.put("consists", List.of("connectId"));
+        OPERATORMAP.put("isNulls", List.of("appId"));
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
@@ -68,9 +68,6 @@ public class DevTableController extends BaseController {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            if ("true".equalsIgnoreCase(req.getParameter(APP_IS_NULL))) {
-                filterGroup.addFilter("appId", FilterGroup.Operator.nil, "1");
-            }
             result = devTableService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());

@@ -9,59 +9,60 @@ import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.security.entity.DataItems;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.*;
 
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/sys/config")
+@ApiRestController("/sys/config")
+@Slf4j
 public class SysConfigController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<SysConfig> CLAZZ = SysConfig.class;
     private static final String CONFIG_TYPE_UPLOAD = "UPLOAD";
-    private static final String APP_IS_NULL = "nullApp";
 
     static {
         OPERATORMAP.put("contains", Arrays.asList("configKey", "configValue", "keyType", "remark"));
+        OPERATORMAP.put("isNulls", List.of("appId"));
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private final Logger logger = LoggerFactory.getLogger(SysConfigController.class);
+    private final SysConfigService sysConfigService;
+    private final AttachService attachService;
+
     @Autowired
-    private SysConfigService sysConfigService;
-    @Autowired
-    private AttachService attachService;
+    public SysConfigController(SysConfigService sysConfigService, AttachService attachService) {
+        this.sysConfigService = sysConfigService;
+        this.attachService = attachService;
+    }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQuery(HttpServletRequest req) {
         ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            if ("true".equalsIgnoreCase(req.getParameter(APP_IS_NULL))) {
-                filterGroup.addFilter("appId", FilterGroup.Operator.nil, "1");
-            }
             result = sysConfigService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
             DataItems<List<SysConfig>> dataItems = (DataItems<List<SysConfig>>) result.getData();
             setConfigAssist(dataItems.getItems());
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -69,7 +70,6 @@ public class SysConfigController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult<List<SysConfig>> query(HttpServletRequest req) {
         ApiResult<List<SysConfig>> result = new ApiResult<>();
         try {
@@ -78,7 +78,7 @@ public class SysConfigController extends BaseController {
             List<SysConfig> list = sysConfigService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             result.setData(setConfigAssist(list));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -86,7 +86,6 @@ public class SysConfigController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult get(@PathVariable(required = true) String id, boolean encrypt) {
         ApiResult result = new ApiResult();
         try {
@@ -98,7 +97,7 @@ public class SysConfigController extends BaseController {
             model.setSm2Key(null);
             result.setData(model);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -106,7 +105,6 @@ public class SysConfigController extends BaseController {
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult createOrUpdate(@RequestBody SysConfig form) {
         ApiResult result = new ApiResult();
         try {
@@ -121,7 +119,7 @@ public class SysConfigController extends BaseController {
                 EnvManager.singleInstance().refreshConfig(form.getConfigKey());
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(e.getMessage());
         }
 
@@ -129,7 +127,6 @@ public class SysConfigController extends BaseController {
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    @ResponseBody
     public ApiResult<SysConfig> isDelete(@PathVariable(required = true) String id) {
         ApiResult<SysConfig> result = new ApiResult<>();
         try {
@@ -138,7 +135,7 @@ public class SysConfigController extends BaseController {
             model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
             sysConfigService.isDeleteModel(model);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
         }
 
@@ -146,7 +143,6 @@ public class SysConfigController extends BaseController {
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult validate(@RequestBody SysConfig form) {
         ApiResult result = new ApiResult();
         try {
@@ -157,7 +153,7 @@ public class SysConfigController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             result.setData(sysConfigService.validate("platform_sys_config", form.getId(), params));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.VALIDATE_FAIL);
         }
 
@@ -165,7 +161,6 @@ public class SysConfigController extends BaseController {
     }
 
     @RequestMapping(value = "/getValue/{key}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult getValue(@PathVariable(required = true) String key) {
         ApiResult result = new ApiResult();
         try {
@@ -179,7 +174,7 @@ public class SysConfigController extends BaseController {
             }
             result.setData("");
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 

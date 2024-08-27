@@ -43,7 +43,7 @@ public class Api extends BaseEntity {
     private String outsideUrl;
     @Title(title = "第三方访问状态")
     @Col(name = "outside_status")
-    private int outSideStatus = 0;
+    private int outsideStatus = 0;
     @Title(title = "响应参数类型")
     @Col(name = "response_type")
     private String responseType;

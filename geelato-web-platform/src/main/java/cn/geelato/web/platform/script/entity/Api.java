@@ -24,6 +24,7 @@ public class Api extends BaseEntity {
     private String appId;
     private String name;
     private String code;
+    private String method;
     private String remark;
     private Integer version;
     @Title(title = "分组名称")

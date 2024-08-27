@@ -70,6 +70,9 @@ public class DownloadController extends BaseController {
                 file = downloadService.downloadFile(name, path);
                 name = Strings.isNotBlank(name) ? name : file.getName();
             }
+            if (file == null) {
+                throw new Exception("文件不存在");
+            }
             if (isPdf) {
                 String ext = name.substring(name.lastIndexOf("."));
                 name = Strings.isNotBlank(name) ? name.replace(ext, ".pdf") : null;
@@ -78,7 +81,7 @@ public class DownloadController extends BaseController {
                 File pFile = new File(outputPath);
                 file = pFile.exists() ? pFile : null;
             }
-            if (file != null && Strings.isNotBlank(name)) {
+            if (Strings.isNotBlank(name)) {
                 out = response.getOutputStream();
                 // 编码
                 String encodeName = URLEncoder.encode(name, StandardCharsets.UTF_8);
@@ -101,8 +104,6 @@ public class DownloadController extends BaseController {
                 while ((len = in.read(buffer)) > 0) {
                     out.write(buffer, 0, len);
                 }
-            } else {
-                throw new Exception("文件不存在");
             }
         } catch (Exception e) {
             logger.error(e.getMessage());

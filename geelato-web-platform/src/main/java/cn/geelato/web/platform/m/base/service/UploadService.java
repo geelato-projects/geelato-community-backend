@@ -23,8 +23,8 @@ import java.util.Date;
 public class UploadService {
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
     public static final String ROOT_DIRECTORY = "upload";
+    public static final String ROOT_CONVERT_DIRECTORY = "upload/convert";
     public static final String ROOT_CONFIG_DIRECTORY = "/upload/config";
-    public static final String ROOT_CONVERT_DIRECTORY = "/upload/convert";
     public static final String ROOT_CONFIG_SUFFIX = ".config";
 
     /**

@@ -101,7 +101,7 @@ public class ExcelCommonUtils {
         List<List<List<Integer>>> limitSetMap = new LinkedList<>();
         int uniqueNum = 0; // 唯一约束的数据量
         for (CellMeta cellMeta : cellMetaList) {
-            if (cellMeta.getPlaceholderMeta().isMerge() && cellMeta.getPlaceholderMeta().isUnique()) {
+            if (cellMeta.getPlaceholderMeta().isIsMerge() && cellMeta.getPlaceholderMeta().isIsUnique()) {
                 uniqueNum += 1;
                 // 获取数据相同的行
                 List<List<Integer>> integerSet = getIntegerSet(cellMeta, valueMap, valueList);
@@ -187,7 +187,7 @@ public class ExcelCommonUtils {
         Object value = "";
         // 不是列表，且是变更
         if (meta.isValueComputeModeVar()) {
-            if (meta.isList()) {
+            if (meta.isIsList()) {
                 Object v = listValueMap.get(meta.getVar());
                 value = getCellValueByValueType(meta, v);
             } else {
@@ -199,7 +199,7 @@ public class ExcelCommonUtils {
         } else if (meta.isValueComputeModeConst()) {
             value = getCellValueByValueType(meta, meta.getConstValue());
         } else if (meta.isValueComputeModeExpression()) {
-            Object v = JsProvider.executeExpression(meta.getExpression(), meta.isList() ? listValueMap : valueMap);
+            Object v = JsProvider.executeExpression(meta.getExpression(), meta.isIsList() ? listValueMap : valueMap);
             value = getCellValueByValueType(meta, v);
         }
         return value;

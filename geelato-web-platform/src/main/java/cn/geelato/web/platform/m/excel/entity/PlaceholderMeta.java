@@ -10,22 +10,34 @@ import lombok.Setter;
  *
  * @author diabl
  */
-@Getter
-@Setter
 public class PlaceholderMeta {
     // excel或word中看到的占位符
+    @Getter
+    @Setter
     private String placeholder;
     // 该占位符对应的取值变量
+    @Getter
+    @Setter
     private String var;
     // 该占位符对应的取值列表变量
+    @Getter
+    @Setter
     private String listVar;
     // 常量值
+    @Getter
+    @Setter
     private String constValue;
     // 表达式
+    @Getter
+    @Setter
     private String expression;
     // STRING | NUMBER | DATE | DATETIME
+    @Getter
+    @Setter
     private String valueType;
     // VAR变量、CONST常量、EXPRESSION表达式
+    @Getter
+    @Setter
     private String valueComputeMode;
     // 是否列表中的一项，是否按列表处理
     private boolean isList;
@@ -36,11 +48,49 @@ public class PlaceholderMeta {
     // 是否是插入图片
     private boolean isImage;
     // 图片宽度，cm
+    @Getter
+    @Setter
     private Double imageWidth;
     // 图片高度，cm
+    @Getter
+    @Setter
     private Double imageHeight;
     // 描述
+    @Getter
+    @Setter
     private String description;
+
+    public boolean isIsList() {
+        return isList;
+    }
+
+    public void setIsList(boolean list) {
+        isList = list;
+    }
+
+    public boolean isIsMerge() {
+        return isMerge;
+    }
+
+    public void setIsMerge(boolean merge) {
+        isMerge = merge;
+    }
+
+    public boolean isIsUnique() {
+        return isUnique;
+    }
+
+    public void setIsUnique(boolean unique) {
+        isUnique = unique;
+    }
+
+    public boolean isIsImage() {
+        return isImage;
+    }
+
+    public void setIsImage(boolean image) {
+        isImage = image;
+    }
 
     public boolean isValueComputeModeVar() {
         return "VAR".equalsIgnoreCase(this.valueComputeMode);

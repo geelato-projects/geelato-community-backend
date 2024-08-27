@@ -1,15 +1,15 @@
 package cn.geelato.web.platform.m.excel.service;
 
+import cn.geelato.core.script.js.JsProvider;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.excel.entity.CellMeta;
 import cn.geelato.web.platform.m.excel.entity.ExportColumn;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.RowMeta;
+import cn.geelato.web.platform.m.excel.enums.ExcelAlignmentEnum;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
-import cn.geelato.core.script.js.JsProvider;
-import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.m.excel.enums.ExcelAlignmentEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -125,7 +125,7 @@ public class ExcelXSSFWriter {
                     if (meta == null) {
                         continue;
                     }
-                    if (meta.isList()) {
+                    if (meta.isIsList()) {
                         if (!StringUtils.isEmpty(meta.getListVar())) {
                             List<CellMeta> cellMetaList = listCellMetaMap.get(meta.getListVar());
                             if (cellMetaList == null) {
@@ -232,7 +232,7 @@ public class ExcelXSSFWriter {
      */
     public void setMergeScope(XSSFSheet sheet, int rowIndex, List<CellMeta> cellMetaList, Map valueMap, List<Map> valueList, List<List<Integer>> mergeScope) {
         for (CellMeta cellMeta : cellMetaList) {
-            if (cellMeta.getPlaceholderMeta().isMerge()) {
+            if (cellMeta.getPlaceholderMeta().isIsMerge()) {
                 // 获取数据相同的行
                 List<List<Integer>> integerSet = ExcelCommonUtils.getIntegerSet(cellMeta, valueMap, valueList);
                 if (integerSet.size() > 0) {
@@ -268,7 +268,7 @@ public class ExcelXSSFWriter {
     private void setCellValue(XSSFCell cell, PlaceholderMeta meta, Map valueMap, Map listValueMap) {
         // 不是列表，且是变更
         if (meta.isValueComputeModeVar()) {
-            if (meta.isList()) {
+            if (meta.isIsList()) {
                 Object v = listValueMap.get(meta.getVar());
                 setCellValueByValueType(cell, meta, v);
             } else {
@@ -280,7 +280,7 @@ public class ExcelXSSFWriter {
         } else if (meta.isValueComputeModeConst()) {
             setCellValueByValueType(cell, meta, meta.getConstValue());
         } else if (meta.isValueComputeModeExpression()) {
-            Object v = JsProvider.executeExpression(meta.getExpression(), meta.isList() ? listValueMap : valueMap);
+            Object v = JsProvider.executeExpression(meta.getExpression(), meta.isIsList() ? listValueMap : valueMap);
             setCellValueByValueType(cell, meta, v);
         }
     }
@@ -486,10 +486,10 @@ public class ExcelXSSFWriter {
             placeholderMeta.setExpression(row.getCell(4).getStringCellValue());
             placeholderMeta.setValueType(row.getCell(5).getStringCellValue());
             placeholderMeta.setValueComputeMode(row.getCell(6).getStringCellValue());
-            placeholderMeta.setList(getBoolean(row.getCell(7)));
-            placeholderMeta.setMerge(getBoolean(row.getCell(8)));
-            placeholderMeta.setUnique(getBoolean(row.getCell(9)));
-            placeholderMeta.setImage(getBoolean(row.getCell(10)));
+            placeholderMeta.setIsList(getBoolean(row.getCell(7)));
+            placeholderMeta.setIsMerge(getBoolean(row.getCell(8)));
+            placeholderMeta.setIsUnique(getBoolean(row.getCell(9)));
+            placeholderMeta.setIsImage(getBoolean(row.getCell(10)));
             placeholderMeta.setImageWidth(row.getCell(11).getNumericCellValue());
             placeholderMeta.setImageHeight(row.getCell(12).getNumericCellValue());
             placeholderMeta.setDescription(row.getCell(13).getStringCellValue());

@@ -386,10 +386,10 @@ public class ExportTemplateService extends BaseService {
             ExcelXSSFUtils.setCell(dRow, 4, cellStyle, metas.get(i).getExpression());
             ExcelXSSFUtils.setCell(dRow, 5, cellStyle, metas.get(i).getValueType());
             ExcelXSSFUtils.setCell(dRow, 6, cellStyle, metas.get(i).getValueComputeMode());
-            ExcelXSSFUtils.setCell(dRow, 7, cellStyle, metas.get(i).isList());
-            ExcelXSSFUtils.setCell(dRow, 8, cellStyle, metas.get(i).isMerge());
-            ExcelXSSFUtils.setCell(dRow, 9, cellStyle, metas.get(i).isUnique());
-            ExcelXSSFUtils.setCell(dRow, 10, cellStyle, metas.get(i).isImage());
+            ExcelXSSFUtils.setCell(dRow, 7, cellStyle, metas.get(i).isIsList());
+            ExcelXSSFUtils.setCell(dRow, 8, cellStyle, metas.get(i).isIsMerge());
+            ExcelXSSFUtils.setCell(dRow, 9, cellStyle, metas.get(i).isIsUnique());
+            ExcelXSSFUtils.setCell(dRow, 10, cellStyle, metas.get(i).isIsImage());
             ExcelXSSFUtils.setCell(dRow, 11, cellStyle, metas.get(i).getImageWidth());
             ExcelXSSFUtils.setCell(dRow, 12, cellStyle, metas.get(i).getImageHeight());
             ExcelXSSFUtils.setCell(dRow, 13, cellStyle, metas.get(i).getDescription());

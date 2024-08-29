@@ -109,7 +109,7 @@ public class MetaDdlController extends BaseController {
         return result;
     }
 
-    @RequestMapping(value = {"/iews/{appId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @RequestMapping(value = {"/views/{appId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult reViewCreates(@PathVariable("appId") String appId) {
         ApiMetaResult result = new ApiMetaResult();
         Map<String, Object> tableResult = new LinkedHashMap<>();

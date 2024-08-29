@@ -12,12 +12,21 @@ select
   tn.`type`      tn_type,
   tn.tree_entity tn_tree_entity,
   tn.meta        tn_meta,
+  tn.url         tn_url,
   t.*
 from platform_tree_node tn left join $.tableName t on tn.id = t.tree_node_id
 where tn.tree_id = $.treeId
 
 -- @sql select_platform_menu
-SELECT tn.id,tn.`TEXT` name,tn.parent parentId,tn.`type` component,tn.icon icon,tn.meta,tn.tree_id treeId
+SELECT
+    tn.id,
+    tn.`TEXT` name,
+    tn.parent parentId,
+    tn.`type` component,
+    tn.icon icon,
+    tn.meta meta,
+    tn.url url,
+    tn.tree_id treeId
 FROM platform_tree_node tn,platform_app_user app
 WHERE tn.tree_id = app.id AND app.user_id=$.userId AND tn.flag='menuItem'
 UNION
@@ -46,7 +55,8 @@ SELECT
   p1.extend_entity as extendEntity,
   p1.text,
   p1.seq_no as seqNo,
-  p1.tenant_code as tenantCode
+  p1.tenant_code as tenantCode,
+  p1.url
 FROM platform_tree_node p1
 LEFT JOIN platform_app p2 ON p2.id = p1.tree_id
 LEFT JOIN platform_app_page p3 ON p3.extend_id = p1.id AND p3.app_id = p2.id

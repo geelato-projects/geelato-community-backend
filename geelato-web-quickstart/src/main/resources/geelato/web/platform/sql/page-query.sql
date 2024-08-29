@@ -179,6 +179,7 @@ SELECT
     p1.create_at as createAt,
     p1.creator,
     p1.creator_name as creatorName,
+    p1.url,
     IF(p2.total > 0,TRUE,FALSE) isRoled,
     IF(p3.total > 0,FALSE,TRUE) isLeaf
 FROM platform_tree_node p1

@@ -38,6 +38,10 @@ public class DictItem extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "字典项文本")
     private String itemName;
 
+    @Col(name = "item_color")
+    @Title(title = "字典项颜色")
+    private String itemColor;
+
     @Col(name = "item_remark")
     @Title(title = "描述")
     private String itemRemark;

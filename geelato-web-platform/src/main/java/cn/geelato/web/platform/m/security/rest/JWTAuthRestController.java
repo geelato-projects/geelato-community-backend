@@ -3,22 +3,20 @@ package cn.geelato.web.platform.m.security.rest;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.base.service.AttachService;
-import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.security.entity.*;
+import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import cn.geelato.web.platform.m.security.service.*;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,29 +27,30 @@ import java.util.*;
 /**
  * Created by hongxq on 2022/5/1.
  */
-@Controller
-@RequestMapping(value = {"/api/user"})
+@ApiRestController("/user")
+@Slf4j
 public class JWTAuthRestController extends BaseController {
-
-    private static final String ROOT_AVATAR_DIRECTORY = "upload/avatar";
-    private static final String AVATAR_BASE64_PREFIX = "data:image/png;base64,";
-    private final Logger logger = LoggerFactory.getLogger(JWTAuthRestController.class);
-    @Autowired
     protected AccountService accountService;
-    @Autowired
     protected AuthCodeService authCodeService;
-    @Autowired
     protected OrgService orgService;
-    @Autowired
     private UploadService uploadService;
-    @Autowired
     private AttachService attachService;
+
     @Autowired
-    private RuleService ruleService;
+    public JWTAuthRestController(AccountService accountService,
+                                 AuthCodeService authCodeService,
+                                 OrgService orgService,
+                                 UploadService uploadService,
+                                 AttachService attachService) {
+        this.accountService = accountService;
+        this.authCodeService = authCodeService;
+        this.orgService = orgService;
+        this.uploadService = uploadService;
+        this.attachService = attachService;
+    }
 
     @IgnoreJWTVerify
     @RequestMapping(value = "/login", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
-    @ResponseBody
     public ApiResult login(@RequestBody LoginParams loginParams, HttpServletRequest req) {
         ApiResult apiResult = new ApiResult();
         try {
@@ -85,7 +84,7 @@ public class JWTAuthRestController extends BaseController {
                 return apiResult.error().setMsg("账号或密码不正确");
             }
         } catch (Exception exception) {
-            logger.error(exception.getMessage(), exception);
+            log.error(exception.getMessage(), exception);
             apiResult.error().setMsg("账号或密码不正确");
         }
         return apiResult;
@@ -106,7 +105,6 @@ public class JWTAuthRestController extends BaseController {
     }
 
     @RequestMapping(value = "/info", method = {RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
     public ApiResult getUserInfo(HttpServletRequest req) {
         try {
             User user = this.getUserByToken(req);
@@ -123,13 +121,12 @@ public class JWTAuthRestController extends BaseController {
 
             return new ApiResult().success().setData(loginResult);
         } catch (Exception e) {
-            logger.error("getUserInfo", e);
+            log.error("getUserInfo", e);
             return new ApiResult().error().setMsg(e.getMessage());
         }
     }
 
     @RequestMapping(value = "/avatar/{userId}", method = {RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
     public ApiResult uploadAvatar(@PathVariable(required = true) String userId, @RequestParam("file") MultipartFile file) {
         ApiResult result = new ApiResult();
         try {
@@ -145,17 +142,17 @@ public class JWTAuthRestController extends BaseController {
             }
             // 存入附件表
             // Attach attach = new Attach(file);
-            // attach.setPath(uploadService.getSavePath(ROOT_AVATAR_DIRECTORY, attach.getName(), true));
+            // attach.setPath(uploadService.getSavePath(UploadService.ROOT_AVATAR_DIRECTORY, attach.getName(), true));
             // byte[] bytes = file.getBytes();
             // Files.write(Paths.get(attach.getPath()), bytes);
             // Map<String, Object> attachMap = attachService.createModel(attach);
             // Base64，存数据库
             byte[] fileBytes = file.getBytes();
             String base64String = Base64.getEncoder().encodeToString(fileBytes);
-            user.setAvatar(AVATAR_BASE64_PREFIX + base64String);
+            user.setAvatar(UploadService.AVATAR_BASE64_PREFIX + base64String);
             dao.save(user);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
         }
 
@@ -163,7 +160,6 @@ public class JWTAuthRestController extends BaseController {
     }
 
     @RequestMapping(value = "/update/{userId}", method = {RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
     public ApiResult updateUserInfo(@PathVariable(required = true) String userId, @RequestBody Map<String, Object> params) {
         ApiResult result = new ApiResult();
         try {
@@ -184,7 +180,7 @@ public class JWTAuthRestController extends BaseController {
             }
             dao.save(user);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
         }
 
@@ -193,14 +189,13 @@ public class JWTAuthRestController extends BaseController {
 
 
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult logout(HttpServletRequest req) {
         try {
             User user = this.getUserByToken(req);
-            logger.debug("User [" + user.getLoginName() + "] logout.");
+            log.debug("User [" + user.getLoginName() + "] logout.");
             return new ApiResult();
         } catch (Exception e) {
-            logger.error("退出失败", e);
+            log.error("退出失败", e);
             return new ApiResult().error();
         }
     }
@@ -211,7 +206,6 @@ public class JWTAuthRestController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/menu", method = {RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
     public ApiResult getCurrentUserMenu(@RequestBody Map<String, Object> params, HttpServletRequest request) throws Exception {
         ApiResult result = new ApiResult();
         List<Map<String, Object>> menuItemList = new ArrayList<>();
@@ -223,20 +217,20 @@ public class JWTAuthRestController extends BaseController {
         String tenantCode = (String) params.get("tenantCode");
         // 用户
         User user = getUserByToken(request);
-        logger.info(String.format("当前用户菜单查询，用户：%s", (user != null ? String.format("%s（%s）", user.getName(), user.getLoginName()) : "")));
+        // log.info(String.format("当前用户菜单查询，用户：%s", (user != null ? String.format("%s（%s）", user.getName(), user.getLoginName()) : "")));
         String token = getToken(request);
-        logger.info(String.format("当前用户菜单查询，Token：%s", token));
+        // log.info(String.format("当前用户菜单查询，Token：%s", token));
         if (user == null || Strings.isBlank(token)) {
             return result;
         }
         // 用户与租户比对
         if (Strings.isNotBlank(tenantCode) && !tenantCode.equalsIgnoreCase(user.getTenantCode())) {
-            logger.info(String.format("当前用户菜单查询，租户不一致：User=>%s | %s", user.getTenantCode(), tenantCode));
+            // log.info(String.format("当前用户菜单查询，租户不一致：User=>%s | %s", user.getTenantCode(), tenantCode));
             return result;
         } else {
             tenantCode = user.getTenantCode();
         }
-        logger.info(String.format("当前用户菜单查询，租户：%s；应用：%s", tenantCode, appId));
+        // log.info(String.format("当前用户菜单查询，租户：%s；应用：%s", tenantCode, appId));
         // 菜单查询
         if (Strings.isNotBlank(appId) && Strings.isNotBlank(tenantCode)) {
             map.put("currentUser", user.getId());
@@ -256,7 +250,6 @@ public class JWTAuthRestController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/resetPassword", method = {RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
     public ApiResult resetPassword(HttpServletRequest req, @RequestParam(defaultValue = "8", required = false) int passwordLength) throws Exception {
         User user = this.getUserByToken(req);
         String plainPassword = RandomStringUtils.randomAlphanumeric(passwordLength > 32 ? 32 : passwordLength);
@@ -267,7 +260,6 @@ public class JWTAuthRestController extends BaseController {
     }
 
     @RequestMapping(value = "/forgetValid", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult forgetValid(@RequestBody Map<String, Object> params) {
         ApiResult result = new ApiResult();
         try {
@@ -293,7 +285,7 @@ public class JWTAuthRestController extends BaseController {
             }
             result.error();
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.UPDATE_FAIL);
         }
 
@@ -301,7 +293,6 @@ public class JWTAuthRestController extends BaseController {
     }
 
     @RequestMapping(value = "/forget", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult forgetPassword(@RequestBody Map<String, Object> params) {
         ApiResult result = new ApiResult();
         try {
@@ -323,7 +314,7 @@ public class JWTAuthRestController extends BaseController {
             accountService.entryptPassword(user);
             dao.save(user);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.UPDATE_FAIL);
         }
 
@@ -331,7 +322,6 @@ public class JWTAuthRestController extends BaseController {
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult validateUser(@RequestBody Map<String, Object> params) {
         ApiResult result = new ApiResult();
         try {
@@ -367,7 +357,7 @@ public class JWTAuthRestController extends BaseController {
             }
             return result.error().setMsg(ApiErrorMsg.VALIDATE_USER);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.UPDATE_FAIL);
         }
 
@@ -375,7 +365,6 @@ public class JWTAuthRestController extends BaseController {
     }
 
     @RequestMapping(value = "/bindAccount", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult bindAccount(@RequestBody Map<String, Object> params) {
         ApiResult result = new ApiResult();
         try {
@@ -414,7 +403,7 @@ public class JWTAuthRestController extends BaseController {
             }
             return result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.UPDATE_FAIL);
         }
 

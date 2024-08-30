@@ -25,6 +25,8 @@ public class UploadService {
     public static final String ROOT_DIRECTORY = "upload";
     public static final String ROOT_CONVERT_DIRECTORY = "upload/convert";
     public static final String ROOT_CONFIG_DIRECTORY = "/upload/config";
+    public static final String ROOT_AVATAR_DIRECTORY = "upload/avatar";
+    public static final String AVATAR_BASE64_PREFIX = "data:image/png;base64,";
     public static final String ROOT_CONFIG_SUFFIX = ".config";
 
     /**

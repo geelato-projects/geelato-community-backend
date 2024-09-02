@@ -18,7 +18,7 @@ import java.nio.file.Files;
  */
 @Getter
 @Setter
-@Entity(name = "platform_resources", table = "platform_resources")
+@Entity(name = "platform_resources")
 @Title(title = "资源信息", description = "对应各类资源文件，如mvel规则文件，sql语句等")
 public class Resources extends BaseEntity {
 

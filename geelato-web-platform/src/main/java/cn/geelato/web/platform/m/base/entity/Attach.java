@@ -6,7 +6,6 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -35,14 +34,15 @@ public class Attach extends BaseEntity {
     private Long size;
     private String path;
     private String url;
-
-    @Col(name = "object_id")
     @Title(title = "对象id")
+    @Col(name = "object_id")
     private String objectId;
 
     @Transient
     private String source;
 
+    public Attach() {
+    }
 
     public Attach(MultipartFile file) {
         setDelStatus(DeleteStatusEnum.NO.getCode());
@@ -56,10 +56,5 @@ public class Attach extends BaseEntity {
         this.name = file.getName();
         this.type = Files.probeContentType(file.toPath());
         this.size = file.length();
-    }
-
-
-    public Attach() {
-
     }
 }

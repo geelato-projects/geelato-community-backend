@@ -1,22 +1,20 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.core.env.entity.User;
-import cn.geelato.web.platform.annotation.ApiRestController;
-import jakarta.servlet.http.HttpServletRequest;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
+import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.env.entity.User;
+import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.service.AppService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +24,7 @@ import java.util.*;
  * @author diabl
  */
 @ApiRestController("/app")
+@Slf4j
 public class AppController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<App> CLAZZ = App.class;
@@ -36,9 +35,12 @@ public class AppController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private final Logger logger = LoggerFactory.getLogger(AppController.class);
+    private final AppService appService;
+
     @Autowired
-    private AppService appService;
+    public AppController(AppService appService) {
+        this.appService = appService;
+    }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
     public ApiPagedResult pageQuery(HttpServletRequest req) {
@@ -48,7 +50,7 @@ public class AppController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
             result = appService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -63,7 +65,7 @@ public class AppController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
             result.setData(appService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -87,7 +89,7 @@ public class AppController extends BaseController {
             List<Map<String, Object>> appList = dao.queryForMapList("query_app_by_role_user", map);
             result.setData(appList);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -102,7 +104,7 @@ public class AppController extends BaseController {
             appService.setConnects(model);
             result.setData(model);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -120,7 +122,7 @@ public class AppController extends BaseController {
                 result.setData(appService.createModel(form));
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
         }
 
@@ -135,7 +137,7 @@ public class AppController extends BaseController {
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             appService.isDeleteModel(model);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
         }
 
@@ -153,7 +155,7 @@ public class AppController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             result.setData(appService.validate("platform_app", form.getId(), params));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.VALIDATE_FAIL);
         }
 
@@ -168,7 +170,7 @@ public class AppController extends BaseController {
             List<Map<String, Object>> queryList = dao.queryForMapList("platform_permission_by_app_page", params);
             result.setData(queryList);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 
@@ -183,7 +185,7 @@ public class AppController extends BaseController {
             List<Map<String, Object>> queryList = dao.queryForMapList("platform_role_r_permission_by_app_page", params);
             result.setData(queryList);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
         }
 

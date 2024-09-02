@@ -1,20 +1,16 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.web.platform.annotation.RuntimeMapping;
-import jakarta.servlet.http.HttpServletRequest;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.AppConnectMap;
 import cn.geelato.web.platform.m.base.service.AppConnectMapService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -24,8 +20,8 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@RestController
-@RequestMapping(value = "/api/app/connect")
+@ApiRestController("/app/connect")
+@Slf4j
 public class AppConnectMapController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<AppConnectMap> CLAZZ = AppConnectMap.class;
@@ -35,9 +31,12 @@ public class AppConnectMapController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private final Logger logger = LoggerFactory.getLogger(AppConnectMapController.class);
+    private final AppConnectMapService appConnectMapService;
+
     @Autowired
-    private AppConnectMapService appConnectMapService;
+    public AppConnectMapController(AppConnectMapService appConnectMapService) {
+        this.appConnectMapService = appConnectMapService;
+    }
 
     @RequestMapping(value = "/pageQueryOf", method = RequestMethod.GET)
     @ResponseBody
@@ -48,7 +47,7 @@ public class AppConnectMapController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(req);
             result = appConnectMapService.pageQueryModel("page_query_platform_app_r_connect", params, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
         }
 
         return result;

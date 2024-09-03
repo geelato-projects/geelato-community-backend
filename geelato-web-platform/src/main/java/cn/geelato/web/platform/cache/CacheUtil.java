@@ -10,6 +10,9 @@ public class CacheUtil {
      * @return 获取不到时，返回null
      */
     public static Object get(String key) {
+        if (key == null||!CacheUtil.exists(key)) {
+            return null;
+        }
         return cacheService.getCache(key);
     }
 

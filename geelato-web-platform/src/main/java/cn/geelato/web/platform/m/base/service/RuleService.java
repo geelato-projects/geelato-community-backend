@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.core.gql.parser.*;
+import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
 import org.apache.commons.collections.map.HashedMap;
 import cn.geelato.core.Ctx;
@@ -302,6 +303,11 @@ public class RuleService {
         String rtnValue = null;
         try {
             rtnValue = dao.save(boundSql);
+            // 增加一个默认清实体缓存的操作
+            String cacheKey = command.getEntityName() + "_" + rtnValue;
+            if(CacheUtil.exists(cacheKey)){
+                CacheUtil.remove(cacheKey);
+            }
         } catch (DaoException e) {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
             throw e;

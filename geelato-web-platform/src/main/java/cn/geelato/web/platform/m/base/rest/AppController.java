@@ -145,7 +145,6 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult validate(@RequestBody App form) {
         ApiResult result = new ApiResult();
         try {

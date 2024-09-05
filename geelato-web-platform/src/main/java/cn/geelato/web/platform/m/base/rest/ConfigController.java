@@ -21,7 +21,7 @@ import java.util.Map;
 public class ConfigController extends BaseController {
 
 
-    @RequestMapping(value = {""}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @RequestMapping(value = {""}, method = RequestMethod.GET)
     public ApiResult<Map<String, Object>> list(HttpServletRequest request) {
         String tenantCode = request.getParameter("tenantCode");
         String appId = request.getParameter("appId");
@@ -38,7 +38,7 @@ public class ConfigController extends BaseController {
                 System.out.println(JSON.toJSONString(config));
                 if (StringUtils.isEmpty(config.getTenantCode())) {
                     globalConfigMap.put(config.getConfigKey(), config.getConfigValue());
-                    rtnConfigMap.put("sys", globalConfigMap);
+                    rtnConfigMap.put("platform", globalConfigMap);
                 }
                 if (StringUtils.isNotEmpty(tenantCode) && StringUtils.isNotBlank(config.getTenantCode()) && config.getTenantCode().equals(tenantCode)) {
                     tenantConfigMap.put(config.getConfigKey(), config.getConfigValue());
@@ -53,7 +53,7 @@ public class ConfigController extends BaseController {
         return ApiResult.success(rtnConfigMap);
     }
 
-    @RequestMapping(value = {"/refresh/{configKey}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @RequestMapping(value = {"/refresh/{configKey}"}, method = RequestMethod.GET)
     public ApiResult<NullResult> refresh(@PathVariable("configKey") String configKey) {
         try {
             EnvManager.singleInstance().refreshConfig(configKey);

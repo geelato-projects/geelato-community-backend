@@ -48,7 +48,8 @@ public class EnvManager  extends AbstractManager {
     }
 
     private void LoadSysConfig() {
-        String sql = "select config_key as configKey,config_value as configValue,app_Id as appId,tenant_code as tenantCode,purpose as purpose from platform_sys_config where enable_status =1 and del_status =0";
+        String sql = "select config_key as configKey,config_value as configValue,app_Id as appId,tenant_code as tenantCode,purpose as purpose " +
+                "from platform_sys_config where enable_status =1 and del_status =0";
         List<SysConfig> sysConfigList = EnvDao.getJdbcTemplate().query(sql,new BeanPropertyRowMapper<>(SysConfig.class));
         for (SysConfig config:sysConfigList) {
             if(!sysConfigMap.containsKey(config.getConfigKey())){
@@ -96,6 +97,9 @@ public class EnvManager  extends AbstractManager {
 
     public Map<String ,SysConfig> getConfigMap(String purpose){
         return sysConfigClassifyMap.get(purpose);
+    }
+    public Map<String ,SysConfig> getAllConfig(){
+        return sysConfigMap;
     }
     public User InitCurrentUser(String loginName) {
         String sql = "select id as userId,org_id as defaultOrgId,login_name as loginName," +

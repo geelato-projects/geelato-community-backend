@@ -160,7 +160,7 @@
     "mysql": "tinyint",
     "fixed": true,
     "extent": 1,
-    "disabled": false,
+    "disabled": true,
     "seqNo": 202
   },
   {

@@ -10,7 +10,7 @@ import java.io.IOException;
 
 @SuppressWarnings("ALL")
 public class HttpServletFilter implements Filter {
-    private final String CACHE_TAG="cache";
+    private final String __CACHE_TAG__="cache";
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         Filter.super.init(filterConfig);
@@ -19,7 +19,7 @@ public class HttpServletFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpServletRequest=(HttpServletRequest)servletRequest;
-        boolean cacheOption=Boolean.parseBoolean(httpServletRequest.getHeader(CACHE_TAG));
+        boolean cacheOption=Boolean.parseBoolean(httpServletRequest.getHeader(__CACHE_TAG__));
         if(cacheOption){
             CustomHttpServletRequest customHttpServletRequest = new CustomHttpServletRequest((HttpServletRequest) servletRequest);
             ContentCachingResponseWrapper contentCachingResponseWrapper=new ContentCachingResponseWrapper((HttpServletResponse) servletResponse);

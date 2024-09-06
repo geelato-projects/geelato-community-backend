@@ -4,6 +4,7 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import cn.geelato.utils.DateUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Setter;
 
@@ -20,7 +21,7 @@ public class AppVersion extends BaseEntity {
     private String version;
     private String packageSource;
     private String appId;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @JsonFormat(pattern = DateUtils.DATETIME, timezone = DateUtils.TIMEZONE)
     private Date packetTime;
     private String status;
     private String description;

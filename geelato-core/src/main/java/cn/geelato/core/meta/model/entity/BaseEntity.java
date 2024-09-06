@@ -3,6 +3,7 @@ package cn.geelato.core.meta.model.entity;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.utils.DateUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,15 +18,15 @@ import java.util.Date;
 public class BaseEntity extends IdEntity {
 
     @Title(title = "创建时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @JsonFormat(pattern = DateUtils.DATETIME, timezone = DateUtils.TIMEZONE)
     @Col(name = "create_at", nullable = false)
     private Date createAt;
     @Title(title = "更新时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @JsonFormat(pattern = DateUtils.DATETIME, timezone = DateUtils.TIMEZONE)
     @Col(name = "update_at", nullable = false)
     private Date updateAt;
     @Title(title = "删除时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @JsonFormat(pattern = DateUtils.DATETIME, timezone = DateUtils.TIMEZONE)
     @Col(name = "delete_at", nullable = true)
     private Date deleteAt;
     @Title(title = "创建者")

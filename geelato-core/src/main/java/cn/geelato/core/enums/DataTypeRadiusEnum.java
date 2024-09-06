@@ -1,12 +1,14 @@
 package cn.geelato.core.enums;
 
 import cn.geelato.core.meta.model.field.DataTypeRadius;
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
  * @description: 数据类型范围
  */
+@Getter
 public enum DataTypeRadiusEnum {
     // 字符串，只需要填写最大值。限制字符串填写长度。
     CHAR(MysqlDataTypeEnum.CHAR, new DataTypeRadius(255L, 0L, 3, 3, 0)),
@@ -51,13 +53,5 @@ public enum DataTypeRadiusEnum {
             }
         }
         return null;
-    }
-
-    public DataTypeRadius getRadius() {
-        return radius;
-    }
-
-    public MysqlDataTypeEnum getMysql() {
-        return mysql;
     }
 }

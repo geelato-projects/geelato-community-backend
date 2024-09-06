@@ -1,10 +1,12 @@
 package cn.geelato.core.enums;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
  */
+@Getter
 public enum TableSourceTypeEnum {
     CREATION("模型创建", "creation"),
     SYSTEM("系统内置", "system"),
@@ -27,13 +29,5 @@ public enum TableSourceTypeEnum {
             }
         }
         return null;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public String getValue() {
-        return value;
     }
 }

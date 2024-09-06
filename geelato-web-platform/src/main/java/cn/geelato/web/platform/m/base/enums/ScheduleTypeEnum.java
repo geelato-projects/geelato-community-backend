@@ -19,7 +19,7 @@ public enum ScheduleTypeEnum {
 
     public static String getLabel(String value) {
         if (Strings.isNotBlank(value)) {
-            for (SysConfigPurposeEnum enums : SysConfigPurposeEnum.values()) {
+            for (ScheduleTypeEnum enums : ScheduleTypeEnum.values()) {
                 if (enums.getValue().equals(value)) {
                     return enums.getLabel();
                 }

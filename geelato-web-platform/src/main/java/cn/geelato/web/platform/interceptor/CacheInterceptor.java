@@ -9,10 +9,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.Arrays;
-
 public class CacheInterceptor implements HandlerInterceptor {
 
     CacheService<Object> cacheService=new CacheServiceImpl<>();

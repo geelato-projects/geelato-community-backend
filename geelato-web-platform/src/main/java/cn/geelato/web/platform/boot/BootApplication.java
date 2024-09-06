@@ -20,8 +20,6 @@ import org.springframework.context.annotation.ComponentScan;
 import java.io.IOException;
 import java.util.Properties;
 
-// 在繼承的类中编写该注解
-//@SpringBootApplication
 @ComponentScan(basePackages = {"cn.geelato"})
 @Slf4j
 public class BootApplication implements CommandLineRunner {

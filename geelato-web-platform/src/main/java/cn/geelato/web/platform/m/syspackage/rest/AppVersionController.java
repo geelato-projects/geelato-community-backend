@@ -1,14 +1,15 @@
 package cn.geelato.web.platform.m.syspackage.rest;
 
 import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.lang.enums.DeleteStatusEnum;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.base.service.AttachService;
@@ -21,13 +22,12 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.gql.parser.PageQueryRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.File;
 import java.util.*;
@@ -55,116 +55,102 @@ public class AppVersionController extends BaseController {
     private DownloadService downloadService;
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQuery(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req, DEFAULT_ORDER_BY);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = appVersionService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            return appVersionService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    @ResponseBody
-    public ApiResult<App> isDelete(@PathVariable(required = true) String id) {
-        ApiResult<App> result = new ApiResult<>();
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         try {
             AppVersion model = appVersionService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             appVersionService.isDeleteModel(model);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    @ResponseBody
-    public ApiResult get(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<AppVersion> get(@PathVariable(required = true) String id) {
         try {
             AppVersion model = appVersionService.getModel(CLAZZ, id);
-            result.setData(model);
+            return ApiResult.success(model);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/package/{id}", method = RequestMethod.GET)
-    @ResponseBody
-    public ApiResult getPackage(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<AppPackage> getPackage(@PathVariable(required = true) String id) {
         try {
             AppVersion appVersion = appVersionService.getModel(CLAZZ, id);
-            String appPackageData = "";
-            if (appVersion != null && !StringUtils.isEmpty(appVersion.getPackagePath())) {
+            Assert.notNull(appVersion, "AppVersion does not exist");
+            if (!StringUtils.isEmpty(appVersion.getPackagePath())) {
+                String appPackageData = "";
                 if (appVersion.getPackagePath().contains(".zgdp")) {
                     appPackageData = ZipUtils.readPackageData(appVersion.getPackagePath(), ".gdp");
                 } else {
                     Attach attach = attachService.getModel(appVersion.getPackagePath());
                     File file = downloadService.downloadFile(attach.getName(), attach.getPath());
-                    appPackageData = ZipUtils.readPackageData(file, ".gdp");
+                    if (file != null) {
+                        appPackageData = ZipUtils.readPackageData(file, ".gdp");
+                    } else {
+                        throw new RuntimeException("AppVersion package file does not exist");
+                    }
                 }
+                AppPackage appPackage = null;
+                if (!StringUtils.isEmpty(appPackageData)) {
+                    appPackage = JSONObject.parseObject(appPackageData, AppPackage.class);
+                    return ApiResult.success(appPackage);
+                } else {
+                    throw new RuntimeException("*.gdp file read failed");
+                }
+            } else {
+                throw new RuntimeException("AppVersion package path does not exist");
             }
-            AppPackage appPackage = null;
-            if (!StringUtils.isEmpty(appPackageData)) {
-                appPackage = JSONObject.parseObject(appPackageData, AppPackage.class);
-            }
-            result.setData(appPackage);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    @ResponseBody
-    public ApiResult createOrUpdate(@RequestBody AppVersion form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<AppVersion> createOrUpdate(@RequestBody AppVersion form) {
         try {
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
-                result.setData(appVersionService.updateModel(form));
+                return ApiResult.success(appVersionService.updateModel(form));
             } else {
-                result.setData(appVersionService.createModel(form));
+                return ApiResult.success(appVersionService.createModel(form));
             }
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    @ResponseBody
-    public ApiResult validate(@RequestBody AppVersion form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<Boolean> validate(@RequestBody AppVersion form) {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("version", form.getVersion());
             params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
-            result.setData(appVersionService.validate("platform_app_version", form.getId(), params));
+            return ApiResult.success(appVersionService.validate("platform_app_version", form.getId(), params));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.VALIDATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 }

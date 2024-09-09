@@ -4,6 +4,7 @@ import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.lang.enums.DeleteStatusEnum;
 import cn.geelato.utils.UUIDUtils;
@@ -52,37 +53,30 @@ public class ApiController extends BaseController {
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
     public ApiPagedResult pageQuery(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = apiService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            return apiService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult query(HttpServletRequest req) {
-        ApiResult result = new ApiResult();
+    public ApiResult<List<Api>> query(HttpServletRequest req) {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
-            result.setData(apiService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
+            return ApiResult.success(apiService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/queryGroupName", method = RequestMethod.GET)
-    public ApiResult queryGroupName(HttpServletRequest req) {
-        ApiResult result = new ApiResult();
+    public ApiResult<List<String>> queryGroupName(HttpServletRequest req) {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
@@ -95,18 +89,15 @@ public class ApiController extends BaseController {
                     }
                 }
             }
-            result.setData(groupNames);
+            return ApiResult.success(groupNames);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult get(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<Api> get(@PathVariable(required = true) String id) {
         try {
             Api model = apiService.getModel(CLAZZ, id);
             List<ApiParam> apiParams = apiParamService.queryModelsByApis(id, null, null);
@@ -114,68 +105,57 @@ public class ApiController extends BaseController {
                 model.setRequestParams(apiParams.stream().filter(apiParam -> AlternateTypeEnum.REQUEST.getValue().equalsIgnoreCase(apiParam.getAlternateType())).collect(Collectors.toList()));
                 model.setResponseParams(apiParams.stream().filter(apiParam -> AlternateTypeEnum.RESPONSE.getValue().equalsIgnoreCase(apiParam.getAlternateType())).collect(Collectors.toList()));
             }
-            result.setData(model);
+            return ApiResult.success(model);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    public ApiResult createOrUpdate(@RequestBody Api form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<Api> createOrUpdate(@RequestBody Api form) {
         try {
             if (Strings.isNotBlank(form.getId())) {
-                result.setData(apiService.updateModel(form));
+                return ApiResult.success(apiService.updateModel(form));
             } else {
-                result.setData(apiService.createModel(form));
+                return ApiResult.success(apiService.createModel(form));
             }
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult isDelete(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         try {
             Api model = apiService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             apiService.isDeleteModel(model);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
     public ApiResult validate(@RequestBody Api form) {
-        ApiResult result = new ApiResult();
         try {
             Map<String, String> params = new HashMap<>();
             params.put("code", form.getCode());
             params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
-            result.setData(apiService.validate("platform_api", form.getId(), params));
+            return ApiResult.success(apiService.validate("platform_api", form.getId(), params));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.VALIDATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/generateOutside", method = RequestMethod.POST)
-    public ApiResult generateOutside(@RequestBody Api form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<String> generateOutside(@RequestBody Api form) {
         try {
             FilterGroup filters = new FilterGroup();
             if (Strings.isNotBlank(form.getId())) {
@@ -188,12 +168,11 @@ public class ApiController extends BaseController {
             if (apis != null) {
                 outsideUrls = apis.stream().map(Api::getOutsideUrl).collect(Collectors.toList());
             }
-            result.setData(generate(outsideUrls, 10));
+            return ApiResult.success(generate(outsideUrls, 10));
         } catch (Exception e) {
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     private String generate(List<String> existList, int limit) {

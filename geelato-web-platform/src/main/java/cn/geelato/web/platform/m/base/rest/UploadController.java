@@ -1,5 +1,10 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.Resources;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.ResourcesService;
@@ -7,16 +12,9 @@ import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.meta.model.field.ColumnMeta;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
-import cn.geelato.web.platform.m.base.entity.Attach;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,23 +26,24 @@ import java.util.*;
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/upload")
+@ApiRestController("/upload")
+@Slf4j
 public class UploadController extends BaseController {
-    private final Logger logger = LoggerFactory.getLogger(UploadController.class);
+    private final AttachService attachService;
+    private final ResourcesService resourcesService;
+    private final DevTableColumnService devTableColumnService;
+
     @Autowired
-    private AttachService attachService;
-    @Autowired
-    private ResourcesService resourcesService;
-    @Autowired
-    private DevTableColumnService devTableColumnService;
+    public UploadController(AttachService attachService, ResourcesService resourcesService, DevTableColumnService devTableColumnService) {
+        this.attachService = attachService;
+        this.resourcesService = resourcesService;
+        this.devTableColumnService = devTableColumnService;
+    }
 
     @RequestMapping(value = "/file", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult uploadFile(@RequestParam("file") MultipartFile file, HttpServletRequest request, Boolean isRename, String tableType, String objectId, String genre, String root, String appId, String tenantCode) {
-        ApiResult result = new ApiResult();
         if (file == null || file.isEmpty()) {
-            return result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail("File is empty");
         }
 
         try {
@@ -63,24 +62,23 @@ public class UploadController extends BaseController {
             // 资源存资源表
             if (AttachmentSourceEnum.PLATFORM_RESOURCES.getValue().equalsIgnoreCase(tableType)) {
                 Resources target = UploadService.copyProperties(attach, Resources.class);
-                result.setData(resourcesService.createModel(target));
+                return ApiResult.success(resourcesService.createModel(target));
             } else {
-                result.setData(attachService.createModel(attach));
+                return ApiResult.success(attachService.createModel(attach));
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/object", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult uploadObject(@RequestBody Map<String, Object> params, String fileName, String catalog) throws IOException {
-        ApiResult result = new ApiResult();
-        if (params == null || params.isEmpty() || Strings.isBlank(fileName)) {
-            return result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+        if (params == null || params.isEmpty()) {
+            return ApiResult.fail("Params is empty");
+        }
+        if (Strings.isBlank(fileName)) {
+            return ApiResult.fail("File name is empty");
         }
         FileOutputStream fops = null;
         ObjectOutputStream oops = null;
@@ -104,10 +102,10 @@ public class UploadController extends BaseController {
             fops = new FileOutputStream(file);
             oops = new ObjectOutputStream(fops);
             oops.writeObject(params);
-            result.setData(file.getName());
+            return ApiResult.success(file.getName());
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         } finally {
             if (oops != null) {
                 oops.close();
@@ -116,17 +114,17 @@ public class UploadController extends BaseController {
                 fops.close();
             }
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/json", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult uploadJson(@RequestBody String JsonData, String fileName, String catalog) throws IOException {
-        ApiResult result = new ApiResult();
-        if (Strings.isBlank(JsonData) || Strings.isBlank(fileName)) {
-            return result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+        if (Strings.isBlank(JsonData)) {
+            return ApiResult.fail("Json data is empty");
         }
+        if (Strings.isBlank(fileName)) {
+            return ApiResult.fail("File name is empty");
+        }
+
         FileWriter fileWriter = null;
         BufferedWriter bufferedWriter = null;
         try {
@@ -149,10 +147,10 @@ public class UploadController extends BaseController {
             fileWriter = new FileWriter(file);
             bufferedWriter = new BufferedWriter(fileWriter);
             bufferedWriter.write(JsonData);
-            result.setData(file.getName());
+            return ApiResult.success(file.getName());
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         } finally {
             if (bufferedWriter != null) {
                 bufferedWriter.close();
@@ -161,29 +159,28 @@ public class UploadController extends BaseController {
                 fileWriter.close();
             }
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/model/{entityName}/{id}", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult uploadModel(@PathVariable("entityName") String entityName, @PathVariable("id") String id, String fileName) {
-        ApiResult result = new ApiResult();
-        if (Strings.isBlank(entityName) || Strings.isBlank(id)) {
-            return result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+        if (Strings.isBlank(entityName)) {
+            return ApiResult.fail("Entity Name Is Null");
+        }
+        if (Strings.isBlank(id)) {
+            return ApiResult.fail("Entity ID Is Null");
         }
         if (Strings.isBlank(fileName)) {
-            return result.error().setMsg("File Name Is Null");
+            return ApiResult.fail("File Name Is Null");
         }
         try {
             String fieldNames = getColumnFieldNames(entityName);
             if (Strings.isBlank(fieldNames)) {
-                return result.error().setMsg("Column Meta Is Null");
+                return ApiResult.fail("Column Meta Is Null");
             }
             String sql = String.format("select %s from %s where id = '%s'", fieldNames, entityName, id);
             Map<String, Object> columnMap = dao.getJdbcTemplate().queryForMap(sql);
             if (columnMap == null || columnMap.isEmpty()) {
-                return result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+                return ApiResult.fail("Entity Query Is Null");
             }
             for (Map.Entry<String, Object> columnEntry : columnMap.entrySet()) {
                 if (columnEntry.getValue() == null) {
@@ -201,13 +198,11 @@ public class UploadController extends BaseController {
             } else {
                 configName = String.format("%s_%s_%s%s", tenantCode, appId, id, ROOT_CONFIG_SUFFIX);
             }*/
-            result = uploadJson(JSON.toJSONString(columnMap), fileName, "");
+            return uploadJson(JSON.toJSONString(columnMap), fileName, "");
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(e.getMessage());
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     private String getColumnFieldNames(String tableName) {
@@ -225,7 +220,7 @@ public class UploadController extends BaseController {
                 fieldName = String.join(",", fields);
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
         }
 
         return fieldName;

@@ -1,10 +1,12 @@
 package cn.geelato.web.platform.script.enums;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
  */
+@Getter
 public enum ResponseParamTypeEnum {
     STRING("字符串", "string"),
     NUMBER("数值", "number"),
@@ -18,14 +20,6 @@ public enum ResponseParamTypeEnum {
     ResponseParamTypeEnum(String label, String value) {
         this.label = label;
         this.value = value;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public String getValue() {
-        return value;
     }
 
     public static String getLabel(String value) {

@@ -4,6 +4,7 @@ package cn.geelato.web.platform.m.base.rest;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.DownloadService;
@@ -11,15 +12,12 @@ import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.OfficeUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.*;
 import java.net.URLEncoder;
@@ -32,15 +30,9 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/resources")
+@ApiRestController("/resources")
+@Slf4j
 public class DownloadController extends BaseController {
-    private final Logger logger = LoggerFactory.getLogger(DownloadController.class);
-    @Autowired
-    private DownloadService downloadService;
-    @Autowired
-    private AttachService attachService;
-
     // 设置不常用的媒体类型
     static final Map<String, String> EXT_MAP = new HashMap<>();
 
@@ -49,8 +41,16 @@ public class DownloadController extends BaseController {
         EXT_MAP.put("mjs", MediaTypes.APPLICATION_JAVASCRIPT);
     }
 
+    private final DownloadService downloadService;
+    private final AttachService attachService;
+
+    @Autowired
+    public DownloadController(DownloadService downloadService, AttachService attachService) {
+        this.downloadService = downloadService;
+        this.attachService = attachService;
+    }
+
     @RequestMapping(value = "/file", method = RequestMethod.GET)
-    @ResponseBody
     public void downloadFile(String id, String name, String path, boolean isPdf, boolean isPreview, HttpServletRequest request, HttpServletResponse response) throws Exception {
         // 抽取出来
         OutputStream out = null;
@@ -71,7 +71,7 @@ public class DownloadController extends BaseController {
                 name = Strings.isNotBlank(name) ? name : file.getName();
             }
             if (file == null) {
-                throw new Exception("文件不存在");
+                throw new Exception("File does not exist");
             }
             if (isPdf) {
                 String ext = name.substring(name.lastIndexOf("."));
@@ -106,7 +106,7 @@ public class DownloadController extends BaseController {
                 }
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
             throw e;
         } finally {
             if (out != null) {
@@ -119,11 +119,9 @@ public class DownloadController extends BaseController {
     }
 
     @RequestMapping(value = "/json", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult downloadJson(String fileName) throws IOException {
-        ApiResult result = new ApiResult();
         if (Strings.isBlank(fileName)) {
-            return result.success().setMsg("fileName is null");
+            return ApiResult.fail("fileName is null");
         }
         BufferedReader bufferedReader = null;
         try {
@@ -133,7 +131,7 @@ public class DownloadController extends BaseController {
             }
             File file = new File(String.format("%s/%s", UploadService.ROOT_CONFIG_DIRECTORY, fileName));
             if (!file.exists()) {
-                return result.success().setMsg("File (.config) does not exist");
+                return ApiResult.fail("File (.config) does not exist");
             }
             StringBuilder contentBuilder = new StringBuilder();
             bufferedReader = Files.newBufferedReader(Paths.get(file.getAbsolutePath()), StandardCharsets.UTF_8);
@@ -141,16 +139,14 @@ public class DownloadController extends BaseController {
             while ((line = bufferedReader.readLine()) != null) {
                 contentBuilder.append(line);
             }
-            result.setData(contentBuilder.toString());
+            return ApiResult.success(contentBuilder.toString());
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.success().setMsg(e.getMessage());
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         } finally {
             if (bufferedReader != null) {
                 bufferedReader.close();
             }
         }
-
-        return result;
     }
 }

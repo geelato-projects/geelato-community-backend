@@ -1,5 +1,6 @@
 package cn.geelato.core.enums;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.util.Set;
  * @author diabl
  * @description: Mysql数据类型对应的Java对象
  */
+@Getter
 public enum MysqlToJavaEnum {
     // 字符串
     STRING(String.class, new MysqlDataTypeEnum[]{MysqlDataTypeEnum.CHAR, MysqlDataTypeEnum.VARCHAR, MysqlDataTypeEnum.TINYTEXT, MysqlDataTypeEnum.TEXT, MysqlDataTypeEnum.MEDIUMTEXT, MysqlDataTypeEnum.LONGTEXT, MysqlDataTypeEnum.JSON}),
@@ -59,13 +61,5 @@ public enum MysqlToJavaEnum {
         }
 
         return null;
-    }
-
-    public Class getJava() {
-        return java;
-    }
-
-    public MysqlDataTypeEnum[] getMysql() {
-        return mysql;
     }
 }

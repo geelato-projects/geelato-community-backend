@@ -1,5 +1,7 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.core.Ctx;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
@@ -10,18 +12,23 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.m.base.entity.AppSqlMap;
 import cn.geelato.web.platform.m.base.entity.CustomSql;
+import cn.geelato.web.platform.m.base.enums.ApprovalStatusEnum;
+import cn.geelato.web.platform.m.base.service.AppSqlMapService;
 import cn.geelato.web.platform.m.base.service.SqlService;
-import cn.geelato.web.platform.script.entity.Api;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author diabl
@@ -36,113 +43,135 @@ public class SqlController extends BaseController {
         OPERATORMAP.put("contains", Arrays.asList("title", "keyName", "description"));
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
+
     private final SqlService sqlService;
+    private final AppSqlMapService appSqlMapService;
 
     @Autowired
-    public SqlController(SqlService sqlService) {
-        this.sqlService=sqlService;
+    public SqlController(SqlService sqlService, AppSqlMapService appSqlMapService) {
+        this.sqlService = sqlService;
+        this.appSqlMapService = appSqlMapService;
     }
-    
+
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
     public ApiPagedResult pageQuery(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = sqlService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            return sqlService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult query(HttpServletRequest req) {
-        ApiResult result = new ApiResult();
+    public ApiResult<List<CustomSql>> query(HttpServletRequest req) {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
-            result.setData(sqlService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
+            List<CustomSql> list = sqlService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
+            return ApiResult.success(list);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult get(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<CustomSql> get(@PathVariable(required = true) String id) {
         try {
-            result.setData(sqlService.getModel(CLAZZ, id));
+            CustomSql model = sqlService.getModel(CLAZZ, id);
+            return ApiResult.success(model);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    public ApiResult createOrUpdate(@RequestBody CustomSql form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<CustomSql> createOrUpdate(@RequestBody CustomSql form) {
         try {
+            CustomSql result = new CustomSql();
             if (Strings.isNotBlank(form.getId())) {
-                result.setData(sqlService.updateModel(form));
+                result = sqlService.updateModel(form);
             } else {
-                result.setData(sqlService.createModel(form));
+                result = sqlService.createModel(form);
             }
+            return ApiResult.success(result);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult isDelete(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         try {
             CustomSql model = sqlService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             sqlService.isDeleteModel(model);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    public ApiResult validate(@RequestBody CustomSql form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<Boolean> validate(@RequestBody CustomSql form) {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("key_name", form.getKeyName());
             params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
-            result.setData(sqlService.validate("platform_sql", form.getId(), params));
+            boolean isValid = sqlService.validate("platform_sql", form.getId(), params);
+            return ApiResult.success(isValid);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.VALIDATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/refresh/{sqlKey}", method = RequestMethod.GET)
     public ApiResult<NullResult> refresh(@PathVariable String sqlKey) {
-        DbScriptManager dbScriptManager= DbScriptManagerFactory.get("db");
+        DbScriptManager dbScriptManager = DbScriptManagerFactory.get("db");
         try {
-           dbScriptManager.refresh(sqlKey);
-           return ApiResult.successNoResult();
+            dbScriptManager.refresh(sqlKey);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/query/{appId}", method = RequestMethod.GET)
+    public ApiResult<List<CustomSql>> queryByApp(@PathVariable(required = true) String appId) {
+        try {
+            List<CustomSql> customSqls = new ArrayList<>();
+            // 应用下sql
+            Map<String, Object> params = new HashMap<>();
+            params.put("appId", appId);
+            params.put("tenantCode", Ctx.getCurrentTenantCode());
+            List<CustomSql> sqlList = sqlService.queryModel(CLAZZ, params);
+            customSqls.addAll(sqlList);
+            // 其他应用授权sql
+            Map<String, Object> appParams = new HashMap<>();
+            appParams.put("appId", appId);
+            appParams.put("tenantCode", Ctx.getCurrentTenantCode());
+            appParams.put("enableStatus", ColumnDefault.ENABLE_STATUS_VALUE);
+            appParams.put("approvalStatus", ApprovalStatusEnum.AGREE.getValue());
+            List<AppSqlMap> appSqlMaps = appSqlMapService.queryModel(AppSqlMap.class, appParams);
+            if (appSqlMaps != null && !appSqlMaps.isEmpty()) {
+                String sqlIds = appSqlMaps.stream().map(AppSqlMap::getSqlId).collect(Collectors.joining(","));
+                FilterGroup filterGroup = new FilterGroup();
+                filterGroup.addFilter("id", FilterGroup.Operator.in, sqlIds);
+                List<CustomSql> appSqlList = sqlService.queryModel(CLAZZ, filterGroup);
+                customSqls.addAll(appSqlList);
+            }
+            return ApiResult.success(customSqls);
+        } catch (Exception e) {
+            log.error(e.getMessage());
             return ApiResult.fail(e.getMessage());
         }
     }

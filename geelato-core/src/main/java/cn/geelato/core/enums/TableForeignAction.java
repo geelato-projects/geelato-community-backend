@@ -1,9 +1,11 @@
 package cn.geelato.core.enums;
 
+import lombok.Getter;
+
 /**
  * @author diabl
  */
-
+@Getter
 public enum TableForeignAction {
     RESTRICT("RESTRICT", "在子表有关联记录的情况下父表不能更新"),
     NO_ACTION("NO ACTION", "在子表有关联记录的情况下父表不能更新"),
@@ -15,13 +17,5 @@ public enum TableForeignAction {
     TableForeignAction(String code, String explain) {
         this.code = code;
         this.explain = explain;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getExplain() {
-        return explain;
     }
 }

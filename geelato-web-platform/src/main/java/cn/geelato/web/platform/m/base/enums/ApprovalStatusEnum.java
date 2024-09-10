@@ -1,28 +1,26 @@
-package cn.geelato.core.enums;
+package cn.geelato.web.platform.m.base.enums;
 
 import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
-/**
- * @author diabl
- */
 @Getter
-public enum TableSourceTypeEnum {
-    CREATION("模型创建", "creation"),
-    SYSTEM("系统内置", "system"),
-    PLATFORM("平台内置", "platform");
+public enum ApprovalStatusEnum {
+    DRAFT("待审批", "draft"),
+    VERIFY("审批", "verify"),
+    AGREE("同意", "agree"),
+    REJECT("拒绝", "reject");
 
     private final String label;// 选项内容
     private final String value;// 选项值
 
-    TableSourceTypeEnum(String label, String value) {
+    ApprovalStatusEnum(String label, String value) {
         this.label = label;
         this.value = value;
     }
 
     public static String getLabel(String value) {
         if (Strings.isNotBlank(value)) {
-            for (TableSourceTypeEnum enums : TableSourceTypeEnum.values()) {
+            for (ApprovalStatusEnum enums : ApprovalStatusEnum.values()) {
                 if (enums.getValue().equals(value)) {
                     return enums.getLabel();
                 }

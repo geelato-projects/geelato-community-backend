@@ -42,9 +42,19 @@
     "value": "radio",
     "mysql": "varchar",
     "disabled": false,
-    "fixed": true,
+    "fixed": false,
     "extent": 64,
     "seqNo": 105
+  },
+  {
+    "group": "字符串",
+    "label": "多选框",
+    "value": "checkbox",
+    "mysql": "varchar",
+    "disabled": false,
+    "fixed": false,
+    "extent": 1024,
+    "seqNo": 106
   },
   {
     "group": "字符串",
@@ -52,9 +62,9 @@
     "value": "code",
     "mysql": "varchar",
     "disabled": false,
-    "fixed": true,
+    "fixed": false,
     "extent": 64,
-    "seqNo": 106
+    "seqNo": 107
   },
   {
     "group": "字符串",
@@ -64,7 +74,7 @@
     "disabled": false,
     "fixed": true,
     "extent": 64,
-    "seqNo": 107
+    "seqNo": 108
   },
   {
     "group": "字符串",
@@ -74,25 +84,43 @@
     "disabled": false,
     "fixed": false,
     "extent": 19,
-    "seqNo": 108
-  },
-  {
-    "group": "字符串",
-    "label": "组织[1~21845]",
-    "value": "org",
-    "mysql": "varchar",
-    "disabled": false,
-    "extent": 19,
     "seqNo": 109
   },
   {
     "group": "字符串",
-    "label": "用户[1~21845]",
-    "value": "user",
+    "label": "组织[单个]",
+    "value": "org",
     "mysql": "varchar",
     "disabled": false,
     "extent": 19,
     "seqNo": 110
+  },
+  {
+    "group": "字符串",
+    "label": "组织[多个]",
+    "value": "orgs",
+    "mysql": "varchar",
+    "disabled": false,
+    "extent": 1024,
+    "seqNo": 111
+  },
+  {
+    "group": "字符串",
+    "label": "用户[单个]",
+    "value": "user",
+    "mysql": "varchar",
+    "disabled": false,
+    "extent": 19,
+    "seqNo": 112
+  },
+  {
+    "group": "字符串",
+    "label": "用户[多个]",
+    "value": "users",
+    "mysql": "varchar",
+    "disabled": false,
+    "extent": 1024,
+    "seqNo": 113
   },
   {
     "group": "字符串",
@@ -101,7 +129,7 @@
     "mysql": "varchar",
     "disabled": false,
     "extent": 19,
-    "seqNo": 111
+    "seqNo": 114
   },
   {
     "group": "字符串",
@@ -111,7 +139,7 @@
     "disabled": false,
     "fixed": true,
     "extent": 4294967295,
-    "seqNo": 112
+    "seqNo": 115
   },
   {
     "group": "字符串",
@@ -121,7 +149,7 @@
     "disabled": false,
     "fixed": true,
     "extent": 65535,
-    "seqNo": 113
+    "seqNo": 116
   },
   {
     "group": "字符串",
@@ -131,7 +159,7 @@
     "disabled": false,
     "fixed": true,
     "extent": 16777215,
-    "seqNo": 114
+    "seqNo": 117
   },
   {
     "group": "字符串",
@@ -141,7 +169,7 @@
     "disabled": false,
     "fixed": true,
     "extent": 4294967295,
-    "seqNo": 115
+    "seqNo": 118
   },
   {
     "group": "布尔值",
@@ -160,7 +188,7 @@
     "mysql": "tinyint",
     "fixed": true,
     "extent": 1,
-    "disabled": false,
+    "disabled": true,
     "seqNo": 202
   },
   {
@@ -294,19 +322,11 @@
   },
   {
     "group": "JSON",
-    "label": "多选框",
-    "value": "checkbox",
-    "mysql": "json",
-    "disabled": false,
-    "seqNo": 502
-  },
-  {
-    "group": "JSON",
     "label": "多组件",
     "value": "multiComponent",
     "mysql": "json",
     "disabled": false,
-    "seqNo": 503
+    "seqNo": 502
   },
   {
     "group": "JSON",
@@ -314,7 +334,7 @@
     "value": "cascadeSelection",
     "mysql": "json",
     "disabled": false,
-    "seqNo": 504
+    "seqNo": 503
   },
   {
     "group": "二进制",

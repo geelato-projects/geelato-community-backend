@@ -1,10 +1,10 @@
 package cn.geelato.web.platform.m.syspackage.rest;
 
+import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.lang.enums.DeleteStatusEnum;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;

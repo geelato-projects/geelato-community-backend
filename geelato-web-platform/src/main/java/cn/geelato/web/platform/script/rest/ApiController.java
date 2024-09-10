@@ -1,12 +1,12 @@
 package cn.geelato.web.platform.script.rest;
 
+import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.lang.enums.DeleteStatusEnum;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.rest.BaseController;

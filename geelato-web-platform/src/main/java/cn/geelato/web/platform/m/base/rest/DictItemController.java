@@ -7,6 +7,7 @@ import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.Dict;
@@ -55,97 +56,80 @@ public class DictItemController extends BaseController {
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
     public ApiPagedResult pageQuery(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = dictItemService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            return dictItemService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
     public ApiResult query(HttpServletRequest req) {
-        ApiResult result = new ApiResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
-            result.setData(dictItemService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
+            return ApiResult.success(dictItemService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
     public ApiResult get(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
         try {
-            result.setData(dictItemService.getModel(CLAZZ, id));
+            return ApiResult.success(dictItemService.getModel(CLAZZ, id));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult createOrUpdate(@RequestBody DictItem form) {
-        ApiResult result = new ApiResult();
         try {
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
-                result.setData(dictItemService.updateModel(form));
+                return ApiResult.success(dictItemService.updateModel(form));
             } else {
-                result.setData(dictItemService.createModel(form));
+                return ApiResult.success(dictItemService.createModel(form));
             }
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/batchCreateOrUpdate", method = RequestMethod.POST)
-    public ApiResult batchCreateOrUpdate(@RequestBody List<DictItem> forms, String dictId, String parentId) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> batchCreateOrUpdate(@RequestBody List<DictItem> forms, String dictId, String parentId) {
         try {
             dictItemService.batchCreateOrUpdate(dictId, parentId, forms);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult isDelete(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         try {
             DictItem model = dictItemService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
             dictItemService.isDeleteModel(model);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/queryItemByDictCode/{dictCode}", method = RequestMethod.GET)
     public ApiResult queryItemByDictCode(@PathVariable(required = true) String dictCode) {
-        ApiResult result = new ApiResult();
         List<DictItem> iResult = new ArrayList<>();
         try {
             Map<String, Object> params = new HashMap<>();
@@ -159,13 +143,11 @@ public class DictItemController extends BaseController {
                 params.put(ColumnDefault.ENABLE_STATUS_FIELD, ColumnDefault.ENABLE_STATUS_VALUE);
                 iResult = dictItemService.queryModel(CLAZZ, params);
             }
-            result.setData(buildTree(iResult));
+            return ApiResult.success(buildTree(iResult));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     public List<DictItem> buildTree(List<DictItem> pidList) {
@@ -189,8 +171,7 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    public ApiResult validate(@RequestBody DictItem form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<Boolean> validate(@RequestBody DictItem form) {
         try {
             Map<String, String> lowers = new HashMap<>();
             lowers.put("item_code", form.getItemCode());
@@ -198,18 +179,15 @@ public class DictItemController extends BaseController {
             params.put("dict_id", form.getDictId());
             params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
             params.put("tenant_code", form.getTenantCode());
-            result.setData(dictService.validate("platform_dict_item", form.getId(), params, lowers));
+            return ApiResult.success(dictService.validate("platform_dict_item", form.getId(), params, lowers));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.VALIDATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createDictAndItems", method = RequestMethod.POST)
     public ApiResult createDictAndItems(@RequestBody Dict form) {
-        ApiResult result = new ApiResult();
         try {
             Dict dict = new Dict();
             dict.setAppId(form.getAppId());
@@ -218,6 +196,7 @@ public class DictItemController extends BaseController {
             dict.setDictRemark(form.getDictRemark());
             dict = dictService.createModel(dict);
             if (form.getDictItems() != null && form.getDictItems().size() > 0) {
+                Set<DictItem> items = new HashSet<>();
                 int orderNum = 1;
                 for (DictItem item : form.getDictItems()) {
                     item.setId(null);
@@ -225,14 +204,14 @@ public class DictItemController extends BaseController {
                     item.setTenantCode(dict.getTenantCode());
                     item.setDictId(dict.getId());
                     item.setSeqNo(orderNum++);
-                    dictItemService.createModel(item);
+                    items.add(dictItemService.createModel(item));
                 }
+                dict.setDictItems(items);
             }
+            return ApiResult.success(dict);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 }

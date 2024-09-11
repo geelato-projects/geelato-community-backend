@@ -8,6 +8,7 @@ import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.Attach;
@@ -54,40 +55,34 @@ public class SysConfigController extends BaseController {
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
     public ApiPagedResult pageQuery(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = sysConfigService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            ApiPagedResult result = sysConfigService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
             DataItems<List<SysConfig>> dataItems = (DataItems<List<SysConfig>>) result.getData();
             setConfigAssist(dataItems.getItems());
+            return result;
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
     public ApiResult<List<SysConfig>> query(HttpServletRequest req) {
-        ApiResult<List<SysConfig>> result = new ApiResult<>();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
             List<SysConfig> list = sysConfigService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
-            result.setData(setConfigAssist(list));
+            return ApiResult.success(setConfigAssist(list));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
     public ApiResult get(@PathVariable(required = true) String id, boolean encrypt) {
-        ApiResult result = new ApiResult();
         try {
             SysConfig model = sysConfigService.getModel(CLAZZ, id);
             model.afterSet();
@@ -95,90 +90,77 @@ public class SysConfigController extends BaseController {
                 SysConfigService.decrypt(model);
             }
             model.setSm2Key(null);
-            result.setData(model);
+            return ApiResult.success(model);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult createOrUpdate(@RequestBody SysConfig form) {
-        ApiResult result = new ApiResult();
         try {
             form.afterSet();
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
-                result.setData(sysConfigService.updateModel(form));
+                form = sysConfigService.updateModel(form);
             } else {
-                result.setData(sysConfigService.createModel(form));
+                form = sysConfigService.createModel(form);
             }
             if (ColumnDefault.ENABLE_STATUS_VALUE == form.getEnableStatus()) {
                 EnvManager.singleInstance().refreshConfig(form.getConfigKey());
             }
+            return ApiResult.success(form);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult<SysConfig> isDelete(@PathVariable(required = true) String id) {
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         ApiResult<SysConfig> result = new ApiResult<>();
         try {
             SysConfig model = sysConfigService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
             sysConfigService.isDeleteModel(model);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    public ApiResult validate(@RequestBody SysConfig form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<Boolean> validate(@RequestBody SysConfig form) {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("config_key", form.getConfigKey());
             params.put("app_id", form.getAppId());
             params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
             params.put("tenant_code", form.getTenantCode());
-            result.setData(sysConfigService.validate("platform_sys_config", form.getId(), params));
+            return ApiResult.success(sysConfigService.validate("platform_sys_config", form.getId(), params));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.VALIDATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/getValue/{key}", method = RequestMethod.GET)
     public ApiResult getValue(@PathVariable(required = true) String key) {
-        ApiResult result = new ApiResult();
         try {
-            if (Strings.isNotBlank(key)) {
-                Map<String, Object> params = new HashMap<>();
-                params.put("configKey", key);
-                List<SysConfig> list = sysConfigService.queryModel(CLAZZ, params);
-                if (list != null && list.size() > 0) {
-                    return result.setData(list.get(0).getConfigValue());
-                }
+            Map<String, Object> params = new HashMap<>();
+            params.put("configKey", key);
+            List<SysConfig> list = sysConfigService.queryModel(CLAZZ, params);
+            if (list != null && list.size() > 0) {
+                return ApiResult.success(list.get(0).getConfigValue());
             }
-            result.setData("");
+            return ApiResult.success("");
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     private List<SysConfig> setConfigAssist(List<SysConfig> sysConfigs) {

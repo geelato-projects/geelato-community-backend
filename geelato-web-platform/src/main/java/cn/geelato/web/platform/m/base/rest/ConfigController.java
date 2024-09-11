@@ -1,6 +1,5 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.env.entity.SysConfig;
 import cn.geelato.lang.api.ApiResult;

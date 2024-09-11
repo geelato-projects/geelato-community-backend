@@ -4,6 +4,7 @@ import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.rest.BaseController;
@@ -38,7 +39,7 @@ public class ApiParamController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private ApiParamService apiParamService;
+    private final ApiParamService apiParamService;
 
     @Autowired
     public ApiParamController(ApiParamService apiParamService) {
@@ -47,76 +48,62 @@ public class ApiParamController extends BaseController {
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
     public ApiPagedResult pageQuery(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = apiParamService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            return apiParamService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
     public ApiResult query(HttpServletRequest req) {
-        ApiResult result = new ApiResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
-            result.setData(apiParamService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
+            return ApiResult.success(apiParamService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
     public ApiResult get(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
         try {
-            result.setData(apiParamService.getModel(CLAZZ, id));
+            return ApiResult.success(apiParamService.getModel(CLAZZ, id));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult createOrUpdate(@RequestBody ApiParam form) {
-        ApiResult result = new ApiResult();
         try {
             if (Strings.isNotBlank(form.getId())) {
-                result.setData(apiParamService.updateModel(form));
+                return ApiResult.success(apiParamService.updateModel(form));
             } else {
-                result.setData(apiParamService.createModel(form));
+                return ApiResult.success(apiParamService.createModel(form));
             }
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult isDelete(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         try {
             ApiParam model = apiParamService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             apiParamService.isDeleteModel(model);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 }

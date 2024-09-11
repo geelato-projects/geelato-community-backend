@@ -4,9 +4,9 @@ import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.entity.AppSqlMap;
 import cn.geelato.web.platform.m.base.service.AppSqlMapService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +38,7 @@ public class AppSqlMapController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private AppSqlMapService appSqlMapService;
+    private final AppSqlMapService appSqlMapService;
 
     @Autowired
     public AppSqlMapController(AppSqlMapService appSqlMapService) {
@@ -47,94 +47,77 @@ public class AppSqlMapController extends BaseController {
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
     public ApiPagedResult pageQuery(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = appSqlMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            return appSqlMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/pageQueryOf", method = RequestMethod.GET)
     public ApiPagedResult pageQueryOf(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(req);
-            result = appSqlMapService.pageQueryModel("page_query_platform_app_r_sql", params, pageQueryRequest);
+            return appSqlMapService.pageQueryModel("page_query_platform_app_r_sql", params, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
     public ApiResult query(HttpServletRequest req) {
-        ApiResult result = new ApiResult<>();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
             List<AppSqlMap> list = appSqlMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
-            result.setData(list);
+            return ApiResult.success(list);
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
     public ApiResult get(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
         try {
-            result.setData(appSqlMapService.getModel(CLAZZ, id));
+            return ApiResult.success(appSqlMapService.getModel(CLAZZ, id));
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult createOrUpdate(@RequestBody AppSqlMap form) {
-        ApiResult result = new ApiResult();
         try {
             appSqlMapService.after(form);
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
-                result.setData(appSqlMapService.updateModel(form));
+                return ApiResult.success(appSqlMapService.updateModel(form));
             } else {
-                result.setData(appSqlMapService.createModel(form));
+                return ApiResult.success(appSqlMapService.createModel(form));
             }
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult<App> isDelete(@PathVariable(required = true) String id) {
-        ApiResult<App> result = new ApiResult<>();
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         try {
             AppSqlMap model = appSqlMapService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             appSqlMapService.isDeleteModel(model);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 }

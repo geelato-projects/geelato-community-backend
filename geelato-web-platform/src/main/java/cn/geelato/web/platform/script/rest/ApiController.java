@@ -140,7 +140,7 @@ public class ApiController extends BaseController {
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    public ApiResult validate(@RequestBody Api form) {
+    public ApiResult<Boolean> validate(@RequestBody Api form) {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("code", form.getCode());

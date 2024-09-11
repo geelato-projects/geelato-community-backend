@@ -1,12 +1,7 @@
 package cn.geelato.web.platform.m.base.rest;
 
 
-import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.m.base.service.ViewService;
-import cn.geelato.web.platform.m.model.service.DevTableService;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
-import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.enums.TableSourceTypeEnum;
@@ -15,12 +10,19 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.orm.DbGenerateDao;
+import cn.geelato.lang.api.ApiMetaResult;
+import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.m.base.service.ViewService;
+import cn.geelato.web.platform.m.model.service.DevTableService;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -31,15 +33,13 @@ import java.util.*;
 @ApiRestController(value = "/meta/ddl")
 public class MetaDdlController extends BaseController {
 
+    private static final Logger logger = LoggerFactory.getLogger(MetaDdlController.class);
     @Autowired
     protected DbGenerateDao dbGenerateDao;
     @Autowired
     private DevTableService devTableService;
     @Autowired
     private ViewService viewService;
-
-    private static final Logger logger = LoggerFactory.getLogger(MetaDdlController.class);
-
 
     /**
      * 新建或更新表，不删除表字段

@@ -3,41 +3,42 @@ package cn.geelato.web.platform.m.security.rest;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import cn.geelato.web.platform.m.security.service.OrgService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 
 /**
  * Created by hongxq on 2022/10/1
  */
-@Controller
-@RequestMapping(value = {"/api/sys"})
+@ApiRestController(value = "/sys")
+@Slf4j
 public class SystemRestController extends BaseController {
-    @Autowired
     protected AccountService accountService;
-    @Autowired
     protected OrgService orgService;
-    private final Logger logger = LoggerFactory.getLogger(SystemRestController.class);
+
+    @Autowired
+    public SystemRestController(AccountService accountService, OrgService orgService) {
+        this.accountService = accountService;
+        this.orgService = orgService;
+    }
 
 
     @IgnoreJWTVerify
     @RequestMapping(value = "/getRoleListByPage", method = RequestMethod.GET, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
-    @ResponseBody
     public ApiPagedResult getAccountList(HttpServletRequest req) {
         // 初始化返回值
         ApiPagedResult apiPageResult = new ApiPagedResult<DataItems>();
@@ -49,7 +50,6 @@ public class SystemRestController extends BaseController {
     }
 
     @RequestMapping(value = "/getUserInfo", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult getUserInfo(HttpServletRequest req) {
         try {
             User user = this.getUserByToken(req);
@@ -59,25 +59,23 @@ public class SystemRestController extends BaseController {
             loginResult.setRoles(null);
             // 用户所属公司
             setCompany(loginResult);
-
-            return new ApiResult().success().setData(loginResult);
+            return ApiResult.success(loginResult);
         } catch (Exception e) {
-            logger.error("getUserInfo", e);
-            return new ApiResult().error().setMsg(e.getMessage());
+            log.error("getUserInfo", e);
+            return ApiResult.fail(e.getMessage());
         }
     }
 
 
     @RequestMapping(value = "/logout", method = RequestMethod.GET)
-    @ResponseBody
-    public ApiResult logout(HttpServletRequest req) {
+    public ApiResult<NullResult> logout(HttpServletRequest req) {
         try {
             User user = this.getUserByToken(req);
-            logger.debug("User [" + user.getLoginName() + "] logout.");
-            return new ApiResult();
+            log.debug("User [" + user.getLoginName() + "] logout.");
+            return ApiResult.successNoResult();
         } catch (Exception e) {
-            logger.error("退出失败", e);
-            return new ApiResult().error();
+            log.error("退出失败", e);
+            return ApiResult.fail(e.getMessage());
         }
     }
 
@@ -89,14 +87,13 @@ public class SystemRestController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/resetPassword", method = {RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
     public ApiResult resetPassword(HttpServletRequest req, @RequestParam(defaultValue = "8", required = false) int passwordLength) throws Exception {
         User user = this.getUserByToken(req);
         String plainPassword = RandomStringUtils.randomAlphanumeric(passwordLength > 32 ? 32 : passwordLength);
         user.setPlainPassword(plainPassword);
         accountService.entryptPassword(user);
         dao.save(user);
-        return new ApiResult().setData(plainPassword);
+        return ApiResult.success(plainPassword);
     }
 
 

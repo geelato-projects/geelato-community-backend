@@ -1,20 +1,20 @@
 package cn.geelato.web.platform.m.security.rest;
 
-import cn.geelato.web.platform.m.security.entity.Encoding;
-import cn.geelato.web.platform.m.security.service.EncodingService;
-import jakarta.servlet.http.HttpServletRequest;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.rest.BaseController;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cn.geelato.web.platform.m.security.entity.Encoding;
+import cn.geelato.web.platform.m.security.service.EncodingService;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,8 +23,8 @@ import java.util.*;
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/encoding")
+@ApiRestController("encoding")
+@Slf4j
 public class EncodingController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<Encoding> CLAZZ = Encoding.class;
@@ -34,93 +34,77 @@ public class EncodingController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private final Logger logger = LoggerFactory.getLogger(EncodingController.class);
+    private final EncodingService encodingService;
+
     @Autowired
-    private EncodingService encodingService;
+    public EncodingController(EncodingService encodingService) {
+        this.encodingService = encodingService;
+    }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQuery(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = encodingService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            return encodingService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult query(HttpServletRequest req) {
-        ApiResult result = new ApiResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
-            result.setData(encodingService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
+            return ApiResult.success(encodingService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult get(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
         try {
-            result.setData(encodingService.getModel(CLAZZ, id));
+            return ApiResult.success(encodingService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult createOrUpdate(@RequestBody Encoding form) {
-        ApiResult result = new ApiResult();
         try {
             if (Strings.isNotBlank(form.getId())) {
-                result.setData(encodingService.updateModel(form));
+                form = encodingService.updateModel(form);
             } else {
-                result.setData(encodingService.createModel(form));
+                form = encodingService.createModel(form);
             }
-            if (result.isSuccess()) {
-                encodingService.redisTemplateEncodingUpdate(form);
-            }
+            // 更新缓存
+            encodingService.redisTemplateEncodingUpdate(form);
+            return ApiResult.success(form);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    @ResponseBody
-    public ApiResult isDelete(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         try {
             Encoding model = encodingService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
             encodingService.isDeleteModel(model);
             encodingService.redisTemplateEncodingDelete(model);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     /**
@@ -132,9 +116,7 @@ public class EncodingController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/generate/{id}", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult generate(@PathVariable(required = true) String id, @RequestParam Map<String, Object> argumentParam, @RequestBody Optional<Map<String, Object>> argumentBodyOptional) {
-        ApiResult result = new ApiResult();
         try {
             Map<String, Object> argument = new HashMap<>();
             if (argumentParam != null && argumentParam.size() > 0) {
@@ -147,12 +129,10 @@ public class EncodingController extends BaseController {
             }
             Encoding encoding = encodingService.getModel(CLAZZ, id);
             Assert.notNull(encoding, ApiErrorMsg.IS_NULL);
-            result.setData(encodingService.generate(encoding, argument));
+            return ApiResult.success(encodingService.generate(encoding, argument));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(e.getMessage());
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 }

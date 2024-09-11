@@ -1,22 +1,25 @@
 package cn.geelato.web.platform.m.security.rest;
 
+import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.security.entity.Permission;
 import cn.geelato.web.platform.m.security.entity.RolePermissionMap;
 import cn.geelato.web.platform.m.security.service.RolePermissionMapService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.gql.parser.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
-import cn.geelato.web.platform.m.base.rest.BaseController;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -26,8 +29,8 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/security/role/permission")
+@ApiRestController(value = "/security/role/permission")
+@Slf4j
 public class RolePermissionMapController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<RolePermissionMap> CLAZZ = RolePermissionMap.class;
@@ -37,148 +40,116 @@ public class RolePermissionMapController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private final Logger logger = LoggerFactory.getLogger(RolePermissionMapController.class);
+    private final RolePermissionMapService rolePermissionMapService;
+
     @Autowired
-    private RolePermissionMapService rolePermissionMapService;
+    public RolePermissionMapController(RolePermissionMapService rolePermissionMapService) {
+        this.rolePermissionMapService = rolePermissionMapService;
+    }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQuery(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = rolePermissionMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            return rolePermissionMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/pageQueryOf", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQueryOf(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(req);
-            result = rolePermissionMapService.pageQueryModel("page_query_platform_role_r_permission", params, pageQueryRequest);
+            return rolePermissionMapService.pageQueryModel("page_query_platform_role_r_permission", params, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult query(HttpServletRequest req) {
-        ApiResult result = new ApiResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
-            result.setData(rolePermissionMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
+            return ApiResult.success(rolePermissionMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/insert", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult insert(@RequestBody RolePermissionMap form) {
-        ApiResult result = new ApiResult();
         try {
-            result.setData(rolePermissionMapService.insertModels(form));
+            return ApiResult.success(rolePermissionMapService.insertModels(form));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/switch", method = RequestMethod.POST)
-    @ResponseBody
-    public ApiResult switchModel(@RequestBody RolePermissionMap form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> switchModel(@RequestBody RolePermissionMap form) {
         try {
             rolePermissionMapService.switchModel(form);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    @ResponseBody
-    public ApiResult isDelete(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         try {
             RolePermissionMap model = rolePermissionMapService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             rolePermissionMapService.isDeleteModel(model);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/queryTable/{type}/{object}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult queryTablePermissions(@PathVariable(required = true) String type, @PathVariable(required = true) String object, String appId, String tenantCode) {
-        ApiResult result = new ApiResult();
         try {
-            result.success().setData(rolePermissionMapService.queryTablePermissions(type, object, appId, tenantCode));
+            return ApiResult.success(rolePermissionMapService.queryTablePermissions(type, object, appId, tenantCode));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/queryColumn/{type}/{object}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult queryColumnPermissions(@PathVariable(required = true) String type, @PathVariable(required = true) String object, String appId, String tenantCode) {
-        ApiResult result = new ApiResult();
         try {
-            result.success().setData(rolePermissionMapService.queryColumnPermissions(type, object, appId, tenantCode));
+            return ApiResult.success(rolePermissionMapService.queryColumnPermissions(type, object, appId, tenantCode));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/insertTable", method = RequestMethod.POST)
-    @ResponseBody
-    public ApiResult insertTablePermission(@RequestBody RolePermissionMap form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> insertTablePermission(@RequestBody RolePermissionMap form) {
         try {
             rolePermissionMapService.insertTablePermission(form);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/insertTable/view", method = RequestMethod.POST)
-    @ResponseBody
-    public ApiResult insertTableViewPermission(@RequestBody RolePermissionMap form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> insertTableViewPermission(@RequestBody RolePermissionMap form) {
         try {
             if (Strings.isNotBlank(form.getPermissionId())) {
                 Permission permission = rolePermissionMapService.getModel(Permission.class, form.getPermissionId());
@@ -187,32 +158,27 @@ public class RolePermissionMapController extends BaseController {
                 }
             }
             rolePermissionMapService.insertTableViewPermission(form);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/insertColumn", method = RequestMethod.POST)
-    @ResponseBody
-    public ApiResult insertColumnPermission(@RequestBody Map<String, Object> form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> insertColumnPermission(@RequestBody Map<String, Object> form) {
         try {
             String roleId = (String) form.get("roleId");
             String columnId = (String) form.get("columnId");
             String rule = (String) form.get("rule");
-            if (Strings.isNotBlank(roleId) && Strings.isNotBlank(columnId) && Strings.isNotBlank(rule)) {
-                rolePermissionMapService.insertColumnPermission(roleId, columnId, rule);
-            } else {
-                result.error().setMsg(ApiErrorMsg.PARAMETER_MISSING);
+            if (Strings.isBlank(roleId) || Strings.isBlank(columnId) || Strings.isBlank(rule)) {
+                throw new RuntimeException("Parameter missing: roleId, columnId or rule");
             }
+            rolePermissionMapService.insertColumnPermission(roleId, columnId, rule);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 }

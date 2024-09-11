@@ -1,21 +1,18 @@
 package cn.geelato.web.platform.m.excel.rest;
 
-import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.rest.BaseController;
+import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.service.ExportTemplateService;
 import cn.geelato.web.platform.m.excel.service.ImportExcelService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
 
@@ -23,15 +20,18 @@ import java.io.IOException;
  * @author diabl
  * @description: 文件导入
  */
-@Controller
-@RequestMapping(value = "/api/import")
+@ApiRestController("/import")
+@Slf4j
 public class ImportExcelController extends BaseController {
-    private final Logger logger = LoggerFactory.getLogger(ImportExcelController.class);
+
+    private final ExportTemplateService exportTemplateService;
+    private final ImportExcelService importExcelService;
 
     @Autowired
-    private ExportTemplateService exportTemplateService;
-    @Autowired
-    private ImportExcelService importExcelService;
+    public ImportExcelController(ExportTemplateService exportTemplateService, ImportExcelService importExcelService) {
+        this.exportTemplateService = exportTemplateService;
+        this.importExcelService = importExcelService;
+    }
 
     /**
      * 下载模板
@@ -42,17 +42,13 @@ public class ImportExcelController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/template/{templateId}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult getTemplate(HttpServletRequest request, HttpServletResponse response, @PathVariable String templateId) {
-        ApiResult result = new ApiResult();
         try {
-            result.setData(exportTemplateService.getModel(ExportTemplate.class, templateId));
+            return ApiResult.success(exportTemplateService.getModel(ExportTemplate.class, templateId));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     /**
@@ -64,17 +60,13 @@ public class ImportExcelController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/attach/{importType}/{templateId}/{attachId}", method = {RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
     public ApiResult importAttach(HttpServletRequest request, HttpServletResponse response, @PathVariable String importType, @PathVariable String templateId, @PathVariable String attachId) {
-        ApiResult result = new ApiResult();
         try {
-            result = importExcelService.importExcel(request, response, importType, templateId, attachId);
+            return importExcelService.importExcel(request, response, importType, templateId, attachId);
         } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            result.error(ex);
+            log.error(ex.getMessage());
+            return ApiResult.fail(ex.getMessage());
         }
-
-        return result;
     }
 
     /**
@@ -88,16 +80,12 @@ public class ImportExcelController extends BaseController {
      * @throws IOException
      */
     @RequestMapping(value = "/file/{importType}/{templateId}", method = {RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
     public ApiResult importFile(HttpServletRequest request, HttpServletResponse response, @PathVariable String importType, @PathVariable String templateId) {
-        ApiResult result = new ApiResult();
         try {
-            result = importExcelService.importExcel(request, response, importType, templateId, null);
+            return importExcelService.importExcel(request, response, importType, templateId, null);
         } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            result.error(ex);
+            log.error(ex.getMessage());
+            return ApiResult.fail(ex.getMessage());
         }
-
-        return result;
     }
 }

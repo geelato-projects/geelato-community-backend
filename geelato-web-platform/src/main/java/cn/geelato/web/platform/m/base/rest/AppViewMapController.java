@@ -1,21 +1,23 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import jakarta.servlet.http.HttpServletRequest;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
-import cn.geelato.web.platform.m.base.entity.App;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.AppViewMap;
 import cn.geelato.web.platform.m.base.service.AppViewMapService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -25,8 +27,8 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/app/view")
+@ApiRestController("/app/view")
+@Slf4j
 public class AppViewMapController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<AppViewMap> CLAZZ = AppViewMap.class;
@@ -36,106 +38,86 @@ public class AppViewMapController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private final Logger logger = LoggerFactory.getLogger(AppViewMapController.class);
+    private final AppViewMapService appViewMapService;
+
     @Autowired
-    private AppViewMapService appViewMapService;
+    public AppViewMapController(AppViewMapService appViewMapService) {
+        this.appViewMapService = appViewMapService;
+    }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQuery(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = appViewMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            return appViewMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/pageQueryOf", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult pageQueryOf(HttpServletRequest req) {
-        ApiPagedResult result = new ApiPagedResult();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(req);
-            result = appViewMapService.pageQueryModel("page_query_platform_app_r_view", params, pageQueryRequest);
+            return appViewMapService.pageQueryModel("page_query_platform_app_r_view", params, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult query(HttpServletRequest req) {
-        ApiResult result = new ApiResult<>();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
             List<AppViewMap> list = appViewMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
-            result.setData(list);
+            return ApiResult.success(list);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult get(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
         try {
-            result.setData(appViewMapService.getModel(CLAZZ, id));
+            return ApiResult.success(appViewMapService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult createOrUpdate(@RequestBody AppViewMap form) {
-        ApiResult result = new ApiResult();
         try {
             appViewMapService.after(form);
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
-                result.setData(appViewMapService.updateModel(form));
+                return ApiResult.success(appViewMapService.updateModel(form));
             } else {
-                result.setData(appViewMapService.createModel(form));
+                return ApiResult.success(appViewMapService.createModel(form));
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    @ResponseBody
-    public ApiResult<App> isDelete(@PathVariable(required = true) String id) {
-        ApiResult<App> result = new ApiResult<>();
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         try {
             AppViewMap model = appViewMapService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             appViewMapService.isDeleteModel(model);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 }

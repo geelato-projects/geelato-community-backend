@@ -29,6 +29,7 @@ public class PluginRuntimeController extends PluginController {
         super(pluginBeanProvider);
     }
 
+    @Override
     @RequestMapping(value = "/example2", method = RequestMethod.GET)
     public ApiResult<Greeting> example(HttpServletRequest req) {
         Greeting greeting = pluginBeanProvider.getBean(Greeting.class, PluginInfo.PluginId);

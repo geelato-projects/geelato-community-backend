@@ -6,6 +6,7 @@ import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.utils.DateUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
@@ -13,58 +14,28 @@ import java.util.Date;
 /**
  * @author diabl
  */
+@Getter
 @Setter
-@Entity(name = "platform_app_version", table = "platform_app_version")
+@Entity(name = "platform_app_version")
 @Title(title = "应用版本")
 public class AppVersion extends BaseEntity {
-    private String packagePath;
-    private String version;
-    private String packageSource;
-    private String appId;
-    @JsonFormat(pattern = DateUtils.DATETIME, timezone = DateUtils.TIMEZONE)
-    private Date packetTime;
-    private String status;
-    private String description;
-
+    @Title(title = "包地址")
     @Col(name = "package_path")
-    @Title(title = "package_path")
-    public String getPackagePath() {
-        return packagePath;
-    }
-
-    @Col(name = "version")
-    @Title(title = "version")
-    public String getVersion() {
-        return version;
-    }
-
+    private String packagePath;
+    @Title(title = "版本名称")
+    private String version;
+    @Title(title = "包来源")
     @Col(name = "package_source")
-    @Title(title = "package_source")
-    public String getPackageSource() {
-        return packageSource;
-    }
-
+    private String packageSource;
+    @Title(title = "所属应用")
     @Col(name = "app_id")
-    @Title(title = "app_id")
-    public String getAppId() {
-        return appId;
-    }
-
+    private String appId;
+    @Title(title = "打包时间")
+    @JsonFormat(pattern = DateUtils.DATETIME, timezone = DateUtils.TIMEZONE)
     @Col(name = "packet_time")
-    @Title(title = "packet_time")
-    public Date getPacketTime() {
-        return packetTime;
-    }
-
-    @Col(name = "status")
-    @Title(title = "status")
-    public String getStatus() {
-        return status;
-    }
-
-    @Col(name = "description")
-    @Title(title = "description")
-    public String getDescription() {
-        return description;
-    }
+    private Date packetTime;
+    @Title(title = "状态")
+    private String status;
+    @Title(title = "描述")
+    private String description;
 }

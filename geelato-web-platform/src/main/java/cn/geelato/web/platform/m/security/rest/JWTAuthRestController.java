@@ -2,6 +2,7 @@ package cn.geelato.web.platform.m.security.rest;
 
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
@@ -33,8 +34,8 @@ public class JWTAuthRestController extends BaseController {
     protected AccountService accountService;
     protected AuthCodeService authCodeService;
     protected OrgService orgService;
-    private UploadService uploadService;
-    private AttachService attachService;
+    private final UploadService uploadService;
+    private final AttachService attachService;
 
     @Autowired
     public JWTAuthRestController(AccountService accountService,
@@ -127,18 +128,17 @@ public class JWTAuthRestController extends BaseController {
     }
 
     @RequestMapping(value = "/avatar/{userId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult uploadAvatar(@PathVariable(required = true) String userId, @RequestParam("file") MultipartFile file) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> uploadAvatar(@PathVariable(required = true) String userId, @RequestParam("file") MultipartFile file) {
         try {
             // 用户信息
             if (Strings.isBlank(userId)) {
-                return result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+                throw new RuntimeException("userId is null");
             }
             User user = dao.queryForObject(User.class, userId);
             Assert.notNull(user, ApiErrorMsg.IS_NULL);
             // 头像
             if (file == null || file.isEmpty()) {
-                return result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+                throw new RuntimeException("Avatar file is null");
             }
             // 存入附件表
             // Attach attach = new Attach(file);
@@ -151,21 +151,19 @@ public class JWTAuthRestController extends BaseController {
             String base64String = Base64.getEncoder().encodeToString(fileBytes);
             user.setAvatar(UploadService.AVATAR_BASE64_PREFIX + base64String);
             dao.save(user);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/update/{userId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult updateUserInfo(@PathVariable(required = true) String userId, @RequestBody Map<String, Object> params) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> updateUserInfo(@PathVariable(required = true) String userId, @RequestBody Map<String, Object> params) {
         try {
             // 用户信息
             if (Strings.isBlank(userId)) {
-                return result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+                throw new RuntimeException("userId is null");
             }
             User user = dao.queryForObject(User.class, userId);
             Assert.notNull(user, ApiErrorMsg.IS_NULL);
@@ -179,24 +177,23 @@ public class JWTAuthRestController extends BaseController {
                 labelField.set(user, value);
             }
             dao.save(user);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
 
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
-    public ApiResult logout(HttpServletRequest req) {
+    public ApiResult<NullResult> logout(HttpServletRequest req) {
         try {
             User user = this.getUserByToken(req);
             log.debug("User [" + user.getLoginName() + "] logout.");
-            return new ApiResult();
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error("退出失败", e);
-            return new ApiResult().error();
+            return ApiResult.fail(e.getMessage());
         }
     }
 
@@ -207,40 +204,42 @@ public class JWTAuthRestController extends BaseController {
      */
     @RequestMapping(value = "/menu", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult getCurrentUserMenu(@RequestBody Map<String, Object> params, HttpServletRequest request) throws Exception {
-        ApiResult result = new ApiResult();
-        List<Map<String, Object>> menuItemList = new ArrayList<>();
-        result.setData(menuItemList);
-        // post参数
-        Map map = new HashMap<>();
-        String flag = (String) params.get("flag");
-        String appId = (String) params.get("appId");
-        String tenantCode = (String) params.get("tenantCode");
-        // 用户
-        User user = getUserByToken(request);
-        // log.info(String.format("当前用户菜单查询，用户：%s", (user != null ? String.format("%s（%s）", user.getName(), user.getLoginName()) : "")));
-        String token = getToken(request);
-        // log.info(String.format("当前用户菜单查询，Token：%s", token));
-        if (user == null || Strings.isBlank(token)) {
-            return result;
+        try {
+            List<Map<String, Object>> menuItemList = new ArrayList<>();
+            // post参数
+            Map map = new HashMap<>();
+            String flag = (String) params.get("flag");
+            String appId = (String) params.get("appId");
+            String tenantCode = (String) params.get("tenantCode");
+            // 用户
+            User user = getUserByToken(request);
+            // log.info(String.format("当前用户菜单查询，用户：%s", (user != null ? String.format("%s（%s）", user.getName(), user.getLoginName()) : "")));
+            String token = getToken(request);
+            // log.info(String.format("当前用户菜单查询，Token：%s", token));
+            if (user == null || Strings.isBlank(token)) {
+                return ApiResult.fail("User or token is null");
+            }
+            // 用户与租户比对
+            if (Strings.isNotBlank(tenantCode) && !tenantCode.equalsIgnoreCase(user.getTenantCode())) {
+                // log.info(String.format("当前用户菜单查询，租户不一致：User=>%s | %s", user.getTenantCode(), tenantCode));
+                return ApiResult.fail("user tenant code not equal");
+            } else {
+                tenantCode = user.getTenantCode();
+            }
+            // log.info(String.format("当前用户菜单查询，租户：%s；应用：%s", tenantCode, appId));
+            // 菜单查询
+            if (Strings.isNotBlank(appId) && Strings.isNotBlank(tenantCode)) {
+                map.put("currentUser", user.getId());
+                map.put("appId", appId);
+                map.put("tenantCode", tenantCode);
+                map.put("flag", flag);
+                menuItemList = dao.queryForMapList("select_platform_tree_node_app_page", map);
+            }
+            return ApiResult.success(menuItemList);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-        // 用户与租户比对
-        if (Strings.isNotBlank(tenantCode) && !tenantCode.equalsIgnoreCase(user.getTenantCode())) {
-            // log.info(String.format("当前用户菜单查询，租户不一致：User=>%s | %s", user.getTenantCode(), tenantCode));
-            return result;
-        } else {
-            tenantCode = user.getTenantCode();
-        }
-        // log.info(String.format("当前用户菜单查询，租户：%s；应用：%s", tenantCode, appId));
-        // 菜单查询
-        if (Strings.isNotBlank(appId) && Strings.isNotBlank(tenantCode)) {
-            map.put("currentUser", user.getId());
-            map.put("appId", appId);
-            map.put("tenantCode", tenantCode);
-            map.put("flag", flag);
-            menuItemList = dao.queryForMapList("select_platform_tree_node_app_page", map);
-        }
-
-        return result.setData(menuItemList);
     }
 
     /**
@@ -251,29 +250,33 @@ public class JWTAuthRestController extends BaseController {
      */
     @RequestMapping(value = "/resetPassword", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult resetPassword(HttpServletRequest req, @RequestParam(defaultValue = "8", required = false) int passwordLength) throws Exception {
-        User user = this.getUserByToken(req);
-        String plainPassword = RandomStringUtils.randomAlphanumeric(passwordLength > 32 ? 32 : passwordLength);
-        user.setPlainPassword(plainPassword);
-        accountService.entryptPassword(user);
-        dao.save(user);
-        return new ApiResult().setData(plainPassword);
+        try {
+            User user = this.getUserByToken(req);
+            String plainPassword = RandomStringUtils.randomAlphanumeric(passwordLength > 32 ? 32 : passwordLength);
+            user.setPlainPassword(plainPassword);
+            accountService.entryptPassword(user);
+            dao.save(user);
+            return ApiResult.success(plainPassword);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
+        }
     }
 
     @RequestMapping(value = "/forgetValid", method = RequestMethod.POST)
     public ApiResult forgetValid(@RequestBody Map<String, Object> params) {
-        ApiResult result = new ApiResult();
         try {
             ForgetPasswordParams form = new ForgetPasswordParams();
             BeanUtils.populate(form, params);
             Map<String, Object> map = new HashMap<>();
             String validLabel = ValidTypeEnum.getLabel(form.getValidType());
             if (Strings.isBlank(form.getValidBox()) || Strings.isBlank(validLabel)) {
-                return result.error();
+                throw new Exception("Parameter error");
             }
             map.put(validLabel, form.getValidBox());
             if (ValidTypeEnum.MOBILE.getValue().equals(form.getValidType())) {
                 if (Strings.isBlank(form.getPrefix())) {
-                    return result.error();
+                    throw new Exception("Parameter error");
                 }
                 map.put("mobilePrefix", form.getPrefix());
             }
@@ -281,31 +284,29 @@ public class JWTAuthRestController extends BaseController {
             if (users != null && users.size() == 1) {
                 User user = new User();
                 user.setId(users.get(0).getId());
-                return result.success().setData(user);
+                return ApiResult.success(user);
+            } else {
+                throw new RuntimeException("user not found");
             }
-            result.error();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.UPDATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/forget", method = RequestMethod.POST)
-    public ApiResult forgetPassword(@RequestBody Map<String, Object> params) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> forgetPassword(@RequestBody Map<String, Object> params) {
         try {
             ForgetPasswordParams form = new ForgetPasswordParams();
             BeanUtils.populate(form, params);
             // 用户、密码
             if (Strings.isBlank(form.getUserId()) || Strings.isBlank(form.getPassword())) {
-                return result.error().setMsg(ApiErrorMsg.PARAMETER_MISSING);
+                throw new Exception("User or password is null");
             }
             // 验证码
             AuthCodeParams code = AuthCodeParams.buildAuthCodeParams(form);
             if (!authCodeService.validate(code)) {
-                return result.error().setMsg(ApiErrorMsg.AUTH_CODE_ERROR);
+                throw new Exception("验证码错误");
             }
             // 修改密码
             User user = dao.queryForObject(User.class, form.getUserId());
@@ -313,23 +314,21 @@ public class JWTAuthRestController extends BaseController {
             user.setPlainPassword(form.getPassword());
             accountService.entryptPassword(user);
             dao.save(user);
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.UPDATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    public ApiResult validateUser(@RequestBody Map<String, Object> params) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> validateUser(@RequestBody Map<String, Object> params) {
         try {
             AuthCodeParams form = new AuthCodeParams();
             BeanUtils.populate(form, params);
             // 用户、密码
             if (Strings.isBlank(form.getValidType()) || Strings.isBlank(form.getUserId()) || Strings.isBlank(form.getAuthCode())) {
-                return result.error().setMsg(ApiErrorMsg.PARAMETER_MISSING);
+                throw new RuntimeException("Parameter error");
             }
             // 用户验证
             User user = dao.queryForObject(User.class, form.getUserId());
@@ -339,40 +338,37 @@ public class JWTAuthRestController extends BaseController {
                 if (Strings.isNotBlank(user.getPassword()) && Strings.isNotBlank(user.getSalt())) {
                     String pwd = accountService.entryptPassword(form.getAuthCode(), user.getSalt());
                     if (user.getPassword().equals(pwd)) {
-                        return result.success();
+                        return ApiResult.successNoResult();
                     }
                 }
-                return result.error().setMsg(ApiErrorMsg.VALIDATE_USER_PASSWORD);
+                throw new RuntimeException("账号密码验证失败");
             } else if (ValidTypeEnum.MOBILE.getValue().equals(form.getValidType())) {
                 // action、userId、validType、authCode
                 if (authCodeService.validate(form)) {
-                    return result.success();
+                    return ApiResult.successNoResult();
                 }
-                return result.error().setMsg(ApiErrorMsg.VALIDATE_USER_MOBILE);
+                throw new RuntimeException("手机号码验证失败");
             } else if (ValidTypeEnum.MAIL.getValue().equals(form.getValidType())) {
                 if (authCodeService.validate(form)) {
-                    return result.success();
+                    return ApiResult.successNoResult();
                 }
-                return result.error().setMsg(ApiErrorMsg.VALIDATE_USER_EMAIL);
+                throw new RuntimeException("电子邮箱验证失败");
             }
-            return result.error().setMsg(ApiErrorMsg.VALIDATE_USER);
+            throw new RuntimeException("验证失败");
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.UPDATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/bindAccount", method = RequestMethod.POST)
-    public ApiResult bindAccount(@RequestBody Map<String, Object> params) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> bindAccount(@RequestBody Map<String, Object> params) {
         try {
             AuthCodeParams form = new AuthCodeParams();
             BeanUtils.populate(form, params);
             // 用户、密码
             if (Strings.isBlank(form.getValidType()) || Strings.isBlank(form.getUserId()) || Strings.isBlank(form.getAuthCode()) || Strings.isBlank(form.getValidBox())) {
-                return result.error().setMsg(ApiErrorMsg.PARAMETER_MISSING);
+                throw new RuntimeException("Parameter error");
             }
             // 用户验证
             User user = dao.queryForObject(User.class, form.getUserId());
@@ -382,32 +378,28 @@ public class JWTAuthRestController extends BaseController {
                 user.setPlainPassword(form.getValidBox());
                 accountService.entryptPassword(user);
                 dao.save(user);
-                return result.success();
+                return ApiResult.successNoResult();
             } else if (ValidTypeEnum.MOBILE.getValue().equals(form.getValidType())) {
                 if (authCodeService.validate(form)) {
                     user.setMobilePhone(form.getValidBox());
                     user.setMobilePrefix(form.getPrefix());
                     dao.save(user);
-                    return result.success();
-                } else {
-                    return result.error().setMsg(ApiErrorMsg.AUTH_CODE_ERROR);
+                    return ApiResult.successNoResult();
                 }
+                throw new RuntimeException("验证码错误");
             } else if (ValidTypeEnum.MAIL.getValue().equals(form.getValidType())) {
                 if (authCodeService.validate(form)) {
                     user.setEmail(form.getValidBox());
                     dao.save(user);
-                    return result.success();
-                } else {
-                    return result.error().setMsg(ApiErrorMsg.AUTH_CODE_ERROR);
+                    return ApiResult.successNoResult();
                 }
+                throw new RuntimeException("验证码错误");
             }
-            return result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            throw new RuntimeException("绑定失败");
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.UPDATE_FAIL);
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     /**

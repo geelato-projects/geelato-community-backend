@@ -27,10 +27,12 @@ public class CacheController extends BaseController {
     @RequestMapping(value = {"remove/{keys}"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> remove(@PathVariable("keys") String keys) {
         if (Strings.isEmpty(keys)) {
-            return ApiResult.fail("参数不能为空");
+            return ApiResult.fail("Keys is empty");
         }
         for (String key : keys.split(",")) {
-            if (StringUtils.isNotBlank(key)) CacheUtil.remove(key);
+            if (StringUtils.isNotBlank(key)) {
+                CacheUtil.remove(key);
+            }
         }
         return ApiResult.successNoResult();
     }

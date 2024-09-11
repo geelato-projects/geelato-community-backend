@@ -1,7 +1,14 @@
 package cn.geelato.web.platform.m.excel.service;
 
+import cn.geelato.core.Ctx;
 import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
+import cn.geelato.web.platform.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.base.entity.Attach;
+import cn.geelato.web.platform.m.base.entity.Base64Info;
+import cn.geelato.web.platform.m.base.entity.SysConfig;
+import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.ExportColumn;
@@ -19,13 +26,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import cn.geelato.core.Ctx;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
-import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.entity.Base64Info;
-import cn.geelato.web.platform.m.base.entity.SysConfig;
-import cn.geelato.web.platform.m.base.service.AttachService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +52,7 @@ public class ExportExcelService {
     @Autowired
     private ExcelWriter excelWriter;
     @Autowired
-    private ExcelXSSFWriter excelXSSFWriter;    
+    private ExcelXSSFWriter excelXSSFWriter;
     @Autowired
     private WordXWPFWriter wordXWPFWriter;
     @Autowired
@@ -73,7 +73,6 @@ public class ExportExcelService {
      * @return
      */
     public ApiResult exportWps(String templateId, String fileName, List<Map> valueMapList, Map valueMap, String markText, String markKey, boolean readonly) {
-        ApiResult result = new ApiResult();
         try {
             // 水印
             WordWaterMarkMeta markMeta = setWaterMark(markText, markKey);
@@ -120,7 +119,7 @@ public class ExportExcelService {
 //            attach.setType(Files.probeContentType(exportFile.toPath()));
 //            attach.setSize(attributes.size());
 //            attach.setPath(directory);
-            Attach attach=new Attach()
+            Attach attach = new Attach()
                     .setAppId(exportTemplate.getAppId())
                     .setGenre("exportFile")
                     .setName(fileName)
@@ -129,17 +128,14 @@ public class ExportExcelService {
                     .setPath(directory);
 
             Attach attachMap = attachService.createModel(attach);
-            result.setData(attachMap);
+            return ApiResult.success(attachMap);
         } catch (Exception e) {
-            result.error().setMsg(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
 
     public ApiResult exportExcelByColumnMeta(String appId, String fileName, List<Map> valueMapList, Map valueMap, List<ExportColumn> exportColumns, List<PlaceholderMeta> placeholderMetas, String markText, String markKey, boolean readonly) {
-        ApiResult result = new ApiResult();
         try {
             String tenantCode = Ctx.getCurrentTenantCode();
             // 水印
@@ -175,12 +171,10 @@ public class ExportExcelService {
             attach.setSize(attributes.size());
             attach.setPath(directory);
             Attach attachMap = attachService.createModel(attach);
-            result.setData(attachMap);
+            return ApiResult.success(attachMap);
         } catch (Exception e) {
-            result.error().setMsg(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     /**

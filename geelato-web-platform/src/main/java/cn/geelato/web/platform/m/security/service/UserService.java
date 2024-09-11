@@ -1,16 +1,16 @@
 package cn.geelato.web.platform.m.security.service;
 
-import cn.geelato.web.platform.m.security.entity.*;
-import com.alibaba.fastjson2.JSON;
-import org.apache.commons.collections4.map.HashedMap;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
-import cn.geelato.web.platform.m.security.enums.IsDefaultOrgEnum;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
+import cn.geelato.web.platform.m.security.entity.*;
+import cn.geelato.web.platform.m.security.enums.IsDefaultOrgEnum;
+import com.alibaba.fastjson2.JSON;
+import org.apache.commons.collections4.map.HashedMap;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -171,29 +171,27 @@ public class UserService extends BaseSortableService {
     }
 
     public ApiResult sendMessage(User user, String type, String message) {
-        ApiResult result = new ApiResult();
         if (Strings.isNotBlank(message)) {
             user.setPlainPassword(message);
             return sendMessage(user, type);
         } else {
-            return result.error().setMsg("发送的信息不能为空！");
+            return ApiResult.fail("发送的信息不能为空！");
         }
     }
 
     public ApiResult sendMessage(User user, String type) {
-        ApiResult result = new ApiResult();
         List<String> types = getSendType(type);
         if (types == null || types.size() == 0) {
-            return result.error().setMsg("请选择发送方式，短信或邮件！");
+            return ApiResult.fail("请选择发送方式，短信或邮件！");
         }
         if (types.contains("phone")) {
             if (Strings.isNotBlank(user.getMobilePhone())) {
                 boolean pushSuccess = sendMobile(user.getMobilePrefix(), user.getMobilePhone(), user.getName(), user.getPlainPassword());
                 if (!pushSuccess) {
-                    return result.error().setMsg("短信发送失败，请重试！");
+                    return ApiResult.fail("短信发送失败，请重试！");
                 }
             } else {
-                return result.error().setMsg("请补全用户手机信息！");
+                return ApiResult.fail("请补全用户手机信息！");
             }
         }
         if (types.contains("email")) {
@@ -201,14 +199,14 @@ public class UserService extends BaseSortableService {
                 String text = String.format("尊敬的 %s 用户，您的密码已经设置为 %s ，请及时登录并修改密码。", user.getName(), user.getPlainPassword());
                 boolean pushSuccess = emailService.sendHtmlMail(user.getEmail(), "Reset User Password", text);
                 if (!pushSuccess) {
-                    return result.error().setMsg("邮件发送失败，请重试！");
+                    return ApiResult.fail("邮件发送失败，请重试！");
                 }
             } else {
-                return result.error().setMsg("请补全用户邮箱信息！");
+                return ApiResult.fail("请补全用户邮箱信息！");
             }
         }
 
-        return result;
+        return ApiResult.successNoResult();
     }
 
     public boolean sendMobile(String mobilePrefix, String mobilePhone, String name, String password) {

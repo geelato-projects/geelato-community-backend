@@ -1,13 +1,5 @@
 package cn.geelato.web.platform.m.model.rest;
 
-import cn.geelato.web.platform.m.model.service.DevViewService;
-import cn.geelato.web.platform.m.security.entity.DataItems;
-import cn.geelato.web.platform.m.security.service.PermissionService;
-import jakarta.servlet.http.HttpServletRequest;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.enums.ColumnSyncedEnum;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
@@ -17,23 +9,34 @@ import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.ColumnMeta;
 import cn.geelato.core.meta.model.field.ColumnSelectType;
 import cn.geelato.core.meta.model.view.TableView;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cn.geelato.web.platform.m.model.service.DevViewService;
+import cn.geelato.web.platform.m.security.entity.DataItems;
+import cn.geelato.web.platform.m.security.service.PermissionService;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.*;
 
 /**
  * @author diabl
  */
-@Controller
-@RequestMapping(value = "/api/model/table/column")
+@ApiRestController("/model/table/column")
+@Slf4j
 public class DevTableColumnController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<ColumnMeta> CLAZZ = ColumnMeta.class;
@@ -43,101 +46,87 @@ public class DevTableColumnController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    private final Logger logger = LoggerFactory.getLogger(DevTableColumnController.class);
     private final MetaManager metaManager = MetaManager.singleInstance();
+    private final DevTableColumnService devTableColumnService;
+    private final DevViewService devViewService;
+    private final PermissionService permissionService;
+
     @Autowired
-    private DevTableColumnService devTableColumnService;
-    @Autowired
-    private DevViewService devViewService;
-    @Autowired
-    private PermissionService permissionService;
+    public DevTableColumnController(DevTableColumnService devTableColumnService, DevViewService devViewService, PermissionService permissionService) {
+        this.devTableColumnService = devTableColumnService;
+        this.devViewService = devViewService;
+        this.permissionService = permissionService;
+    }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    @ResponseBody
     public ApiPagedResult<DataItems> pageQuery(HttpServletRequest req) {
-        ApiPagedResult<DataItems> result = new ApiPagedResult<>();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
-            result = devTableColumnService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            return devTableColumnService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiPagedResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult query(HttpServletRequest req) {
-        ApiResult result = new ApiResult<>();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
-            result.setData(devTableColumnService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
+            return ApiResult.success(devTableColumnService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult get(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult<>();
         try {
-            result.setData(devTableColumnService.getModel(CLAZZ, id));
+            return ApiResult.success(devTableColumnService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    @ResponseBody
     public ApiResult createOrUpdate(@RequestBody ColumnMeta form) {
-        ApiResult result = new ApiResult<>();
         try {
             form.afterSet();
+            ColumnMeta resultMap = new ColumnMeta();
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
                 // 存在，方可更新
                 ColumnMeta meta = devTableColumnService.getModel(CLAZZ, form.getId());
                 Assert.notNull(meta, ApiErrorMsg.IS_NULL);
                 form = devTableColumnService.upgradeTable(form, meta);
-                ColumnMeta resultMap = devTableColumnService.updateModel(form);
+                resultMap = devTableColumnService.updateModel(form);
                 if (!meta.getName().equalsIgnoreCase(form.getName())) {
                     permissionService.columnPermissionChangeObject(form.getTableName(), form.getName(), meta.getName());
                     permissionService.resetDefaultPermission(PermissionTypeEnum.COLUMN.getValue(), form.getTableName(), form.getAppId());
                 }
-                result.setData(resultMap);
             } else {
                 form.setSynced(ColumnSyncedEnum.FALSE.getValue());
-                ColumnMeta resultMap = devTableColumnService.createModel(form);
+                resultMap = devTableColumnService.createModel(form);
                 permissionService.resetDefaultPermission(PermissionTypeEnum.COLUMN.getValue(), form.getTableName(), form.getAppId());
-                result.setData(resultMap);
+
             }
             // 选择类型为 组织、用户时
-            if (result.isSuccess()) {
-                devTableColumnService.automaticGeneration(form);
-            }
+            devTableColumnService.automaticGeneration(form);
             // 刷新实体缓存
-            if (result.isSuccess() && Strings.isNotEmpty(form.getTableName())) {
+            if (Strings.isNotEmpty(form.getTableName())) {
                 // 刷新默认视图
                 updateDefaultTableView(form.getTableId());
                 metaManager.refreshDBMeta(form.getTableName());
             }
+            return ApiResult.success(resultMap);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     private void updateDefaultTableView(String tableId) {
@@ -151,15 +140,13 @@ public class DevTableColumnController extends BaseController {
     }
 
     @RequestMapping(value = "/insertCommon", method = RequestMethod.POST)
-    @ResponseBody
-    public ApiResult<Map> insertCommon(@RequestBody Map<String, Object> params) {
-        ApiResult<Map> result = new ApiResult<>();
+    public ApiResult<NullResult> insertCommon(@RequestBody Map<String, Object> params) {
         try {
             String tableId = String.valueOf(params.get("tableId"));
             String tableName = String.valueOf(params.get("tableName"));
             String columnIds = String.valueOf(params.get("columnIds"));
             if (Strings.isBlank(tableId) || Strings.isBlank(columnIds)) {
-                return result.error().setMsg(ApiErrorMsg.PARAMETER_MISSING);
+                throw new RuntimeException("tableId or columnIds is null");
             }
             //
             TableMeta tableMeta = devTableColumnService.getModel(TableMeta.class, tableId);
@@ -169,7 +156,7 @@ public class DevTableColumnController extends BaseController {
             columnFilter.addFilter("id", FilterGroup.Operator.in, columnIds);
             List<ColumnMeta> columnMetas = devTableColumnService.queryModel(CLAZZ, columnFilter);
             if (columnMetas == null || columnMetas.size() == 0) {
-                return result;
+                throw new RuntimeException("columnMetas is null");
             }
             // 已有字段，
             List<String> existColumnNames = new ArrayList<>();
@@ -196,23 +183,20 @@ public class DevTableColumnController extends BaseController {
                 }
             }
             // 刷新实体缓存
-            if (result.isSuccess() && Strings.isNotEmpty(tableMeta.getEntityName())) {
+            if (Strings.isNotEmpty(tableMeta.getEntityName())) {
                 // 刷新默认视图
                 updateDefaultTableView(tableMeta.getId());
                 metaManager.refreshDBMeta(tableMeta.getEntityName());
             }
+            return ApiResult.successNoResult();
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.OPERATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    @ResponseBody
-    public ApiResult isDelete(@PathVariable(required = true) String id) {
-        ApiResult result = new ApiResult();
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
         try {
             ColumnMeta model = devTableColumnService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
@@ -223,48 +207,37 @@ public class DevTableColumnController extends BaseController {
                 updateDefaultTableView(model.getTableId());
                 metaManager.refreshDBMeta(model.getTableName());
             }
+            return ApiResult.successNoResult();
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.DELETE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/queryDefaultMeta", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult<List<ColumnMeta>> queryDefaultMeta() {
-        ApiResult<List<ColumnMeta>> result = new ApiResult<>();
         try {
             List<ColumnMeta> defaultColumnMetaList = metaManager.getDefaultColumn();
-            result.setData(defaultColumnMetaList);
+            return ApiResult.success(defaultColumnMetaList);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/selectType", method = RequestMethod.GET)
-    @ResponseBody
     public ApiResult<List<ColumnSelectType>> getSelectType() {
-        ApiResult<List<ColumnSelectType>> result = new ApiResult<>();
         try {
             List<ColumnSelectType> selectTypes = metaManager.getColumnSelectType();
-            result.setData(selectTypes);
+            return ApiResult.success(selectTypes);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.QUERY_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    @ResponseBody
-    public ApiResult validate(@RequestBody ColumnMeta form) {
-        ApiResult result = new ApiResult();
+    public ApiResult<Boolean> validate(@RequestBody ColumnMeta form) {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("column_name", form.getName());
@@ -272,12 +245,10 @@ public class DevTableColumnController extends BaseController {
             params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
-            result.setData(devTableColumnService.validate("platform_dev_column", form.getId(), params));
+            return ApiResult.success(devTableColumnService.validate("platform_dev_column", form.getId(), params));
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            result.error().setMsg(ApiErrorMsg.VALIDATE_FAIL);
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
-
-        return result;
     }
 }

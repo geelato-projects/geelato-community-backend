@@ -12,10 +12,9 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_app_segment", table = "platform_app_segment")
+@Entity(name = "platform_app_segment")
 @Title(title = "页面片段模板")
 public class AppSegmentTemplate extends BaseSortableEntity {
-
     @Col(name = "extend_id", nullable = true)
     @Title(title = "扩展信息", description = "扩展id，如对应的叶子节点id")
     private String extendId;
@@ -29,11 +28,8 @@ public class AppSegmentTemplate extends BaseSortableEntity {
     @Title(title = "JSON内容")
     private String jsonContent;
     private String thumbnail;
-
     @Col(name = "original_picture", nullable = false, dataType = "longText")
     @Title(title = "原图")
     private String originalPicture;
     private String description;
-
-
 }

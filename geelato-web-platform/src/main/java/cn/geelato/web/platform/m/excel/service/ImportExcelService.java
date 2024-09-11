@@ -488,11 +488,14 @@ public class ImportExcelService {
                 HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(sheetIndex);
                 businessMetaListMap = excelReader.readBusinessMeta(sheet);
                 workbook.close();
+                workbook = null;
+                fileSystem.close();
             } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(sheetIndex);
                 businessMetaListMap = excelXSSFReader.readBusinessMeta(sheet);
                 workbook.close();
+                workbook = null;
             } else {
                 throw new FileTypeNotSupportedException("Business Meta, Excel Type: " + contentType);
             }
@@ -538,11 +541,14 @@ public class ImportExcelService {
                 HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(sheetIndex);
                 businessTypeDataMap = excelReader.readBusinessTypeData(sheet);
                 workbook.close();
+                workbook = null;
+                fileSystem.close();
             } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(sheetIndex);
                 businessTypeDataMap = excelXSSFReader.readBusinessTypeData(sheet);
                 workbook.close();
+                workbook = null;
             } else {
                 throw new FileTypeNotSupportedException("Business Data Type, Excel Type: " + contentType);
             }
@@ -588,11 +594,14 @@ public class ImportExcelService {
                 HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(sheetIndex);
                 typeRuleDataSet = excelReader.readBusinessTypeRuleData(sheet);
                 workbook.close();
+                workbook = null;
+                fileSystem.close();
             } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(sheetIndex);
                 typeRuleDataSet = excelXSSFReader.readBusinessTypeRuleData(sheet);
                 workbook.close();
+                workbook = null;
             } else {
                 throw new FileTypeNotSupportedException("Business Data Type Rule, Excel Type: " + contentType);
             }
@@ -649,6 +658,8 @@ public class ImportExcelService {
                 HSSFFormulaEvaluator evaluator = (HSSFFormulaEvaluator) workbook.getCreationHelper().createFormulaEvaluator();
                 businessDataMapList = excelReader.readBusinessData(sheet, evaluator, businessTypeDataMap);
                 workbook.close();
+                workbook = null;
+                fileSystem.close();
             } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(sheetIndex);
@@ -656,6 +667,7 @@ public class ImportExcelService {
                 XSSFFormulaEvaluator evaluator = (XSSFFormulaEvaluator) workbook.getCreationHelper().createFormulaEvaluator();
                 businessDataMapList = excelXSSFReader.readBusinessData(sheet, evaluator, businessTypeDataMap);
                 workbook.close();
+                workbook = null;
             } else {
                 throw new FileTypeNotSupportedException("Business Data, Excel Type: " + contentType);
             }
@@ -764,6 +776,8 @@ public class ImportExcelService {
                 outputStream = new FileOutputStream(errorFile);
                 workbook.write(outputStream);
                 workbook.close();
+                workbook = null;
+                fileSystem.close();
             } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 ExcelXSSFUtils.reserveSheet((XSSFWorkbook) workbook, sheetIndex);
@@ -783,7 +797,9 @@ public class ImportExcelService {
                 sWorkbook.write(outputStream);
                 outputStream.flush();
                 sWorkbook.dispose();
+                sWorkbook.close();
                 workbook.close();
+                workbook = null;
             } else {
                 throw new FileTypeNotSupportedException("Business Data, Excel Type: " + contentType);
             }

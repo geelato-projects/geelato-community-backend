@@ -222,9 +222,9 @@ public class ExportExcelService {
      */
     private Map<String, PlaceholderMeta> getPlaceholderMeta(File file) throws IOException {
         Map<String, PlaceholderMeta> metaMap = new HashMap<>();
+        Workbook workbook = null;
         FileInputStream fileInputStream = null;
         BufferedInputStream bufferedInputStream = null;
-        Workbook workbook = null;
         try {
             // excel文件类型
             String contentType = Files.probeContentType(file.toPath());
@@ -237,11 +237,14 @@ public class ExportExcelService {
                 HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(0);
                 metaMap = excelWriter.readPlaceholderMeta(sheet);
                 workbook.close();
+                workbook = null;
+                fileSystem.close();
             } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(0);
                 metaMap = excelXSSFWriter.readPlaceholderMeta(sheet);
                 workbook.close();
+                workbook = null;
             } else {
                 throw new RuntimeException("暂不支持导出该格式文件！");
             }
@@ -327,6 +330,8 @@ public class ExportExcelService {
                 outputStream = new FileOutputStream(exportFile);
                 workbook.write(outputStream);
                 workbook.close();
+                workbook = null;
+                fileSystem.close();
             } else if (MediaTypes.APPLICATION_EXCEL_XLSX.equals(contentType)) {
                 workbook = new XSSFWorkbook(bufferedInputStream);
                 // 替换占位符
@@ -343,6 +348,7 @@ public class ExportExcelService {
                 workbook.write(outputStream);
                 outputStream.flush();
                 workbook.close();
+                workbook = null;
             } else if (MediaTypes.APPLICATION_WORD_DOC.equals(contentType)) {
                 POIFSFileSystem fileSystem = new POIFSFileSystem(bufferedInputStream);
                 HWPFDocument document = new HWPFDocument(fileSystem);
@@ -352,6 +358,8 @@ public class ExportExcelService {
                 document.write(outputStream);
                 outputStream.flush();
                 document.close();
+                document = null;
+                fileSystem.close();
             } else if (MediaTypes.APPLICATION_WORD_DOCX.equals(contentType)) {
                 XWPFDocument document = new XWPFDocument(bufferedInputStream);
                 document.getParagraphs();
@@ -368,6 +376,7 @@ public class ExportExcelService {
                 document.write(outputStream);
                 outputStream.flush();
                 document.close();
+                document = null;
             } else {
                 throw new RuntimeException("暂不支持导出该格式文件！");
             }

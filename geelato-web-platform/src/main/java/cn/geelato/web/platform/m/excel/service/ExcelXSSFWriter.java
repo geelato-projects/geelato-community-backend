@@ -179,11 +179,7 @@ public class ExcelXSSFWriter {
             listMaxRowCount = Math.max(valueList.size(), listMaxRowCount);
         }
         // 先创建空行
-        int newRowCount = 0;
-        while (newRowCount < listMaxRowCount - 1) {
-            newRowCount++;
-            createRowWithPreRowStyle(sheet, rowIndex + newRowCount);
-        }
+        int newRowCount = createRowWithPreRowStyles(sheet, rowIndex, listMaxRowCount);
 
         // ----2.2 为模板行及动态创建的行设置值
         // 设置类型为list的cell
@@ -214,6 +210,39 @@ public class ExcelXSSFWriter {
                 // 合并唯一约束 - 行范围
                 List<List<Integer>> mergeScope = ExcelCommonUtils.getMergeUniqueScope(cellMetaList, valueMap, valueList);
                 setMergeScope(sheet, rowIndex, cellMetaList, valueMap, valueList, mergeScope);
+            }
+        }
+
+        return newRowCount;
+    }
+
+    public int createRowWithPreRowStyles(XSSFSheet sheet, Integer rowIndex, Integer listMaxRowCount) {
+        if (listMaxRowCount <= 0) {
+            return 0;
+        }
+        // 模板行,模板单元格
+        XSSFRow sourceRow = sheet.getRow(rowIndex);
+        List<XSSFCell> sourceCellList = new ArrayList<>();
+        for (int cellIndex = 0; cellIndex < sourceRow.getLastCellNum(); cellIndex++) {
+            sourceCellList.add(sourceRow.getCell(cellIndex));
+        }
+        // 向下移动
+        if (listMaxRowCount > 1) {
+            int lastRowNo = sheet.getLastRowNum();
+            if (rowIndex + 1 <= lastRowNo) {
+                sheet.shiftRows(rowIndex + 1, lastRowNo, listMaxRowCount - 1);
+            }
+        }
+        // 复制模板
+        int newRowCount = 0;
+        while (newRowCount < listMaxRowCount - 1) {
+            newRowCount++;
+            XSSFRow newRow = sheet.createRow(rowIndex + newRowCount);
+            newRow.setHeight(sourceRow.getHeight());
+            for (int cellIndex = 0; cellIndex < sourceRow.getLastCellNum(); cellIndex++) {
+                XSSFCell templateCell = sourceCellList.get(cellIndex);
+                XSSFCell newCell = newRow.createCell(cellIndex);
+                newCell.setCellStyle(templateCell.getCellStyle());
             }
         }
 

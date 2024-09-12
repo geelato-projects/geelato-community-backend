@@ -4,6 +4,7 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
@@ -13,51 +14,23 @@ import java.util.Date;
  *
  * @author diabl
  */
+@Getter
 @Setter
 @Entity(name = "platform_message")
 @Title(title = "消息")
 public class Message extends BaseEntity {
-
-    private String title;
-    private String content;
-    private String receiver;
-    private String sender;
-    private Date sendTime;
-    private String sendMethod;
-
     @Title(title = "消息标题")
-    @Col(name = "title")
-    public String getTitle() {
-        return title;
-    }
-
+    private String title;
     @Title(title = "消息内容")
-    @Col(name = "content")
-    public String getContent() {
-        return content;
-    }
-
+    private String content;
     @Title(title = "接收者")
-    @Col(name = "receiver")
-    public String getReceiver() {
-        return receiver;
-    }
-
+    private String receiver;
     @Title(title = "发送者")
-    @Col(name = "sender")
-    public String getSender() {
-        return sender;
-    }
-
+    private String sender;
     @Title(title = "发送时间")
     @Col(name = "sendTime")
-    public Date getSendTime() {
-        return sendTime;
-    }
-
+    private Date sendTime;
     @Title(title = "发送方式")
     @Col(name = "sendMethod")
-    public String getSendMethod() {
-        return sendMethod;
-    }
+    private String sendMethod;
 }

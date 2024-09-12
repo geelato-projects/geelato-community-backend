@@ -11,6 +11,7 @@ import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.m.security.enums.EncodingItemTypeEnum;
 import cn.geelato.web.platform.m.security.enums.EncodingSerialTypeEnum;
 import com.alibaba.fastjson2.JSON;
+import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
 
@@ -21,91 +22,42 @@ import java.util.List;
  * @author diabl
  * @description: 编码
  */
+@Getter
 @Setter
 @Entity(name = "platform_encoding")
 @Title(title = "编码")
 public class Encoding extends BaseEntity implements EntityEnableAble {
-    private String title;
-    private String template;
-    private String separators;
-    private String example;
-    private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
-    private String description;
-    private String appId;
-    // 解析
-    private String formatExample;
-    private String dateType;// 日期格式
-    private int serialDigit;// 位数
-    private String serialType;// 顺序、随机
-    private boolean coverPos = true;// 顺序补位 0
-
-    @Title(title = "标题")
-    @Col(name = "title")
-    public String getTitle() {
-        return title;
-    }
-
-    @Title(title = "模板")
-    @Col(name = "template")
-    public String getTemplate() {
-        return template;
-    }
-
-    @Title(title = "分隔符")
-    @Col(name = "separators")
-    public String getSeparators() {
-        return separators;
-    }
-
-    @Title(title = "示例")
-    @Col(name = "example")
-    public String getExample() {
-        return example;
-    }
-
-    @Title(title = "描述")
-    @Col(name = "description")
-    public String getDescription() {
-        return description;
-    }
-
     @Title(title = "应用id")
     @Col(name = "app_id")
-    public String getAppId() {
-        return appId;
-    }
-
-    @Override
+    private String appId;
+    @Title(title = "标题")
+    private String title;
+    @Title(title = "模板")
+    private String template;
+    @Title(title = "分隔符")
+    private String separators;
+    @Title(title = "示例")
+    private String example;
     @Title(title = "状态", description = "0:停用|1:启用")
     @Col(name = "enable_status")
-    public int getEnableStatus() {
-        return enableStatus;
-    }
-
+    private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
+    @Title(title = "描述")
+    private String description;
+    // 解析
     @Transient
-    public String getFormatExample() {
-        return formatExample;
-    }
-
+    private String formatExample;
+    @Title(title = "日期格式")
     @Transient
-    public String getDateType() {
-        return dateType;
-    }
-
+    private String dateType;
+    @Title(title = "位数")
     @Transient
-    public int getSerialDigit() {
-        return serialDigit;
-    }
-
+    private int serialDigit;
+    @Title(title = "顺序、随机")
     @Transient
-    public String getSerialType() {
-        return serialType;
-    }
-
+    private String serialType;
+    @Title(title = "顺序补位 0")
     @Transient
-    public boolean isCoverPos() {
-        return coverPos;
-    }
+    private boolean coverPos = true;
 
     @Override
     public void afterSet() {

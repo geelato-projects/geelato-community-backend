@@ -107,7 +107,7 @@ public class RoleService extends BaseSortableService {
         // 更新
         Role formMap = super.updateModel(form);
         // 是否用于应用
-        if (RoleTypeEnum.PLATFORM.getValue().equals(model.getType()) && !model.getUsedApp()) {
+        if (RoleTypeEnum.PLATFORM.getValue().equals(model.getType()) && !model.isUsedApp()) {
             // 角色APP关系表
             Map<String, Object> params = new HashMap<>();
             params.put("roleId", model.getId());

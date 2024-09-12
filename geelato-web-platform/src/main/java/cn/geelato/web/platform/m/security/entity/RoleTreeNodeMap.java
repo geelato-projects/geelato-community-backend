@@ -7,65 +7,37 @@ import cn.geelato.core.meta.annotation.ForeignKey;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.web.platform.m.base.entity.TreeNode;
+import lombok.Getter;
 import lombok.Setter;
 
 /**
  * 菜单存在platform_tree_node中，字段flag为"menuItem"
  */
+@Getter
 @Setter
 @Entity(name = "platform_role_r_tree_node")
 @Title(title = "角色菜单关系表")
 public class RoleTreeNodeMap extends BaseEntity {
-
-    private String appId;
-    private String treeId;
-    private String roleId;
-    private String treeNodeId;
-    private String treeNodeText;
-    private String roleName;
-    private String title;
-
     @Title(title = "应用Id")
     @Col(name = "app_id")
-    public String getAppId() {
-        return appId;
-    }
-
+    private String appId;
     @Title(title = "树ID")
     @Col(name = "tree_id", nullable = false)
-    public String getTreeId() {
-        return treeId;
-    }
-
-    @Title(title = "名称")
-    @Col(name = "title", nullable = false)
-    public String getTitle() {
-        return title;
-    }
-
+    private String treeId;
     @Title(title = "角色ID")
-    @Col(name = "role_id", refTables = "platform_role", refColName = "platform_role.id")
     @ForeignKey(fTable = Role.class)
-    public String getRoleId() {
-        return roleId;
-    }
-
+    @Col(name = "role_id", refTables = "platform_role", refColName = "platform_role.id")
+    private String roleId;
     @Title(title = "菜单ID")
-    @Col(name = "tree_node_id", refTables = "platform_tree_node", refColName = "platform_tree_node.id")
     @ForeignKey(fTable = TreeNode.class)
-    public String getTreeNodeId() {
-        return treeNodeId;
-    }
-
+    @Col(name = "tree_node_id", refTables = "platform_tree_node", refColName = "platform_tree_node.id")
+    private String treeNodeId;
     @Title(title = "菜单名称")
     @Col(name = "tree_node_text", isRefColumn = true, refLocalCol = "treeNodeId", refColName = "platform_tree_node.text")
-    public String getTreeNodeText() {
-        return treeNodeText;
-    }
-
+    private String treeNodeText;
     @Title(title = "角色名称")
     @Col(name = "role_name", isRefColumn = true, refLocalCol = "roleId", refColName = "platform_role.name")
-    public String getRoleName() {
-        return roleName;
-    }
+    private String roleName;
+    @Title(title = "名称")
+    private String title;
 }

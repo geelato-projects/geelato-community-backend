@@ -5,6 +5,7 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.utils.StringUtils;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Map;
@@ -12,25 +13,48 @@ import java.util.Map;
 /**
  * @author geemeta
  */
+@Getter
 @Setter
 @Title(title = "实体信息")
 @Entity(name = "platform_dev_table")
 public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
-
+    @Title(title = "应用Id")
+    @Col(name = "app_id")
     private String appId;
+    @Title(title = "名称(中文)")
     private String title;
+    @Title(title = "数据库连接id")
+    @Col(name = "connect_id")
     private String connectId;
+    @Title(title = "表名", description = "与数据库中的表名一致")
+    @Col(name = "table_name")
     private String tableName;
+    @Title(title = "实体名称", description = "实体名称")
+    @Col(name = "entity_name")
     private String entityName;
+    @Title(title = "表格类型", description = "entity or view")
+    @Col(name = "table_type")
     private String tableType;
+    @Title(title = "备注")
+    @Col(name = "table_comment")
     private String tableComment;
+    @Title(title = "启用状态", description = "1表示启用、0表示未启用")
+    @Col(name = "enable_status", nullable = false, dataType = "tinyint", numericPrecision = 1)
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
+    @Title(title = "已链接")
     private int linked;
+    @Title(title = "补充描述")
     private String description;
+    @Title(title = "同步状态")
     private Boolean synced = false;
+    @Title(title = "来源类型", description = "system:系统;creation:创建;")
+    @Col(name = "source_type")
     private String sourceType;
-    private int packBusData = 0;// 0 不打包，1 增量，2 全量
-
+    @Title(title = "数据打包策略：0 不打包，1 增量，2 全量")
+    @Col(name = "pack_bus_data")
+    private int packBusData = 0;
+    @Title(title = "视图语句")
+    @Col(name = "view_sql")
     private String viewSql;
 
     public TableMeta() {
@@ -61,90 +85,5 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         this.sourceType = map.get("source_type") == null ? null : map.get("source_type").toString();
         this.packBusData = map.get("pack_bus_data") == null ? 0 : Integer.parseInt(map.get("pack_bus_data").toString());
         this.viewSql = map.get("view_sql") == null ? null : map.get("view_sql").toString();
-    }
-
-    @Title(title = "应用Id")
-    @Col(name = "app_id")
-    public String getAppId() {
-        return appId;
-    }
-
-    @Col(name = "table_name")
-    @Title(title = "表名", description = "与数据库中的表名一致")
-    public String getTableName() {
-        return tableName;
-    }
-
-    @Col(name = "entity_name")
-    @Title(title = "实体名称", description = "实体名称")
-    public String getEntityName() {
-        return entityName;
-    }
-
-    @Col(name = "connect_id")
-    @Title(title = "数据库连接id")
-    public String getConnectId() {
-        return connectId;
-    }
-
-    @Col(name = "table_type")
-    @Title(title = "表格类型", description = "entity or view")
-    public String getTableType() {
-        return tableType;
-    }
-
-    @Col(name = "table_comment")
-    @Title(title = "备注")
-    public String getTableComment() {
-        return tableComment;
-    }
-
-    @Col(name = "title")
-    @Title(title = "名称(中文)")
-    public String getTitle() {
-        return title;
-    }
-
-    @Col(name = "linked")
-    @Title(title = "已链接")
-    public int getLinked() {
-        return linked;
-    }
-
-    @Col(name = "description")
-    @Title(title = "补充描述")
-    public String getDescription() {
-        return description;
-    }
-
-    @Title(title = "启用状态", description = "1表示启用、0表示未启用")
-    @Col(name = "enable_status", nullable = false, dataType = "tinyint", numericPrecision = 1)
-    @Override
-    public int getEnableStatus() {
-        return this.enableStatus;
-    }
-
-    @Col(name = "view_sql")
-    @Title(title = "视图语句")
-    public String getViewSql() {
-        return viewSql;
-    }
-
-    @Col(name = "synced")
-    @Title(title = "同步状态")
-    public Boolean getSynced() {
-        return synced;
-    }
-
-    @Col(name = "source_type")
-    @Title(title = "来源类型", description = "system:系统;creation:创建;")
-    public String getSourceType() {
-        return sourceType;
-    }
-
-    @Col(name = "pack_bus_data")
-    @Title(title = "数据打包策略：0 不打包，1 增量，2 全量")
-    public int getPackBusData() {
-        return packBusData;
     }
 }

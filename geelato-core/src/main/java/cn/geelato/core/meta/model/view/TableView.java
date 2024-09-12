@@ -6,6 +6,7 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
+import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
 
@@ -14,89 +15,41 @@ import java.util.Locale;
 /**
  * @author diabl
  */
+@Getter
 @Setter
 @Title(title = "实体视图关系")
 @Entity(name = "platform_dev_view")
 public class TableView extends BaseSortableEntity implements EntityEnableAble {
-
-    private String appId;
-    private String connectId;
-    private String entityName;
-    private String title;
-    private String viewName;
-    private String viewType;
-    private String viewConstruct;
-    private String viewColumn;
-    private String description;
-    private int linked;
-    private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
-
     @Title(title = "应用Id")
     @Col(name = "app_id")
-    public String getAppId() {
-        return appId;
-    }
-
-    @Col(name = "connect_id")
+    private String appId;
     @Title(title = "数据库连接id")
-    public String getConnectId() {
-        return connectId;
-    }
-
+    @Col(name = "connect_id")
+    private String connectId;
     @Col(name = "entity_name")
     @Title(title = "实体名称")
-    public String getEntityName() {
-        return entityName;
-    }
-
-    @Col(name = "title")
+    private String entityName;
     @Title(title = "视图名称")
-    public String getTitle() {
-        return title;
-    }
-
+    private String title;
+    @Title(title = "视图名称")
     @Col(name = "view_name")
-    @Title(title = "视图名称")
-    public String getViewName() {
-        return viewName;
-    }
-
-    @Col(name = "view_type")
+    private String viewName;
     @Title(title = "视图类型")
-    public String getViewType() {
-        return viewType;
-    }
-
+    @Col(name = "view_type")
+    private String viewType;
+    @Title(title = "视图语句")
     @Col(name = "view_construct")
+    private String viewConstruct;
     @Title(title = "视图语句")
-    public String getViewConstruct() {
-        return viewConstruct;
-    }
-
     @Col(name = "view_column")
-    @Title(title = "视图语句")
-    public String getViewColumn() {
-        return viewColumn;
-    }
-
-    @Col(name = "description")
+    private String viewColumn;
     @Title(title = "补充描述")
-    public String getDescription() {
-        return description;
-    }
-
-    @Col(name = "linked")
+    private String description;
     @Title(title = "已链接")
-    public int getLinked() {
-        return linked;
-    }
-
+    private int linked;
     @Title(title = "启用状态", description = "1表示启用、0表示未启用")
     @Col(name = "enable_status")
-    @Override
-    public int getEnableStatus() {
-        return enableStatus;
-    }
+    private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
 
     @Override
     public void afterSet() {

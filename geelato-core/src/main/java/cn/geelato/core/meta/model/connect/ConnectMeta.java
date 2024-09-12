@@ -61,6 +61,4 @@ public class ConnectMeta extends BaseEntity implements EntityEnableAble {
 
     @Transient
     private String apps;
-
-
 }

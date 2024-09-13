@@ -1,10 +1,10 @@
 package cn.geelato.web.platform.m.base.service;
 
+import cn.geelato.web.platform.m.base.entity.App;
+import cn.geelato.web.platform.m.base.entity.AppConnectMap;
 import cn.geelato.web.platform.m.security.entity.RoleAppMap;
 import cn.geelato.web.platform.m.security.service.RoleAppMapService;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.web.platform.m.base.entity.App;
-import cn.geelato.web.platform.m.base.entity.AppConnectMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -76,6 +76,27 @@ public class AppService extends BaseSortableService {
         App app = super.createModel(model);
         app.setConnects(model.getConnects());
         // 关联应用数据链接
+        appConnectMapService.insertModels(app);
+        // 关联平台级角色
+        if (Strings.isNotBlank(model.getRoles())) {
+            RoleAppMap map = new RoleAppMap();
+            map.setAppId(app.getId());
+            map.setRoleId(model.getRoles());
+            roleAppMapService.insertModels(map);
+        }
+
+        return app;
+    }
+
+    public App importModel(App model) {
+        String id = model.getId();
+        model.setId(null);
+        App app = super.createModel(model);
+        // 更新id
+        dao.getJdbcTemplate().update("UPDATE platform_app SET id=? WHERE id=?", id, app.getId());
+        app.setId(id);
+        // 关联应用数据链接
+        app.setConnects(model.getConnects());
         appConnectMapService.insertModels(app);
         // 关联平台级角色
         if (Strings.isNotBlank(model.getRoles())) {

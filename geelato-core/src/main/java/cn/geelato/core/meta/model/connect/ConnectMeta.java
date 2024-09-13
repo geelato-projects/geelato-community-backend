@@ -4,7 +4,6 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
-import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import lombok.Getter;
@@ -58,7 +57,4 @@ public class ConnectMeta extends BaseEntity implements EntityEnableAble {
     @Title(title = "启用状态", description = "1表示启用、0表示未启用")
     @Col(name = "enable_status", nullable = false, numericPrecision = 1)
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
-
-    @Transient
-    private String apps;
 }

@@ -1,12 +1,12 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.web.platform.m.model.service.DevDbConnectService;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.entity.AppConnectMap;
+import cn.geelato.web.platform.m.model.service.DevDbConnectService;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -45,7 +45,7 @@ public class AppConnectMapService extends BaseService {
 
     public void insertModels(App app) {
         // 角色存在，
-        List<ConnectMeta> connects = devDbConnectService.getModelsById(ConnectMeta.class, app.getConnects());
+        List<ConnectMeta> connects = devDbConnectService.getModelsById(ConnectMeta.class, null);
         // 角色-应用
         List<AppConnectMap> maps = this.queryModelByIds(null, app.getId());
         // 不存在插入
@@ -93,7 +93,7 @@ public class AppConnectMapService extends BaseService {
 
     public void insertModels(ConnectMeta meta) {
         // 应用
-        List<App> apps = appService.getModelsById(App.class, meta.getApps());
+        List<App> apps = appService.getModelsById(App.class, null);
         // 角色-应用
         List<AppConnectMap> maps = this.queryModelByIds(meta.getId(), null);
         // 不存在插入

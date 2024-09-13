@@ -104,8 +104,14 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    public ApiResult<App> createOrUpdate(@RequestBody App form) {
+    public ApiResult<App> createOrUpdate(@RequestBody App form, String useType) {
         try {
+            if ("import".equalsIgnoreCase(useType)) {
+                if (Strings.isBlank(form.getId())) {
+                    throw new RuntimeException("The ID cannot be empty");
+                }
+                return ApiResult.success(appService.importModel(form));
+            }
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
                 return ApiResult.success(appService.updateModel(form));
@@ -131,14 +137,23 @@ public class AppController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    public ApiResult<Boolean> validate(@RequestBody App form) {
+    @RequestMapping(value = "/validate/{type}", method = RequestMethod.POST)
+    public ApiResult<Boolean> validate(@PathVariable(required = true) String type, @RequestBody App form) {
         try {
-            Map<String, String> params = new HashMap<>();
-            params.put("code", form.getCode());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
-            params.put("tenant_code", form.getTenantCode());
-            return ApiResult.success(appService.validate("platform_app", form.getId(), params));
+            if ("code".equalsIgnoreCase(type)) {
+                Map<String, String> params = new HashMap<>();
+                params.put("code", form.getCode());
+                params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+                params.put("tenant_code", form.getTenantCode());
+                return ApiResult.success(appService.validate("platform_app", form.getId(), params));
+            } else if ("id".equalsIgnoreCase(type) && Strings.isNotBlank(form.getId())) {
+                Map<String, Object> params = new HashMap<>();
+                params.put("id", form.getId());
+                List<App> apps = appService.queryModel(CLAZZ, params);
+                return ApiResult.success(apps == null || apps.isEmpty());
+            } else {
+                throw new RuntimeException("type is error");
+            }
         } catch (Exception e) {
             log.error(e.getMessage());
             return ApiResult.fail(e.getMessage());

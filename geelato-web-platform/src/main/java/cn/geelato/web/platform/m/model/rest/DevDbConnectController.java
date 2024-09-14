@@ -120,4 +120,20 @@ public class DevDbConnectController extends BaseController {
             return ApiResult.fail(e.getMessage());
         }
     }
+
+    @RequestMapping(value = "/batchCreate", method = RequestMethod.POST)
+    public ApiResult<NullResult> batchCreate(@RequestBody Map<String, Object> params) {
+        try {
+            String appId = (String) params.get("appId");
+            List<String> connectIds = (List<String>) params.get("connectIds");
+            if (Strings.isBlank(appId) || connectIds == null || connectIds.isEmpty()) {
+                return ApiResult.fail("AppId or connectIds can not be null");
+            }
+            devDbConnectService.batchCreate(appId, connectIds);
+            return ApiResult.successNoResult();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
+        }
+    }
 }

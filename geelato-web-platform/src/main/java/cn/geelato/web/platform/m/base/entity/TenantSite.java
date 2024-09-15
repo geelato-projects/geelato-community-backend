@@ -31,6 +31,7 @@ public class TenantSite extends BaseEntity {
     private String logoIcon;
 
     @Title(title = "特点、亮点")
+    @Col(name = "features",dataType = "JSON")
     private String features;
 
     @Title(title = "企业的logo，一般带文字的版本，区别于标志图标。")

@@ -9,6 +9,7 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.sql.provider.*;
 import cn.geelato.utils.DateUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
@@ -21,8 +22,8 @@ import java.util.*;
  *
  * @author geemeta
  */
+@Slf4j
 public class SqlManager extends AbstractManager {
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(SqlManager.class);
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
     private static SqlManager instance;
     private final MetaManager metaManager = MetaManager.singleInstance();
@@ -44,7 +45,7 @@ public class SqlManager extends AbstractManager {
     }
 
     private SqlManager() {
-        logger.info("SqlManager Instancing...");
+        log.info("SqlManager Instancing...");
     }
 
     //========================================================

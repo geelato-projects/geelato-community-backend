@@ -203,6 +203,10 @@
               <version>1.1.14</version>
             </dependency>
 
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+            </dependency>
     </dependencies>
 
     <!--该工程打包成普通的jar，以便发布到仓库共其它应用模块使用，不采用spring-boot-maven-plugin打成fat jar

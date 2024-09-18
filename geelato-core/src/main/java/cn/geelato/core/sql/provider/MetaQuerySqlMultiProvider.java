@@ -1,5 +1,6 @@
 package cn.geelato.core.sql.provider;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.QueryCommand;
@@ -19,8 +20,8 @@ import java.util.*;
  * @author liuwq
  */
 @Component
+@Slf4j
 public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand> {
-    private static final Logger logger = LoggerFactory.getLogger(MetaQuerySqlMultiProvider.class);
 
     @Override
     protected Object[] buildParams(QueryCommand command) {

@@ -82,7 +82,7 @@ public class ApiController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
             List<Api> list = apiService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             List<String> groupNames = new ArrayList<>();
-            if (list != null && list.size() > 0) {
+            if (list != null && !list.isEmpty()) {
                 for (Api api : list) {
                     if (Strings.isNotBlank(api.getGroupName()) && !groupNames.contains(api.getGroupName())) {
                         groupNames.add(api.getGroupName());
@@ -101,7 +101,7 @@ public class ApiController extends BaseController {
         try {
             Api model = apiService.getModel(CLAZZ, id);
             List<ApiParam> apiParams = apiParamService.queryModelsByApis(id, null, null);
-            if (apiParams != null && apiParams.size() > 0) {
+            if (apiParams != null && !apiParams.isEmpty()) {
                 model.setRequestParams(apiParams.stream().filter(apiParam -> AlternateTypeEnum.REQUEST.getValue().equalsIgnoreCase(apiParam.getAlternateType())).collect(Collectors.toList()));
                 model.setResponseParams(apiParams.stream().filter(apiParam -> AlternateTypeEnum.RESPONSE.getValue().equalsIgnoreCase(apiParam.getAlternateType())).collect(Collectors.toList()));
             }
@@ -161,8 +161,6 @@ public class ApiController extends BaseController {
             if (Strings.isNotBlank(form.getId())) {
                 filters.addFilter("id", FilterGroup.Operator.neq, form.getId());
             }
-            // filters.addFilter("appId", form.getAppId());
-            // filters.addFilter("tenantCode", form.getTenantCode());
             List<Api> apis = apiService.queryModel(Api.class, filters);
             List<String> outsideUrls = new ArrayList<>();
             if (apis != null) {

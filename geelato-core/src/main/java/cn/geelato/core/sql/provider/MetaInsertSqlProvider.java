@@ -3,6 +3,7 @@ package cn.geelato.core.sql.provider;
 import cn.geelato.core.gql.TypeConverter;
 import cn.geelato.core.gql.parser.SaveCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -14,8 +15,8 @@ import java.util.Map;
  * @author geemeta
  */
 @Component
+@Slf4j
 public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
-    private static final Logger logger = LoggerFactory.getLogger(MetaInsertSqlProvider.class);
 
     @Override
     protected Object[] buildParams(SaveCommand command) {

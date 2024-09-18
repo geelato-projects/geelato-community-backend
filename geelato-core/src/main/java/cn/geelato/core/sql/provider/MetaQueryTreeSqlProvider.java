@@ -39,7 +39,7 @@ public class MetaQueryTreeSqlProvider extends MetaBaseSqlProvider<QueryTreeComma
         sb.append(" t on tn.id=t.tree_node_id ");
         // where
         FilterGroup fg = command.getWhere();
-        if (fg != null && fg.getFilters() != null && fg.getFilters().size() > 0) {
+        if (fg != null && fg.getFilters() != null && !fg.getFilters().isEmpty()) {
             sb.append(" where ");
             buildConditions(sb, md, fg.getFilters(), fg.getLogic());
         }

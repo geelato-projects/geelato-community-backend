@@ -4,6 +4,7 @@ import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.QueryCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -15,9 +16,8 @@ import java.util.Map;
  * @author geemeta
  */
 @Component
+@Slf4j
 public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
-    private static final Logger logger = LoggerFactory.getLogger(MetaQuerySqlProvider.class);
-
     @Override
     protected Object[] buildParams(QueryCommand command) {
         return buildWhereParams(command);

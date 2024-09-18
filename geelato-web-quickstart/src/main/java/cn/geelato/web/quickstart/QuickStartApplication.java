@@ -1,6 +1,7 @@
 package cn.geelato.web.quickstart;
 
 import cn.geelato.web.platform.boot.BootApplication;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -10,13 +11,13 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"cn.geelato"})
-@EnableCaching // 开启缓存
+@EnableCaching
+@Slf4j
 public class QuickStartApplication extends BootApplication {
-    private static final Logger logger = LoggerFactory.getLogger(QuickStartApplication.class);
 
     @Override
     public void run(String... strings) throws Exception {
-        logger.info("QuickStartApplication>run");
+        log.info("QuickStartApplication>run");
         super.run(strings);
     }
 

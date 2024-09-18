@@ -7,6 +7,7 @@ import cn.geelato.core.gql.parser.QueryViewCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.view.ViewMeta;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -16,8 +17,8 @@ import java.util.Map;
 
 
 @Component
+@Slf4j
 public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewCommand> {
-    private static Logger logger = LoggerFactory.getLogger(MetaViewQuerySqlProvider.class);
 
     @Override
     protected Object[] buildParams(QueryViewCommand command) {
@@ -44,7 +45,7 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         }
         // where
         FilterGroup fg = command.getWhere();
-        if (fg != null && fg.getFilters() != null && fg.getFilters().size() > 0) {
+        if (fg != null && fg.getFilters() != null && !fg.getFilters().isEmpty()) {
             sb.append(" where ");
             buildConditions(sb, md, fg.getFilters(), fg.getLogic());
         }

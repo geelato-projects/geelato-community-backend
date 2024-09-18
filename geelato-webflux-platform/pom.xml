@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>geelato-parent</artifactId>
+        <groupId>cn.geelato</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath/>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>geelato-webflux-platform</artifactId>
+    <packaging>jar</packaging>
+    <name>geelato-webflux-platform</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-plugin-manager</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>plugin-all</artifactId>
+        </dependency>
+
+
+
+    </dependencies>
+
+    <!--该工程打包成普通的jar，以便发布到仓库共其它应用模块使用，不采用spring-boot-maven-plugin打成fat jar
+        若需要演示该platform平台模块的功能，可以新建一个模块，引用该jar进行演示。
+    -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

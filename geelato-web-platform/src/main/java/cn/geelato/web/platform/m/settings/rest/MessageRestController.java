@@ -25,7 +25,7 @@ import java.util.Map;
 public class MessageRestController extends BaseController {
     private static final Class<Message> CLAZZ = Message.class;
 
-    private MessageService messageService;
+    private final MessageService messageService;
 
     @Autowired
     public MessageRestController(MessageService messageService) {

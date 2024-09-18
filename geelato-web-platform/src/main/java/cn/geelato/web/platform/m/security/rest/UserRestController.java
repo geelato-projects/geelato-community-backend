@@ -35,7 +35,6 @@ import java.util.*;
 @ApiRestController(value = "/security/user")
 @Slf4j
 public class UserRestController extends BaseController {
-    private static final String DEFAULT_PASSWORD = "12345678";
     private static final int DEFAULT_PASSWORD_DIGIT = 8;
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<User> CLAZZ = User.class;

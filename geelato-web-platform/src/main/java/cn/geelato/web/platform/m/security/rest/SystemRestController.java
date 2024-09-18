@@ -27,8 +27,8 @@ import java.util.List;
 @ApiRestController(value = "/sys")
 @Slf4j
 public class SystemRestController extends BaseController {
-    protected AccountService accountService;
-    protected OrgService orgService;
+    private final AccountService accountService;
+    private final OrgService orgService;
 
     @Autowired
     public SystemRestController(AccountService accountService, OrgService orgService) {
@@ -105,11 +105,6 @@ public class SystemRestController extends BaseController {
      * @throws Exception
      */
     private User getUserByToken(HttpServletRequest req) throws Exception {
-//        String token = this.getToken(req);
-        // 验证令牌  如果令牌不正确会出现异常 被全局异常处理
-//        DecodedJWT verify = JWTUtil.verify(token);
-//        String loginName = verify.getClaim("loginName").asString();
-
         return dao.queryForObject(User.class, "loginName", req.getAttribute("loginName"));
     }
 

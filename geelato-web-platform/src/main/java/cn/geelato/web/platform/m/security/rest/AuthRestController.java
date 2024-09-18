@@ -48,12 +48,12 @@ public class AuthRestController extends BaseController {
             token.setRememberMe(rememberMe);
             try {
                 if (log.isDebugEnabled()) {
-                    log.debug("User [" + token.getUsername() + "] logging in ... ");
+                    log.debug("User [{}] logging in ... ", token.getUsername());
                 }
                 currentUser.login(token);
                 // if no exception, that's it, we're done!
                 if (log.isDebugEnabled()) {
-                    log.debug("User [" + currentUser.getPrincipal() + "] login successfully.");
+                    log.debug("User [{}] login successfully.", currentUser.getPrincipal());
                 }
             } catch (UnknownAccountException uae) {
                 // username wasn't in the system, show them an error message?
@@ -80,15 +80,6 @@ public class AuthRestController extends BaseController {
         return accountService.wrapUser(user);
     }
 
-//    @RequestMapping(value = "/loginSecurity", method = RequestMethod.POST)
-//    @ResponseBody
-//    public ApiResult loginMD5(@RequestBody User user, HttpServletRequest req) {
-//        ApiResult apiResult = new ApiResult();
-//        apiResult.setData(login(user, req));
-//        return apiResult;
-//    }
-
-
     @RequestMapping(value = "/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout() {
@@ -98,7 +89,7 @@ public class AuthRestController extends BaseController {
             String name = SecurityHelper.getCurrentUser().getName();
             Subject currentUser = SecurityUtils.getSubject();
             currentUser.logout();
-            log.debug("User [" + name + "] logout successfully.");
+            log.debug("User [{}] logout successfully.", name);
         }
     }
 

@@ -3,7 +3,6 @@ package cn.geelato.web.platform.script.rest;
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.graal.GraalContext;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.script.entity.Api;
 import cn.geelato.web.platform.script.service.ApiService;
@@ -11,7 +10,6 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -61,20 +59,6 @@ public class ScriptController extends BaseController {
         return api.getReleaseContent();
     }
 
-//    private String scriptTemplate() {
-//        return "(function(parameter){\n" +
-//                "\t var ctx={};\n" +
-//                "\t ctx.parameter=parameter;\n" +
-//                "\t ctx.result=null;\n" +
-////                "\t var $gl={};\n" +
-////                "\t $gl.dao=GqlService;\n" +
-////                "\t $gl.json=JsonService;\n" +
-////                "\t $gl.user=userVariable;\n" +
-////                "\t $gl.tenant=tenantVariable;\n" +
-//                "\t #scriptContent# \n" +
-//                "\t return ctx;\t\n" +
-//                "})";
-//    }
     private String scriptTemplate() {
         return "(function(parameter){\n" +
                 "\t var ctx={};\n" +
@@ -88,14 +72,14 @@ public class ScriptController extends BaseController {
         BufferedReader br = null;
         try {
             br = request.getReader();
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         String str;
         try {
             while ((str = br.readLine()) != null) {
                 stringBuilder.append(str);
             }
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         return stringBuilder.toString();
     }

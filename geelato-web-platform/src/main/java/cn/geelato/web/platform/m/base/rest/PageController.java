@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * @author itechgee@126.com
  */
-@ApiRestController("/page/")
+@ApiRestController("/page")
 @Slf4j
 public class PageController extends BaseController {
 
@@ -32,7 +32,7 @@ public class PageController extends BaseController {
      * @param id     id值
      * @return {id,type,appId,code,releaseContent,pageCustom}，其中pageCustom为不同用户对该页面的自定义信息
      */
-    @RequestMapping(value = {"getPageAndCustom/{idType}/{id}", "getPageAndCustom/{idType}/{id}/*"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @RequestMapping(value = {"/getPageAndCustom/{idType}/{id}", "getPageAndCustom/{idType}/{id}/*"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<HashMap<String, Object>> getPageAndCustom(@PathVariable String idType, @PathVariable String id) {
         try {
             // 获取页面定义信息

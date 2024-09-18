@@ -55,7 +55,7 @@ public class BaseService {
         result.setSize(request.getPageSize());
         result.setTotal(queryList != null ? queryList.size() : 0);
         result.setDataSize(pageQueryList != null ? pageQueryList.size() : 0);
-        result.setData(new DataItems(pageQueryList, result.getTotal()));
+        result.setData(new DataItems<>(pageQueryList, result.getTotal()));
 
         return result;
     }
@@ -334,7 +334,7 @@ public class BaseService {
      * @param id
      * @return 列表
      */
-    public <T extends BaseEntity> List getModelsById(Class<T> entity, String id) {
+    public <T extends BaseEntity> List<T> getModelsById(Class<T> entity, String id) {
         List<T> list = new ArrayList<>();
         if (Strings.isNotBlank(id)) {
             FilterGroup filter = new FilterGroup();
@@ -355,18 +355,18 @@ public class BaseService {
      */
     public <T extends BaseEntity> Map<String, List<T>> compareBaseEntity(List<T> sources, List<T> targets) {
         Map<String, List<T>> result = new HashMap<>();
-        if (sources != null && sources.size() > 0 && targets != null && targets.size() > 0) {
-            List<String> sourceIds = sources.stream().map(T::getId).collect(Collectors.toList());
-            List<String> targetIds = targets.stream().map(T::getId).collect(Collectors.toList());
+        if (sources != null && !sources.isEmpty() && targets != null && !targets.isEmpty()) {
+            List<String> sourceIds = sources.stream().map(T::getId).toList();
+            List<String> targetIds = targets.stream().map(T::getId).toList();
             // 删除的，新的没有
             result.put(COMPARE_RESULT_DELETE, sources.stream().filter(apiParam -> !targetIds.contains(apiParam.getId())).collect(Collectors.toList()));
             // 更新的，旧的有的
             result.put(COMPARE_RESULT_UPDATE, targets.stream().filter(apiParam -> sourceIds.contains(apiParam.getId())).collect(Collectors.toList()));
             // 新增的，旧的没有
             result.put(COMPARE_RESULT_ADD, targets.stream().filter(apiParam -> !sourceIds.contains(apiParam.getId())).collect(Collectors.toList()));
-        } else if (sources != null && sources.size() > 0) {
+        } else if (sources != null && !sources.isEmpty()) {
             result.put(COMPARE_RESULT_DELETE, sources);
-        } else if (targets != null && targets.size() > 0) {
+        } else if (targets != null && !targets.isEmpty()) {
             result.put(COMPARE_RESULT_ADD, targets);
         }
 

@@ -29,7 +29,7 @@ public class SqlService extends BaseService {
         Map<String, Object> params = new HashMap<>();
         params.put("sqlId", model.getId());
         List<AppSqlMap> list = appSqlMapService.queryModel(AppSqlMap.class, params);
-        if (list != null && list.size() > 0) {
+        if (list != null && !list.isEmpty()) {
             for (AppSqlMap map : list) {
                 appSqlMapService.isDeleteModel(map);
             }

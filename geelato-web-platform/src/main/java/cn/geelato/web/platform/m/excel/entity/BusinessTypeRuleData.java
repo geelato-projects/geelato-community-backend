@@ -91,7 +91,7 @@ public class BusinessTypeRuleData {
         if (this.isRuleTypeQueryRule() || this.isRuleTypeQueryGoal()) {
             if (Strings.isNotBlank(this.rule)) {
                 String[] keys = this.rule.split(":");
-                if (keys != null && keys.length == 2 && Strings.isNotBlank(keys[0]) && Strings.isNotBlank(keys[1])) {
+                if (keys.length == 2 && Strings.isNotBlank(keys[0]) && Strings.isNotBlank(keys[1])) {
                     return keys[0];
                 }
             }
@@ -109,13 +109,11 @@ public class BusinessTypeRuleData {
         if (this.isRuleTypeQueryRule() || this.isRuleTypeQueryGoal()) {
             if (Strings.isNotBlank(this.rule)) {
                 String[] keys = this.rule.split(":");
-                if (keys != null && keys.length == 2 && Strings.isNotBlank(keys[0]) && Strings.isNotBlank(keys[1])) {
+                if (keys.length == 2 && Strings.isNotBlank(keys[0]) && Strings.isNotBlank(keys[1])) {
                     String[] keys1 = keys[1].split(",");
-                    if (keys1 != null) {
-                        for (String key : keys1) {
-                            if (Strings.isNotBlank(key) && !columns.contains(key)) {
-                                columns.add(key);
-                            }
+                    for (String key : keys1) {
+                        if (Strings.isNotBlank(key) && !columns.contains(key)) {
+                            columns.add(key);
                         }
                     }
                 }
@@ -128,11 +126,9 @@ public class BusinessTypeRuleData {
         Set<String> columnNames = new LinkedHashSet<>();
         if (Strings.isNotBlank(this.columnName)) {
             String[] columns = this.columnName.split(",");
-            if (columns != null && columns.length > 0) {
-                for (String str : columns) {
-                    if (Strings.isNotBlank(str) && !columnNames.contains(str)) {
-                        columnNames.add(str);
-                    }
+            for (String str : columns) {
+                if (Strings.isNotBlank(str)) {
+                    columnNames.add(str);
                 }
             }
         }

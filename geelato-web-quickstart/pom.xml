@@ -100,4 +100,20 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>default</id>
+            <properties>
+                <start.mainclass>cn.geelato.web.quickstart.QuickStartApplication</start.mainclass>
+            </properties>
+        </profile>
+    <!-- schedule -->
+        <profile>
+            <id>schedule</id>
+            <properties>
+                <start.mainclass>dev</start.mainclass>
+            </properties>
+        </profile>
+    </profiles>
 </project>

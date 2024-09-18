@@ -28,7 +28,7 @@ public class DbScriptManager extends AbstractScriptManager {
                 }
                 return sql;
         } else {
-            Assert.isTrue(false, "未找到sqlId：" + id + "，对应的语句。");
+            log.error("未找到sqlId：{} 对应的语句。",id);
             return null;
         }
     }

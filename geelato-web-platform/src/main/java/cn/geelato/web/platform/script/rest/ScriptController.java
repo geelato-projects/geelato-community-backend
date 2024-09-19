@@ -29,24 +29,27 @@ public class ScriptController extends BaseController {
 
     @RequestMapping(value = "/exec/{scriptId}", method = RequestMethod.POST)
     @ResponseBody
+    @SuppressWarnings("rawtypes")
     public ApiResult<?> exec(@PathVariable("scriptId") String scriptId, HttpServletRequest request) {
         String parameter = getBody(request);
         String scriptContent = getScriptContent(scriptId);
-        Context context = Context.newBuilder("js")
-                .allowHostAccess(HostAccess.ALL)
-                .allowHostClassLookup(className -> true).build();
-        Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
-        Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
-        Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
-        context.getBindings("js").putMember("$gl", globalGraalVariableMap);
-        for (Map.Entry entry : graalServiceMap.entrySet()) {
-            context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
+        try (
+            Context context = Context.newBuilder("js")
+                    .allowHostAccess(HostAccess.ALL)
+                    .allowHostClassLookup(className -> true).build()) {
+            Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
+            Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
+            Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
+            context.getBindings("js").putMember("$gl", globalGraalVariableMap);
+            for (Map.Entry entry : graalServiceMap.entrySet()) {
+                context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
+            }
+            for (Map.Entry entry : graalVariableMap.entrySet()) {
+                context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
+            }
+            Map result = context.eval("js", scriptContent).execute(parameter).as(Map.class);
+            return ApiResult.success(result.get("result"));
         }
-        for (Map.Entry entry : graalVariableMap.entrySet()) {
-            context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
-        }
-        Map result = context.eval("js", scriptContent).execute(parameter).as(Map.class);
-        return new ApiResult<>(result.get("result")).success();
     }
 
     private String getScriptContent(String scriptId) {
@@ -60,12 +63,13 @@ public class ScriptController extends BaseController {
     }
 
     private String scriptTemplate() {
-        return "(function(parameter){\n" +
-                "\t var ctx={};\n" +
-                "\t ctx.parameter=parameter;\n" +
-                "\t ctx.result=" +"#scriptContent# "+"();\n"+
-                "\t return ctx;\t\n" +
-                "})";
+        return """
+                (function(parameter){
+                \t var ctx={};
+                \t ctx.parameter=parameter;
+                \t ctx.result=#scriptContent# ();
+                \t return ctx;\t
+                })""";
     }
     private String getBody(HttpServletRequest request) {
         StringBuilder stringBuilder = new StringBuilder();

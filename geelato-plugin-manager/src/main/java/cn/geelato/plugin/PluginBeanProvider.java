@@ -9,9 +9,13 @@ import java.util.List;
 
 @Component
 public class PluginBeanProvider {
+    private final SpringPluginManager springPluginManager;
 
     @Autowired
-    SpringPluginManager springPluginManager;
+    public PluginBeanProvider(SpringPluginManager springPluginManager){
+        this.springPluginManager=springPluginManager;
+    }
+
 
     public <T> T getBean(Class<T> type,String pluginId){
         List<T> extensions=null;

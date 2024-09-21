@@ -1,5 +1,6 @@
 package cn.geelato.utils;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +26,18 @@ public class StringUtils extends org.springframework.util.StringUtils {
                 sb.append(array[i]);
             } else {
                 sb.append(array[i]).append(separator);
+            }
+        }
+        return sb.toString();
+    }
+
+    public static String join(List<String> array, String separator) {
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0, len = array.size(); i < len; i++) {
+            if (i == (len - 1)) {
+                sb.append(array.get(i));
+            } else {
+                sb.append(array.get(i)).append(separator);
             }
         }
         return sb.toString();

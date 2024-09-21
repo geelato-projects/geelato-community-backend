@@ -1,14 +1,11 @@
 package cn.geelato.web.platform.m.model.service;
 
+import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
-import cn.geelato.web.platform.m.base.entity.AppConnectMap;
-import cn.geelato.web.platform.m.base.service.AppConnectMapService;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.BaseService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,38 +13,19 @@ import java.util.List;
  */
 @Component
 public class DevDbConnectService extends BaseService {
-    @Lazy
-    @Autowired
-    private AppConnectMapService appConnectMapService;
 
-    public void setApps(ConnectMeta model) {
-        List<AppConnectMap> appConnectMaps = appConnectMapService.queryModelByIds(model.getId(), null);
-        if (appConnectMaps != null) {
-            List<String> appIds = new ArrayList<>();
-            for (AppConnectMap map : appConnectMaps) {
-                if (!appIds.contains(map.getAppId())) {
-                    appIds.add(map.getAppId());
-                }
+    public void batchCreate(String appId, List<String> connectIds) {
+        FilterGroup filter = new FilterGroup();
+        filter.addFilter("id", FilterGroup.Operator.in, StringUtils.join(connectIds, ","));
+        List<ConnectMeta> connectMetaList = this.queryModel(ConnectMeta.class, filter);
+        if (connectMetaList != null && !connectMetaList.isEmpty()) {
+            for (ConnectMeta connectMeta : connectMetaList) {
+                connectMeta.setId(null);
+                connectMeta.setDbUserName(null);
+                connectMeta.setDbPassword(null);
+                connectMeta.setAppId(appId);
+                this.createModel(connectMeta);
             }
-            model.setApps(String.join(",", appIds));
         }
-    }
-
-    public ConnectMeta updateModel(ConnectMeta model) {
-        ConnectMeta meta = super.updateModel(model);
-        meta.setApps(model.getApps());
-        // 关联应用数据链接
-        appConnectMapService.insertModels(meta);
-
-        return meta;
-    }
-
-    public ConnectMeta createModel(ConnectMeta model) {
-        ConnectMeta meta = super.createModel(model);
-        meta.setApps(model.getApps());
-        // 关联应用数据链接
-        appConnectMapService.insertModels(meta);
-
-        return meta;
     }
 }

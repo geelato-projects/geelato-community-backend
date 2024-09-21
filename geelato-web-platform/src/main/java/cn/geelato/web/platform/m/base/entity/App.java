@@ -65,6 +65,4 @@ public class App extends BaseSortableEntity {
 
     @Transient
     private String roles;
-    @Transient
-    private String connects;
 }

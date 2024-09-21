@@ -21,8 +21,8 @@ public class DevDbConnectService extends BaseService {
         if (connectMetaList != null && !connectMetaList.isEmpty()) {
             for (ConnectMeta connectMeta : connectMetaList) {
                 connectMeta.setId(null);
-                connectMeta.setDbUserName(null);
-                connectMeta.setDbPassword(null);
+                connectMeta.setDbUserName("USERNAME");
+                connectMeta.setDbPassword("PASSWORD");
                 connectMeta.setAppId(appId);
                 this.createModel(connectMeta);
             }

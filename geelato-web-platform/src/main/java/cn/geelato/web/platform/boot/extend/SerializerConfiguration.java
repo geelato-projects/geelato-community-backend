@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.boot;
+package cn.geelato.web.platform.boot.extend;
 
 import cn.geelato.utils.DateUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;

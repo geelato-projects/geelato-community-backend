@@ -1,5 +1,6 @@
-package cn.geelato.web.platform.boot;
+package cn.geelato.web.platform.boot.extend;
 
+import cn.geelato.web.platform.boot.BaseConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;

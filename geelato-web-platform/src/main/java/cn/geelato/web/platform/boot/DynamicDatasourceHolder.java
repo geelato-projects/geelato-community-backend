@@ -8,7 +8,4 @@ public class DynamicDatasourceHolder {
     public static void setDataSourceKey(String dataSourceKey) {
         dataSourceContextHolder.set(dataSourceKey);
     }
-    public static void removeDataSourceKey(String dataSourceKey) {
-        dataSourceContextHolder.remove();
-    }
 }

@@ -53,7 +53,6 @@ public class BootApplication implements CommandLineRunner {
         log.info("[start application]...start");
         assertOS();
         parseStartArgs(args);
-//        initMeta();
         resolveSqlScript(args);
         resolveGraalContext();
         initEnvironment();

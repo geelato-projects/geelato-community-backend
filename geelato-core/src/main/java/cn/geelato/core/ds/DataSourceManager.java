@@ -19,7 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DataSourceManager extends AbstractManager {
 
 
-    private Dao dao;
     private static DataSourceManager instance;
 
     private final static ConcurrentHashMap<String, DataSource> dataSourceMap=new ConcurrentHashMap<>();
@@ -41,7 +40,6 @@ public class DataSourceManager extends AbstractManager {
 
 
     public void parseDataSourceMeta(Dao dao){
-        this.dao=dao;
         List<Map<String,Object>> dbConenctList=dao.getJdbcTemplate().queryForList("SELECT * FROM platform_dev_db_connect");
         for (Map<String,Object> dbConnectMap:dbConenctList){
             String connectId=dbConnectMap.get("id").toString();

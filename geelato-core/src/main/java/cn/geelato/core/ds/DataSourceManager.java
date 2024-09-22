@@ -25,6 +25,8 @@ public class DataSourceManager extends AbstractManager {
 
     private final static ConcurrentHashMap<Object, Object> dynamicDataSourceMap =new ConcurrentHashMap<>();
 
+    private final static ConcurrentHashMap<Object, Object> lazyDynamicDataSourceMap =new ConcurrentHashMap<>();
+
     public static DataSourceManager singleInstance() {
         lock.lock();
         if (instance == null) {
@@ -43,9 +45,10 @@ public class DataSourceManager extends AbstractManager {
         List<Map<String,Object>> dbConenctList=dao.getJdbcTemplate().queryForList("SELECT * FROM platform_dev_db_connect");
         for (Map<String,Object> dbConnectMap:dbConenctList){
             String connectId=dbConnectMap.get("id").toString();
-            DataSource dataSource=buildDataSource(dbConnectMap);
-            dataSourceMap.put(connectId,dataSource);
-            dynamicDataSourceMap.put(connectId,dataSource);
+//            DataSource dataSource=buildDataSource(dbConnectMap);
+//            dataSourceMap.put(connectId,dataSource);
+//            dynamicDataSourceMap.put(connectId,dataSource);
+            lazyDynamicDataSourceMap.put(connectId,dbConnectMap);
         }
     }
     public Map<Object, Object> getDynamicDataSourceMap(){
@@ -54,7 +57,11 @@ public class DataSourceManager extends AbstractManager {
     public DataSource getDataSource(String connectId){
         return dataSourceMap.get(connectId);
     }
-    private DataSource buildDataSource(Map dbConnectMap){
+
+    public Object getLazyDataSource(String connectId){
+        return lazyDynamicDataSourceMap.get(connectId);
+    }
+    public DataSource buildDataSource(Map dbConnectMap){
         HikariConfig config = new HikariConfig();
         String serverHost=dbConnectMap.get("db_hostname_ip").toString();
         String serverPort=dbConnectMap.get("db_port").toString();

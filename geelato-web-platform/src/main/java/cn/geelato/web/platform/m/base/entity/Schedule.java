@@ -19,6 +19,9 @@ public class Schedule extends BaseEntity {
     private String name;
     @Title(title = "编码")
     private String code;
+    @Title(title = "当type=java的时候，这个字段的值要  类名，方法名")
+    @Col(name = "class_info")
+    private String classInfo;
     @Title(title = "cron表达式")
     private String expression;
     @Title(title = "类型")

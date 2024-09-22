@@ -94,9 +94,7 @@ public class AppController extends BaseController {
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
     public ApiResult get(@PathVariable(required = true) String id) {
         try {
-            App model = appService.getModel(CLAZZ, id);
-            appService.setConnects(model);
-            return ApiResult.success(model);
+            return ApiResult.success(appService.getModel(CLAZZ, id));
         } catch (Exception e) {
             log.error(e.getMessage());
             return ApiResult.fail(e.getMessage());

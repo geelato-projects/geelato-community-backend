@@ -124,7 +124,7 @@
   },
   {
     "group": "字符串",
-    "label": "上传[1~21845]",
+    "label": "上传[图片/文件]",
     "value": "upload",
     "mysql": "varchar",
     "disabled": false,

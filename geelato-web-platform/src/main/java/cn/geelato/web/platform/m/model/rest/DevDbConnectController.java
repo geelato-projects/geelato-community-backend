@@ -85,6 +85,9 @@ public class DevDbConnectController extends BaseController {
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult createOrUpdate(@RequestBody ConnectMeta form) {
         try {
+            // 判断是否存在
+            devDbConnectService.isExist(form);
+            // 判断是否是更新
             if (Strings.isNotBlank(form.getId())) {
                 return ApiResult.success(devDbConnectService.updateModel(form));
             } else {
@@ -126,10 +129,15 @@ public class DevDbConnectController extends BaseController {
         try {
             String appId = (String) params.get("appId");
             List<String> connectIds = (List<String>) params.get("connectIds");
+            String userName = (String) params.get("userName");
+            String password = (String) params.get("password");
             if (Strings.isBlank(appId) || connectIds == null || connectIds.isEmpty()) {
                 return ApiResult.fail("AppId or connectIds can not be null");
             }
-            devDbConnectService.batchCreate(appId, connectIds);
+            if (Strings.isBlank(userName) || Strings.isBlank(password)) {
+                return ApiResult.fail("UserName or Password can not be null");
+            }
+            devDbConnectService.batchCreate(appId, connectIds, userName, password);
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());

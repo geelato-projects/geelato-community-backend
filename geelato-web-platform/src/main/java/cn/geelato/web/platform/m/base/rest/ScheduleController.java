@@ -7,8 +7,10 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.Schedule;
+import cn.geelato.web.platform.m.base.enums.ScheduleTypeEnum;
 import cn.geelato.web.platform.m.base.service.ScheduleService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -84,6 +86,9 @@ public class ScheduleController extends BaseController {
             if (Strings.isNotBlank(form.getId())) {
                 result = scheduleService.updateModel(form);
             } else {
+                if (ScheduleTypeEnum.JAVA.getValue().equalsIgnoreCase(form.getType())) {
+                    form.setCode(String.valueOf(UIDGenerator.generate()));
+                }
                 result = scheduleService.createModel(form);
             }
             return ApiResult.success(result);

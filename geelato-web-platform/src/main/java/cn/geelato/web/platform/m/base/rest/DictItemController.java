@@ -214,4 +214,32 @@ public class DictItemController extends BaseController {
             return ApiResult.fail(e.getMessage());
         }
     }
+
+    @RequestMapping(value = "/queryItemTagsByDict/{dictString}", method = RequestMethod.GET)
+    public ApiResult queryItemTagsByDict(@PathVariable(required = true) String dictString) {
+        Set<String> tags = new HashSet<>();
+        try {
+            String sql = String.format("SELECT id FROM platform_dict WHERE 1=1 AND del_status = 0 AND (id = '%s' or dict_code = '%s')", dictString, dictString);
+            // 字典
+            List<Map<String, Object>> dResult = dao.getJdbcTemplate().queryForList(sql);
+            // 字典项
+            if (dResult != null && !dResult.isEmpty()) {
+                Map<String, Object> params = new HashMap<>();
+                params.put(DICT_ID, dResult.get(0).get("id"));
+                params.put(ColumnDefault.ENABLE_STATUS_FIELD, ColumnDefault.ENABLE_STATUS_VALUE);
+                List<DictItem> iResult = dictItemService.queryModel(CLAZZ, params);
+                if (iResult != null && !iResult.isEmpty()) {
+                    for (DictItem item : iResult) {
+                        if (Strings.isNotBlank(item.getItemTag())) {
+                            tags.addAll(Arrays.asList(item.getItemTag().split(",")));
+                        }
+                    }
+                }
+            }
+            return ApiResult.success(tags);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
+        }
+    }
 }

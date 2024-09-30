@@ -77,9 +77,6 @@ public class JWTAuthRestController extends BaseController {
                 loginResult.setRoles(getRoles(userId));
                 // 用户所属公司
                 setCompany(loginResult);
-
-                // TODO 将token 写入域名下的cookies
-
                 apiResult.setData(loginResult);
             } else {
                 return apiResult.error().setMsg("账号或密码不正确");

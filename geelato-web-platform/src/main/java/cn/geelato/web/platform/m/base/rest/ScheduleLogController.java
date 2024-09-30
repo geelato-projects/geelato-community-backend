@@ -31,6 +31,7 @@ public class ScheduleLogController extends BaseController {
     private static final Class<ScheduleLog> CLAZZ = ScheduleLog.class;
 
     static {
+        OPERATORMAP.put("contains", Arrays.asList("scheduleName", "scheduleCode", "result"));
         OPERATORMAP.put("intervals", Arrays.asList("startAt", "finishAt", "createAt", "updateAt"));
     }
 

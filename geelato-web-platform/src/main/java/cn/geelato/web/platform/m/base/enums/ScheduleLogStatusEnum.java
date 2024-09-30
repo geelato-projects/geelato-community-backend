@@ -4,14 +4,14 @@ import lombok.Getter;
 
 @Getter
 public enum ScheduleLogStatusEnum {
-    FAIL("失败", 0),
-    SUCCESS("成功", 1),
-    EXECUTING("执行中", 2);
+    EXECUTING("执行中", "execute"),
+    SUCCESS("运行成功", "success"),
+    FAIL("运行失败", "fail");
 
     private final String label;// 选项内容
-    private final int value;// 选项值
+    private final String value;// 选项值
 
-    ScheduleLogStatusEnum(String label, int value) {
+    ScheduleLogStatusEnum(String label, String value) {
         this.label = label;
         this.value = value;
     }

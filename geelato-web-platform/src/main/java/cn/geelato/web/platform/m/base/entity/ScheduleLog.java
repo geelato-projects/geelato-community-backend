@@ -22,6 +22,9 @@ public class ScheduleLog extends BaseEntity {
     @Title(title = "所属调度")
     @Col(name = "schedule_id")
     private String scheduleId;
+    @Title(title = "调度编码")
+    @Col(name = "schedule_code")
+    private String scheduleCode;
     @Title(title = "所属调度")
     @Col(name = "schedule_name")
     private String scheduleName;
@@ -39,7 +42,7 @@ public class ScheduleLog extends BaseEntity {
     @Col(name = "finish_at")
     private Date finishAt;
     @Title(title = "状态：成功，失败")
-    private Integer status;
+    private String status;
     @Title(title = "执行-结果")
     private String result;
 }

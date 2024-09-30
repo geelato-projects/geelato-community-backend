@@ -92,6 +92,7 @@ public class SqlController extends BaseController {
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult<CustomSql> createOrUpdate(@RequestBody CustomSql form) {
         try {
+            form.afterSet();
             CustomSql result = new CustomSql();
             if (Strings.isNotBlank(form.getId())) {
                 result = sqlService.updateModel(form);

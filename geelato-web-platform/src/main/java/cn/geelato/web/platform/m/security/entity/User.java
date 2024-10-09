@@ -83,6 +83,8 @@ public class User extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "明文密码", description = "不持久化到数据库，也不显示在Restful接口的属性.")
     @Transient
     private String plainPassword;
+    @Transient
+    private boolean stocked;
 
     public User() {
     }

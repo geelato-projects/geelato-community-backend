@@ -116,6 +116,16 @@ public class BaseController implements InitializingBean {
         FilterGroup filterGroup = new FilterGroup();
         if (params != null && !params.isEmpty()) {
             if (operatorMap != null && !operatorMap.isEmpty()) {
+                // 排除查询
+                List<String> excludes = operatorMap.get("excludes");
+                if (excludes != null && !excludes.isEmpty()) {
+                    for (String list : excludes) {
+                        if (params.get(list) != null) {
+                            params.remove(list);
+                        }
+                    }
+                }
+                // 不等于查询
                 List<String> isNulls = operatorMap.get("isNulls");
                 if (isNulls != null && !isNulls.isEmpty()) {
                     for (String list : isNulls) {

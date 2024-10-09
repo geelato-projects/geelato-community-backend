@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.security.rest;
 
+import cn.geelato.core.Ctx;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
@@ -7,15 +8,18 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.m.security.entity.DataItems;
 import cn.geelato.web.platform.m.security.entity.Org;
 import cn.geelato.web.platform.m.security.entity.User;
+import cn.geelato.web.platform.m.security.entity.UserStockMap;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import cn.geelato.web.platform.m.security.service.OrgService;
 import cn.geelato.web.platform.m.security.service.UserService;
+import cn.geelato.web.platform.m.security.service.UserStockMapService;
 import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author diabl
@@ -42,18 +47,21 @@ public class UserRestController extends BaseController {
     static {
         OPERATORMAP.put("contains", Arrays.asList("name", "loginName", "orgName", "description"));
         OPERATORMAP.put("consists", List.of("orgId"));
+        OPERATORMAP.put("excludes", Arrays.asList("stocked", "stockSearch"));
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
     protected AccountService accountService;
     private final UserService userService;
     private final OrgService orgService;
+    private final UserStockMapService userStockMapService;
 
     @Autowired
-    public UserRestController(AccountService accountService, UserService userService, OrgService orgService) {
+    public UserRestController(AccountService accountService, UserService userService, OrgService orgService, UserStockMapService userStockMapService) {
         this.accountService = accountService;
         this.userService = userService;
         this.orgService = orgService;
+        this.userStockMapService = userStockMapService;
     }
 
 
@@ -64,7 +72,45 @@ public class UserRestController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
             ApiPagedResult result = userService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
             DataItems<List<User>> dataItems = (DataItems<List<User>>) result.getData();
+            // 清理不需要展示的数据
             userFormat(dataItems.getItems());
+            // 是否是当前用户的常用联系人
+            userStockFormat(dataItems.getItems(), Ctx.getCurrentUser().getUserId());
+            return result;
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return ApiPagedResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/pageQueryStock", method = RequestMethod.GET)
+    public ApiPagedResult pageQueryStock(HttpServletRequest req, boolean stocked, boolean stockSearch) {
+        try {
+            // 搜索条件
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            // 获取当前用户常用联系人
+            if (stockSearch) {
+                Map<String, Object> params = new HashMap<>();
+                params.put("userId", Ctx.getCurrentUser().getUserId());
+                List<UserStockMap> userStockMaps = userStockMapService.queryModel(UserStockMap.class, params);
+                List<String> stockIds = new ArrayList<>();
+                if (userStockMaps != null && userStockMaps.size() > 0) {
+                    stockIds = userStockMaps.stream().map(UserStockMap::getStockId).collect(Collectors.toList());
+                    filterGroup.addFilter("id", FilterGroup.Operator.in, StringUtils.join(stockIds, ","));
+                } else {
+                    filterGroup.addFilter("id", FilterGroup.Operator.in, "null");
+                }
+            }
+            // 分页查询
+            ApiPagedResult result = userService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+            DataItems<List<User>> dataItems = (DataItems<List<User>>) result.getData();
+            // 清理不需要展示的数据
+            userFormat(dataItems.getItems());
+            // 是否是当前用户的常用联系人
+            if (stocked) {
+                userStockFormat(dataItems.getItems(), Ctx.getCurrentUser().getUserId());
+            }
             return result;
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -354,5 +400,27 @@ public class UserRestController extends BaseController {
         model.setPassword(null);
         model.setPlainPassword(null);
         return model;
+    }
+
+    private List<User> userStockFormat(List<User> models, String userId) {
+        if (models == null || models.isEmpty() || Strings.isBlank(userId)) {
+            return models;
+        }
+        // 当前查询的用户
+        List<String> userIds = models.stream().map(User::getId).collect(Collectors.toList());
+        // 查询当前用户的联系人
+        FilterGroup filterGroup = new FilterGroup();
+        filterGroup.addFilter("userId", userId);
+        filterGroup.addFilter("stockId", FilterGroup.Operator.in, StringUtils.join(userIds, ","));
+        List<UserStockMap> userStocks = userStockMapService.queryModel(UserStockMap.class, filterGroup);
+        if (userStocks == null || userStocks.isEmpty()) {
+            return models;
+        }
+        List<String> stockIds = userStocks.stream().map(UserStockMap::getStockId).collect(Collectors.toList());
+        for (User user : models) {
+            user.setStocked(stockIds.contains(user.getId()));
+        }
+
+        return models;
     }
 }

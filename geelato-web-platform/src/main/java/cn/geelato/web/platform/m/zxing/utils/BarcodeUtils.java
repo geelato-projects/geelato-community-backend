@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.zxing.utils;
+package cn.geelato.web.platform.m.zxing.utils;
 
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.orm.Dao;
@@ -7,8 +7,8 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.UploadService;
-import cn.geelato.web.platform.zxing.entity.Barcode;
-import cn.geelato.web.platform.zxing.enums.*;
+import cn.geelato.web.platform.m.zxing.entity.Barcode;
+import cn.geelato.web.platform.m.zxing.enums.*;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;
@@ -125,10 +125,11 @@ public class BarcodeUtils {
                 virtualGraphics.dispose();
             }
         }
-        // 计算画布高度, 条码高度 + 条码上下边距*2 + 条码与字体之间的距离 + 文字高度
-        int barcodeHeight = barcode.getHeight() + 2 * barcode.getBorderTop() + textHeight + barcode.getFontMargin();
+        // 计算画布高度, 条码高度 + 条码上下边距 + 条码与字体之间的距离 + 文字高度
+        int barcodeHeight = barcode.getHeight() + barcode.getBorderTop() + barcode.getBorderBottom() + textHeight + barcode.getFontMargin();
+        barcodeHeight = Math.max(barcodeHeight, barcode.getHeight() + barcode.getBorderTop() + barcode.getBorderBottom());
         // 计算画布宽度，最大值(条码宽度,字体宽度) + 条码左右边距*2
-        int barcodeWidth = Math.max(barcode.getWidth(), textWidth) + 2 * barcode.getBorderLeft();
+        int barcodeWidth = Math.max(barcode.getWidth(), textWidth) + barcode.getBorderLeft() + barcode.getBorderRight();
         log.info(String.format("画布宽高：（%d，%d）", barcodeWidth, barcodeHeight));
         // 创建画布
         Graphics2D graphics2D = null;
@@ -144,7 +145,7 @@ public class BarcodeUtils {
             if (barcode.getDisplayText() && BarcodeFontPositionEnum.isTop(barcode.getFontPosition())) {
                 graphics2D.setColor(fontColor);
                 graphics2D.setFont(font);
-                int startX = startXPosition(barcode.getFontAlign(), barcodeWidth, barcode.getBorderLeft(), textWidth);
+                int startX = startXPosition(barcode.getFontAlign(), barcodeWidth, barcode.getBorderLeft(), barcode.getBorderRight(), textWidth);
                 int startY = barcode.getBorderTop() + textHeight;
                 log.info(String.format("字体头部位置：（%d，%d）", startX, startY));
                 graphics2D.drawString(text, startX, startY);
@@ -174,7 +175,7 @@ public class BarcodeUtils {
             if (barcode.getDisplayText() && BarcodeFontPositionEnum.isBottom(barcode.getFontPosition())) {
                 graphics2D.setColor(fontColor);
                 graphics2D.setFont(font);
-                int startX = startXPosition(barcode.getFontAlign(), barcodeWidth, barcode.getBorderLeft(), textWidth);
+                int startX = startXPosition(barcode.getFontAlign(), barcodeWidth, barcode.getBorderLeft(), barcode.getBorderRight(), textWidth);
                 int startY = barcode.getBorderTop() + barcode.getHeight() + barcode.getFontMargin() + textHeight;
                 log.info(String.format("字体底部位置：（%d，%d）", startX, startY));
                 graphics2D.drawString(text, startX, startY);
@@ -199,12 +200,12 @@ public class BarcodeUtils {
         return String.valueOf(new Date().getTime());
     }
 
-    private static int startXPosition(String alignType, int totalWidth, int borderWidth, int textWidth) {
+    private static int startXPosition(String alignType, int totalWidth, int borderLeftWidth, int borderRightWidth, int textWidth) {
         int startX = 0;
         if (BarcodeFontAlignEnum.isLeft(alignType)) {
-            startX = borderWidth;
+            startX = borderLeftWidth;
         } else if (BarcodeFontAlignEnum.isRight(alignType)) {
-            startX = totalWidth - borderWidth - textWidth;
+            startX = totalWidth - borderRightWidth - textWidth;
         } else {
             startX = (totalWidth - textWidth) / 2;
         }

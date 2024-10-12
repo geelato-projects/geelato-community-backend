@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.zxing.enums;
+package cn.geelato.web.platform.m.zxing.enums;
 
 import java.awt.*;
 import java.util.Locale;

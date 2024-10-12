@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.zxing.reset;
+package cn.geelato.web.platform.m.zxing.reset;
 
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
@@ -9,9 +9,9 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.rest.BaseController;
-import cn.geelato.web.platform.zxing.entity.Barcode;
-import cn.geelato.web.platform.zxing.service.BarcodeService;
-import cn.geelato.web.platform.zxing.utils.BarcodeUtils;
+import cn.geelato.web.platform.m.zxing.entity.Barcode;
+import cn.geelato.web.platform.m.zxing.service.BarcodeService;
+import cn.geelato.web.platform.m.zxing.utils.BarcodeUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;

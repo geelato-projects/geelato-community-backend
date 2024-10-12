@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.zxing.enums;
+package cn.geelato.web.platform.m.zxing.enums;
 
 import com.google.zxing.BarcodeFormat;
 import lombok.Getter;

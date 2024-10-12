@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.zxing.entity;
+package cn.geelato.web.platform.m.zxing.entity;
 
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
@@ -7,7 +7,7 @@ import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.utils.ColorUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.zxing.enums.*;
+import cn.geelato.web.platform.m.zxing.enums.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -106,7 +106,7 @@ public class Barcode extends BaseEntity implements EntityEnableAble {
         // 字体大小，默认12，最小12，最大60
         this.setFontSize(this.fontSize == null ? 16 : (this.fontSize <= 12 ? 12 : (this.fontSize >= 60 ? 60 : this.fontSize)));
         // 字体与条码之间的距离，默认-7
-        this.setFontMargin(this.fontMargin == null || this.fontMargin < -7 ? -7 : this.fontMargin);
+        this.setFontMargin(this.fontMargin == null || this.fontMargin < -100 ? 0 : this.fontMargin);
         // 字体对齐方式，默认center
         this.setFontAlign(BarcodeFontAlignEnum.getEnum(this.fontAlign, true));
         // 字体位置，默认bottom

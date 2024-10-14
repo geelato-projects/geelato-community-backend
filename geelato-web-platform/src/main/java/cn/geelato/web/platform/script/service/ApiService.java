@@ -65,3 +65,4 @@ public class ApiService extends BaseService {
         super.isDeleteModel(model);
     }
 }
+

@@ -217,7 +217,7 @@ public class RoleService extends BaseSortableService {
         }
         // appName
         List<String> appIds = new ArrayList<>();
-        if (roles != null && roles.size() > 0) {
+        if (roles != null && !roles.isEmpty()) {
             for (Role role : roles) {
                 if (Strings.isNotBlank(role.getAppId()) && !appIds.contains(role.getAppId())) {
                     appIds.add(role.getAppId());
@@ -225,12 +225,12 @@ public class RoleService extends BaseSortableService {
             }
         }
         List<App> apps = new ArrayList<>();
-        if (appIds != null && appIds.size() > 0) {
+        if (!appIds.isEmpty()) {
             FilterGroup filter = new FilterGroup().addFilter("id", FilterGroup.Operator.in, Strings.join(appIds, ','));
             apps = queryModel(App.class, filter);
         }
         // 填充
-        if (apps != null && apps.size() > 0) {
+        if (apps != null && !apps.isEmpty()) {
             for (Role role : roles) {
                 for (App app : apps) {
                     if (Strings.isNotBlank(app.getId()) && app.getId().equals(role.getAppId())) {

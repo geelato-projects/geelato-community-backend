@@ -3,14 +3,17 @@ package cn.geelato.web.platform.script.rest;
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.m.base.rest.BaseController;
 import cn.geelato.web.platform.script.entity.Api;
 import cn.geelato.web.platform.script.service.ApiService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.shiro.crypto.hash.Hash;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Source;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -19,24 +22,39 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @ApiRestController("/outside")
 public class OutsideController extends BaseController {
 
     private final HashMap<String,String> urlHashMap=new HashMap<>();
-
     @Resource
     private ApiService apiService;
     private final GraalManager graalManager = GraalManager.singleInstance();
 
-    @RequestMapping(value = "{outside_url}", method = RequestMethod.POST)
+    @IgnoreJWTVerify
+    @RequestMapping(value = "{outside_url}", method = {RequestMethod.POST,RequestMethod.GET})
     @ResponseBody
     @SuppressWarnings("rawtypes")
     public ApiResult<?> exec(@PathVariable("outside_url") String outside_url, HttpServletRequest request) throws IOException {
         String parameter = getBody(request);
-        String scriptId= urlHashMap.get(outside_url);
-        String scriptContent = getScriptContent(scriptId);
+        String scriptId;
+        String scriptContent=null;
+        String outSideUrl="/"+outside_url;
+        if(urlHashMap.get(outSideUrl)!=null){
+            scriptId=urlHashMap.get(outSideUrl);
+            scriptContent= getScriptContent(scriptId);
+        }else{
+            Map<String,Object> params=new HashMap<>();
+            params.put("outsideUrl",outSideUrl);
+            List<Api> apiList=apiService.queryModel(Api.class,params);
+            if(apiList!=null&& !apiList.isEmpty()){
+                scriptId=apiList.get(0).getId();
+                scriptContent=apiList.get(0).getReleaseContent();
+                urlHashMap.put(outSideUrl,scriptId);
+            }
+        }
 
         try (
                 Context context = Context.newBuilder("js")

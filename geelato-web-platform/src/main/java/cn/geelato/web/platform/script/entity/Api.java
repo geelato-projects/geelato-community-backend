@@ -27,6 +27,8 @@ public class Api extends BaseEntity {
     private String method;
     private String remark;
     private Integer version;
+    @Title(title = "是否匿名访问", description = "1=允许匿名，不鉴权；0=不允许匿名，鉴权。")
+    private int anonymous = 0;
     @Title(title = "分组名称")
     @Col(name = "group_name")
     private String groupName;

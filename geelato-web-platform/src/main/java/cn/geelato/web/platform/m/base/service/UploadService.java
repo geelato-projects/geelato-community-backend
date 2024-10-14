@@ -21,13 +21,13 @@ import java.util.Date;
  */
 @Component
 public class UploadService {
-    private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
     public static final String ROOT_DIRECTORY = "upload";
     public static final String ROOT_CONVERT_DIRECTORY = "upload/convert";
     public static final String ROOT_CONFIG_DIRECTORY = "/upload/config";
     public static final String ROOT_AVATAR_DIRECTORY = "upload/avatar";
     public static final String AVATAR_BASE64_PREFIX = "data:image/png;base64,";
     public static final String ROOT_CONFIG_SUFFIX = ".config";
+    private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
 
     /**
      * 返回文件上传绝对路径

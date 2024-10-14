@@ -10,6 +10,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
+import org.graalvm.polyglot.Source;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -30,12 +31,14 @@ public class ScriptController extends BaseController {
     @RequestMapping(value = "/exec/{scriptId}", method = RequestMethod.POST)
     @ResponseBody
     @SuppressWarnings("rawtypes")
-    public ApiResult<?> exec(@PathVariable("scriptId") String scriptId, HttpServletRequest request) {
+    public ApiResult<?> exec(@PathVariable("scriptId") String scriptId, HttpServletRequest request) throws IOException {
         String parameter = getBody(request);
         String scriptContent = getScriptContent(scriptId);
+
         try (
             Context context = Context.newBuilder("js")
                     .allowHostAccess(HostAccess.ALL)
+                    .allowIO(true)
                     .allowHostClassLookup(className -> true).build()) {
             Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
             Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
@@ -47,7 +50,8 @@ public class ScriptController extends BaseController {
             for (Map.Entry entry : graalVariableMap.entrySet()) {
                 context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
             }
-            Map result = context.eval("js", scriptContent).execute(parameter).as(Map.class);
+            Source source=Source.newBuilder("js", scriptContent, "graal.mjs").build();
+            Map result = context.eval(source).execute(parameter).as(Map.class);
             return ApiResult.success(result.get("result"));
         }
     }
@@ -63,6 +67,8 @@ public class ScriptController extends BaseController {
     }
 
     private String scriptTemplate() {
+//        String preImport="import {Foo} from 'graaljs/foo.mjs';\t" +
+//                "import Base64 from 'graaljs/crypto-js/enc-base64.js';\t";
         return """
                 (function(parameter){
                 \t var ctx={};

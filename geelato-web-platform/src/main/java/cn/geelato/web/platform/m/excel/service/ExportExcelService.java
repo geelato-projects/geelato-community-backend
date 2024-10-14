@@ -15,6 +15,8 @@ import cn.geelato.web.platform.m.excel.entity.ExportColumn;
 import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.WordWaterMarkMeta;
+import cn.geelato.web.platform.m.zxing.entity.Barcode;
+import cn.geelato.web.platform.m.zxing.service.BarcodeService;
 import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;
@@ -59,6 +61,8 @@ public class ExportExcelService {
     private SysConfigService sysConfigService;
     @Autowired
     private AttachService attachService;
+    @Autowired
+    private BarcodeService barcodeService;
 
     /**
      * 导出文件
@@ -94,6 +98,8 @@ public class ExportExcelService {
             if (metaMap == null || metaMap.isEmpty()) {
                 throw new RuntimeException("导出模板源数据不存在！");
             }
+            // 条形码信息设置
+            barcodeFormat(metaMap);
             // 实体文件名称
             String templateExt = templateAttach.getName().substring(templateAttach.getName().lastIndexOf("."));
             String templateName = templateAttach.getName().substring(0, templateAttach.getName().lastIndexOf("."));
@@ -151,6 +157,8 @@ public class ExportExcelService {
             }
             // 模板源数据
             Map<String, PlaceholderMeta> metaMap = getPlaceholderMeta(placeholderMetas);
+            // 条形码信息设置
+            barcodeFormat(metaMap);
             // 生成导出模板
             String templateName = String.format("%s_%s%s", fileName, "导出模板", templateExt);
             Base64Info templateAttach = getTemplate(tenantCode, appId, templateName, exportColumns);
@@ -174,6 +182,26 @@ public class ExportExcelService {
             return ApiResult.success(attachMap);
         } catch (Exception e) {
             return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    /**
+     * 根据占位符元数据格式化条形码信息
+     *
+     * @param metaMap 占位符元数据映射，键为占位符标识，值为占位符元数据
+     * @throws RuntimeException 如果条形码配置错误，将抛出运行时异常
+     */
+    public void barcodeFormat(Map<String, PlaceholderMeta> metaMap) {
+        for (PlaceholderMeta meta : metaMap.values()) {
+            meta.setBarcode(null);
+            if (meta.isImageSourceBarcode() && Strings.isNotEmpty(meta.getBarcodeCode())) {
+                ApiResult<Barcode> barcodeResult = barcodeService.getBarcodeByCode(meta.getBarcodeCode());
+                if (barcodeResult.isSuccess() && barcodeResult.getData() != null) {
+                    meta.setBarcode(barcodeResult.getData());
+                } else {
+                    throw new RuntimeException(String.format("条形码配置错误（%s）: %s", meta.getBarcodeCode(), barcodeResult.getMsg()));
+                }
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.excel.entity;
 
+import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -55,6 +56,17 @@ public class PlaceholderMeta {
     @Getter
     @Setter
     private Double imageHeight;
+    // 图片来源，附件表，base64，条形码
+    @Getter
+    @Setter
+    private String imageSource;
+    // 条形码编号
+    @Getter
+    @Setter
+    private String barcodeCode;
+    @Getter
+    @Setter
+    private Barcode barcode;
     // 描述
     @Getter
     @Setter
@@ -114,5 +126,25 @@ public class PlaceholderMeta {
 
     public boolean isValueTypeDateTime() {
         return "DATETIME".equalsIgnoreCase(this.valueType);
+    }
+
+    public boolean isImageSourceBarcode() {
+        return "BARCODE".equalsIgnoreCase(this.imageSource);
+    }
+
+    public boolean isImageSourceAttachment() {
+        return "ATTACHID".equalsIgnoreCase(this.imageSource);
+    }
+
+    public boolean isImageSourceBase64() {
+        return "BASE64".equalsIgnoreCase(this.imageSource);
+    }
+
+    public boolean isImageSourceRelativePath() {
+        return "RELATIVEPATH".equalsIgnoreCase(this.imageSource);
+    }
+
+    public boolean isImageSourceNetAddress() {
+        return "NETADDRESS".equalsIgnoreCase(this.imageSource);
     }
 }

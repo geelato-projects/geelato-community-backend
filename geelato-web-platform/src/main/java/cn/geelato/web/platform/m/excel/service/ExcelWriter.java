@@ -398,7 +398,11 @@ public class ExcelWriter {
             placeholderMeta.setIsImage(getBoolean(row.getCell(10)));
             placeholderMeta.setImageWidth(row.getCell(11).getNumericCellValue());
             placeholderMeta.setImageHeight(row.getCell(12).getNumericCellValue());
-            placeholderMeta.setDescription(row.getCell(13).getStringCellValue());
+            placeholderMeta.setIsBarcode(getBoolean(row.getCell(13)));
+            placeholderMeta.setBarcodeCode(row.getCell(14).getStringCellValue());
+            placeholderMeta.setDescription(row.getCell(15).getStringCellValue());
+            placeholderMeta.setBarcode(null);
+            // 校验占位符元数据
             if (validatePlaceholderMeta(placeholderMeta)) {
                 map.put(placeholderMeta.getPlaceholder(), placeholderMeta);
             }

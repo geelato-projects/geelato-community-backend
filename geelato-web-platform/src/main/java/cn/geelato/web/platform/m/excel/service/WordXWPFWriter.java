@@ -1,6 +1,9 @@
 package cn.geelato.web.platform.m.excel.service;
 
+import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.m.excel.entity.*;
+import cn.geelato.web.platform.m.excel.enums.WordTableLoopTypeEnum;
+import cn.geelato.web.platform.m.zxing.utils.BarcodeUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.util.Units;
@@ -8,8 +11,6 @@ import org.apache.poi.xwpf.usermodel.*;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlToken;
-import cn.geelato.utils.UIDGenerator;
-import cn.geelato.web.platform.m.excel.enums.WordTableLoopTypeEnum;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTNonVisualDrawingProps;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTPositiveSize2D;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline;
@@ -64,10 +65,10 @@ public class WordXWPFWriter {
      * @return 返回新修改好的水印样式
      */
     public static String getWaterMarkStyle(String styleStr, double height) {
-        //把拿到的样式用";"切割，切割后保存到数组中
+        // 把拿到的样式用";"切割，切割后保存到数组中
         Pattern p = Pattern.compile(";");
         String[] strs = p.split(styleStr);
-        //遍历保存的数据，找到高度样式，将高度改为参数传入高度的
+        // 遍历保存的数据，找到高度样式，将高度改为参数传入高度的
         for (String str : strs) {
             if (str.startsWith("height:")) {
                 String heightStr = "height:" + height + "pt";
@@ -485,11 +486,16 @@ public class WordXWPFWriter {
                                 Object oValue = valueMap.get(meta.getVar());
                                 String value = oValue == null ? "" : String.valueOf(oValue);
                                 if (meta.isIsImage()) {
+                                    // 条形码
+                                    if (meta.isIsBarcode()) {
+                                        value = BarcodeUtils.generateBarcode(value, meta.getBarcode());
+                                    }
                                     if (new File(value).exists()) {
                                         CTInline inline = runs.get(r).getCTR().addNewDrawing().addNewInline();
                                         try {
                                             insertPicture(document, value, inline, meta.getImageWidth(), meta.getImageHeight(), XWPFDocument.PICTURE_TYPE_PNG);
                                             document.createParagraph();
+                                            runText = runText.replace(phm.group(), "");
                                             isReplace = true;
                                         } catch (Exception e) {
                                             throw new RuntimeException("Image construction failure!", e);

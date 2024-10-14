@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.excel.entity;
 
+import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -55,6 +56,15 @@ public class PlaceholderMeta {
     @Getter
     @Setter
     private Double imageHeight;
+    // 是否是条形码
+    private boolean isBarcode;
+    // 条形码编号
+    @Getter
+    @Setter
+    private String barcodeCode;
+    @Getter
+    @Setter
+    private Barcode barcode;
     // 描述
     @Getter
     @Setter
@@ -90,6 +100,14 @@ public class PlaceholderMeta {
 
     public void setIsImage(boolean image) {
         isImage = image;
+    }
+
+    public boolean isIsBarcode() {
+        return isBarcode;
+    }
+
+    public void setIsBarcode(boolean barcode) {
+        isBarcode = barcode;
     }
 
     public boolean isValueComputeModeVar() {

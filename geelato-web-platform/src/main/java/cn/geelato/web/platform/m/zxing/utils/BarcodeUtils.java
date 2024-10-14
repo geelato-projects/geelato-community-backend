@@ -101,7 +101,7 @@ public class BarcodeUtils {
         String pictureSuffix = BarcodePictureFormatEnum.getEnum(barcode.getPictureFormat());
         String pictureName = String.format("%s.%s", getFileName(barcode), pictureSuffix);
         String picturePath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), barcode.getTenantCode(), barcode.getAppId(), pictureName, true);
-        log.info(String.format("%s, %s", pictureName, picturePath));
+        // log.info(String.format("%s, %s", pictureName, picturePath));
         // 字体
         Font font = null;
         int textWidth = 0;
@@ -118,7 +118,7 @@ public class BarcodeUtils {
                 virtualGraphics.dispose();
                 textWidth = virtualFontMetrics.stringWidth(text);
                 textHeight = virtualFontMetrics.getHeight();
-                log.info(String.format("文本宽高：（%d，%d）", textWidth, textHeight));
+                // log.info(String.format("文本宽高：（%d，%d）", textWidth, textHeight));
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
             } finally {
@@ -130,7 +130,7 @@ public class BarcodeUtils {
         barcodeHeight = Math.max(barcodeHeight, barcode.getHeight() + barcode.getBorderTop() + barcode.getBorderBottom());
         // 计算画布宽度，最大值(条码宽度,字体宽度) + 条码左右边距*2
         int barcodeWidth = Math.max(barcode.getWidth(), textWidth) + barcode.getBorderLeft() + barcode.getBorderRight();
-        log.info(String.format("画布宽高：（%d，%d）", barcodeWidth, barcodeHeight));
+        // log.info(String.format("画布宽高：（%d，%d）", barcodeWidth, barcodeHeight));
         // 创建画布
         Graphics2D graphics2D = null;
         try {
@@ -147,7 +147,7 @@ public class BarcodeUtils {
                 graphics2D.setFont(font);
                 int startX = startXPosition(barcode.getFontAlign(), barcodeWidth, barcode.getBorderLeft(), barcode.getBorderRight(), textWidth);
                 int startY = barcode.getBorderTop() + textHeight;
-                log.info(String.format("字体头部位置：（%d，%d）", startX, startY));
+                // log.info(String.format("字体头部位置：（%d，%d）", startX, startY));
                 graphics2D.drawString(text, startX, startY);
             }
             // 生成条形码
@@ -155,13 +155,13 @@ public class BarcodeUtils {
             hintTypeMap.put(EncodeHintType.CHARACTER_SET, "UTF-8");
             BitMatrix bitMatrix = new MultiFormatWriter().encode(text, barcodeFormat, barcode.getWidth(), barcode.getHeight(), hintTypeMap);
             if (bitMatrix != null) {
-                log.info(String.format("条形码宽高：（%d，%d）", bitMatrix.getWidth(), bitMatrix.getHeight()));
+                // log.info(String.format("条形码宽高：（%d，%d）", bitMatrix.getWidth(), bitMatrix.getHeight()));
                 int startX = (barcodeWidth - barcode.getWidth()) / 2;
                 int startY = barcode.getBorderTop();
                 if (BarcodeFontPositionEnum.isTop(barcode.getFontPosition())) {
                     startY = barcode.getBorderTop() + textHeight + barcode.getFontMargin();
                 }
-                log.info(String.format("条形码位置：（%d，%d）", startX, startY));
+                // log.info(String.format("条形码位置：（%d，%d）", startX, startY));
                 for (int x = 0; x < bitMatrix.getWidth(); x++) {
                     for (int y = 0; y < bitMatrix.getHeight(); y++) {
                         barcodeImage.setRGB(startX + x, startY + y,
@@ -177,7 +177,7 @@ public class BarcodeUtils {
                 graphics2D.setFont(font);
                 int startX = startXPosition(barcode.getFontAlign(), barcodeWidth, barcode.getBorderLeft(), barcode.getBorderRight(), textWidth);
                 int startY = barcode.getBorderTop() + barcode.getHeight() + barcode.getFontMargin() + textHeight;
-                log.info(String.format("字体底部位置：（%d，%d）", startX, startY));
+                // log.info(String.format("字体底部位置：（%d，%d）", startX, startY));
                 graphics2D.drawString(text, startX, startY);
             }
             // 保存图片

@@ -111,7 +111,7 @@ public class BarcodeController extends BaseController {
             Map<String, String> params = new HashMap<>();
             params.put("code", form.getCode());
             params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
-            params.put("app_id", form.getAppId());
+            // params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(barcodeService.validate("platform_barcode", form.getId(), params));
         } catch (Exception e) {

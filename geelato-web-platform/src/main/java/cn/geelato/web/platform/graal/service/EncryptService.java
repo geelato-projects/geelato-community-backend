@@ -16,7 +16,7 @@ import java.util.Base64;
 public class EncryptService {
     private static final String __AES_KEY__="aes_key";
 
-    public String md5(String str) throws NoSuchAlgorithmException {
+    public String md5_32bit(String str) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("MD5");
         byte[] messageDigest = md.digest(str.getBytes());
         StringBuilder sb = new StringBuilder();
@@ -24,6 +24,11 @@ public class EncryptService {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
+    }
+
+    public String md5_16bit(String str) throws NoSuchAlgorithmException {
+        String bit32Str=md5_32bit(str);
+        return bit32Str.substring(8,24);
     }
 
     public String aes(String str) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {

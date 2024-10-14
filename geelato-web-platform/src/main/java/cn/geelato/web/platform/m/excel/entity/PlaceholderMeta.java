@@ -56,8 +56,10 @@ public class PlaceholderMeta {
     @Getter
     @Setter
     private Double imageHeight;
-    // 是否是条形码
-    private boolean isBarcode;
+    // 图片来源，附件表，base64，条形码
+    @Getter
+    @Setter
+    private String imageSource;
     // 条形码编号
     @Getter
     @Setter
@@ -102,14 +104,6 @@ public class PlaceholderMeta {
         isImage = image;
     }
 
-    public boolean isIsBarcode() {
-        return isBarcode;
-    }
-
-    public void setIsBarcode(boolean barcode) {
-        isBarcode = barcode;
-    }
-
     public boolean isValueComputeModeVar() {
         return "VAR".equalsIgnoreCase(this.valueComputeMode);
     }
@@ -132,5 +126,25 @@ public class PlaceholderMeta {
 
     public boolean isValueTypeDateTime() {
         return "DATETIME".equalsIgnoreCase(this.valueType);
+    }
+
+    public boolean isImageSourceBarcode() {
+        return "BARCODE".equalsIgnoreCase(this.imageSource);
+    }
+
+    public boolean isImageSourceAttachment() {
+        return "ATTACHID".equalsIgnoreCase(this.imageSource);
+    }
+
+    public boolean isImageSourceBase64() {
+        return "BASE64".equalsIgnoreCase(this.imageSource);
+    }
+
+    public boolean isImageSourceRelativePath() {
+        return "RELATIVEPATH".equalsIgnoreCase(this.imageSource);
+    }
+
+    public boolean isImageSourceNetAddress() {
+        return "NETADDRESS".equalsIgnoreCase(this.imageSource);
     }
 }

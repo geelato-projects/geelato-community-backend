@@ -1,10 +1,15 @@
 package cn.geelato.web.platform.m.excel.service;
 
+import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UIDGenerator;
+import cn.geelato.web.platform.m.base.entity.Attach;
+import cn.geelato.web.platform.m.base.service.AttachService;
+import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
 import cn.geelato.web.platform.m.excel.enums.WordTableLoopTypeEnum;
 import cn.geelato.web.platform.m.zxing.utils.BarcodeUtils;
 import org.apache.logging.log4j.util.Strings;
+import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.*;
@@ -16,11 +21,12 @@ import org.openxmlformats.schemas.drawingml.x2006.main.CTPositiveSize2D;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,27 +41,11 @@ public class WordXWPFWriter {
     private static final Pattern loopCellPattern = Pattern.compile("\\{\\*[\\\u4e00-\\\u9fa5,\\w,\\.]+\\}");
     private static final Pattern loopHeadPattern = Pattern.compile("\\{\\?[\\\u4e00-\\\u9fa5,\\w,\\.]+\\}");
     private static final Pattern loopEndPattern = Pattern.compile("\\{\\/[\\\u4e00-\\\u9fa5,\\w,\\.]+\\}");
+    private static final Pattern base64Pattern = Pattern.compile("data:image\\/\\w+;base64,(.+)");
     private final Logger logger = LoggerFactory.getLogger(WordXWPFWriter.class);
 
-    /**
-     * @param document
-     * @param placeholderMetaMap
-     * @param valueMapList
-     * @param valueMap
-     */
-    public void writeDocument(XWPFDocument document, Map<String, PlaceholderMeta> placeholderMetaMap, List<Map> valueMapList, Map valueMap) {
-        // mapList 数据解析
-        Map<String, List<Map>> valueListMap = analysisValueMapList(valueMapList);
-        // loop 内容循环
-        List<WordParagraphMeta> paragraphMetas = analysisParagraphLoop(document, valueListMap);
-        setParagraphLoop(document, placeholderMetaMap, paragraphMetas);
-        // loop 表格循环
-        List<WordTableMeta> tableMetas = analysisTableLoop(document, valueListMap);
-        setTableLoop(document, placeholderMetaMap, tableMetas);
-        // 标签替换：文本、图片 ${}
-        setValueMap(document, placeholderMetaMap, valueMap);
-    }
-
+    @Autowired
+    private AttachService attachService;
 
     /**
      * 修改水印样式高度的方法,如果不想改高度可以不用方法
@@ -77,6 +67,73 @@ public class WordXWPFWriter {
             }
         }
         return styleStr;
+    }
+
+    private static void insertPicture(XWPFDocument document, String filePath, CTInline inline, double imageWidth, double imageHeight) throws FileNotFoundException, InvalidFormatException {
+        int picFormat = getPictureFormat(filePath);
+        document.addPictureData(new FileInputStream(filePath), picFormat);
+        long id = UIDGenerator.generate();
+        long width = (long) Math.floor(Units.toEMU(imageWidth) * 1000 / 35);
+        long height = (long) Math.floor(Units.toEMU(imageHeight) * 1000 / 35);
+        String blipId = document.addPictureData(new FileInputStream(filePath), picFormat);
+        String picXml = getPicXml(blipId, width, height);
+        XmlToken xmlToken = null;
+        try {
+            xmlToken = XmlToken.Factory.parse(picXml);
+        } catch (XmlException xe) {
+            throw new RuntimeException(xe.getMessage());
+        }
+        inline.set(xmlToken);
+        inline.setDistT(0);
+        inline.setDistB(0);
+        inline.setDistL(0);
+        inline.setDistR(0);
+        CTPositiveSize2D extent = inline.addNewExtent();
+        extent.setCx(width);
+        extent.setCy(height);
+        CTNonVisualDrawingProps docPr = inline.addNewDocPr();
+        docPr.setId(id);
+        docPr.setName("IMG_" + id);
+        docPr.setDescr("IMG_" + id);
+    }
+
+    private static int getPictureFormat(String filePath) {
+        if (filePath != null) {
+            int dotIndex = filePath.lastIndexOf('.');
+            if (dotIndex != -1 && dotIndex != 0 && dotIndex < filePath.length() - 1) {
+                String fileExtension = filePath.substring(dotIndex);
+                for (PictureType pictureType : PictureType.values()) {
+                    if (pictureType.getExtension().equalsIgnoreCase(fileExtension)) {
+                        return pictureType.getOoxmlId();
+                    }
+                }
+            }
+        }
+        throw new IllegalArgumentException("Invalid file path: " + filePath);
+    }
+
+    private static String getPicXml(String blipId, long width, long height) {
+        String picXml = "<a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" + "   <a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" + "      <pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" + "         <pic:nvPicPr>" + "            <pic:cNvPr id=\"" + 0 + "\" name=\"Generated\"/>" + "            <pic:cNvPicPr/>" + "         </pic:nvPicPr>" + "         <pic:blipFill>" + "            <a:blip r:embed=\"" + blipId + "\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>" + "            <a:stretch>" + "               <a:fillRect/>" + "            </a:stretch>" + "         </pic:blipFill>" + "         <pic:spPr>" + "            <a:xfrm>" + "               <a:off x=\"0\" y=\"0\"/>" + "               <a:ext cx=\"" + width + "\" cy=\"" + height + "\"/>" + "            </a:xfrm>" + "            <a:prstGeom prst=\"rect\">" + "               <a:avLst/>" + "            </a:prstGeom>" + "         </pic:spPr>" + "      </pic:pic>" + "   </a:graphicData>" + "</a:graphic>";
+        return picXml;
+    }
+
+    /**
+     * @param document
+     * @param placeholderMetaMap
+     * @param valueMapList
+     * @param valueMap
+     */
+    public void writeDocument(XWPFDocument document, Map<String, PlaceholderMeta> placeholderMetaMap, List<Map> valueMapList, Map valueMap) {
+        // mapList 数据解析
+        Map<String, List<Map>> valueListMap = analysisValueMapList(valueMapList);
+        // loop 内容循环
+        List<WordParagraphMeta> paragraphMetas = analysisParagraphLoop(document, valueListMap);
+        setParagraphLoop(document, placeholderMetaMap, paragraphMetas);
+        // loop 表格循环
+        List<WordTableMeta> tableMetas = analysisTableLoop(document, valueListMap);
+        setTableLoop(document, placeholderMetaMap, tableMetas);
+        // 标签替换：文本、图片 ${}
+        setValueMap(document, placeholderMetaMap, valueMap);
     }
 
     /**
@@ -486,14 +543,11 @@ public class WordXWPFWriter {
                                 Object oValue = valueMap.get(meta.getVar());
                                 String value = oValue == null ? "" : String.valueOf(oValue);
                                 if (meta.isIsImage()) {
-                                    // 条形码
-                                    if (meta.isIsBarcode()) {
-                                        value = BarcodeUtils.generateBarcode(value, meta.getBarcode());
-                                    }
-                                    if (new File(value).exists()) {
+                                    value = getImagePath(meta, value);
+                                    if (StringUtils.isNotBlank(value) && new File(value).exists()) {
                                         CTInline inline = runs.get(r).getCTR().addNewDrawing().addNewInline();
                                         try {
-                                            insertPicture(document, value, inline, meta.getImageWidth(), meta.getImageHeight(), XWPFDocument.PICTURE_TYPE_PNG);
+                                            insertPicture(document, value, inline, meta.getImageWidth(), meta.getImageHeight());
                                             document.createParagraph();
                                             runText = runText.replace(phm.group(), "");
                                             isReplace = true;
@@ -517,6 +571,91 @@ public class WordXWPFWriter {
         }
     }
 
+    private String getImagePath(PlaceholderMeta meta, String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        try {
+            if (meta.isImageSourceAttachment()) {
+                Attach attach = attachService.getModel(value);
+                if (attach != null) {
+                    value = attach.getPath();
+                }
+            } else if (meta.isImageSourceBarcode()) {
+                if (meta.getBarcode() != null) {
+                    value = BarcodeUtils.generateBarcode(value, meta.getBarcode());
+                }
+            } else if (meta.isImageSourceBase64()) {
+                Matcher mp = base64Pattern.matcher(value);
+                if (mp.matches()) {
+                    value = mp.group(1);
+                }
+                if (StringUtils.isNotBlank(value)) {
+                    FileOutputStream fos = null;
+                    try {
+                        byte[] decodedBytes = Base64.getDecoder().decode(value);
+                        File tempFile = File.createTempFile("temp_base64_export", ".png");
+                        tempFile.deleteOnExit();
+                        fos = new FileOutputStream(tempFile);
+                        fos.write(decodedBytes);
+                        fos.flush();
+                        value = tempFile.getAbsolutePath();
+                    } catch (Exception e) {
+                        value = null;
+                    } finally {
+                        if (fos != null) {
+                            fos.close();
+                        }
+                    }
+                }
+            } else if (meta.isImageSourceRelativePath()) {
+                if (!value.startsWith("/" + UploadService.ROOT_DIRECTORY)) {
+                    value = null;
+                }
+            } else if (meta.isImageSourceNetAddress()) {
+                if (!value.startsWith("http")) {
+                    value = null;
+                }
+                InputStream inputStream = null;
+                FileOutputStream outputStream = null;
+                HttpURLConnection httpConn = null;
+                try {
+                    URL url = new URL(value);
+                    httpConn = (HttpURLConnection) url.openConnection();
+                    int responseCode = httpConn.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        inputStream = httpConn.getInputStream();
+                        File tempFile = File.createTempFile("temp_base64_export", ".png");
+                        tempFile.deleteOnExit();
+                        outputStream = new FileOutputStream(tempFile);
+                        byte[] buffer = new byte[4096];
+                        int bytesRead = -1;
+                        while ((bytesRead = inputStream.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, bytesRead);
+                        }
+                        outputStream.flush();
+                        value = tempFile.getAbsolutePath();
+                    }
+                } catch (Exception ex) {
+                    value = null;
+                } finally {
+                    if (inputStream != null) {
+                        inputStream.close();
+                    }
+                    if (outputStream != null) {
+                        outputStream.close();
+                    }
+                    if (httpConn != null) {
+                        httpConn.disconnect();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return value;
+    }
+
     private String getIdentify(Pattern pattern, String runText, String[] replaces) {
         String text = "";
         Matcher mp = pattern.matcher(runText);
@@ -524,7 +663,7 @@ public class WordXWPFWriter {
             text = mp.group();
             break;
         }
-        if (replaces != null && replaces.length > 0) {
+        if (replaces != null) {
             for (String re : replaces) {
                 text = text.replace(re, "");
             }
@@ -664,38 +803,6 @@ public class WordXWPFWriter {
         }
 
         return newParagraph;
-    }
-
-    private static void insertPicture(XWPFDocument document, String filePath, CTInline inline, double imageWidth, double imageHeight, int format) throws FileNotFoundException, InvalidFormatException {
-        document.addPictureData(new FileInputStream(filePath), XWPFDocument.PICTURE_TYPE_PNG);
-        long id = UIDGenerator.generate();
-        long width = (long) Math.floor(Units.toEMU(imageWidth) * 1000 / 35);
-        long height = (long) Math.floor(Units.toEMU(imageHeight) * 1000 / 35);
-        String blipId = document.addPictureData(new FileInputStream(filePath), format);
-        String picXml = getPicXml(blipId, width, height);
-        XmlToken xmlToken = null;
-        try {
-            xmlToken = XmlToken.Factory.parse(picXml);
-        } catch (XmlException xe) {
-            throw new RuntimeException(xe.getMessage());
-        }
-        inline.set(xmlToken);
-        inline.setDistT(0);
-        inline.setDistB(0);
-        inline.setDistL(0);
-        inline.setDistR(0);
-        CTPositiveSize2D extent = inline.addNewExtent();
-        extent.setCx(width);
-        extent.setCy(height);
-        CTNonVisualDrawingProps docPr = inline.addNewDocPr();
-        docPr.setId(id);
-        docPr.setName("IMG_" + id);
-        docPr.setDescr("IMG_" + id);
-    }
-
-    private static String getPicXml(String blipId, long width, long height) {
-        String picXml = "<a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" + "   <a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" + "      <pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" + "         <pic:nvPicPr>" + "            <pic:cNvPr id=\"" + 0 + "\" name=\"Generated\"/>" + "            <pic:cNvPicPr/>" + "         </pic:nvPicPr>" + "         <pic:blipFill>" + "            <a:blip r:embed=\"" + blipId + "\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>" + "            <a:stretch>" + "               <a:fillRect/>" + "            </a:stretch>" + "         </pic:blipFill>" + "         <pic:spPr>" + "            <a:xfrm>" + "               <a:off x=\"0\" y=\"0\"/>" + "               <a:ext cx=\"" + width + "\" cy=\"" + height + "\"/>" + "            </a:xfrm>" + "            <a:prstGeom prst=\"rect\">" + "               <a:avLst/>" + "            </a:prstGeom>" + "         </pic:spPr>" + "      </pic:pic>" + "   </a:graphicData>" + "</a:graphic>";
-        return picXml;
     }
 }
 

@@ -193,7 +193,8 @@ public class ExportExcelService {
      */
     public void barcodeFormat(Map<String, PlaceholderMeta> metaMap) {
         for (PlaceholderMeta meta : metaMap.values()) {
-            if (meta.isIsBarcode() && Strings.isNotEmpty(meta.getBarcodeCode())) {
+            meta.setBarcode(null);
+            if (meta.isImageSourceBarcode() && Strings.isNotEmpty(meta.getBarcodeCode())) {
                 ApiResult<Barcode> barcodeResult = barcodeService.getBarcodeByCode(meta.getBarcodeCode());
                 if (barcodeResult.isSuccess() && barcodeResult.getData() != null) {
                     meta.setBarcode(barcodeResult.getData());

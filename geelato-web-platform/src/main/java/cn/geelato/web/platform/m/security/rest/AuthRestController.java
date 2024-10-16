@@ -7,7 +7,6 @@ import cn.geelato.web.platform.m.base.rest.RestException;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import cn.geelato.web.platform.m.security.service.SecurityHelper;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.shiro.SecurityUtils;
@@ -35,7 +34,7 @@ public class AuthRestController extends BaseController {
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public Map login(@RequestBody User user, HttpServletRequest req) {
+    public Map login(@RequestBody User user) {
         Subject currentUser = SecurityUtils.getSubject();
         if (!currentUser.isAuthenticated()) {
             // collect user principals and credentials in a gui specific manner
@@ -44,7 +43,7 @@ public class AuthRestController extends BaseController {
             //(do you know what movie this is from? ;)
             UsernamePasswordToken token = new UsernamePasswordToken(user.getLoginName(), user.getPassword());
             // this is all you have to do to support 'remember me' (no config - built in!):
-            boolean rememberMe = Boolean.parseBoolean(req.getParameter("remember"));
+            boolean rememberMe = Boolean.parseBoolean(this.request.getParameter("remember"));
             token.setRememberMe(rememberMe);
             try {
                 if (log.isDebugEnabled()) {

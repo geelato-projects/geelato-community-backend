@@ -10,7 +10,6 @@ import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.service.ExportTemplateService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +46,10 @@ public class ExportTemplateController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult pageQuery(HttpServletRequest req) {
+    public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return exportTemplateService.pageQueryModel("page_query_platform_export_template", params, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -59,10 +58,10 @@ public class ExportTemplateController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult query(HttpServletRequest req) {
+    public ApiResult query() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(exportTemplateService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
             log.error(e.getMessage());

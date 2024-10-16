@@ -18,7 +18,6 @@ import cn.geelato.web.platform.m.base.entity.CustomSql;
 import cn.geelato.web.platform.m.base.enums.ApprovalStatusEnum;
 import cn.geelato.web.platform.m.base.service.AppSqlMapService;
 import cn.geelato.web.platform.m.base.service.SqlService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,10 +54,10 @@ public class SqlController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult pageQuery(HttpServletRequest req) {
+    public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return sqlService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -67,10 +66,10 @@ public class SqlController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult<List<CustomSql>> query(HttpServletRequest req) {
+    public ApiResult<List<CustomSql>> query() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             List<CustomSql> list = sqlService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(list);
         } catch (Exception e) {

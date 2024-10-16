@@ -6,7 +6,6 @@ import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.AccountService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +23,7 @@ public class AccountRestController extends BaseController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public ApiResult<NullResult> create(@RequestBody User user, HttpServletRequest req) {
+    public ApiResult<NullResult> create(@RequestBody User user) {
         accountService.registerUser(user);
         return ApiResult.successNoResult();
     }

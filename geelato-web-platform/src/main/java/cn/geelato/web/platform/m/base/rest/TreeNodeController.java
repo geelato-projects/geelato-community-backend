@@ -8,7 +8,6 @@ import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.TreeNode;
 import cn.geelato.web.platform.m.base.service.TreeNodeService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
@@ -34,10 +33,10 @@ public class TreeNodeController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult<List<TreeNode>> query(HttpServletRequest req) {
+    public ApiResult<List<TreeNode>> query() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(treeNodeService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
             log.error(e.getMessage());

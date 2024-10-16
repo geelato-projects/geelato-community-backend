@@ -6,8 +6,6 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.service.ExportTemplateService;
 import cn.geelato.web.platform.m.excel.service.ImportExcelService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,13 +34,11 @@ public class ImportExcelController extends BaseController {
     /**
      * 下载模板
      *
-     * @param request
-     * @param response
      * @param templateId
      * @return
      */
     @RequestMapping(value = "/template/{templateId}", method = RequestMethod.GET)
-    public ApiResult getTemplate(HttpServletRequest request, HttpServletResponse response, @PathVariable String templateId) {
+    public ApiResult getTemplate(@PathVariable String templateId) {
         try {
             return ApiResult.success(exportTemplateService.getModel(ExportTemplate.class, templateId));
         } catch (Exception e) {
@@ -52,17 +48,15 @@ public class ImportExcelController extends BaseController {
     }
 
     /**
-     * @param request
-     * @param response
      * @param importType part:可以部分导入；all:需要全部导入，错误即中断并回滚。
      * @param templateId 模板文件id
      * @param attachId   业务数据文件id
      * @return
      */
     @RequestMapping(value = "/attach/{importType}/{templateId}/{attachId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult importAttach(HttpServletRequest request, HttpServletResponse response, @PathVariable String importType, @PathVariable String templateId, @PathVariable String attachId) {
+    public ApiResult importAttach(@PathVariable String importType, @PathVariable String templateId, @PathVariable String attachId) {
         try {
-            return importExcelService.importExcel(request, response, importType, templateId, attachId);
+            return importExcelService.importExcel(this.request, this.response, importType, templateId, attachId);
         } catch (Exception ex) {
             log.error(ex.getMessage());
             return ApiResult.fail(ex.getMessage());
@@ -72,17 +66,15 @@ public class ImportExcelController extends BaseController {
     /**
      * excel导入
      *
-     * @param request
-     * @param response
      * @param importType part:可以部分导入；all:需要全部导入，错误即中断并回滚。
      * @param templateId 模板文件id
      * @return
      * @throws IOException
      */
     @RequestMapping(value = "/file/{importType}/{templateId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult importFile(HttpServletRequest request, HttpServletResponse response, @PathVariable String importType, @PathVariable String templateId) {
+    public ApiResult importFile(@PathVariable String importType, @PathVariable String templateId) {
         try {
-            return importExcelService.importExcel(request, response, importType, templateId, null);
+            return importExcelService.importExcel(this.request, this.response, importType, templateId, null);
         } catch (Exception ex) {
             log.error(ex.getMessage());
             return ApiResult.fail(ex.getMessage());

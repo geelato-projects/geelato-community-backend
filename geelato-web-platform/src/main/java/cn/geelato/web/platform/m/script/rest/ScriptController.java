@@ -6,8 +6,8 @@ import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.script.entity.Api;
 import cn.geelato.web.platform.m.script.service.ApiService;
+import cn.geelato.web.platform.utils.GqlUtil;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Source;
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Map;
 
@@ -31,15 +30,15 @@ public class ScriptController extends BaseController {
     @RequestMapping(value = "/exec/{scriptId}", method = RequestMethod.POST)
     @ResponseBody
     @SuppressWarnings("rawtypes")
-    public ApiResult<?> exec(@PathVariable("scriptId") String scriptId, HttpServletRequest request) throws IOException {
-        String parameter = getBody(request);
+    public ApiResult<?> exec(@PathVariable("scriptId") String scriptId) throws IOException {
+        String parameter = GqlUtil.resolveGql(this.request);
         String scriptContent = getScriptContent(scriptId);
 
         try (
-            Context context = Context.newBuilder("js")
-                    .allowHostAccess(HostAccess.ALL)
-                    .allowIO(true)
-                    .allowHostClassLookup(className -> true).build()) {
+                Context context = Context.newBuilder("js")
+                        .allowHostAccess(HostAccess.ALL)
+                        .allowIO(true)
+                        .allowHostClassLookup(className -> true).build()) {
             Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
             Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
             Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
@@ -50,7 +49,7 @@ public class ScriptController extends BaseController {
             for (Map.Entry entry : graalVariableMap.entrySet()) {
                 context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
             }
-            Source source=Source.newBuilder("js", scriptContent, "graal.mjs").build();
+            Source source = Source.newBuilder("js", scriptContent, "graal.mjs").build();
             Map result = context.eval(source).execute(parameter).as(Map.class);
             return ApiResult.success(result.get("result"));
         }
@@ -77,21 +76,4 @@ public class ScriptController extends BaseController {
                 \t return ctx;\t
                 })""";
     }
-    private String getBody(HttpServletRequest request) {
-        StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader br = null;
-        try {
-            br = request.getReader();
-        } catch (IOException ignored) {
-        }
-        String str;
-        try {
-            while ((str = br.readLine()) != null) {
-                stringBuilder.append(str);
-            }
-        } catch (IOException ignored) {
-        }
-        return stringBuilder.toString();
-    }
-
 }

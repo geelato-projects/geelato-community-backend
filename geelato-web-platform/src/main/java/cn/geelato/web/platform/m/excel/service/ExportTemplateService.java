@@ -34,7 +34,7 @@ import java.util.*;
  */
 @Component
 public class ExportTemplateService extends BaseService {
-    public static final String[] EXPORT_META_HEADER = {"占位符", "变量", "列表变量", "常量值", "表达式", "值类型", "取值计算方式", "是否列表", "是否合并", "合并唯一约束", "是否图片", "图片宽度cm", "图片高度cm", "图片来源", "条形码编码", "备注"};
+    public static final String[] EXPORT_META_HEADER = {"占位符", "变量", "列表变量", "常量值", "表达式", "值类型", "取值计算方式", "来源于列表", "合并单元格", "合并唯一约束", "图片", "图片宽度cm", "图片高度cm", "图片来源", "条形码编码", "备注"};
     public static final String[] IMPORT_META_TYPE_HEADER = {"列名", "类型", "格式", "多值分隔符", "多值场景", "清洗规则", "备注"};
     public static final String[] IMPORT_META_META_HEADER = {"表格", "字段名称", "取值计算方式", "常量取值", "变量取值", "表达式取值", "数据字典取值", "模型取值", "备注"};
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);

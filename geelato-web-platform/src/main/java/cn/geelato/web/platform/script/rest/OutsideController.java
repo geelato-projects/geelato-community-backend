@@ -28,7 +28,7 @@ import java.util.Map;
 @ApiRestController("/ext")
 public class OutsideController extends BaseController {
 
-    private final HashMap<String,String> urlHashMap=new HashMap<>();
+    private final HashMap<String,Api> urlHashMap=new HashMap<>();
     @Resource
     private ApiService apiService;
     private final GraalManager graalManager = GraalManager.singleInstance();
@@ -39,20 +39,18 @@ public class OutsideController extends BaseController {
     @SuppressWarnings("rawtypes")
     public ApiResult<?> exec(@PathVariable("outside_url") String outside_url, HttpServletRequest request) throws IOException {
         String parameter = getBody(request);
-        String scriptId;
         String scriptContent=null;
         String outSideUrl="/"+outside_url;
         if(urlHashMap.get(outSideUrl)!=null){
-            scriptId=urlHashMap.get(outSideUrl);
-            scriptContent= getScriptContent(scriptId);
+            Api api=urlHashMap.get(outSideUrl);
+            scriptContent=api.getReleaseContent();
         }else{
             Map<String,Object> params=new HashMap<>();
             params.put("outsideUrl",outSideUrl);
             List<Api> apiList=apiService.queryModel(Api.class,params);
             if(apiList!=null&& !apiList.isEmpty()){
-                scriptId=apiList.get(0).getId();
                 scriptContent=apiList.get(0).getReleaseContent();
-                urlHashMap.put(outSideUrl,scriptId);
+                urlHashMap.put(outSideUrl,apiList.get(0));
             }
         }
 

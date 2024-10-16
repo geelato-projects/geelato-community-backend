@@ -20,7 +20,6 @@ public class ApiService extends BaseService {
      * 创建一条数据
      *
      * @param model 实体数据
-     * @return
      */
     public Api createModel(Api model) {
         // 创建api
@@ -39,7 +38,6 @@ public class ApiService extends BaseService {
      * 更新一条数据
      *
      * @param model 实体数据
-     * @return
      */
     public Api updateModel(Api model) {
         // 更新api

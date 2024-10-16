@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @ApiRestController("/plugin")
 @Slf4j
 public class PluginController extends BaseController {
@@ -31,7 +33,11 @@ public class PluginController extends BaseController {
     }
 
     @RequestMapping(value = "/example", method = RequestMethod.GET)
-    public ApiResult<Greeting> example(HttpServletRequest req) {
+    public ApiResult<Greeting> example() {
+
+        Map<String,Object> pars= getQueryParameters();
+        Object par1= pars.get("par1");
+        Object par2=pars.get("par2");
         Greeting greeting = pluginBeanProvider.getBean(Greeting.class, PluginInfo.PluginId);
         return ApiPagedResult.success(greeting);
     }

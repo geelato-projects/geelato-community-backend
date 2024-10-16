@@ -75,6 +75,11 @@ public class BaseController implements InitializingBean {
      * 构建分页查询条件
      *
      */
+    public PageQueryRequest getPageQueryParameters() {
+        return getPageQueryParameters(this.request);
+    }
+
+    @Deprecated
     public PageQueryRequest getPageQueryParameters(HttpServletRequest request) {
         PageQueryRequest queryRequest = new PageQueryRequest();
         int pageNum = Strings.isNotBlank(request.getParameter("current")) ? Integer.parseInt(request.getParameter("current")) : -1;
@@ -92,6 +97,11 @@ public class BaseController implements InitializingBean {
      * 根据接口传递的参数，构建查询条件
      *
      */
+    public FilterGroup getFilterGroup(Class elementType, Map<String, List<String>> operatorMap) throws ParseException {
+        Map<String, Object> params = this.getQueryParameters(elementType, this.request);
+        return this.getFilterGroup(params, operatorMap);
+    }
+    @Deprecated
     public FilterGroup getFilterGroup(Class elementType, HttpServletRequest request, Map<String, List<String>> operatorMap) throws ParseException {
         Map<String, Object> params = this.getQueryParameters(elementType, request);
         return this.getFilterGroup(params, operatorMap);
@@ -100,7 +110,7 @@ public class BaseController implements InitializingBean {
     /**
      * 构建查询条件
      */
-    public FilterGroup getFilterGroup(Map<String, Object> params, Map<String, List<String>> operatorMap) throws ParseException {
+    private FilterGroup getFilterGroup(Map<String, Object> params, Map<String, List<String>> operatorMap) throws ParseException {
         FilterGroup filterGroup = new FilterGroup();
         if (params != null && !params.isEmpty()) {
             if (operatorMap != null && !operatorMap.isEmpty()) {
@@ -192,6 +202,10 @@ public class BaseController implements InitializingBean {
      * 获取接口参数，根据对象清理
      *
      */
+    public Map<String, Object> getQueryParameters(Class elementType) {
+        return getQueryParameters(elementType,this.request);
+    }
+    @Deprecated
     public Map<String, Object> getQueryParameters(Class elementType, HttpServletRequest request) {
         Map<String, Object> queryParamsMap = new LinkedHashMap<>();
         for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
@@ -201,19 +215,20 @@ public class BaseController implements InitializingBean {
                 if (values.size() == 1) {
                     queryParamsMap.put(entry.getKey(), values.get(0));
                 } else {
-                    queryParamsMap.put(entry.getKey(), values.toArray(new String[values.size()]));
+                    queryParamsMap.put(entry.getKey(), values.toArray(new String[0]));
                 }
             }
         }
-
-
         return queryParamsMap;
     }
-
     /**
      * 获取接口参数
      *
      */
+    public Map<String, Object> getQueryParameters() {
+        return getQueryParameters(this.request);
+    }
+    @Deprecated
     public Map<String, Object> getQueryParameters(HttpServletRequest request) {
         Map<String, Object> queryParamsMap = new LinkedHashMap<>();
         for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
@@ -224,7 +239,6 @@ public class BaseController implements InitializingBean {
                 queryParamsMap.put(entry.getKey(), values.toArray(new String[0]));
             }
         }
-
         return queryParamsMap;
     }
 

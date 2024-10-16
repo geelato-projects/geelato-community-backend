@@ -45,6 +45,7 @@ public class ApiParam extends BaseEntity {
     @Title(title = "交互类型")
     private String alternateType;
     private boolean required = false;
+    private boolean jacket = false;
     private String remark;
     @Transient
     private List<ApiParam> children;

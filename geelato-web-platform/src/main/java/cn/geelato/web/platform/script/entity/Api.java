@@ -24,6 +24,8 @@ public class Api extends BaseEntity {
     private String appId;
     private String name;
     private String code;
+    @Title(title = "是否分页")
+    private boolean paging = false;
     private String method;
     private String remark;
     private Integer version;
@@ -47,6 +49,9 @@ public class Api extends BaseEntity {
     @Title(title = "第三方访问状态")
     @Col(name = "outside_status")
     private int outsideStatus = 0;
+    @Title(title = "响应格式")
+    @Col(name = "response_format")
+    private String responseFormat;
     @Title(title = "响应参数类型")
     @Col(name = "response_type")
     private String responseType;

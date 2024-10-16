@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.pluginexample;
+package cn.geelato.web.platform.m.pluginexample;
 
 import lombok.Getter;
 import lombok.Setter;

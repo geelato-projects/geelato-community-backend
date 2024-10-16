@@ -10,7 +10,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.m.base.rest.BaseController;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.Permission;
 import cn.geelato.web.platform.m.security.service.PermissionService;
 import jakarta.servlet.http.HttpServletRequest;

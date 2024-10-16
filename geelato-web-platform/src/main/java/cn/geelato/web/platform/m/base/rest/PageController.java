@@ -7,6 +7,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.cache.CacheUtil;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.AppPage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PathVariable;

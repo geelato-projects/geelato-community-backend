@@ -1,20 +1,17 @@
-package cn.geelato.web.platform.script.rest;
+package cn.geelato.web.platform.m.script.rest;
 
 import cn.geelato.core.graal.GraalManager;
-import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
-import cn.geelato.web.platform.m.base.rest.BaseController;
-import cn.geelato.web.platform.script.entity.Api;
-import cn.geelato.web.platform.script.service.ApiService;
+import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.script.entity.Api;
+import cn.geelato.web.platform.m.script.service.ApiService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.apache.shiro.crypto.hash.Hash;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Source;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -29,7 +26,7 @@ import java.util.Map;
 @ApiRestController("/ext")
 public class OutsideController extends BaseController {
 
-    private final HashMap<String,Api> urlHashMap=new HashMap<>();
+    private final HashMap<String, Api> urlHashMap=new HashMap<>();
     @Resource
     private ApiService apiService;
     private final GraalManager graalManager = GraalManager.singleInstance();

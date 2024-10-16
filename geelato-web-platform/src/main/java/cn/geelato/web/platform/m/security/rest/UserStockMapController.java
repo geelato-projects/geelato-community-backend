@@ -8,7 +8,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.m.base.rest.BaseController;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.UserStockMap;
 import cn.geelato.web.platform.m.security.service.UserStockMapService;
 import jakarta.servlet.http.HttpServletRequest;

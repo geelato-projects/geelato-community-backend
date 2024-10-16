@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.script.entity;
+package cn.geelato.web.platform.m.script.entity;
 
 
 import cn.geelato.core.meta.annotation.Col;

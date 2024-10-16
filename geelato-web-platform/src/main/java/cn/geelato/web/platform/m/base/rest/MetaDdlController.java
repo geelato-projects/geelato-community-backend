@@ -12,6 +12,7 @@ import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.ViewService;
 import cn.geelato.web.platform.m.model.service.DevTableService;
 import org.apache.logging.log4j.util.Strings;

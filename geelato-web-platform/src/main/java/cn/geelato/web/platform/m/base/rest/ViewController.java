@@ -8,6 +8,7 @@ import cn.geelato.core.meta.model.view.ViewMeta;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.ViewService;
 import cn.geelato.web.platform.m.security.entity.DataItems;
 import com.alibaba.fastjson2.JSONArray;

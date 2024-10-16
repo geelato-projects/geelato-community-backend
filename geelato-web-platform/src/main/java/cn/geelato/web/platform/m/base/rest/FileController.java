@@ -3,6 +3,7 @@ package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.FileInfo;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;

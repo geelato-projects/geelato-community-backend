@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.base.rest;
+package cn.geelato.web.platform.m;
 
 import cn.geelato.core.gql.parser.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
@@ -24,17 +24,13 @@ import java.util.*;
  * @author geemeta
  */
 @SuppressWarnings("rawtypes")
-public class BaseController implements InitializingBean {
+public class BaseController extends ParameterOperator implements InitializingBean {
 
     private final SimpleDateFormat SDF_DATE = new SimpleDateFormat(DateUtils.DATE);
     private final SimpleDateFormat SDF_DATE_START = new SimpleDateFormat(DateUtils.DATESTART);
     private final SimpleDateFormat SDF_DATE_FINISH = new SimpleDateFormat(DateUtils.DATEFINISH);
     protected Dao dao;
     protected RuleService ruleService;
-    /**
-     * 创建session、Request、Response等对象
-     */
-    protected HttpServletRequest request;
     protected HttpServletResponse response;
     protected HttpSession session;
 
@@ -59,39 +55,6 @@ public class BaseController implements InitializingBean {
         this.session = request.getSession(true);
     }
 
-    /**
-     * 构建分页查询条件，设置默认排序
-     *
-     */
-    public PageQueryRequest getPageQueryParameters(HttpServletRequest request, String defaultOrder) {
-        PageQueryRequest pageQueryRequest = getPageQueryParameters(request);
-        if (Strings.isNotBlank(pageQueryRequest.getOrderBy())) {
-            pageQueryRequest.setOrderBy(defaultOrder);
-        }
-        return pageQueryRequest;
-    }
-
-    /**
-     * 构建分页查询条件
-     *
-     */
-    public PageQueryRequest getPageQueryParameters() {
-        return getPageQueryParameters(this.request);
-    }
-
-    @Deprecated
-    public PageQueryRequest getPageQueryParameters(HttpServletRequest request) {
-        PageQueryRequest queryRequest = new PageQueryRequest();
-        int pageNum = Strings.isNotBlank(request.getParameter("current")) ? Integer.parseInt(request.getParameter("current")) : -1;
-        queryRequest.setPageNum(pageNum);
-        int pageSize = Strings.isNotBlank(request.getParameter("pageSize")) ? Integer.parseInt(request.getParameter("pageSize")) : -1;
-        queryRequest.setPageSize(pageSize);
-        String orderBy = Strings.isNotBlank(request.getParameter("order")) ? String.valueOf(request.getParameter("order")) : "";
-        orderBy = orderBy.replaceAll("\\|", " ");
-        queryRequest.setOrderBy(orderBy);
-
-        return queryRequest;
-    }
 
     /**
      * 根据接口传递的参数，构建查询条件
@@ -198,77 +161,7 @@ public class BaseController implements InitializingBean {
         return filterGroup;
     }
 
-    /**
-     * 获取接口参数，根据对象清理
-     *
-     */
-    public Map<String, Object> getQueryParameters(Class elementType) {
-        return getQueryParameters(elementType,this.request);
-    }
-    @Deprecated
-    public Map<String, Object> getQueryParameters(Class elementType, HttpServletRequest request) {
-        Map<String, Object> queryParamsMap = new LinkedHashMap<>();
-        for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
-            Set<String> fieldNames = getClassFieldNames(elementType);
-            if (fieldNames.contains(entry.getKey())) {
-                List<String> values = List.of(entry.getValue());
-                if (values.size() == 1) {
-                    queryParamsMap.put(entry.getKey(), values.get(0));
-                } else {
-                    queryParamsMap.put(entry.getKey(), values.toArray(new String[0]));
-                }
-            }
-        }
-        return queryParamsMap;
-    }
-    /**
-     * 获取接口参数
-     *
-     */
-    public Map<String, Object> getQueryParameters() {
-        return getQueryParameters(this.request);
-    }
-    @Deprecated
-    public Map<String, Object> getQueryParameters(HttpServletRequest request) {
-        Map<String, Object> queryParamsMap = new LinkedHashMap<>();
-        for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
-            List<String> values = List.of(entry.getValue());
-            if (values.size() == 1) {
-                queryParamsMap.put(entry.getKey(), values.get(0));
-            } else {
-                queryParamsMap.put(entry.getKey(), values.toArray(new String[0]));
-            }
-        }
-        return queryParamsMap;
-    }
 
-    /**
-     * 获取对象拥有的属性
-     *
-     */
-    private Set<String> getClassFieldNames(Class elementType) {
-        Set<String> fieldNameList = new HashSet<>();
-        List<Field> fieldsList = getClassFields(elementType);
-        for (Field field : fieldsList) {
-            fieldNameList.add(field.getName());
-        }
-        return fieldNameList;
-    }
-
-    /**
-     * 获取对象拥有的属性
-     *
-     */
-    private List<Field> getClassFields(Class elementType) {
-        List<Field> fieldsList = new ArrayList<>();
-        while (elementType != null) {
-            Field[] declaredFields = elementType.getDeclaredFields();
-            fieldsList.addAll(Arrays.asList(declaredFields));
-            elementType = elementType.getSuperclass();
-        }
-
-        return fieldsList;
-    }
 
     @Override
     public void afterPropertiesSet() throws Exception {

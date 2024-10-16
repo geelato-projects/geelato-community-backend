@@ -35,7 +35,7 @@ public class MetaController extends BaseController {
 
     @RequestMapping(value = {"/list", "list/*"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiPagedResult list(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
-        String gql = getGql(this.request, "query");
+        String gql = getGql("query");
         return ruleService.queryForMapList(gql, withMeta);
     }
 
@@ -44,34 +44,33 @@ public class MetaController extends BaseController {
      */
     @RequestMapping(value = {"/multiList", "multiList/*"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMultiPagedResult multiList(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta, HttpServletRequest request) {
-        String gql = getGql(request, null);
+        String gql = getGql(null);
         return ruleService.queryForMultiMapList(gql, withMeta);
     }
 
     /**
      * @param biz     业务代码
-     * @param request HttpServletRequest
      * @return SaveResult
      */
     @RequestMapping(value = {"/save/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiMetaResult save(@PathVariable("biz") String biz, HttpServletRequest request) throws DaoException {
-        String gql = getGql(request, "save");
+    public ApiMetaResult save(@PathVariable("biz") String biz) throws DaoException {
+        String gql = getGql( "save");
         ApiMetaResult result = new ApiMetaResult();
         result.setData(ruleService.save(biz, gql));
         return result;
     }
 
     @RequestMapping(value = {"/batchSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiMetaResult batchSave(HttpServletRequest request) throws DaoException {
-        String gql = getGql(request, "batchSave");
+    public ApiMetaResult batchSave() throws DaoException {
+        String gql = getGql( "batchSave");
         ApiMetaResult result = new ApiMetaResult();
         result.setData(ruleService.batchSave(gql, true));
         return result;
     }
 
     @RequestMapping(value = {"/multiSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiMetaResult multiSave(HttpServletRequest request) {
-        String gql = getGql(request, "multiSave");
+    public ApiMetaResult multiSave() {
+        String gql = getGql( "multiSave");
         ApiMetaResult result = new ApiMetaResult();
         result.setData(ruleService.multiSave(gql));
         return result;
@@ -85,8 +84,8 @@ public class MetaController extends BaseController {
     }
 
     @RequestMapping(value = {"/delete2/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiMetaResult delete(@PathVariable("biz") String biz, HttpServletRequest request) {
-        String gql = getGql(request, "delete");
+    public ApiMetaResult delete(@PathVariable("biz") String biz) {
+        String gql = getGql("delete");
         ApiMetaResult result = new ApiMetaResult();
         result.setData(ruleService.deleteByGql(biz, gql));
         return result;
@@ -111,17 +110,16 @@ public class MetaController extends BaseController {
      * 获取实体名称列表
      */
     @RequestMapping(value = {"/entityNames"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult entityNames(@RequestParam String appCode) {
+    public ApiResult entityNames() {
         return ApiResult.success(metaManager.getAllEntityNames());
     }
 
     /**
      * 获取指定应用下的精简版实体元数据信息列表
      *
-     * @param appCode 应用编码
      */
     @RequestMapping(value = {"/entityLiteMetas"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult queryLiteEntities(@RequestParam String appCode) {
+    public ApiResult queryLiteEntities() {
         return ApiResult.success(metaManager.getAllEntityLiteMetas());
     }
 
@@ -130,18 +128,17 @@ public class MetaController extends BaseController {
      * 获取通用树数据（platform_tree_node）
      *
      * @param biz     业务代码
-     * @param request HttpServletRequest
      * @return ApiResult
      */
     @RequestMapping(value = {"/tree/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
-    public ApiResult treeNodeList(@PathVariable("biz") String biz, @RequestParam String entity, @RequestParam Long treeId, HttpServletRequest request) {
+    public ApiResult treeNodeList(@PathVariable("biz") String biz, @RequestParam String entity, @RequestParam Long treeId) {
         return ruleService.queryForTreeNodeList(entity, treeId);
     }
 
 
-    private String getGql(HttpServletRequest request, String type) {
-        String gql = GqlUtil.resolveGql(request);
+    private String getGql(String type) {
+        String gql = GqlUtil.resolveGql(this.request);
         if (StringUtils.isEmpty(gql)) {
             throw new GqlResolveException();
         }
@@ -157,7 +154,7 @@ public class MetaController extends BaseController {
      */
     @RequestMapping(value = {"/uniqueness"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult uniqueness(HttpServletRequest request) {
-        String gql = getGql(request, null);
+        String gql = getGql(null);
         if (Strings.isNotBlank(gql)) {
             JSONObject jo = JSON.parseObject(gql);
             String key = jo.keySet().iterator().next();

@@ -8,8 +8,6 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.field.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -94,7 +92,6 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
      */
     public String buildCountSql(QueryCommand command) {
         StringBuilder sb = new StringBuilder();
-        EntityMeta md = getEntityMeta(command);
         sb.append("select count(*) from (");
         String selectSql = command.getSelectSql();
         int seq = selectSql.indexOf("limit");
@@ -230,7 +227,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
     private String replaceTableAlias(QueryCommand command, String sql) {
         StringBuilder newSql = new StringBuilder();
         if (sql != null) {
-            String[] items = sql.split(".");
+            String[] items = sql.split("\\.");
             if (items.length > 1) {
                 for (String item : items) {
                     int seq = item.lastIndexOf(" ");
@@ -273,7 +270,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
     }
 
     @Override
-    protected StringBuilder tryAppendKeywords(EntityMeta md, StringBuilder sb, FieldMeta fm) {
+    protected void tryAppendKeywords(EntityMeta md, StringBuilder sb, FieldMeta fm) {
         String field = fm.getColumnName();
         if (fm.getColumn().getIsRefColumn()) {
             String fCol = fm.getColumn().getRefColName();
@@ -294,6 +291,5 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
         } else {
             sb.append(field);
         }
-        return sb;
     }
 }

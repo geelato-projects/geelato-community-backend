@@ -25,7 +25,7 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
     public final static String VAL_FLAG = "$";
     public final static String VAL_NAME = "$";
     //e.g. match $tableName or $tableName.item or $addList[i].type.XX.ZZ
-    private final static Pattern PATTERN_VAL_FLAG = Pattern.compile("[\\s]*\\$\\.[\\w,\\[,\\]]+[\\.]?\\w*[\\.]?\\w*[\\.]?\\w*");
+    private final static Pattern PATTERN_VAL_FLAG = Pattern.compile("\\s*\\$\\.[\\w,\\[\\]]+[.]?\\w*[.]?\\w*[.]?\\w*");
 
     @Override
     public Map<String, String> parse(List<String> lines) {
@@ -156,9 +156,7 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
      */
     public JsToken parseFor(String template) throws Exception {
         String[] w = template.split("[ ]+");
-        //validate
         if ("@for".equals(w[0]) && ("in".equals(w[2]) || ":".equals(w[2]))) {
-            //i
             String[] indexItem = w[1].split("[ ]*,[ ]*");
             if (indexItem.length == 1) {
                 Matcher matcher = PATTERN_VAL_FLAG.matcher(w[3]);
@@ -193,10 +191,9 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
     public JsToken parseIf(String template) throws Exception {
         //TODO 多个关键字时怎么处理，需for
         String result = template.replace("@if", "").trim();
-        StringBuilder sb = new StringBuilder();
-        sb.append("if(");
-        sb.append(replace(result, true));
-        sb.append("){");
-        return new JsToken(true, sb.toString(), TokenType.Open);
+        String sb = "if(" +
+                replace(result, true) +
+                "){";
+        return new JsToken(true, sb, TokenType.Open);
     }
 }

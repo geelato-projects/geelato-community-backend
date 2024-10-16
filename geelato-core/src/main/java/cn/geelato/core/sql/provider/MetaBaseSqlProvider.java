@@ -302,9 +302,9 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         return keywordsMap.containsKey(field);
     }
 
-    protected StringBuilder tryAppendKeywords(EntityMeta em, StringBuilder sb, FieldMeta fm) {
+    protected void tryAppendKeywords(EntityMeta em, StringBuilder sb, FieldMeta fm) {
         Assert.notNull(fm, "获取不到元数据，fieldName：" + fm.getFieldName());
-        return this.tryAppendKeywords(sb, fm.getColumnName());
+        this.tryAppendKeywords(sb, fm.getColumnName());
     }
 
     protected StringBuilder tryAppendKeywords(StringBuilder sb, String field) {

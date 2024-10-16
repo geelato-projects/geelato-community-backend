@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.script.rest;
 
 import cn.geelato.core.graal.GraalManager;
+import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
@@ -37,41 +38,50 @@ public class OutsideController extends BaseController {
     @RequestMapping(value = "{outside_url}", method = {RequestMethod.POST,RequestMethod.GET})
     @ResponseBody
     @SuppressWarnings("rawtypes")
-    public ApiResult<?> exec(@PathVariable("outside_url") String outside_url, HttpServletRequest request) throws IOException {
+    public Object exec(@PathVariable("outside_url") String outside_url, HttpServletRequest request) throws IOException {
         String parameter = getBody(request);
         String scriptContent=null;
         String outSideUrl="/"+outside_url;
+        Api api=null;
         if(urlHashMap.get(outSideUrl)!=null){
-            Api api=urlHashMap.get(outSideUrl);
+            api=urlHashMap.get(outSideUrl);
             scriptContent=api.getReleaseContent();
         }else{
             Map<String,Object> params=new HashMap<>();
             params.put("outsideUrl",outSideUrl);
             List<Api> apiList=apiService.queryModel(Api.class,params);
             if(apiList!=null&& !apiList.isEmpty()){
-                scriptContent=apiList.get(0).getReleaseContent();
-                urlHashMap.put(outSideUrl,apiList.get(0));
+                api=apiList.get(0);
+                scriptContent=api.getReleaseContent();
+                urlHashMap.put(outSideUrl,api);
             }
         }
-
-        try (
-                Context context = Context.newBuilder("js")
-                        .allowHostAccess(HostAccess.ALL)
-                        .allowIO(true)
-                        .allowHostClassLookup(className -> true).build()) {
-            Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
-            Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
-            Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
-            context.getBindings("js").putMember("$gl", globalGraalVariableMap);
-            for (Map.Entry entry : graalServiceMap.entrySet()) {
-                context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
+        if(api!=null){
+            try (
+                    Context context = Context.newBuilder("js")
+                            .allowHostAccess(HostAccess.ALL)
+                            .allowIO(true)
+                            .allowHostClassLookup(className -> true).build()) {
+                Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
+                Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
+                Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
+                context.getBindings("js").putMember("$gl", globalGraalVariableMap);
+                for (Map.Entry entry : graalServiceMap.entrySet()) {
+                    context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
+                }
+                for (Map.Entry entry : graalVariableMap.entrySet()) {
+                    context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
+                }
+                Source source=Source.newBuilder("js", scriptContent, "graal.mjs").build();
+                Map result = context.eval(source).execute(parameter).as(Map.class);
+                if(api.getResponseFormat().equals("custom")){
+                    return result.get("result");
+                }else {
+                    return ApiResult.success(result.get("result"));
+                }
             }
-            for (Map.Entry entry : graalVariableMap.entrySet()) {
-                context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
-            }
-            Source source=Source.newBuilder("js", scriptContent, "graal.mjs").build();
-            Map result = context.eval(source).execute(parameter).as(Map.class);
-            return ApiResult.success(result.get("result"));
+        }else{
+            return ApiResult.fail("not found script");
         }
     }
 

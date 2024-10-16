@@ -57,16 +57,11 @@ public class BaseController implements InitializingBean {
         this.request = request;
         this.response = response;
         this.session = request.getSession(true);
-
-        // 可以在此处拿到当前登录的用户
     }
 
     /**
      * 构建分页查询条件，设置默认排序
      *
-     * @param request
-     * @param defaultOrder
-     * @return
      */
     public PageQueryRequest getPageQueryParameters(HttpServletRequest request, String defaultOrder) {
         PageQueryRequest pageQueryRequest = getPageQueryParameters(request);
@@ -79,8 +74,6 @@ public class BaseController implements InitializingBean {
     /**
      * 构建分页查询条件
      *
-     * @param request
-     * @return
      */
     public PageQueryRequest getPageQueryParameters(HttpServletRequest request) {
         PageQueryRequest queryRequest = new PageQueryRequest();
@@ -98,11 +91,6 @@ public class BaseController implements InitializingBean {
     /**
      * 根据接口传递的参数，构建查询条件
      *
-     * @param elementType
-     * @param request
-     * @param operatorMap
-     * @return
-     * @throws ParseException
      */
     public FilterGroup getFilterGroup(Class elementType, HttpServletRequest request, Map<String, List<String>> operatorMap) throws ParseException {
         Map<String, Object> params = this.getQueryParameters(elementType, request);
@@ -168,7 +156,7 @@ public class BaseController implements InitializingBean {
                         // 2024-08-01,2024-08-08; 2024-08-01,; ,2024-08-08
                         if (value instanceof String) {
                             times = String.valueOf(value).split(",");
-                            if (times != null && times.length == 2) {
+                            if (times.length == 2) {
                                 if (Strings.isNotBlank(times[0])) {
                                     filterGroup.addFilter(list, FilterGroup.Operator.gte, SDF_DATE_START.format(SDF_DATE.parse(times[0])));
                                 }
@@ -178,10 +166,9 @@ public class BaseController implements InitializingBean {
                                 params.remove(list);
                             }
                         }
-                        // ["2024-08-01", "2024-08-08"]
                         if (value.getClass().isArray()) {
                             times = (String[]) value;
-                            if (times != null && times.length == 2 && Strings.isNotBlank(times[0]) && Strings.isNotBlank(times[1])) {
+                            if (times.length == 2 && Strings.isNotBlank(times[0]) && Strings.isNotBlank(times[1])) {
                                 filterGroup.addFilter(list, FilterGroup.Operator.gte, SDF_DATE_START.format(SDF_DATE.parse(times[0])));
                                 filterGroup.addFilter(list, FilterGroup.Operator.lte, SDF_DATE_FINISH.format(SDF_DATE.parse(times[1])));
                                 params.remove(list);
@@ -204,9 +191,6 @@ public class BaseController implements InitializingBean {
     /**
      * 获取接口参数，根据对象清理
      *
-     * @param elementType
-     * @param request
-     * @return
      */
     public Map<String, Object> getQueryParameters(Class elementType, HttpServletRequest request) {
         Map<String, Object> queryParamsMap = new LinkedHashMap<>();
@@ -229,8 +213,6 @@ public class BaseController implements InitializingBean {
     /**
      * 获取接口参数
      *
-     * @param request
-     * @return
      */
     public Map<String, Object> getQueryParameters(HttpServletRequest request) {
         Map<String, Object> queryParamsMap = new LinkedHashMap<>();
@@ -249,8 +231,6 @@ public class BaseController implements InitializingBean {
     /**
      * 获取对象拥有的属性
      *
-     * @param elementType
-     * @return
      */
     private Set<String> getClassFieldNames(Class elementType) {
         Set<String> fieldNameList = new HashSet<>();
@@ -264,8 +244,6 @@ public class BaseController implements InitializingBean {
     /**
      * 获取对象拥有的属性
      *
-     * @param elementType
-     * @return
      */
     private List<Field> getClassFields(Class elementType) {
         List<Field> fieldsList = new ArrayList<>();

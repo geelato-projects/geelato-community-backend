@@ -5,7 +5,6 @@ import lombok.Setter;
 
 /**
  * @author diabl
- * @description: 分页查询参数
  */
 @Getter
 @Setter

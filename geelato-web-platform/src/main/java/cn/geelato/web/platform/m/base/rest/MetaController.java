@@ -34,8 +34,8 @@ public class MetaController extends BaseController {
 
 
     @RequestMapping(value = {"/list", "list/*"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiPagedResult list(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta, HttpServletRequest request) {
-        String gql = getGql(request, "query");
+    public ApiPagedResult list(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
+        String gql = getGql(this.request, "query");
         return ruleService.queryForMapList(gql, withMeta);
     }
 

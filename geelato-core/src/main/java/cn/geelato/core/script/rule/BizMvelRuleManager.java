@@ -4,11 +4,9 @@ import org.apache.commons.collections.map.HashedMap;
 import cn.geelato.core.script.AbstractScriptManager;
 import org.jeasy.rules.api.Rule;
 import org.jeasy.rules.api.Rules;
-import org.jeasy.rules.mvel.MVELRule;
 import org.jeasy.rules.mvel.MVELRuleFactory;
 
 import java.io.*;
-import java.util.Map;
 
 /**
  * @author geemeta
@@ -17,8 +15,8 @@ public class BizMvelRuleManager extends AbstractScriptManager {
     private final HashedMap ruleMap = new HashedMap();
 
 
-    public MVELRule getRule(String ruleCode) {
-        return (MVELRule) ruleMap.get(ruleCode);
+    public void getRule(String ruleCode) {
+        ruleMap.get(ruleCode);
     }
 
     /**

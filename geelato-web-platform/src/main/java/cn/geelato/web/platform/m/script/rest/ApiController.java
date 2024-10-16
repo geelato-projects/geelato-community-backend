@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.script.rest;
+package cn.geelato.web.platform.m.script.rest;
 
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.parser.FilterGroup;
@@ -9,12 +9,12 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.m.base.rest.BaseController;
-import cn.geelato.web.platform.script.entity.Api;
-import cn.geelato.web.platform.script.entity.ApiParam;
-import cn.geelato.web.platform.script.enums.AlternateTypeEnum;
-import cn.geelato.web.platform.script.service.ApiParamService;
-import cn.geelato.web.platform.script.service.ApiService;
+import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.script.entity.ApiParam;
+import cn.geelato.web.platform.m.script.entity.Api;
+import cn.geelato.web.platform.m.script.enums.AlternateTypeEnum;
+import cn.geelato.web.platform.m.script.service.ApiParamService;
+import cn.geelato.web.platform.m.script.service.ApiService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;

@@ -4,6 +4,7 @@ import cn.geelato.core.meta.model.field.ColumnMeta;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.Resources;
 import cn.geelato.web.platform.m.base.service.AttachService;

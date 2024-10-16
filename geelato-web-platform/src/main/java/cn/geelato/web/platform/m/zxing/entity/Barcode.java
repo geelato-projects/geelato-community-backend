@@ -96,7 +96,7 @@ public class Barcode extends BaseEntity implements EntityEnableAble {
         this.setLucency(this.lucency != null && this.lucency);
         // 背景颜色，默认白色
         this.setBackgroundColor(StringUtils.isBlank(this.backgroundColor) ? ColorUtils.WHITE : this.backgroundColor);
-        if (this.lucency == true) {
+        if (this.lucency) {
             this.setBackgroundColor(null);
         }
         // 是否显示文字，默认false

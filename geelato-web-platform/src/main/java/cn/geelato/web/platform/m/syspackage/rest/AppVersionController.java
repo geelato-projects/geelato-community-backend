@@ -11,7 +11,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.rest.BaseController;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.syspackage.entity.AppPackage;

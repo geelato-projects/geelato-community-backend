@@ -6,7 +6,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
-import cn.geelato.web.platform.m.base.rest.BaseController;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import cn.geelato.web.platform.m.security.service.OrgService;

@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.script.entity;
+package cn.geelato.web.platform.m.script.entity;
 
 
 import cn.geelato.core.meta.annotation.Col;
@@ -29,6 +29,7 @@ public class Api extends BaseEntity {
     private String method;
     private String remark;
     private Integer version;
+    private Boolean paging;
     @Title(title = "是否匿名访问", description = "1=允许匿名，不鉴权；0=不允许匿名，鉴权。")
     private int anonymous = 0;
     @Title(title = "分组名称")
@@ -55,6 +56,9 @@ public class Api extends BaseEntity {
     @Title(title = "响应参数类型")
     @Col(name = "response_type")
     private String responseType;
+    @Title(title = "响应格式化")
+    @Col(name = "response_format")
+    private String responseFormat;
     @Title(title = "请求参数")
     @Transient
     private List<ApiParam> requestParams;

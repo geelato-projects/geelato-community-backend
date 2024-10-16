@@ -1,11 +1,11 @@
-package cn.geelato.web.platform.script.rest;
+package cn.geelato.web.platform.m.script.rest;
 
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.m.base.rest.BaseController;
-import cn.geelato.web.platform.script.entity.Api;
-import cn.geelato.web.platform.script.service.ApiService;
+import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.script.entity.Api;
+import cn.geelato.web.platform.m.script.service.ApiService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.graalvm.polyglot.Context;

@@ -8,7 +8,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.m.base.rest.BaseController;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import cn.geelato.web.platform.m.zxing.service.BarcodeService;
 import cn.geelato.web.platform.m.zxing.utils.BarcodeUtils;

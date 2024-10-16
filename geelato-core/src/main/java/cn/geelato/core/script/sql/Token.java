@@ -25,7 +25,6 @@ public class Token {
      * -- GETTER --
      *  tokenType!=TokenType.Value时才有值
      *
-     * @return 关键字后面的表达式
      */
     private String express;
 

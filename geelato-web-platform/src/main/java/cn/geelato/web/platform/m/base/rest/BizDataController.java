@@ -9,6 +9,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRuntimeRestController;
 import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
+import cn.geelato.web.platform.m.BaseController;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

@@ -1,9 +1,9 @@
-package cn.geelato.web.platform.script.service;
+package cn.geelato.web.platform.m.script.service;
 
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.BaseService;
-import cn.geelato.web.platform.script.entity.Api;
-import cn.geelato.web.platform.script.entity.ApiParam;
+import cn.geelato.web.platform.m.script.entity.Api;
+import cn.geelato.web.platform.m.script.entity.ApiParam;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,10 +21,6 @@ public class ApiParamService extends BaseService {
     /**
      * 批量查询
      *
-     * @param apiId
-     * @param appId
-     * @param tenantCode
-     * @return
      */
     public List<ApiParam> queryModelsByApi(String apiId, String appId, String tenantCode) {
         Map<String, Object> params = new HashMap<>();
@@ -40,24 +36,23 @@ public class ApiParamService extends BaseService {
         return queryModel(ApiParam.class, params);
     }
 
-    public List<ApiParam> buildChildren(List<ApiParam> parentList, List<ApiParam> existList) {
-        if (parentList != null && parentList.size() > 0) {
+    public void buildChildren(List<ApiParam> parentList, List<ApiParam> existList) {
+        if (parentList != null && !parentList.isEmpty()) {
             for (ApiParam apiParam : parentList) {
                 List<ApiParam> childList = existList.stream().filter(param -> apiParam.getId().equals(param.getPid())).collect(Collectors.toList());
-                if (childList != null && childList.size() > 0) {
+                if (!childList.isEmpty()) {
                     buildChildren(childList, existList);
                     apiParam.setChildren(childList);
                 }
             }
         }
 
-        return parentList;
     }
 
     public List<ApiParam> queryModelsByApis(String apiId, String appId, String tenantCode) {
         List<ApiParam> existList = this.queryModelsByApi(apiId, appId, tenantCode);
         List<ApiParam> parentList = new ArrayList<>();
-        if (existList != null && existList.size() > 0) {
+        if (existList != null && !existList.isEmpty()) {
             parentList = existList.stream().filter(param -> StringUtils.isBlank(param.getPid())).collect(Collectors.toList());
             buildChildren(parentList, existList);
         }
@@ -67,7 +62,7 @@ public class ApiParamService extends BaseService {
 
     public List<ApiParam> batchCreateModel(Api api, String pid, List<ApiParam> records) {
         List<ApiParam> result = new ArrayList<>();
-        if (records != null && records.size() > 0) {
+        if (records != null && !records.isEmpty()) {
             for (ApiParam param : records) {
                 param.setApiId(api.getId());
                 param.setPid(pid);
@@ -75,7 +70,7 @@ public class ApiParamService extends BaseService {
                 param.setTenantCode(api.getTenantCode());
                 param.setId(null);
                 ApiParam apiParam = this.createModel(param);
-                if (param.getChildren() != null && param.getChildren().size() > 0) {
+                if (param.getChildren() != null && !param.getChildren().isEmpty()) {
                     List<ApiParam> apiParams = batchCreateModel(api, apiParam.getId(), param.getChildren());
                     apiParam.setChildren(apiParams);
                 }
@@ -88,7 +83,7 @@ public class ApiParamService extends BaseService {
 
     public void isDeleteModels(Api model) {
         List<ApiParam> apiParams = this.queryModelsByApi(model.getId(), null, null);
-        if (apiParams != null && apiParams.size() > 0) {
+        if (apiParams != null && !apiParams.isEmpty()) {
             for (ApiParam param : apiParams) {
                 this.isDeleteModel(param);
             }

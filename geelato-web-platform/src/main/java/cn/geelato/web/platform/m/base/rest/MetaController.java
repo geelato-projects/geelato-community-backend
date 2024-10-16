@@ -12,6 +12,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.utils.GqlResolveException;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson2.JSON;

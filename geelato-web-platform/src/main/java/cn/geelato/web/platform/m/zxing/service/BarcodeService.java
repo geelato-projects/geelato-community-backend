@@ -35,18 +35,18 @@ public class BarcodeService extends BaseService {
                     params.put("tenantCode", Ctx.getCurrentTenantCode());
                     List<Barcode> barcodes = queryModel(Barcode.class, params);
                     if (barcodes == null) {
-                        result.error().setMsg("没有找到对应的条码信息");
+                        result = ApiResult.fail("没有找到对应的条码信息");
                     } else if (barcodes.size() == 1) {
-                        result.success().setData(barcodes.get(0));
+                        result = ApiResult.success(barcodes.get(0));
                     } else {
-                        result.error().setMsg("找到多个条码信息，请联系管理员");
+                        result = ApiResult.fail("找到多个条码信息，请联系管理员");
                     }
                 } catch (Exception e) {
-                    result.error().setMsg("没有找到对应的条码信息");
+                    result = ApiResult.fail("没有找到对应的条码信息");
                 }
             }
         } else {
-            result.error().setMsg("条码不能为空");
+            result = ApiResult.fail("条码不能为空");
         }
 
         return result;

@@ -71,7 +71,7 @@ public class OutsideController extends BaseController {
                 }
                 Source source=Source.newBuilder("js", scriptContent, "graal.mjs").build();
                 Map result = context.eval(source).execute(parameter).as(Map.class);
-                if(api.getResponseFormat().equals("custom")){
+                if(api.getResponseFormat()!=null&&api.getResponseFormat().equals("custom")){
                     return result.get("result");
                 }else {
                     return ApiResult.success(result.get("result"));

@@ -13,7 +13,6 @@ import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.service.AppService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,10 +47,10 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult pageQuery(HttpServletRequest req) {
+    public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req, DEFAULT_ORDER_BY);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(DEFAULT_ORDER_BY);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return appService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -60,10 +59,10 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult<List<App>> query(HttpServletRequest req) {
+    public ApiResult<List<App>> query() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req, DEFAULT_ORDER_BY);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(DEFAULT_ORDER_BY);
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(appService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -160,9 +159,9 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/queryPermissionByPage", method = RequestMethod.GET)
-    public ApiResult<List<Map<String, Object>>> queryPermissionByPage(HttpServletRequest req) {
+    public ApiResult<List<Map<String, Object>>> queryPermissionByPage() {
         try {
-            Map<String, Object> params = this.getQueryParameters(req);
+            Map<String, Object> params = this.getQueryParameters();
             List<Map<String, Object>> queryList = dao.queryForMapList("platform_permission_by_app_page", params);
             return ApiResult.success(queryList);
         } catch (Exception e) {
@@ -172,9 +171,9 @@ public class AppController extends BaseController {
     }
 
     @RequestMapping(value = "/queryRolePermissionByPage", method = RequestMethod.GET)
-    public ApiResult<List<Map<String, Object>>> queryRolePermissionByPage(HttpServletRequest req) {
+    public ApiResult<List<Map<String, Object>>> queryRolePermissionByPage() {
         try {
-            Map<String, Object> params = this.getQueryParameters(req);
+            Map<String, Object> params = this.getQueryParameters();
             List<Map<String, Object>> queryList = dao.queryForMapList("platform_role_r_permission_by_app_page", params);
             return ApiResult.success(queryList);
         } catch (Exception e) {

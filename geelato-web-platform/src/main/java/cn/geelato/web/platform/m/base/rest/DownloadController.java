@@ -11,8 +11,6 @@ import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.OfficeUtils;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +50,7 @@ public class DownloadController extends BaseController {
     }
 
     @RequestMapping(value = "/file", method = RequestMethod.GET)
-    public void downloadFile(String id, String name, String path, boolean isPdf, boolean isPreview, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public void downloadFile(String id, String name, String path, boolean isPdf, boolean isPreview) throws Exception {
         // 抽取出来
         OutputStream out = null;
         FileInputStream in = null;
@@ -83,20 +81,20 @@ public class DownloadController extends BaseController {
                 file = pFile.exists() ? pFile : null;
             }
             if (Strings.isNotBlank(name)) {
-                out = response.getOutputStream();
+                out = this.response.getOutputStream();
                 // 编码
                 String encodeName = URLEncoder.encode(name, StandardCharsets.UTF_8);
-                String mineType = request.getServletContext().getMimeType(encodeName);
+                String mineType = this.request.getServletContext().getMimeType(encodeName);
                 // 如果没有取到常用的媒体类型，则获取自配置的媒体类型
                 if (mineType == null) {
                     mineType = EXT_MAP.get(UploadService.getFileExtensionWithNoDot(name));
                 }
-                response.setContentType(mineType);
+                this.response.setContentType(mineType);
                 // 在线查看图片、pdf
                 if (isPreview && Strings.isNotBlank(mineType) && (mineType.startsWith("image/") || mineType.equalsIgnoreCase(MediaTypes.APPLICATION_PDF))) {
                     //  file = downloadService.copyToFile(file, name);
                 } else {
-                    response.setHeader("Content-Disposition", "attachment; filename=" + encodeName);
+                    this.response.setHeader("Content-Disposition", "attachment; filename=" + encodeName);
                 }
                 // 读取文件
                 in = new FileInputStream(file);

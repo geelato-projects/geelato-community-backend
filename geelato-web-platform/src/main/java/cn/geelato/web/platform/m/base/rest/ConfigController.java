@@ -9,7 +9,6 @@ import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.enums.SysConfigPurposeEnum;
 import com.alibaba.fastjson2.JSON;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -22,9 +21,9 @@ public class ConfigController extends BaseController {
 
 
     @RequestMapping(value = {""}, method = RequestMethod.GET)
-    public ApiResult<Map<String, Object>> list(HttpServletRequest request) {
-        String tenantCode = request.getParameter("tenantCode");
-        String appId = request.getParameter("appId");
+    public ApiResult<Map<String, Object>> list() {
+        String tenantCode = this.request.getParameter("tenantCode");
+        String appId = this.request.getParameter("appId");
         Map<String, SysConfig> configMap = new HashMap<>();
         pullAll(configMap, SysConfigPurposeEnum.WEBAPP.getValue());
         pullAll(configMap, SysConfigPurposeEnum.ALL.getValue());

@@ -21,7 +21,6 @@ import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import cn.geelato.web.platform.m.model.service.DevTableService;
 import cn.geelato.web.platform.m.model.service.DevViewService;
 import cn.geelato.web.platform.m.security.service.PermissionService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,10 +63,10 @@ public class DevTableController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult pageQuery(HttpServletRequest req) {
+    public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return devTableService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -76,10 +75,10 @@ public class DevTableController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult<List<TableMeta>> query(HttpServletRequest req) {
+    public ApiResult<List<TableMeta>> query() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(devTableService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
             log.error(e.getMessage());

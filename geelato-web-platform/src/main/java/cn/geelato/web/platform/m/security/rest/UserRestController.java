@@ -21,7 +21,6 @@ import cn.geelato.web.platform.m.security.service.OrgService;
 import cn.geelato.web.platform.m.security.service.UserService;
 import cn.geelato.web.platform.m.security.service.UserStockMapService;
 import com.alibaba.fastjson2.JSON;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,10 +65,10 @@ public class UserRestController extends BaseController {
 
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult pageQuery(HttpServletRequest req) {
+    public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             ApiPagedResult result = userService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
             DataItems<List<User>> dataItems = (DataItems<List<User>>) result.getData();
             // 清理不需要展示的数据
@@ -84,11 +83,11 @@ public class UserRestController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQueryStock", method = RequestMethod.GET)
-    public ApiPagedResult pageQueryStock(HttpServletRequest req, boolean stocked, boolean stockSearch) {
+    public ApiPagedResult pageQueryStock(boolean stocked, boolean stockSearch) {
         try {
             // 搜索条件
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             // 获取当前用户常用联系人
             if (stockSearch) {
                 Map<String, Object> params = new HashMap<>();
@@ -119,10 +118,10 @@ public class UserRestController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQueryOf", method = RequestMethod.GET)
-    public ApiPagedResult pageQueryOf(HttpServletRequest req, String appId, String tenantCode) {
+    public ApiPagedResult pageQueryOf(String appId, String tenantCode) {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return userService.pageQueryModelOf(filterGroup, pageQueryRequest, appId, tenantCode);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -131,10 +130,10 @@ public class UserRestController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult query(HttpServletRequest req) {
+    public ApiResult query() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             List<User> list = userService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(userFormat(list));
         } catch (Exception e) {
@@ -363,7 +362,7 @@ public class UserRestController extends BaseController {
     }
 
     @RequestMapping(value = "/resetCompany", method = RequestMethod.POST)
-    public ApiResult<NullResult> resetCompany(HttpServletRequest req) {
+    public ApiResult<NullResult> resetCompany() {
         try {
             List<User> users = userService.queryModel(User.class, new HashMap<>());
             if (users != null && users.size() > 0) {

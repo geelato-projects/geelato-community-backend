@@ -10,12 +10,11 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.script.entity.ApiParam;
 import cn.geelato.web.platform.m.script.entity.Api;
+import cn.geelato.web.platform.m.script.entity.ApiParam;
 import cn.geelato.web.platform.m.script.enums.AlternateTypeEnum;
 import cn.geelato.web.platform.m.script.service.ApiParamService;
 import cn.geelato.web.platform.m.script.service.ApiService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,10 +51,10 @@ public class ApiController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult pageQuery(HttpServletRequest req) {
+    public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return apiService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -64,10 +63,10 @@ public class ApiController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult<List<Api>> query(HttpServletRequest req) {
+    public ApiResult<List<Api>> query() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(apiService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -76,10 +75,10 @@ public class ApiController extends BaseController {
     }
 
     @RequestMapping(value = "/queryGroupName", method = RequestMethod.GET)
-    public ApiResult<List<String>> queryGroupName(HttpServletRequest req) {
+    public ApiResult<List<String>> queryGroupName() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             List<Api> list = apiService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             List<String> groupNames = new ArrayList<>();
             if (list != null && !list.isEmpty()) {

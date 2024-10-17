@@ -12,7 +12,6 @@ import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import cn.geelato.web.platform.m.security.service.*;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -52,7 +51,7 @@ public class JWTAuthRestController extends BaseController {
 
     @IgnoreJWTVerify
     @RequestMapping(value = "/login", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
-    public ApiResult login(@RequestBody LoginParams loginParams, HttpServletRequest req) {
+    public ApiResult login(@RequestBody LoginParams loginParams) {
         ApiResult apiResult = new ApiResult();
         try {
             // 用户登录校验
@@ -103,15 +102,15 @@ public class JWTAuthRestController extends BaseController {
     }
 
     @RequestMapping(value = "/info", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult getUserInfo(HttpServletRequest req) {
+    public ApiResult getUserInfo() {
         try {
-            User user = this.getUserByToken(req);
+            User user = this.getUserByToken();
             if (user == null) {
                 return new ApiResult().error().setMsg("获取用户失败");
             }
 
             LoginResult loginResult = LoginResult.formatLoginResult(user);
-            loginResult.setToken(this.getToken(req));
+            loginResult.setToken(this.getToken());
             loginResult.setHomePath("");
             loginResult.setRoles(null);
             // 用户所属公司
@@ -183,9 +182,9 @@ public class JWTAuthRestController extends BaseController {
 
 
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
-    public ApiResult<NullResult> logout(HttpServletRequest req) {
+    public ApiResult<NullResult> logout() {
         try {
-            User user = this.getUserByToken(req);
+            User user = this.getUserByToken();
             log.debug("User [" + user.getLoginName() + "] logout.");
             return ApiResult.successNoResult();
         } catch (Exception e) {
@@ -200,7 +199,7 @@ public class JWTAuthRestController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/menu", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult getCurrentUserMenu(@RequestBody Map<String, Object> params, HttpServletRequest request) throws Exception {
+    public ApiResult getCurrentUserMenu(@RequestBody Map<String, Object> params) throws Exception {
         try {
             List<Map<String, Object>> menuItemList = new ArrayList<>();
             // post参数
@@ -209,9 +208,9 @@ public class JWTAuthRestController extends BaseController {
             String appId = (String) params.get("appId");
             String tenantCode = (String) params.get("tenantCode");
             // 用户
-            User user = getUserByToken(request);
+            User user = getUserByToken();
             // log.info(String.format("当前用户菜单查询，用户：%s", (user != null ? String.format("%s（%s）", user.getName(), user.getLoginName()) : "")));
-            String token = getToken(request);
+            String token = getToken();
             // log.info(String.format("当前用户菜单查询，Token：%s", token));
             if (user == null || Strings.isBlank(token)) {
                 return ApiResult.fail("User or token is null");
@@ -246,9 +245,9 @@ public class JWTAuthRestController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/resetPassword", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult resetPassword(HttpServletRequest req, @RequestParam(defaultValue = "8", required = false) int passwordLength) throws Exception {
+    public ApiResult resetPassword(@RequestParam(defaultValue = "8", required = false) int passwordLength) throws Exception {
         try {
-            User user = this.getUserByToken(req);
+            User user = this.getUserByToken();
             String plainPassword = RandomStringUtils.randomAlphanumeric(passwordLength > 32 ? 32 : passwordLength);
             user.setPlainPassword(plainPassword);
             accountService.entryptPassword(user);
@@ -402,11 +401,10 @@ public class JWTAuthRestController extends BaseController {
     /**
      * 通过token获取用户信息
      *
-     * @param req
      * @return
      * @throws Exception
      */
-    private User getUserByToken(HttpServletRequest req) throws Exception {
+    private User getUserByToken() throws Exception {
         ShiroDbRealm.ShiroUser shiroUser = SecurityHelper.getCurrentUser();
         User user = null;
         if (shiroUser != null) {
@@ -415,8 +413,8 @@ public class JWTAuthRestController extends BaseController {
         return user;
     }
 
-    private String getToken(HttpServletRequest req) {
-        return req.getHeader("Authorization");
+    private String getToken() {
+        return this.request.getHeader("Authorization");
     }
 
     /**

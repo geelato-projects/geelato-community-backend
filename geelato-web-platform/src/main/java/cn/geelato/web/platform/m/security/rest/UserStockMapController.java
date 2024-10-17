@@ -11,7 +11,6 @@ import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.UserStockMap;
 import cn.geelato.web.platform.m.security.service.UserStockMapService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,10 +34,10 @@ public class UserStockMapController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult pageQuery(HttpServletRequest req) {
+    public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             ApiPagedResult result = userStockMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
             return result;
         } catch (Exception e) {
@@ -48,10 +47,10 @@ public class UserStockMapController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult query(HttpServletRequest req) {
+    public ApiResult query() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             List<UserStockMap> list = userStockMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(list);
         } catch (Exception e) {
@@ -61,10 +60,10 @@ public class UserStockMapController extends BaseController {
     }
 
     @RequestMapping(value = "/total", method = RequestMethod.GET)
-    public ApiResult total(HttpServletRequest req) {
+    public ApiResult total() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req);
-            Map<String, Object> params = this.getQueryParameters(CLAZZ, req);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
             params.put("userId", Ctx.getCurrentUser().getUserId());
             List<UserStockMap> list = userStockMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(list == null ? 0 : list.size());

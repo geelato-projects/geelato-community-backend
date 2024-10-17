@@ -5,7 +5,6 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.FileInfo;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,8 +39,7 @@ public class FileController extends BaseController {
      * @return 上传的字节数，-1表示上传失败
      */
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
-    public ApiResult uploadFile(@RequestParam("file") MultipartFile file,
-                                HttpServletRequest request) {
+    public ApiResult uploadFile(@RequestParam("file") MultipartFile file) {
         String contentType = file.getContentType();
         String originalFilename = file.getOriginalFilename();
         String relativePath = sdf.format(new Date());

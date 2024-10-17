@@ -10,8 +10,8 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.syspackage.entity.AppPackage;
@@ -19,7 +19,6 @@ import cn.geelato.web.platform.m.syspackage.entity.AppVersion;
 import cn.geelato.web.platform.m.syspackage.service.AppVersionService;
 import com.alibaba.fastjson2.JSONObject;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,10 +54,10 @@ public class AppVersionController extends BaseController {
     private DownloadService downloadService;
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult pageQuery(HttpServletRequest req) {
+    public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(req, DEFAULT_ORDER_BY);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, req, OPERATORMAP);
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(DEFAULT_ORDER_BY);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return appVersionService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());

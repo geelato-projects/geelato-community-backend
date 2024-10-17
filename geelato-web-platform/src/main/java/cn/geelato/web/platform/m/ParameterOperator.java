@@ -11,8 +11,9 @@ import java.util.*;
 public class ParameterOperator extends RequestOperator {
 
     protected Map<String, Object> getQueryParameters(Class elementType) {
-        return getQueryParameters(elementType,this.request);
+        return getQueryParameters(elementType, this.request);
     }
+
     @Deprecated
     protected Map<String, Object> getQueryParameters(Class elementType, HttpServletRequest request) {
         Map<String, Object> queryParamsMap = new LinkedHashMap<>();
@@ -33,6 +34,7 @@ public class ParameterOperator extends RequestOperator {
     protected Map<String, Object> getQueryParameters() {
         return getQueryParameters(this.request);
     }
+
     @Deprecated
     protected Map<String, Object> getQueryParameters(HttpServletRequest request) {
         Map<String, Object> queryParamsMap = new LinkedHashMap<>();
@@ -45,6 +47,10 @@ public class ParameterOperator extends RequestOperator {
             }
         }
         return queryParamsMap;
+    }
+
+    protected PageQueryRequest getPageQueryParameters(String defaultOrder) {
+        return getPageQueryParameters(this.request, defaultOrder);
     }
 
     protected PageQueryRequest getPageQueryParameters(HttpServletRequest request, String defaultOrder) {
@@ -73,6 +79,7 @@ public class ParameterOperator extends RequestOperator {
 
         return queryRequest;
     }
+
     private Set<String> getClassFieldNames(Class elementType) {
         Set<String> fieldNameList = new HashSet<>();
         List<Field> fieldsList = getClassFields(elementType);

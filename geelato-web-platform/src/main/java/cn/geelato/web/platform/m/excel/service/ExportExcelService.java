@@ -18,7 +18,6 @@ import cn.geelato.web.platform.m.excel.entity.WordWaterMarkMeta;
 import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import cn.geelato.web.platform.m.zxing.service.BarcodeService;
 import com.alibaba.fastjson2.JSON;
-import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -527,31 +526,4 @@ public class ExportExcelService {
 
         return null;
     }
-
-    /**
-     * 获取查询sql
-     *
-     * @param request
-     * @return
-     */
-    public String getGql(HttpServletRequest request) {
-        StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader br = null;
-        try {
-            br = request.getReader();
-        } catch (IOException e) {
-            logger.error("未能从httpServletRequest中获取gql的内容", e);
-        }
-        String str;
-        try {
-            while ((str = br.readLine()) != null) {
-                stringBuilder.append(str);
-            }
-        } catch (IOException e) {
-            logger.error("未能从httpServletRequest中获取gql的内容", e);
-        }
-
-        return stringBuilder.toString();
-    }
-
 }

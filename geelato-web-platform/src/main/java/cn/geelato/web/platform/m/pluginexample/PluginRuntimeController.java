@@ -5,7 +5,6 @@ import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.example.Greeting;
 import cn.geelato.plugin.example.PluginInfo;
 import cn.geelato.web.platform.annotation.ApiRuntimeRestController;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,7 +27,7 @@ public class PluginRuntimeController extends PluginController {
     }
 
     @RequestMapping(value = "/example3", method = RequestMethod.GET)
-    public ApiResult<?> example3(HttpServletRequest req) {
+    public ApiResult<?> example3() {
         return ApiResult.fail("fail message");
     }
 }

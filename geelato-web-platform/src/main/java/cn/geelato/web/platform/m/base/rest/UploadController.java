@@ -12,7 +12,6 @@ import cn.geelato.web.platform.m.base.service.ResourcesService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import com.alibaba.fastjson2.JSON;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +41,7 @@ public class UploadController extends BaseController {
     }
 
     @RequestMapping(value = "/file", method = RequestMethod.POST)
-    public ApiResult uploadFile(@RequestParam("file") MultipartFile file, HttpServletRequest request, Boolean isRename, String tableType, String objectId, String genre, String root, String appId, String tenantCode) {
+    public ApiResult uploadFile(@RequestParam("file") MultipartFile file, Boolean isRename, String tableType, String objectId, String genre, String root, String appId, String tenantCode) {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }

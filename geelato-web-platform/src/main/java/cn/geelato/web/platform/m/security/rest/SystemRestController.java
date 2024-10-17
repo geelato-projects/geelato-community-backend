@@ -10,7 +10,6 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import cn.geelato.web.platform.m.security.service.OrgService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.util.Strings;
@@ -39,7 +38,7 @@ public class SystemRestController extends BaseController {
 
     @IgnoreJWTVerify
     @RequestMapping(value = "/getRoleListByPage", method = RequestMethod.GET, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
-    public ApiPagedResult getAccountList(HttpServletRequest req) {
+    public ApiPagedResult getAccountList() {
         // 初始化返回值
         ApiPagedResult apiPageResult = new ApiPagedResult<DataItems>();
         List mapList = dao.queryForMapList(Role.class);
@@ -50,11 +49,11 @@ public class SystemRestController extends BaseController {
     }
 
     @RequestMapping(value = "/getUserInfo", method = RequestMethod.GET)
-    public ApiResult getUserInfo(HttpServletRequest req) {
+    public ApiResult getUserInfo() {
         try {
-            User user = this.getUserByToken(req);
+            User user = this.getUserByToken();
             LoginResult loginResult = LoginResult.formatLoginResult(user);
-            loginResult.setToken(this.getToken(req));
+            loginResult.setToken(this.getToken());
             loginResult.setHomePath("");
             loginResult.setRoles(null);
             // 用户所属公司
@@ -68,9 +67,9 @@ public class SystemRestController extends BaseController {
 
 
     @RequestMapping(value = "/logout", method = RequestMethod.GET)
-    public ApiResult<NullResult> logout(HttpServletRequest req) {
+    public ApiResult<NullResult> logout() {
         try {
-            User user = this.getUserByToken(req);
+            User user = this.getUserByToken();
             log.debug("User [" + user.getLoginName() + "] logout.");
             return ApiResult.successNoResult();
         } catch (Exception e) {
@@ -87,8 +86,8 @@ public class SystemRestController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/resetPassword", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult resetPassword(HttpServletRequest req, @RequestParam(defaultValue = "8", required = false) int passwordLength) throws Exception {
-        User user = this.getUserByToken(req);
+    public ApiResult resetPassword(@RequestParam(defaultValue = "8", required = false) int passwordLength) throws Exception {
+        User user = this.getUserByToken();
         String plainPassword = RandomStringUtils.randomAlphanumeric(passwordLength > 32 ? 32 : passwordLength);
         user.setPlainPassword(plainPassword);
         accountService.entryptPassword(user);
@@ -100,16 +99,15 @@ public class SystemRestController extends BaseController {
     /**
      * 通过token获取用户信息
      *
-     * @param req
      * @return
      * @throws Exception
      */
-    private User getUserByToken(HttpServletRequest req) throws Exception {
-        return dao.queryForObject(User.class, "loginName", req.getAttribute("loginName"));
+    private User getUserByToken() throws Exception {
+        return dao.queryForObject(User.class, "loginName", this.request.getAttribute("loginName"));
     }
 
-    private String getToken(HttpServletRequest req) {
-        return req.getHeader("authorization");
+    private String getToken() {
+        return this.request.getHeader("authorization");
     }
 
     /**

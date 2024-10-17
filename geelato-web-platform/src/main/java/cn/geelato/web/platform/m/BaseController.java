@@ -31,9 +31,13 @@ public class BaseController extends ParameterOperator implements InitializingBea
     private final SimpleDateFormat SDF_DATE_FINISH = new SimpleDateFormat(DateUtils.DATEFINISH);
     protected Dao dao;
     protected RuleService ruleService;
-    protected HttpServletResponse response;
-    protected HttpSession session;
 
+    protected HttpServletResponse response;
+
+    @Autowired
+    protected void setHttpServletRequest(HttpServletRequest httpServletRequest) {
+        this.request = httpServletRequest;
+    }
     @Autowired
     protected void setDao(@Qualifier("primaryDao") Dao dao) {
         this.dao = dao;
@@ -50,9 +54,7 @@ public class BaseController extends ParameterOperator implements InitializingBea
      */
     @ModelAttribute
     public void setReqAndRes(HttpServletRequest request, HttpServletResponse response) {
-        this.request = request;
         this.response = response;
-        this.session = request.getSession(true);
     }
 
 

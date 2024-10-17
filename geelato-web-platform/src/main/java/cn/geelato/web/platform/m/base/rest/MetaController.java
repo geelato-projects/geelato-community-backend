@@ -17,7 +17,6 @@ import cn.geelato.web.platform.utils.GqlResolveException;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.web.bind.annotation.*;
@@ -43,18 +42,18 @@ public class MetaController extends BaseController {
      * 多列表查询，一次查询返回多个列表
      */
     @RequestMapping(value = {"/multiList", "multiList/*"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiMultiPagedResult multiList(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta, HttpServletRequest request) {
+    public ApiMultiPagedResult multiList(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
         String gql = getGql(null);
         return ruleService.queryForMultiMapList(gql, withMeta);
     }
 
     /**
-     * @param biz     业务代码
+     * @param biz 业务代码
      * @return SaveResult
      */
     @RequestMapping(value = {"/save/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult save(@PathVariable("biz") String biz) throws DaoException {
-        String gql = getGql( "save");
+        String gql = getGql("save");
         ApiMetaResult result = new ApiMetaResult();
         result.setData(ruleService.save(biz, gql));
         return result;
@@ -62,7 +61,7 @@ public class MetaController extends BaseController {
 
     @RequestMapping(value = {"/batchSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult batchSave() throws DaoException {
-        String gql = getGql( "batchSave");
+        String gql = getGql("batchSave");
         ApiMetaResult result = new ApiMetaResult();
         result.setData(ruleService.batchSave(gql, true));
         return result;
@@ -70,7 +69,7 @@ public class MetaController extends BaseController {
 
     @RequestMapping(value = {"/multiSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult multiSave() {
-        String gql = getGql( "multiSave");
+        String gql = getGql("multiSave");
         ApiMetaResult result = new ApiMetaResult();
         result.setData(ruleService.multiSave(gql));
         return result;
@@ -116,7 +115,6 @@ public class MetaController extends BaseController {
 
     /**
      * 获取指定应用下的精简版实体元数据信息列表
-     *
      */
     @RequestMapping(value = {"/entityLiteMetas"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult queryLiteEntities() {
@@ -127,7 +125,7 @@ public class MetaController extends BaseController {
     /**
      * 获取通用树数据（platform_tree_node）
      *
-     * @param biz     业务代码
+     * @param biz 业务代码
      * @return ApiResult
      */
     @RequestMapping(value = {"/tree/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
@@ -153,7 +151,7 @@ public class MetaController extends BaseController {
      * 唯一性校验
      */
     @RequestMapping(value = {"/uniqueness"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult uniqueness(HttpServletRequest request) {
+    public ApiResult uniqueness() {
         String gql = getGql(null);
         if (Strings.isNotBlank(gql)) {
             JSONObject jo = JSON.parseObject(gql);

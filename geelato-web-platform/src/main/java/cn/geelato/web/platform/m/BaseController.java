@@ -1,23 +1,21 @@
 package cn.geelato.web.platform.m;
 
 import cn.geelato.core.gql.parser.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
-import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -31,13 +29,13 @@ public class BaseController extends ParameterOperator implements InitializingBea
     private final SimpleDateFormat SDF_DATE_FINISH = new SimpleDateFormat(DateUtils.DATEFINISH);
     protected Dao dao;
     protected RuleService ruleService;
-
     protected HttpServletResponse response;
 
     @Autowired
     protected void setHttpServletRequest(HttpServletRequest httpServletRequest) {
         this.request = httpServletRequest;
     }
+
     @Autowired
     protected void setDao(@Qualifier("primaryDao") Dao dao) {
         this.dao = dao;
@@ -60,12 +58,12 @@ public class BaseController extends ParameterOperator implements InitializingBea
 
     /**
      * 根据接口传递的参数，构建查询条件
-     *
      */
     public FilterGroup getFilterGroup(Class elementType, Map<String, List<String>> operatorMap) throws ParseException {
         Map<String, Object> params = this.getQueryParameters(elementType, this.request);
         return this.getFilterGroup(params, operatorMap);
     }
+
     @Deprecated
     public FilterGroup getFilterGroup(Class elementType, HttpServletRequest request, Map<String, List<String>> operatorMap) throws ParseException {
         Map<String, Object> params = this.getQueryParameters(elementType, request);
@@ -162,7 +160,6 @@ public class BaseController extends ParameterOperator implements InitializingBea
 
         return filterGroup;
     }
-
 
 
     @Override

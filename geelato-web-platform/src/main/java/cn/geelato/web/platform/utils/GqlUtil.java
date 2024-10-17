@@ -17,18 +17,25 @@ public class GqlUtil {
     public static String resolveGql(HttpServletRequest request) {
         StringBuilder stringBuilder = new StringBuilder();
         BufferedReader br = null;
-        try {
-            br = request.getReader();
-        } catch (IOException e) {
-            log.error("未能从httpServletRequest中获取gql的内容", e);
-        }
         String str;
         try {
-            while ((str = br.readLine()) != null) {
-                stringBuilder.append(str);
+            br = request.getReader();
+            if (br != null) {
+                while ((str = br.readLine()) != null) {
+                    stringBuilder.append(str);
+                }
             }
         } catch (IOException e) {
             log.error("未能从httpServletRequest中获取gql的内容", e);
+            throw new GqlResolveException();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
         return stringBuilder.toString();

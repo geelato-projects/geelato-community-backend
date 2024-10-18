@@ -1,17 +1,20 @@
 package cn.geelato.web.platform.m.base.service;
 
-import com.alibaba.fastjson2.JSON;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.Resources;
+import com.alibaba.fastjson2.JSON;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,5 +83,18 @@ public class AttachService extends BaseService {
         }
 
         return true;
+    }
+
+    public Attach saveByFile(File file, String name, String genre, String appId, String tenantCode) throws IOException {
+        BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+        Attach attach = new Attach();
+        attach.setTenantCode(tenantCode);
+        attach.setAppId(appId);
+        attach.setName(name);
+        attach.setType(Files.probeContentType(file.toPath()));
+        attach.setGenre(genre);
+        attach.setSize(attributes.size());
+        attach.setPath(file.getAbsolutePath());
+        return this.createModel(attach);
     }
 }

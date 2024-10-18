@@ -2,6 +2,7 @@ package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.core.meta.model.field.ColumnMeta;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.BaseController;
@@ -84,7 +85,7 @@ public class UploadController extends BaseController {
         ObjectOutputStream oops = null;
         try {
             // 文件名称
-            String ext = UploadService.getFileExtension(fileName);
+            String ext = FileUtils.getFileExtension(fileName);
             if (Strings.isBlank(ext) || !ext.equalsIgnoreCase(UploadService.ROOT_CONFIG_SUFFIX)) {
                 fileName += UploadService.ROOT_CONFIG_SUFFIX;
             }
@@ -129,7 +130,7 @@ public class UploadController extends BaseController {
         BufferedWriter bufferedWriter = null;
         try {
             // 文件名称
-            String ext = UploadService.getFileExtension(fileName);
+            String ext = FileUtils.getFileExtension(fileName);
             if (Strings.isBlank(ext) || !ext.equalsIgnoreCase(UploadService.ROOT_CONFIG_SUFFIX)) {
                 fileName += UploadService.ROOT_CONFIG_SUFFIX;
             }

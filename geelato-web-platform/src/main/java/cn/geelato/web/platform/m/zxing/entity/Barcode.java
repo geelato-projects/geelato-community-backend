@@ -104,7 +104,7 @@ public class Barcode extends BaseEntity implements EntityEnableAble {
         // 字体，默认宋体
         this.setFontFamily(StringUtils.isBlank(this.fontFamily) ? "宋体" : this.fontFamily);
         // 字体大小，默认12，最小12，最大60
-        this.setFontSize(this.fontSize == null ? 16 : (this.fontSize <= 12 ? 12 : (this.fontSize >= 60 ? 60 : this.fontSize)));
+        this.setFontSize(this.fontSize == null ? 16 : (this.fontSize <= 12 ? 12 : (this.fontSize >= 120 ? 120 : this.fontSize)));
         // 字体与条码之间的距离，默认-7
         this.setFontMargin(this.fontMargin == null || this.fontMargin < -100 ? 0 : this.fontMargin);
         // 字体对齐方式，默认center

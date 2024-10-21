@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * @author geemeta
  */
-@SuppressWarnings("rawtypes")
+@SuppressWarnings("all")
 public class BaseController extends ParameterOperator implements InitializingBean {
 
     private final SimpleDateFormat SDF_DATE = new SimpleDateFormat(DateUtils.DATE);

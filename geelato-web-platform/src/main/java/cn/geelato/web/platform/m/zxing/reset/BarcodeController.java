@@ -7,14 +7,18 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.FontUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import cn.geelato.web.platform.m.zxing.service.BarcodeService;
 import cn.geelato.web.platform.m.zxing.utils.BarcodeUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,12 +26,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @ApiRestController(value = "/zxing/barcode")
 @Slf4j
 public class BarcodeController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<Barcode> CLAZZ = Barcode.class;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     static {
         OPERATORMAP.put("contains", Arrays.asList("title", "code", "description"));
@@ -35,6 +41,8 @@ public class BarcodeController extends BaseController {
     }
 
     private final BarcodeService barcodeService;
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     public BarcodeController(BarcodeService barcodeService) {
@@ -154,5 +162,25 @@ public class BarcodeController extends BaseController {
             obj = BarcodeUtils.generateBarcode(text, barcode);
         }
         return obj;
+    }
+
+    @RequestMapping(value = "/getFonts", method = RequestMethod.GET)
+    public ApiResult getFonts() {
+        try {
+            List<String> fonts = new ArrayList<>();
+            if (redisTemplate.hasKey(FontUtils.redisTemplateKey)) {
+                Object jsonObject = redisTemplate.opsForValue().get(FontUtils.redisTemplateKey);
+                fonts = jsonObject != null ? objectMapper.readValue(String.valueOf(jsonObject), List.class) : new ArrayList<>();
+            } else {
+                fonts = FontUtils.getAvailableFontFamilies();
+                String jsonText = objectMapper.writeValueAsString(fonts);
+                redisTemplate.opsForValue().set(FontUtils.redisTemplateKey, jsonText);
+                redisTemplate.expire(FontUtils.redisTemplateKey, 7, TimeUnit.DAYS);
+            }
+            return ApiResult.success(fonts);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return ApiResult.fail(e.getMessage());
+        }
     }
 }

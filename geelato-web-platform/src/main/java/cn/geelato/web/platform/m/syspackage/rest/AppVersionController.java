@@ -7,6 +7,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
@@ -100,7 +101,7 @@ public class AppVersionController extends BaseController {
                     appPackageData = ZipUtils.readPackageData(appVersion.getPackagePath(), ".gdp");
                 } else {
                     Attach attach = attachService.getModel(appVersion.getPackagePath());
-                    File file = downloadService.downloadFile(attach.getName(), attach.getPath());
+                    File file = FileUtils.pathToFile(attach.getPath());
                     if (file != null) {
                         appPackageData = ZipUtils.readPackageData(file, ".gdp");
                     } else {

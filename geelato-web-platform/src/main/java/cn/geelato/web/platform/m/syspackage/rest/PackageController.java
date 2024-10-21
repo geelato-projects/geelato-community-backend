@@ -13,13 +13,12 @@ import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiResultCode;
+import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
-import cn.geelato.web.platform.m.syspackage.enums.PackageSourceEnum;
-import cn.geelato.web.platform.m.syspackage.enums.PackageStatusEnum;
-import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.base.service.UploadService;
@@ -27,6 +26,8 @@ import cn.geelato.web.platform.m.syspackage.PackageConfigurationProperties;
 import cn.geelato.web.platform.m.syspackage.entity.AppMeta;
 import cn.geelato.web.platform.m.syspackage.entity.AppPackage;
 import cn.geelato.web.platform.m.syspackage.entity.AppVersion;
+import cn.geelato.web.platform.m.syspackage.enums.PackageSourceEnum;
+import cn.geelato.web.platform.m.syspackage.enums.PackageStatusEnum;
 import cn.geelato.web.platform.m.syspackage.service.AppVersionService;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -226,7 +227,7 @@ public class PackageController extends BaseController {
                         appPackageData = ZipUtils.readPackageData(appVersion.getPackagePath(), ".gdp");
                     } else {
                         Attach attach = attachService.getModel(appVersion.getPackagePath());
-                        File file = downloadService.downloadFile(attach.getName(), attach.getPath());
+                        File file = FileUtils.pathToFile(attach.getPath());
                         appPackageData = ZipUtils.readPackageData(file, ".gdp");
                     }
                 } catch (IOException ex) {
@@ -320,7 +321,7 @@ public class PackageController extends BaseController {
 //                    appPackageData = ZipUtils.readPackageData("D:\\geelato-project\\app_package_temp\\upload_temp\\ob.zgdp", ".gdp");
                 } else {
                     Attach attach = attachService.getModel(appVersion.getPackagePath());
-                    File file = downloadService.downloadFile(attach.getName(), attach.getPath());
+                    File file = FileUtils.pathToFile(attach.getPath());
                     appPackageData = ZipUtils.readPackageData(file, ".gdp");
                 }
             } catch (IOException ex) {

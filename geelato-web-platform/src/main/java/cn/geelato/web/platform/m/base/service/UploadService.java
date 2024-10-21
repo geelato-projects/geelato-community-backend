@@ -2,6 +2,7 @@ package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.core.Ctx;
 import cn.geelato.utils.DateUtils;
+import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
@@ -50,7 +51,7 @@ public class UploadService {
 
         // 处理文件名称
         if (isRename) {
-            String ext = UploadService.getFileExtension(fileName);
+            String ext = FileUtils.getFileExtension(fileName);
             fileName = UIDGenerator.generate() + ext;
         }
         // 路径检验
@@ -108,7 +109,7 @@ public class UploadService {
 
         // 处理文件名称
         if (isRename) {
-            String ext = UploadService.getFileExtension(fileName);
+            String ext = FileUtils.getFileExtension(fileName);
             fileName = UIDGenerator.generate() + ext;
         }
         // 路径检验
@@ -132,51 +133,6 @@ public class UploadService {
     }
 
     /**
-     * 文件后缀。例：.xlsx
-     *
-     * @param fileName 文件名称
-     * @return
-     */
-    public static String getFileExtension(String fileName) {
-        if (Strings.isNotBlank(fileName)) {
-            int lastIndexOfDot = fileName.lastIndexOf('.');
-            if (lastIndexOfDot != -1) {
-                return fileName.substring(lastIndexOfDot);
-            }
-        }
-
-        return "";
-    }
-
-    /**
-     * 文件后缀
-     *
-     * @param fileName 文件名称
-     * @return 例：xlsx，不包含.
-     */
-    public static String getFileExtensionWithNoDot(String fileName) {
-        if (StringUtils.isNotBlank(fileName)) {
-            int lastIndexOfDot = fileName.lastIndexOf('.');
-            if (lastIndexOfDot != -1) {
-                return fileName.substring(lastIndexOfDot + 1);
-            }
-        }
-
-        return "";
-    }
-
-    public static String getFileName(String fileName) {
-        if (Strings.isNotBlank(fileName)) {
-            int lastIndexOfDot = fileName.lastIndexOf('.');
-            if (lastIndexOfDot != -1) {
-                return fileName.substring(0, lastIndexOfDot);
-            }
-        }
-
-        return "";
-    }
-
-    /**
      * 文件复制
      *
      * @param file
@@ -186,7 +142,7 @@ public class UploadService {
     public static boolean fileResetName(File file, String fileName) {
         if (file != null && file.exists()) {
             if (Strings.isBlank(fileName)) {
-                fileName = String.format("%s_bak_%s%s", UploadService.getFileName(file.getName()), sdf.format(new Date()), UploadService.getFileExtension(file.getName()));
+                fileName = String.format("%s_bak_%s%s", FileUtils.getFileName(file.getName()), sdf.format(new Date()), FileUtils.getFileExtension(file.getName()));
             }
             File newFile = new File(String.format("%s/%s", file.getParent(), fileName));
             if (!newFile.exists()) {

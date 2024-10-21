@@ -4,13 +4,14 @@ package cn.geelato.web.platform.m.base.rest;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.FileUtils;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.base.service.UploadService;
-import cn.geelato.web.platform.m.excel.entity.OfficeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +19,9 @@ import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.io.*;
-import java.net.URLEncoder;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -51,9 +53,6 @@ public class DownloadController extends BaseController {
 
     @RequestMapping(value = "/file", method = RequestMethod.GET)
     public void downloadFile(String id, String name, String path, boolean isPdf, boolean isPreview) throws Exception {
-        // 抽取出来
-        OutputStream out = null;
-        FileInputStream in = null;
         try {
             File file = null;
             String appId = null;
@@ -63,57 +62,32 @@ public class DownloadController extends BaseController {
                 Assert.notNull(attach, ApiErrorMsg.IS_NULL);
                 appId = attach.getAppId();
                 tenantCode = attach.getTenantCode();
-                file = downloadService.downloadFile(attach.getName(), attach.getPath());
+                file = FileUtils.pathToFile(attach.getPath());
                 name = attach.getName();
             } else if (Strings.isNotBlank(path)) {
-                file = downloadService.downloadFile(name, path);
+                file = FileUtils.pathToFile(path);
                 name = Strings.isNotBlank(name) ? name : file.getName();
             }
-            if (file == null) {
-                throw new Exception("File does not exist");
+            if (file == null || !file.exists()) {
+                throw new RuntimeException("downloadFile: file is null or not exists");
             }
+            // 转为pdf文件
             if (isPdf) {
-                String ext = name.substring(name.lastIndexOf("."));
-                name = Strings.isNotBlank(name) ? name.replace(ext, ".pdf") : null;
-                String outputPath = UploadService.getSavePath(UploadService.ROOT_CONVERT_DIRECTORY, tenantCode, appId, "word-to-pdf.pdf", true);
-                OfficeUtils.toPdf(file.getAbsolutePath(), outputPath, ext);
-                File pFile = new File(outputPath);
-                file = pFile.exists() ? pFile : null;
-            }
-            if (Strings.isNotBlank(name)) {
-                out = this.response.getOutputStream();
-                // 编码
-                String encodeName = URLEncoder.encode(name, StandardCharsets.UTF_8);
-                String mineType = this.request.getServletContext().getMimeType(encodeName);
-                // 如果没有取到常用的媒体类型，则获取自配置的媒体类型
-                if (mineType == null) {
-                    mineType = EXT_MAP.get(UploadService.getFileExtensionWithNoDot(name));
+                String ext = FileUtils.getFileExtension(name);
+                if (StringUtils.isBlank(ext)) {
+                    throw new RuntimeException("downloadFile: invalid file extension");
                 }
-                this.response.setContentType(mineType);
-                // 在线查看图片、pdf
-                if (isPreview && Strings.isNotBlank(mineType) && (mineType.startsWith("image/") || mineType.equalsIgnoreCase(MediaTypes.APPLICATION_PDF))) {
-                    //  file = downloadService.copyToFile(file, name);
-                } else {
-                    this.response.setHeader("Content-Disposition", "attachment; filename=" + encodeName);
-                }
-                // 读取文件
-                in = new FileInputStream(file);
-                int len = 0;
-                byte[] buffer = new byte[1024];
-                while ((len = in.read(buffer)) > 0) {
-                    out.write(buffer, 0, len);
+                name = String.format("%s.pdf", FileUtils.getFileName(name));
+                file = downloadService.toPdf(file, ext, appId, tenantCode);
+                if (file == null || !file.exists()) {
+                    throw new RuntimeException("downloadFile: file is null or not exists");
                 }
             }
+            // 下载
+            downloadService.downloadFile(file, name, isPreview, this.request, this.response);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw e;
-        } finally {
-            if (out != null) {
-                out.close();
-            }
-            if (in != null) {
-                in.close();
-            }
         }
     }
 
@@ -124,7 +98,7 @@ public class DownloadController extends BaseController {
         }
         BufferedReader bufferedReader = null;
         try {
-            String ext = UploadService.getFileExtension(fileName);
+            String ext = FileUtils.getFileExtension(fileName);
             if (Strings.isBlank(ext) || !ext.equalsIgnoreCase(".config")) {
                 fileName += ".config";
             }

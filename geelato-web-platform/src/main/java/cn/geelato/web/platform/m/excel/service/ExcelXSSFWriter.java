@@ -7,6 +7,7 @@ import cn.geelato.web.platform.m.excel.entity.ExportColumn;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.RowMeta;
 import cn.geelato.web.platform.m.excel.enums.ExcelAlignmentEnum;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Component
@@ -314,6 +316,21 @@ public class ExcelXSSFWriter {
         }
     }
 
+    private String formatDate(Object value, SimpleDateFormat sdf) {
+        try {
+            Date date = null;
+            String valueStr = value.toString();
+            if (NumberUtils.isNumber(valueStr)) {
+                date = new Date(Long.parseLong(valueStr));
+            } else {
+                date = sdf.parse(valueStr);
+            }
+            return sdf.format(date);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     private void setCellValueByValueType(XSSFCell cell, PlaceholderMeta meta, Object value) {
         if (value != null) {
             if (meta.isValueTypeNumber()) {
@@ -323,11 +340,10 @@ public class ExcelXSSFWriter {
                     cell.setCellValue(new BigDecimal(value.toString()).doubleValue());
                 }
             } else if (meta.isValueTypeDate()) {
-                // value 应为时间戳
-                cell.setCellValue(ExcelCommonUtils.DATE_FORMAT.format(value));
+                cell.setCellValue(formatDate(value, ExcelCommonUtils.DATE_FORMAT));
             } else if (meta.isValueTypeDateTime()) {
                 // value 应为时间戳
-                cell.setCellValue(ExcelCommonUtils.DATE_TIME_FORMAT.format(value));
+                cell.setCellValue(formatDate(value, ExcelCommonUtils.DATE_TIME_FORMAT));
             } else {
                 cell.setCellValue(value.toString());
             }

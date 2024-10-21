@@ -6,6 +6,7 @@ import cn.geelato.web.platform.m.excel.entity.CellMeta;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.RowMeta;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -14,6 +15,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Component
@@ -310,6 +312,21 @@ public class ExcelWriter {
         } else if (meta.isValueComputeModeExpression()) {
             Object v = JsProvider.executeExpression(meta.getExpression(), meta.isIsList() ? listValueMap : valueMap);
             setCellValueByValueType(cell, meta, v);
+        }
+    }
+
+    private String formatDate(Object value, SimpleDateFormat sdf) {
+        try {
+            Date date = null;
+            String valueStr = value.toString();
+            if (NumberUtils.isNumber(valueStr)) {
+                date = new Date(Long.parseLong(valueStr));
+            } else {
+                date = sdf.parse(valueStr);
+            }
+            return sdf.format(date);
+        } catch (Exception e) {
+            return "";
         }
     }
 

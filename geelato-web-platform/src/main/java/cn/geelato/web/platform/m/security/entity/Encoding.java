@@ -58,6 +58,9 @@ public class Encoding extends BaseEntity implements EntityEnableAble {
     @Title(title = "顺序补位 0")
     @Transient
     private boolean coverPos = true;
+    @Title(title = "随机范围")
+    @Transient
+    private String randomRange = UUIDUtils.CHARS_NUMBER;
 
     @Override
     public void afterSet() {
@@ -90,7 +93,12 @@ public class Encoding extends BaseEntity implements EntityEnableAble {
                                 examples.add("1");
                             }
                         } else if (EncodingSerialTypeEnum.RANDOM.getValue().equals(item.getSerialType())) {
-                            examples.add(UUIDUtils.generateFixation(item.getSerialDigit(), 8));
+                            item.setRandomRange(Strings.isNotBlank(item.getRandomRange()) ? item.getRandomRange() : UUIDUtils.CHARS_NUMBER);
+                            if (UUIDUtils.CHARS_NUMBER.equals(item.getRandomRange())) {
+                                examples.add(UUIDUtils.generateFixation(item.getSerialDigit(), 8));
+                            } else {
+                                examples.add(String.format("(%s)%s", item.getSerialDigit(), item.getRandomRange()));
+                            }
                         }
                     } else if (EncodingItemTypeEnum.DATE.getValue().equals(item.getItemType())) {
                         // 日期

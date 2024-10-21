@@ -5,11 +5,11 @@ import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UUIDUtils;
-import cn.geelato.web.platform.m.security.enums.EncodingItemTypeEnum;
-import cn.geelato.web.platform.m.security.enums.EncodingSerialTypeEnum;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.security.entity.*;
+import cn.geelato.web.platform.m.security.enums.EncodingItemTypeEnum;
+import cn.geelato.web.platform.m.security.enums.EncodingSerialTypeEnum;
 import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
@@ -233,7 +233,7 @@ public class EncodingService extends BaseService {
                 serial = getOrderSerial(redisItemKey, item.getSerialDigit(), item.isCoverPos());
             } else if (EncodingSerialTypeEnum.RANDOM.getValue().equals(item.getSerialType())) {
                 // 随机
-                serial = getRandomSerial(redisItemKey, item.getSerialDigit());
+                serial = getRandomSerial(redisItemKey, item.getSerialDigit(), item.getRandomRange());
             }
             // 在极端情况下仍然会误删除锁
             // 因此使用lua脚本的方式来防止误删除
@@ -280,12 +280,13 @@ public class EncodingService extends BaseService {
      * @param serialDigit
      * @return
      */
-    private String getRandomSerial(String redisItemKey, int serialDigit) {
+    private String getRandomSerial(String redisItemKey, int serialDigit, String range) {
+        range = Strings.isBlank(range) ? "0123456789" : range;
         List<Object> redisSerials = redisTemplate.opsForList().range(redisItemKey, 0, -1);
         String serial = null;
-        long radius = Long.parseLong(UUIDUtils.generateFixation(serialDigit, 9));
+        long radius = Long.parseLong(UUIDUtils.generateFixation(serialDigit, range.length() - 1));
         for (int i = 0; i < radius; i++) {
-            serial = UUIDUtils.generateRandom(serialDigit);
+            serial = UUIDUtils.generate(serialDigit, range);
             if (Strings.isNotBlank(serial) && !redisSerials.contains(serial)) {
                 break;
             }

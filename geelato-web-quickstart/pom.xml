@@ -100,7 +100,7 @@
             </plugin>
         </plugins>
     </build>
-
+<!--todo 区分web启动还是schedule启动-->
     <profiles>
         <profile>
             <id>default</id>

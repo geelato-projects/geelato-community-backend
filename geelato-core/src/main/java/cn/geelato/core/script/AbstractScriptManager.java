@@ -5,12 +5,9 @@ import cn.geelato.core.GlobalContext;
 import cn.geelato.core.orm.Dao;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.util.Assert;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -68,11 +65,10 @@ public abstract class AbstractScriptManager extends GlobalContext {
     public abstract void parseStream(InputStream is) throws IOException;
 
 
-    public void loadResource(String locationPattern) throws IOException {
+    public void loadResource(String locationPattern) {
         try {
             Resource[] resources = resolver.getResources(locationPattern);
             for (Resource resource : resources) {
-                // 获得文件流，因为在jar文件中，不能直接通过文件资源路径拿到文件，但是可以在jar包中拿到文件流
                 InputStream is = resource.getInputStream();
                 parseStream(is);
             }
@@ -84,7 +80,7 @@ public abstract class AbstractScriptManager extends GlobalContext {
     public List<String> readLines(InputStream is) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         List<String> lineList = new ArrayList<>();
-        String line = null;
+        String line;
         while ((line = reader.readLine()) != null) {
             lineList.add(line);
             log.debug("line:{}", line);

@@ -1,6 +1,7 @@
 package cn.geelato.core.orm;
 
 import com.alibaba.fastjson2.JSONObject;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.enums.DeleteStatusEnum;
@@ -219,6 +220,7 @@ public class DbGenerateDao {
             upgradeTable(em.getTableMeta(), addList, modifyList, indexList, uniqueList, String.join(",", primaryList), hasDelStatus);
         }
     }
+
 
     private void createOrUpdateOneTable(EntityMeta em, boolean dropBeforeCreate) {
 

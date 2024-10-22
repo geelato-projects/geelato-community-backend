@@ -13,12 +13,10 @@ import java.util.Map;
 @Slf4j
 public class SqlKeyController extends BaseController {
 
-
     @RequestMapping(value = "/{key}", method = {RequestMethod.POST})
-    public ApiResult<NullResult> exec(@PathVariable("key") String key,@RequestBody Map<String, Object> paramMap) {
+    public ApiResult<?> exec(@PathVariable("key") String key,@RequestBody Map<String, Object> paramMap) {
         try {
-            dao.executeKey(key, paramMap);
-            return ApiResult.successNoResult();
+            return ApiResult.success(dao.executeKey(key, paramMap));
         } catch (Exception e) {
             return ApiResult.fail(e.getMessage());
         }

@@ -86,11 +86,6 @@ public class OutsideController extends BaseController {
         return scriptTemplate.replace("#scriptContent#", customContent);
     }
 
-    private String customContent(String id) {
-        Api api = apiService.getModel(Api.class, id);
-        return api.getReleaseContent();
-    }
-
     private String scriptTemplate() {
         return """
                 (function(parameter){

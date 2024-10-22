@@ -10,8 +10,10 @@ public class SqlKeyDao extends SqlIdDao{
     public Object executeKey(String sqlKey, Map<String, Object> paramMap) throws ScriptException, NoSuchMethodException {
         switch (dbScriptManager.getSqlResponse(sqlKey).toLowerCase()){
             case "map":
+            case "object":
                 return queryForMapKey(sqlKey,paramMap);
             case "list":
+            case "array":
                 return queryForListKey(sqlKey,paramMap);
             default:
                 executeForNull(sqlKey,paramMap);

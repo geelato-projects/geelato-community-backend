@@ -41,14 +41,14 @@ public class OutsideController extends BaseController {
         Api api = null;
         if (urlHashMap.get(outSideUrl) != null) {
             api = urlHashMap.get(outSideUrl);
-            scriptContent = api.getReleaseContent();
+            scriptContent= getScriptContent(api.getReleaseContent());
         } else {
             Map<String, Object> params = new HashMap<>();
             params.put("outsideUrl", outSideUrl);
             List<Api> apiList = apiService.queryModel(Api.class, params);
             if (apiList != null && !apiList.isEmpty()) {
                 api = apiList.get(0);
-                scriptContent = api.getReleaseContent();
+                scriptContent= getScriptContent(api.getReleaseContent());
                 urlHashMap.put(outSideUrl, api);
             }
         }
@@ -81,9 +81,9 @@ public class OutsideController extends BaseController {
         }
     }
 
-    private String getScriptContent(String scriptId) {
+    private String getScriptContent(String customContent) {
         String scriptTemplate = scriptTemplate();
-        return scriptTemplate.replace("#scriptContent#", customContent(scriptId));
+        return scriptTemplate.replace("#scriptContent#", customContent);
     }
 
     private String customContent(String id) {

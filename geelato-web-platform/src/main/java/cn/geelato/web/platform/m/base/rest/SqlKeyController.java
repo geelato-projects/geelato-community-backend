@@ -5,8 +5,7 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -15,8 +14,8 @@ import java.util.Map;
 public class SqlKeyController extends BaseController {
 
 
-    @RequestMapping("/{key}")
-    public ApiResult<NullResult> exec(@PathVariable("key") String key, Map<String, Object> paramMap) {
+    @RequestMapping(value = "/{key}", method = {RequestMethod.POST})
+    public ApiResult<NullResult> exec(@PathVariable("key") String key,@RequestBody Map<String, Object> paramMap) {
         try {
             dao.executeKey(key, paramMap);
             return ApiResult.successNoResult();

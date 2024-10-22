@@ -32,7 +32,6 @@ public class GqlService extends RuleService {
         jdbcTemplate.setDataSource(ds);
         return new Dao(jdbcTemplate);
     }
-
     public Object executeSqlKey(String sqlKey, Map<String, Object> params) {
         Object result = null;
         try {

@@ -99,7 +99,6 @@ public class GqlService extends RuleService {
      * js函数,将sql内容转换为js函数
      *
      * @param encodingContent 编码内容
-     * @return
      */
     private String javaScriptFunction(String encodingContent) {
         List<String> lines = new ArrayList<>();

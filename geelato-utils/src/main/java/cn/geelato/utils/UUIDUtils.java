@@ -5,7 +5,7 @@ package cn.geelato.utils;
  * @description: 随机字符
  */
 public class UUIDUtils {
-    private static final String CHARS_NUMBER = "0123456789";
+    public static final String CHARS_NUMBER = "0123456789";
     private static final String CHARS_CAPITAL_LETTER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final String CHARS_LOWERCASE_LETTER = "abcdefghijklmnopqrstuvwxyz";
     private static final String CHARS_SPECIAL_CHARACTER = "!@#$%^&*()_+-={}[]\\|:;\"'<>,.?/";

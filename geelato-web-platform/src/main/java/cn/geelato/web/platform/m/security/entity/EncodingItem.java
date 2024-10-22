@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.security.entity;
 
+import cn.geelato.utils.UUIDUtils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,4 +23,5 @@ public class EncodingItem {
     private Integer serialDigit;// 位数
     private String serialType;// 顺序、随机
     private boolean coverPos = true;// 顺序补位 0
+    private String randomRange = UUIDUtils.CHARS_NUMBER;// 随机范围
 }

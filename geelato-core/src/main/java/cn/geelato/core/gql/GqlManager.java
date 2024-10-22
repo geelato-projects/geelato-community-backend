@@ -37,15 +37,15 @@ public class GqlManager extends AbstractManager {
     //========================================================
     //                  基于元数据  gql                      ==
     //========================================================
-    public QueryCommand generateQuerySql(String jsonText, Ctx ctx) {
+    public QueryCommand generateQuerySql(String jsonText) {
         return jsonTextQueryParser.parse(jsonText);
     }
 
-    public List<QueryCommand> generateMultiQuerySql(String jsonText, Ctx ctx) {
+    public List<QueryCommand> generateMultiQuerySql(String jsonText) {
         return jsonTextQueryParser.parseMulti(jsonText);
     }
 
-    public QueryCommand generatePageQuerySql(String jsonText, Ctx ctx) {
+    public QueryCommand generatePageQuerySql(String jsonText) {
         return jsonTextQueryParser.parse(jsonText);
     }
 

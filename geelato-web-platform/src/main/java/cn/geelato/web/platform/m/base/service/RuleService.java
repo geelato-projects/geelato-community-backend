@@ -79,11 +79,8 @@ public class RuleService {
                 command = gqlManager.generateSaveSql(gql, getSessionCtx());
                 break;
             case"query":
-                command = gqlManager.generateQuerySql(gql, getSessionCtx());
+                command = gqlManager.generateQuerySql(gql);
                 break;
-//            case"multiSave":
-//                command = gqlManager.generateMultiSaveSql(gql, getSessionCtx());
-//                break;
             case"batchSave":
                 command = gqlManager.generateBatchSaveSql(gql, getSessionCtx()).get(0);
                 break;
@@ -91,7 +88,7 @@ public class RuleService {
                 command = gqlManager.generateDeleteSql(gql, getSessionCtx());
                 break;
             case"pageQuery":
-                command = gqlManager.generatePageQuerySql(gql, getSessionCtx());
+                command = gqlManager.generatePageQuerySql(gql);
                 break;
             default:
                 break;
@@ -99,13 +96,13 @@ public class RuleService {
         return metaManager.getByEntityName(command.getEntityName());
     }
     public Map<String, Object> queryForMap(String gql) throws DataAccessException {
-        QueryCommand command = gqlManager.generateQuerySql(gql, getSessionCtx());
+        QueryCommand command = gqlManager.generateQuerySql(gql);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
         return dao.queryForMap(boundSql);
     }
 
     public <T> T queryForObject(String gql, Class<T> requiredType) throws DataAccessException {
-        QueryCommand command = gqlManager.generateQuerySql(gql, getSessionCtx());
+        QueryCommand command = gqlManager.generateQuerySql(gql);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
         return dao.queryForObject(boundSql, requiredType);
     }
@@ -113,7 +110,7 @@ public class RuleService {
 
     public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta) {
         ApiPagedResult<List<Map<String, Object>>> result = new ApiPagedResult<>();
-        QueryCommand command = gqlManager.generateQuerySql(gql, getSessionCtx());
+        QueryCommand command = gqlManager.generateQuerySql(gql);
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
         List<Map<String, Object>> list=dao.queryForMapList(boundPageSql);
         Long total=dao.queryTotal(boundPageSql);
@@ -191,7 +188,7 @@ public class RuleService {
 
     public ApiPagedResult queryTreeForMapList(String gql, boolean withMeta, String treeId) {
         ApiPagedResult result = new ApiPagedResult();
-        QueryCommand command = gqlManager.generateQuerySql(gql, getSessionCtx());
+        QueryCommand command = gqlManager.generateQuerySql(gql);
         command.getWhere().addFilter("tn.tree_id", treeId);
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
         List<Map<String, Object>> list=dao.queryForMapList(boundPageSql);
@@ -209,7 +206,7 @@ public class RuleService {
 
     public ApiMultiPagedResult queryForMultiMapList(String gql, boolean withMeta) {
         Map<String, ApiMultiPagedResult.PageData> dataMap = new HashMap<>();
-        List<QueryCommand> commandList = gqlManager.generateMultiQuerySql(gql, getSessionCtx());
+        List<QueryCommand> commandList = gqlManager.generateMultiQuerySql(gql);
         for (QueryCommand command : commandList) {
             BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
             dataMap.put(command.getEntityName(), dao.queryForMapListToPageData(boundPageSql, withMeta));
@@ -220,7 +217,7 @@ public class RuleService {
     }
 
     public <T> List<T> queryForOneColumnList(String gql, Class<T> elementType) throws DataAccessException {
-        QueryCommand command = gqlManager.generateQuerySql(gql, getSessionCtx());
+        QueryCommand command = gqlManager.generateQuerySql(gql);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
         return dao.queryForOneColumnList(boundSql, elementType);
     }

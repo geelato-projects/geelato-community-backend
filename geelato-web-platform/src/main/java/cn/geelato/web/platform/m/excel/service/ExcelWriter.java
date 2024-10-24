@@ -417,7 +417,9 @@ public class ExcelWriter {
             placeholderMeta.setImageHeight(row.getCell(12).getNumericCellValue());
             placeholderMeta.setImageSource(row.getCell(13).getStringCellValue());
             placeholderMeta.setBarcodeCode(row.getCell(14).getStringCellValue());
-            placeholderMeta.setDescription(row.getCell(15).getStringCellValue());
+            placeholderMeta.setFormatImport(row.getCell(15).getStringCellValue());
+            placeholderMeta.setFormatExport(row.getCell(16).getStringCellValue());
+            placeholderMeta.setDescription(row.getCell(17).getStringCellValue());
             placeholderMeta.setBarcode(null);
             // 校验占位符元数据
             if (validatePlaceholderMeta(placeholderMeta)) {

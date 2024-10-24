@@ -8,6 +8,7 @@ import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.RowMeta;
 import cn.geelato.web.platform.m.excel.enums.ExcelAlignmentEnum;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
@@ -297,6 +298,12 @@ public class ExcelXSSFWriter {
 
 
     private void setCellValue(XSSFCell cell, PlaceholderMeta meta, Map valueMap, Map listValueMap) {
+        if (Strings.isBlank(meta.getFormatExport())) {
+            meta.setFormatExport("");
+        }
+        if (Strings.isBlank(meta.getFormatImport())) {
+            meta.setFormatImport("");
+        }
         // 不是列表，且是变更
         if (meta.isValueComputeModeVar()) {
             if (meta.isIsList()) {
@@ -316,16 +323,19 @@ public class ExcelXSSFWriter {
         }
     }
 
-    private String formatDate(Object value, SimpleDateFormat sdf) {
+    private String formatDate(Object value, String in, String out) {
         try {
+            if (Strings.isBlank(in) || Strings.isBlank(out)) {
+                return value.toString();
+            }
             Date date = null;
             String valueStr = value.toString();
-            if (NumberUtils.isNumber(valueStr)) {
+            if (NumberUtils.isNumber(valueStr) && "timestamp".equalsIgnoreCase(in)) {
                 date = new Date(Long.parseLong(valueStr));
             } else {
-                date = sdf.parse(valueStr);
+                date = new SimpleDateFormat(in).parse(valueStr);
             }
-            return sdf.format(date);
+            return new SimpleDateFormat(out).format(date);
         } catch (Exception e) {
             return "";
         }
@@ -335,17 +345,15 @@ public class ExcelXSSFWriter {
         if (value != null) {
             if (meta.isValueTypeNumber()) {
                 if (value.toString().indexOf(".") == -1) {
-                    cell.setCellValue(Long.parseLong(value.toString()));
+                    cell.setCellValue(String.format("%s%s%s", meta.getFormatImport(), Long.parseLong(value.toString()), meta.getFormatExport()));
                 } else {
-                    cell.setCellValue(new BigDecimal(value.toString()).doubleValue());
+                    cell.setCellValue(String.format("%s%s%s", meta.getFormatImport(), new BigDecimal(value.toString()).doubleValue(), meta.getFormatExport()));
                 }
             } else if (meta.isValueTypeDate()) {
-                cell.setCellValue(formatDate(value, ExcelCommonUtils.DATE_FORMAT));
+                cell.setCellValue(formatDate(value, meta.getFormatImport(), meta.getFormatExport()));
             } else if (meta.isValueTypeDateTime()) {
-                // value 应为时间戳
-                cell.setCellValue(formatDate(value, ExcelCommonUtils.DATE_TIME_FORMAT));
             } else {
-                cell.setCellValue(value.toString());
+                cell.setCellValue(String.format("%s%s%s", meta.getFormatImport(), value.toString(), meta.getFormatExport()));
             }
         } else {
             if (meta.isValueTypeNumber()) {
@@ -539,7 +547,9 @@ public class ExcelXSSFWriter {
             placeholderMeta.setImageHeight(row.getCell(12).getNumericCellValue());
             placeholderMeta.setImageSource(row.getCell(13).getStringCellValue());
             placeholderMeta.setBarcodeCode(row.getCell(14).getStringCellValue());
-            placeholderMeta.setDescription(row.getCell(15).getStringCellValue());
+            placeholderMeta.setFormatImport(row.getCell(15).getStringCellValue());
+            placeholderMeta.setFormatExport(row.getCell(16).getStringCellValue());
+            placeholderMeta.setDescription(row.getCell(17).getStringCellValue());
             placeholderMeta.setBarcode(null);
             // 校验占位符元数据
             if (validatePlaceholderMeta(placeholderMeta)) {

@@ -71,6 +71,14 @@ public class PlaceholderMeta {
     @Getter
     @Setter
     private String description;
+    // 输入值格式
+    @Getter
+    @Setter
+    private String formatImport;
+    // 输出值格式
+    @Getter
+    @Setter
+    private String formatExport;
 
     public boolean isIsList() {
         return isList;

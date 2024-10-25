@@ -4,7 +4,7 @@ import cn.geelato.web.platform.m.model.service.DevTableService;
 import cn.geelato.web.platform.m.security.entity.Permission;
 import cn.geelato.web.platform.m.security.service.PermissionService;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.entity.AppTableMap;

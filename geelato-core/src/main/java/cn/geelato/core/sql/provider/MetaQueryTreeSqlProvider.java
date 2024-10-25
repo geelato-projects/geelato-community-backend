@@ -1,6 +1,6 @@
 package cn.geelato.core.sql.provider;
 
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.QueryTreeCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;

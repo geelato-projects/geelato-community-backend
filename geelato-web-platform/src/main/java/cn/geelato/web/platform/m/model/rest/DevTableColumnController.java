@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.model.rest;
 
 import cn.geelato.core.enums.ColumnSyncedEnum;
 import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.TableMeta;

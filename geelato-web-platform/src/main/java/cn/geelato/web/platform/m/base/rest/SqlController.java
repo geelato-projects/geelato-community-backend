@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.base.rest;
 import cn.geelato.core.Ctx;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.script.db.DbScriptManager;
 import cn.geelato.core.script.db.DbScriptManagerFactory;

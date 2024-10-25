@@ -5,7 +5,7 @@ import cn.geelato.core.Ctx;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.enums.TableSourceTypeEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;

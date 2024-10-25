@@ -1,5 +1,6 @@
 package cn.geelato.core.gql.parser;
 
+import cn.geelato.core.gql.filter.FilterGroup;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections.map.HashedMap;

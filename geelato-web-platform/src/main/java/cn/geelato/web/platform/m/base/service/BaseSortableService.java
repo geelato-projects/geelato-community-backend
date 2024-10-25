@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.base.service;
 
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import org.springframework.stereotype.Component;
 

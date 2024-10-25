@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.security.service;
 
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.field.ColumnMeta;
 import cn.geelato.lang.constants.ApiErrorMsg;

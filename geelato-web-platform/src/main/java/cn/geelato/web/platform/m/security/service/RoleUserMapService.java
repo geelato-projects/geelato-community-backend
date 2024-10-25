@@ -5,7 +5,7 @@ import cn.geelato.web.platform.m.security.entity.RoleUserMap;
 import cn.geelato.web.platform.m.security.entity.User;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

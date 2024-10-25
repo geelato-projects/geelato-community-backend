@@ -1,6 +1,6 @@
 package cn.geelato.core.gql.parser;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.utils.StringUtils;
 import lombok.Getter;
 import lombok.Setter;

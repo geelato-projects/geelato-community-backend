@@ -1,13 +1,11 @@
 package cn.geelato.core.sql.provider;
 
 import cn.geelato.core.gql.TypeConverter;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.SaveCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.field.FunctionFieldValueMeta;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
@@ -15,7 +13,6 @@ import java.util.ArrayList;
 /**
  * @author geemeta
  */
-@Component
 @Slf4j
 public class MetaUpdateSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
 
@@ -28,7 +25,12 @@ public class MetaUpdateSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
         command.getValueMap().forEach((key, value) -> {
             if (!em.isIgnoreUpdateField(key)) {
                 // 1、先加值部分
-                objectList.add(value);
+                if(value instanceof FunctionFieldValueMeta){
+
+                }else{
+                    objectList.add(value);
+                }
+
             }
         });
 
@@ -86,23 +88,28 @@ public class MetaUpdateSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
         sb.append("update ");
         sb.append(em.getTableName());
         sb.append(" set ");
-        buildFields(sb, em, command.getFields());
+        buildFields(sb, em, command);
         FilterGroup fg = command.getWhere();
-        if (fg != null && fg.getFilters() != null && fg.getFilters().size() > 0) {
+        if (fg != null && fg.getFilters() != null && !fg.getFilters().isEmpty()) {
             sb.append(" where ");
             buildConditions(sb, em, fg.getFilters(), fg.getLogic());
         }
         return sb.toString();
     }
 
-    protected void buildFields(StringBuilder sb, EntityMeta em, String[] fields) {
-        //重命名查询的结果列表为实体字段名
-        for (String fieldName : fields) {
+    protected void buildFields(StringBuilder sb, EntityMeta em, SaveCommand command) {
+        for (String fieldName : command.getFields()) {
             if (em.isIgnoreUpdateField(fieldName)) {
                 continue;
             }
             tryAppendKeywords(sb, em.getColumnName(fieldName));
-            sb.append("=?,");
+            var fieldValue= command.getValueMap().get(fieldName);
+            if(fieldValue instanceof FunctionFieldValueMeta){
+                sb.append("='ojbk_function',");
+            }else{
+                sb.append("=?,");
+            }
+
         }
         sb.deleteCharAt(sb.length() - 1);
     }

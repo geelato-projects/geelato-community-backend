@@ -1,5 +1,6 @@
 package cn.geelato.core.orm;
 
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.*;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -14,13 +15,9 @@ import cn.geelato.core.meta.model.CommonRowMapper;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.IdEntity;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionStatus;
 
 import java.util.ArrayList;

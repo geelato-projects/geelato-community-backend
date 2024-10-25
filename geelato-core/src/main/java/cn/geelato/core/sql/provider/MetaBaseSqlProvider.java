@@ -5,7 +5,7 @@ import org.apache.commons.collections.map.HashedMap;
 import cn.geelato.core.gql.TypeConverter;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.parser.BaseCommand;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;

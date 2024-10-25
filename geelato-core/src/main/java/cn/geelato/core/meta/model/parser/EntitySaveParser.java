@@ -4,7 +4,7 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
 import cn.geelato.core.gql.parser.CommandType;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.SaveCommand;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;

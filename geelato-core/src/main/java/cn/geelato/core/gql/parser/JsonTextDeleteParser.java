@@ -1,12 +1,11 @@
 package cn.geelato.core.gql.parser;
 
 import cn.geelato.core.Ctx;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.utils.DateUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 

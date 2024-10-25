@@ -1,16 +1,16 @@
 package cn.geelato.core.gql.parser;
 
 import cn.geelato.core.Ctx;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.core.meta.model.field.FunctionFieldValueMeta;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -115,15 +115,20 @@ public class JsonTextSaveParser extends JsonTextParser {
                 validator.validateField(key, "字段");
                 // 对于boolean类型的值，转为数值，以值存到数据库
                 FieldMeta fieldMeta = entityMeta.getFieldMeta(key);
-                if (fieldMeta != null && (boolean.class.equals(fieldMeta.getFieldType())
-                        || Boolean.class.equals(fieldMeta.getFieldType())
-                        || "delStatus".equals(fieldMeta.getFieldName())
-                        || "enableStatus".equals(fieldMeta.getFieldName())
-                )) {
-                    String v = jo.getString(key).toLowerCase();
-                    params.put(key, "true".equals(v) ? 1 : ("false".equals(v) ? 0 : v));
-                } else {
-                    params.put(key, jo.getString(key));
+
+                if(isFunction(jo.getString(key))){
+                    params.put(key, new FunctionFieldValueMeta(fieldMeta, jo.getString(key)));
+                }else{
+                    if (fieldMeta != null && (boolean.class.equals(fieldMeta.getFieldType())
+                            || Boolean.class.equals(fieldMeta.getFieldType())
+                            || "delStatus".equals(fieldMeta.getFieldName())
+                            || "enableStatus".equals(fieldMeta.getFieldName())
+                    )) {
+                        String v = jo.getString(key).toLowerCase();
+                        params.put(key, "true".equals(v) ? 1 : ("false".equals(v) ? 0 : v));
+                    } else {
+                        params.put(key, jo.getString(key));
+                    }
                 }
             }
         });
@@ -201,5 +206,9 @@ public class JsonTextSaveParser extends JsonTextParser {
             command.setPK(entity.get(PK).toString());
         }
         return command;
+    }
+
+    private boolean isFunction(String value) {
+        return value.startsWith("increment");
     }
 }

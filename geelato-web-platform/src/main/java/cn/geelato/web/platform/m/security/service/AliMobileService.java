@@ -5,7 +5,7 @@ import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.SysConfigService;

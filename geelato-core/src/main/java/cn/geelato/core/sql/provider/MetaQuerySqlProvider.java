@@ -1,22 +1,17 @@
 package cn.geelato.core.sql.provider;
 
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.QueryCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
-import java.util.Map;
 
 /**
  * @author geemeta
  */
-@Component
 @Slf4j
+@SuppressWarnings("rawtypes")
 public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
     @Override
     protected Object[] buildParams(QueryCommand command) {
@@ -33,7 +28,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         StringBuilder sb = new StringBuilder();
         EntityMeta md = getEntityMeta(command);
         sb.append("select ");
-        buildSelectFields(sb, md, command.getFields(), command.getAlias());
+        buildSelectFields(sb, md, command);
         sb.append(" from ");
         sb.append(md.getTableName());
         // where
@@ -90,7 +85,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         sb.append("select count(*) from (");
         sb.append("select ");
         // fields
-        buildSelectFields(sb, md, command.getFields(), command.getAlias());
+        buildSelectFields(sb, md, command);
         sb.append(" from ");
         sb.append(md.getTableName());
         //where
@@ -140,22 +135,22 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
     }
 
-    private void buildSelectFields(StringBuilder sb, EntityMeta md, String[] fields, Map alias) {
-        if (fields == null || fields.length == 0) {
+    private void buildSelectFields(StringBuilder sb, EntityMeta md, QueryCommand command) {
+
+        if (command.getFields() == null || command.getFields().length == 0) {
             sb.append("*");
             return;
-        } else if (fields.length == 1 && "*".equals(fields[0])) {
+        } else if (command.getFields().length == 1 && "*".equals(command.getFields()[0])) {
             sb.append("*");
             return;
         }
-        //重命名查询的结果列表为实体字段名
-        for (String fieldName : fields) {
+        for (String fieldName : command.getFields()) {
             FieldMeta fm = md.getFieldMeta(fieldName);
-            if (alias.containsKey(fieldName)) {
+            if (command.getAlias().containsKey(fieldName)) {
                 // 有指定的重命名要求时
                 tryAppendKeywords(sb, fm.getColumnName());
                 sb.append(" ");
-                tryAppendKeywords(sb, alias.get(fieldName).toString());
+                tryAppendKeywords(sb, command.getAlias().get(fieldName).toString());
             } else {
                 // 无指定的重命名要求，将数据库的字段格式转成实体字段格式，如role_id to roleId
                 if (fm.isEquals()) {

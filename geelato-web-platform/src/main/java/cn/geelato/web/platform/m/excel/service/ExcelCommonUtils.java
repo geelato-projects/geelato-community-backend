@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.excel.service;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.field.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;

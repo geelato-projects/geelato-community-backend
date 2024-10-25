@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.base.service;
 
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.*;
 import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;

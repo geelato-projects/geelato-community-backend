@@ -348,7 +348,7 @@ public class Dao extends SqlKeyDao {
         }
         BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, orderBy);
         log.info(boundSql.toString());
-        return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<T>());
+        return jdbcTemplate.query(boundSql.getSql(),  new CommonRowMapper<T>(),boundSql.getParams());
     }
 
     /**
@@ -361,15 +361,7 @@ public class Dao extends SqlKeyDao {
      * @return
      */
     public <T> List<T> queryList(Class<T> entityType, Map<String, Object> params, String orderBy) {
-        FilterGroup filterGroup = new FilterGroup();
-        if (params != null && !params.isEmpty()) {
-            for (Map.Entry<String, Object> entry : params.entrySet()) {
-                if (entry.getValue() != null && Strings.isNotBlank(entry.getValue().toString())) {
-                    filterGroup.addFilter(entry.getKey(), entry.getValue().toString());
-                }
-            }
-        }
-
+        FilterGroup filterGroup= generateFilterGroup(params);
         return queryList(entityType, filterGroup, orderBy);
     }
 
@@ -407,6 +399,11 @@ public class Dao extends SqlKeyDao {
      * @return
      */
     public <T> List<T> pageQueryList(Class<T> entityType, Map<String, Object> params, PageQueryRequest request) {
+        FilterGroup filterGroup = generateFilterGroup(params);
+        return pageQueryList(entityType, filterGroup, request);
+    }
+
+    private FilterGroup generateFilterGroup(Map<String, Object> params) {
         FilterGroup filterGroup = new FilterGroup();
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, Object> entry : params.entrySet()) {
@@ -415,8 +412,7 @@ public class Dao extends SqlKeyDao {
                 }
             }
         }
-
-        return pageQueryList(entityType, filterGroup, request);
+        return filterGroup;
     }
 
     @MethodLog(type = "queryListByView")

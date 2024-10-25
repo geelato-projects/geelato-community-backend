@@ -78,7 +78,7 @@ public class Dao extends SqlKeyDao {
         QueryCommand command = (QueryCommand) boundPageSql.getBoundSql().getCommand();
         BoundSql boundSql = boundPageSql.getBoundSql();
         Object[] sqlParams = boundSql.getParams();
-        List<Map<String, Object>> result=null;
+        List<Map<String, Object>> result;
         try {
             List<Map<String, Object>> list = jdbcTemplate.queryForList(boundSql.getSql(), sqlParams);
             result=convert(list, metaManager.getByEntityName(command.getEntityName()));
@@ -433,7 +433,7 @@ public class Dao extends SqlKeyDao {
     }
 
     public int delete(Class entityType, String fieldName, Object value) {
-        FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
+        FilterGroup filterGroup = new FilterGroup().    addFilter(fieldName, value.toString());
         BoundSql boundSql = sqlManager.generateDeleteSql(entityType, filterGroup);
         log.info(boundSql.toString());
         return jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());

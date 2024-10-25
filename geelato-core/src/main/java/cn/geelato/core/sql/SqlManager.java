@@ -23,6 +23,7 @@ import java.util.*;
  * @author geemeta
  */
 @Slf4j
+@SuppressWarnings("rawtypes")
 public class SqlManager extends AbstractManager {
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
     private static SqlManager instance;

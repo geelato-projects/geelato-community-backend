@@ -91,11 +91,6 @@ public class BaseService {
     /**
      * 分页查询
      *
-     * @param entity
-     * @param filter
-     * @param request
-     * @param <T>
-     * @return
      */
     public <T> ApiPagedResult pageQueryModel(Class<T> entity, FilterGroup filter, PageQueryRequest request) {
         ApiPagedResult result = new ApiPagedResult();

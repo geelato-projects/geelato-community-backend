@@ -98,7 +98,6 @@ public class BaseService {
         dao.setDefaultFilter(true, filterGroup);
         String orderBy = Strings.isNotBlank(request.getOrderBy()) ? request.getOrderBy() : BaseService.DEFAULT_ORDER_BY;
         request.setOrderBy(orderBy);
-        // dao查询
         List<T> pageQueryList = dao.pageQueryList(entity, filter, request);
         List<T> queryList = dao.queryList(entity, filter, orderBy);
         // 分页结果
@@ -106,7 +105,7 @@ public class BaseService {
         result.setSize(request.getPageSize());
         result.setTotal(queryList != null ? queryList.size() : 0);
         result.setDataSize(pageQueryList != null ? pageQueryList.size() : 0);
-        result.setData(new DataItems(pageQueryList, result.getTotal()));
+        result.setData(new DataItems<>(pageQueryList, result.getTotal()));
 
         return result;
     }

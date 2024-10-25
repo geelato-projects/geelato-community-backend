@@ -1,5 +1,6 @@
 package cn.geelato.core.meta.model.parser;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.Ctx;
@@ -20,6 +21,7 @@ import java.util.Map;
 /**
  * @author geemeta
  */
+@Slf4j
 public class EntitySaveParser {
     private final MetaManager metaManager = MetaManager.singleInstance();
 
@@ -29,7 +31,7 @@ public class EntitySaveParser {
         command.setEntityName(entityMeta.getEntityName());
 
 
-        Map entity = new HashMap(entityMeta.getFieldMetas().size());
+        Map<String,Object> entity = new HashMap<>(entityMeta.getFieldMetas().size());
         try {
             for (FieldMeta fm : entityMeta.getFieldMetas()) {
                 entity.put(fm.getFieldName(), PropertyUtils.getProperty(object, fm.getFieldName()));
@@ -42,16 +44,7 @@ public class EntitySaveParser {
                 fg.addFilter(PK, String.valueOf(entity.get(PK)));
                 command.setWhere(fg);
                 command.setCommandType(CommandType.Update);
-
-                if (entity.containsKey("updateAt")) {
-                    entity.put("updateAt", new Date());
-                }
-                if (entity.containsKey("updater")) {
-                    entity.put("updater", ctx.get("userId"));
-                }
-                if (entity.containsKey("updaterName")) {
-                    entity.put("updaterName", ctx.get("userName"));
-                }
+                putUpdateDefaultField(entity,ctx);
 
                 String[] updateFields = new String[entity.size()];
                 entity.keySet().toArray(updateFields);
@@ -60,41 +53,48 @@ public class EntitySaveParser {
             } else {
                 command.setCommandType(CommandType.Insert);
                 entity.put(PK, UIDGenerator.generate());
-                if (entity.containsKey("createAt")) {
-                    entity.put("createAt", new Date());
-                }
-                if (entity.containsKey("creator")) {
-                    entity.put("creator", ctx.get("userId"));
-                }
-                if (entity.containsKey("creatorName")) {
-                    entity.put("creatorName", ctx.get("userName"));
-                }
-                if (entity.containsKey("updateAt")) {
-                    entity.put("updateAt", new Date());
-                }
-                if (entity.containsKey("updater")) {
-                    entity.put("updater", ctx.get("userId"));
-                }
-                if (entity.containsKey("updaterName")) {
-                    entity.put("updaterName", ctx.get("userName"));
-                }
-                if (entity.containsKey("buId")) {
-                    entity.put("buId", ctx.getCurrentUser().getBuId());
-                }
-                if (entity.containsKey("deptId")) {
-                    entity.put("deptId", ctx.getCurrentUser().getDefaultOrgId());
-                }
-
+                putInsertDefaultField(entity,ctx);
                 String[] insertFields = new String[entity.size()];
                 entity.keySet().toArray(insertFields);
                 command.setFields(insertFields);
                 command.setValueMap(entity);
             }
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(),e);
         }
 
         return command;
+    }
+
+    private void putUpdateDefaultField(Map<String,Object> entity, Ctx ctx) {
+        if (entity.containsKey("updateAt")) {
+            entity.put("updateAt", new Date());
+        }
+        if (entity.containsKey("updater")) {
+            entity.put("updater", ctx.get("userId"));
+        }
+        if (entity.containsKey("updaterName")) {
+            entity.put("updaterName", ctx.get("userName"));
+        }
+    }
+
+    private void putInsertDefaultField(Map<String,Object> entity, Ctx ctx) {
+        if (entity.containsKey("createAt")) {
+            entity.put("createAt", new Date());
+        }
+        if (entity.containsKey("creator")) {
+            entity.put("creator", ctx.get("userId"));
+        }
+        if (entity.containsKey("creatorName")) {
+            entity.put("creatorName", ctx.get("userName"));
+        }
+        if (entity.containsKey("buId")) {
+            entity.put("buId", Ctx.getCurrentUser().getBuId());
+        }
+        if (entity.containsKey("deptId")) {
+            entity.put("deptId", Ctx.getCurrentUser().getDefaultOrgId());
+        }
+        putUpdateDefaultField(entity, ctx);
     }
 
 

@@ -1,6 +1,9 @@
 package cn.geelato.core.gql.parser;
 
 import cn.geelato.core.Ctx;
+import cn.geelato.core.gql.command.CommandType;
+import cn.geelato.core.gql.command.CommandValidator;
+import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
@@ -146,15 +149,7 @@ public class JsonTextSaveParser extends JsonTextParser {
             command.setWhere(fg);
             command.setCommandType(CommandType.Update);
             Object pkValue = params.remove(PK);
-            if (validator.hasKeyField("updateAt")) {
-                params.put("updateAt", newDataString);
-            }
-            if (validator.hasKeyField("updater")) {
-                params.put("updater", ctx.get("userId"));
-            }
-            if (validator.hasKeyField("updaterName")) {
-                params.put("updaterName", ctx.get("userName"));
-            }
+            putUpdateDefaultField(params,ctx);
             String[] updateFields = new String[params.keySet().size()];
             params.keySet().toArray(updateFields);
             command.setFields(updateFields);
@@ -172,33 +167,7 @@ public class JsonTextSaveParser extends JsonTextParser {
                 params.remove(PK);
             }
             entity.putAll(params);
-            if (entity.containsKey("createAt")) {
-                entity.put("createAt", newDataString);
-            }
-            if (entity.containsKey("creator")) {
-                entity.put("creator", ctx.get("userId"));
-            }
-            if (entity.containsKey("creatorName")) {
-                entity.put("creatorName", ctx.get("userName"));
-            }
-            if (entity.containsKey("updateAt")) {
-                entity.put("updateAt", newDataString);
-            }
-            if (entity.containsKey("updater")) {
-                entity.put("updater", ctx.get("userId"));
-            }
-            if (entity.containsKey("updaterName")) {
-                entity.put("updaterName", ctx.get("userName"));
-            }
-            if (entity.containsKey("tenantCode")) {
-                entity.put("tenantCode", ctx.get("tenantCode"));
-            }
-            if (entity.containsKey("buId")) {
-                entity.put("buId", ctx.getCurrentUser().getBuId());
-            }
-            if (entity.containsKey("deptId")) {
-                entity.put("deptId", ctx.getCurrentUser().getDefaultOrgId());
-            }
+            putInsertDefaultField(entity,ctx);
             String[] insertFields = new String[entity.size()];
             entity.keySet().toArray(insertFields);
             command.setFields(insertFields);
@@ -207,6 +176,38 @@ public class JsonTextSaveParser extends JsonTextParser {
         }
         return command;
     }
+
+    private void putUpdateDefaultField(Map<String,Object> entity, Ctx ctx) {
+        if (entity.containsKey("updateAt")) {
+            entity.put("updateAt", new Date());
+        }
+        if (entity.containsKey("updater")) {
+            entity.put("updater", ctx.get("userId"));
+        }
+        if (entity.containsKey("updaterName")) {
+            entity.put("updaterName", ctx.get("userName"));
+        }
+    }
+
+    private void putInsertDefaultField(Map<String,Object> entity, Ctx ctx) {
+        if (entity.containsKey("createAt")) {
+            entity.put("createAt", new Date());
+        }
+        if (entity.containsKey("creator")) {
+            entity.put("creator", ctx.get("userId"));
+        }
+        if (entity.containsKey("creatorName")) {
+            entity.put("creatorName", ctx.get("userName"));
+        }
+        if (entity.containsKey("buId")) {
+            entity.put("buId", Ctx.getCurrentUser().getBuId());
+        }
+        if (entity.containsKey("deptId")) {
+            entity.put("deptId", Ctx.getCurrentUser().getDefaultOrgId());
+        }
+        putUpdateDefaultField(entity, ctx);
+    }
+
 
     private boolean isFunction(String value) {
         return value.startsWith("increment");

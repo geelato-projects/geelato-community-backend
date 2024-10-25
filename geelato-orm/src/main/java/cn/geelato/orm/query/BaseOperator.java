@@ -1,9 +1,8 @@
 package cn.geelato.orm.query;
 
-import cn.geelato.core.gql.parser.BaseCommand;
+import cn.geelato.core.gql.command.BaseCommand;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.sql.SqlManager;
-import io.lettuce.core.dynamic.annotation.CommandNaming;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;

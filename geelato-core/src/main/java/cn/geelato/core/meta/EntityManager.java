@@ -2,8 +2,8 @@ package cn.geelato.core.meta;
 
 import cn.geelato.core.AbstractManager;
 import cn.geelato.core.gql.execute.BoundSql;
-import cn.geelato.core.gql.parser.CommandType;
-import cn.geelato.core.gql.parser.SaveCommand;
+import cn.geelato.core.gql.command.CommandType;
+import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.meta.model.entity.IdEntity;
 import cn.geelato.core.meta.model.parser.EntitySaveParser;
 import cn.geelato.core.Ctx;

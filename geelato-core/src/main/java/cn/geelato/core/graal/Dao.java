@@ -1,11 +1,8 @@
 package cn.geelato.core.graal;
 
 import cn.geelato.core.Ctx;
-import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.gql.GqlManager;
-import cn.geelato.core.gql.execute.BoundPageSql;
-import cn.geelato.core.gql.parser.QueryCommand;
 import cn.geelato.core.sql.SqlManager;
 import org.springframework.jdbc.core.JdbcTemplate;
 

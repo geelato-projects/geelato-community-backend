@@ -1,5 +1,7 @@
 package cn.geelato.core.gql.parser;
 
+import cn.geelato.core.gql.command.CommandValidator;
+import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;

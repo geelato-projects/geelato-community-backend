@@ -1,7 +1,7 @@
 package cn.geelato.core.biz.rules.common;
 
-import cn.geelato.core.gql.parser.DeleteCommand;
-import cn.geelato.core.gql.parser.SaveCommand;
+import cn.geelato.core.gql.command.DeleteCommand;
+import cn.geelato.core.gql.command.SaveCommand;
 import org.jeasy.rules.api.Facts;
 import org.jeasy.rules.core.BasicRule;
 

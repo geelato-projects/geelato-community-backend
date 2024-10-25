@@ -1,6 +1,6 @@
 package cn.geelato.core.gql.execute;
 
-import cn.geelato.core.gql.parser.BaseCommand;
+import cn.geelato.core.gql.command.BaseCommand;
 import lombok.Getter;
 import lombok.Setter;
 

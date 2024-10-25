@@ -1,7 +1,7 @@
 package cn.geelato.core.sql.provider;
 
 import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.gql.parser.QueryCommand;
+import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import lombok.extern.slf4j.Slf4j;

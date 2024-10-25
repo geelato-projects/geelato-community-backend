@@ -4,7 +4,7 @@ import com.alibaba.fastjson2.JSONArray;
 import org.apache.commons.collections.map.HashedMap;
 import cn.geelato.core.gql.TypeConverter;
 import cn.geelato.core.gql.execute.BoundSql;
-import cn.geelato.core.gql.parser.BaseCommand;
+import cn.geelato.core.gql.command.BaseCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;

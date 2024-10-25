@@ -2,14 +2,10 @@ package cn.geelato.orm.query;
 
 
 import cn.geelato.core.gql.execute.BoundPageSql;
-import cn.geelato.core.gql.execute.BoundSql;
-import cn.geelato.core.gql.parser.BaseCommand;
-import cn.geelato.core.gql.parser.CommandType;
-import cn.geelato.core.gql.parser.QueryCommand;
-import org.springframework.jdbc.core.JdbcTemplate;
+import cn.geelato.core.gql.command.CommandType;
+import cn.geelato.core.gql.command.QueryCommand;
 import org.springframework.stereotype.Component;
 
-import javax.management.Query;
 import java.util.List;
 import java.util.Map;
 

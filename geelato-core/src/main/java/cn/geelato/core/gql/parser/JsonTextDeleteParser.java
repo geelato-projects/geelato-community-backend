@@ -1,15 +1,16 @@
 package cn.geelato.core.gql.parser;
 
 import cn.geelato.core.Ctx;
+import cn.geelato.core.gql.command.CommandType;
+import cn.geelato.core.gql.command.CommandValidator;
+import cn.geelato.core.gql.command.DeleteCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.utils.DateUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +27,7 @@ public class JsonTextDeleteParser extends JsonTextParser {
     private final static String FILTER_FLAG = "\\|";
     private final static String SUB_ENTITY_FLAG = "~";
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
+
 
     public DeleteCommand parse(String jsonText, Ctx ctx) {
         JSONObject jo = JSON.parseObject(jsonText);
@@ -44,26 +45,13 @@ public class JsonTextDeleteParser extends JsonTextParser {
 
         DeleteCommand command = new DeleteCommand();
         command.setEntityName(commandName);
-        String newDataString = simpleDateFormat.format(new Date());
+
         FilterGroup fg = new FilterGroup();
         command.setWhere(fg);
         command.setCommandType(CommandType.Delete);
         Map<String, Object> params = new HashMap<>();
-        if (validator.hasKeyField("delStatus")) {
-            params.put("delStatus", 1);
-        }
-        if (validator.hasKeyField("deleteAt")) {
-            params.put("deleteAt", newDataString);
-        }
-        if (validator.hasKeyField("updateAt")) {
-            params.put("updateAt", newDataString);
-        }
-        if (validator.hasKeyField("updater")) {
-            params.put("updater", ctx.get("userId"));
-        }
-        if (validator.hasKeyField("updaterName")) {
-            params.put("updaterName", ctx.get("userName"));
-        }
+        putDeleteDefaultField(ctx,params,validator);
+
         String[] updateFields = new String[params.keySet().size()];
         params.keySet().toArray(updateFields);
         command.setFields(updateFields);
@@ -82,6 +70,19 @@ public class JsonTextDeleteParser extends JsonTextParser {
         Assert.isTrue(validator.isSuccess(), validator.getMessage());
         return command;
     }
+
+    private void putDeleteDefaultField(Ctx ctx, Map<String, Object> params, CommandValidator validator) {
+        String newDataString = simpleDateFormat.format(new Date());
+        if (validator.hasKeyField("delStatus")) {
+            params.put("delStatus", 1);
+        }
+        if (validator.hasKeyField("deleteAt")) {
+            params.put("deleteAt", newDataString);
+        }
+        putBaseDefaultField(ctx,params,validator);
+    }
+
+
 
 
     protected void parseWhere(FilterGroup fg, String key, JSONObject jo, CommandValidator validator) {

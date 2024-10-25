@@ -306,7 +306,7 @@
   },
   {
     "group": "日期时间",
-    "label": "时间戳[yyyy-MM-dd HH:mm:ss]",
+    "label": "时间戳",
     "value": "timeStamp",
     "mysql": "timeStamp",
     "disabled": false,

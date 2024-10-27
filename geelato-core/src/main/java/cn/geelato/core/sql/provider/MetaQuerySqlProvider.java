@@ -4,6 +4,8 @@ import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.core.meta.model.field.FunctionFieldValue;
+import cn.geelato.core.meta.model.parser.FunctionParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
@@ -145,23 +147,28 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             return;
         }
         for (String fieldName : command.getFields()) {
-            FieldMeta fm = md.getFieldMeta(fieldName);
-            if (command.getAlias().containsKey(fieldName)) {
-                // 有指定的重命名要求时
-                tryAppendKeywords(sb, fm.getColumnName());
-                sb.append(" ");
-                tryAppendKeywords(sb, command.getAlias().get(fieldName).toString());
-            } else {
-                // 无指定的重命名要求，将数据库的字段格式转成实体字段格式，如role_id to roleId
-                if (fm.isEquals()) {
-                    tryAppendKeywords(sb, fm.getColumnName());
-                } else {
+            if(FunctionParser.isFunction(fieldName)){
+                String afterRefaceExpression= FunctionParser.reconstruct(fieldName,md.getEntityName());
+                sb.append(new FunctionFieldValue(afterRefaceExpression).getMysqlFunction()).append(" ");
+            }else{
+                FieldMeta fm = md.getFieldMeta(fieldName);
+                if (command.getAlias().containsKey(fieldName)) {
+                    // 有指定的重命名要求时
                     tryAppendKeywords(sb, fm.getColumnName());
                     sb.append(" ");
-                    tryAppendKeywords(sb, fm.getFieldName());
+                    tryAppendKeywords(sb, command.getAlias().get(fieldName).toString());
+                } else {
+                    // 无指定的重命名要求，将数据库的字段格式转成实体字段格式，如role_id to roleId
+                    if (fm.isEquals()) {
+                        tryAppendKeywords(sb, fm.getColumnName());
+                    } else {
+                        tryAppendKeywords(sb, fm.getColumnName());
+                        sb.append(" ");
+                        tryAppendKeywords(sb, fm.getFieldName());
+                    }
                 }
             }
-            sb.append(",");
+             sb.append(",");
         }
         sb.deleteCharAt(sb.length() - 1);
     }

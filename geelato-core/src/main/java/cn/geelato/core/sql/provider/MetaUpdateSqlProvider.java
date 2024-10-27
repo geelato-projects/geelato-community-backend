@@ -4,7 +4,7 @@ import cn.geelato.core.gql.TypeConverter;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
-import cn.geelato.core.meta.model.field.FunctionFieldValueMeta;
+import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 
@@ -25,7 +25,7 @@ public class MetaUpdateSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
         command.getValueMap().forEach((key, value) -> {
             if (!em.isIgnoreUpdateField(key)) {
                 // 1、先加值部分
-                if(value instanceof FunctionFieldValueMeta){
+                if(value instanceof FunctionFieldValue){
 
                 }else{
                     objectList.add(value);
@@ -104,8 +104,8 @@ public class MetaUpdateSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
             }
             tryAppendKeywords(sb, em.getColumnName(fieldName));
             var fieldValue= command.getValueMap().get(fieldName);
-            if(fieldValue instanceof FunctionFieldValueMeta fvm){
-                sb.append( String.format("=%s,",fvm.getMysql_function()));
+            if(fieldValue instanceof FunctionFieldValue fvm){
+                sb.append( String.format("=%s,",fvm.getMysqlFunction()));
             }else{
                 sb.append("=?,");
             }

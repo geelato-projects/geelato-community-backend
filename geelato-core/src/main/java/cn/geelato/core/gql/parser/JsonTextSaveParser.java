@@ -7,8 +7,8 @@ import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import cn.geelato.core.meta.model.field.FunctionFieldValueMeta;
-import cn.geelato.core.meta.model.field.FunctionParser;
+import cn.geelato.core.meta.model.field.FunctionFieldValue;
+import cn.geelato.core.meta.model.parser.FunctionParser;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson2.JSON;
@@ -122,7 +122,7 @@ public class JsonTextSaveParser extends JsonTextParser {
 
                 if(FunctionParser.isFunction(jo.getString(key))){
                     String afterRefaceExpression= FunctionParser.reconstruct(jo.getString(key),entityMeta.getEntityName());
-                    params.put(key, new FunctionFieldValueMeta(fieldMeta,afterRefaceExpression));
+                    params.put(key, new FunctionFieldValue(fieldMeta,afterRefaceExpression));
                 }else{
                     if (fieldMeta != null && (boolean.class.equals(fieldMeta.getFieldType())
                             || Boolean.class.equals(fieldMeta.getFieldType())

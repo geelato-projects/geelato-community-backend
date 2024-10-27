@@ -1,6 +1,5 @@
 package cn.geelato.core.meta.model.field;
 
-import cn.geelato.core.meta.EntityManager;
 import cn.geelato.core.meta.MetaManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,14 +9,18 @@ import java.util.regex.Pattern;
 
 @Setter
 @Getter
-public class FunctionFieldValueMeta extends FieldValueMeta {
+public class FunctionFieldValue extends FieldValue {
 
     MetaManager metaManager=MetaManager.singleInstance();
-    private String mysql_function;
-    public FunctionFieldValueMeta(FieldMeta fieldMeta, String functionExpression){
-        this.mysql_function=resolveFunctionExpression(functionExpression);
+    private String mysqlFunction;
+    public FunctionFieldValue(FieldMeta fieldMeta, String functionExpression){
+        this.mysqlFunction=resolveFunctionExpression(functionExpression);
         this.fieldMeta = fieldMeta;
     }
+    public FunctionFieldValue( String functionExpression){
+        this.mysqlFunction=resolveFunctionExpression(functionExpression);
+    }
+
 
     private String resolveFunctionExpression(String functionExpression) {
         Pattern pattern = Pattern.compile("\\((.*?)\\)");
@@ -39,7 +42,7 @@ public class FunctionFieldValueMeta extends FieldValueMeta {
     }
 
     private String resolveSpecialParam(String param) {
-        String[] paramsPartial=param.split("//.");
+        String[] paramsPartial=param.split("\\.");
         return metaManager.getByEntityName(paramsPartial[1]).getColumnName(paramsPartial[2]);
     }
 }

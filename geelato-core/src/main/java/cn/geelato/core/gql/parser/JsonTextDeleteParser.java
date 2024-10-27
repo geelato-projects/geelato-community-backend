@@ -95,19 +95,13 @@ public class JsonTextDeleteParser extends JsonTextParser {
         } else if (ary.length == 2) {
             String fn = ary[1];
             if (!FilterGroup.Operator.contains(fn)) {
-                validator.appendMessage("[");
-                validator.appendMessage(key);
-                validator.appendMessage("]");
-                validator.appendMessage("不支持");
-                validator.appendMessage(fn);
-                validator.appendMessage(";只支持");
-                validator.appendMessage(FilterGroup.Operator.getOperatorStrings());
+                validator.appendMessage(String.format("[%s]不支持%s,只支持%s",key,fn,FilterGroup.Operator.getOperatorStrings()));
             } else {
                 FilterGroup.Operator operator = FilterGroup.Operator.fromString(fn);
                 fg.addFilter(field, operator, jo.getString(key));
             }
         } else {
-            // TODO 格式不对 throw
+            throw new JsonParseException();
         }
     }
 }

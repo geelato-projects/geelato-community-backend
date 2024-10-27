@@ -101,7 +101,6 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     /**
      * 构建一条语句，如insert、save、select、delete语句，在子类中实现
      *
-     * @param command
      * @return 带参数（?）或无参数的完整sql语句
      */
     protected abstract String buildOneSql(E command);
@@ -118,38 +117,30 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         }
         List<Object> list = new ArrayList<>();
         for (FilterGroup.Filter filter : command.getWhere().getFilters()) {
-            // 若为in操作，则需将in内的内容拆分成多个，相应地在构建参数占位符的地方也做相应的处理
-            if (filter.getOperator().equals(FilterGroup.Operator.in)||filter.getOperator().equals(FilterGroup.Operator.notin)) {
-                Object[] ary = filter.getValueAsArray();
-                list.addAll(Arrays.asList(ary));
-            } else if (filter.getOperator().equals(FilterGroup.Operator.nil)||filter.getOperator().equals(FilterGroup.Operator.bt)) {
-                //not do anything
-            }else {
-                if(!getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType().equals("JSON")) {
-                    list.add(filter.getValue());
-                }
+            recombine(filter,list,command);
+        }
+        List<Object> newList =recursionFilterGroup(command.getWhere().getChildFilterGroup() ,command,list);
+        return newList.toArray();
+    }
+
+    private void recombine(FilterGroup.Filter filter,List<Object> list,E command) {
+        // 若为in操作，则需将in内的内容拆分成多个，相应地在构建参数占位符的地方也做相应的处理
+        if (filter.getOperator().equals(FilterGroup.Operator.in)||filter.getOperator().equals(FilterGroup.Operator.notin)) {
+            Object[] ary = filter.getValueAsArray();
+            list.addAll(Arrays.asList(ary));
+        } else if (filter.getOperator().equals(FilterGroup.Operator.nil)||filter.getOperator().equals(FilterGroup.Operator.bt)) {
+            //not do anything
+        }else {
+            if(!getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType().equals("JSON")) {
+                list.add(filter.getValue());
             }
         }
-
-        List<Object> newList =recursionFilterGroup(command.getWhere().getChildFilterGroup() ,command,list);
-
-        return newList.toArray();
     }
 
     private List<Object> recursionFilterGroup(List<FilterGroup> childFilterGroup, E command, List<Object> list) {
         for (FilterGroup filterGroup :childFilterGroup) {
             for (FilterGroup.Filter filter : filterGroup.getFilters()) {
-                // 若为in操作，则需将in内的内容拆分成多个，相应地在构建参数占位符的地方也做相应的处理
-                if (filter.getOperator().equals(FilterGroup.Operator.in)||filter.getOperator().equals(FilterGroup.Operator.notin)) {
-                    Object[] ary = filter.getValueAsArray();
-                    list.addAll(Arrays.asList(ary));
-                } else if (filter.getOperator().equals(FilterGroup.Operator.nil)||filter.getOperator().equals(FilterGroup.Operator.bt)) {
-                    //not do anything
-                }else {
-                    if(!getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType().equals("JSON")) {
-                        list.add(filter.getValue());
-                    }
-                }
+                recombine(filter, list, command);
             }
             if(!filterGroup.getChildFilterGroup().isEmpty())
                 recursionFilterGroup(filterGroup.getChildFilterGroup(),command,list);
@@ -307,7 +298,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         this.tryAppendKeywords(sb, fm.getColumnName());
     }
 
-    protected StringBuilder tryAppendKeywords(StringBuilder sb, String field) {
+    protected void tryAppendKeywords(StringBuilder sb, String field) {
         if (isKeywords(field)) {
             sb.append("'");
             sb.append(field);
@@ -315,7 +306,6 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         } else {
             sb.append(field);
         }
-        return sb;
     }
 
     public EntityMeta getEntityMeta(E command) {

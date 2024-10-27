@@ -1,6 +1,7 @@
 package cn.geelato.core.meta.model.field;
 
 import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.entity.EntityMeta;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,6 +12,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("rawtypes")
 public class FieldMeta implements Serializable {
+    private final EntityMeta entityMeta;
     private final ColumnMeta columnMeta;
     /**
      * -- GETTER --
@@ -24,12 +26,14 @@ public class FieldMeta implements Serializable {
     @Getter
     private Class fieldType;
 
-    public FieldMeta(String columnName, String fieldName, String title) {
+
+    public FieldMeta(String columnName, String fieldName, String title,EntityMeta entityMeta) {
         columnMeta = new ColumnMeta();
         columnMeta.setName(columnName);
         columnMeta.setTitle(title);
         columnMeta.setFieldName(fieldName);
         this.fieldName = fieldName;
+        this.entityMeta=entityMeta;
     }
 
     public ColumnMeta getColumn() {

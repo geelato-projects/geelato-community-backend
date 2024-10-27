@@ -1,6 +1,7 @@
 package cn.geelato.core.gql.filter;
 
 
+import cn.geelato.core.meta.model.parser.FunctionParser;
 import com.alibaba.fastjson2.JSONArray;
 import lombok.Getter;
 import lombok.Setter;
@@ -53,8 +54,8 @@ public class FilterGroup {
      */
     public FilterGroup addFilter(Filter filter) {
         if (this.filters == null) {
-            this.filters = new ArrayList<Filter>();
-            this.params = new HashMap<String, Object>();
+            this.filters = new ArrayList<>();
+            this.params = new HashMap<>();
         }
         this.filters.add(filter);
         if (params.containsKey(filter.getField())) {
@@ -83,9 +84,6 @@ public class FilterGroup {
     }
 
     public static class Filter {
-        public Filter() {
-        }
-
         public Filter(String field, Operator operator, String value) {
             this.setField(field);
             this.setOperator(operator);
@@ -107,14 +105,18 @@ public class FilterGroup {
         /**
          */
         public Filter setField(String field) {
-            if (StringUtils.hasText(field) && field.contains(".")) {
+            if (StringUtils.hasText(field) && field.contains(".") && !FunctionParser.isFunction(field)) {
                 String[] arrays = field.split("\\.");
                 this.isRefField = true;
                 this.field = arrays[1];
                 this.refEntityName = arrays[0];
             } else {
                 this.isRefField = false;
-                this.field = field;
+                if(FunctionParser.isFunction(field)){
+                    this.field = field;
+                }else{
+//                    FunctionParser.reconstruct(field);
+                }
                 this.refEntityName = "";
             }
             return this;

@@ -101,8 +101,6 @@ public class JsonTextQueryParser extends JsonTextParser {
 
         jo.keySet().forEach(key -> {
             if (key.startsWith(KEYWORD_FLAG) && StringUtils.hasText(jo.getString(key))) {
-
-//                String[] segments = jo.getString(key).split(",");
                 String[] segments= jo.getString(key).split(",(?![^()]*\\))");
                 switch (key) {
                     case KW_FIELDS:

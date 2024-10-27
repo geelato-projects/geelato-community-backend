@@ -6,7 +6,7 @@ import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
-import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;

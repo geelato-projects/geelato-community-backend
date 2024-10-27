@@ -5,7 +5,7 @@ import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.script.js.JsProvider;

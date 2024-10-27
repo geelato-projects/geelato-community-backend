@@ -1,7 +1,6 @@
 package cn.geelato.core.orm;
 
 import com.alibaba.fastjson2.JSONObject;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.enums.DeleteStatusEnum;
@@ -12,13 +11,11 @@ import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
-import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.util.ConnectUtils;
 import cn.geelato.utils.SqlParams;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;

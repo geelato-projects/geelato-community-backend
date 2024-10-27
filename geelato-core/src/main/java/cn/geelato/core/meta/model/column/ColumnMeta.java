@@ -1,4 +1,4 @@
-package cn.geelato.core.meta.model.field;
+package cn.geelato.core.meta.model.column;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DataTypeRadiusEnum;

@@ -7,7 +7,7 @@ import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.constants.ResourcesFiles;
 import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.utils.FastJsonUtils;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.base.service.BaseService;

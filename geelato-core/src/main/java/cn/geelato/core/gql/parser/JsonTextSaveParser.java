@@ -8,6 +8,7 @@ import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValueMeta;
+import cn.geelato.core.meta.model.field.FunctionParser;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson2.JSON;
@@ -119,8 +120,9 @@ public class JsonTextSaveParser extends JsonTextParser {
                 // 对于boolean类型的值，转为数值，以值存到数据库
                 FieldMeta fieldMeta = entityMeta.getFieldMeta(key);
 
-                if(isFunction(jo.getString(key))){
-                    params.put(key, new FunctionFieldValueMeta(fieldMeta, jo.getString(key)));
+                if(FunctionParser.isFunction(jo.getString(key))){
+                    String afterRefaceExpression= FunctionParser.reconstruct(jo.getString(key),entityMeta.getEntityName());
+                    params.put(key, new FunctionFieldValueMeta(fieldMeta,afterRefaceExpression));
                 }else{
                     if (fieldMeta != null && (boolean.class.equals(fieldMeta.getFieldType())
                             || Boolean.class.equals(fieldMeta.getFieldType())
@@ -140,15 +142,13 @@ public class JsonTextSaveParser extends JsonTextParser {
         String[] fields = new String[params.keySet().size()];
         params.keySet().toArray(fields);
         String PK = validator.getPK();
-
-        String newDataString = simpleDateFormat.format(new Date());
         if (validator.hasPK(fields) && StringUtils.hasText(jo.getString(PK)) && !StringUtils.hasText(jo.getString("forceId"))) {
             // update
             FilterGroup fg = new FilterGroup();
             fg.addFilter(PK, jo.getString(PK));
             command.setWhere(fg);
             command.setCommandType(CommandType.Update);
-            Object pkValue = params.remove(PK);
+            params.remove(PK);
             putUpdateDefaultField(params,ctx);
             String[] updateFields = new String[params.keySet().size()];
             params.keySet().toArray(updateFields);
@@ -177,6 +177,7 @@ public class JsonTextSaveParser extends JsonTextParser {
         return command;
     }
 
+
     private void putUpdateDefaultField(Map<String,Object> entity, Ctx ctx) {
         if (entity.containsKey("updateAt")) {
             entity.put("updateAt", new Date());
@@ -188,7 +189,6 @@ public class JsonTextSaveParser extends JsonTextParser {
             entity.put("updaterName", ctx.get("userName"));
         }
     }
-
     private void putInsertDefaultField(Map<String,Object> entity, Ctx ctx) {
         if (entity.containsKey("createAt")) {
             entity.put("createAt", new Date());
@@ -209,7 +209,5 @@ public class JsonTextSaveParser extends JsonTextParser {
     }
 
 
-    private boolean isFunction(String value) {
-        return value.startsWith("increment");
-    }
+
 }

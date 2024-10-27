@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;

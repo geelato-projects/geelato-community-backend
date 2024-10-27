@@ -4,7 +4,7 @@ import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.enums.MysqlDataTypeEnum;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
-import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.lang.api.ApiResult;

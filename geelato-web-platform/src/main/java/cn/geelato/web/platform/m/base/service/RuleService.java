@@ -406,15 +406,11 @@ public class RuleService {
         } else if (valueExpTrim.startsWith(VARS_FN)) {
             String fnName = valueExpTrim.substring(VARS_FN.length() + 1);
             // 检查是否存在变更$fn.now等
-            switch (fnName) {
-                case "now":
-                case "nowDateTime":
-                    return Fn.nowDateTime();
-                case "nowDate":
-                    return Fn.nowDate();
-                default:
-                    return null;
-            }
+            return switch (fnName) {
+                case "now", "nowDateTime" -> Fn.nowDateTime();
+                case "nowDate" -> Fn.nowDate();
+                default -> null;
+            };
         } else if (valueExpTrim.startsWith(VARS_PARENT)) {
             // 检查是否存在变量$parent
             return parseValueExp((SaveCommand) currentCommand.getParentCommand(), valueExpTrim.substring(VARS_PARENT.length() + 1), times + 1);

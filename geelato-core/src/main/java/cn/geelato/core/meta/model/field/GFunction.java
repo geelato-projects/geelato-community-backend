@@ -31,7 +31,8 @@ public enum GFunction implements FunctionResolver{
         }
         private String resolveSpecialParam(String param) {
             String[] paramsPartial=param.split("\\.");
-            return MetaManager.singleInstance().getByEntityName(paramsPartial[1]).getColumnName(paramsPartial[2]);
+            return MetaManager.singleInstance().getByEntityName(paramsPartial[0].replace("$",""))
+                    .getColumnName(paramsPartial[1]);
         }
 
     },
@@ -58,7 +59,8 @@ public enum GFunction implements FunctionResolver{
         }
         private String resolveSpecialParam(String param) {
             String[] paramsPartial=param.split("\\.");
-            return MetaManager.singleInstance().getByEntityName(paramsPartial[1]).getColumnName(paramsPartial[2]);
+            return MetaManager.singleInstance().getByEntityName(paramsPartial[0].replace("$",""))
+                    .getColumnName(paramsPartial[1]);
         }
     };
     private static final GFunction[] VALUES = values();

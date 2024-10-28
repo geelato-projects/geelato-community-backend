@@ -31,7 +31,6 @@ public class JsonTextSaveParser extends JsonTextParser {
     private final static String SUB_ENTITY_FLAG = "#";
     private final static String KW_BIZ = "@biz";
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
 
 
     /**

@@ -3,6 +3,9 @@ package cn.geelato.core.gql.parser;
 import cn.geelato.core.gql.command.CommandValidator;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.core.meta.model.field.FieldValue;
+import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -184,7 +187,11 @@ public class JsonTextQueryParser extends JsonTextParser {
                 //where子句过滤条件
                 String[] ary = key.split(FILTER_FLAG);
                 String field = ary[0];
-                if(!FunctionParser.isFunction((field))) {
+                if(FunctionParser.isFunction((field))) {
+                    field=new FunctionFieldValue(
+                            FunctionParser.reconstruct(field,entityName)
+                    ).getMysqlFunction();
+                }else{
                     validator.validateField(field, "where");
                 }
                 if (ary.length == 1) {

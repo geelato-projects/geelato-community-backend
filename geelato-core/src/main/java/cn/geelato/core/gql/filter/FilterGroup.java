@@ -102,6 +102,8 @@ public class FilterGroup {
         @Getter
         private String refEntityName;
 
+        @Getter
+        private FilterFieldType filterFieldType;
         /**
          */
         public Filter setField(String field) {
@@ -112,12 +114,14 @@ public class FilterGroup {
                 this.refEntityName = arrays[0];
             } else {
                 this.isRefField = false;
-                if(FunctionParser.isFunction(field)){
-                    this.field = field;
-                }else{
-//                    FunctionParser.reconstruct(field);
-                }
+                this.field = field;
                 this.refEntityName = "";
+            }
+
+            if(FunctionParser.isFunction(field)){
+                this.filterFieldType=FilterFieldType.Function;
+            }else{
+                this.filterFieldType=FilterFieldType.Normal;
             }
             return this;
         }
@@ -160,8 +164,10 @@ public class FilterGroup {
         }
 
     }
-
-
+    public enum FilterFieldType {
+        Normal,
+        Function
+    }
     @Getter
     public enum Operator {
         eq("eq"),
@@ -193,7 +199,7 @@ public class FilterGroup {
             StringBuilder sb = new StringBuilder();
             for (Operator operator : values()) {
                 stringToEnum.put(operator.toString(), operator);
-                sb.append(operator.toString());
+                sb.append(operator);
                 sb.append(",");
             }
             if (!sb.isEmpty()) {

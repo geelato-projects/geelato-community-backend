@@ -7,6 +7,9 @@ public class FunctionParser {
 
 
     public static boolean isFunction(String value) {
-        return value.startsWith("increment");
+        return value.startsWith("increment")
+                ||value.startsWith("gfn_increment")
+                ||value.startsWith("findinset")
+                ||value.startsWith("gfn_findinset");
     }
 }

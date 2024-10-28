@@ -10,9 +10,13 @@ import java.io.Serializable;
 /**
  * @author geemeta
  */
+@Getter
 @SuppressWarnings("rawtypes")
 public class FieldMeta implements Serializable {
-    private final EntityMeta entityMeta;
+
+    @Setter
+    private EntityMeta entityMeta;
+
     private final ColumnMeta columnMeta;
     /**
      * -- GETTER --
@@ -20,22 +24,17 @@ public class FieldMeta implements Serializable {
      *  columnMeta.getName()是数据库中的字段格式
      */
     @Setter
-    @Getter
     private String fieldName;
     @Setter
-    @Getter
     private Class fieldType;
 
-
-    public FieldMeta(String columnName, String fieldName, String title,EntityMeta entityMeta) {
+    public FieldMeta(String columnName, String fieldName, String title) {
         columnMeta = new ColumnMeta();
         columnMeta.setName(columnName);
         columnMeta.setTitle(title);
         columnMeta.setFieldName(fieldName);
         this.fieldName = fieldName;
-        this.entityMeta=entityMeta;
     }
-
     public ColumnMeta getColumn() {
         return columnMeta;
     }
@@ -68,4 +67,5 @@ public class FieldMeta implements Serializable {
         }
         return this.getColumn().getName().equals(fieldName);
     }
+
 }

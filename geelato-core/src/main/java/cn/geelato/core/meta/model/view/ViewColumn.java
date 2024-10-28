@@ -19,7 +19,7 @@ public class ViewColumn {
     private String column_comment;
     private Boolean column_key = false;
     private Boolean is_nullable = false;
-    private Long character_maxinum_length;
+    private Long character_maximum_length;
     private Integer numeric_precision;
     private Integer numeric_scale;
 
@@ -40,7 +40,7 @@ public class ViewColumn {
             column.setColumn_comment(meta.getComment());
             column.setColumn_key(meta.isKey());
             column.setIs_nullable(meta.isNullable());
-            column.setCharacter_maxinum_length(meta.getCharMaxLength());
+            column.setCharacter_maximum_length(meta.getCharMaxLength());
             column.setNumeric_precision(meta.getNumericPrecision());
             column.setNumeric_scale(meta.getNumericScale());
         }

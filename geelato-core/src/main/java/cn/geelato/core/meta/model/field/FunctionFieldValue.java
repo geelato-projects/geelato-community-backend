@@ -10,39 +10,15 @@ import java.util.regex.Pattern;
 @Setter
 @Getter
 public class FunctionFieldValue extends FieldValue {
-
-    MetaManager metaManager=MetaManager.singleInstance();
+    private FunctionFieldValue functionFieldValue;
     private String mysqlFunction;
     public FunctionFieldValue(FieldMeta fieldMeta, String functionExpression){
-        this.mysqlFunction=resolveFunctionExpression(functionExpression);
+        GFunction gFunction=GFunction.lookUp(functionExpression);
+        this.mysqlFunction=gFunction.resolve(functionExpression);
         this.fieldMeta = fieldMeta;
     }
-    public FunctionFieldValue( String functionExpression){
-        this.mysqlFunction=resolveFunctionExpression(functionExpression);
-    }
-
-
-    private String resolveFunctionExpression(String functionExpression) {
-        Pattern pattern = Pattern.compile("\\((.*?)\\)");
-        Matcher matcher = pattern.matcher(functionExpression);
-        if (matcher.find()) {
-            String paramPartial = matcher.group(1);
-            String[] ps = paramPartial.split(",");
-            String param1 = ps[0];
-            String param2 = ps[1];
-            if (param1.startsWith("$")) {
-                param1 = resolveSpecialParam(param1);
-            } else {
-                param1 = ps[1];
-            }
-            return String.format("gfn_increment(%s,%s)", param1, param2);
-        } else {
-            return null;
-        }
-    }
-
-    private String resolveSpecialParam(String param) {
-        String[] paramsPartial=param.split("\\.");
-        return metaManager.getByEntityName(paramsPartial[1]).getColumnName(paramsPartial[2]);
+    public FunctionFieldValue(String functionExpression){
+        GFunction gFunction=GFunction.lookUp(functionExpression);
+        this.mysqlFunction=gFunction.resolve(functionExpression);
     }
 }

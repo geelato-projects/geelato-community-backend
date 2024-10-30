@@ -1,7 +1,7 @@
 package cn.geelato.core.sql;
 
 import cn.geelato.core.AbstractManager;
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.command.*;
 import cn.geelato.core.gql.execute.BoundPageSql;
 import cn.geelato.core.gql.execute.BoundSql;
@@ -174,7 +174,7 @@ public class SqlManager extends AbstractManager {
         DeleteCommand deleteCommand = new DeleteCommand();
         EntityMeta em = metaManager.getByEntityName(entityName);
         deleteCommand.setEntityName(em.getEntityName());
-        Ctx ctx = new Ctx();
+        SessionCtx sessionCtx = new SessionCtx();
         Map<String, Object> params = new HashMap<>();
         String newDataString = simpleDateFormat.format(new Date());
         if (validator.hasKeyField("delStatus")) {
@@ -187,10 +187,10 @@ public class SqlManager extends AbstractManager {
             params.put("updateAt", newDataString);
         }
         if (validator.hasKeyField("updater")) {
-            params.put("updater", ctx.get("userId"));
+            params.put("updater", SessionCtx.getCurrentUser().getUserId());
         }
         if (validator.hasKeyField("updaterName")) {
-            params.put("updaterName", ctx.get("userName"));
+            params.put("updaterName", SessionCtx.getCurrentUser().getUserName());
         }
         String[] updateFields = new String[params.keySet().size()];
         params.keySet().toArray(updateFields);

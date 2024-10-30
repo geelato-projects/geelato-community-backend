@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.security.rest;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
@@ -64,7 +64,7 @@ public class UserStockMapController extends BaseController {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
-            params.put("userId", Ctx.getCurrentUser().getUserId());
+            params.put("userId", SessionCtx.getCurrentUser().getUserId());
             List<UserStockMap> list = userStockMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(list == null ? 0 : list.size());
         } catch (Exception e) {
@@ -76,9 +76,9 @@ public class UserStockMapController extends BaseController {
     @RequestMapping(value = "/create", method = RequestMethod.POST)
     public ApiResult create(@RequestBody UserStockMap form) {
         try {
-            String userId = Ctx.getCurrentUser().getUserId();
+            String userId = SessionCtx.getCurrentUser().getUserId();
             // 删除已存在的
-            isDelete(Ctx.getCurrentUser().getUserId(), form.getStockId());
+            isDelete(SessionCtx.getCurrentUser().getUserId(), form.getStockId());
             // 创建
             List<String> stockIds = new ArrayList<>();
             if (StringUtils.isNotBlank(form.getStockId())) {
@@ -102,7 +102,7 @@ public class UserStockMapController extends BaseController {
     @RequestMapping(value = "/remove/{stockId}", method = RequestMethod.DELETE)
     public ApiResult<NullResult> remove(@PathVariable(required = true) String stockId) {
         try {
-            isDelete(Ctx.getCurrentUser().getUserId(), stockId);
+            isDelete(SessionCtx.getCurrentUser().getUserId(), stockId);
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());

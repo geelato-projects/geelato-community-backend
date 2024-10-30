@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.security.service;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
@@ -371,7 +371,7 @@ public class EncodingService extends BaseService {
         }
         if (variableKeys.size() > 0 && variableValues.size() > 0) {
             if (variableKeys.contains("tenant")) {
-                String tenantCode = Ctx.getCurrentTenantCode();
+                String tenantCode = SessionCtx.getCurrentTenantCode();
                 if (Strings.isNotBlank(tenantCode)) {
                     List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList("SELECT * FROM platform_tenant WHERE 1=1 AND del_status = 0 AND code = ?", new Object[]{tenantCode});
                     if (mapList != null && mapList.size() > 0) {
@@ -394,7 +394,7 @@ public class EncodingService extends BaseService {
                 }
             }
             if (variableKeys.contains("user")) {
-                cn.geelato.core.env.entity.User user = Ctx.getCurrentUser();
+                cn.geelato.core.env.entity.User user = SessionCtx.getCurrentUser();
                 if (user != null && Strings.isNotBlank(user.getUserId())) {
                     Map<String, Object> model = dao.queryForMap(User.class, "id", user.getUserId());
                     if (model != null) {

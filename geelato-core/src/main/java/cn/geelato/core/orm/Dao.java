@@ -9,7 +9,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.aop.annotation.MethodLog;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.core.gql.execute.BoundPageSql;
@@ -323,7 +323,7 @@ public class Dao extends SqlKeyDao {
 
 
     public <E extends IdEntity> Map save(E entity) {
-        BoundSql boundSql = entityManager.generateSaveSql(entity, new Ctx());
+        BoundSql boundSql = entityManager.generateSaveSql(entity, new SessionCtx());
         log.info(boundSql.toString());
         jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
         SaveCommand command = (SaveCommand) boundSql.getCommand();

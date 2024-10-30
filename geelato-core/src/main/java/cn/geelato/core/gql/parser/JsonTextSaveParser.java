@@ -1,6 +1,6 @@
 package cn.geelato.core.gql.parser;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.command.CommandType;
 import cn.geelato.core.gql.command.CommandValidator;
 import cn.geelato.core.gql.command.SaveCommand;
@@ -9,7 +9,6 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
-import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -18,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -36,51 +34,51 @@ public class JsonTextSaveParser extends JsonTextParser {
     /**
      *
      */
-    public SaveCommand parse(String jsonText, Ctx ctx) {
+    public SaveCommand parse(String jsonText, SessionCtx sessionCtx) {
         JSONObject jo = JSON.parseObject(jsonText);
         CommandValidator validator = new CommandValidator();
         if (jo.containsKey(KW_BIZ)) {
             jo.remove(KW_BIZ);
         }
         String entityName = jo.keySet().iterator().next();
-        return parse(ctx, entityName, jo.getJSONObject(entityName), validator);
+        return parse(sessionCtx, entityName, jo.getJSONObject(entityName), validator);
     }
 
 
-    public List<SaveCommand> parseBatch(String jsonText, Ctx ctx) {
+    public List<SaveCommand> parseBatch(String jsonText, SessionCtx sessionCtx) {
         JSONObject jo = JSON.parseObject(jsonText);
         CommandValidator validator = new CommandValidator();
         if (jo.containsKey(KW_BIZ)) {
             jo.remove(KW_BIZ);
         }
         String entityName = jo.keySet().iterator().next();
-        return parseBatch(ctx, entityName, jo.getJSONArray(entityName), validator);
+        return parseBatch(sessionCtx, entityName, jo.getJSONArray(entityName), validator);
     }
 
-    public List<SaveCommand> parseMulti(String jsonText, Ctx ctx) {
+    public List<SaveCommand> parseMulti(String jsonText, SessionCtx sessionCtx) {
         JSONObject jo = JSON.parseObject(jsonText);
         CommandValidator validator = new CommandValidator();
         if (jo.containsKey(KW_BIZ)) {
             jo.remove(KW_BIZ);
         }
-        return parseMulti(ctx, jo, validator);
+        return parseMulti(sessionCtx, jo, validator);
     }
 
-    private List<SaveCommand> parseMulti(Ctx ctx, JSONObject jo, CommandValidator validator) {
+    private List<SaveCommand> parseMulti(SessionCtx sessionCtx, JSONObject jo, CommandValidator validator) {
         List<SaveCommand> saveCommandList = new ArrayList<>();
         for (String entityName : jo.keySet()) {
             String value = jo.getString(entityName);
             JSONObject o = JSONObject.parseObject(value);
-            SaveCommand saveCommand = parse(ctx, entityName, o, validator);
+            SaveCommand saveCommand = parse(sessionCtx, entityName, o, validator);
             saveCommandList.add(saveCommand);
         }
         return saveCommandList;
     }
 
-    private List<SaveCommand> parseBatch(Ctx ctx, String commandName, JSONArray jsonArray, CommandValidator validator) {
+    private List<SaveCommand> parseBatch(SessionCtx sessionCtx, String commandName, JSONArray jsonArray, CommandValidator validator) {
         List<SaveCommand> saveCommandList = new ArrayList<>();
         for (Object o : jsonArray) {
-            SaveCommand saveCommand = parse(ctx, commandName, (JSONObject) o, validator);
+            SaveCommand saveCommand = parse(sessionCtx, commandName, (JSONObject) o, validator);
             saveCommandList.add(saveCommand);
         }
         return saveCommandList;
@@ -89,7 +87,7 @@ public class JsonTextSaveParser extends JsonTextParser {
     /**
      * 递归解析保存操作命令，里面变更在执行期再解析，不在此解析
      */
-    private SaveCommand parse(Ctx ctx, String commandName, JSONObject jo, CommandValidator validator) {
+    private SaveCommand parse(SessionCtx sessionCtx, String commandName, JSONObject jo, CommandValidator validator) {
         Assert.isTrue(validator.validateEntity(commandName), validator.getMessage());
         SaveCommand command = new SaveCommand();
         command.setEntityName(commandName);
@@ -101,12 +99,12 @@ public class JsonTextSaveParser extends JsonTextParser {
                 Object sub = jo.get(key);
                 CommandValidator subValidator = new CommandValidator();
                 if (sub instanceof JSONObject) {
-                    SaveCommand subCommand = parse(ctx, key.substring(1), (JSONObject) sub, subValidator);
+                    SaveCommand subCommand = parse(sessionCtx, key.substring(1), (JSONObject) sub, subValidator);
                     subCommand.setParentCommand(command);
                     command.getCommands().add(subCommand);
                 } else if (sub instanceof JSONArray) {
                     ((JSONArray) sub).forEach(subJo -> {
-                        SaveCommand subCommand = parse(ctx, key.substring(1), (JSONObject) subJo, subValidator);
+                        SaveCommand subCommand = parse(sessionCtx, key.substring(1), (JSONObject) subJo, subValidator);
                         subCommand.setParentCommand(command);
                         command.getCommands().add(subCommand);
                     });
@@ -148,7 +146,7 @@ public class JsonTextSaveParser extends JsonTextParser {
             command.setWhere(fg);
             command.setCommandType(CommandType.Update);
             params.remove(PK);
-            putUpdateDefaultField(params,ctx);
+            putUpdateDefaultField(params, sessionCtx);
             String[] updateFields = new String[params.keySet().size()];
             params.keySet().toArray(updateFields);
             command.setFields(updateFields);
@@ -166,7 +164,7 @@ public class JsonTextSaveParser extends JsonTextParser {
                 params.remove(PK);
             }
             entity.putAll(params);
-            putInsertDefaultField(entity,ctx);
+            putInsertDefaultField(entity, sessionCtx);
             String[] insertFields = new String[entity.size()];
             entity.keySet().toArray(insertFields);
             command.setFields(insertFields);
@@ -177,34 +175,34 @@ public class JsonTextSaveParser extends JsonTextParser {
     }
 
 
-    private void putUpdateDefaultField(Map<String,Object> entity, Ctx ctx) {
+    private void putUpdateDefaultField(Map<String,Object> entity, SessionCtx sessionCtx) {
         if (entity.containsKey("updateAt")) {
             entity.put("updateAt", new Date());
         }
         if (entity.containsKey("updater")) {
-            entity.put("updater", ctx.get("userId"));
+            entity.put("updater", SessionCtx.getUserId());
         }
         if (entity.containsKey("updaterName")) {
-            entity.put("updaterName", ctx.get("userName"));
+            entity.put("updaterName", SessionCtx.getUserName());
         }
     }
-    private void putInsertDefaultField(Map<String,Object> entity, Ctx ctx) {
+    private void putInsertDefaultField(Map<String,Object> entity, SessionCtx sessionCtx) {
         if (entity.containsKey("createAt")) {
             entity.put("createAt", new Date());
         }
         if (entity.containsKey("creator")) {
-            entity.put("creator", ctx.get("userId"));
+            entity.put("creator",SessionCtx.getUserId());
         }
         if (entity.containsKey("creatorName")) {
-            entity.put("creatorName", ctx.get("userName"));
+            entity.put("creatorName",SessionCtx.getUserName());
         }
         if (entity.containsKey("buId")) {
-            entity.put("buId", Ctx.getCurrentUser().getBuId());
+            entity.put("buId", SessionCtx.getCurrentUser().getBuId());
         }
         if (entity.containsKey("deptId")) {
-            entity.put("deptId", Ctx.getCurrentUser().getDefaultOrgId());
+            entity.put("deptId", SessionCtx.getCurrentUser().getDefaultOrgId());
         }
-        putUpdateDefaultField(entity, ctx);
+        putUpdateDefaultField(entity, sessionCtx);
     }
 
 

@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.env.entity.User;
 import cn.geelato.lang.api.ApiPagedResult;
@@ -70,7 +70,7 @@ public class PageController extends BaseController {
                 pageMap.put("code", page.getCode());
                 pageMap.put("releaseContent", page.getReleaseContent());
 
-                User user = Ctx.getCurrentUser();
+                User user = SessionCtx.getCurrentUser();
                 // 用户自定义信息
                 String pageCustomKey = "platform_app_page_custom_" + page.getId() + '_' + user.getUserId();
                 if (!CacheUtil.exists(pageCustomKey) || CacheUtil.get(pageCustomKey) == null) {

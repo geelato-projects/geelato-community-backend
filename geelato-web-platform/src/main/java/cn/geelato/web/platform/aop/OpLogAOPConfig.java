@@ -1,4 +1,5 @@
 package cn.geelato.web.platform.aop;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.web.platform.aop.annotation.OpLog;
 import com.alibaba.fastjson2.JSONArray;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -11,7 +12,6 @@ import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 
-import cn.geelato.core.Ctx;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.UIDGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,10 +59,10 @@ public class OpLogAOPConfig {
 
     private void resolveSaveOpRecord(ProceedingJoinPoint proceedingJoinPoint, Object ret){
         String gql=(String) proceedingJoinPoint.getArgs()[1];
-        SaveCommand saveCommand = gqlManager.generateSaveSql(gql, new Ctx());
+        SaveCommand saveCommand = gqlManager.generateSaveSql(gql, new SessionCtx());
         EntityMeta entityMeta= MetaManager.singleInstance().get(saveCommand.getEntityName());
-        String opUser= Ctx.getCurrentUser().getUserName();
-        String opUserId=Ctx.getCurrentUser().getUserId();
+        String opUser= SessionCtx.getCurrentUser().getUserName();
+        String opUserId= SessionCtx.getCurrentUser().getUserId();
         String opDataId="";
         String opType="";
         String opRecord="";
@@ -104,7 +104,7 @@ public class OpLogAOPConfig {
                     opUser,
                     opUserId,
                     opRecord,
-                    Ctx.getCurrentTenantCode());
+                    SessionCtx.getCurrentTenantCode());
         }
 
     }

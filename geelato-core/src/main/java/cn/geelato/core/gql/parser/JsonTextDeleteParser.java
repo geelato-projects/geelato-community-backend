@@ -1,6 +1,6 @@
 package cn.geelato.core.gql.parser;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.command.CommandType;
 import cn.geelato.core.gql.command.CommandValidator;
 import cn.geelato.core.gql.command.DeleteCommand;
@@ -29,17 +29,17 @@ public class JsonTextDeleteParser extends JsonTextParser {
 
 
 
-    public DeleteCommand parse(String jsonText, Ctx ctx) {
+    public DeleteCommand parse(String jsonText, SessionCtx sessionCtx) {
         JSONObject jo = JSON.parseObject(jsonText);
         CommandValidator validator = new CommandValidator();
         // TODO biz怎么用起来
         String biz = jo.getString(KW_BIZ);
         jo.remove(KW_BIZ);
         String key = jo.keySet().iterator().next();
-        return parse(ctx, key, jo.getJSONObject(key), validator);
+        return parse(sessionCtx, key, jo.getJSONObject(key), validator);
     }
 
-    private DeleteCommand parse(Ctx ctx, String commandName, JSONObject jo, CommandValidator validator) {
+    private DeleteCommand parse(SessionCtx sessionCtx, String commandName, JSONObject jo, CommandValidator validator) {
 
         Assert.isTrue(validator.validateEntity(commandName), validator.getMessage());
 
@@ -50,7 +50,7 @@ public class JsonTextDeleteParser extends JsonTextParser {
         command.setWhere(fg);
         command.setCommandType(CommandType.Delete);
         Map<String, Object> params = new HashMap<>();
-        putDeleteDefaultField(ctx,params,validator);
+        putDeleteDefaultField(sessionCtx,params,validator);
 
         String[] updateFields = new String[params.keySet().size()];
         params.keySet().toArray(updateFields);
@@ -61,7 +61,7 @@ public class JsonTextDeleteParser extends JsonTextParser {
 
             } else if (key.startsWith(SUB_ENTITY_FLAG)) {
                 // 解析子实体
-                command.getCommands().add(parse(ctx, key.substring(1), jo.getJSONObject(key), validator));
+                command.getCommands().add(parse(sessionCtx, key.substring(1), jo.getJSONObject(key), validator));
             } else {
                 parseWhere(fg, key, jo, validator);
             }
@@ -71,7 +71,7 @@ public class JsonTextDeleteParser extends JsonTextParser {
         return command;
     }
 
-    private void putDeleteDefaultField(Ctx ctx, Map<String, Object> params, CommandValidator validator) {
+    private void putDeleteDefaultField(SessionCtx sessionCtx, Map<String, Object> params, CommandValidator validator) {
         String newDataString = simpleDateFormat.format(new Date());
         if (validator.hasKeyField("delStatus")) {
             params.put("delStatus", 1);
@@ -79,7 +79,7 @@ public class JsonTextDeleteParser extends JsonTextParser {
         if (validator.hasKeyField("deleteAt")) {
             params.put("deleteAt", newDataString);
         }
-        putBaseDefaultField(ctx,params,validator);
+        putBaseDefaultField(sessionCtx,params,validator);
     }
 
 

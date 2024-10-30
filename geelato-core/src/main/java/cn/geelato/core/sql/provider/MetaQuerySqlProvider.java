@@ -13,7 +13,6 @@ import org.springframework.util.StringUtils;
  * @author geemeta
  */
 @Slf4j
-@SuppressWarnings("rawtypes")
 public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
     @Override
     protected Object[] buildParams(QueryCommand command) {

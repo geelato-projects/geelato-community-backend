@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.zxing.service;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.BaseService;
@@ -32,7 +32,7 @@ public class BarcodeService extends BaseService {
                     Map<String, Object> params = new HashMap<>();
                     params.put("code", code);
                     params.put("enableStatus", 1);
-                    params.put("tenantCode", Ctx.getCurrentTenantCode());
+                    params.put("tenantCode", SessionCtx.getCurrentTenantCode());
                     List<Barcode> barcodes = queryModel(Barcode.class, params);
                     if (barcodes == null) {
                         result = ApiResult.fail("没有找到对应的条码信息");

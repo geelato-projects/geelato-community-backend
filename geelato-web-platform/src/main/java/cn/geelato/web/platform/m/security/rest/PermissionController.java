@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.security.rest;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.env.entity.User;
 import cn.geelato.core.gql.filter.FilterGroup;
@@ -74,7 +74,7 @@ public class PermissionController extends BaseController {
         try {
             Map<String, Object> params = this.getQueryParameters();
             if (params.get("userId") == null) {
-                User user = Ctx.getCurrentUser();
+                User user = SessionCtx.getCurrentUser();
                 params.put("userId", user.getUserId());
             }
             if (params.get("userId") == null) {

@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.security.rest;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
@@ -74,7 +74,7 @@ public class UserRestController extends BaseController {
             // 清理不需要展示的数据
             userFormat(dataItems.getItems());
             // 是否是当前用户的常用联系人
-            userStockFormat(dataItems.getItems(), Ctx.getCurrentUser().getUserId());
+            userStockFormat(dataItems.getItems(), SessionCtx.getCurrentUser().getUserId());
             return result;
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -91,7 +91,7 @@ public class UserRestController extends BaseController {
             // 获取当前用户常用联系人
             if (stockSearch) {
                 Map<String, Object> params = new HashMap<>();
-                params.put("userId", Ctx.getCurrentUser().getUserId());
+                params.put("userId", SessionCtx.getCurrentUser().getUserId());
                 List<UserStockMap> userStockMaps = userStockMapService.queryModel(UserStockMap.class, params);
                 List<String> stockIds = new ArrayList<>();
                 if (userStockMaps != null && userStockMaps.size() > 0) {
@@ -108,7 +108,7 @@ public class UserRestController extends BaseController {
             userFormat(dataItems.getItems());
             // 是否是当前用户的常用联系人
             if (stocked) {
-                userStockFormat(dataItems.getItems(), Ctx.getCurrentUser().getUserId());
+                userStockFormat(dataItems.getItems(), SessionCtx.getCurrentUser().getUserId());
             }
             return result;
         } catch (Exception e) {

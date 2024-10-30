@@ -1,7 +1,7 @@
 package cn.geelato.core.gql;
 
 import cn.geelato.core.AbstractManager;
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.command.DeleteCommand;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.command.SaveCommand;
@@ -50,18 +50,18 @@ public class GqlManager extends AbstractManager {
         return jsonTextQueryParser.parse(jsonText);
     }
 
-    public SaveCommand generateSaveSql(String jsonText, Ctx ctx) {
-        return jsonTextSaveParser.parse(jsonText, ctx);
+    public SaveCommand generateSaveSql(String jsonText, SessionCtx sessionCtx) {
+        return jsonTextSaveParser.parse(jsonText, sessionCtx);
     }
 
-    public List<SaveCommand> generateBatchSaveSql(String jsonText, Ctx ctx) {
-        return jsonTextSaveParser.parseBatch(jsonText, ctx);
+    public List<SaveCommand> generateBatchSaveSql(String jsonText, SessionCtx sessionCtx) {
+        return jsonTextSaveParser.parseBatch(jsonText, sessionCtx);
     }
-    public List<SaveCommand> generateMultiSaveSql(String jsonText, Ctx ctx) {
-        return jsonTextSaveParser.parseMulti(jsonText, ctx);
+    public List<SaveCommand> generateMultiSaveSql(String jsonText, SessionCtx sessionCtx) {
+        return jsonTextSaveParser.parseMulti(jsonText, sessionCtx);
     }
-    public DeleteCommand generateDeleteSql(String jsonText, Ctx ctx) {
-        return jsonTextDeleteParser.parse(jsonText, ctx);
+    public DeleteCommand generateDeleteSql(String jsonText, SessionCtx sessionCtx) {
+        return jsonTextDeleteParser.parse(jsonText, sessionCtx);
     }
 
 }

@@ -70,10 +70,10 @@ public class ScriptController extends BaseController {
 //                "import Base64 from 'graaljs/crypto-js/enc-base64.js';\t";
         return """
                 (function(parameter){
-                \t var ctx={};
-                \t ctx.parameter=parameter;
-                \t ctx.result=#scriptContent# ();
-                \t return ctx;\t
+                \t var sessionCtx={};
+                \t sessionCtx.parameter=parameter;
+                \t sessionCtx.result=#scriptContent# ();
+                \t return sessionCtx;\t
                 })""";
     }
 }

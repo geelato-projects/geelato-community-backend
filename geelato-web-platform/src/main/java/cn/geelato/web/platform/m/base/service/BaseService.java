@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
@@ -319,7 +319,7 @@ public class BaseService {
      * @return 当前会话信息
      */
     protected String getSessionTenantCode() {
-        return Ctx.getCurrentTenantCode();
+        return SessionCtx.getCurrentTenantCode();
     }
 
     /**

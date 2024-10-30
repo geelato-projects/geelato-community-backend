@@ -1,12 +1,12 @@
 package cn.geelato.core.meta;
 
 import cn.geelato.core.AbstractManager;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.command.CommandType;
 import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.meta.model.entity.IdEntity;
 import cn.geelato.core.meta.model.parser.EntitySaveParser;
-import cn.geelato.core.Ctx;
 import cn.geelato.core.sql.provider.MetaDeleteSqlProvider;
 import cn.geelato.core.sql.provider.MetaInsertSqlProvider;
 import cn.geelato.core.sql.provider.MetaQuerySqlProvider;
@@ -32,8 +32,8 @@ public class EntityManager extends AbstractManager {
         return instance;
     }
 
-    public BoundSql generateSaveSql(IdEntity entity, Ctx ctx) {
-        SaveCommand command = entitySaveParser.parse(entity, ctx);
+    public BoundSql generateSaveSql(IdEntity entity, SessionCtx sessionCtx) {
+        SaveCommand command = entitySaveParser.parse(entity, sessionCtx);
         if (command.getCommandType() == CommandType.Update) {
             return metaUpdateSqlProvider.generate(command);
         } else {

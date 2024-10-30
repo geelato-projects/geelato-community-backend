@@ -8,7 +8,7 @@ import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
 import org.apache.commons.collections.map.HashedMap;
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.Fn;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
@@ -462,8 +462,8 @@ public class RuleService {
     /**
      * @return 当前会话信息
      */
-    protected Ctx getSessionCtx() {
-        return new Ctx();
+    protected SessionCtx getSessionCtx() {
+        return new SessionCtx();
     }
 
 

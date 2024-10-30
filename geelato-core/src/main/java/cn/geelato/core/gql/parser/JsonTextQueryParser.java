@@ -1,17 +1,15 @@
 package cn.geelato.core.gql.parser;
 
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.command.CommandValidator;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.meta.model.field.FieldMeta;
-import cn.geelato.core.meta.model.field.FieldValue;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import cn.geelato.core.env.entity.Permission;
-import cn.geelato.core.Ctx;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -90,14 +88,14 @@ public class JsonTextQueryParser extends JsonTextParser {
         QueryCommand command = new QueryCommand();
         command.setEntityName(entityName);
         FilterGroup fg = new FilterGroup();
-        fg.addFilter("tenantCode", Ctx.getCurrentTenantCode());
+        fg.addFilter("tenantCode", SessionCtx.getCurrentTenantCode());
 
-        if (Ctx.getCurrentUser().getDataPermissionByEntity(entityName) != null) {
-            Permission dp = Ctx.getCurrentUser().getDataPermissionByEntity(entityName);
+        if (SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName) != null) {
+            Permission dp = SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName);
             String rule= dp.getRuleReplaceVariable();
             command.setOriginalWhere(rule);
         }else{
-            command.setOriginalWhere(String.format("creator='%s'", Ctx.getCurrentUser().getUserId()));
+            command.setOriginalWhere(String.format("creator='%s'", SessionCtx.getCurrentUser().getUserId()));
         }
 
         command.setWhere(fg);

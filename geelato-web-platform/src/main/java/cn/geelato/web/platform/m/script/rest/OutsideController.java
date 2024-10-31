@@ -9,6 +9,7 @@ import cn.geelato.web.platform.m.script.entity.Api;
 import cn.geelato.web.platform.m.script.service.ApiService;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
@@ -60,7 +61,7 @@ public class OutsideController extends BaseController {
                     context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
                 }
                 Source source = Source.newBuilder("js", scriptContent, "graal.mjs").build();
-                Map result = context.eval(source).execute(parameter).as(Map.class);
+                Map result = context.eval(source).execute(JSON.parse(parameter)).as(Map.class);
                 if (api.getResponseFormat() != null && api.getResponseFormat().equals("custom")) {
                     return JSONObject.toJSONString(result.get("result"));
                 } else {

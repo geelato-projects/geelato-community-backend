@@ -5,6 +5,7 @@ import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.utils.NumbChineseUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.graal.ApplicationContextProvider;
+import cn.geelato.web.platform.graal.GraalUtils;
 import cn.geelato.web.platform.graal.entity.EntityField;
 import cn.geelato.web.platform.graal.entity.EntitySaver;
 import cn.geelato.web.platform.m.base.service.RuleService;
@@ -67,12 +68,12 @@ public class FnService {
             }
         }
         StringBuffer sb = new StringBuffer();
-        sb.append("\"@biz\":\"0\",\"").append(entitySaver.getEntity()).append("\":{");
+        sb.append("{\"@biz\":\"0\",\"").append(entitySaver.getEntity()).append("\":{");
         for (Map.Entry<String, Object> entry : paramsMap.entrySet()) {
             sb.append("\"").append(entry.getKey()).append("\":").append(JSON.toJSONString(entry.getValue())).append(",");
         }
         sb.deleteCharAt(sb.length() - 1);
-        sb.append("}");
-        return ruleService.save("0", sb.toString());
+        sb.append("}}");
+        return ruleService.save("0", sb.toString(), GraalUtils.getCxt());
     }
 }

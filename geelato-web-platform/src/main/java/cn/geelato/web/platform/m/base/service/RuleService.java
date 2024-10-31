@@ -1,20 +1,13 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.core.gql.parser.*;
-import cn.geelato.web.platform.cache.CacheUtil;
-import lombok.Setter;
-import org.apache.commons.collections.map.HashedMap;
 import cn.geelato.core.Ctx;
 import cn.geelato.core.Fn;
-import cn.geelato.lang.api.ApiMultiPagedResult;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
 import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.biz.rules.common.EntityValidateRule;
-import cn.geelato.lang.constants.ApiResultCode;
 import cn.geelato.core.gql.GqlManager;
 import cn.geelato.core.gql.execute.BoundPageSql;
 import cn.geelato.core.gql.execute.BoundSql;
+import cn.geelato.core.gql.parser.*;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.orm.Dao;
@@ -22,6 +15,13 @@ import cn.geelato.core.orm.DaoException;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.script.rule.BizMvelRuleManager;
 import cn.geelato.core.sql.SqlManager;
+import cn.geelato.lang.api.ApiMultiPagedResult;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiResultCode;
+import cn.geelato.web.platform.cache.CacheUtil;
+import lombok.Setter;
+import org.apache.commons.collections.map.HashedMap;
 import org.jeasy.rules.api.Facts;
 import org.jeasy.rules.api.Rules;
 import org.jeasy.rules.api.RulesEngine;
@@ -72,22 +72,22 @@ public class RuleService {
     public RuleService() {
     }
 
-    public EntityMeta resolveEntity(String gql,String type) {
-        BaseCommand command=null;
-        switch (type){
+    public EntityMeta resolveEntity(String gql, String type) {
+        BaseCommand command = null;
+        switch (type) {
             case "save":
                 command = gqlManager.generateSaveSql(gql, getSessionCtx());
                 break;
-            case"query":
+            case "query":
                 command = gqlManager.generateQuerySql(gql);
                 break;
-            case"batchSave":
+            case "batchSave":
                 command = gqlManager.generateBatchSaveSql(gql, getSessionCtx()).get(0);
                 break;
-            case"delete":
+            case "delete":
                 command = gqlManager.generateDeleteSql(gql, getSessionCtx());
                 break;
-            case"pageQuery":
+            case "pageQuery":
                 command = gqlManager.generatePageQuerySql(gql);
                 break;
             default:
@@ -95,6 +95,7 @@ public class RuleService {
         }
         return metaManager.getByEntityName(command.getEntityName());
     }
+
     public Map<String, Object> queryForMap(String gql) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
@@ -112,8 +113,8 @@ public class RuleService {
         ApiPagedResult<List<Map<String, Object>>> result = new ApiPagedResult<>();
         QueryCommand command = gqlManager.generateQuerySql(gql);
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
-        List<Map<String, Object>> list=dao.queryForMapList(boundPageSql);
-        Long total=dao.queryTotal(boundPageSql);
+        List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
+        Long total = dao.queryTotal(boundPageSql);
         result.setData(list);
         result.setTotal(total);
         result.setPage(command.getPageNum());
@@ -191,8 +192,8 @@ public class RuleService {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         command.getWhere().addFilter("tn.tree_id", treeId);
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
-        List<Map<String, Object>> list=dao.queryForMapList(boundPageSql);
-        Long total=dao.queryTotal(boundPageSql);
+        List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
+        Long total = dao.queryTotal(boundPageSql);
         result.setData(list);
         result.setTotal(total);
         result.setPage(command.getPageNum());
@@ -231,7 +232,20 @@ public class RuleService {
      * @return 第一个saveCommand执行的返回主健值（saveCommand内可能有子saveCommand）
      */
     public String save(String biz, String gql) throws DaoException {
-        SaveCommand command = gqlManager.generateSaveSql(gql, getSessionCtx());
+        return save(biz, gql, getSessionCtx());
+    }
+
+    /**
+     * 保存操作,自己构建当前用户
+     *
+     * @param biz
+     * @param gql
+     * @param ctx
+     * @return
+     * @throws DaoException
+     */
+    public String save(String biz, String gql, Ctx ctx) throws DaoException {
+        SaveCommand command = gqlManager.generateSaveSql(gql, ctx);
         Facts facts = new Facts();
         facts.put("saveCommand", command);
         // TODO 通过biz获取业务规则，包括：内置的规则（实体检查），自定义规则（script脚本）
@@ -293,7 +307,6 @@ public class RuleService {
     /**
      * 递归执行，存在需解析依赖变更的情况
      * 不执行业务规则检查
-     *
      */
     public String recursiveSave(SaveCommand command, DataSourceTransactionManager dataSourceTransactionManager, TransactionStatus transactionStatus) throws DaoException {
         BoundSql boundSql = sqlManager.generateSaveSql(command);
@@ -302,7 +315,7 @@ public class RuleService {
             rtnValue = dao.save(boundSql);
             // 增加一个默认清实体缓存的操作
             String cacheKey = command.getEntityName() + "_" + rtnValue;
-            if(CacheUtil.exists(cacheKey)){
+            if (CacheUtil.exists(cacheKey)) {
                 CacheUtil.remove(cacheKey);
             }
         } catch (DaoException e) {
@@ -416,7 +429,7 @@ public class RuleService {
             return parseValueExp((SaveCommand) currentCommand.getParentCommand(), valueExpTrim.substring(VARS_PARENT.length() + 1), times + 1);
         } else {
             if (times == 0) {
-                //如果是第一次且无VARS_PARENT关键字，则直接返回值
+                // 如果是第一次且无VARS_PARENT关键字，则直接返回值
                 return valueExp;
             } else {
                 // 如果是updateCommand，id值不在valueMap中，可从PK值中获取

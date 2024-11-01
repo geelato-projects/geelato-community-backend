@@ -250,6 +250,34 @@ public class WordXWPFWriter {
                     setTableLoopTypeRow(document, placeholderMetaMap, meta);
                 }
             }
+            // 删除空的段落
+            deleteEmptyParagraph(document);
+        }
+    }
+
+    private void deleteEmptyParagraph(XWPFDocument document) {
+        List<XWPFParagraph> paragraphs = document.getParagraphs();
+        boolean isDeleteEmptyPh = false;
+        for (XWPFParagraph paragraph : paragraphs) {
+            String pht = paragraph.getText();
+            if (pht != null && pht.indexOf("{TLDEP}") != -1) {
+                isDeleteEmptyPh = true;
+                break;
+            }
+        }
+        if (isDeleteEmptyPh) {
+            for (int i = paragraphs.size() - 1; i >= 1; i--) {
+                XWPFParagraph paragraph = paragraphs.get(i);
+                document.removeBodyElement(document.getPosOfParagraph(paragraph));
+            }
+            clearParagraphContent(paragraphs.get(0));
+        }
+    }
+
+    public static void clearParagraphContent(XWPFParagraph paragraph) {
+        List<XWPFRun> runs = paragraph.getRuns();
+        for (int i = runs.size() - 1; i >= 0; i--) {
+            paragraph.removeRun(i);
         }
     }
 

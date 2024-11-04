@@ -742,7 +742,7 @@ public class WordXWPFWriter {
         newRow.getCtRow().setTrPr(originalRow.getCtRow().getTrPr());
         // 新行样式
         newRow.setHeight(originalRow.getHeight());
-        newRow.setHeightRule(originalRow.getHeightRule());
+        // newRow.setHeightRule(originalRow.getHeightRule());
         newRow.setCantSplitRow(originalRow.isCantSplitRow());
         newRow.setRepeatHeader(originalRow.isRepeatHeader());
         // 行的列

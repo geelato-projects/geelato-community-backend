@@ -331,7 +331,10 @@ public class ExcelXSSFWriter {
             Date date = null;
             String valueStr = value.toString();
             if (NumberUtils.isNumber(valueStr) && "timestamp".equalsIgnoreCase(in)) {
-                date = new Date(Long.parseLong(valueStr));
+                if (valueStr.length() != 10 && valueStr.length() != 13) {
+                    return "";
+                }
+                date = new Date(Long.parseLong(valueStr.length() == 10 ? valueStr + "000" : valueStr));
             } else {
                 date = new SimpleDateFormat(in).parse(valueStr);
             }
@@ -345,15 +348,15 @@ public class ExcelXSSFWriter {
         if (value != null) {
             if (meta.isValueTypeNumber()) {
                 if (value.toString().indexOf(".") == -1) {
-                    cell.setCellValue(String.format("%s%s%s", meta.getFormatImport(), Long.parseLong(value.toString()), meta.getFormatExport()));
+                    cell.setCellValue(Long.parseLong(value.toString()));
                 } else {
-                    cell.setCellValue(String.format("%s%s%s", meta.getFormatImport(), new BigDecimal(value.toString()).doubleValue(), meta.getFormatExport()));
+                    cell.setCellValue(new BigDecimal(value.toString()).doubleValue());
                 }
             } else if (meta.isValueTypeDate()) {
                 cell.setCellValue(formatDate(value, meta.getFormatImport(), meta.getFormatExport()));
             } else if (meta.isValueTypeDateTime()) {
             } else {
-                cell.setCellValue(String.format("%s%s%s", meta.getFormatImport(), value.toString(), meta.getFormatExport()));
+                cell.setCellValue(value.toString());
             }
         } else {
             if (meta.isValueTypeNumber()) {

@@ -7,5 +7,6 @@ import lombok.Setter;
 @Setter
 public class EntityField {
     private String name;
+    private String value;
     private String valueExpression;
 }

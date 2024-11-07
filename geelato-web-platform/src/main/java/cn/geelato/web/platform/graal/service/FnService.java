@@ -58,12 +58,16 @@ public class FnService {
         }
         Map<String, Object> paramsMap = new HashMap<>();
         for (EntityField field : entitySaver.getFields()) {
-            if (StringUtils.isNotBlank(field.getName()) && StringUtils.isNotBlank(field.getValueExpression())) {
-                if (params != null && params.containsKey(field.getValueExpression())) {
-                    paramsMap.put(field.getName(), params.get(field.getValueExpression()));
-                } else {
-                    Object value = JsProvider.executeExpression(field.getValueExpression(), params);
-                    paramsMap.put(field.getName(), value);
+            if (StringUtils.isNotBlank(field.getName())) {
+                if (StringUtils.isNotBlank(field.getValue())) {
+                    paramsMap.put(field.getName(), field.getValue());
+                } else if (StringUtils.isNotBlank(field.getValueExpression())) {
+                    if (params != null && params.containsKey(field.getValueExpression())) {
+                        paramsMap.put(field.getName(), params.get(field.getValueExpression()));
+                    } else {
+                        Object value = JsProvider.executeExpression(field.getValueExpression(), params);
+                        paramsMap.put(field.getName(), value);
+                    }
                 }
             }
         }

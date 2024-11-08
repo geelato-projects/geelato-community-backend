@@ -7,7 +7,9 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.graal.ApplicationContextProvider;
 import cn.geelato.web.platform.graal.GraalUtils;
 import cn.geelato.web.platform.graal.entity.EntityField;
-import cn.geelato.web.platform.graal.entity.EntitySaver;
+import cn.geelato.web.platform.graal.entity.EntityGraal;
+import cn.geelato.web.platform.graal.entity.EntityOrder;
+import cn.geelato.web.platform.graal.entity.EntityParams;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.UserService;
@@ -15,9 +17,7 @@ import com.alibaba.fastjson2.JSON;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @GraalService(name = "fn", built = "true")
 public class FnService {
@@ -51,8 +51,28 @@ public class FnService {
         return formatDate;
     }
 
+    /**
+     * 分组求和
+     *
+     * @param data
+     * @param groupField
+     * @param sumFields
+     * @return
+     */
+    public Map<String, Object> groupSum(Object[] data, String groupField, String[] sumFields) {
+        Map<String, Object> map = new HashMap<>();
+        return map;
+    }
+
+    /**
+     * 实体保存
+     *
+     * @param entityParams
+     * @param params
+     * @return
+     */
     public String convertEntitySaver(Map<String, Object> entityParams, Map<String, Object> params) {
-        EntitySaver entitySaver = JSON.parseObject(JSON.toJSONString(entityParams), EntitySaver.class);
+        EntityGraal entitySaver = JSON.parseObject(JSON.toJSONString(entityParams), EntityGraal.class);
         if (StringUtils.isBlank(entitySaver.getEntity()) || entitySaver.getFields() == null || entitySaver.getFields().isEmpty()) {
             throw new RuntimeException("entityName or fields is empty");
         }
@@ -80,4 +100,99 @@ public class FnService {
         sb.append("}}");
         return ruleService.save("0", sb.toString(), GraalUtils.getCxt());
     }
+
+    /**
+     * 实体查询
+     *
+     * @param entityParams
+     * @return
+     */
+    public Object convertEntityReader(Map<String, Object> entityParams) {
+        EntityGraal entityReader = JSON.parseObject(JSON.toJSONString(entityParams), EntityGraal.class);
+        if (StringUtils.isBlank(entityReader.getEntity()) || entityReader.getFields() == null || entityReader.getFields().isEmpty()) {
+            throw new RuntimeException("entityName or fields is empty");
+        }
+        StringBuffer entity = new StringBuffer();
+        entity.append("{\"").append(entityReader.getEntity()).append("\":{");
+        // 构建查询字段，@fs
+        List<String> fields = new ArrayList<>();
+        for (EntityField field : entityReader.getFields()) {
+            StringBuffer sb = new StringBuffer();
+            if (StringUtils.isBlank(field.getName())) {
+                continue;
+            }
+            sb.append(field.getName());
+            if (StringUtils.isNotBlank(field.getAlias())) {
+                sb.append(" ").append(field.getAlias());
+            }
+            fields.add(sb.toString());
+        }
+        entity.append("\"@fs\":\"").append(StringUtils.join(fields, ",")).append("\",");
+        // 构建查询排序，@order
+        if (entityReader.getOrder() != null && entityReader.getOrder().size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            for (EntityOrder order : entityReader.getOrder()) {
+                if (StringUtils.isBlank(order.getField()) || StringUtils.isBlank(order.getOrder())) {
+                    continue;
+                }
+                sb.append(order.getField()).append("|").append(order.getOrder()).append(",");
+            }
+            entity.append("\"@order\":\"").append(sb.deleteCharAt(sb.length() - 1)).append("\",");
+        }
+        // 构建分页查询，@p
+        if (entityReader.getPageSize() != null && entityReader.getPageSize().intValue() > 0) {
+            entity.append("\"@p\":\"").append("1").append(",").append(entityReader.getPageSize()).append("\",");
+        }
+        // 构建查询条件，@q
+        if (entityReader.getParams() != null && entityReader.getParams().size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            for (EntityParams param : entityReader.getParams()) {
+                if (StringUtils.isBlank(param.getTitle()) || StringUtils.isBlank(param.getCop()) || StringUtils.isBlank(param.getValueExpression())) {
+                    continue;
+                }
+                entity.append("\"").append(param.getTitle()).append("|").append(param.getCop()).append("\":\"").append(param.getValueExpression()).append("\",");
+            }
+        }
+        entity.deleteCharAt(entity.length() - 1);
+        entity.append("}}");
+        return ruleService.queryForMapList(entity.toString(), true);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

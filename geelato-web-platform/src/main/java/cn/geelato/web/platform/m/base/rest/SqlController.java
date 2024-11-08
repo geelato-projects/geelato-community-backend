@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.script.db.DbScriptManager;
 import cn.geelato.core.script.db.DbScriptManagerFactory;
@@ -153,13 +153,13 @@ public class SqlController extends BaseController {
             // 应用下sql
             Map<String, Object> params = new HashMap<>();
             params.put("appId", appId);
-            params.put("tenantCode", Ctx.getCurrentTenantCode());
+            params.put("tenantCode", SessionCtx.getCurrentTenantCode());
             List<CustomSql> sqlList = sqlService.queryModel(CLAZZ, params);
             customSqls.addAll(sqlList);
             // 其他应用授权sql
             Map<String, Object> appParams = new HashMap<>();
             appParams.put("appId", appId);
-            appParams.put("tenantCode", Ctx.getCurrentTenantCode());
+            appParams.put("tenantCode", SessionCtx.getCurrentTenantCode());
             appParams.put("enableStatus", ColumnDefault.ENABLE_STATUS_VALUE);
             appParams.put("approvalStatus", ApprovalStatusEnum.AGREE.getValue());
             List<AppSqlMap> appSqlMaps = appSqlMapService.queryModel(AppSqlMap.class, appParams);

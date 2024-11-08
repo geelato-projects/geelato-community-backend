@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.env.entity.User;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
@@ -74,7 +74,7 @@ public class AppController extends BaseController {
     public ApiResult queryByUser(String tenantCode, String userId) {
         try {
             if (Strings.isBlank(userId)) {
-                User user = Ctx.getCurrentUser();
+                User user = SessionCtx.getCurrentUser();
                 userId = user != null ? user.getUserId() : "";
             }
             if (Strings.isBlank(tenantCode) || Strings.isBlank(userId)) {

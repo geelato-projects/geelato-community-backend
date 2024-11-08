@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.excel.service;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
@@ -134,7 +134,7 @@ public class ExportExcelService {
 
     public ApiResult exportExcelByColumnMeta(String appId, String fileName, List<Map> valueMapList, Map valueMap, List<ExportColumn> exportColumns, List<PlaceholderMeta> placeholderMetas, String markText, String markKey, boolean readonly) {
         try {
-            String tenantCode = Ctx.getCurrentTenantCode();
+            String tenantCode = SessionCtx.getCurrentTenantCode();
             // 水印
             WordWaterMarkMeta markMeta = setWaterMark(markText, markKey);
             // 实体文件名称

@@ -4,8 +4,8 @@ import com.alibaba.fastjson2.JSONArray;
 import org.apache.commons.collections.map.HashedMap;
 import cn.geelato.core.gql.TypeConverter;
 import cn.geelato.core.gql.execute.BoundSql;
-import cn.geelato.core.gql.parser.BaseCommand;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.command.BaseCommand;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
@@ -21,8 +21,7 @@ import java.util.*;
 public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     protected  Boolean LogicDelete=true;  //是否开启软删除
     protected  Boolean PermissionControl=true;
-    private static final Logger logger = LoggerFactory.getLogger(MetaBaseSqlProvider.class);
-    protected static final Map<String, Boolean> keywordsMap = new HashedMap();
+    protected static final HashedMap keywordsMap = new HashedMap();
     protected static final Map<FilterGroup.Operator, String> enumToSignString = new HashMap<FilterGroup.Operator, String>();
     protected MetaManager metaManager = MetaManager.singleInstance();
 
@@ -101,7 +100,6 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     /**
      * 构建一条语句，如insert、save、select、delete语句，在子类中实现
      *
-     * @param command
      * @return 带参数（?）或无参数的完整sql语句
      */
     protected abstract String buildOneSql(E command);
@@ -118,38 +116,28 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         }
         List<Object> list = new ArrayList<>();
         for (FilterGroup.Filter filter : command.getWhere().getFilters()) {
-            // 若为in操作，则需将in内的内容拆分成多个，相应地在构建参数占位符的地方也做相应的处理
-            if (filter.getOperator().equals(FilterGroup.Operator.in)||filter.getOperator().equals(FilterGroup.Operator.notin)) {
-                Object[] ary = filter.getValueAsArray();
-                list.addAll(Arrays.asList(ary));
-            } else if (filter.getOperator().equals(FilterGroup.Operator.nil)||filter.getOperator().equals(FilterGroup.Operator.bt)) {
-                //not do anything
-            }else {
-                if(!getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType().equals("JSON")) {
-                    list.add(filter.getValue());
-                }
-            }
+            recombine(filter,list,command);
         }
-
         List<Object> newList =recursionFilterGroup(command.getWhere().getChildFilterGroup() ,command,list);
-
         return newList.toArray();
+    }
+
+    private void recombine(FilterGroup.Filter filter,List<Object> list,E command) {
+        // 若为in操作，则需将in内的内容拆分成多个，相应地在构建参数占位符的地方也做相应的处理
+        if (filter.getOperator().equals(FilterGroup.Operator.in)||filter.getOperator().equals(FilterGroup.Operator.notin)) {
+            Object[] ary = filter.getValueAsArray();
+            list.addAll(Arrays.asList(ary));
+        } else if (filter.getOperator().equals(FilterGroup.Operator.nil)||filter.getOperator().equals(FilterGroup.Operator.bt)) {
+            //not do anything
+        }else {
+            list.add(filter.getValue());
+        }
     }
 
     private List<Object> recursionFilterGroup(List<FilterGroup> childFilterGroup, E command, List<Object> list) {
         for (FilterGroup filterGroup :childFilterGroup) {
             for (FilterGroup.Filter filter : filterGroup.getFilters()) {
-                // 若为in操作，则需将in内的内容拆分成多个，相应地在构建参数占位符的地方也做相应的处理
-                if (filter.getOperator().equals(FilterGroup.Operator.in)||filter.getOperator().equals(FilterGroup.Operator.notin)) {
-                    Object[] ary = filter.getValueAsArray();
-                    list.addAll(Arrays.asList(ary));
-                } else if (filter.getOperator().equals(FilterGroup.Operator.nil)||filter.getOperator().equals(FilterGroup.Operator.bt)) {
-                    //not do anything
-                }else {
-                    if(!getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType().equals("JSON")) {
-                        list.add(filter.getValue());
-                    }
-                }
+                recombine(filter, list, command);
             }
             if(!filterGroup.getChildFilterGroup().isEmpty())
                 recursionFilterGroup(filterGroup.getChildFilterGroup(),command,list);
@@ -172,8 +160,10 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         int[] types = new int[command.getWhere().getFilters().size()];
         int i = 0;
         for (FilterGroup.Filter filter : command.getWhere().getFilters()) {
-            types[i] = TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumn().getDataType());
-            i++;
+            if(filter.getFilterFieldType()!= FilterGroup.FilterFieldType.Function) {
+                types[i] = TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumn().getDataType());
+                i++;
+            }
         }
         return types;
     }
@@ -245,53 +235,109 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
      *
      */
     protected void buildConditionSegment(StringBuilder sb, EntityMeta em, FilterGroup.Filter filter) {
-        FieldMeta fm = em.getFieldMeta(filter.getField());
-        FilterGroup.Operator operator = filter.getOperator();
-        if (operator == FilterGroup.Operator.eq || operator == FilterGroup.Operator.neq || operator == FilterGroup.Operator.lt || operator == FilterGroup.Operator.lte || operator == FilterGroup.Operator.gt || operator == FilterGroup.Operator.gte) {
-            if(fm.getColumn().getDataType().equals("JSON")){
-                sb.append( String.format(" JSON_CONTAINS( %s->'$','%s') >0",fm.getColumnName(),"\""+filter.getValue()+"\""));
-            }else {
-                tryAppendKeywords(em, sb, fm);
+        if(filter.getFilterFieldType()== FilterGroup.FilterFieldType.Function){
+            FilterGroup.Operator operator = filter.getOperator();
+            String fm=filter.getField();
+            if (operator == FilterGroup.Operator.eq
+                    || operator == FilterGroup.Operator.neq
+                    || operator == FilterGroup.Operator.lt
+                    || operator == FilterGroup.Operator.lte
+                    || operator == FilterGroup.Operator.gt
+                    || operator == FilterGroup.Operator.gte) {
+                tryAppendKeywords(sb, fm);
                 sb.append(enumToSignString.get(operator));
                 sb.append("?");
+
+            } else if (operator == FilterGroup.Operator.startWith) {
+                tryAppendKeywords( sb, fm);
+                sb.append(" like CONCAT('',?,'%')");
+            } else if (operator == FilterGroup.Operator.endWith) {
+                tryAppendKeywords( sb, fm);
+                sb.append(" like CONCAT('%',?,'')");
+            } else if (operator == FilterGroup.Operator.contains) {
+                tryAppendKeywords(sb, fm);
+                sb.append(" like CONCAT('%',?,'%')");
+            } else if (operator == FilterGroup.Operator.in) {
+                tryAppendKeywords( sb, fm);
+                Object[] ary = filter.getValueAsArray();
+                sb.append(" in(");
+                sb.append(cn.geelato.utils.StringUtils.join(ary.length, "?", ","));
+                sb.append(")");
+            } else if (operator == FilterGroup.Operator.notin) {
+                tryAppendKeywords( sb, fm);
+                Object[] ary = filter.getValueAsArray();
+                sb.append(" not in(");
+                sb.append(cn.geelato.utils.StringUtils.join(ary.length, "?", ","));
+                sb.append(")");
+            } else if (operator == FilterGroup.Operator.nil) {
+                tryAppendKeywords(sb, fm);
+                if (filter.getValue().equals("1")) {
+                    sb.append(" is NULL");
+                } else {
+                    sb.append(" is NOT NULL");
+                }
+            } else if (operator == FilterGroup.Operator.bt) {
+                tryAppendKeywords( sb, fm);
+                JSONArray ja = JSONArray.parse(filter.getValue());
+                String startTime = ja.get(0).toString();
+                String endTime = ja.get(1).toString();
+                sb.append(String.format("  between '%s' and '%s' ", startTime, endTime));
+            } else {
+                throw new RuntimeException("未实现Operator：" + operator);
             }
-        } else if (operator == FilterGroup.Operator.startWith) {
-            tryAppendKeywords(em, sb, fm);
-            sb.append(" like CONCAT('',?,'%')");
-        } else if (operator == FilterGroup.Operator.endWith) {
-            tryAppendKeywords(em, sb, fm);
-            sb.append(" like CONCAT('%',?,'')");
-        } else if (operator == FilterGroup.Operator.contains) {
-            tryAppendKeywords(em, sb, fm);
-            sb.append(" like CONCAT('%',?,'%')");
-        } else if (operator == FilterGroup.Operator.in) {
-            tryAppendKeywords(em, sb, fm);
-            Object[] ary = filter.getValueAsArray();
-            sb.append(" in(");
-            sb.append(cn.geelato.utils.StringUtils.join(ary.length, "?", ","));
-            sb.append(")");
-        }else if (operator == FilterGroup.Operator.notin) {
-            tryAppendKeywords(em, sb, fm);
-            Object[] ary = filter.getValueAsArray();
-            sb.append(" not in(");
-            sb.append(cn.geelato.utils.StringUtils.join(ary.length, "?", ","));
-            sb.append(")");
-        }else if(operator==FilterGroup.Operator.nil){
-            tryAppendKeywords(em, sb, fm);
-            if(filter.getValue().equals("1")){
-                sb.append(" is NULL");
-            }else{
-                sb.append(" is NOT NULL");
+        }else {
+            FieldMeta fm = em.getFieldMeta(filter.getField());
+            FilterGroup.Operator operator = filter.getOperator();
+            if (operator == FilterGroup.Operator.eq
+                    || operator == FilterGroup.Operator.neq
+                    || operator == FilterGroup.Operator.lt
+                    || operator == FilterGroup.Operator.lte
+                    || operator == FilterGroup.Operator.gt
+                    || operator == FilterGroup.Operator.gte) {
+                if (fm.getColumn().getDataType().equals("JSON")) {
+                    sb.append(String.format(" JSON_CONTAINS( %s->'$','%s') >0", fm.getColumnName(), "\"" + filter.getValue() + "\""));
+                } else {
+                    tryAppendKeywords(em, sb, fm);
+                    sb.append(enumToSignString.get(operator));
+                    sb.append("?");
+                }
+            } else if (operator == FilterGroup.Operator.startWith) {
+                tryAppendKeywords(em, sb, fm);
+                sb.append(" like CONCAT('',?,'%')");
+            } else if (operator == FilterGroup.Operator.endWith) {
+                tryAppendKeywords(em, sb, fm);
+                sb.append(" like CONCAT('%',?,'')");
+            } else if (operator == FilterGroup.Operator.contains) {
+                tryAppendKeywords(em, sb, fm);
+                sb.append(" like CONCAT('%',?,'%')");
+            } else if (operator == FilterGroup.Operator.in) {
+                tryAppendKeywords(em, sb, fm);
+                Object[] ary = filter.getValueAsArray();
+                sb.append(" in(");
+                sb.append(cn.geelato.utils.StringUtils.join(ary.length, "?", ","));
+                sb.append(")");
+            } else if (operator == FilterGroup.Operator.notin) {
+                tryAppendKeywords(em, sb, fm);
+                Object[] ary = filter.getValueAsArray();
+                sb.append(" not in(");
+                sb.append(cn.geelato.utils.StringUtils.join(ary.length, "?", ","));
+                sb.append(")");
+            } else if (operator == FilterGroup.Operator.nil) {
+                tryAppendKeywords(em, sb, fm);
+                if (filter.getValue().equals("1")) {
+                    sb.append(" is NULL");
+                } else {
+                    sb.append(" is NOT NULL");
+                }
+            } else if (operator == FilterGroup.Operator.bt) {
+                tryAppendKeywords(em, sb, fm);
+                JSONArray ja = JSONArray.parse(filter.getValue());
+                String startTime = ja.get(0).toString();
+                String endTime = ja.get(1).toString();
+                sb.append(String.format("  between '%s' and '%s' ", startTime, endTime));
+            } else {
+                throw new RuntimeException("未实现Operator：" + operator);
             }
-        }else if(operator==FilterGroup.Operator.bt) {
-            tryAppendKeywords(em, sb, fm);
-            JSONArray ja = JSONArray.parse(filter.getValue());
-            String startTime = ja.get(0).toString();
-            String endTime = ja.get(1).toString();
-            sb.append(String.format("  between '%s' and '%s' ", startTime, endTime));
-        }
-        else {
-            throw new RuntimeException("未实现Operator：" + operator);
         }
     }
 
@@ -307,7 +353,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         this.tryAppendKeywords(sb, fm.getColumnName());
     }
 
-    protected StringBuilder tryAppendKeywords(StringBuilder sb, String field) {
+    protected void tryAppendKeywords(StringBuilder sb, String field) {
         if (isKeywords(field)) {
             sb.append("'");
             sb.append(field);
@@ -315,7 +361,6 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         } else {
             sb.append(field);
         }
-        return sb;
     }
 
     public EntityMeta getEntityMeta(E command) {

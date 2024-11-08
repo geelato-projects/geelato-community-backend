@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.syspackage.rest;
 
 import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;

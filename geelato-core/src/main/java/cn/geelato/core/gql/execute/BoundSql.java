@@ -1,6 +1,6 @@
 package cn.geelato.core.gql.execute;
 
-import cn.geelato.core.gql.parser.BaseCommand;
+import cn.geelato.core.gql.command.BaseCommand;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,13 +11,13 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@SuppressWarnings("rawtypes")
 public class BoundSql {
     private String name;
     private String sql;
     private Object[] params;
     private int[] types;
     private Map<String, BoundSql> boundSqlMap;
-    // 对应解析的command，通过该command，可以获取对应的实体信息
     private BaseCommand command;
 
     @Override

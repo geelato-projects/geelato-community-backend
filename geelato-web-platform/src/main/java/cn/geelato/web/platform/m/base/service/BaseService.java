@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.orm.Dao;
@@ -91,11 +91,6 @@ public class BaseService {
     /**
      * 分页查询
      *
-     * @param entity
-     * @param filter
-     * @param request
-     * @param <T>
-     * @return
      */
     public <T> ApiPagedResult pageQueryModel(Class<T> entity, FilterGroup filter, PageQueryRequest request) {
         ApiPagedResult result = new ApiPagedResult();
@@ -103,7 +98,6 @@ public class BaseService {
         dao.setDefaultFilter(true, filterGroup);
         String orderBy = Strings.isNotBlank(request.getOrderBy()) ? request.getOrderBy() : BaseService.DEFAULT_ORDER_BY;
         request.setOrderBy(orderBy);
-        // dao查询
         List<T> pageQueryList = dao.pageQueryList(entity, filter, request);
         List<T> queryList = dao.queryList(entity, filter, orderBy);
         // 分页结果
@@ -111,7 +105,7 @@ public class BaseService {
         result.setSize(request.getPageSize());
         result.setTotal(queryList != null ? queryList.size() : 0);
         result.setDataSize(pageQueryList != null ? pageQueryList.size() : 0);
-        result.setData(new DataItems(pageQueryList, result.getTotal()));
+        result.setData(new DataItems<>(pageQueryList, result.getTotal()));
 
         return result;
     }
@@ -325,7 +319,7 @@ public class BaseService {
      * @return 当前会话信息
      */
     protected String getSessionTenantCode() {
-        return Ctx.getCurrentTenantCode();
+        return SessionCtx.getCurrentTenantCode();
     }
 
     /**

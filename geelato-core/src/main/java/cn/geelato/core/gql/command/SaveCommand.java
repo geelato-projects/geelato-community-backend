@@ -1,4 +1,4 @@
-package cn.geelato.core.gql.parser;
+package cn.geelato.core.gql.command;
 
 import lombok.Getter;
 import lombok.Setter;

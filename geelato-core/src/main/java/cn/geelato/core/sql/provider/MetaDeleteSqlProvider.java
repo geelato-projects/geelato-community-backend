@@ -1,12 +1,10 @@
 package cn.geelato.core.sql.provider;
 
 import cn.geelato.core.gql.TypeConverter;
-import cn.geelato.core.gql.parser.DeleteCommand;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.command.DeleteCommand;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 

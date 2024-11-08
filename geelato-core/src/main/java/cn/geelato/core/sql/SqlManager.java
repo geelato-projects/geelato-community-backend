@@ -1,16 +1,16 @@
 package cn.geelato.core.sql;
 
 import cn.geelato.core.AbstractManager;
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
+import cn.geelato.core.gql.command.*;
 import cn.geelato.core.gql.execute.BoundPageSql;
 import cn.geelato.core.gql.execute.BoundSql;
-import cn.geelato.core.gql.parser.*;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.sql.provider.*;
 import cn.geelato.utils.DateUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 import java.text.SimpleDateFormat;
@@ -23,6 +23,7 @@ import java.util.*;
  * @author geemeta
  */
 @Slf4j
+@SuppressWarnings("rawtypes")
 public class SqlManager extends AbstractManager {
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
     private static SqlManager instance;
@@ -173,7 +174,7 @@ public class SqlManager extends AbstractManager {
         DeleteCommand deleteCommand = new DeleteCommand();
         EntityMeta em = metaManager.getByEntityName(entityName);
         deleteCommand.setEntityName(em.getEntityName());
-        Ctx ctx = new Ctx();
+        SessionCtx sessionCtx = new SessionCtx();
         Map<String, Object> params = new HashMap<>();
         String newDataString = simpleDateFormat.format(new Date());
         if (validator.hasKeyField("delStatus")) {
@@ -186,10 +187,10 @@ public class SqlManager extends AbstractManager {
             params.put("updateAt", newDataString);
         }
         if (validator.hasKeyField("updater")) {
-            params.put("updater", ctx.get("userId"));
+            params.put("updater", SessionCtx.getCurrentUser().getUserId());
         }
         if (validator.hasKeyField("updaterName")) {
-            params.put("updaterName", ctx.get("userName"));
+            params.put("updaterName", SessionCtx.getCurrentUser().getUserName());
         }
         String[] updateFields = new String[params.keySet().size()];
         params.keySet().toArray(updateFields);

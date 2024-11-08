@@ -1,7 +1,7 @@
 package cn.geelato.core.env.entity;
 
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -40,10 +40,10 @@ public class Permission {
     }
 
     public String getRuleReplaceVariable(){
-       return  this.rule.replace("#currentUser.userId#", String.format("'%s'",Ctx.getCurrentUser().getUserId()))
-               .replace("#currentUser.deptId#",String.format("'%s'",Ctx.getCurrentUser().getDefaultOrgId()))
-               .replace("#currentUser.buId#",String.format("'%s'",Ctx.getCurrentUser().getBuId()))
-               .replace("#currentUser.cooperatingOrgId#",String.format("'%s'",Ctx.getCurrentUser().getCooperatingOrgId()));
+       return  this.rule.replace("#currentUser.userId#", String.format("'%s'", SessionCtx.getCurrentUser().getUserId()))
+               .replace("#currentUser.deptId#",String.format("'%s'", SessionCtx.getCurrentUser().getDefaultOrgId()))
+               .replace("#currentUser.buId#",String.format("'%s'", SessionCtx.getCurrentUser().getBuId()))
+               .replace("#currentUser.cooperatingOrgId#",String.format("'%s'", SessionCtx.getCurrentUser().getCooperatingOrgId()));
     }
 
 }

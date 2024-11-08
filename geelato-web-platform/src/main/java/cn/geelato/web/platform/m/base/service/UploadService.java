@@ -1,9 +1,8 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.FileUtils;
-import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.base.entity.Attach;
@@ -72,7 +71,7 @@ public class UploadService {
      */
     public static String getSavePath(String subPath, String tenantCode, String appId, String fileName, boolean isRename) {
         String rootPath = subPath;
-        tenantCode = Strings.isNotBlank(tenantCode) ? tenantCode : Ctx.getCurrentTenantCode();
+        tenantCode = Strings.isNotBlank(tenantCode) ? tenantCode : SessionCtx.getCurrentTenantCode();
         if (Strings.isNotBlank(appId) && Strings.isNotBlank(tenantCode)) {
             rootPath = String.format("%s/%s/%s", subPath, tenantCode, appId);
         }

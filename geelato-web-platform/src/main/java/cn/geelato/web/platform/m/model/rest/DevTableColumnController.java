@@ -2,12 +2,12 @@ package cn.geelato.web.platform.m.model.rest;
 
 import cn.geelato.core.enums.ColumnSyncedEnum;
 import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.TableMeta;
-import cn.geelato.core.meta.model.field.ColumnMeta;
-import cn.geelato.core.meta.model.field.ColumnSelectType;
+import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnSelectType;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;

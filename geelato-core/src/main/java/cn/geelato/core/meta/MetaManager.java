@@ -11,8 +11,8 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.model.entity.EntityLiteMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
-import cn.geelato.core.meta.model.field.ColumnMeta;
-import cn.geelato.core.meta.model.field.ColumnSelectType;
+import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnSelectType;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.schema.SchemaForeign;
 import cn.geelato.core.meta.schema.SchemaIndex;
@@ -57,18 +57,18 @@ public class MetaManager extends AbstractManager {
 
         parseOne(ColumnMeta.class);
         parseOne(TableMeta.class);
-        // 内置默认的公共字段
-        addCommonFieldMeta("name", "name", "名称");
-        addCommonFieldMeta("type", "type", "类型");
-        addCommonFieldMeta("creator", "creator", "创建者");
-        addCommonFieldMeta("updater", "updater", "更新者");
-        addCommonFieldMeta("create_at", "createAt", "创建日期");
-        addCommonFieldMeta("update_at", "updateAt", "更新日期");
-        addCommonFieldMeta("description", "description", "描述", 1024);
-        addCommonFieldMeta("id", "id", "序号");
-        addCommonFieldMeta("title", "title", "标题");
-        addCommonFieldMeta("password", "password", "密码");
-        addCommonFieldMeta("login_name", "loginName", "登录名");
+//        // 内置默认的公共字段, todo : 似乎无用
+//        addCommonFieldMeta("name", "name", "名称");
+//        addCommonFieldMeta("type", "type", "类型");
+//        addCommonFieldMeta("creator", "creator", "创建者");
+//        addCommonFieldMeta("updater", "updater", "更新者");
+//        addCommonFieldMeta("create_at", "createAt", "创建日期");
+//        addCommonFieldMeta("update_at", "updateAt", "更新日期");
+//        addCommonFieldMeta("description", "description", "描述", 1024);
+//        addCommonFieldMeta("id", "id", "序号");
+//        addCommonFieldMeta("title", "title", "标题");
+//        addCommonFieldMeta("password", "password", "密码");
+//        addCommonFieldMeta("login_name", "loginName", "登录名");
     }
 
     public void parseDBMeta(Dao dao) {
@@ -86,7 +86,6 @@ public class MetaManager extends AbstractManager {
     /**
      * 根据需求刷新模型和视图
      *
-     * @param dao
      * @param params appId,connectId,tableId,entityName
      */
     public void parseDBMeta(Dao dao, Map<String, String> params) {
@@ -177,10 +176,10 @@ public class MetaManager extends AbstractManager {
      * @param fieldName  字段名
      * @param title      字段显示名，如中文名
      */
-    public void addCommonFieldMeta(String columnName, String fieldName, String title) {
-        FieldMeta fieldMeta = new FieldMeta(columnName, fieldName, title);
-        commonFieldMetas.put(fieldName, fieldMeta);
-    }
+//    public void addCommonFieldMeta(String columnName, String fieldName, String title) {
+//        FieldMeta fieldMeta = new FieldMeta(columnName, fieldName, title);
+//        commonFieldMetas.put(fieldName, fieldMeta);
+//    }
 
     /**
      * 添加公共字段
@@ -190,18 +189,18 @@ public class MetaManager extends AbstractManager {
      * @param title         字段显示名，如中文名
      * @param charMaxLength 字符长
      */
-    public void addCommonFieldMeta(String columnName, String fieldName, String title, int charMaxLength) {
-        FieldMeta fieldMeta = new FieldMeta(columnName, fieldName, title);
-        fieldMeta.getColumn().setCharMaxLength(charMaxLength);
-        commonFieldMetas.put(fieldName, fieldMeta);
-    }
+//    public void addCommonFieldMeta(String columnName, String fieldName, String title, int charMaxLength) {
+//        FieldMeta fieldMeta = new FieldMeta(columnName, fieldName, title);
+//        fieldMeta.getColumn().setCharMaxLength(charMaxLength);
+//        commonFieldMetas.put(fieldName, fieldMeta);
+//    }
 
     /**
      *
      */
-    public FieldMeta getCommonFieldMeta(String columnName) {
-        return commonFieldMetas.get(columnName);
-    }
+//    public FieldMeta getCommonFieldMeta(String columnName) {
+//        return commonFieldMetas.get(columnName);
+//    }
 
 
     public EntityMeta get(Class clazz) {

@@ -1,6 +1,5 @@
 package cn.geelato.core;
 
-import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.env.entity.User;
 
 import java.util.HashMap;
@@ -11,19 +10,25 @@ import java.util.HashMap;
  * @author geemeta
  *
  */
-public class Ctx extends HashMap<String, String> {
+public class SessionCtx extends HashMap<String,String> {
 
     private static final ThreadLocal<User> threadLocalUser = new ThreadLocal<>();
 
     private static final ThreadLocal<String> threadLocalTenantCode = new ThreadLocal<>();
 
-    public Ctx(){
+    public SessionCtx(){
         this.put("userId",getCurrentUser().getUserId());
         this.put("userName",getCurrentUser().getUserName());
         this.put("defaultOrgId",getCurrentUser().getDefaultOrgId());
         this.put("tenantCode",getCurrentTenantCode());
     }
 
+    public static String getUserId(){
+        return getCurrentUser().getUserId();
+    }
+    public static String getUserName(){
+        return getCurrentUser().getUserName();
+    }
     public static void setCurrentUser(User user){
         threadLocalUser.set(user);
     }
@@ -39,4 +44,5 @@ public class Ctx extends HashMap<String, String> {
     public static String getCurrentTenantCode() {
         return threadLocalTenantCode.get();
     }
+
 }

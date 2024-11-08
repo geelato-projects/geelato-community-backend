@@ -1,4 +1,4 @@
-package cn.geelato.core.meta.model.field;
+package cn.geelato.core.meta.model.column;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -21,9 +21,6 @@ public class DataTypeRadius {
     private Integer unDigit;
     // 数值：小数位。
     private Integer precision;
-
-    public DataTypeRadius() {
-    }
 
     public DataTypeRadius(Long max, Long min, Integer digit, Integer unDigit, Integer precision) {
         this.max = max;

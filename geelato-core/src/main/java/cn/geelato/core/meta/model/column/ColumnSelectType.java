@@ -1,4 +1,4 @@
-package cn.geelato.core.meta.model.field;
+package cn.geelato.core.meta.model.column;
 
 import lombok.Getter;
 import lombok.Setter;

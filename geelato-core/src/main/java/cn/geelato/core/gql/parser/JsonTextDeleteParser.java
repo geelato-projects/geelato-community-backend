@@ -1,16 +1,16 @@
 package cn.geelato.core.gql.parser;
 
-import cn.geelato.core.Ctx;
-import cn.geelato.utils.DateUtils;
+import cn.geelato.core.SessionCtx;
+import cn.geelato.core.gql.command.CommandType;
+import cn.geelato.core.gql.command.CommandValidator;
+import cn.geelato.core.gql.command.DeleteCommand;
+import cn.geelato.core.gql.filter.FilterGroup;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,44 +27,31 @@ public class JsonTextDeleteParser extends JsonTextParser {
     private final static String FILTER_FLAG = "\\|";
     private final static String SUB_ENTITY_FLAG = "~";
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
 
-    public DeleteCommand parse(String jsonText, Ctx ctx) {
+
+    public DeleteCommand parse(String jsonText, SessionCtx sessionCtx) {
         JSONObject jo = JSON.parseObject(jsonText);
         CommandValidator validator = new CommandValidator();
         // TODO biz怎么用起来
         String biz = jo.getString(KW_BIZ);
         jo.remove(KW_BIZ);
         String key = jo.keySet().iterator().next();
-        return parse(ctx, key, jo.getJSONObject(key), validator);
+        return parse(sessionCtx, key, jo.getJSONObject(key), validator);
     }
 
-    private DeleteCommand parse(Ctx ctx, String commandName, JSONObject jo, CommandValidator validator) {
+    private DeleteCommand parse(SessionCtx sessionCtx, String commandName, JSONObject jo, CommandValidator validator) {
 
         Assert.isTrue(validator.validateEntity(commandName), validator.getMessage());
 
         DeleteCommand command = new DeleteCommand();
         command.setEntityName(commandName);
-        String newDataString = simpleDateFormat.format(new Date());
+
         FilterGroup fg = new FilterGroup();
         command.setWhere(fg);
         command.setCommandType(CommandType.Delete);
         Map<String, Object> params = new HashMap<>();
-        if (validator.hasKeyField("delStatus")) {
-            params.put("delStatus", 1);
-        }
-        if (validator.hasKeyField("deleteAt")) {
-            params.put("deleteAt", newDataString);
-        }
-        if (validator.hasKeyField("updateAt")) {
-            params.put("updateAt", newDataString);
-        }
-        if (validator.hasKeyField("updater")) {
-            params.put("updater", ctx.get("userId"));
-        }
-        if (validator.hasKeyField("updaterName")) {
-            params.put("updaterName", ctx.get("userName"));
-        }
+        putDeleteDefaultField(sessionCtx,params,validator);
+
         String[] updateFields = new String[params.keySet().size()];
         params.keySet().toArray(updateFields);
         command.setFields(updateFields);
@@ -74,7 +61,7 @@ public class JsonTextDeleteParser extends JsonTextParser {
 
             } else if (key.startsWith(SUB_ENTITY_FLAG)) {
                 // 解析子实体
-                command.getCommands().add(parse(ctx, key.substring(1), jo.getJSONObject(key), validator));
+                command.getCommands().add(parse(sessionCtx, key.substring(1), jo.getJSONObject(key), validator));
             } else {
                 parseWhere(fg, key, jo, validator);
             }
@@ -83,6 +70,19 @@ public class JsonTextDeleteParser extends JsonTextParser {
         Assert.isTrue(validator.isSuccess(), validator.getMessage());
         return command;
     }
+
+    private void putDeleteDefaultField(SessionCtx sessionCtx, Map<String, Object> params, CommandValidator validator) {
+        String newDataString = simpleDateFormat.format(new Date());
+        if (validator.hasKeyField("delStatus")) {
+            params.put("delStatus", 1);
+        }
+        if (validator.hasKeyField("deleteAt")) {
+            params.put("deleteAt", newDataString);
+        }
+        putBaseDefaultField(sessionCtx,params,validator);
+    }
+
+
 
 
     protected void parseWhere(FilterGroup fg, String key, JSONObject jo, CommandValidator validator) {
@@ -95,19 +95,13 @@ public class JsonTextDeleteParser extends JsonTextParser {
         } else if (ary.length == 2) {
             String fn = ary[1];
             if (!FilterGroup.Operator.contains(fn)) {
-                validator.appendMessage("[");
-                validator.appendMessage(key);
-                validator.appendMessage("]");
-                validator.appendMessage("不支持");
-                validator.appendMessage(fn);
-                validator.appendMessage(";只支持");
-                validator.appendMessage(FilterGroup.Operator.getOperatorStrings());
+                validator.appendMessage(String.format("[%s]不支持%s,只支持%s",key,fn,FilterGroup.Operator.getOperatorStrings()));
             } else {
                 FilterGroup.Operator operator = FilterGroup.Operator.fromString(fn);
                 fg.addFilter(field, operator, jo.getString(key));
             }
         } else {
-            // TODO 格式不对 throw
+            throw new JsonParseException();
         }
     }
 }

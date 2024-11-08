@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m;
 
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.m.base.service.RuleService;

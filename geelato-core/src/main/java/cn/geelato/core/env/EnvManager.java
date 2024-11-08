@@ -2,15 +2,13 @@ package cn.geelato.core.env;
 
 
 import cn.geelato.core.AbstractManager;
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.env.entity.Permission;
 import cn.geelato.core.env.entity.SysConfig;
 import cn.geelato.core.env.entity.User;
 import cn.geelato.core.env.entity.UserMenu;
-import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.orm.Dao;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
 import java.util.ArrayList;
@@ -109,8 +107,8 @@ public class EnvManager  extends AbstractManager {
         dbUser.setMenus(StructUserMenu(dbUser.getUserId()));
         dbUser.setDataPermissions(StructDataPermission(dbUser.getUserId()));
         dbUser.setElementPermissions(StructElementPermission(dbUser.getUserId()));
-        Ctx.setCurrentUser(dbUser);
-        Ctx.setCurrentTenant("geelato");
+        SessionCtx.setCurrentUser(dbUser);
+        SessionCtx.setCurrentTenant("geelato");
         return dbUser;
     }
 

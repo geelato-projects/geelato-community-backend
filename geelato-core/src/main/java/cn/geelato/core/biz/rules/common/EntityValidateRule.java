@@ -1,7 +1,6 @@
 package cn.geelato.core.biz.rules.common;
 
-import cn.geelato.core.gql.parser.DeleteCommand;
-import cn.geelato.core.gql.parser.SaveCommand;
+
 import org.jeasy.rules.api.Facts;
 import org.jeasy.rules.core.BasicRule;
 
@@ -16,15 +15,6 @@ public class EntityValidateRule extends BasicRule {
 
     @Override
     public boolean evaluate(Facts facts) {
-        SaveCommand saveCommand = (SaveCommand) facts.get("saveCommand");
-        if (saveCommand != null) {
-            saveCommand.getEntityName();
-        } else {
-            DeleteCommand deleteCommand = (DeleteCommand) facts.get("deleteCommand");
-            if (deleteCommand != null) {
-                deleteCommand.getEntityName();
-            }
-        }
         return true;
     }
 

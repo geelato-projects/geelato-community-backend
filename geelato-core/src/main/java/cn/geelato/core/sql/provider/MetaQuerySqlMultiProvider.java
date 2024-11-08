@@ -2,11 +2,11 @@ package cn.geelato.core.sql.provider;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.gql.parser.FilterGroup;
-import cn.geelato.core.gql.parser.QueryCommand;
+import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
-import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;

@@ -1,11 +1,11 @@
 package cn.geelato.web.platform.m.base.rest;
 
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.enums.TableSourceTypeEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
@@ -63,7 +63,7 @@ public class MetaDdlController extends BaseController {
     public ApiMetaResult recreates(@PathVariable("appId") String appId) {
         ApiMetaResult result = new ApiMetaResult();
         Map<String, Object> tableResult = new LinkedHashMap<>();
-        String tenantCode = Ctx.getCurrentTenantCode();
+        String tenantCode = SessionCtx.getCurrentTenantCode();
         String errorModel = "";
         try {
             if (Strings.isNotBlank(appId)) {
@@ -114,7 +114,7 @@ public class MetaDdlController extends BaseController {
     public ApiMetaResult reViewCreates(@PathVariable("appId") String appId) {
         ApiMetaResult result = new ApiMetaResult();
         Map<String, Object> tableResult = new LinkedHashMap<>();
-        String tenantCode = Ctx.getCurrentTenantCode();
+        String tenantCode = SessionCtx.getCurrentTenantCode();
         String errorModel = "";
         try {
             if (Strings.isNotBlank(appId)) {
@@ -269,7 +269,7 @@ public class MetaDdlController extends BaseController {
             table.put("entity_name", params.get("entityName"));
             table.put("connect_id", params.get("connectId"));
             table.put("app_id", params.get("appId"));
-            table.put("tenant_code", Strings.isNotBlank(params.get("tenantCode")) ? params.get("tenantCode") : Ctx.getCurrentTenantCode());
+            table.put("tenant_code", Strings.isNotBlank(params.get("tenantCode")) ? params.get("tenantCode") : SessionCtx.getCurrentTenantCode());
             MetaManager.singleInstance().parseDBMeta(dao, table);
         } catch (Exception ex) {
             logger.error(ex.getMessage());

@@ -11,6 +11,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * 外键
  * Created by liuwq on 2020/3/19.
  */
+@SuppressWarnings("ALL")
 @Target({METHOD, FIELD})
 @Retention(RUNTIME)
 @Documented

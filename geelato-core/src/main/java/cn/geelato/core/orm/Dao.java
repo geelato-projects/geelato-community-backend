@@ -1,11 +1,15 @@
 package cn.geelato.core.orm;
 
+import cn.geelato.core.gql.command.QueryCommand;
+import cn.geelato.core.gql.command.QueryViewCommand;
+import cn.geelato.core.gql.command.SaveCommand;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.*;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.aop.annotation.MethodLog;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.core.gql.execute.BoundPageSql;
@@ -14,13 +18,9 @@ import cn.geelato.core.meta.model.CommonRowMapper;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.IdEntity;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionStatus;
 
 import java.util.ArrayList;
@@ -78,7 +78,7 @@ public class Dao extends SqlKeyDao {
         QueryCommand command = (QueryCommand) boundPageSql.getBoundSql().getCommand();
         BoundSql boundSql = boundPageSql.getBoundSql();
         Object[] sqlParams = boundSql.getParams();
-        List<Map<String, Object>> result=null;
+        List<Map<String, Object>> result;
         try {
             List<Map<String, Object>> list = jdbcTemplate.queryForList(boundSql.getSql(), sqlParams);
             result=convert(list, metaManager.getByEntityName(command.getEntityName()));
@@ -323,7 +323,7 @@ public class Dao extends SqlKeyDao {
 
 
     public <E extends IdEntity> Map save(E entity) {
-        BoundSql boundSql = entityManager.generateSaveSql(entity, new Ctx());
+        BoundSql boundSql = entityManager.generateSaveSql(entity, new SessionCtx());
         log.info(boundSql.toString());
         jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
         SaveCommand command = (SaveCommand) boundSql.getCommand();
@@ -348,7 +348,7 @@ public class Dao extends SqlKeyDao {
         }
         BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, orderBy);
         log.info(boundSql.toString());
-        return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<T>());
+        return jdbcTemplate.query(boundSql.getSql(),  new CommonRowMapper<T>(),boundSql.getParams());
     }
 
     /**
@@ -361,15 +361,7 @@ public class Dao extends SqlKeyDao {
      * @return
      */
     public <T> List<T> queryList(Class<T> entityType, Map<String, Object> params, String orderBy) {
-        FilterGroup filterGroup = new FilterGroup();
-        if (params != null && !params.isEmpty()) {
-            for (Map.Entry<String, Object> entry : params.entrySet()) {
-                if (entry.getValue() != null && Strings.isNotBlank(entry.getValue().toString())) {
-                    filterGroup.addFilter(entry.getKey(), entry.getValue().toString());
-                }
-            }
-        }
-
+        FilterGroup filterGroup= generateFilterGroup(params);
         return queryList(entityType, filterGroup, orderBy);
     }
 
@@ -407,6 +399,11 @@ public class Dao extends SqlKeyDao {
      * @return
      */
     public <T> List<T> pageQueryList(Class<T> entityType, Map<String, Object> params, PageQueryRequest request) {
+        FilterGroup filterGroup = generateFilterGroup(params);
+        return pageQueryList(entityType, filterGroup, request);
+    }
+
+    private FilterGroup generateFilterGroup(Map<String, Object> params) {
         FilterGroup filterGroup = new FilterGroup();
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, Object> entry : params.entrySet()) {
@@ -415,8 +412,7 @@ public class Dao extends SqlKeyDao {
                 }
             }
         }
-
-        return pageQueryList(entityType, filterGroup, request);
+        return filterGroup;
     }
 
     @MethodLog(type = "queryListByView")
@@ -437,7 +433,7 @@ public class Dao extends SqlKeyDao {
     }
 
     public int delete(Class entityType, String fieldName, Object value) {
-        FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
+        FilterGroup filterGroup = new FilterGroup().    addFilter(fieldName, value.toString());
         BoundSql boundSql = sqlManager.generateDeleteSql(entityType, filterGroup);
         log.info(boundSql.toString());
         return jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());

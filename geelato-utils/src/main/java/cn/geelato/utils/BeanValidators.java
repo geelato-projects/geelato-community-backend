@@ -16,6 +16,7 @@ import java.util.*;
  * 2. List<String>, String内容为propertyPath + separator + message
  * 3. Map<propertyPath, message>
  */
+@SuppressWarnings("All")
 public class BeanValidators {
 
     /**
@@ -58,7 +59,7 @@ public class BeanValidators {
      * 辅助方法, 转换Set<ConstraintViolation>为Map<property, message>.
      */
     public static Map<String, String> extractPropertyAndMessage(Set<? extends ConstraintViolation> constraintViolations) {
-        Map<String, String> errorMessages = new HashMap();
+        Map<String, String> errorMessages = new HashMap<>();
         for (ConstraintViolation violation : constraintViolations) {
             errorMessages.put(violation.getPropertyPath().toString(), violation.getMessage());
         }

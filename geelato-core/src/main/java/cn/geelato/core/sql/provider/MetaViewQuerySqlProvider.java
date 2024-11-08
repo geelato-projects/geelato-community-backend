@@ -1,15 +1,12 @@
 package cn.geelato.core.sql.provider;
 
 import cn.geelato.core.enums.ViewTypeEnum;
-import cn.geelato.core.gql.parser.FilterGroup;
-import cn.geelato.core.gql.parser.QueryCommand;
-import cn.geelato.core.gql.parser.QueryViewCommand;
+import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.gql.command.QueryViewCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.view.ViewMeta;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 

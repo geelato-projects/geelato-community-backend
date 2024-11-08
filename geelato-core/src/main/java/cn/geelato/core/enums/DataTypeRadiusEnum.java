@@ -1,6 +1,6 @@
 package cn.geelato.core.enums;
 
-import cn.geelato.core.meta.model.field.DataTypeRadius;
+import cn.geelato.core.meta.model.column.DataTypeRadius;
 import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 

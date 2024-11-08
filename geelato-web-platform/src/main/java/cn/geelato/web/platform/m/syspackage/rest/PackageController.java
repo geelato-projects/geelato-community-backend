@@ -1,10 +1,10 @@
 package cn.geelato.web.platform.m.syspackage.rest;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.parser.JsonTextSaveParser;
-import cn.geelato.core.gql.parser.SaveCommand;
+import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
@@ -539,7 +539,7 @@ public class PackageController extends BaseController {
         String appPackageName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String appPackageFullName = (Strings.isNotBlank(appVersion.getVersion()) ? appVersion.getVersion() : appPackageName) + packageSuffix;
         String targetZipPath = packageConfigurationProperties.getPath() + appPackageFullName;
-        targetZipPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), Ctx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
+        targetZipPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), SessionCtx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
         ZipUtils.compressDirectory(sourcePackageFolder, targetZipPath);
         File file = new File(targetZipPath);
         Attach attach = new Attach(file);
@@ -599,7 +599,7 @@ public class PackageController extends BaseController {
                 }
             }
             metaData.put(appMeta.getMetaName(), metaDataArray);
-            List<SaveCommand> saveCommandList = jsonTextSaveParser.parseBatch(JSONObject.toJSONString(metaData), new Ctx());
+            List<SaveCommand> saveCommandList = jsonTextSaveParser.parseBatch(JSONObject.toJSONString(metaData), new SessionCtx());
             for (SaveCommand saveCommand : saveCommandList) {
                 BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
                 String pkValue = dao.save(boundSql);

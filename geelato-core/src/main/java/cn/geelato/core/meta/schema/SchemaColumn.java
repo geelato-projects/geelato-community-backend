@@ -2,7 +2,7 @@ package cn.geelato.core.meta.schema;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.MysqlDataTypeEnum;
-import cn.geelato.core.meta.model.field.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;

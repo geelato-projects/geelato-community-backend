@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.model.service;
 
-import cn.geelato.core.gql.parser.FilterGroup;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.BaseService;

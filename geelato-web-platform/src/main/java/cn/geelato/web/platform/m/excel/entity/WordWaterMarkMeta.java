@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.excel.entity;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.env.entity.User;
 import cn.geelato.utils.DateUtils;
 import lombok.Getter;
@@ -98,18 +98,18 @@ public class WordWaterMarkMeta {
             if ("${TEXT}".equalsIgnoreCase(type)) {
                 return markText;
             } else if ("${TENANTCODE}".equalsIgnoreCase(type)) {
-                return Ctx.getCurrentTenantCode();
+                return SessionCtx.getCurrentTenantCode();
             } else if ("${USERID}".equalsIgnoreCase(type)) {
-                User user = Ctx.getCurrentUser();
+                User user = SessionCtx.getCurrentUser();
                 return user != null ? user.getUserId() : "";
             } else if ("${USERNAME}".equalsIgnoreCase(type)) {
-                User user = Ctx.getCurrentUser();
+                User user = SessionCtx.getCurrentUser();
                 return user != null ? user.getLoginName() : "";
             } else if ("${LOGINNAME}".equalsIgnoreCase(type)) {
-                User user = Ctx.getCurrentUser();
+                User user = SessionCtx.getCurrentUser();
                 return user != null ? user.getLoginName() : "";
             } else if ("${ORGNAME}".equalsIgnoreCase(type)) {
-                User user = Ctx.getCurrentUser();
+                User user = SessionCtx.getCurrentUser();
                 return user != null ? user.getDefaultOrgName() : "";
             } else if ("${DATE}".equalsIgnoreCase(type)) {
                 return SDF_DATE.format(new Date());

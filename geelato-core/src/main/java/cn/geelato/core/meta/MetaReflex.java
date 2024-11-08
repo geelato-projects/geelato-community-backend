@@ -326,7 +326,7 @@ public class MetaReflex {
                                     cfm.getColumn().setName(column.name());
                                     cfm.getColumn().setNumericPrecision(column.numericPrecision());
                                     cfm.getColumn().setNumericScale(column.numericScale());
-                                    cfm.getColumn().setIsRefColumn(column.isRefColumn());
+                                    cfm.getColumn().setRefColumn(column.isRefColumn());
                                     cfm.getColumn().setRefLocalCol(column.refLocalCol());
                                     cfm.getColumn().setRefColName(column.refColName());
                                     cfm.getColumn().setRefTables(column.refTables());
@@ -416,7 +416,7 @@ public class MetaReflex {
                                 cfm.getColumn().setName(column.name());
                                 cfm.getColumn().setNumericPrecision(column.numericPrecision());
                                 cfm.getColumn().setNumericScale(column.numericScale());
-                                cfm.getColumn().setIsRefColumn(column.isRefColumn());
+                                cfm.getColumn().setRefColumn(column.isRefColumn());
                                 cfm.getColumn().setRefLocalCol(column.refLocalCol());
                                 cfm.getColumn().setRefColName(column.refColName());
                                 cfm.getColumn().setRefTables(column.refTables());

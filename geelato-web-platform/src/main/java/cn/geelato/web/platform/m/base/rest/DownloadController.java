@@ -84,7 +84,7 @@ public class DownloadController extends BaseController {
                 }
             }
             // 下载
-            downloadService.downloadFile(file, name, isPreview, this.request, this.response);
+            downloadService.downloadFile(file, name, isPreview, this.request, this.response, null);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw e;

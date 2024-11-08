@@ -7,6 +7,7 @@ import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.RowMeta;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -315,16 +316,29 @@ public class ExcelWriter {
         }
     }
 
-    private String formatDate(Object value, SimpleDateFormat sdf) {
+    public static void main(String[] args) {
+        String s = "1730777163";
+        System.out.println(s.length());
+        System.out.println(new Date(Long.parseLong(s)));
+        System.out.println(new Date(Long.parseLong(s + "000")));
+    }
+
+    private String formatDate(Object value, String in, String out) {
         try {
+            if (Strings.isBlank(in) || Strings.isBlank(out)) {
+                return value.toString();
+            }
             Date date = null;
             String valueStr = value.toString();
-            if (NumberUtils.isNumber(valueStr)) {
-                date = new Date(Long.parseLong(valueStr));
+            if (NumberUtils.isNumber(valueStr) && "timestamp".equalsIgnoreCase(in)) {
+                if (valueStr.length() != 10 && valueStr.length() != 13) {
+                    return "";
+                }
+                date = new Date(Long.parseLong(valueStr.length() == 10 ? valueStr + "000" : valueStr));
             } else {
-                date = sdf.parse(valueStr);
+                date = new SimpleDateFormat(in).parse(valueStr);
             }
-            return sdf.format(date);
+            return new SimpleDateFormat(out).format(date);
         } catch (Exception e) {
             return "";
         }
@@ -339,11 +353,8 @@ public class ExcelWriter {
                     cell.setCellValue(new BigDecimal(value.toString()).doubleValue());
                 }
             } else if (meta.isValueTypeDate()) {
-                // value 应为时间戳
-                cell.setCellValue(ExcelCommonUtils.DATE_FORMAT.format(value));
+                cell.setCellValue(formatDate(value, meta.getFormatImport(), meta.getFormatExport()));
             } else if (meta.isValueTypeDateTime()) {
-                // value 应为时间戳
-                cell.setCellValue(ExcelCommonUtils.DATE_TIME_FORMAT.format(value));
             } else {
                 cell.setCellValue(value.toString());
             }

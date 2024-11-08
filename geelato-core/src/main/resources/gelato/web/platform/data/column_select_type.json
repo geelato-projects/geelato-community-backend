@@ -266,7 +266,7 @@
   },
   {
     "group": "日期时间",
-    "label": "年份[YYYY]",
+    "label": "年份[yyyy]",
     "value": "year",
     "mysql": "year",
     "disabled": false,
@@ -274,7 +274,7 @@
   },
   {
     "group": "日期时间",
-    "label": "日期[YYYY-MM-DD]",
+    "label": "日期[yyyy-MM-dd]",
     "value": "date",
     "mysql": "date",
     "disabled": false,
@@ -298,7 +298,7 @@
   },
   {
     "group": "日期时间",
-    "label": "日期时间[YYYY-MM-DD HH:mm:ss]",
+    "label": "日期时间[yyyy-MM-dd HH:mm:ss]",
     "value": "dateTime",
     "mysql": "dateTime",
     "disabled": false,
@@ -306,7 +306,7 @@
   },
   {
     "group": "日期时间",
-    "label": "时间戳[YYYY-MM-DD HH:mm:ss]",
+    "label": "时间戳",
     "value": "timeStamp",
     "mysql": "timeStamp",
     "disabled": false,

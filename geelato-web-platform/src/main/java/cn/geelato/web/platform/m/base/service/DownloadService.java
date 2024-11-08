@@ -110,7 +110,7 @@ public class DownloadService {
      * @param response HttpServletResponse对象，用于设置响应信息
      * @throws Exception 如果在下载文件过程中发生异常，则抛出该异常
      */
-    public void downloadFile(File file, String name, boolean isPreview, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void downloadFile(File file, String name, boolean isPreview, HttpServletRequest request, HttpServletResponse response, String mineType) throws IOException {
         OutputStream out = null;
         FileInputStream in = null;
         try {
@@ -118,7 +118,7 @@ public class DownloadService {
                 throw new RuntimeException("downloadFile: File does not exist");
             }
             out = response.getOutputStream();
-            this.setResponse(request, response, name, isPreview);
+            this.setResponse(request, response, name, isPreview, mineType);
             // 读取文件
             in = new FileInputStream(file);
             int len = 0;
@@ -171,8 +171,8 @@ public class DownloadService {
      * @param response HttpServletResponse对象
      * @throws Exception 如果在下载文件过程中出现异常，则抛出该异常
      */
-    public void downloadFile(Attach attach, boolean isPreview, HttpServletRequest request, HttpServletResponse response) throws Exception {
-        this.downloadFile(new File(attach.getPath()), attach.getName(), isPreview, request, response);
+    public void downloadFile(Attach attach, boolean isPreview, HttpServletRequest request, HttpServletResponse response, String mineType) throws Exception {
+        this.downloadFile(new File(attach.getPath()), attach.getName(), isPreview, request, response, mineType);
     }
 
     /**
@@ -183,13 +183,15 @@ public class DownloadService {
      * @param name      文件名，用于获取媒体类型
      * @param isPreview 是否为预览模式
      */
-    public void setResponse(HttpServletRequest request, HttpServletResponse response, String name, boolean isPreview) {
+    public void setResponse(HttpServletRequest request, HttpServletResponse response, String name, boolean isPreview, String mineType) {
         // 编码
         String encodeName = URLEncoder.encode(name, StandardCharsets.UTF_8);
-        String mineType = request.getServletContext().getMimeType(encodeName);
-        // 如果没有取到常用的媒体类型，则获取自配置的媒体类型
         if (mineType == null) {
-            mineType = EXT_MAP.get(FileUtils.getFileExtensionWithNoDot(name));
+            mineType = request.getServletContext().getMimeType(encodeName);
+            // 如果没有取到常用的媒体类型，则获取自配置的媒体类型
+            if (mineType == null) {
+                mineType = EXT_MAP.get(FileUtils.getFileExtensionWithNoDot(name));
+            }
         }
         response.setContentType(mineType);
         // 在线查看图片、pdf

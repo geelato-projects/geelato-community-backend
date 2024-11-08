@@ -250,6 +250,34 @@ public class WordXWPFWriter {
                     setTableLoopTypeRow(document, placeholderMetaMap, meta);
                 }
             }
+            // 删除空的段落
+            deleteEmptyParagraph(document);
+        }
+    }
+
+    private void deleteEmptyParagraph(XWPFDocument document) {
+        List<XWPFParagraph> paragraphs = document.getParagraphs();
+        boolean isDeleteEmptyPh = false;
+        for (XWPFParagraph paragraph : paragraphs) {
+            String pht = paragraph.getText();
+            if (pht != null && pht.indexOf("{TLDEP}") != -1) {
+                isDeleteEmptyPh = true;
+                break;
+            }
+        }
+        if (isDeleteEmptyPh) {
+            for (int i = paragraphs.size() - 1; i >= 1; i--) {
+                XWPFParagraph paragraph = paragraphs.get(i);
+                document.removeBodyElement(document.getPosOfParagraph(paragraph));
+            }
+            clearParagraphContent(paragraphs.get(0));
+        }
+    }
+
+    public static void clearParagraphContent(XWPFParagraph paragraph) {
+        List<XWPFRun> runs = paragraph.getRuns();
+        for (int i = runs.size() - 1; i >= 0; i--) {
+            paragraph.removeRun(i);
         }
     }
 
@@ -683,6 +711,7 @@ public class WordXWPFWriter {
 
     private XWPFTable copyTable(XWPFTable newTable, XWPFTable originalTable) {
         newTable.getCTTbl().setTblPr(originalTable.getCTTbl().getTblPr());
+        newTable.getCTTbl().setTblGrid(originalTable.getCTTbl().getTblGrid());
         // 表格行
         List<XWPFTableRow> newRows = newTable.getRows();
         List<XWPFTableRow> rows = originalTable.getRows();
@@ -709,9 +738,11 @@ public class WordXWPFWriter {
     }
 
     private XWPFTableRow copyTableRow(XWPFTableRow newRow, XWPFTableRow originalRow) {
+        newRow.getCtRow().setTblPrEx(originalRow.getCtRow().getTblPrEx());
+        newRow.getCtRow().setTrPr(originalRow.getCtRow().getTrPr());
         // 新行样式
         newRow.setHeight(originalRow.getHeight());
-        newRow.setHeightRule(originalRow.getHeightRule());
+        // newRow.setHeightRule(originalRow.getHeightRule());
         newRow.setCantSplitRow(originalRow.isCantSplitRow());
         newRow.setRepeatHeader(originalRow.isRepeatHeader());
         // 行的列
@@ -740,6 +771,7 @@ public class WordXWPFWriter {
     }
 
     private XWPFTableCell copyTableCell(XWPFTableCell newCell, XWPFTableCell originalCell) {
+        newCell.getCTTc().setTcPr(originalCell.getCTTc().getTcPr());
         // 新列样式
         newCell.setColor(originalCell.getColor());
         newCell.setVerticalAlignment(originalCell.getVerticalAlignment());
@@ -772,9 +804,98 @@ public class WordXWPFWriter {
 
     private XWPFParagraph copyParagraph(XWPFParagraph newParagraph, XWPFParagraph originalParagraph) {
         newParagraph.getCTP().setPPr(originalParagraph.getCTP().getPPr());
+        // 新行样式
+        newParagraph.setAlignment(originalParagraph.getAlignment());
+        // newParagraph.setBorderBottom(originalParagraph.getBorderBottom());
+        // newParagraph.setBorderLeft(originalParagraph.getBorderLeft());
+        // newParagraph.setBorderRight(originalParagraph.getBorderRight());
+        // newParagraph.setBorderTop(originalParagraph.getBorderTop());
+        // newParagraph.setBorderBetween(originalParagraph.getBorderBetween());
+        // newParagraph.setFirstLineIndent(originalParagraph.getFirstLineIndent());
+        // newParagraph.setFontAlignment(originalParagraph.getFontAlignment());
+        // newParagraph.setIndentationHanging(originalParagraph.getIndentationHanging());
+        // newParagraph.setIndentationFirstLine(originalParagraph.getIndentationFirstLine());
+        // newParagraph.setIndentationRight(originalParagraph.getIndentationRight());
+        // newParagraph.setIndentationRightChars(originalParagraph.getIndentationRightChars());
+        // newParagraph.setIndentationLeft(originalParagraph.getIndentationLeft());
+        // newParagraph.setIndentationLeftChars(originalParagraph.getIndentationLeftChars());
+        // newParagraph.setIndentFromLeft(originalParagraph.getIndentFromLeft());
+        // newParagraph.setIndentFromRight(originalParagraph.getIndentFromRight());
+        // newParagraph.setKeepNext(originalParagraph.isKeepNext());
+        // newParagraph.setNumID(originalParagraph.getNumID());
+        // newParagraph.setNumILvl(originalParagraph.getNumIlvl());
+        // newParagraph.setSpacingAfter(originalParagraph.getSpacingAfter());
+        // newParagraph.setSpacingBefore(originalParagraph.getSpacingBefore());
+        // newParagraph.setSpacingAfterLines(originalParagraph.getSpacingAfterLines());
+        // newParagraph.setSpacingBetween(originalParagraph.getSpacingBetween());
+        // newParagraph.setSpacingLineRule(originalParagraph.getSpacingLineRule());
+        // newParagraph.setStyle(originalParagraph.getStyleID());
+        newParagraph.setVerticalAlignment(originalParagraph.getVerticalAlignment());
+        // newParagraph.setWordWrapped(originalParagraph.isWordWrapped());
+        // newParagraph.setWordWrap(originalParagraph.isWordWrap());
+        // 列的段落
+        List<XWPFRun> newRuns = newParagraph.getRuns();
+        List<XWPFRun> runs = originalParagraph.getRuns();
+        boolean newIsShort = newRuns.size() <= runs.size();
+        int maxSize = newIsShort ? runs.size() : newRuns.size();
+        int minSize = newIsShort ? newRuns.size() : runs.size();
+        // 相同长度覆写
+        for (int r = 0; r < minSize; r++) {
+            if (newRuns.get(r) != null && runs.get(r) != null) {
+                copyRun(newRuns.get(r), runs.get(r));
+            }
+        }
+        // 不同长度，创建或删除
+        for (int p = minSize; p < maxSize; p++) {
+            if (newIsShort && runs.get(p) != null) {
+                XWPFRun newRun = newParagraph.createRun();
+                copyRun(newRun, runs.get(p));
+            } else if (newRuns.get(p) != null) {
+                newRuns.remove(p);
+            }
+        }
+
+        return newParagraph;
+    }
+
+    private XWPFRun copyRun(XWPFRun newRun, XWPFRun originalRun) {
+        newRun.getCTR().setRPr(originalRun.getCTR().getRPr());
+        // 新行样式
+        newRun.setText(originalRun.getText(0));
+        newRun.setBold(originalRun.isBold());
+        newRun.setColor(originalRun.getColor());
+        newRun.setCapitalized(originalRun.isCapitalized());
+        newRun.setCharacterSpacing(originalRun.getCharacterSpacing());
+        newRun.setDoubleStrikethrough(originalRun.isDoubleStrikeThrough());
+        newRun.setEmbossed(originalRun.isEmbossed());
+        newRun.setEmphasisMark(originalRun.getEmphasisMark() == null ? null : String.valueOf(originalRun.getEmphasisMark()));
+        newRun.setFontFamily(originalRun.getFontFamily());
+        newRun.setFontSize(originalRun.getFontSize());
+        newRun.setImprinted(originalRun.isImprinted());
+        newRun.setItalic(originalRun.isItalic());
+        newRun.setKerning(originalRun.getKerning());
+        newRun.setLang(originalRun.getLang());
+        newRun.setShadow(originalRun.isShadowed());
+        newRun.setSmallCaps(originalRun.isSmallCaps());
+        newRun.setStrikeThrough(originalRun.isStrikeThrough());
+        newRun.setTextHighlightColor(originalRun.getTextHighlightColor() == null ? null : String.valueOf(originalRun.getTextHighlightColor()));
+        newRun.setTextPosition(originalRun.getTextPosition());
+        newRun.setTextScale(originalRun.getTextScale());
+        newRun.setUnderline(originalRun.getUnderline());
+        newRun.setUnderlineColor(originalRun.getUnderlineColor());
+        newRun.setUnderlineThemeColor(String.valueOf(originalRun.getUnderlineThemeColor()));
+        newRun.setVanish(originalRun.isVanish());
+        newRun.setVerticalAlignment(originalRun.getVerticalAlignment() == null ? null : String.valueOf(originalRun.getVerticalAlignment()));
+
+        return newRun;
+    }
+
+    private XWPFParagraph copyParagraphAndRuns(XWPFParagraph newParagraph, XWPFParagraph originalParagraph) {
+        newParagraph.getCTP().setPPr(originalParagraph.getCTP().getPPr());
         // 复制原始行的内容到新行
         for (XWPFRun run : originalParagraph.getRuns()) {
             XWPFRun newRun = newParagraph.createRun();
+            newRun.getCTR().setRPr(run.getCTR().getRPr());
             newRun.setText(run.getText(0));
             newRun.setBold(run.isBold());
             newRun.setColor(run.getColor());

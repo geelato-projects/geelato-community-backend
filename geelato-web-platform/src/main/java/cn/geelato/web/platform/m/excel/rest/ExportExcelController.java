@@ -159,7 +159,7 @@ public class ExportExcelController extends BaseController {
                 }
                 if (isDownload) {
                     Attach attach = (Attach) result.getData();
-                    downloadService.downloadFile(attach, false, this.request, this.response);
+                    downloadService.downloadFile(attach, false, this.request, this.response, null);
                 }
             }
             return result;

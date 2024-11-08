@@ -8,8 +8,8 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.script.entity.Api;
 import cn.geelato.web.platform.m.script.service.ApiService;
 import cn.geelato.web.platform.utils.GqlUtil;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
@@ -26,8 +26,6 @@ import java.util.Map;
 
 @ApiRestController("/ext")
 public class OutsideController extends BaseController {
-
-    private final HashMap<String, Api> urlHashMap = new HashMap<>();
     @Resource
     private ApiService apiService;
     private final GraalManager graalManager = GraalManager.singleInstance();
@@ -38,23 +36,15 @@ public class OutsideController extends BaseController {
     @SuppressWarnings("rawtypes")
     public Object exec(@PathVariable("outside_url") String outside_url) throws IOException {
         String parameter = GqlUtil.resolveGql(this.request);
-        String scriptContent = null;
-        String outSideUrl = "/" + outside_url;
         Api api = null;
-        if (urlHashMap.get(outSideUrl) != null) {
-            api = urlHashMap.get(outSideUrl);
-            scriptContent= getScriptContent(api.getReleaseContent());
-        } else {
-            Map<String, Object> params = new HashMap<>();
-            params.put("outsideUrl", outSideUrl);
-            List<Api> apiList = apiService.queryModel(Api.class, params);
-            if (apiList != null && !apiList.isEmpty()) {
-                api = apiList.get(0);
-                scriptContent= getScriptContent(api.getReleaseContent());
-                urlHashMap.put(outSideUrl, api);
-            }
+        Map<String, Object> params = new HashMap<>();
+        params.put("outsideUrl", "/" + outside_url);
+        List<Api> apiList = apiService.queryModel(Api.class, params);
+        if (apiList != null && !apiList.isEmpty()) {
+            api = apiList.get(0);
         }
         if (api != null) {
+            String scriptContent = getScriptContent(api.getReleaseContent());
             try (
                     Context context = Context.newBuilder("js")
                             .allowHostAccess(HostAccess.ALL)
@@ -71,7 +61,7 @@ public class OutsideController extends BaseController {
                     context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
                 }
                 Source source = Source.newBuilder("js", scriptContent, "graal.mjs").build();
-                Map result = context.eval(source).execute(parameter).as(Map.class);
+                Map result = context.eval(source).execute(JSON.parse(parameter)).as(Map.class);
                 if (api.getResponseFormat() != null && api.getResponseFormat().equals("custom")) {
                     return JSONObject.toJSONString(result.get("result"));
                 } else {

@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.graal;
+package cn.geelato.web.platform.graal.entity;
 
 import lombok.Getter;
 import lombok.Setter;

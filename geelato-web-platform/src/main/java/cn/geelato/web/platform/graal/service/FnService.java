@@ -78,6 +78,6 @@ public class FnService {
         }
         sb.deleteCharAt(sb.length() - 1);
         sb.append("}}");
-        return ruleService.save("0", sb.toString(), GraalUtils.getCxt());
+        return ruleService.save("0", sb.toString());
     }
 }

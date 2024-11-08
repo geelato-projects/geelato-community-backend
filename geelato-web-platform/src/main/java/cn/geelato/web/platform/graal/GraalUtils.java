@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.graal;
 
-import cn.geelato.core.Ctx;
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.env.entity.User;
 
 public class GraalUtils {
@@ -26,11 +26,11 @@ public class GraalUtils {
      *
      * @return
      */
-    public static Ctx getCxt() {
+    public static SessionCtx getCxt() {
         User user = getUser();
-        Ctx.setCurrentUser(user);
-        Ctx.setCurrentTenant("geelato");
-        return new Ctx();
+        SessionCtx.setCurrentUser(user);
+        SessionCtx.setCurrentTenant("geelato");
+        return new SessionCtx();
     }
 
     /**
@@ -40,6 +40,6 @@ public class GraalUtils {
      */
     public static String getCurrentTenantCode() {
         GraalUtils.getCxt();
-        return Ctx.getCurrentTenantCode();
+        return SessionCtx.getCurrentTenantCode();
     }
 }

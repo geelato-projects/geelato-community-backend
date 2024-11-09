@@ -1,6 +1,7 @@
 package cn.geelato.core.meta.model.parser;
 
 import cn.geelato.core.SessionCtx;
+import cn.geelato.utils.DateUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.logging.log4j.util.Strings;
@@ -14,6 +15,7 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.utils.UIDGenerator;
 
 import java.lang.reflect.InvocationTargetException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,8 +69,9 @@ public class EntitySaveParser {
     }
 
     private void putUpdateDefaultField(Map<String,Object> entity, SessionCtx sessionCtx) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
         if (entity.containsKey("updateAt")) {
-            entity.put("updateAt", new Date());
+            entity.put("updateAt",  simpleDateFormat.format(new Date()));
         }
         if (entity.containsKey("updater")) {
             entity.put("updater", SessionCtx.getUserId());
@@ -79,8 +82,9 @@ public class EntitySaveParser {
     }
 
     private void putInsertDefaultField(Map<String,Object> entity, SessionCtx sessionCtx) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
         if (entity.containsKey("createAt")) {
-            entity.put("createAt", new Date());
+            entity.put("createAt", simpleDateFormat.format(new Date()));
         }
         if (entity.containsKey("creator")) {
             entity.put("creator", SessionCtx.getUserId());

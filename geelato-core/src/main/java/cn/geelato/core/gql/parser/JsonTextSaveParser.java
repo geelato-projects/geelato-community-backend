@@ -177,7 +177,7 @@ public class JsonTextSaveParser extends JsonTextParser {
 
     private void putUpdateDefaultField(Map<String,Object> entity, SessionCtx sessionCtx) {
         if (entity.containsKey("updateAt")) {
-            entity.put("updateAt", new Date());
+            entity.put("updateAt", simpleDateFormat.format(new Date()));
         }
         if (entity.containsKey("updater")) {
             entity.put("updater", SessionCtx.getUserId());
@@ -188,7 +188,7 @@ public class JsonTextSaveParser extends JsonTextParser {
     }
     private void putInsertDefaultField(Map<String,Object> entity, SessionCtx sessionCtx) {
         if (entity.containsKey("createAt")) {
-            entity.put("createAt", new Date());
+            entity.put("createAt", simpleDateFormat.format(new Date()));
         }
         if (entity.containsKey("creator")) {
             entity.put("creator",SessionCtx.getUserId());

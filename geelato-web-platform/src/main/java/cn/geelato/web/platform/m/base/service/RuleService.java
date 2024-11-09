@@ -5,6 +5,7 @@ import cn.geelato.core.gql.command.DeleteCommand;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
 import org.apache.commons.collections.map.HashedMap;
@@ -317,7 +318,7 @@ public class RuleService {
         if (command.hasCommands()) {
             command.getCommands().forEach(subCommand -> {
                 subCommand.getValueMap().forEach((key, value) -> {
-                    if (value != null) {
+                    if (value != null&&!(value instanceof FunctionFieldValue)) {
                         subCommand.getValueMap().put(key, parseValueExp(subCommand, value.toString(), 0));
                     }
                 });
@@ -357,7 +358,7 @@ public class RuleService {
         if (command.hasCommands()) {
             command.getCommands().forEach(subCommand -> {
                 subCommand.getValueMap().forEach((key, value) -> {
-                    if (value != null) {
+                    if (value != null&&!(value instanceof FunctionFieldValue)) {
                         subCommand.getValueMap().put(key, parseValueExp(subCommand, value.toString(), 0));
                     }
                 });
@@ -381,7 +382,7 @@ public class RuleService {
             command.getCommands().forEach(subCommand -> {
                 // 保存之前需先替换subCommand中的变量值，如依赖于父command执行的返回id：$parent.id
                 subCommand.getValueMap().forEach((key, value) -> {
-                    if (value != null) {
+                    if (value != null&&!(value instanceof FunctionFieldValue)) {
                         subCommand.getValueMap().put(key, parseValueExp(subCommand, value.toString(), 0));
                     }
                 });

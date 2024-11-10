@@ -130,7 +130,9 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         } else if (filter.getOperator().equals(FilterGroup.Operator.nil)||filter.getOperator().equals(FilterGroup.Operator.bt)) {
             //not do anything
         }else {
-            list.add(filter.getValue());
+            if(!getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType().equals("JSON")) {
+                list.add(filter.getValue());
+            }
         }
     }
 

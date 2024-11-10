@@ -196,6 +196,9 @@ public class JsonTextSaveParser extends JsonTextParser {
         if (entity.containsKey("creatorName")) {
             entity.put("creatorName",SessionCtx.getUserName());
         }
+        if (entity.containsKey("tenantCode")) {
+            entity.put("tenantCode", SessionCtx.getCurrentTenantCode());
+        }
         if (entity.containsKey("buId")) {
             entity.put("buId", SessionCtx.getCurrentUser().getBuId());
         }

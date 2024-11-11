@@ -25,6 +25,7 @@ public class FnService {
     private RuleService ruleService;
 
     public FnService() {
+        GraalUtils.getCurrentTenantCode();
         // 使用ApplicationContextProvider获取RuleService
         this.ruleService = ApplicationContextProvider.getBean(RuleService.class);
     }

@@ -3,17 +3,20 @@ package cn.geelato.web.platform.m.script.rest;
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.graal.GraalUtils;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.script.entity.Api;
 import cn.geelato.web.platform.m.script.service.ApiService;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson2.JSON;
-import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Source;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -25,10 +28,17 @@ import java.util.List;
 import java.util.Map;
 
 @ApiRestController("/ext")
+@Slf4j
 public class OutsideController extends BaseController {
-    @Resource
-    private ApiService apiService;
     private final GraalManager graalManager = GraalManager.singleInstance();
+    private final ApiService apiService;
+    private final RuleService ruleService;
+
+    @Autowired
+    public OutsideController(ApiService apiService, RuleService ruleService) {
+        this.apiService = apiService;
+        this.ruleService = ruleService;
+    }
 
     @IgnoreJWTVerify
     @RequestMapping(value = "{outside_url}", method = {RequestMethod.POST, RequestMethod.GET})
@@ -45,11 +55,11 @@ public class OutsideController extends BaseController {
         }
         if (api != null) {
             String scriptContent = getScriptContent(api.getReleaseContent());
-            try (
-                    Context context = Context.newBuilder("js")
-                            .allowHostAccess(HostAccess.ALL)
-                            .allowIO(true)
-                            .allowHostClassLookup(className -> true).build()) {
+            try {
+                Context context = Context.newBuilder("js")
+                        .allowHostAccess(HostAccess.ALL)
+                        .allowIO(true)
+                        .allowHostClassLookup(className -> true).build();
                 Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
                 Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
                 Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
@@ -62,15 +72,34 @@ public class OutsideController extends BaseController {
                 }
                 Source source = Source.newBuilder("js", scriptContent, "graal.mjs").build();
                 Map result = context.eval(source).execute(JSON.parse(parameter)).as(Map.class);
+                // 记录日志
+                createApiLog(api.getCode(), parameter, JSONObject.toJSONString(result.get("result")));
+                // 返回结果
                 if (api.getResponseFormat() != null && api.getResponseFormat().equals("custom")) {
                     return JSONObject.toJSONString(result.get("result"));
                 } else {
                     return ApiResult.success(result.get("result"));
                 }
+            } catch (Exception e) {
+                createApiLog(api.getCode(), parameter, JSONObject.toJSONString(e));
+                log.error("script error:{}", e.getMessage());
+                return ApiResult.fail(e.getMessage());
             }
         } else {
             return ApiResult.fail("not found script");
         }
+    }
+
+    private void createApiLog(String code, String requestParams, String responseParams) {
+        GraalUtils.getCurrentTenantCode();
+        StringBuffer gql = new StringBuffer();
+        gql.append("{\"@biz\":\"0\",\"").append("platform_api_log").append("\":{");
+        gql.append("\"").append("code").append("\":").append(JSON.toJSONString(code)).append(",");
+        gql.append("\"").append("requestParams").append("\":").append(JSON.toJSONString(requestParams)).append(",");
+        gql.append("\"").append("responseParams").append("\":").append(JSON.toJSONString(responseParams)).append(",");
+        gql.deleteCharAt(gql.length() - 1);
+        gql.append("}}");
+        ruleService.save("0", gql.toString());
     }
 
     private String getScriptContent(String customContent) {

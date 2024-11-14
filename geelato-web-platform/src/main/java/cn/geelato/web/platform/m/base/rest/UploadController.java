@@ -3,6 +3,8 @@ package cn.geelato.web.platform.m.base.rest;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.FileUtils;
+import cn.geelato.utils.ImageUtils;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.BaseController;
@@ -42,7 +44,7 @@ public class UploadController extends BaseController {
     }
 
     @RequestMapping(value = "/file", method = RequestMethod.POST)
-    public ApiResult uploadFile(@RequestParam("file") MultipartFile file, Boolean isRename, String tableType, String objectId, String genre, String root, String appId, String tenantCode) {
+    public ApiResult uploadFile(@RequestParam("file") MultipartFile file, String tableType, String objectId, String genre, String root, boolean isThumbnail, Boolean isRename, Integer dimension, String appId, String tenantCode) {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }
@@ -63,13 +65,53 @@ public class UploadController extends BaseController {
             // 资源存资源表
             if (AttachmentSourceEnum.PLATFORM_RESOURCES.getValue().equalsIgnoreCase(tableType)) {
                 Resources target = UploadService.copyProperties(attach, Resources.class);
-                return ApiResult.success(resourcesService.createModel(target));
+                Resources resources = resourcesService.createModel(target);
+                if (isThumbnail) {
+                    thumbnail(resources, dimension);
+                }
+                return ApiResult.success(resources);
             } else {
-                return ApiResult.success(attachService.createModel(attach));
+                Attach attach1 = attachService.createModel(attach);
+                if (isThumbnail) {
+                    thumbnail(attach1, dimension);
+                }
+                return ApiResult.success(attach1);
             }
         } catch (Exception e) {
             log.error(e.getMessage());
             return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    private void thumbnail(Attach source, Integer dimension) throws IOException {
+        File sourceFile = new File(source.getPath());
+        int dis = dimension == null ? 0 : dimension.intValue();
+        if (ImageUtils.isThumbnail(sourceFile, dis)) {
+            String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), source.getTenantCode(), source.getAppId(), source.getName(), true);
+            File file = new File(path);
+            ImageUtils.thumbnail(sourceFile, file, dis);
+            if (!file.exists()) {
+                throw new RuntimeException("saveBase64：thumbnail save failed");
+            }
+            String genre = StringUtils.isNotBlank(source.getGenre()) ? source.getGenre() + "," + ImageUtils.THUMBNAIL_GENRE : ImageUtils.THUMBNAIL_GENRE;
+            Attach attach = attachService.saveByFile(file, source.getName(), genre, source.getAppId(), source.getTenantCode());
+            dao.getJdbcTemplate().update("update platform_attach set id = ? where id = ?", source.getId() + ImageUtils.THUMBNAIL_SUFFIX, attach.getId());
+        }
+    }
+
+    private void thumbnail(Resources source, Integer dimension) throws IOException {
+        File sourceFile = new File(source.getPath());
+        int dis = dimension == null ? 0 : dimension.intValue();
+        if (ImageUtils.isThumbnail(sourceFile, dis)) {
+            String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_RESOURCES.getValue(), source.getTenantCode(), source.getAppId(), source.getName(), true);
+            File file = new File(path);
+            ImageUtils.thumbnail(sourceFile, file, dis);
+            if (!file.exists()) {
+                throw new RuntimeException("saveBase64：thumbnail save failed");
+            }
+            String genre = StringUtils.isNotBlank(source.getGenre()) ? source.getGenre() + "," + ImageUtils.THUMBNAIL_GENRE : ImageUtils.THUMBNAIL_GENRE;
+            Resources attach = resourcesService.saveByFile(file, source.getName(), genre, source.getAppId(), source.getTenantCode());
+            dao.getJdbcTemplate().update("update platform_resources set id = ? where id = ?", source.getId() + ImageUtils.THUMBNAIL_SUFFIX, attach.getId());
         }
     }
 

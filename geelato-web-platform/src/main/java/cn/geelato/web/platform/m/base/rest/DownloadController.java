@@ -52,13 +52,13 @@ public class DownloadController extends BaseController {
     }
 
     @RequestMapping(value = "/file", method = RequestMethod.GET)
-    public void downloadFile(String id, String name, String path, boolean isPdf, boolean isPreview) throws Exception {
+    public void downloadFile(String id, String name, String path, boolean isPdf, boolean isPreview, boolean isThumbnail) throws Exception {
         try {
             File file = null;
             String appId = null;
             String tenantCode = null;
             if (Strings.isNotBlank(id)) {
-                Attach attach = attachService.getModel(id);
+                Attach attach = attachService.getModelThumbnail(id, isThumbnail);
                 Assert.notNull(attach, ApiErrorMsg.IS_NULL);
                 appId = attach.getAppId();
                 tenantCode = attach.getTenantCode();
@@ -83,6 +83,10 @@ public class DownloadController extends BaseController {
                     throw new RuntimeException("downloadFile: file is null or not exists");
                 }
             }
+            // 设置缓存
+            this.response.setHeader("Cache-Control", "public, max-age=3600, must-revalidate");
+            this.response.setHeader("ETag", id);
+            this.response.setDateHeader("Last-Modified", file.lastModified());
             // 下载
             downloadService.downloadFile(file, name, isPreview, this.request, this.response, null);
         } catch (Exception e) {

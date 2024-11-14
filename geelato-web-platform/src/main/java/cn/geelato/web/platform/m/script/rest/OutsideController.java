@@ -81,7 +81,7 @@ public class OutsideController extends BaseController {
                     return ApiResult.success(result.get("result"));
                 }
             } catch (Exception e) {
-                createApiLog(api.getCode(), parameter, JSONObject.toJSONString(e));
+                createApiLog(api.getCode(), parameter, e.getMessage());
                 log.error("script error:{}", e.getMessage());
                 return ApiResult.fail(e.getMessage());
             }

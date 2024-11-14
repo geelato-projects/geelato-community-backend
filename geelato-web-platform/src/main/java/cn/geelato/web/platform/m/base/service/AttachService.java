@@ -1,6 +1,8 @@
 package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.ImageUtils;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.Resources;
@@ -15,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +43,41 @@ public class AttachService extends BaseService {
         params.put("id", id);
         Map<String, Object> map = dao.queryForMap("platform_attachment_by_more", params);
         return JSON.parseObject(JSON.toJSONString(map), Attach.class);
+    }
+
+    /**
+     * 获取附件信息
+     *
+     * @param id          附件id
+     * @param isThumbnail 是否获取缩略图
+     * @return
+     */
+    public Attach getModelThumbnail(String id, boolean isThumbnail) {
+        List<String> ids = new ArrayList<>();
+        if (id.endsWith(ImageUtils.THUMBNAIL_SUFFIX)) {
+            ids.add(id);
+            ids.add(id.substring(0, id.lastIndexOf(ImageUtils.THUMBNAIL_SUFFIX)));
+        } else {
+            ids.add(id);
+            if (isThumbnail) {
+                ids.add(id + ImageUtils.THUMBNAIL_SUFFIX);
+            }
+        }
+        Map<String, Object> params = new HashMap<>();
+        params.put("id", StringUtils.join(ids, ","));
+        List<Map<String, Object>> mapList = dao.queryForMapList("platform_attachment_by_more", params);
+        if (mapList != null && mapList.size() > 0) {
+            if (mapList.size() == 1) {
+                return JSON.parseObject(JSON.toJSONString(mapList.get(0)), Attach.class);
+            } else if (mapList.size() > 1) {
+                for (Map<String, Object> map : mapList) {
+                    if (map.get("id").toString().endsWith(ImageUtils.THUMBNAIL_SUFFIX)) {
+                        return JSON.parseObject(JSON.toJSONString(map), Attach.class);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -85,6 +123,15 @@ public class AttachService extends BaseService {
         return true;
     }
 
+    public static void main(String[] args) throws IOException {
+        File file = new File("/upload/attach/geelato/1976169388038462609/2024/11/14/15/32/5693093797047701504.png");
+        System.out.println(file.getAbsolutePath());
+        System.out.println(file.getCanonicalPath());
+        System.out.println(file.getPath());
+        System.out.println(file.getName());
+        System.out.println(file.getParent());
+    }
+
     public Attach saveByFile(File file, String name, String genre, String appId, String tenantCode) throws IOException {
         BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
         Attach attach = new Attach();
@@ -94,7 +141,7 @@ public class AttachService extends BaseService {
         attach.setType(Files.probeContentType(file.toPath()));
         attach.setGenre(genre);
         attach.setSize(attributes.size());
-        attach.setPath(file.getAbsolutePath());
+        attach.setPath(file.getPath());
         return this.createModel(attach);
     }
 }

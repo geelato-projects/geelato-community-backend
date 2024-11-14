@@ -73,7 +73,7 @@ public class OutsideController extends BaseController {
                 Source source = Source.newBuilder("js", scriptContent, "graal.mjs").build();
                 Map result = context.eval(source).execute(JSON.parse(parameter)).as(Map.class);
                 // 记录日志
-                createApiLog(api.getCode(), parameter, JSONObject.toJSONString(result.get("result")));
+                createApiLog("info", api.getAppId(), api.getCode(), parameter, null, null, null, JSONObject.toJSONString(result.get("result")));
                 // 返回结果
                 if (api.getResponseFormat() != null && api.getResponseFormat().equals("custom")) {
                     return JSONObject.toJSONString(result.get("result"));
@@ -81,7 +81,7 @@ public class OutsideController extends BaseController {
                     return ApiResult.success(result.get("result"));
                 }
             } catch (Exception e) {
-                createApiLog(api.getCode(), parameter, e.getMessage());
+                createApiLog("error", api.getAppId(), api.getCode(), parameter, null, null, null, e.getMessage());
                 log.error("script error:{}", e.getMessage());
                 return ApiResult.fail(e.getMessage());
             }
@@ -90,13 +90,30 @@ public class OutsideController extends BaseController {
         }
     }
 
-    private void createApiLog(String code, String requestParams, String responseParams) {
+    /**
+     * 创建API日志。
+     *
+     * @param dg    调试等级
+     * @param appId 应用ID
+     * @param code  状态码
+     * @param rp    请求参数
+     * @param rb    请求体
+     * @param rh    请求头
+     * @param rc    请求Cookie
+     * @param resp  响应参数
+     */
+    private void createApiLog(String dg, String appId, String code, String rp, String rb, String rh, String rc, String resp) {
         GraalUtils.getCurrentTenantCode();
         StringBuffer gql = new StringBuffer();
         gql.append("{\"@biz\":\"0\",\"").append("platform_api_log").append("\":{");
         gql.append("\"").append("code").append("\":").append(JSON.toJSONString(code)).append(",");
-        gql.append("\"").append("requestParams").append("\":").append(JSON.toJSONString(requestParams)).append(",");
-        gql.append("\"").append("responseParams").append("\":").append(JSON.toJSONString(responseParams)).append(",");
+        gql.append("\"").append("requestParams").append("\":").append(JSON.toJSONString(rp)).append(",");
+        gql.append("\"").append("requestBody").append("\":").append(JSON.toJSONString(rb)).append(",");
+        gql.append("\"").append("requestHeaders").append("\":").append(JSON.toJSONString(rh)).append(",");
+        gql.append("\"").append("requestCookies").append("\":").append(JSON.toJSONString(rc)).append(",");
+        gql.append("\"").append("responseParams").append("\":").append(JSON.toJSONString(resp)).append(",");
+        gql.append("\"").append("debugGrade").append("\":").append(JSON.toJSONString(dg)).append(",");
+        gql.append("\"").append("appId").append("\":").append(JSON.toJSONString(appId)).append(",");
         gql.deleteCharAt(gql.length() - 1);
         gql.append("}}");
         ruleService.save("0", gql.toString());

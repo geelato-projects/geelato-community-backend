@@ -24,10 +24,12 @@ public class ViewColumn {
     private Integer numeric_scale;
 
     /**
-     * 将表格字段转为视图字段
+     * 将表格字段转换为视图字段。
+     * 该方法接收一个表格字段元数据对象（ColumnMeta）作为参数，并将其转换为视图字段对象（ViewColumn）。
+     * 如果传入的表格字段元数据对象不为空，则将其属性赋值给视图字段对象。
      *
-     * @param meta
-     * @return
+     * @param meta 表格字段元数据对象
+     * @return 转换后的视图字段对象
      */
     public static ViewColumn fromColumnMeta(ColumnMeta meta) {
         ViewColumn column = new ViewColumn();

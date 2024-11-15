@@ -1,16 +1,14 @@
 package cn.geelato.core.sql.provider;
 
-import com.alibaba.fastjson2.JSONArray;
-import org.apache.commons.collections.map.HashedMap;
 import cn.geelato.core.gql.TypeConverter;
-import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.command.BaseCommand;
+import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.alibaba.fastjson2.JSONArray;
+import org.apache.commons.collections.map.HashedMap;
 import org.springframework.util.Assert;
 
 import java.util.*;
@@ -19,14 +17,14 @@ import java.util.*;
  * @author geemeta
  */
 public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
-    protected  Boolean LogicDelete=true;  //是否开启软删除
-    protected  Boolean PermissionControl=true;
+    protected Boolean LogicDelete = true;  // 是否开启软删除
+    protected Boolean PermissionControl = true;
     protected static final HashedMap keywordsMap = new HashedMap();
     protected static final Map<FilterGroup.Operator, String> enumToSignString = new HashMap<FilterGroup.Operator, String>();
     protected MetaManager metaManager = MetaManager.singleInstance();
 
 
-    //表别名MAP
+    // 表别名MAP
     private final Map<String, String> tableAlias = new HashMap<>(8);
 
     static {
@@ -108,7 +106,6 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     /**
      * 基于条件部分，构建参数值对像数组
      * 对于update、insert、delete的sql provider，即结合字段设值部分的需要，组合调整
-     *
      */
     protected Object[] buildWhereParams(E command) {
         if (command.getWhere() == null || command.getWhere().getFilters() == null || command.getWhere().getFilters().isEmpty()) {
@@ -116,43 +113,44 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         }
         List<Object> list = new ArrayList<>();
         for (FilterGroup.Filter filter : command.getWhere().getFilters()) {
-            recombine(filter,list,command);
+            recombine(filter, list, command);
         }
-        List<Object> newList =recursionFilterGroup(command.getWhere().getChildFilterGroup() ,command,list);
+        List<Object> newList = recursionFilterGroup(command.getWhere().getChildFilterGroup(), command, list);
         return newList.toArray();
     }
 
-    private void recombine(FilterGroup.Filter filter,List<Object> list,E command) {
+    private void recombine(FilterGroup.Filter filter, List<Object> list, E command) {
         // 若为in操作，则需将in内的内容拆分成多个，相应地在构建参数占位符的地方也做相应的处理
-        if (filter.getOperator().equals(FilterGroup.Operator.in)||filter.getOperator().equals(FilterGroup.Operator.notin)) {
+        if (filter.getOperator().equals(FilterGroup.Operator.in) || filter.getOperator().equals(FilterGroup.Operator.notin)) {
             Object[] ary = filter.getValueAsArray();
             list.addAll(Arrays.asList(ary));
-        } else if (filter.getOperator().equals(FilterGroup.Operator.nil)||filter.getOperator().equals(FilterGroup.Operator.bt)) {
-            //not do anything
-        }else {
-            if(!getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType().equals("JSON")) {
+        } else if (filter.getOperator().equals(FilterGroup.Operator.nil) || filter.getOperator().equals(FilterGroup.Operator.bt)) {
+            // not do anything
+        } else {
+            if (!getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType().equals("JSON")) {
                 list.add(filter.getValue());
             }
         }
     }
 
     private List<Object> recursionFilterGroup(List<FilterGroup> childFilterGroup, E command, List<Object> list) {
-        for (FilterGroup filterGroup :childFilterGroup) {
+        for (FilterGroup filterGroup : childFilterGroup) {
             for (FilterGroup.Filter filter : filterGroup.getFilters()) {
                 recombine(filter, list, command);
             }
-            if(!filterGroup.getChildFilterGroup().isEmpty())
-                recursionFilterGroup(filterGroup.getChildFilterGroup(),command,list);
+            if (!filterGroup.getChildFilterGroup().isEmpty())
+                recursionFilterGroup(filterGroup.getChildFilterGroup(), command, list);
         }
         return list;
     }
 
     /**
-     * 基于条件部分，构建参数类型数组
-     * 对于update、insert、delete的sql provider，即结合字段设值部分的需要，组合调整
+     * 基于条件部分，构建参数类型数组。
+     * <p>
+     * 对于update、insert、delete的sql provider，该方法会根据字段设值部分的需要，对条件部分进行调整，并构建相应的参数类型数组。
      *
-     * @param command 命令
-     * @return types
+     * @param command 命令对象，包含SQL操作的相关信息
+     * @return 返回构建好的参数类型数组
      */
     protected int[] buildWhereTypes(E command) {
         if (command.getWhere() == null || command.getWhere().getFilters() == null) {
@@ -162,7 +160,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         int[] types = new int[command.getWhere().getFilters().size()];
         int i = 0;
         for (FilterGroup.Filter filter : command.getWhere().getFilters()) {
-            if(filter.getFilterFieldType()!= FilterGroup.FilterFieldType.Function) {
+            if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
                 types[i] = TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumn().getDataType());
                 i++;
             }
@@ -172,7 +170,6 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
 
     /**
      * 只构建当前实体的查询条件!isRefField
-     *
      */
     protected void buildConditions(StringBuilder sb, EntityMeta em, List<FilterGroup.Filter> list, FilterGroup.Logic logic) {
         if (list != null && !list.isEmpty()) {
@@ -180,7 +177,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             int index = 0;
             while (iterator.hasNext()) {
                 FilterGroup.Filter filter = iterator.next();
-                //只构建当前实体的查询条件
+                // 只构建当前实体的查询条件
                 if (filter.isRefField()) {
                     continue;
                 }
@@ -196,7 +193,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     }
 
     protected void buildConditions(StringBuilder sb, EntityMeta em, FilterGroup filterGroup) {
-        List<FilterGroup.Filter> list=filterGroup.getFilters();
+        List<FilterGroup.Filter> list = filterGroup.getFilters();
         if (list != null && !list.isEmpty()) {
             Iterator<FilterGroup.Filter> iterator = list.iterator();
             int index = 0;
@@ -215,31 +212,31 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             }
         }
 
-        buildChildConditions(sb,em,filterGroup, FilterGroup.Logic.and);
+        buildChildConditions(sb, em, filterGroup, FilterGroup.Logic.and);
     }
 
     protected void buildChildConditions(StringBuilder sb, EntityMeta em, FilterGroup filterGroup, FilterGroup.Logic logic) {
-        List<FilterGroup> childFilterGroup=filterGroup.getChildFilterGroup();
+        List<FilterGroup> childFilterGroup = filterGroup.getChildFilterGroup();
         if (childFilterGroup != null && !childFilterGroup.isEmpty()) {
-            for (FilterGroup fg:filterGroup.getChildFilterGroup()){
-                sb.append(String.format(" %s ", logic==null?"and":logic.getText()));
+            for (FilterGroup fg : filterGroup.getChildFilterGroup()) {
+                sb.append(String.format(" %s ", logic == null ? "and" : logic.getText()));
                 sb.append(" ( ");
-                buildConditions(sb,em,fg.getFilters(),fg.getLogic());
-                if(fg.getChildFilterGroup()!=null){
-                    buildChildConditions(sb,em,fg,fg.getLogic());
+                buildConditions(sb, em, fg.getFilters(), fg.getLogic());
+                if (fg.getChildFilterGroup() != null) {
+                    buildChildConditions(sb, em, fg, fg.getLogic());
                 }
                 sb.append(" ) ");
             }
         }
     }
+
     /**
      * 构建单个过滤条件
-     *
      */
     protected void buildConditionSegment(StringBuilder sb, EntityMeta em, FilterGroup.Filter filter) {
-        if(filter.getFilterFieldType()== FilterGroup.FilterFieldType.Function){
+        if (filter.getFilterFieldType() == FilterGroup.FilterFieldType.Function) {
             FilterGroup.Operator operator = filter.getOperator();
-            String fm=filter.getField();
+            String fm = filter.getField();
             if (operator == FilterGroup.Operator.eq
                     || operator == FilterGroup.Operator.neq
                     || operator == FilterGroup.Operator.lt
@@ -251,22 +248,22 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                 sb.append("?");
 
             } else if (operator == FilterGroup.Operator.startWith) {
-                tryAppendKeywords( sb, fm);
+                tryAppendKeywords(sb, fm);
                 sb.append(" like CONCAT('',?,'%')");
             } else if (operator == FilterGroup.Operator.endWith) {
-                tryAppendKeywords( sb, fm);
+                tryAppendKeywords(sb, fm);
                 sb.append(" like CONCAT('%',?,'')");
             } else if (operator == FilterGroup.Operator.contains) {
                 tryAppendKeywords(sb, fm);
                 sb.append(" like CONCAT('%',?,'%')");
             } else if (operator == FilterGroup.Operator.in) {
-                tryAppendKeywords( sb, fm);
+                tryAppendKeywords(sb, fm);
                 Object[] ary = filter.getValueAsArray();
                 sb.append(" in(");
                 sb.append(cn.geelato.utils.StringUtils.join(ary.length, "?", ","));
                 sb.append(")");
             } else if (operator == FilterGroup.Operator.notin) {
-                tryAppendKeywords( sb, fm);
+                tryAppendKeywords(sb, fm);
                 Object[] ary = filter.getValueAsArray();
                 sb.append(" not in(");
                 sb.append(cn.geelato.utils.StringUtils.join(ary.length, "?", ","));
@@ -279,7 +276,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                     sb.append(" is NOT NULL");
                 }
             } else if (operator == FilterGroup.Operator.bt) {
-                tryAppendKeywords( sb, fm);
+                tryAppendKeywords(sb, fm);
                 JSONArray ja = JSONArray.parse(filter.getValue());
                 String startTime = ja.get(0).toString();
                 String endTime = ja.get(1).toString();
@@ -287,7 +284,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             } else {
                 throw new RuntimeException("未实现Operator：" + operator);
             }
-        }else {
+        } else {
             FieldMeta fm = em.getFieldMeta(filter.getField());
             FilterGroup.Operator operator = filter.getOperator();
             if (operator == FilterGroup.Operator.eq
@@ -372,7 +369,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     }
 
 
-    //表别名
+    // 表别名
     public String buildTableAlias(String tableName) {
         if (tableName != null && !this.tableAlias.containsKey(tableName)) {
             this.tableAlias.put(tableName, "t" + this.tableAlias.size());

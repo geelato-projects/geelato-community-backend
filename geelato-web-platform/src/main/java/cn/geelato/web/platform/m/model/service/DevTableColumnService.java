@@ -42,11 +42,11 @@ public class DevTableColumnService extends BaseSortableService {
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
 
     /**
-     * 自动生成对于字段
-     * org、user 需要 id、name
+     * 自动生成对应字段
      *
-     * @param model 实体数据
-     * @return
+     * 对于实体数据中的org和user字段，自动生成对应的id和name字段。
+     *
+     * @param model 实体数据对象，包含字段的元数据
      */
     public void automaticGeneration(ColumnMeta model) {
         Assert.notNull(model, ApiErrorMsg.IS_NULL);
@@ -82,9 +82,11 @@ public class DevTableColumnService extends BaseSortableService {
     }
 
     /**
-     * 生成默认字段，表格类型：数据库表
+     * 生成默认字段
      *
-     * @param tableMeta
+     * 为数据库表生成默认的字段。
+     *
+     * @param tableMeta 表格元数据对象，包含表格的基本信息
      */
     public void createDefaultColumn(TableMeta tableMeta) {
         Assert.notNull(tableMeta, ApiErrorMsg.IS_NULL);
@@ -120,8 +122,10 @@ public class DevTableColumnService extends BaseSortableService {
     /**
      * 获取默认视图
      *
-     * @param entityName
-     * @return
+     * 根据实体名称生成默认的视图SQL语句，并返回包含视图字段和视图构造SQL的参数映射。
+     *
+     * @param entityName 实体名称
+     * @return 返回包含视图字段和视图构造SQL的参数映射
      */
     public Map<String, Object> getDefaultViewSql(String entityName) {
         Map<String, Object> viewParams = new HashMap<>();
@@ -170,8 +174,12 @@ public class DevTableColumnService extends BaseSortableService {
     /**
      * 依据表格情况，从数据库中更新至 dev_column 中
      *
-     * @param tableMeta
-     * @param deleteAll
+     * 根据传入的表格元数据对象，从数据库中查询对应的列信息，并根据是否需要删除所有现有列来更新dev_column表。
+     *
+     * @param tableMeta 表格元数据对象，包含表格的ID和实体名称等信息
+     * @param deleteAll 是否删除所有现有列
+     * @throws InvocationTargetException 如果在反射调用过程中发生异常，将抛出该异常
+     * @throws IllegalAccessException  如果在反射调用过程中访问受限，将抛出该异常
      */
     public void resetTableColumnByDataBase(TableMeta tableMeta, boolean deleteAll) throws InvocationTargetException, IllegalAccessException {
         Map<String, Object> queryParams = new HashMap<>();
@@ -227,10 +235,15 @@ public class DevTableColumnService extends BaseSortableService {
     }
 
     /**
-     * 比较 dev_column 和 数据库中字段 创建、更新、删除
+     * 比较dev_column和数据库中字段，进行创建、更新、删除操作
      *
-     * @param metaMap
-     * @param schemaMap
+     * 该方法用于比较传入的dev_column映射（metaMap）和数据库中的字段映射（schemaMap），并根据比较结果对字段进行相应的创建、更新或删除操作。
+     *
+     * @param tableMeta 表元数据对象，包含表的基本信息
+     * @param metaMap   dev_column映射，键为字段名，值为对应的ColumnMeta对象
+     * @param schemaMap 数据库字段映射，键为字段名，值为对应的SchemaColumn对象
+     * @throws InvocationTargetException 如果在调用方法时发生异常
+     * @throws IllegalAccessException    如果尝试访问不可访问的方法时抛出异常
      */
     private void compareHashMapKeys(TableMeta tableMeta, HashMap<String, ColumnMeta> metaMap, Map<String, SchemaColumn> schemaMap) throws InvocationTargetException, IllegalAccessException {
         // 遍历 metaMap 的键 不存在：删除
@@ -260,7 +273,11 @@ public class DevTableColumnService extends BaseSortableService {
     /**
      * 逻辑删除
      *
-     * @param model
+     * 对指定的列元数据进行逻辑删除操作，包括修改列名、注释、描述等信息，并更新列的状态。
+     *
+     * @param model 列元数据对象，包含列的详细信息
+     * @throws InvocationTargetException 如果在反射调用过程中发生异常，将抛出该异常
+     * @throws IllegalAccessException  如果在反射调用过程中访问受限，将抛出该异常
      */
     public void isDeleteModel(ColumnMeta model) throws InvocationTargetException, IllegalAccessException {
         // 重命名
@@ -309,8 +326,10 @@ public class DevTableColumnService extends BaseSortableService {
     /**
      * 分组选择 select
      *
-     * @param selectTypes
-     * @return
+     * 根据提供的选择类型列表，生成分组的选择选项。
+     *
+     * @param selectTypes 选择类型列表，包含每个选择类型的信息
+     * @return 返回包含分组选择选项的列表
      */
     public List<SelectOptionGroup> getSelectOptionGroup(List<ColumnSelectType> selectTypes) {
         List<SelectOptionGroup> groups = new ArrayList<>();
@@ -328,10 +347,12 @@ public class DevTableColumnService extends BaseSortableService {
     }
 
     /**
-     * 选择 select
+     * 选择项数据获取
      *
-     * @param selectTypes
-     * @return
+     * 根据传入的选择类型列表，获取对应的选择项数据列表。
+     *
+     * @param selectTypes 选择类型列表
+     * @return 返回包含选择项数据的列表
      */
     public List<SelectOptionData<ColumnSelectType>> getSelectOptionData(List<ColumnSelectType> selectTypes) {
         List<SelectOptionData<ColumnSelectType>> selects = new ArrayList<>();
@@ -346,10 +367,12 @@ public class DevTableColumnService extends BaseSortableService {
     }
 
     /**
-     * 解析 ColumnSelectType
+     * 解析 ColumnSelectType 列表
      *
-     * @param selectTypes
-     * @return
+     * 将传入的 ColumnSelectType 列表解析为按组分类的选择项数据映射。
+     *
+     * @param selectTypes ColumnSelectType 列表，包含每个选择项的类型信息
+     * @return 返回按组分类的选择项数据映射，键为组名，值为对应组内的选择项数据列表
      */
     private HashMap<String, List<SelectOptionData<ColumnSelectType>>> getSelectOptionDataMap(List<ColumnSelectType> selectTypes) {
         HashMap<String, List<SelectOptionData<ColumnSelectType>>> stringListMap = new HashMap<>();
@@ -377,6 +400,17 @@ public class DevTableColumnService extends BaseSortableService {
         return stringListMap;
     }
 
+    /**
+     * 更新表格字段
+     *
+     * 根据传入的表单字段（form）和模型字段（model），对表格字段进行更新操作。
+     *
+     * @param form  表单字段对象，包含表单字段的当前信息
+     * @param model 模型字段对象，包含模型字段的新信息
+     * @return 返回更新后的表单字段对象
+     * @throws InvocationTargetException 如果在反射调用过程中发生异常，将抛出该异常
+     * @throws IllegalAccessException  如果在反射调用过程中访问受限，将抛出该异常
+     */
     public ColumnMeta upgradeTable(ColumnMeta form, ColumnMeta model) throws InvocationTargetException, IllegalAccessException {
         // 字段标识，是否变更
         if (model.getName().equals(form.getName())) {
@@ -422,6 +456,17 @@ public class DevTableColumnService extends BaseSortableService {
         return form;
     }
 
+    /**
+     * 获取 SQL 参数
+     *
+     * 根据提供的列元数据对象和前缀，生成包含列元数据信息的 SQL 参数映射。
+     *
+     * @param model   列元数据对象，包含列的详细信息
+     * @param prefix  参数名前缀
+     * @return 返回包含列元数据信息的 SQL 参数映射
+     * @throws InvocationTargetException 如果在反射调用过程中发生异常，将抛出该异常
+     * @throws IllegalAccessException  如果在反射调用过程中访问受限，将抛出该异常
+     */
     public Map<String, Object> getSqlParams(ColumnMeta model, String prefix) throws InvocationTargetException, IllegalAccessException {
         Map<String, Object> maps = JSONObject.parseObject(JSONObject.toJSONString(model));
         Map<String, Object> modelMaps = new HashMap<>();

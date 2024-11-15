@@ -27,8 +27,10 @@ public class DevTableForeignService extends BaseSortableService {
     /**
      * 依据表格情况，从数据库中更新至 dev_column 中
      *
-     * @param tableMeta
-     * @param deleteAll
+     * 根据表格元数据对象，从数据库中查询外键信息，并根据是否需要删除所有现有外键来更新dev_column表中外键的记录。
+     *
+     * @param tableMeta 表格元数据对象，包含表格的基本信息
+     * @param deleteAll 是否删除所有现有外键
      */
     public void resetTableForeignByDataBase(TableMeta tableMeta, boolean deleteAll) {
         Map<String, Object> queryParams = new HashMap<>();
@@ -70,10 +72,13 @@ public class DevTableForeignService extends BaseSortableService {
     }
 
     /**
-     * 比较 dev_column 和 数据库中字段 创建、更新、删除
+     * 比较 dev_column 和 数据库中外键 创建、更新、删除
      *
-     * @param metaMap
-     * @param schemaMap
+     * 根据传入的 dev_column 外键映射（metaMap）和数据库外键映射（schemaMap），对数据库中的外键记录进行相应的创建、更新或删除操作。
+     *
+     * @param tableMeta 表元数据对象，包含表的基本信息
+     * @param metaMap   dev_column外键映射，键为外键名，值为对应的TableForeign对象
+     * @param schemaMap 数据库外键映射，键为外键名，值为对应的SchemaForeign对象
      */
     private void compareHashMapKeys(TableMeta tableMeta, HashMap<String, TableForeign> metaMap, Map<String, SchemaForeign> schemaMap) {
         // 遍历 metaMap 的键 不存在：不处理

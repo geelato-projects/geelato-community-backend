@@ -2,8 +2,6 @@ package cn.geelato.core.script.js;
 
 import cn.geelato.core.script.AbstractScriptManager;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 import javax.script.ScriptException;
@@ -28,8 +26,12 @@ public class JsScriptManager extends AbstractScriptManager {
     private final JsProvider jsProvider = new JsProvider();
 
     /**
-     * 解析*.js、*.sql的文件，支持两种格式
+     * 解析*.js和*.sql文件
+     * <p>
+     * 该方法用于解析指定路径下的*.js和*.sql文件，支持两种文件格式。
      *
+     * @param file 要解析的文件
+     * @throws IOException 如果在文件读取或解析过程中发生输入输出异常，则抛出此异常
      */
     @Override
     public void parseFile(File file) throws IOException {
@@ -52,8 +54,13 @@ public class JsScriptManager extends AbstractScriptManager {
 
 
     /**
-     * @param id       sqlId or functionName
-     * @param paramMap key value(key value)，值Object为key value的对象或字符串、数字等基本类型
+     * 根据给定的id和参数生成SQL语句。
+     *
+     * @param id       SQL语句的ID或者函数名称
+     * @param paramMap 包含参数的Map，其中键为参数名，值为参数值。参数值可以是对象、字符串、数字等基本类型。
+     * @return 返回生成的SQL语句字符串，如果生成失败则返回null。
+     * @throws ScriptException       如果在执行JavaScript脚本时发生异常
+     * @throws NoSuchMethodException 如果找不到对应的执行方法
      */
     public String generate(String id, Map<String, Object> paramMap) {
         if (jsProvider.contain(id)) {

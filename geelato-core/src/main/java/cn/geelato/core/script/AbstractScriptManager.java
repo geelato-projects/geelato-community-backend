@@ -28,8 +28,13 @@ public abstract class AbstractScriptManager extends GlobalContext {
     public abstract void loadDb();
 
     /**
-     * @param path 文件存放目录,多个目录用逗号分隔，递归加载子目录
-     * @throws IOException 读取文件出错
+     * 加载指定路径下的文件。
+     * <p>
+     * 该方法接受一个包含文件存放目录路径的字符串作为参数，可以指定多个目录，目录之间用逗号分隔。
+     * 方法会递归加载指定目录下的所有文件以及子目录中的文件。
+     *
+     * @param path 文件存放目录路径，支持指定多个目录，目录之间用逗号分隔
+     * @throws IOException 如果在读取文件过程中发生错误，则抛出IOException异常
      */
     public void loadFiles(String path) throws IOException {
         String[] paths = path.split(",");
@@ -39,8 +44,10 @@ public abstract class AbstractScriptManager extends GlobalContext {
     }
 
     /**
-     * @param file 文件存放目录,递归加载子目录
-     * @throws IOException IOException
+     * 递归加载指定目录下的所有文件。
+     *
+     * @param file 文件存放目录，将递归加载该目录及其所有子目录中的文件。
+     * @throws IOException 如果在文件操作过程中发生I/O错误，将抛出此异常。
      */
     public void loadFiles(File file) throws IOException {
         parseDirectory(file);
@@ -88,8 +95,8 @@ public abstract class AbstractScriptManager extends GlobalContext {
         return lineList;
     }
 
-    //todo 内容校验
-    protected Boolean validateContent(Object content){
+    // todo 内容校验
+    protected Boolean validateContent(Object content) {
         return true;
     }
 }

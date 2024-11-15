@@ -1,12 +1,11 @@
 package cn.geelato.web.platform.m.base.service;
 
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.enums.EnableStatusEnum;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.m.base.entity.Dict;
 import cn.geelato.web.platform.m.base.entity.DictItem;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -24,8 +23,10 @@ public class DictService extends BaseSortableService {
 
     /**
      * 逻辑删除
+     * <p>
+     * 将给定的字典模型对象标记为禁用状态，并清理与之关联的字典项。
      *
-     * @param model
+     * @param model 要进行逻辑删除的字典模型对象
      */
     public void isDeleteModel(Dict model) {
         model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
@@ -43,9 +44,11 @@ public class DictService extends BaseSortableService {
 
     /**
      * 更新数据字典
+     * <p>
+     * 更新指定ID的数据字典信息，并处理应用变更。
      *
-     * @param model
-     * @return
+     * @param model 包含要更新的数据字典信息的模型对象
+     * @return 返回更新后的数据字典模型对象
      */
     public Dict updateModel(Dict model) {
         Dict source = getModel(Dict.class, model.getId());

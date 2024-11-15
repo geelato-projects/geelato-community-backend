@@ -30,10 +30,10 @@ public enum AttachmentSourceEnum {
     }
 
     /**
-     * 获取枚举类
+     * 根据给定的值获取对应的枚举类。
      *
-     * @param value
-     * @return
+     * @param value 要获取的枚举类对应的值
+     * @return 返回对应的枚举类对象，如果未找到对应的枚举类，则返回null
      */
     public static AttachmentSourceEnum getEnum(String value) {
         if (Strings.isNotBlank(value)) {

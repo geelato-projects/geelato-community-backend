@@ -152,6 +152,13 @@ public class FileService {
         return attach.getId();
     }
 
+    /**
+     * 生成指定尺寸的缩略图
+     *
+     * @param source    源文件信息
+     * @param dimension 缩略图尺寸，如果为null则默认为0
+     * @throws IOException 如果在文件操作过程中发生I/O错误，则抛出此异常
+     */
     private void thumbnail(Attach source, Integer dimension) throws IOException {
         File sourceFile = new File(source.getPath());
         int dv = dimension == null ? 0 : dimension;

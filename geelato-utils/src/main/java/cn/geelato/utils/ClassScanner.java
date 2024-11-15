@@ -81,9 +81,16 @@ public class ClassScanner {
     }
 
     /**
-     * 第三方Jar类库的引用。
+     * 查找指定包名下的类名，并将其添加到给定的类列表中。
+     * 该方法通过遍历指定的JAR文件，查找所有符合条件的类名，并将其添加到传入的类列表中。
+     * 如果设置了递归选项，则还会查找子包中的类。
      *
-     * @throws IOException IOException
+     * @param clazzList   类列表，用于存储找到的类名
+     * @param pkgName     包名，用于筛选符合条件的类
+     * @param url         JAR文件的URL
+     * @param isRecursive 是否递归查找子包中的类
+     * @param annotation  注解类型，用于筛选具有指定注解的类（可选）
+     * @throws IOException 如果在读取JAR文件时发生I/O错误，则抛出此异常
      */
     public static void findClassName(List<Class<?>> clazzList, String pkgName, URL url, boolean isRecursive, Class<? extends Annotation> annotation) throws IOException {
         JarURLConnection jarURLConnection = (JarURLConnection) url.openConnection();

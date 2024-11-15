@@ -45,9 +45,11 @@ public class UserService extends BaseSortableService {
     private AliMobileService aliMobileService;
 
     /**
-     * 逻辑删除
+     * 逻辑删除用户
+     * <p>
+     * 删除指定的用户，并同时删除与之关联的组织用户关系和角色用户关系。
      *
-     * @param model
+     * @param model 要删除的用户对象
      */
     public void isDeleteModel(User model) {
         // 用户删除

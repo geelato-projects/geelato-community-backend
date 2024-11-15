@@ -39,10 +39,11 @@ public enum DataTypeRadiusEnum {
     }
 
     /**
-     * 获取数据类型范围
+     * 获取数据类型范围。
+     * 根据给定的数据类型名称，从预定义的数据类型枚举中获取对应的数据类型范围。
      *
-     * @param type
-     * @return
+     * @param type 数据类型名称，例如"VARCHAR"
+     * @return 返回对应的数据类型范围对象，如果未找到匹配的数据类型，则返回null
      */
     public static DataTypeRadius getRadius(String type) {
         if (Strings.isNotBlank(type)) {

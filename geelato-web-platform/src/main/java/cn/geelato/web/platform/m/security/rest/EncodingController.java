@@ -107,12 +107,14 @@ public class EncodingController extends BaseController {
     }
 
     /**
-     * 获取一个新的编码，如需要使用系统编码app，需在参数中传入appId
+     * 获取一个新的编码
+     * <p>
+     * 根据提供的编码ID和参数，生成一个新的编码。如果需要使用系统编码app，需要在参数中传入appId。
      *
-     * @param id                   编码ID
-     * @param argumentParam        params参数
-     * @param argumentBodyOptional body参数，优先级高于params参数
-     * @return
+     * @param id                   编码ID，用于指定要生成的编码类型
+     * @param argumentParam        params参数，包含生成编码所需的参数
+     * @param argumentBodyOptional body参数，优先级高于params参数，包含生成编码所需的额外参数
+     * @return 返回包含生成编码结果的ApiResult对象
      */
     @RequestMapping(value = "/generate/{id}", method = RequestMethod.POST)
     public ApiResult generate(@PathVariable(required = true) String id, @RequestParam Map<String, Object> argumentParam, @RequestBody Optional<Map<String, Object>> argumentBodyOptional) {

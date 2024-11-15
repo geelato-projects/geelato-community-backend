@@ -25,27 +25,14 @@ import java.util.Map;
 @Slf4j
 public class QrcodeUtils {
 
-    public static void main(String[] args) {
-        Qrcode qrcode = new Qrcode();
-        qrcode.setAppId("1");
-        qrcode.setTitle("测试");
-        qrcode.setCode("https://www.geelato.cn");
-        qrcode.setPictureFormat(BarcodePictureFormatEnum.PNG.getExtension());
-        qrcode.setWidth(900);
-        qrcode.setHeight(900);
-        qrcode.setCodeColor("#000000");
-        qrcode.setBackgroundColor("#FFFFFF");
-        qrcode.setCodePadding(20);
-
-        generateQrcode("https://www.geelato.cn", qrcode);
-    }
-
     /**
      * 生成二维码
+     * <p>
+     * 根据提供的文本和二维码配置，生成对应的二维码图片，并返回图片的路径。
      *
-     * @param text
-     * @param qrcode
-     * @return
+     * @param text   要生成二维码的文本内容
+     * @param qrcode 二维码的配置信息，包括大小、边距、背景色、字体色等
+     * @return 返回生成的二维码图片的路径
      */
     public static String generateQrcode(String text, Qrcode qrcode) {
         // 数据处理

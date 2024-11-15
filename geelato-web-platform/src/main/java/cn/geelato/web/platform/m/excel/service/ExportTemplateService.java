@@ -218,11 +218,13 @@ public class ExportTemplateService extends BaseService {
     }
 
     /**
-     * 往文档中写入信息，导入功能，模板
+     * 往文档中写入模板信息
+     * <p>
+     * 在给定的Excel工作簿中创建一个新的工作表，并根据提供的业务类型数据列表，向该工作表中写入表头信息。
      *
-     * @param workbook
-     * @param sheetName
-     * @param metas
+     * @param workbook  Excel工作簿对象
+     * @param sheetName 新建工作表的名称
+     * @param metas     业务类型数据列表，每个元素包含业务类型名称、类型、格式和备注等信息
      */
     private void importTemplateSheet(XSSFWorkbook workbook, String sheetName, List<BusinessTypeData> metas) {
         XSSFSheet sheet = workbook.createSheet(sheetName);
@@ -248,11 +250,13 @@ public class ExportTemplateService extends BaseService {
     }
 
     /**
-     * 往文档中写入信息，导入功能，数据类型
+     * 往文档中写入数据类型信息，用于导入功能
+     * <p>
+     * 在给定的Excel工作簿中创建一个新的工作表，并根据提供的业务类型数据列表，向该工作表中写入数据类型信息。
      *
-     * @param workbook
-     * @param sheetName
-     * @param metas
+     * @param workbook  Excel工作簿对象
+     * @param sheetName 新建工作表的名称
+     * @param metas     业务类型数据列表，每个元素包含业务类型名称、类型、格式、备注等信息
      */
     private void importMetaTypeSheet(XSSFWorkbook workbook, String sheetName, List<BusinessTypeData> metas) {
         XSSFSheet sheet = workbook.createSheet(sheetName);
@@ -282,10 +286,12 @@ public class ExportTemplateService extends BaseService {
 
     /**
      * 往文档中写入信息，导入功能，清洗规则
+     * <p>
+     * 在Excel工作簿中创建一个新的工作表，并向其中写入清洗规则的表头和数据。
      *
-     * @param workbook
-     * @param sheetName
-     * @param metas
+     * @param workbook  Excel工作簿对象
+     * @param sheetName 新建工作表的名称
+     * @param metas     清洗规则数据列表，包含处理列名、清洗规则类型、规则、目标、是否保留原值和次序等信息
      */
     private void importMetaRuleSheet(XSSFWorkbook workbook, String sheetName, List<BusinessTypeRuleData> metas) {
         XSSFSheet sheet = workbook.createSheet(sheetName);
@@ -324,11 +330,13 @@ public class ExportTemplateService extends BaseService {
     }
 
     /**
-     * 往文档中写入信息，导入功能，元数据
+     * 往文档中写入元数据，用于导入功能
+     * <p>
+     * 在给定的Excel工作簿中创建一个新的工作表，并根据提供的业务元数据列表，向该工作表中写入元数据信息。
      *
-     * @param workbook
-     * @param sheetName
-     * @param metas
+     * @param workbook  Excel工作簿对象
+     * @param sheetName 新建工作表的名称
+     * @param metas     业务元数据列表，每个元素包含表名、列名、评估规则、常量值、变量值、表达式、字典编码、主键值和备注等信息
      */
     private void importMetaMetaSheet(XSSFWorkbook workbook, String sheetName, List<BusinessMeta> metas) {
         XSSFSheet sheet = workbook.createSheet(sheetName);
@@ -360,10 +368,12 @@ public class ExportTemplateService extends BaseService {
 
     /**
      * 往文档中写入信息，导出功能，元数据
+     * <p>
+     * 在给定的Excel工作簿中创建一个新的工作表，并根据提供的占位符元数据列表，向该工作表中写入元数据信息。
      *
-     * @param workbook
-     * @param sheetName
-     * @param metas
+     * @param workbook  Excel工作簿对象
+     * @param sheetName 新建工作表的名称
+     * @param metas     占位符元数据列表，每个元素包含占位符名称、变量名、列表变量名、常量值、表达式、值类型、值计算模式、是否列表、是否合并、是否唯一、是否图片、图片宽度、图片高度、图片来源、条形码编码、导入格式、导出格式和描述等信息
      */
     private void exportMetaSheet(XSSFWorkbook workbook, String sheetName, List<PlaceholderMeta> metas) {
         XSSFSheet sheet = workbook.createSheet(sheetName);
@@ -403,11 +413,15 @@ public class ExportTemplateService extends BaseService {
     }
 
     /**
-     * 获取文件路径 upload/存放表/租户编码/应用Id
+     * 获取文件保存路径
+     * <p>
+     * 根据提供的导出模板元数据、文件名和是否重命名标志，获取文件的保存路径。
+     * 路径格式为：upload/存放表/租户编码/应用Id
      *
-     * @param meta
-     * @param fileName
-     * @return
+     * @param meta     导出模板元数据对象
+     * @param fileName 文件名
+     * @param isRename 是否重命名文件
+     * @return 返回文件的保存路径
      */
     private String getSavePath(ExportTemplate meta, String fileName, boolean isRename) {
         return UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_RESOURCES.getValue(), meta.getTenantCode(), meta.getAppId(), fileName, isRename);
@@ -415,12 +429,14 @@ public class ExportTemplateService extends BaseService {
 
     /**
      * 保存文件至附件表中
+     * <p>
+     * 将Excel文件保存到附件表中，并返回保存后的资源对象。
      *
-     * @param meta
-     * @param excelPath
-     * @param fileName
-     * @return
-     * @throws IOException
+     * @param meta      导出模板元数据对象，包含应用ID等信息
+     * @param excelPath Excel文件的路径
+     * @param fileName  文件名
+     * @return 返回保存后的资源对象
+     * @throws IOException 如果在文件读写或保存过程中出现I/O异常，将抛出该异常
      */
     public Resources saveAttach(ExportTemplate meta, String excelPath, String fileName) throws IOException {
         File excelFile = new File(excelPath);
@@ -439,11 +455,13 @@ public class ExportTemplateService extends BaseService {
 
     /**
      * 将文件转为base64格式
+     * <p>
+     * 将提供的文件输入流转换为Base64编码的字符串，并将相关信息存储在一个Map中返回。
      *
-     * @param fileInputStream
-     * @param attach
-     * @return
-     * @throws IOException
+     * @param fileInputStream 文件输入流，包含要转换的文件数据
+     * @param attach          资源对象，包含文件的类型、大小、名称等信息
+     * @return 返回包含文件信息的Map，包括文件的Base64编码内容、类型、大小和名称
+     * @throws IOException 如果在文件读取过程中发生I/O异常，将抛出该异常
      */
     private Map<String, Object> fileToBase64(FileInputStream fileInputStream, Resources attach) throws IOException {
         Map<String, Object> templateMap = new HashMap<>();
@@ -458,12 +476,15 @@ public class ExportTemplateService extends BaseService {
     }
 
     /**
-     * 备份原数据，在更新原数据
+     * 备份原数据并更新原数据
+     * <p>
+     * 在更新导出模板数据之前，先备份原始数据。
      *
-     * @param meta
-     * @param template
-     * @throws InvocationTargetException
-     * @throws IllegalAccessException
+     * @param meta         导出模板元数据对象
+     * @param template     模板内容
+     * @param templateRule 模板规则
+     * @throws InvocationTargetException 如果调用方法时发生异常
+     * @throws IllegalAccessException    如果访问非法时发生异常
      */
     private void backupsAndUpdateExportTemplate(ExportTemplate meta, String template, String templateRule) throws InvocationTargetException, IllegalAccessException {
         if (template == null && templateRule == null) {
@@ -488,14 +509,12 @@ public class ExportTemplateService extends BaseService {
     }
 
     /**
-     * 表头样式
-     * 字体：仿宋、12、加粗
-     * 背景色：浅灰色
-     * 边框：上下左右
-     * 方向：水平居中、垂直居中
+     * 获取表头单元格样式
+     * <p>
+     * 设置表头单元格的字体为仿宋、12号、加粗，背景色为浅灰色，边框为上下左右均有，文本方向为水平居中、垂直居中。
      *
-     * @param workbook
-     * @return
+     * @param workbook Excel工作簿对象
+     * @return 返回设置好的单元格样式对象
      */
     private XSSFCellStyle getHeaderCellStyle(XSSFWorkbook workbook) {
         // 创建单元格样式，并将字体样式应用到单元格样式中
@@ -512,13 +531,12 @@ public class ExportTemplateService extends BaseService {
     }
 
     /**
-     * 表头样式
-     * 字体：仿宋、11
-     * 边框：上下左右
-     * 方向：水平居中、垂直居中
+     * 获取单元格样式
+     * <p>
+     * 设置单元格的字体为仿宋、11号，边框为上下左右，文本方向为水平居中、垂直居中。
      *
-     * @param workbook
-     * @return
+     * @param workbook Excel工作簿对象
+     * @return 返回设置好的单元格样式对象
      */
     private XSSFCellStyle getCellStyle(XSSFWorkbook workbook) {
         // 创建单元格样式，并将字体样式应用到单元格样式中

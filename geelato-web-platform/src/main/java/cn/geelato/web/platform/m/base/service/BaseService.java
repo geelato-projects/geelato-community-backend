@@ -36,10 +36,13 @@ public class BaseService {
 
     /**
      * 分页查询
+     * <p>
+     * 该方法用于执行分页查询操作，并返回分页查询结果。
      *
-     * @param params
-     * @param request
-     * @return
+     * @param sqlId   SQL语句的标识符，用于指定要执行的SQL查询语句
+     * @param params  SQL查询所需的参数，以键值对的形式提供
+     * @param request 分页查询请求对象，包含分页信息（如页码、每页条数等）
+     * @return 返回分页查询结果，包括分页信息、数据总数、数据列表等
      */
     public ApiPagedResult pageQueryModel(String sqlId, Map<String, Object> params, PageQueryRequest request) {
         ApiPagedResult result = new ApiPagedResult();
@@ -62,12 +65,14 @@ public class BaseService {
 
     /**
      * 分页查询
+     * <p>
+     * 该方法用于对指定实体进行分页查询。
      *
-     * @param entity
-     * @param params
-     * @param request
-     * @param <T>
-     * @return
+     * @param entity  需要查询的实体类类型
+     * @param params  查询参数，用于构造查询条件
+     * @param request 分页查询请求对象，包含分页参数和排序参数
+     * @param <T>     泛型，表示需要查询的实体类型
+     * @return 返回包含分页查询结果的ApiPagedResult对象
      */
     public <T> ApiPagedResult pageQueryModel(Class<T> entity, Map<String, Object> params, PageQueryRequest request) {
         ApiPagedResult result = new ApiPagedResult();
@@ -89,8 +94,15 @@ public class BaseService {
     }
 
     /**
-     * 分页查询
+     * 分页查询方法
+     * <p>
+     * 该方法用于对指定实体类进行分页查询，并返回分页结果。
      *
+     * @param <T>     实体类类型
+     * @param entity  要查询的实体类
+     * @param filter  查询条件组
+     * @param request 分页查询请求参数
+     * @return 返回分页查询结果，包括分页信息、查询结果等
      */
     public <T> ApiPagedResult pageQueryModel(Class<T> entity, FilterGroup filter, PageQueryRequest request) {
         ApiPagedResult result = new ApiPagedResult();
@@ -112,9 +124,13 @@ public class BaseService {
 
     /**
      * 全量查询
+     * <p>
+     * 根据给定的实体类和条件参数执行全量查询，并返回查询结果列表。
      *
-     * @param entity 查询实体
-     * @param params 条件参数
+     * @param entity  查询的实体类
+     * @param params  查询条件参数，以键值对的形式表示
+     * @param orderBy 排序规则，指定查询结果的排序方式
+     * @return 返回查询结果列表，列表中的元素类型为指定的实体类类型
      */
     public <T> List<T> queryModel(Class<T> entity, Map<String, Object> params, String orderBy) {
         dao.setDefaultFilter(true, filterGroup);
@@ -124,11 +140,13 @@ public class BaseService {
 
     /**
      * 全量查询，默认排序
+     * <p>
+     * 执行全量查询操作，并使用默认的排序规则对查询结果进行排序。
      *
-     * @param entity
-     * @param params
-     * @param <T>
-     * @return
+     * @param entity 查询的目标实体类
+     * @param params 查询参数，包含查询条件等
+     * @param <T>    泛型参数，表示查询结果的数据类型
+     * @return 返回查询结果的列表，列表中的元素类型为泛型参数T
      */
     public <T> List<T> queryModel(Class<T> entity, Map<String, Object> params) {
         return queryModel(entity, params, BaseService.DEFAULT_ORDER_BY);
@@ -136,9 +154,13 @@ public class BaseService {
 
     /**
      * 全量查询
+     * <p>
+     * 根据给定的实体类和条件参数进行全量查询，并返回查询结果列表。
      *
-     * @param entity 查询实体
-     * @param filter 条件参数
+     * @param entity  查询的实体类
+     * @param filter  条件参数，用于过滤查询结果
+     * @param orderBy 排序字段和排序方式，如果不指定，则使用默认排序方式
+     * @return 返回查询结果列表，列表中的元素类型为指定的实体类类型
      */
     public <T> List<T> queryModel(Class<T> entity, FilterGroup filter, String orderBy) {
         dao.setDefaultFilter(true, filterGroup);
@@ -147,12 +169,14 @@ public class BaseService {
     }
 
     /**
-     * 全量查询，默认排序
+     * 全量查询，使用默认排序
+     * <p>
+     * 根据指定的实体类和过滤条件进行全量查询，并使用默认的排序规则对查询结果进行排序。
      *
-     * @param entity
-     * @param filter
-     * @param <T>
-     * @return
+     * @param entity 要查询的实体类类型
+     * @param filter 查询条件，用于筛选满足条件的实体记录
+     * @param <T>    实体类的泛型类型
+     * @return 返回查询到的实体记录列表
      */
     public <T> List<T> queryModel(Class<T> entity, FilterGroup filter) {
         dao.setDefaultFilter(true, filterGroup);
@@ -161,9 +185,12 @@ public class BaseService {
 
     /**
      * 单条数据获取
+     * <p>
+     * 根据给定的实体类和ID，从数据库中查询并返回对应的实体对象。
      *
-     * @param entity 查询实体
-     * @param id     实体id
+     * @param entity 查询的实体类
+     * @param id     实体的ID
+     * @return 返回查询到的实体对象，如果未找到对应的数据则返回null
      */
     public <T> T getModel(Class<T> entity, String id) {
         return dao.queryForObject(entity, id);
@@ -171,10 +198,12 @@ public class BaseService {
 
     /**
      * 创建一条数据
+     * <p>
+     * 该方法用于在数据库中创建一条新的数据记录。
      *
-     * @param model 实体数据
-     * @param <T>
-     * @return
+     * @param model 要创建的实体数据对象
+     * @param <T>   泛型类型，表示实体数据的类型，必须继承自BaseEntity类
+     * @return 返回创建后的实体数据对象
      */
     public <T extends BaseEntity> T createModel(T model) {
         model.setDelStatus(DeleteStatusEnum.NO.getCode());
@@ -189,10 +218,12 @@ public class BaseService {
 
     /**
      * 更新一条数据
+     * <p>
+     * 更新指定实体数据，包括设置删除状态为未删除、清空删除时间，并处理租户代码。
      *
-     * @param model 实体数据
-     * @param <T>
-     * @return
+     * @param model 实体数据对象，需要继承自BaseEntity
+     * @param <T>   实体数据的泛型类型
+     * @return 更新后的实体数据对象
      */
     public <T extends BaseEntity> T updateModel(T model) {
         model.setDelStatus(DeleteStatusEnum.NO.getCode());
@@ -206,10 +237,12 @@ public class BaseService {
     }
 
     /**
-     * 逻辑删除
+     * 逻辑删除方法
+     * <p>
+     * 该方法将指定模型标记为已删除状态，但不从数据库中实际删除该记录。
      *
-     * @param model
-     * @param <T>
+     * @param model 要进行逻辑删除的模型对象
+     * @param <T>   模型对象的类型，必须继承自BaseEntity
      */
     public <T extends BaseEntity> void isDeleteModel(T model) {
         model.setDelStatus(DeleteStatusEnum.IS.getCode());
@@ -219,20 +252,24 @@ public class BaseService {
 
     /**
      * 删除一条数据
+     * <p>
+     * 根据给定的实体类和实体ID，从数据库中删除对应的数据记录。
      *
-     * @param entity 实体
-     * @param id     实体id
+     * @param entity 要删除数据的实体类
+     * @param id     要删除数据的实体ID
      */
     public void deleteModel(Class entity, String id) {
         dao.delete(entity, "id", id);
     }
 
     /**
-     * 是否存在数据
+     * 判断是否存在数据
+     * <p>
+     * 根据提供的实体类和实体ID，判断数据库中是否存在对应的数据记录。
      *
-     * @param entity 查询实体
-     * @param id     实体id
-     * @return
+     * @param entity 查询实体对应的类
+     * @param id     要查询的实体ID
+     * @return 如果存在对应的数据记录，则返回true；否则返回false
      */
     public boolean isExist(Class entity, String id) {
         if (Strings.isNotBlank(id)) {
@@ -242,11 +279,14 @@ public class BaseService {
     }
 
     /**
-     * 是否存在数据
+     * 判断是否存在数据
+     * <p>
+     * 根据给定的实体类、字段名称和字段值，判断数据库中是否存在满足条件的数据记录。
      *
-     * @param entity     查询实体
-     * @param fieldName  关联实体字段名称
-     * @param fieldValue 关联实体字段值
+     * @param entity     要查询的实体类类型
+     * @param fieldName  关联实体的字段名称
+     * @param fieldValue 关联实体的字段值
+     * @return 如果存在满足条件的数据记录，则返回true；否则返回false
      */
     public <T> boolean isExist(Class<T> entity, String fieldName, Object fieldValue) {
         if (fieldValue != null) {
@@ -259,7 +299,16 @@ public class BaseService {
         return false;
     }
 
-
+    /**
+     * 验证表格数据的有效性
+     * <p>
+     * 根据给定的表名、ID和参数，验证表格数据是否有效。
+     *
+     * @param tableName 要验证的表格名称
+     * @param id        要验证的数据ID，如果为空则不限制ID
+     * @param params    验证参数，包含验证所需的数据
+     * @return 如果验证通过返回true，否则返回false
+     */
     public boolean validate(String tableName, String id, Map<String, String> params) {
         Map<String, Object> map = new HashMap<>();
         // 租户编码
@@ -280,6 +329,17 @@ public class BaseService {
         return vlist.isEmpty();
     }
 
+    /**
+     * 验证数据
+     * <p>
+     * 根据提供的表名、ID和参数，执行数据验证操作。
+     *
+     * @param tableName 表名，表示要验证的数据所在的表
+     * @param id        数据ID，用于排除特定记录
+     * @param params    验证参数，包含要验证的字段及其值
+     * @param lowers    验证参数的低级版本，用于处理某些特殊需求
+     * @return 如果验证通过（即没有查询到冲突数据），则返回true；否则返回false
+     */
     public boolean validate(String tableName, String id, Map<String, String> params, Map<String, String> lowers) {
         Map<String, Object> map = new HashMap<>();
         // 租户编码
@@ -301,6 +361,14 @@ public class BaseService {
         return vlist.isEmpty();
     }
 
+    /**
+     * 格式化参数
+     * <p>
+     * 将传入的参数Map转换为JSONObject列表。
+     *
+     * @param params 参数Map，键为参数名，值为参数值
+     * @return 返回格式化后的JSONObject列表，每个JSONObject包含"key"和"value"两个字段
+     */
     private List<JSONObject> formatParameter(Map<String, String> params) {
         List<JSONObject> list = new ArrayList<>();
         for (Map.Entry<String, String> param : params.entrySet()) {
@@ -316,7 +384,9 @@ public class BaseService {
     }
 
     /**
-     * @return 当前会话信息
+     * 获取当前会话的租户编码。
+     *
+     * @return 返回当前会话的租户编码。
      */
     protected String getSessionTenantCode() {
         return SessionCtx.getCurrentTenantCode();
@@ -324,9 +394,12 @@ public class BaseService {
 
     /**
      * 根据ID获取列表
+     * <p>
+     * 根据提供的实体类类型和ID字符串，查询并返回对应的实体对象列表。
      *
-     * @param id
-     * @return 列表
+     * @param entity 要查询的实体类类型
+     * @param id     包含要查询的实体ID的字符串，多个ID之间用逗号分隔
+     * @return 返回查询到的实体对象列表，如果未找到对应的数据则返回空列表
      */
     public <T extends BaseEntity> List<T> getModelsById(Class<T> entity, String id) {
         List<T> list = new ArrayList<>();
@@ -340,12 +413,14 @@ public class BaseService {
     }
 
     /**
-     * 旧集合与新集合对比，返回新增、更新、删除
+     * 对比旧集合与新集合，返回新增、更新、删除的实体列表
+     * <p>
+     * 该方法用于比较两个实体集合（旧集合和新集合），并返回新增、更新和删除的实体列表。
      *
-     * @param sources
-     * @param targets
-     * @param <T>
-     * @return
+     * @param sources 旧集合，包含旧的数据实体列表
+     * @param targets 新集合，包含新的数据实体列表
+     * @param <T>     泛型类型，表示实体类型，必须继承自BaseEntity类
+     * @return 返回一个包含新增、更新、删除实体列表的Map，键为比较结果类型（新增、更新、删除），值为对应类型的实体列表
      */
     public <T extends BaseEntity> Map<String, List<T>> compareBaseEntity(List<T> sources, List<T> targets) {
         Map<String, List<T>> result = new HashMap<>();

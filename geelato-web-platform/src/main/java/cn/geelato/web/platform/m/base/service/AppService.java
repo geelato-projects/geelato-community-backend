@@ -24,11 +24,11 @@ public class AppService extends BaseSortableService {
     private RoleAppMapService roleAppMapService;
 
     /**
-     * 逻辑删除
-     * 1, 删除 app
-     * 2, 删除 role_r_app
+     * 逻辑删除方法
+     * <p>
+     * 该方法首先执行应用的删除操作，然后删除与角色相关联的应用信息。
      *
-     * @param model
+     * @param model 要删除的应用模型对象
      */
     public void isDeleteModel(App model) {
         // 应用删除
@@ -46,11 +46,14 @@ public class AppService extends BaseSortableService {
 
     /**
      * 创建应用
-     * 1，创建 app
-     * 2，创建 role_r_app
+     * <p>
+     * 该方法用于创建一个新的应用，并关联平台级角色。
+     * <p>
+     * 1. 创建应用（app）。
+     * 2. 创建应用与角色的关联关系（role_r_app）。
      *
-     * @param model
-     * @return
+     * @param model 包含应用信息的模型对象
+     * @return 返回创建的应用对象
      */
     public App createModel(App model) {
         // 创建应用
@@ -68,12 +71,14 @@ public class AppService extends BaseSortableService {
 
     /**
      * 导入应用
-     * 1，创建 app
-     * 2，变更 app-id
-     * 3，创建 role_r_app
+     * <p>
+     * 该方法用于导入一个应用，主要步骤包括：
+     * 1. 创建应用实例。
+     * 2. 变更应用ID。
+     * 3. 创建角色与应用关联记录。
      *
-     * @param model
-     * @return
+     * @param model 包含应用信息的模型对象
+     * @return 导入后的应用实例
      */
     public App importModel(App model) {
         String id = model.getId();
@@ -95,12 +100,14 @@ public class AppService extends BaseSortableService {
     }
 
     /**
-     * 更新应用
-     * 1, 更新 app
-     * 2, 更新 role_r_app-appName
+     * 更新应用信息
+     * <p>
+     * 该方法负责更新应用的信息，包括应用本身的信息以及与角色关联的应用名称。
+     * 1. 更新应用的基本信息。
+     * 2. 如果应用名称发生变化，则更新role_r_app表中对应的应用名称。
      *
-     * @param model
-     * @return
+     * @param model 包含要更新的应用信息的App对象
+     * @return 更新后的App对象
      */
     public App updateModel(App model) {
         // 查询应用

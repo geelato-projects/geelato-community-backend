@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.m.excel.entity;
 
+import cn.geelato.web.platform.m.excel.enums.ExcelColumnTypeRuleEnum;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.web.platform.m.excel.enums.ExcelColumnTypeRuleEnum;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -84,8 +84,6 @@ public class BusinessTypeRuleData {
 
     /**
      * 求取主键值所需，表格名称
-     *
-     * @return
      */
     public String getQueryRuleTable() {
         if (this.isRuleTypeQueryRule() || this.isRuleTypeQueryGoal()) {
@@ -101,8 +99,6 @@ public class BusinessTypeRuleData {
 
     /**
      * 求取主键值所需，字段名称
-     *
-     * @return
      */
     public List<String> getQueryRuleColumn() {
         List<String> columns = new ArrayList<>();

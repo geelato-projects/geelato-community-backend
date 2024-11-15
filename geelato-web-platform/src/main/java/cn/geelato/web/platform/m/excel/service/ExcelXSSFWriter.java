@@ -31,9 +31,10 @@ public class ExcelXSSFWriter {
      * 支持单个单元格的写入
      * 支持列表按行动态添加写入，支持多个不同的列表并行动态写入
      *
-     * @param sheet
-     * @param placeholderMetaMap
-     * @param valueMapList
+     * @param sheet              Excel工作表对象，用于写入数据
+     * @param placeholderMetaMap 占位符元数据映射，键为占位符名称，值为对应的PlaceholderMeta对象
+     * @param valueMapList       包含多组值映射的列表，每组值映射是一个Map，包含要写入工作表的数据
+     * @param valueMap           包含单个值映射的Map，也包含要写入工作表的数据
      */
     public void writeSheet(XSSFSheet sheet, Map<String, PlaceholderMeta> placeholderMetaMap, List<Map> valueMapList, Map valueMap) {
         int lastRowIndex = sheet.getLastRowNum();
@@ -74,11 +75,13 @@ public class ExcelXSSFWriter {
     }
 
     /**
-     * 按一组值valueMap写入sheet
+     * 按一组值写入Excel工作表
+     * <p>
+     * 根据提供的占位符元数据映射和值映射，将值写入到指定的Excel工作表中。
      *
-     * @param sheet
-     * @param placeholderMetaMap
-     * @param valueMap
+     * @param sheet              Excel工作表对象
+     * @param placeholderMetaMap 占位符元数据映射，键为占位符名称，值为对应的PlaceholderMeta对象
+     * @param valueMap           值映射，包含要写入工作表的数据
      */
     public void writeSheet(XSSFSheet sheet, Map<String, PlaceholderMeta> placeholderMetaMap, Map valueMap) {
         int lastRowIndex = sheet.getLastRowNum();
@@ -156,12 +159,14 @@ public class ExcelXSSFWriter {
     }
 
     /**
-     * 设置行值，对于列表行，动态创建行之后再设置行值
+     * 设置行值
+     * <p>
+     * 对于列表行，动态创建行之后再设置行值。
      *
-     * @param sheet
-     * @param rowIndex
-     * @param rowMeta
-     * @param valueMap
+     * @param sheet    Excel工作表对象
+     * @param rowIndex 当前处理的行索引
+     * @param rowMeta  行元数据对象，包含单元格的元数据
+     * @param valueMap 值映射，包含要写入工作表的数据
      * @return 返回创建的新行数
      */
     private int setRowValue(XSSFSheet sheet, int rowIndex, RowMeta rowMeta, Map valueMap) {
@@ -253,14 +258,16 @@ public class ExcelXSSFWriter {
     }
 
     /**
-     * 合并相同数据的行
+     * 设置合并单元格的范围
+     * <p>
+     * 根据提供的单元格元数据列表、值映射、值列表以及合并范围列表，将具有相同数据的单元格进行合并。
      *
-     * @param sheet
-     * @param rowIndex
-     * @param cellMetaList
-     * @param valueMap
-     * @param valueList
-     * @param mergeScope
+     * @param sheet        Excel工作表对象，用于合并单元格
+     * @param rowIndex     起始行索引
+     * @param cellMetaList 单元格元数据列表，包含需要合并的单元格信息
+     * @param valueMap     单个值映射，包含要写入工作表的数据
+     * @param valueList    包含多组值映射的列表，每组值映射是一个Map，也包含要写入工作表的数据
+     * @param mergeScope   合并范围列表，指定哪些单元格范围需要被合并
      */
     public void setMergeScope(XSSFSheet sheet, int rowIndex, List<CellMeta> cellMetaList, Map valueMap, List<Map> valueList, List<List<Integer>> mergeScope) {
         for (CellMeta cellMeta : cellMetaList) {
@@ -369,10 +376,13 @@ public class ExcelXSSFWriter {
 
     /**
      * 找到需要插入的行数，并新建一个POI的row对象
+     * <p>
+     * 在指定的Excel工作表中，找到需要插入新行的位置，并新建一个XSSFRow对象。
+     * 如果指定位置已经存在行，则将其下移一行。
      *
-     * @param sheet
-     * @param rowIndex
-     * @return
+     * @param sheet    Excel工作表对象
+     * @param rowIndex 需要插入新行的行索引
+     * @return 返回新创建的XSSFRow对象
      */
     private XSSFRow createRow(XSSFSheet sheet, int rowIndex) {
         XSSFRow row = null;
@@ -399,10 +409,12 @@ public class ExcelXSSFWriter {
 
     /**
      * 生成导出模板文件
+     * <p>
+     * 根据提供的Excel工作簿、工作表名称和导出列信息，生成一个包含表头和占位符的Excel模板文件。
      *
-     * @param workbook
-     * @param sheetName
-     * @param exportColumns
+     * @param workbook      Excel工作簿对象
+     * @param sheetName     工作表名称
+     * @param exportColumns 导出列信息列表，每个元素包含列标题、对齐方式、描述和宽度等信息
      */
     public void generateTemplateFile(XSSFWorkbook workbook, String sheetName, List<ExportColumn> exportColumns) {
         XSSFSheet sheet = workbook.createSheet(sheetName);
@@ -475,14 +487,13 @@ public class ExcelXSSFWriter {
     }
 
     /**
-     * 表头样式
-     * 字体：仿宋、12、加粗
-     * 背景色：浅灰色
-     * 边框：上下左右
-     * 方向：水平居中、垂直居中
+     * 获取表头单元格样式
+     * <p>
+     * 设置表头单元格的样式，包括字体、背景色、边框和方向。
+     * 字体为仿宋、12号、加粗，背景色为浅灰色，边框为上下左右，方向为水平居中和垂直居中。
      *
-     * @param workbook
-     * @return
+     * @param workbook Excel工作簿对象
+     * @return 返回设置好的表头单元格样式对象
      */
     private XSSFCellStyle getHeaderCellStyle(XSSFWorkbook workbook) {
         // 创建单元格样式，并将字体样式应用到单元格样式中
@@ -499,13 +510,12 @@ public class ExcelXSSFWriter {
     }
 
     /**
-     * 表头样式
-     * 字体：仿宋、11
-     * 边框：上下左右
-     * 方向：水平居中、垂直居中
+     * 获取表头样式
+     * <p>
+     * 设置单元格的字体为仿宋、11号，并添加边框（上下左右），同时设置文本对齐方式为水平居中和垂直居中。
      *
-     * @param workbook
-     * @return
+     * @param workbook Excel工作簿对象，用于创建单元格样式
+     * @return 返回设置好的单元格样式对象
      */
     private XSSFCellStyle getCellStyle(XSSFWorkbook workbook) {
         // 创建单元格样式，并将字体样式应用到单元格样式中
@@ -520,10 +530,12 @@ public class ExcelXSSFWriter {
     }
 
     /**
-     * 从excel中读取占位符、变量定义
+     * 从Excel中读取占位符和变量定义
+     * <p>
+     * 从指定的Excel工作表中读取占位符和变量定义，并将它们存储在一个映射中。
      *
-     * @param sheet
-     * @return
+     * @param sheet Excel工作表对象，包含占位符和变量定义
+     * @return 返回包含占位符和变量定义的映射，键为占位符名称，值为对应的PlaceholderMeta对象
      */
     public Map<String, PlaceholderMeta> readPlaceholderMeta(XSSFSheet sheet) {
         int lastRowIndex = sheet.getLastRowNum();

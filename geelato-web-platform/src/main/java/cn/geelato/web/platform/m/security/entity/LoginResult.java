@@ -41,9 +41,11 @@ public class LoginResult {
 
     /**
      * 对象转换
+     * <p>
+     * 将用户对象转换为登录结果对象。
      *
-     * @param user
-     * @return
+     * @param user 用户对象，包含用户的基本信息
+     * @return 返回登录结果对象，包含用户的基本信息和登录信息
      */
     public static LoginResult formatLoginResult(User user) {
         LoginResult loginResult = new LoginResult();

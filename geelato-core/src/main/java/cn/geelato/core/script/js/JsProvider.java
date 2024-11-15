@@ -3,15 +3,14 @@ package cn.geelato.core.script.js;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
-import javax.script.*;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import org.graalvm.polyglot.*;
 
 /**
  * 先compile之后再调用{@link #execute}
@@ -31,11 +30,19 @@ public class JsProvider {
     }
 
     /**
-     * 编译多个js函数（function）片段
+     * 编译多个JavaScript函数片段
+     * <p>
+     * 该方法接收一个包含JavaScript函数名称和函数体的Map作为参数，
+     * 遍历该Map，并将每个JavaScript函数编译后存储到jsFunctionInfoMap中。
+     * 如果Map中的某个键已经存在于jsFunctionInfoMap中，则会记录一个警告日志。
      *
+     * @param jsFuncMap 包含JavaScript函数名称和函数体的Map
+     * @throws ScriptException 如果在编译过程中发生脚本异常，则抛出该异常
      */
     public void compile(Map<String, String> jsFuncMap) throws ScriptException {
-        if (jsFuncMap == null){ return;}
+        if (jsFuncMap == null) {
+            return;
+        }
         for (Map.Entry<String, String> entry : jsFuncMap.entrySet()) {
             if (jsFunctionInfoMap.containsKey(entry.getKey())) {
                 log.warn("collection exists key：{}", entry.getKey());
@@ -51,7 +58,7 @@ public class JsProvider {
      * @param functionName 函数名
      * @param scriptText   javascript function脚本片段，有具只有一个function,
      *                     格式如function fun1(a,b){return a+b}
-     * @return
+     * @return CompiledScriptInfo
      * @throws ScriptException
      */
 //    public CompiledScriptInfo compile(String functionName, String scriptText) throws ScriptException {

@@ -46,10 +46,11 @@ public enum MysqlToJavaEnum {
     }
 
     /**
-     * 获取数据库数据类型对于的Java对象
+     * 获取数据库数据类型对应的Java对象类型。
+     * 根据给定的数据库数据类型名称，返回对应的Java对象类型。
      *
-     * @param type
-     * @return
+     * @param type 数据库数据类型名称
+     * @return 返回对应的Java对象类型，如果未找到对应的类型，则返回null
      */
     public static Class getJava(String type) {
         if (Strings.isNotBlank(type)) {

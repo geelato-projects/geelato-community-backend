@@ -196,7 +196,11 @@ public class JWTAuthRestController extends BaseController {
     /**
      * 获取当前用户的菜单
      *
-     * @return
+     * 根据提供的参数，查询并返回当前用户的菜单列表。
+     *
+     * @param params 包含查询参数的Map对象，参数包括flag、appId和tenantCode
+     * @return 返回包含查询结果的ApiResult对象，如果查询成功则返回包含菜单列表的成功结果，否则返回失败结果
+     * @throws Exception 如果在查询过程中发生异常，则抛出该异常
      */
     @RequestMapping(value = "/menu", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult getCurrentUserMenu(@RequestBody Map<String, Object> params) throws Exception {
@@ -241,8 +245,11 @@ public class JWTAuthRestController extends BaseController {
     /**
      * 用于管理员重置密码
      *
-     * @param passwordLength 默认为8位，最长为32位
-     * @return
+     * 通过该方法，管理员可以重置其密码。默认密码长度为8位，最长为32位。
+     *
+     * @param passwordLength 密码长度，默认为8位，最长为32位
+     * @return 返回操作结果，包括密码重置是否成功及生成的随机密码
+     * @throws Exception 如果在重置密码过程中发生异常，则抛出该异常
      */
     @RequestMapping(value = "/resetPassword", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult resetPassword(@RequestParam(defaultValue = "8", required = false) int passwordLength) throws Exception {
@@ -401,8 +408,10 @@ public class JWTAuthRestController extends BaseController {
     /**
      * 通过token获取用户信息
      *
-     * @return
-     * @throws Exception
+     * 根据当前会话的token获取对应的用户信息。
+     *
+     * @return 返回获取到的用户信息对象，如果未找到对应的用户则返回null
+     * @throws Exception 如果在获取用户信息的过程中发生异常，则抛出该异常
      */
     private User getUserByToken() throws Exception {
         ShiroDbRealm.ShiroUser shiroUser = SecurityHelper.getCurrentUser();
@@ -418,9 +427,11 @@ public class JWTAuthRestController extends BaseController {
     }
 
     /**
-     * 用户所属公司
+     * 设置用户所属公司
      *
-     * @param loginResult
+     * 根据登录结果中的公司ID或组织ID，设置登录结果中的公司名称和公司ID。
+     *
+     * @param loginResult 登录结果对象，包含用户的登录信息
      */
     private void setCompany(LoginResult loginResult) {
         if (Strings.isNotBlank(loginResult.getCompanyId())) {

@@ -57,9 +57,11 @@ public class FieldMeta implements Serializable {
 
 
     /**
-     * 列名、字段名是否一致
-     * 如果columnName或fieldName为空，则返回false
+     * 判断列名和字段名是否一致。
+     * 如果列名（columnName）或字段名（fieldName）为空，则返回false；
+     * 否则，比较列名和字段名是否相等，如果相等则返回true，否则返回false。
      *
+     * @return 如果列名和字段名一致，则返回true；否则返回false。
      */
     public boolean isEquals() {
         if (this.getColumn().getName() == null || fieldName == null) {

@@ -98,7 +98,9 @@ public class OrgUserMapService extends BaseService {
     /**
      * 逻辑删除
      *
-     * @param model
+     * 对传入的OrgUserMap对象进行逻辑删除操作，并清理用户默认部门信息。
+     *
+     * @param model 需要进行逻辑删除的OrgUserMap对象
      */
     public void isDeleteModel(OrgUserMap model) {
         isDeleteOrgUserMap(model);
@@ -119,7 +121,9 @@ public class OrgUserMapService extends BaseService {
     /**
      * 基础逻辑删除
      *
-     * @param model
+     * 对OrgUserMap对象执行基础逻辑删除操作，将默认组织设置为非默认。
+     *
+     * @param model 要执行删除操作的OrgUserMap对象
      */
     public void isDeleteOrgUserMap(OrgUserMap model) {
         model.setDefaultOrg(IsDefaultOrgEnum.NO.getCode());

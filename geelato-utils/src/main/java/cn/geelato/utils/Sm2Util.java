@@ -33,6 +33,15 @@ public class Sm2Util {
     }
 
 
+    /**
+     * 使用SM2算法加密字符串
+     * 该方法接收一个待加密的字符串和一个包含公钥和私钥的Map，使用SM2算法对字符串进行加密，并将加密后的字节数组转换为Base64编码的字符串返回。
+     *
+     * @param value 待加密的字符串
+     * @param keys  包含公钥和私钥的Map，其中公钥的键为KeyUtils.PUBLIC_KEY，私钥的键为KeyUtils.PRIVATE_KEY
+     * @return 加密后的字符串，采用Base64编码
+     * @throws Exception 如果在加密过程中发生异常，则抛出该异常
+     */
     public static String encrypt(String value, Map<String, String> keys) throws Exception {
         // 公钥、密钥
         PublicKey publicKey = KeyUtils.createPublicKey(keys.get(KeyUtils.PUBLIC_KEY));
@@ -47,6 +56,17 @@ public class Sm2Util {
         return encryptBase64Str;
     }
 
+    /**
+     * 使用SM2算法解密字符串
+     * 该方法接收一个经过Base64编码的加密字符串和一个包含公钥和私钥的Map，使用SM2算法对字符串进行解密，并返回解密后的字符串。
+     * 在解密之前，可以选择性地使用私钥对加密数据进行签名，并使用公钥进行验证，以确保数据的完整性和真实性。
+     * 如果启用了签名验证功能，则在解密之前会先验证签名，如果验证失败，则抛出异常。
+     *
+     * @param encodeValue 经过Base64编码的加密字符串
+     * @param keys        包含公钥和私钥的Map，其中公钥的键为KeyUtils.PUBLIC_KEY，私钥的键为KeyUtils.PRIVATE_KEY
+     * @return 解密后的字符串
+     * @throws Exception 如果在解密过程中发生异常，或者启用了签名验证但验证失败，则抛出该异常
+     */
     public static String decrypt(String encodeValue, Map<String, String> keys) throws Exception {
         // 公钥、密钥
         PublicKey publicKey = KeyUtils.createPublicKey(keys.get(KeyUtils.PUBLIC_KEY));
@@ -66,7 +86,13 @@ public class Sm2Util {
     }
 
     /**
-     * 根据publicKey对原始数据data，使用SM2加密
+     * 使用SM2算法对原始数据进行加密
+     * <p>
+     * 该方法接收原始数据的字节数组和公钥，使用SM2算法对数据进行加密，并返回加密后的字节数组。
+     *
+     * @param data      待加密的原始数据的字节数组
+     * @param publicKey 用于加密的公钥
+     * @return 加密后的字节数组，如果加密失败则返回null
      */
     public static byte[] encrypt(byte[] data, PublicKey publicKey) {
         ECPublicKeyParameters localECPublicKeyParameters = getEcPublicKeyParameters(publicKey);
@@ -82,6 +108,13 @@ public class Sm2Util {
         }
     }
 
+    /**
+     * 获取EC公钥参数
+     * 根据传入的公钥对象，获取对应的EC公钥参数。
+     *
+     * @param publicKey 公钥对象
+     * @return ECPublicKeyParameters对象，如果公钥不是BCECPublicKey类型，则返回null
+     */
     private static ECPublicKeyParameters getEcPublicKeyParameters(PublicKey publicKey) {
         ECPublicKeyParameters localECPublicKeyParameters = null;
         if (publicKey instanceof BCECPublicKey localECPublicKey) {
@@ -94,7 +127,13 @@ public class Sm2Util {
     }
 
     /**
-     * 根据privateKey对加密数据encode data，使用SM2解密
+     * 使用SM2算法对加密数据进行解密
+     * <p>
+     * 根据传入的私钥对加密数据进行解密，并返回解密后的字节数组。
+     *
+     * @param encodeData 加密后的字节数组
+     * @param privateKey 用于解密的私钥
+     * @return 解密后的字节数组，如果解密失败则返回null
      */
     public static byte[] decrypt(byte[] encodeData, PrivateKey privateKey) {
         SM2Engine localSM2Engine = new SM2Engine();
@@ -114,7 +153,14 @@ public class Sm2Util {
     }
 
     /**
-     * 私钥签名
+     * 使用私钥对数据进行签名
+     * <p>
+     * 该方法接收一个字节数组数据和私钥，使用SM2算法和SM3哈希函数对数据进行签名，并返回签名后的字节数组。
+     *
+     * @param data       待签名的数据字节数组
+     * @param privateKey 用于签名的私钥
+     * @return 签名后的字节数组
+     * @throws Exception 如果在签名过程中发生异常，则抛出该异常
      */
     public static byte[] signByPrivateKey(byte[] data, PrivateKey privateKey) throws Exception {
         Signature sig = Signature.getInstance(GMObjectIdentifiers.sm2sign_with_sm3.toString(), BouncyCastleProvider.PROVIDER_NAME);
@@ -124,7 +170,15 @@ public class Sm2Util {
     }
 
     /**
-     * 公钥验签
+     * 使用公钥验证签名
+     * 该方法接收待验证的数据、公钥和签名，使用SM2算法和SM3哈希函数对签名进行验证，
+     * 如果签名有效则返回true，否则返回false。
+     *
+     * @param data      待验证的数据字节数组
+     * @param publicKey 用于验证签名的公钥
+     * @param signature 待验证的签名字节数组
+     * @return 如果签名有效则返回true，否则返回false
+     * @throws Exception 如果在验证过程中发生异常，则抛出该异常
      */
     public static boolean verifyByPublicKey(byte[] data, PublicKey publicKey, byte[] signature) throws Exception {
         Signature sig = Signature.getInstance(GMObjectIdentifiers.sm2sign_with_sm3.toString(), BouncyCastleProvider.PROVIDER_NAME);

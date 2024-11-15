@@ -128,10 +128,12 @@ public class RolePermissionMapService extends BaseService {
     }
 
     /**
-     * 权限进行分类，适合模型权限，dp，mp
+     * 对权限进行分类，适用于模型权限、数据权限等
+     * <p>
+     * 将传入的权限列表进行分类，分为查看权限、编辑权限和自定义权限三类，并返回分类后的权限集合。
      *
-     * @param permissions
-     * @return
+     * @param permissions 权限列表，包含需要分类的权限对象
+     * @return 返回分类后的权限集合，每个集合包含权限类型和对应的权限数据
      */
     private Set<Map<String, Object>> permissionClassify(List<Permission> permissions) {
         Set<Map<String, Object>> permissionMapSet = new LinkedHashSet<>();
@@ -177,10 +179,12 @@ public class RolePermissionMapService extends BaseService {
 
     /**
      * 权限按照编码排序
+     * <p>
+     * 根据提供的权限集合和编码组，对权限进行排序，并返回排序后的权限集合。
      *
-     * @param permissions
-     * @param orders      编码组
-     * @return
+     * @param permissions 权限集合，包含需要排序的权限对象
+     * @param orders      编码组，用于指定权限的排序顺序
+     * @return 返回排序后的权限集合
      */
     private Set<Permission> permissionSort(Set<Permission> permissions, String[] orders) {
         Set<Permission> orderPermissions = new LinkedHashSet<>();
@@ -199,13 +203,15 @@ public class RolePermissionMapService extends BaseService {
     }
 
     /**
-     * 表格权限
+     * 查询表格权限
+     * <p>
+     * 根据提供的权限类型、对象名称、应用ID和租户代码，查询对应的表格权限信息。
      *
-     * @param type
-     * @param object
-     * @param appId
-     * @param tenantCode
-     * @return
+     * @param type       权限类型，如数据权限、模型权限等
+     * @param object     对象名称，如表名或模型名
+     * @param appId      应用ID，用于标识需要查询权限的应用
+     * @param tenantCode 租户代码，用于标识需要查询权限的租户
+     * @return 返回包含表格权限信息的Map对象，包含权限信息、角色信息和表格数据
      */
     public Map<String, JSONArray> queryTablePermissions(String type, String object, String appId, String tenantCode) {
         tenantCode = Strings.isNotBlank(tenantCode) ? tenantCode : getSessionTenantCode();
@@ -289,12 +295,15 @@ public class RolePermissionMapService extends BaseService {
     }
 
     /**
-     * 表格权限
+     * 查询列权限
+     * <p>
+     * 根据提供的权限类型、表名、应用ID和租户代码，查询对应的列权限信息。
      *
-     * @param tableName
-     * @param appId
-     * @param tenantCode
-     * @return
+     * @param type       权限类型，如列权限
+     * @param tableName  表名，用于指定需要查询权限的表
+     * @param appId      应用ID，用于标识需要查询权限的应用
+     * @param tenantCode 租户代码，用于标识需要查询权限的租户
+     * @return 返回包含列权限信息的Map对象，包含列信息、角色信息和表格数据
      */
     public Map<String, JSONArray> queryColumnPermissions(String type, String tableName, String appId, String tenantCode) {
         tenantCode = Strings.isNotBlank(tenantCode) ? tenantCode : getSessionTenantCode();
@@ -401,6 +410,14 @@ public class RolePermissionMapService extends BaseService {
         return tablePermissionMap;
     }
 
+    /**
+     * 插入表格权限
+     * <p>
+     * 根据提供的角色权限映射对象，将其插入到数据库中。如果已存在相同角色和权限的组合，则先删除原有记录。
+     *
+     * @param form 角色权限映射对象，包含角色ID、权限ID和租户代码等信息
+     * @throws RuntimeException 如果角色ID或权限ID为空，则抛出运行时异常，提示参数缺失
+     */
     public void insertTablePermission(RolePermissionMap form) {
         if (Strings.isNotBlank(form.getRoleId()) && Strings.isNotBlank(form.getPermissionId())) {
             Map<String, Object> params = new HashMap<>();
@@ -420,6 +437,15 @@ public class RolePermissionMapService extends BaseService {
         }
     }
 
+    /**
+     * 插入表格视图权限
+     * <p>
+     * 根据提供的角色权限映射对象，将其插入到数据库中。如果已存在相同角色和权限组合的记录，则先删除原有记录。
+     * 如果form对象中包含需要打开的权限ID，则将该权限插入到数据库中。
+     *
+     * @param form 角色权限映射对象，包含角色ID、权限ID集合和租户代码等信息
+     * @throws RuntimeException 如果角色ID或权限ID集合为空，则抛出运行时异常，提示参数缺失
+     */
     public void insertTableViewPermission(RolePermissionMap form) {
         if (Strings.isNotBlank(form.getRoleId()) && Strings.isNotBlank(form.getPermissionIds())) {
             FilterGroup filter = new FilterGroup();
@@ -442,6 +468,15 @@ public class RolePermissionMapService extends BaseService {
         }
     }
 
+    /**
+     * 插入列权限
+     * <p>
+     * 根据提供的角色ID、列ID和规则，插入对应的列权限。
+     *
+     * @param roleId   角色ID
+     * @param columnId 列ID
+     * @param rule     规则，表示权限的具体内容
+     */
     public void insertColumnPermission(String roleId, String columnId, String rule) {
         // 模型字段；
         ColumnMeta column = getModel(ColumnMeta.class, columnId);
@@ -545,6 +580,15 @@ public class RolePermissionMapService extends BaseService {
         }
     }
 
+    /**
+     * 根据角色和权限创建角色权限映射对象
+     * <p>
+     * 根据提供的角色和权限对象，创建一个新的角色权限映射对象，并将其保存到数据库中。
+     *
+     * @param role       角色对象，包含角色ID和角色名称等信息
+     * @param permission 权限对象，包含权限ID、权限名称、应用ID和租户代码等信息
+     * @return 返回创建的角色权限映射对象
+     */
     public RolePermissionMap createByRoleAndPermission(Role role, Permission permission) {
         RolePermissionMap map = new RolePermissionMap();
         map.setRoleId(role.getId());

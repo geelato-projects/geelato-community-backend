@@ -104,8 +104,11 @@ public class SnowFlake {
     }
 
     /**
-     * 2进制结果当uuid用
-     * @return
+     * 将2进制结果用作UUID
+     *
+     * 将生成的下一个ID转换为2进制字符串，并在前面添加"0"字符，然后返回该字符串作为UUID。
+     *
+     * @return 转换后的2进制字符串作为UUID
      */
     public String nextIdBinary(){
         return "0" + Long.toBinaryString(this.nextId());

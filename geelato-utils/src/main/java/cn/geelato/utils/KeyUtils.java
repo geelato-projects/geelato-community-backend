@@ -20,7 +20,11 @@ public class KeyUtils {
     private static final Logger logger = LoggerFactory.getLogger(KeyUtils.class);
 
     /**
-     * 生成国密公私钥对
+     * 生成国密SM2公私钥对
+     * 使用Bouncy Castle加密库生成SM2算法的公私钥对，并将公钥和私钥进行Base64编码后存储在Map中返回。
+     *
+     * @return 包含公钥和私钥的Map，其中公钥的键为PUBLIC_KEY，私钥的键为PRIVATE_KEY
+     * @throws Exception 如果在生成密钥对的过程中发生异常，则抛出该异常
      */
     public static Map<String, String> generateSmKey() throws Exception {
         KeyPairGenerator keyPairGenerator = null;
@@ -38,7 +42,10 @@ public class KeyUtils {
     }
 
     /**
-     * 将Base64转码的公钥串，转化为公钥对象
+     * 将Base64转码的公钥串转化为公钥对象
+     *
+     * @param publicKey Base64转码的公钥串
+     * @return 转化后的公钥对象，如果转化失败则返回null
      */
     public static PublicKey createPublicKey(String publicKey) {
         PublicKey publickey = null;
@@ -53,7 +60,10 @@ public class KeyUtils {
     }
 
     /**
-     * 将Base64转码的私钥串，转化为私钥对象
+     * 将Base64转码的私钥串转化为私钥对象
+     *
+     * @param privateKey Base64转码的私钥串
+     * @return 转化后的私钥对象，如果转化失败则返回null
      */
     public static PrivateKey createPrivateKey(String privateKey) {
         PrivateKey publickey = null;

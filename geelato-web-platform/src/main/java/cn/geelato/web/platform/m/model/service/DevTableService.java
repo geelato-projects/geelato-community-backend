@@ -3,8 +3,8 @@ package cn.geelato.web.platform.m.model.service;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.enums.*;
-import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaTable;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
@@ -41,11 +41,13 @@ public class DevTableService extends BaseSortableService {
 
     /**
      * 全量查询
+     * <p>
+     * 根据提供的实体类和条件参数，执行全量查询操作，返回符合条件的记录列表。
      *
-     * @param entity 查询实体
-     * @param params 条件参数
-     * @param <T>
-     * @return
+     * @param entity 查询实体类，指定查询结果的数据类型
+     * @param params 条件参数，包含查询所需的过滤条件
+     * @param <T>    泛型参数，表示查询结果的数据类型
+     * @return 返回符合条件的记录列表
      */
     @Override
     public <T> List<T> queryModel(Class<T> entity, Map<String, Object> params) {
@@ -55,9 +57,13 @@ public class DevTableService extends BaseSortableService {
 
     /**
      * 从数据库同步至模型
+     * <p>
+     * 根据传入的表格元数据对象，从数据库中查询对应表格的信息，并将其同步至模型中。
      *
-     * @param tableMeta
-     * @throws ParseException
+     * @param tableMeta 表格元数据对象，包含表格的基本信息
+     * @throws ParseException            如果在解析日期时发生错误，则抛出该异常
+     * @throws InvocationTargetException 如果在反射调用过程中发生异常，则抛出该异常
+     * @throws IllegalAccessException    如果在反射调用过程中访问受限，则抛出该异常
      */
     public void resetTableByDataBase(TableMeta tableMeta) throws ParseException, InvocationTargetException, IllegalAccessException {
         // database_table
@@ -83,10 +89,12 @@ public class DevTableService extends BaseSortableService {
 
     /**
      * 表名变更，需要同步数据库的方法
+     * <p>
+     * 当表名发生变更时，此方法用于同步数据库中的表名。
      *
-     * @param form  变更数据
-     * @param model 源数据
-     * @return
+     * @param form  变更后的表元数据对象，包含变更后的表信息
+     * @param model 变更前的表元数据对象，包含变更前的表信息
+     * @return 返回变更后的表元数据对象
      */
     public TableMeta handleForm(TableMeta form, TableMeta model) {
         form.setSynced(ColumnSyncedEnum.FALSE.getValue());
@@ -140,8 +148,10 @@ public class DevTableService extends BaseSortableService {
 
     /**
      * 逻辑删除
+     * <p>
+     * 对指定的表格进行逻辑删除操作，包括修改表名、注释、描述等信息，并更新表的状态。
      *
-     * @param model
+     * @param model 表格元数据对象，包含表格的基本信息
      */
     public void isDeleteModel(TableMeta model) {
         // 格式：table_name_20230625141315
@@ -189,9 +199,11 @@ public class DevTableService extends BaseSortableService {
 
     /**
      * 查询数据库表信息
+     * <p>
+     * 根据传入的表名称，查询数据库中的表信息，并返回包含表信息的列表。
      *
-     * @param tableName 表名称
-     * @return
+     * @param tableName 表名称，用于指定要查询的数据库表
+     * @return 返回包含表信息的列表，每个元素为一个Map对象，包含表的详细信息
      */
     private List<Map<String, Object>> queryInformationSchemaTables(String tableName) {
         List<Map<String, Object>> tableList = new ArrayList<>();
@@ -203,6 +215,20 @@ public class DevTableService extends BaseSortableService {
         return tableList;
     }
 
+    /**
+     * 复制表格
+     * <p>
+     * 根据提供的表格ID、标题、实体名称、连接ID、表注释、应用ID和租户代码，复制一个新的表格。
+     *
+     * @param tableId      源表格ID
+     * @param title        新表格标题，如果为空则使用源表格的标题
+     * @param entityName   新表格的实体名称
+     * @param connectId    新表格的连接ID，如果为空则不设置
+     * @param tableComment 新表格的注释，如果为空则不设置
+     * @param appId        新表格的应用ID，如果为空则不设置
+     * @param tenantCode   新表格的租户代码，如果为空则不设置
+     * @return 返回新创建的表格元数据对象
+     */
     public TableMeta copyTable(String tableId, String title, String entityName, String connectId, String tableComment, String appId, String tenantCode) {
         // 源模型
         TableMeta form = this.getModel(TableMeta.class, tableId);

@@ -3,8 +3,6 @@ package cn.geelato.core.script.sql;
 import cn.geelato.core.script.AbstractScriptManager;
 import cn.geelato.core.script.js.JsProvider;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 import javax.script.ScriptException;
@@ -62,8 +60,11 @@ public class SqlScriptManager extends AbstractScriptManager {
 
 
     /**
-     * @param id       sqlId or functionName
-     * @param paramMap key value(key value)，值Object为key value的对象或字符串、数字等基本类型
+     * 根据提供的sqlId或函数名以及参数Map生成SQL语句。
+     *
+     * @param id       sqlId或函数名
+     * @param paramMap 包含键值对的Map，其中键为字符串类型，值为Object类型，可以是对象、字符串或数字等基本类型
+     * @return 返回生成的SQL语句字符串，如果生成失败则返回null
      */
     public String generate(String id, Map<String, Object> paramMap) {
         if (jsProvider.contain(id)) {

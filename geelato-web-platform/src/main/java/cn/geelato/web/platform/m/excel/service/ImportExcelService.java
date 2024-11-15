@@ -321,11 +321,14 @@ public class ImportExcelService {
     /**
      * 业务数据类型与元数据类型校验
      *
-     * @param currentUUID  批次号
-     * @param columnMeta   元数据
-     * @param businessData 业务数据类型
-     * @param value        值
-     * @return
+     * 对给定的业务数据类型和值进行校验，确保其符合元数据中的数据类型和约束条件。
+     *
+     * @param currentUUID  批次号，用于唯一标识当前批次的数据
+     * @param columnMeta   元数据对象，包含字段名、数据类型、长度、精度等信息
+     * @param businessData 业务数据类型对象，包含业务类型数据
+     * @param value        待校验的值
+     * @param columnNames 当前处理的数据列名集合
+     * @return 返回包含校验错误信息的集合，如果校验通过则返回空集合
      */
     private Set<String> validateValue(String currentUUID, ColumnMeta columnMeta, BusinessData businessData, Object value, List<String> columnNames) {
         Set<String> errorMsg = new LinkedHashSet<>();
@@ -364,6 +367,15 @@ public class ImportExcelService {
         return errorMsg;
     }
 
+    /**
+     * 验证数据值
+     *
+     * 根据提供的唯一列元数据和列数据，验证数据值是否重复，并返回重复的数据信息。
+     *
+     * @param uniqueColumns 包含唯一列元数据的映射，键为列名，值为列元数据对象
+     * @param columnData  包含列数据的列表，每个元素为一个包含键值对的映射，键为列名，值为列数据
+     * @return 返回包含重复数据信息的映射，键为列元数据对象，值为包含重复数据值和出现次数的映射
+     */
     private Map<ColumnMeta, Map<Object, Long>> validateValue(Map<String, ColumnMeta> uniqueColumns, List<Map<String, Object>> columnData) {
         Map<ColumnMeta, Map<Object, Long>> repeateData = new HashMap<>();
         if (uniqueColumns != null && uniqueColumns.size() > 0 && columnData.size() > 0) {
@@ -395,14 +407,16 @@ public class ImportExcelService {
     }
 
     /**
-     * 元数据对应的值
+     * 根据元数据和业务数据获取对应的值
      *
-     * @param currentUUID
-     * @param columnMeta   元数据
-     * @param meta         元数据
-     * @param businessData 业务数据
-     * @param valueMap     一行业务数据
-     * @return
+     * 根据提供的当前UUID、列元数据、业务元数据、业务数据和一行业务数据映射，获取对应的值。
+     *
+     * @param currentUUID 当前UUID
+     * @param columnMeta 列元数据，包含数据类型等信息
+     * @param meta 业务元数据，包含评估类型、常量值、变量值、表达式、字典编码、主键值等信息
+     * @param businessData 业务数据对象，包含值、原始值等信息
+     * @param valueMap 一行业务数据映射，包含多个字段的值
+     * @return 返回获取到的值，可能为null
      */
     private Object getValue(String currentUUID, ColumnMeta columnMeta, BusinessMeta meta, BusinessData businessData, Map<String, Object> valueMap) {
         Object value = null;
@@ -466,10 +480,12 @@ public class ImportExcelService {
     /**
      * 获取元数据
      *
-     * @param file       文件
-     * @param sheetIndex 工作表次序
-     * @return
-     * @throws IOException
+     * 从指定的Excel文件中读取指定工作表次序的业务元数据。
+     *
+     * @param file       要读取的Excel文件
+     * @param sheetIndex 要读取的工作表次序
+     * @return 返回包含业务元数据的映射，键为业务类型，值为对应的业务元数据列表
+     * @throws IOException 如果在文件读取或处理过程中发生I/O异常，将抛出此异常
      */
     private Map<String, List<BusinessMeta>> getBusinessMeta(File file, int sheetIndex) throws IOException {
         Map<String, List<BusinessMeta>> businessMetaListMap = new HashMap<>();
@@ -519,10 +535,12 @@ public class ImportExcelService {
     /**
      * 获取业务数据类型
      *
-     * @param file       文件
-     * @param sheetIndex 工作表次序
-     * @return
-     * @throws IOException
+     * 从指定的Excel文件中读取指定工作表的数据，并解析为业务数据类型数据。
+     *
+     * @param file       要读取的Excel文件对象
+     * @param sheetIndex 要读取的工作表次序（从0开始计数）
+     * @return 返回包含业务数据类型数据的映射，键为业务类型名称，值为对应的业务类型数据对象
+     * @throws IOException 如果在文件读取或解析过程中发生I/O异常，将抛出该异常
      */
     private Map<String, BusinessTypeData> getBusinessTypeData(File file, int sheetIndex) throws IOException {
         Map<String, BusinessTypeData> businessTypeDataMap = new HashMap<>();
@@ -572,10 +590,12 @@ public class ImportExcelService {
     /**
      * 获取业务数据类型
      *
-     * @param file       文件
-     * @param sheetIndex 工作表次序
-     * @return
-     * @throws IOException
+     * 从指定的Excel文件中读取指定工作表次序的业务数据类型规则数据。
+     *
+     * @param file       Excel文件对象
+     * @param sheetIndex 工作表次序，从0开始计数
+     * @return 返回包含业务数据类型规则数据的集合
+     * @throws IOException 如果在文件读取或处理过程中发生I/O异常，将抛出该异常
      */
     private Set<Map<Integer, BusinessTypeRuleData>> getBusinessTypeRuleData(File file, int sheetIndex) throws IOException {
         Set<Map<Integer, BusinessTypeRuleData>> typeRuleDataSet = new LinkedHashSet<>();
@@ -625,11 +645,14 @@ public class ImportExcelService {
     /**
      * 获取业务数据
      *
-     * @param request
-     * @param businessTypeDataMap 数据类型
-     * @param sheetIndex          工作表次序
-     * @return
-     * @throws IOException
+     * 从上传的文件或请求中获取Excel数据，并解析为业务数据列表。
+     *
+     * @param businessFile 上传的文件对象，若为空则从请求中获取文件
+     * @param request HTTP请求对象，用于从请求中获取文件
+     * @param businessTypeDataMap 业务数据类型映射，键为业务类型名称，值为对应的业务类型数据对象
+     * @param sheetIndex 要读取的工作表次序（从0开始计数）
+     * @return 返回包含业务数据的列表，每个元素为一个映射，键为列名，值为对应的业务数据对象
+     * @throws IOException 如果在文件读取或解析过程中发生I/O异常，将抛出该异常
      */
     private List<Map<String, BusinessData>> getBusinessData(Attach businessFile, HttpServletRequest request, Map<String, BusinessTypeData> businessTypeDataMap, int sheetIndex) throws IOException {
         List<Map<String, BusinessData>> businessDataMapList = new ArrayList<>();
@@ -694,8 +717,10 @@ public class ImportExcelService {
     /**
      * 业务数据校验
      *
-     * @param businessDataMapList 业务数据
-     * @return
+     * 对传入的业务数据进行校验，确保所有数据均通过验证。
+     *
+     * @param businessDataMapList 业务数据列表，每个元素为一个映射，映射的键为业务类型名称，值为对应的业务数据对象
+     * @return 如果所有数据均通过验证，则返回true；否则返回false
      */
     private boolean validBusinessData(List<Map<String, BusinessData>> businessDataMapList) {
         boolean isValid = true;
@@ -718,12 +743,17 @@ public class ImportExcelService {
     /**
      * 有错误业务数据值，将批注写入对应表格，并生成新文件
      *
-     * @param request
-     * @param businessDataMapList 业务数据
-     * @param repeatedData        业务数据
-     * @param sheetIndex          工作表次序
-     * @return
-     * @throws IOException
+     * 当业务数据中存在错误值时，将错误信息以批注的形式写入对应的Excel表格中，并生成一个新的文件。
+     *
+     * @param exportTemplate 导出模板对象，包含租户编码和应用Id等信息
+     * @param businessFile 上传的业务数据文件对象，若为空则从请求中获取文件
+     * @param request HTTP请求对象，用于从请求中获取文件
+     * @param response HTTP响应对象，用于返回生成的文件
+     * @param businessDataMapList 业务数据列表，每个元素为一个映射，映射的键为列名，值为对应的业务数据对象
+     * @param repeatedData 包含重复数据信息的映射，键为列元数据对象，值为包含重复数据值和出现次数的映射
+     * @param sheetIndex 要写入批注的工作表次序（从0开始计数）
+     * @return 返回包含新生成文件信息的Attach对象
+     * @throws IOException 如果在文件读写或处理过程中发生I/O异常，将抛出该异常
      */
     private Attach writeBusinessData(ExportTemplate exportTemplate, Attach businessFile, HttpServletRequest request, HttpServletResponse response, List<Map<String, BusinessData>> businessDataMapList, Map<ColumnMeta, Map<Object, Long>> repeatedData, int sheetIndex) throws IOException {
         Attach attachMap = new Attach();
@@ -858,11 +888,13 @@ public class ImportExcelService {
     }
 
     /**
-     * 将base64转为file
+     * 将base64字符串转换为文件
      *
-     * @param currentUUID
-     * @param template
-     * @return
+     * 根据提供的当前UUID和模板base64字符串，将其解码并转换为文件对象。
+     *
+     * @param currentUUID 当前操作的UUID
+     * @param template    包含文件信息的base64字符串
+     * @return 返回转换后的文件对象，如果转换失败则返回null
      */
     private File getTemplate(String currentUUID, String template) {
         File file = null;
@@ -901,8 +933,10 @@ public class ImportExcelService {
     /**
      * 获取文件
      *
-     * @param attachId
-     * @return
+     * 根据提供的附件ID获取对应的文件对象。
+     *
+     * @param attachId 附件ID
+     * @return 如果成功获取到文件对象，则返回该文件对象；否则返回null
      */
     private Attach getFile(String attachId) {
         try {
@@ -923,8 +957,10 @@ public class ImportExcelService {
     /**
      * 模板数据解析
      *
-     * @param jsonText
-     * @return
+     * 解析传入的JSON字符串，将其转换为业务元数据映射。
+     *
+     * @param jsonText 包含业务元数据的JSON字符串
+     * @return 返回包含业务元数据的映射，键为表名，值为对应的业务元数据列表
      */
     private Map<String, List<BusinessMeta>> getBusinessMeta(String jsonText) {
         Map<String, List<BusinessMeta>> businessMetaListMap = new HashMap<>();
@@ -958,8 +994,10 @@ public class ImportExcelService {
     /**
      * 模板数据解析
      *
-     * @param jsonText
-     * @return
+     * 解析传入的JSON字符串，将其转换为业务类型规则数据的集合。
+     *
+     * @param jsonText 包含业务类型规则数据的JSON字符串
+     * @return 返回包含业务类型规则数据的集合，如果解析失败则返回null
      */
     private Set<Map<Integer, BusinessTypeRuleData>> getBusinessTypeRuleData(String jsonText) {
         Set<Map<Integer, BusinessTypeRuleData>> businessTypeRuleDataSet = new LinkedHashSet<>();
@@ -988,8 +1026,10 @@ public class ImportExcelService {
     /**
      * 模板数据解析
      *
-     * @param jsonText
-     * @return
+     * 解析传入的JSON字符串，将其转换为业务类型数据的映射。
+     *
+     * @param jsonText 包含业务类型数据的JSON字符串
+     * @return 返回包含业务类型数据的映射，键为业务类型名称，值为对应的业务类型数据对象；如果解析失败则返回null
      */
     private Map<String, BusinessTypeData> getBusinessTypeData(String jsonText) {
         Map<String, BusinessTypeData> businessTypeDataMap = new HashMap<>();

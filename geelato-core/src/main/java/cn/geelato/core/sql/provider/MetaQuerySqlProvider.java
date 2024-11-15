@@ -1,7 +1,7 @@
 package cn.geelato.core.sql.provider;
 
-import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.command.QueryCommand;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
@@ -38,7 +38,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             sb.append(" where ");
             buildConditions(sb, md, fg);
         }
-        if(command.getOriginalWhere()!=null) {
+        if (command.getOriginalWhere() != null) {
             sb.append("  and  ");
             if (!command.getOriginalWhere().equals("1=1")) {
                 if (md.getTableAlias() != null) {
@@ -75,10 +75,12 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
     }
 
     /**
-     * 构健统计数据
+     * 构建统计数据查询的SQL语句。
+     * <p>
+     * 根据提供的查询命令（QueryCommand），构建一个用于统计数据的SQL查询语句。
      *
-     * @param command
-     * @return
+     * @param command 查询命令对象，包含查询所需的各种参数和条件
+     * @return 构建好的SQL语句字符串
      */
     public String buildCountSql(QueryCommand command) {
         StringBuilder sb = new StringBuilder();
@@ -89,13 +91,13 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         buildSelectFields(sb, md, command);
         sb.append(" from ");
         sb.append(md.getTableName());
-        //where
+        // where
         FilterGroup fg = command.getWhere();
         if (fg != null && fg.getFilters() != null && !fg.getFilters().isEmpty()) {
             sb.append(" where ");
             buildConditions(sb, md, fg);
         }
-        if(command.getOriginalWhere()!=null) {
+        if (command.getOriginalWhere() != null) {
             sb.append("  and  ");
             if (!command.getOriginalWhere().equals("1=1")) {
                 if (md.getTableAlias() != null) {
@@ -106,12 +108,12 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                 sb.append(command.getOriginalWhere());
             }
         }
-        //group by
+        // group by
         if (StringUtils.hasText(command.getGroupBy())) {
             sb.append(" group by ");
             sb.append(command.getGroupBy());
         }
-        //having
+        // having
         if (command.getHaving() != null) {
             sb.append(" having ");
             sb.append(command.getHaving());
@@ -146,10 +148,10 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             return;
         }
         for (String fieldName : command.getFields()) {
-            if(FunctionParser.isFunction(fieldName)){
-                String afterRefaceExpression= FunctionParser.reconstruct(fieldName,md.getEntityName());
+            if (FunctionParser.isFunction(fieldName)) {
+                String afterRefaceExpression = FunctionParser.reconstruct(fieldName, md.getEntityName());
                 sb.append(new FunctionFieldValue(afterRefaceExpression).getMysqlFunction()).append(" ");
-            }else{
+            } else {
                 FieldMeta fm = md.getFieldMeta(fieldName);
                 if (command.getAlias().containsKey(fieldName)) {
                     // 有指定的重命名要求时
@@ -167,7 +169,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                     }
                 }
             }
-             sb.append(",");
+            sb.append(",");
         }
         sb.deleteCharAt(sb.length() - 1);
     }

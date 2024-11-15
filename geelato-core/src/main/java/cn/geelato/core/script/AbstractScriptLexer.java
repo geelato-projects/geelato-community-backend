@@ -14,8 +14,17 @@ import java.util.regex.Pattern;
 public abstract class AbstractScriptLexer {
 
     /**
-     * 简单解析，解析出模板内容段，便于下一步对模板内容段进一步解析
+     * 对输入的脚本行进行简单的词法分析。
+     * <p>
+     * 该方法将输入的脚本行（List<String> lines）解析成多个脚本语句（ScriptStatement）的列表。
+     * 它通过遍历每一行，识别出语句标识符和内容行，并将它们分别存储到ScriptStatement对象中。
+     * 如果某一行匹配到语句标识符的正则表达式，则会创建一个新的ScriptStatement对象，并设置其ID和内容列表。
+     * 如果某一行是内容行，则会将该行添加到当前ScriptStatement对象的内容列表中。
+     * 忽略以特定字符开头的注释行。
+     * 最后，将包含脚本语句的列表返回。
      *
+     * @param lines 要解析的脚本行列表
+     * @return 解析后的脚本语句列表
      */
     public List<ScriptStatement> lex(List<String> lines) {
         String statementId = null;
@@ -31,9 +40,9 @@ public abstract class AbstractScriptLexer {
                 if (log.isDebugEnabled()) {
                     log.debug("matcher:{}", matcher.group());
                 }
-                //当前分行
+                // 当前分行
                 if (statementId != null) {
-                    //新的语句行，先保存已有的TemplateStatement
+                    // 新的语句行，先保存已有的TemplateStatement
                     if (scriptStatement.getContent() != null && !scriptStatement.getContent().isEmpty()) {
                         scriptStatements.add(scriptStatement);
                     }
@@ -42,12 +51,12 @@ public abstract class AbstractScriptLexer {
                 scriptStatement.setContent(new ArrayList<String>());
                 statementId = parseStatementId(line);
                 scriptStatement.setId(statementId);
-                //如果匹配的statementId行同时是内容行时
+                // 如果匹配的statementId行同时是内容行时
                 if (statementIdLineIsContent()) {
                     scriptStatement.getContent().add(line);
                 }
             } else {
-                //丢弃注解行，不进行add(line)
+                // 丢弃注解行，不进行add(line)
                 switch (line.charAt(0)) {
                     case '*', '/':
                         continue;
@@ -62,7 +71,7 @@ public abstract class AbstractScriptLexer {
                 }
             }
         }
-        //添加最后一个
+        // 添加最后一个
         if (scriptStatement != null && scriptStatement.getContent() != null && !scriptStatement.getContent().isEmpty()) {
             scriptStatements.add(scriptStatement);
         }
@@ -71,13 +80,11 @@ public abstract class AbstractScriptLexer {
 
     /**
      * 匹配的分割行的正则表达式
-     *
      */
     protected abstract Pattern getSplitPattern();
 
     /**
      * 匹配的分割行，statementId就在行内
-     *
      */
     protected abstract String parseStatementId(String matchedSplitLine);
 
@@ -86,7 +93,6 @@ public abstract class AbstractScriptLexer {
      * 匹配行是否需加入有效的内容中(匹配行用于解析statementId，有时该行是
      * 有效的内容行，如js脚本的解析,function foo(){}是statementId行，
      * 同时也是内容行)。若是返回true，若不是返回false。
-     *
      */
     protected abstract boolean statementIdLineIsContent();
 }

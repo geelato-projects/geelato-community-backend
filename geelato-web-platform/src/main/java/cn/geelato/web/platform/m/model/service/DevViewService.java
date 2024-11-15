@@ -44,7 +44,12 @@ public class DevViewService extends BaseSortableService {
     }
 
     /**
-     * 仅创建、更新默认视图
+     * 仅创建或更新默认视图
+     *
+     * 根据传入的表格元数据对象（tableMeta）和视图参数（viewParams），创建或更新指定表格的默认视图。
+     *
+     * @param tableMeta   表格元数据对象，包含表格的基本信息
+     * @param viewParams  视图参数，包含视图的列和构造SQL
      */
     public void createOrUpdateDefaultTableView(TableMeta tableMeta, Map<String, Object> viewParams) {
         Assert.notNull(tableMeta, ApiErrorMsg.IS_NULL);

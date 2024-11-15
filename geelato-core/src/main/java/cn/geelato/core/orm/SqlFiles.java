@@ -1,8 +1,8 @@
 package cn.geelato.core.orm;
 
+import cn.geelato.utils.UIDGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import cn.geelato.utils.UIDGenerator;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.*;
@@ -33,7 +33,7 @@ public class SqlFiles {
                 line = line.trim();
                 int index = line.trim().indexOf("--");
                 if (index >= 0) {
-                    //新的语句开始，若存在老的语句，执行老的语句并清空
+                    // 新的语句开始，若存在老的语句，执行老的语句并清空
                     if (sb.length() > 1) {
                         log.debug("execute sql :{}", sb);
                         jdbcTemplate.execute(sb.toString());
@@ -56,12 +56,13 @@ public class SqlFiles {
     }
 
     /**
-     * 文件格式说明：每条语句之间必须用注释“--”进行分割
-     * 自动生成id替换$id
+     * 从输入流中加载SQL语句并执行。
+     * 文件格式要求：每条SQL语句之间必须用注释“--”进行分割。
+     * 在执行过程中，会自动将占位符$id替换为实际生成的id。
      *
      * @param is           SQL文件的输入流
-     * @param jdbcTemplate
-     * @param isWinOS
+     * @param jdbcTemplate JDBC模板对象，用于执行SQL语句
+     * @param isWinOS      一个布尔值，指示操作系统是否为Windows
      */
     public static void loadAndExecute(InputStream is, JdbcTemplate jdbcTemplate, boolean isWinOS) {
         try {
@@ -79,11 +80,12 @@ public class SqlFiles {
     }
 
     /**
-     * 解析sql，并执行本框架定义的方法，目前方案有：
-     * </br>$newId()：生成long型UID，并替换sql语句相应的位置
+     * 解析SQL语句，并执行本框架定义的方法。
+     * 目前支持的方案包括：
+     * <br>$newId()：生成long型UID，并替换SQL语句中相应的位置。
      *
-     * @param line 解析后的语句
-     * @return
+     * @param line 解析后的SQL语句
+     * @return 处理后的SQL语句
      */
     public static String parseLine(String line) {
         Matcher matcher = newIdPattern.matcher(line);
@@ -101,22 +103,25 @@ public class SqlFiles {
     }
 
     /**
-     * 文件格式说明：每条语句之间必须用注释“--”进行分割
+     * 加载并执行SQL文件中的语句。
+     * SQL文件格式要求：每条SQL语句之间必须用注释“--”进行分割。
      *
-     * @param file         SQL文件
-     * @param jdbcTemplate
-     * @param isWinOS
+     * @param file         SQL文件对象
+     * @param jdbcTemplate JdbcTemplate对象，用于执行SQL语句
+     * @param isWinOS      是否为Windows操作系统
      */
     public static void loadAndExecute(File file, JdbcTemplate jdbcTemplate, boolean isWinOS) {
         loadAndExecute(file.list(), jdbcTemplate, isWinOS);
     }
 
     /**
-     * 文件格式说明：每条语句之间必须用注释“--”进行分割
+     * 加载并执行SQL文件中的SQL语句。
+     * <p>文件格式说明：每条SQL语句之间必须用注释“--”进行分割。</p>
      *
-     * @param path         SQL文件物理位置,无法加载fatjar中的文件
-     * @param jdbcTemplate
-     * @param isWinOS
+     * @param path         SQL文件的物理位置。注意，该方法无法加载fatjar中的文件。
+     * @param jdbcTemplate JdbcTemplate对象，用于执行SQL语句。
+     * @param isWinOS      指示操作系统是否为Windows。
+     * @throws IOException 如果在读取SQL文件时发生I/O错误，将抛出此异常。
      */
     public static void loadAndExecute(String path, JdbcTemplate jdbcTemplate, boolean isWinOS) {
         try {

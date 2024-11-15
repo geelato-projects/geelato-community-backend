@@ -58,12 +58,14 @@ public class ExcelCommonUtils {
     private RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * 为空，抛出异常
+     * 为空时抛出异常
      *
-     * @param object
-     * @param fileException
-     * @param <T>
-     * @throws T
+     * 检查给定的对象是否为空，如果为空则抛出指定的异常。
+     *
+     * @param object 要检查的对象
+     * @param fileException 如果对象为空时，要抛出的异常
+     * @param <T> 异常的类型，必须是FileException或其子类的实例
+     * @throws T 如果对象为空，则抛出指定的异常
      */
     public static <T extends FileException> void notNull(@Nullable Object object, T fileException) throws T {
         if (object == null) {
@@ -72,10 +74,12 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 字符串转数值
+     * 将字符串转换为数值
      *
-     * @param value
-     * @return
+     * 将给定的字符串转换为相应的数值类型。如果字符串是数字格式的（包括整数和小数），则将其转换为相应的数值类型（Long或Double）。
+     *
+     * @param value 待转换的字符串
+     * @return 转换后的数值对象，如果字符串不是有效的数字格式，则返回null
      */
     public static Object stringToNumber(String value) {
         Object cellValue = null;
@@ -92,10 +96,12 @@ public class ExcelCommonUtils {
     /**
      * 合并唯一约束的交集
      *
-     * @param cellMetaList
-     * @param valueMap
-     * @param valueList
-     * @return
+     * 根据提供的单元格元数据列表、值映射和值列表，合并具有唯一约束的交集。
+     *
+     * @param cellMetaList 单元格元数据列表，包含每个单元格的元数据
+     * @param valueMap 值映射，将单元格值映射到其他数据
+     * @param valueList 值列表，包含多行数据
+     * @return 返回合并后的唯一约束交集列表，如果没有唯一约束或唯一约束的交集为空，则返回null
      */
     public static List<List<Integer>> getMergeUniqueScope(List<CellMeta> cellMetaList, Map valueMap, List<Map> valueList) {
         List<List<List<Integer>>> limitSetMap = new LinkedList<>();
@@ -142,10 +148,12 @@ public class ExcelCommonUtils {
     /**
      * 获取数据相同的行
      *
-     * @param cellMeta
-     * @param valueMap
-     * @param valueList
-     * @return
+     * 根据给定的单元格元数据、值映射和值列表，找出值相同的行并返回它们的索引集合。
+     *
+     * @param cellMeta   单元格元数据对象，包含关于如何解析单元格值的信息
+     * @param valueMap   值映射，用于解析单元格值时的上下文数据
+     * @param valueList 包含单元格值的列表，每个元素都是一个包含单元格值的映射
+     * @return 返回一个列表，每个元素都是一个整数列表，表示值相同的行的索引集合
      */
     public static List<List<Integer>> getIntegerSet(CellMeta cellMeta, Map valueMap, List<Map> valueList) {
         List<List<Integer>> integerSet = new LinkedList<>();
@@ -178,10 +186,12 @@ public class ExcelCommonUtils {
     /**
      * 获取单元格值
      *
-     * @param meta
-     * @param valueMap
-     * @param listValueMap
-     * @return
+     * 根据提供的元数据、值映射表和列表值映射表，获取单元格的值。
+     *
+     * @param meta 元数据对象，包含计算模式、变量名、常量值或表达式等信息
+     * @param valueMap 值映射表，用于存储非列表类型的变量及其对应的值
+     * @param listValueMap 列表值映射表，用于存储列表类型的变量及其对应的值
+     * @return 返回单元格的值，如果无法获取到值，则返回一个空字符串
      */
     public static Object getCellValue(PlaceholderMeta meta, Map valueMap, Map listValueMap) {
         Object value = "";
@@ -208,9 +218,11 @@ public class ExcelCommonUtils {
     /**
      * 根据类型获取具体值
      *
-     * @param meta
-     * @param value
-     * @return
+     * 根据给定的元数据（PlaceholderMeta）和值（value），根据元数据中指定的类型返回相应的值。
+     *
+     * @param meta 元数据对象，包含值的类型信息
+     * @param value 要处理的原始值
+     * @return 根据元数据指定的类型处理后的值
      */
     private static Object getCellValueByValueType(PlaceholderMeta meta, Object value) {
         if (value != null) {
@@ -239,10 +251,12 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 将连续的整数构建一个集合,这个集合的起止节点
+     * 构建连续整数集合的起止节点
      *
-     * @param numbers
-     * @return
+     * 该方法接受一个整数集合作为输入，将集合中的连续整数划分为多个范围，并返回每个范围的起止节点。
+     *
+     * @param numbers 输入的整数集合
+     * @return 返回每个连续整数范围的起止节点集合，每个范围用一个包含两个整数的数组表示，分别为范围的起始值和结束值
      */
     public static List<Integer[]> findScopes(Set<Integer> numbers) {
         List<Integer[]> list = new ArrayList<>();
@@ -262,8 +276,11 @@ public class ExcelCommonUtils {
     /**
      * 将连续的整数构建一个集合
      *
-     * @param numbers
-     * @return
+     * 将输入的整数列表转换为一个包含连续整数范围的列表。每个范围以两个元素的列表表示，
+     * 第一个元素为范围的起始值，第二个元素为范围的结束值。
+     *
+     * @param numbers 输入的整数列表
+     * @return 返回包含连续整数范围的列表，其中每个范围都以两个元素的列表表示
      */
     public static List<List<Integer>> findRanges(List<Integer> numbers) {
         // 先对数字进行排序
@@ -301,7 +318,9 @@ public class ExcelCommonUtils {
     /**
      * 获取表格默认字段
      *
-     * @return
+     * 从元数据中获取表格的默认字段列表。
+     *
+     * @return 返回包含表格默认字段名称的列表
      */
     public List<String> getDefaultColumns() {
         List<String> columnNames = new ArrayList<>();
@@ -318,10 +337,12 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 解析业务数据类型，规则
+     * 解析业务数据类型规则
      *
-     * @param rules
-     * @return
+     * 根据提供的规则字符串，解析并返回业务数据类型规则的集合。
+     *
+     * @param rules 规则字符串，包含业务数据类型规则的JSON数组
+     * @return 返回业务数据类型规则的集合
      */
     public Set<BusinessTypeRuleData> readBusinessTypeRuleData(String rules) {
         Set<BusinessTypeRuleData> typeRuleDataSet = new LinkedHashSet<>();
@@ -344,10 +365,12 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 导入数据，多值数据处理
+     * 导入数据，处理多值数据
      *
-     * @param businessDataMapList
-     * @return
+     * 该方法用于处理包含多值数据的业务数据列表。根据数据的不同类型（单值、多值、对称值）进行分类处理，并生成处理后的数据列表。
+     *
+     * @param businessDataMapList 包含业务数据的列表，每个元素是一个包含业务数据键值对的映射
+     * @return 返回处理后的业务数据列表，每个元素是一个包含业务数据键值对的映射
      */
     public List<Map<String, BusinessData>> handleBusinessDataMultiScene(List<Map<String, BusinessData>> businessDataMapList) {
         List<Map<String, BusinessData>> handleDataMapList = new ArrayList<>();
@@ -428,12 +451,14 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 导入数据，多值数据处理
+     * 导入数据，处理多值数据
      *
-     * @param singleData   单值数据
-     * @param multiMapList 多值数据，相乘
-     * @param symMapList   多值数据，对称
-     * @return
+     * 将单值数据、多值相乘数据和多值对称数据进行合并处理。
+     *
+     * @param singleData   单值数据，包含业务数据的Map集合
+     * @param multiMapList 多值相乘数据，每个Map代表一组多值数据
+     * @param symMapList   多值对称数据，每个Map代表一组多值数据
+     * @return 返回合并后的业务数据列表，每个元素都是一个包含业务数据的Map
      */
     private List<Map<String, BusinessData>> mergeBusinessData(Map<String, BusinessData> singleData, List<Map<String, BusinessData>> multiMapList, List<Map<String, BusinessData>> symMapList) {
         List<Map<String, BusinessData>> mergeData = new ArrayList<>();
@@ -469,10 +494,12 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 导入数据，多值数据处理
+     * 导入数据，处理多值数据
      *
-     * @param multiData 多值数据，相乘
-     * @return
+     * 对传入的多值数据进行笛卡尔积运算，生成所有可能的组合。
+     *
+     * @param multiData 包含多值数据的映射，其中键为业务数据类型的标识，值为包含多值的BusinessData对象
+     * @return 返回所有可能的组合，每个组合是一个映射，包含键为业务数据类型标识，值为对应的BusinessData对象的列表
      */
     private List<Map<String, BusinessData>> cartesianProduct(Map<String, BusinessData> multiData) {
         List<Map<String, BusinessData>> mapList = new ArrayList<>();
@@ -508,10 +535,12 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 递归
+     * 递归计算笛卡尔积
      *
-     * @param arrays
-     * @return
+     * 使用递归方法计算给定二维字符串数组的笛卡尔积。
+     *
+     * @param arrays 二维字符串数组，用于计算笛卡尔积
+     * @return 返回包含所有笛卡尔积结果的集合，每个元素都是一个字符串数组
      */
     private Set<String[]> cartesianProductHelper(String[][] arrays) {
         Set<String[]> result = new LinkedHashSet<>();
@@ -520,12 +549,14 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 递归，计算组合
+     * 递归计算组合
      *
-     * @param arrays
-     * @param index
-     * @param current
-     * @param result
+     * 使用递归方法计算给定字符串数组的笛卡尔积（组合）。
+     *
+     * @param arrays   输入的字符串数组，每个数组代表一个维度
+     * @param index    当前递归的维度索引
+     * @param current  当前维度的元素组合数组
+     * @param result   存储计算结果的集合，结果以字符串数组的形式存储
      */
     private void cartesianProductHelper(String[][] arrays, int index, String[] current, Set<String[]> result) {
         if (index == arrays.length) {
@@ -542,10 +573,12 @@ public class ExcelCommonUtils {
     /**
      * 数据处理
      *
-     * @param currentUUID
-     * @param businessDataMapList
-     * @param priorityMulti       是否优先于多值处理
-     * @return
+     * 根据业务规则处理输入的业务数据列表。
+     *
+     * @param currentUUID 当前操作的唯一标识符
+     * @param businessDataMapList 包含业务数据的列表，每个元素是一个映射，键为业务数据类型的标识，值为对应的BusinessData对象
+     * @param priorityMulti 是否优先处理多值数据
+     * @return 返回处理后的业务数据列表，每个元素是一个包含业务数据键值对的映射
      */
     public List<Map<String, BusinessData>> handleBusinessDataRule(String currentUUID, List<Map<String, BusinessData>> businessDataMapList, boolean priorityMulti) {
         if (businessDataMapList != null && businessDataMapList.size() > 0) {
@@ -739,9 +772,11 @@ public class ExcelCommonUtils {
     /**
      * 数据字典缓存
      *
-     * @param currentUUID
-     * @param ruleDataMap
-     * @return
+     * 将数据字典信息缓存到Redis中，以便于后续快速访问。
+     *
+     * @param currentUUID 当前操作的唯一标识符，用于构建缓存的键
+     * @param ruleDataMap 包含业务规则数据的映射，其中键为规则的唯一标识，值为对应的业务规则数据对象
+     * @return 返回缓存的键列表，用于后续可能的缓存清理操作
      */
     private List<String> setDictRuleRedis(String currentUUID, Map<String, BusinessTypeRuleData> ruleDataMap) {
         List<String> dictKeys = new ArrayList<>();
@@ -787,10 +822,12 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 主键查询，缓存
+     * 主键查询并缓存结果
      *
-     * @param ruleDataMap
-     * @return
+     * 根据提供的业务规则数据映射，执行主键查询，并将查询结果缓存到Redis中，以便于后续快速访问。
+     *
+     * @param ruleDataMap 包含业务规则数据的映射，其中键为规则的唯一标识，值为对应的业务规则数据对象
+     * @return 返回缓存的键列表，用于后续可能的缓存清理操作
      */
     private List<String> setQueryRuleRedis(Map<String, BusinessTypeRuleData> ruleDataMap) {
         List<String> primaryKeys = new ArrayList<>();
@@ -820,12 +857,14 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 设置 缓存，数据字典、主键
+     * 设置缓存，包括数据字典和主键查询结果的缓存
      *
-     * @param currentUUID 当前主键
-     * @param tableMeta   元数据
-     * @param data        业务数据
-     * @return
+     * 根据提供的当前主键、元数据和业务数据，将相关数据字典和主键查询结果缓存到Redis中，以便于后续快速访问。
+     *
+     * @param currentUUID 当前主键，用于构建缓存的键
+     * @param tableMeta   元数据，包含业务数据的字段信息和评估类型等
+     * @param data        业务数据，包含需要缓存的相关数据
+     * @return 返回缓存的键列表，用于后续可能的缓存清理操作
      */
     public List<String> setCache(String currentUUID, Map<String, List<BusinessMeta>> tableMeta, List<Map<String, BusinessData>> data) {
         List<String> cacheList = new ArrayList<>();
@@ -885,9 +924,11 @@ public class ExcelCommonUtils {
     /**
      * 数据字典缓存
      *
-     * @param currentUUID
-     * @param dictMetas
-     * @return
+     * 将数据字典信息缓存到Redis中，以便于后续快速访问。
+     *
+     * @param currentUUID 当前操作的唯一标识符，用于构建缓存的键
+     * @param dictMetas   包含数据字典元数据的映射，键为缓存键，值为对应的条件元数据对象
+     * @return 返回缓存的键列表，用于后续可能的缓存清理操作
      */
     private List<String> setDictRedis(String currentUUID, Map<String, ConditionMeta> dictMetas) {
         List<String> dictKeys = new ArrayList<>();
@@ -937,10 +978,12 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 主键查询，缓存
+     * 主键查询并缓存结果
      *
-     * @param primaryMetas
-     * @return
+     * 根据提供的条件元数据映射，执行主键查询，并将查询结果缓存到Redis中，以便于后续快速访问。
+     *
+     * @param primaryMetas 包含主键查询条件元数据的映射，键为缓存键，值为对应的条件元数据对象
+     * @return 返回缓存的键列表，用于后续可能的缓存清理操作
      */
     private List<String> setPrimaryRedis(Map<String, ConditionMeta> primaryMetas) {
         List<String> primaryKeys = new ArrayList<>();
@@ -970,12 +1013,14 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 值转化
+     * 将分页查询结果转换为映射
      *
-     * @param page        查询结果
-     * @param goalName    目标字段
-     * @param columnNames 查询字段
-     * @return
+     * 将ApiPagedResult对象中的查询结果转换为Map<String, Object>类型，其中键为查询字段的值，值为目标字段的值。
+     *
+     * @param page        分页查询结果对象
+     * @param goalName    目标字段名称，用于从查询结果中提取对应的值
+     * @param columnNames 查询字段名称列表，用于构建映射的键
+     * @return 返回转换后的映射，键为查询字段的值，值为目标字段的值
      */
     private Map<String, Object> pagedResultToMap(ApiPagedResult page, String goalName, List<String> columnNames) {
         Map<String, Object> redisMap = new HashMap<>();
@@ -1029,12 +1074,14 @@ public class ExcelCommonUtils {
     }
 
     /**
-     * 为一只
+     * 设置唯一性约束缓存
      *
-     * @param currentUUID
-     * @param tableName
-     * @param uniqueColumns
-     * @return
+     * 根据提供的表名和唯一性字段，将表中满足唯一性约束的数据缓存到Redis中，以便于后续快速访问。
+     *
+     * @param currentUUID     当前操作的唯一标识符，用于构建缓存的键
+     * @param tableName       表名，指定要缓存数据的表
+     * @param uniqueColumns   唯一性字段集合，指定表中哪些字段的组合值具有唯一性
+     * @return 返回缓存的键列表，但由于当前实现中未添加任何键到列表中，因此该列表始终为空
      */
     public List<String> setUniqueRedis(String currentUUID, String tableName, Set<String> uniqueColumns) {
         List<String> uniqueKeys = new ArrayList<>();
@@ -1076,10 +1123,12 @@ public class ExcelCommonUtils {
     /**
      * 数据处理
      *
-     * @param currentUUID
-     * @param businessDataMapList     业务数据
-     * @param businessTypeRuleDataSet 清洗规则
-     * @return
+     * 根据提供的业务数据和清洗规则，对业务数据进行处理。
+     *
+     * @param currentUUID 当前操作的唯一标识符
+     * @param businessDataMapList 业务数据列表，每个元素是一个包含业务数据键值对的映射
+     * @param businessTypeRuleDataSet 清洗规则集合，每个元素是一个包含业务类型规则数据的映射
+     * @return 返回处理后的业务数据列表，每个元素是一个包含业务数据键值对的映射
      */
     public List<Map<String, BusinessData>> handleBusinessDataRules(String currentUUID, List<Map<String, BusinessData>> businessDataMapList, Set<Map<Integer, BusinessTypeRuleData>> businessTypeRuleDataSet) {
         if (businessDataMapList == null || businessDataMapList.size() == 0 || businessTypeRuleDataSet == null || businessTypeRuleDataSet.size() == 0) {

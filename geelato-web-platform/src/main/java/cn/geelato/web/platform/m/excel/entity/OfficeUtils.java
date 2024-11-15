@@ -102,12 +102,14 @@ public class OfficeUtils {
     }
 
     /**
-     * docx 转为 pdf
+     * 将 docx 文件转换为 pdf 文件
+     * <p>
+     * 该方法将指定路径的 docx 文件转换为 pdf 文件，并保存到指定路径。
      *
-     * @param inputPath
-     * @param outputPath
-     * @throws IOException
-     * @throws DocumentException
+     * @param inputPath  docx 文件的输入路径
+     * @param outputPath pdf 文件的输出路径
+     * @throws IOException       如果在文件输入输出过程中发生错误，则抛出 IOException
+     * @throws DocumentException 如果在文档处理过程中发生错误，则抛出 DocumentException
      */
     public static void docxToPdf(String inputPath, String outputPath) throws IOException, DocumentException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -148,7 +150,7 @@ public class OfficeUtils {
             }
             pdfDocument.add(new Chunk(Chunk.NEWLINE));
         }
-        //需要关闭，不然无法获取到输出流
+        // 需要关闭，不然无法获取到输出流
         pdfDocument.close();
         pdfWriter.close();
         baos.writeTo(new FileOutputStream(outputPath));
@@ -166,21 +168,26 @@ public class OfficeUtils {
 
     public static void spireToPdf(String inputPath, String outputPath) {
         //  com.spire.license.LicenseProvider.setLicenseFile("license.elic.xml");
-        //实例化Document类的对象
+        // 实例化Document类的对象
         //  com.spire.doc.Document doc = new com.spire.doc.Document();
-        //加载Word
+        // 加载Word
         //   doc.loadFromFile(inputPath);
-        //保存为PDF格式
+        // 保存为PDF格式
         //   doc.saveToFile(outputPath, FileFormat.PDF);
     }
 
     /**
-     * doc 转为 pdf
+     * 将 doc 文件转换为 pdf 文件
+     * <p>
+     * 该方法将 doc 文件转换为 pdf 文件，并保存到指定的输出路径。
      *
-     * @param inputPath
-     * @param outputPath
-     * @throws IOException
-     * @throws DocumentException
+     * @param inputPath  doc 文件的输入路径
+     * @param outputPath pdf 文件的输出路径
+     * @param pageSize   pdf 页面的尺寸
+     * @throws IOException                  如果文件读写过程中发生 I/O 错误
+     * @throws DocumentException            如果处理文档时出现异常
+     * @throws ParserConfigurationException 如果解析 XML 时发生配置错误
+     * @throws TransformerException         如果转换 XML 时发生错误
      */
     public static void docToPdf(String inputPath, String outputPath, Rectangle pageSize) throws IOException, DocumentException, ParserConfigurationException, TransformerException {
         String html = docToHtml(inputPath);
@@ -189,10 +196,15 @@ public class OfficeUtils {
     }
 
     /**
-     * doc文件转为html
+     * 将doc文件转换为html格式
+     * <p>
+     * 该方法接收一个doc文件的路径作为输入，将doc文件内容转换为html格式，并返回转换后的html字符串。
      *
-     * @param inputPath
-     * @return
+     * @param inputPath doc文件的路径
+     * @return 转换后的html字符串
+     * @throws IOException                  如果在文件读写过程中发生I/O错误
+     * @throws ParserConfigurationException 如果在解析XML或HTML文档时发生配置错误
+     * @throws TransformerException         如果在将DOM树转换为输出格式时发生错误
      */
     public static String docToHtml(String inputPath) throws IOException, ParserConfigurationException, TransformerException {
         FileInputStream fis = new FileInputStream(inputPath);
@@ -252,12 +264,15 @@ public class OfficeUtils {
     }
 
     /**
-     * html 生成 pdf
+     * 将HTML内容转换为PDF文件
+     * <p>
+     * 将给定的HTML内容转换为PDF文件，并保存到指定的输出路径。
      *
-     * @param html
-     * @param outputPath
-     * @throws DocumentException
-     * @throws IOException
+     * @param html       HTML内容字符串
+     * @param outputPath 输出PDF文件的路径
+     * @param pageSize   PDF页面的大小
+     * @throws DocumentException 当文档操作异常时抛出
+     * @throws IOException       当I/O操作异常时抛出
      */
     public static void htmlToPdf(String html, String outputPath, Rectangle pageSize) throws DocumentException, IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

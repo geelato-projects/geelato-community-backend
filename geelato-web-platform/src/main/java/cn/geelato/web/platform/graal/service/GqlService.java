@@ -32,15 +32,26 @@ public class GqlService extends RuleService {
         return new Dao(jdbcTemplate);
     }
 
+    /**
+     * 执行与给定SQL键关联的SQL语句，并返回执行结果。
+     *
+     * @param sqlKey SQL键，用于标识要执行的SQL语句
+     * @param params SQL语句中所需的参数，以键值对的形式提供
+     * @return SQL语句的执行结果
+     * @throws ScriptException       如果在执行SQL语句时发生脚本异常，则抛出此异常
+     * @throws NoSuchMethodException 如果在尝试执行SQL语句时找不到对应的方法，则抛出此异常
+     */
     public Object executeSqlKey(String sqlKey, Map<String, Object> params) throws ScriptException, NoSuchMethodException {
         return this.initDefaultDao().executeKey(sqlKey, params);
     }
 
     /**
      * 查询字典项
+     * <p>
+     * 根据字典ID查询对应的字典项列表。
      *
-     * @param dictId
-     * @return
+     * @param dictId 字典ID
+     * @return 返回查询结果的ApiResult对象，包含字典项列表
      */
     public ApiResult queryDictItems(String dictId) {
         try {

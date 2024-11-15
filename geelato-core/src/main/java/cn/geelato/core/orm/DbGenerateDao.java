@@ -1,21 +1,21 @@
 package cn.geelato.core.orm;
 
-import com.alibaba.fastjson2.JSONObject;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.enums.TableTypeEnum;
 import cn.geelato.core.meta.MetaManager;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
-import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.util.ConnectUtils;
 import cn.geelato.utils.SqlParams;
+import com.alibaba.fastjson2.JSONObject;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -44,7 +44,6 @@ public class DbGenerateDao {
     }
 
 
-
     public void createAllTables(boolean dropBeforeCreate) {
         this.createAllTables(dropBeforeCreate, null);
     }
@@ -55,7 +54,7 @@ public class DbGenerateDao {
      * 内部调用了sqlId:createOneTable来创建表</p>
      * 创建完表之后，将元数据信息保存到数据库中
      *
-     * @param dropBeforeCreate     存在表时，是否删除
+     * @param dropBeforeCreate 存在表时，是否删除
      */
     public void createAllTables(boolean dropBeforeCreate, List<String> ignoreEntityNameList) {
         Collection<EntityMeta> entityMetas = metaManager.getAll();
@@ -96,8 +95,14 @@ public class DbGenerateDao {
     }
 
     /**
-     * 将元数据信息保存到服务端，一般用于开发环境初始化，创建完表之后执行
+     * 将元数据信息保存到服务端数据库。
+     * <p>
+     * 该方法通常用于开发环境的初始化阶段，在创建完数据库表之后执行。
+     * 它遍历传入的实体元数据集合，对每个实体元数据进行处理，包括设置连接ID、链接状态、启用状态等，
+     * 并将这些信息保存到服务端数据库中。同时，它还会处理字段元数据和表外键关系，并将它们也保存到数据库中。
      *
+     * @param id          连接ID，用于标识数据库连接
+     * @param entityMetas 实体元数据集合，包含需要保存的实体元数据
      */
     private void saveJavaMetaToDb(String id, Collection<EntityMeta> entityMetas) {
         for (EntityMeta em : entityMetas) {
@@ -128,7 +133,7 @@ public class DbGenerateDao {
      * @param dropBeforeCreate 存在表时，是否删除
      */
     public void createOrUpdateOneTable(String entityName, boolean dropBeforeCreate) {
-        //createOrUpdateOneTable(metaManager.getByEntityName(entityName,false), dropBeforeCreate);
+        // createOrUpdateOneTable(metaManager.getByEntityName(entityName,false), dropBeforeCreate);
         EntityMeta entityMeta = metaManager.getByEntityName(entityName, false);
         if (TableTypeEnum.TABLE.getCode().equals(entityMeta.getTableMeta().getTableType())) {
             createOrUpdateOneTable(entityMeta);
@@ -291,8 +296,13 @@ public class DbGenerateDao {
     }
 
     /**
-     * 创建数据库表
+     * 创建数据库表。
+     * 根据提供的表元数据、列信息、外键信息和是否有删除状态标志，创建一个新的数据库表。
      *
+     * @param tableMeta        表元数据对象，包含表的基本信息
+     * @param createColumnList 包含列信息的JSONObject列表
+     * @param foreignList      包含外键信息的JSONObject列表
+     * @param hasDelStatus     是否有删除状态标志，用于决定是否在表中添加删除状态字段
      */
     private void createTable(TableMeta tableMeta, List<JSONObject> createColumnList, List<JSONObject> foreignList, boolean hasDelStatus) {
         Map<String, Object> map = new HashMap<>();
@@ -320,8 +330,17 @@ public class DbGenerateDao {
     }
 
     /**
-     * 更新数据库表
+     * 更新数据库表。
+     * 根据提供的表元数据、新增字段列表、修改字段列表、索引列表、唯一约束列表、主键名称以及是否存在删除状态标志，
+     * 更新数据库中的表结构。
      *
+     * @param tableMeta    表元数据对象，包含表名、表注释等信息
+     * @param addList      新增字段列表，每个元素为一个JSONObject，包含字段相关信息
+     * @param modifyList   修改字段列表，每个元素为一个JSONObject，包含字段相关信息
+     * @param indexList    索引列表，每个元素为一个JSONObject，包含索引相关信息
+     * @param uniqueList   唯一约束列表，每个元素为一个JSONObject，包含唯一约束相关信息
+     * @param primaryKey   主键名称
+     * @param hasDelStatus 是否存在删除状态标志
      */
     private void upgradeTable(TableMeta tableMeta, List<JSONObject> addList, List<JSONObject> modifyList, List<JSONObject> indexList,
                               List<JSONObject> uniqueList, String primaryKey, boolean hasDelStatus) {
@@ -381,7 +400,7 @@ public class DbGenerateDao {
         }
         Map<String, Object> map = new HashMap<>();
         map.put("viewName", view);
-        map.put("viewSql", sql);   //TODO 对sql进行检查
+        map.put("viewSql", sql);   // TODO 对sql进行检查
         dao.execute("createOneView", map);
     }
 

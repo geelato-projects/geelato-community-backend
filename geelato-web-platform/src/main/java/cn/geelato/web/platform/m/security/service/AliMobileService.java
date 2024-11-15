@@ -1,7 +1,5 @@
 package cn.geelato.web.platform.m.security.service;
 
-import com.alibaba.fastjson2.JSON;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
@@ -10,6 +8,8 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.security.entity.AliMobile;
+import com.alibaba.fastjson2.JSON;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +42,12 @@ public class AliMobileService {
 
     /**
      * 使用AK&SK初始化账号Client
+     * <p>
+     * 根据提供的AliMobile对象中的AccessKeyId和AccessKeySecret，创建一个用于访问阿里云短信服务的Client对象。
      *
-     * @throws Exception
+     * @param aliMobile 包含阿里云账号信息的AliMobile对象
+     * @return 返回初始化后的Client对象
+     * @throws Exception 如果初始化过程中发生异常，则抛出该异常
      */
     private com.aliyun.dysmsapi20170525.Client createClient(AliMobile aliMobile) throws Exception {
         com.aliyun.teaopenapi.models.Config config = new com.aliyun.teaopenapi.models.Config()
@@ -58,8 +62,12 @@ public class AliMobileService {
 
     /**
      * 使用STS鉴权方式初始化账号Client，推荐此方式。
+     * <p>
+     * 通过提供的AliMobile对象中的AccessKey ID、AccessKey Secret和Security Token信息，使用STS鉴权方式初始化阿里云短信服务的Client。
      *
-     * @throws Exception
+     * @param aliMobile 包含AccessKey ID、AccessKey Secret和Security Token的AliMobile对象
+     * @return 初始化后的阿里云短信服务Client对象
+     * @throws Exception 如果初始化过程中发生异常，则抛出该异常
      */
     private com.aliyun.dysmsapi20170525.Client createClientWithSTS(AliMobile aliMobile) throws Exception {
         com.aliyun.teaopenapi.models.Config config = new com.aliyun.teaopenapi.models.Config()
@@ -78,11 +86,14 @@ public class AliMobileService {
 
     /**
      * 发送信息
+     * <p>
+     * 通过阿里云的短信服务发送短信信息。
      *
-     * @param phoneNumbers  电话号码
-     * @param templateParam 模板参数
-     * @return
-     * @throws Exception
+     * @param templateCode  模板代码，用于指定要发送的短信模板
+     * @param phoneNumbers  电话号码，指定接收短信的电话号码
+     * @param templateParam 模板参数，包含要填充到短信模板中的参数值
+     * @return 如果短信发送成功，则返回true；否则返回false
+     * @throws Exception 如果在发送短信过程中发生异常，则抛出该异常
      */
     public boolean sendMobile(String templateCode, String phoneNumbers, Map<String, Object> templateParam) throws Exception {
         // 查询参数值
@@ -110,8 +121,16 @@ public class AliMobileService {
 
     /**
      * 获取配置值
+     * <p>
+     * 根据提供的签名名称、模板代码、访问密钥ID、访问密钥秘密和安全令牌，从系统配置中获取对应的配置值，并填充到AliMobile对象中。
      *
-     * @return
+     * @param signName        签名名称
+     * @param templateCode    模板代码
+     * @param accessKeyId     访问密钥ID
+     * @param accessKeySecret 访问密钥秘密
+     * @param securityToken   安全令牌
+     * @return 填充了配置值的AliMobile对象
+     * @throws Exception 如果在获取配置值的过程中发生异常，则抛出该异常
      */
     private AliMobile getAliMobileBySysConfig(String signName, String templateCode, String accessKeyId, String accessKeySecret, String securityToken) throws Exception {
         AliMobile aliMobile = new AliMobile();

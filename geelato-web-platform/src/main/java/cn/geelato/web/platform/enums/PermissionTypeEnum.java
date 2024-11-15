@@ -13,8 +13,8 @@ public enum PermissionTypeEnum {
     MODEL("实体模型权限", "mp"),
     COLUMN("实体字段权限", "cp");
 
-    private final String label;//选项内容
-    private final String value;//选项值
+    private final String label;// 选项内容
+    private final String value;// 选项值
 
     PermissionTypeEnum(String label, String value) {
         this.label = label;
@@ -33,18 +33,22 @@ public enum PermissionTypeEnum {
     }
 
     /**
-     * 获取模型拥有的权限
+     * 获取模型拥有的权限。
+     * <p>
+     * 返回模型所拥有的权限字符串，格式为"DATA,MODEL"。
      *
-     * @return
+     * @return 返回模型所拥有的权限字符串
      */
     public static String getTablePermissions() {
         return String.format("%s,%s", PermissionTypeEnum.DATA.getValue(), PermissionTypeEnum.MODEL.getValue());
     }
 
     /**
-     * 获取模型权限+字段权限
+     * 获取模型权限和字段权限的字符串表示。
+     * <p>
+     * 该方法将模型权限（MODEL）、数据权限（DATA）和字段权限（COLUMN）的值通过逗号连接成一个字符串，并返回该字符串。
      *
-     * @return
+     * @return 包含模型权限、数据权限和字段权限的字符串
      */
     public static String getTableAndColumnPermissions() {
         return String.format("%s,%s,%s", PermissionTypeEnum.DATA.getValue(), PermissionTypeEnum.MODEL.getValue(), PermissionTypeEnum.COLUMN.getValue());

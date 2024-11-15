@@ -19,8 +19,6 @@ public class BizMvelRuleManager extends AbstractScriptManager {
         ruleMap.get(ruleCode);
     }
 
-    /**
-     */
     @Override
     public void loadDb() {
         //暂时不知道用法

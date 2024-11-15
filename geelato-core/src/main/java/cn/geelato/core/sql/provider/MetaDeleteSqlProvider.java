@@ -30,9 +30,9 @@ public class MetaDeleteSqlProvider extends MetaBaseSqlProvider<DeleteCommand> {
                 objectList.add(value);
             }
         });
-        //条件部分
+        // 条件部分
         Object[] whereObjects = buildWhereParams(command);
-        //2、再加条件部分
+        // 2、再加条件部分
         for (Object object : whereObjects) {
             objectList.add(object);
         }
@@ -68,16 +68,18 @@ public class MetaDeleteSqlProvider extends MetaBaseSqlProvider<DeleteCommand> {
         }
         return types;
     }
-        /**
+
+    /**
+     * 构建单条SQL语句，用于删除或逻辑删除实体记录。
      *
-     * @param command
-     * @return
+     * @param command 包含删除操作的命令对象
+     * @return 构建的SQL语句字符串
      */
     @Override
     protected String buildOneSql(DeleteCommand command) {
         StringBuilder sb = new StringBuilder();
         EntityMeta em = getEntityMeta(command);
-        if(!LogicDelete){
+        if (!LogicDelete) {
             sb.append("delete from ");
             sb.append(em.getTableName());
             FilterGroup fg = command.getWhere();
@@ -85,7 +87,7 @@ public class MetaDeleteSqlProvider extends MetaBaseSqlProvider<DeleteCommand> {
                 sb.append(" where ");
                 buildConditions(sb, em, fg.getFilters(), fg.getLogic());
             }
-        }else{
+        } else {
             sb.append("update   ");
             sb.append(em.getTableName());
             sb.append(" set  ");
@@ -98,8 +100,9 @@ public class MetaDeleteSqlProvider extends MetaBaseSqlProvider<DeleteCommand> {
         }
         return sb.toString();
     }
+
     protected void buildFields(StringBuilder sb, EntityMeta em, String[] fields) {
-        //重命名查询的结果列表为实体字段名
+        // 重命名查询的结果列表为实体字段名
         for (String fieldName : fields) {
             if (em.isIgnoreUpdateField(fieldName)) {
                 continue;

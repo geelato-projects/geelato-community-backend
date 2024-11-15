@@ -1,8 +1,8 @@
 package cn.geelato.core.sql.provider;
 
 import cn.geelato.core.enums.ViewTypeEnum;
-import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.command.QueryViewCommand;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.view.ViewMeta;
@@ -26,18 +26,19 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
     protected int[] buildTypes(QueryViewCommand command) {
         return buildWhereTypes(command);
     }
+
     @Override
     protected String buildOneSql(QueryViewCommand command) {
         StringBuilder sb = new StringBuilder();
         EntityMeta md = getEntityMeta(command);
         sb.append("select  * ");
         sb.append(" from ");
-        ViewMeta vm= md.getViewMeta(command.getViewName());
-        if(vm.getViewType().equals(ViewTypeEnum.DEFAULT.getCode())){
+        ViewMeta vm = md.getViewMeta(command.getViewName());
+        if (vm.getViewType().equals(ViewTypeEnum.DEFAULT.getCode())) {
             sb.append("(");
             sb.append(vm.getViewConstruct());
             sb.append(") as vt");
-        }else {
+        } else {
             sb.append(vm.getViewName());
         }
         // where
@@ -70,11 +71,14 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         }
         return sb.toString();
     }
+
     /**
-     * 构健统计数据
+     * 构建统计数据查询的SQL语句
+     * <p>
+     * 根据传入的查询视图命令（QueryViewCommand）构建用于统计数据的SQL语句。
      *
-     * @param command
-     * @return
+     * @param command 查询视图命令，包含查询所需的字段、别名、过滤条件等信息
+     * @return 返回构建的SQL语句字符串
      */
     public String buildCountSql(QueryViewCommand command) {
         StringBuilder sb = new StringBuilder();
@@ -85,18 +89,18 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         buildSelectFields(sb, md, command.getFields(), command.getAlias());
         sb.append(" from ");
         sb.append(md.getTableName());
-        //where
+        // where
         FilterGroup fg = command.getWhere();
         if (fg != null && fg.getFilters() != null && fg.getFilters().size() > 0) {
             sb.append(" where ");
             buildConditions(sb, md, fg.getFilters(), fg.getLogic());
         }
-        //group by
+        // group by
         if (StringUtils.hasText(command.getGroupBy())) {
             sb.append(" group by ");
             sb.append(command.getGroupBy());
         }
-        //having
+        // having
         if (command.getHaving() != null) {
             sb.append(" having ");
             sb.append(command.getHaving());
@@ -132,7 +136,7 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
             sb.append("*");
             return;
         }
-        //重命名查询的结果列表为实体字段名
+        // 重命名查询的结果列表为实体字段名
         for (String fieldName : fields) {
             FieldMeta fm = md.getFieldMeta(fieldName);
             if (alias.containsKey(fieldName)) {

@@ -1,8 +1,5 @@
 package cn.geelato.web.platform.m.security.service;
 
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
@@ -11,6 +8,9 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.security.entity.AliEmail;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,11 +40,14 @@ public class EmailService {
     public Dao dao;
 
     /**
-     * html邮件
+     * 发送HTML格式邮件
+     * <p>
+     * 根据提供的收件人、主题和内容，发送HTML格式的邮件。
      *
-     * @param to      收件人
-     * @param subject 主题
-     * @param content 内容
+     * @param to      收件人的邮箱地址
+     * @param subject 邮件的主题
+     * @param content 邮件的正文内容，应为HTML格式
+     * @return 如果邮件发送成功，则返回true；否则返回false
      */
     public boolean sendHtmlMail(String to, String subject, String content) {
         try {

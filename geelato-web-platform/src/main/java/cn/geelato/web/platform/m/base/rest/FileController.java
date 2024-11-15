@@ -72,7 +72,12 @@ public class FileController extends BaseController {
     }
 
     /**
+     * 将字节数组保存到文件系统中。
      *
+     * @param file     要保存的字节数组
+     * @param filePath 文件保存的路径
+     * @param fileName 文件名
+     * @throws IOException 如果在文件操作过程中发生I/O错误，则抛出此异常
      */
     private void saveToFileSystem(byte[] file, String filePath, String fileName) throws IOException {
         File targetFile = new File(filePath);

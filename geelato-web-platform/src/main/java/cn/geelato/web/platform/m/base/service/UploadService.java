@@ -30,12 +30,14 @@ public class UploadService {
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
 
     /**
-     * 返回文件上传绝对路径
+     * 返回文件上传的绝对路径
+     * <p>
+     * 根据提供的子路径、文件名和是否重命名的标志，生成文件上传的绝对路径。
      *
-     * @param subPath
-     * @param fileName
-     * @param isRename
-     * @return
+     * @param subPath  子路径，用于指定文件上传的具体目录
+     * @param fileName 文件名，表示要上传的文件的名称
+     * @param isRename 是否重命名文件，如果为true，则会对文件名进行重命名处理
+     * @return 返回文件上传的绝对路径字符串
      */
     public static String getSavePath(String subPath, String fileName, boolean isRename) {
         // 处理子路径
@@ -60,14 +62,17 @@ public class UploadService {
     }
 
     /**
-     * 根目录添加 租户编码、应用id
+     * 根据子路径、租户编码、应用ID、文件名和是否重命名生成保存路径
+     * <p>
+     * 该方法根据提供的子路径、租户编码、应用ID、文件名和是否重命名的标志，生成文件的保存路径。
+     * 如果租户编码或应用ID为空，则使用当前会话的租户编码或默认路径。
      *
-     * @param subPath
-     * @param tenantCode
-     * @param appId
-     * @param fileName
-     * @param isRename
-     * @return
+     * @param subPath    子路径，用于指定保存文件的目录
+     * @param tenantCode 租户编码，用于区分不同租户的文件
+     * @param appId      应用ID，用于进一步区分文件
+     * @param fileName   文件名，要保存的文件的名称
+     * @param isRename   是否重命名文件，如果为true，则对文件名进行处理以避免重名
+     * @return 返回生成的保存路径字符串
      */
     public static String getSavePath(String subPath, String tenantCode, String appId, String fileName, boolean isRename) {
         String rootPath = subPath;
@@ -80,15 +85,17 @@ public class UploadService {
     }
 
     /**
-     * 根目录添加，存放表 默认为attach
+     * 获取文件保存路径
+     * <p>
+     * 根据给定的子路径、表类型、租户代码、应用ID、文件名和是否重命名标志，生成文件的保存路径。
      *
-     * @param subPath
-     * @param tableType
-     * @param tenantCode
-     * @param appId
-     * @param fileName
-     * @param isRename
-     * @return
+     * @param subPath    子路径，用于指定文件保存的相对路径
+     * @param tableType  表类型，用于指定文件的来源或类型
+     * @param tenantCode 租户代码，用于区分不同租户的文件
+     * @param appId      应用ID，用于进一步区分同一租户下的不同应用文件
+     * @param fileName   文件名，要保存的文件名称
+     * @param isRename   是否重命名，如果为true，则文件名可能会根据规则进行重命名
+     * @return 返回生成的文件保存路径字符串
      */
     public static String getSavePath(String subPath, String tableType, String tenantCode, String appId, String fileName, boolean isRename) {
         String rootPath = subPath;
@@ -101,6 +108,16 @@ public class UploadService {
         return getSavePath(rootPath, tenantCode, appId, fileName, isRename);
     }
 
+    /**
+     * 获取保存文件的根路径
+     * <p>
+     * 根据提供的子路径、文件名和是否重命名标志，构造并返回文件的完整保存路径。
+     *
+     * @param subPath  子路径，用于指定文件保存的目录
+     * @param fileName 文件名，不包含路径
+     * @param isRename 是否重命名文件，如果为true，则文件名将被替换为生成的唯一标识符
+     * @return 返回文件的完整保存路径
+     */
     public static String getSaveRootPath(String subPath, String fileName, boolean isRename) {
         // 处理子路径
         subPath = subPath.startsWith("/") ? subPath : "/" + subPath;
@@ -119,8 +136,10 @@ public class UploadService {
 
     /**
      * 创建全部路径
+     * <p>
+     * 根据给定的路径字符串，检查路径是否存在，如果不存在则创建该路径及其所有父目录。
      *
-     * @param path
+     * @param path 要创建的路径字符串
      */
     public static void fileMkdirs(String path) {
         if (Strings.isNotBlank(path)) {
@@ -132,11 +151,13 @@ public class UploadService {
     }
 
     /**
-     * 文件复制
+     * 文件重命名并复制
+     * <p>
+     * 将指定的文件重命名为新的名称，并复制到原文件所在的目录下。
      *
-     * @param file
-     * @param fileName 重命名文件名称
-     * @return
+     * @param file     要重命名并复制的文件对象
+     * @param fileName 新的文件名称，如果为空则自动生成一个包含当前日期时间的备份文件名
+     * @return 如果文件重命名并复制成功返回true，否则返回false
      */
     public static boolean fileResetName(File file, String fileName) {
         if (file != null && file.exists()) {
@@ -153,26 +174,30 @@ public class UploadService {
     }
 
     /**
-     * 文件复制，重命名：name_uuid_bak.extension
+     * 文件复制并重命名
+     * <p>
+     * 将给定的文件复制并重命名为 "name_uuid_bak.extension" 格式的新文件名。
      *
-     * @param file
-     * @return
+     * @param file 要复制并重命名的文件对象
+     * @return 如果文件复制并重命名成功，则返回true；否则返回false
      */
     public static boolean fileResetName(File file) {
         return UploadService.fileResetName(file, null);
     }
 
     /**
-     * 复制对象
+     * 复制对象属性
+     * <p>
+     * 将源对象的属性复制到目标对象的实例中。
      *
-     * @param source
-     * @param entity
-     * @param <T>
-     * @return
-     * @throws NoSuchMethodException
-     * @throws InvocationTargetException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
+     * @param source 源对象，即要复制属性的对象
+     * @param entity 目标对象的Class类型，用于创建目标对象实例
+     * @param <T>    目标对象的类型
+     * @return 返回目标对象的实例，如果复制失败则返回null
+     * @throws NoSuchMethodException     如果目标对象的类没有无参数的构造函数，则抛出此异常
+     * @throws InvocationTargetException 如果目标对象的构造函数或初始化代码块在执行时抛出异常，则抛出此异常
+     * @throws InstantiationException    如果目标对象的类表示一个抽象类、接口、数组类、基本类型或void，或者如果无法实例化目标对象，则抛出此异常
+     * @throws IllegalAccessException    如果目标对象的构造函数或初始化代码块不可访问，则抛出此异常
      */
     public static <T> T copyProperties(Attach source, Class<T> entity) {
         T object = null;

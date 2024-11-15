@@ -4,9 +4,6 @@ import cn.geelato.core.script.AbstractScriptManager;
 import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.core.script.js.JsTemplateParser;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.Assert;
 
 import javax.script.Bindings;
 import javax.script.ScriptException;
@@ -27,8 +24,10 @@ public class BizRuleScriptManager extends AbstractScriptManager {
     private final JsProvider jsProvider = new JsProvider();
 
     /**
-     * 解析*.js的文件
+     * 解析指定的*.js文件。
      *
+     * @param file 要解析的*.js文件
+     * @throws IOException 如果在读取文件或进行文件操作时发生I/O错误，将抛出此异常
      */
     @Override
     public void parseFile(File file) throws IOException {
@@ -36,8 +35,12 @@ public class BizRuleScriptManager extends AbstractScriptManager {
     }
 
     /**
-     * 解析*.js的文件流
+     * 解析*.js文件流
+     * <p>
+     * 从输入流中读取内容，并解析为JavaScript模板。
      *
+     * @param inputStream 输入流，包含待解析的*.js文件内容
+     * @throws IOException 如果在读取或解析输入流时发生I/O错误，将抛出此异常
      */
     @Override
     public void parseStream(InputStream inputStream) throws IOException {
@@ -59,9 +62,11 @@ public class BizRuleScriptManager extends AbstractScriptManager {
 
 
     /**
-     * @param functionName functionName
-     * @param paramMap     paramMap中put的key与函数的参数名称需一致，{@link Bindings}
-     * @return 执行结果
+     * 执行指定的JavaScript函数。
+     *
+     * @param functionName 要执行的JavaScript函数名称
+     * @param paramMap     包含函数参数的Map，其中Map的key需要与函数参数名称一致。具体参数绑定方式请参考{@link Bindings}
+     * @return 函数执行的结果，如果执行失败或未找到函数，则返回null
      */
     public Object execute(String functionName, Map<String, Object> paramMap) {
         if (jsProvider.contain(functionName)) {

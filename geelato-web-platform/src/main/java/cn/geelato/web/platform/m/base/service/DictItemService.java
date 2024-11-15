@@ -1,10 +1,10 @@
 package cn.geelato.web.platform.m.base.service;
 
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
+import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.m.base.entity.DictItem;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -19,11 +19,14 @@ import java.util.Map;
 public class DictItemService extends BaseSortableService {
 
     /**
-     * 批量插入和更新
+     * 批量插入和更新字典项
+     * <p>
+     * 根据给定的字典ID、父ID和字典项列表，进行批量插入和更新操作。
      *
-     * @param dictId
-     * @param parentId
-     * @param forms
+     * @param dictId   字典ID，用于标识要操作的字典
+     * @param parentId 父ID，用于指定字典项的父级分类
+     * @param forms    字典项列表，包含要插入或更新的字典项信息
+     * @throws RuntimeException 如果字典ID为空，则抛出运行时异常，并返回更新失败的错误信息
      */
     public void batchCreateOrUpdate(String dictId, String parentId, List<DictItem> forms) {
         if (Strings.isBlank(dictId)) {
@@ -68,9 +71,11 @@ public class DictItemService extends BaseSortableService {
 
     /**
      * 更新一条数据
+     * <p>
+     * 更新指定的字典项数据，并处理其启用状态对子项的影响。
      *
-     * @param model 实体数据
-     * @return
+     * @param model 要更新的字典项数据
+     * @return 返回更新后的数据映射
      */
     public Map updateModel(DictItem model) {
         model.setDelStatus(DeleteStatusEnum.NO.getCode());
@@ -95,8 +100,10 @@ public class DictItemService extends BaseSortableService {
 
     /**
      * 逻辑删除，并删除子集
+     * <p>
+     * 该方法用于逻辑删除指定的字典项及其子集。
      *
-     * @param model
+     * @param model 要删除的字典项模型对象
      */
     public void isDeleteModelAndChild(DictItem model) {
         List<DictItem> childs = new ArrayList<>();
@@ -118,8 +125,10 @@ public class DictItemService extends BaseSortableService {
 
     /**
      * 基础逻辑删除
+     * <p>
+     * 该方法用于执行字典项的逻辑删除操作，即将字典项的启用状态设置为禁用。
      *
-     * @param model
+     * @param model 要进行逻辑删除的字典项模型对象
      */
     public void isDeleteDictItem(DictItem model) {
         model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
@@ -127,6 +136,15 @@ public class DictItemService extends BaseSortableService {
     }
 
 
+    /**
+     * 递归查找子节点
+     * <p>
+     * 根据给定的节点列表和父节点ID，递归查找所有子节点，并将它们添加到结果列表中。
+     *
+     * @param list 节点列表，包含所有节点的信息
+     * @param pid  父节点ID，用于指定要查找的子节点的父节点
+     * @return 返回包含所有子节点的列表
+     */
     private List<DictItem> childIteration(List<DictItem> list, String pid) {
         List<DictItem> result = new ArrayList<>();
         for (DictItem item : list) {

@@ -84,9 +84,11 @@ public class MetaManager extends AbstractManager {
     }
 
     /**
-     * 根据需求刷新模型和视图
+     * 根据需求刷新模型和视图。
+     * 根据传入的参数，从数据库中查询表信息、列信息和视图信息，并对这些信息进行处理以刷新模型和视图。
      *
-     * @param params appId,connectId,tableId,entityName
+     * @param dao    数据访问对象，用于执行数据库操作
+     * @param params 包含查询参数的Map，支持的参数包括appId、connectId、tableId和entityName
      */
     public void parseDBMeta(Dao dao, Map<String, String> params) {
         this.dao = dao;
@@ -169,40 +171,6 @@ public class MetaManager extends AbstractManager {
         return keyList;
     }
 
-    /**
-     * 添加公共字段
-     *
-     * @param columnName 列名
-     * @param fieldName  字段名
-     * @param title      字段显示名，如中文名
-     */
-//    public void addCommonFieldMeta(String columnName, String fieldName, String title) {
-//        FieldMeta fieldMeta = new FieldMeta(columnName, fieldName, title);
-//        commonFieldMetas.put(fieldName, fieldMeta);
-//    }
-
-    /**
-     * 添加公共字段
-     *
-     * @param columnName    列名
-     * @param fieldName     字段名
-     * @param title         字段显示名，如中文名
-     * @param charMaxLength 字符长
-     */
-//    public void addCommonFieldMeta(String columnName, String fieldName, String title, int charMaxLength) {
-//        FieldMeta fieldMeta = new FieldMeta(columnName, fieldName, title);
-//        fieldMeta.getColumn().setCharMaxLength(charMaxLength);
-//        commonFieldMetas.put(fieldName, fieldMeta);
-//    }
-
-    /**
-     *
-     */
-//    public FieldMeta getCommonFieldMeta(String columnName) {
-//        return commonFieldMetas.get(columnName);
-//    }
-
-
     public EntityMeta get(Class clazz) {
         String entityName = MetaReflex.getEntityName(clazz);
         if (entityMetadataMap.containsKey(entityName)) {
@@ -250,8 +218,12 @@ public class MetaManager extends AbstractManager {
 
 
     /**
-     * @param entityName 实体名称，若是java元数据，则entityName为长类名（包名+类名）
-     * @return 实体元数据
+     * 根据实体名称获取实体元数据。
+     * 通过传入的实体名称（entityName）在entityMetadataMap中查找对应的实体元数据，并返回。
+     * 如果未找到对应的实体元数据，则记录警告日志并返回null。
+     *
+     * @param entityName 实体名称。如果是Java元数据，则entityName应为长类名（包名+类名）。
+     * @return 返回找到的实体元数据对象，如果未找到则返回null。
      */
     public EntityMeta getByEntityName(String entityName) {
         if (entityMetadataMap.containsKey(entityName)) {
@@ -329,8 +301,10 @@ public class MetaManager extends AbstractManager {
     }
 
     /**
-     * @param packageName            扫描的包名
-     * @param isUpdateMetadataFormDb 是否同时从数据库的元数据表中更新元数据信息，如字段长度
+     * 扫描并解析指定包名下的所有类。
+     *
+     * @param packageName            要扫描的包名
+     * @param isUpdateMetadataFormDb 是否在解析类之后，从数据库的元数据表中更新类的元数据信息，如字段长度等
      */
     public void scanAndParse(String packageName, boolean isUpdateMetadataFormDb) {
         scanAndParse(packageName);

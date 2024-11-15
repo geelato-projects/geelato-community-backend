@@ -1,20 +1,23 @@
 package cn.geelato.web.platform.m.security.service;
 
-import cn.geelato.web.platform.m.security.entity.*;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
-import cn.geelato.web.platform.m.security.enums.RoleTypeEnum;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.service.AppService;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
+import cn.geelato.web.platform.m.security.entity.*;
+import cn.geelato.web.platform.m.security.enums.RoleTypeEnum;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author diabl
@@ -42,10 +45,12 @@ public class RoleService extends BaseSortableService {
 
 
     /**
-     * 获取单条
+     * 获取单条角色信息
+     * <p>
+     * 根据提供的角色ID，获取对应的角色信息。
      *
-     * @param id
-     * @return
+     * @param id 角色ID
+     * @return 返回对应的角色对象，包含角色信息
      */
     public Role getModel(String id) {
         // 获取
@@ -61,9 +66,11 @@ public class RoleService extends BaseSortableService {
     }
 
     /**
-     * 逻辑删除
+     * 逻辑删除角色
+     * <p>
+     * 删除指定的角色，并同时删除与之关联的角色APP关系、角色权限关系、角色菜单关系和角色用户关系。
      *
-     * @param model
+     * @param model 要删除的角色对象
      */
     public void isDeleteModel(Role model) {
         // 组织删除
@@ -101,6 +108,14 @@ public class RoleService extends BaseSortableService {
         }
     }
 
+    /**
+     * 更新角色信息
+     * <p>
+     * 根据提供的角色表单对象更新角色信息，并处理与之关联的表。
+     *
+     * @param form 角色表单对象，包含要更新的角色信息
+     * @return 返回更新后的角色对象
+     */
     public Role updateModel(Role form) {
         // 原来的数据
         Role model = getModel(Role.class, form.getId());
@@ -159,6 +174,14 @@ public class RoleService extends BaseSortableService {
         return formMap;
     }
 
+    /**
+     * 创建角色
+     * <p>
+     * 根据提供的角色对象创建新的角色，并处理与之关联的平台级角色。
+     *
+     * @param model 角色对象，包含角色的各种信息
+     * @return 返回创建的角色对象
+     */
     public Role createModel(Role model) {
         // 创建
         Role role = super.createModel(model);
@@ -177,10 +200,12 @@ public class RoleService extends BaseSortableService {
     }
 
     /**
-     * 查询，平台级、应用级角色
+     * 查询平台级和应用级角色
+     * <p>
+     * 根据提供的参数查询平台级和应用级角色列表。
      *
-     * @param params
-     * @return
+     * @param params 查询参数，包含租户代码和应用ID等信息
+     * @return 返回查询到的角色列表
      */
     public List<Role> queryRoles(Map<String, Object> params) {
         String orderBy = "weight DESC,update_at DESC";
@@ -245,8 +270,10 @@ public class RoleService extends BaseSortableService {
 
     /**
      * 设置模型角色和权限
+     * <p>
+     * 根据提供的角色模型，为其设置相应的权限。
      *
-     * @param model
+     * @param model 角色模型对象，包含应用ID、租户代码等信息
      */
     public void resetRolePermission(Role model) {
         Map<String, Object> params = new HashMap<>();

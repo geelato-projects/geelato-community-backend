@@ -32,6 +32,16 @@ import java.util.Map;
 @Slf4j
 public class BarcodeUtils {
 
+    /**
+     * 生成条形码并附加到指定对象
+     * <p>
+     * 根据提供的文本和条形码参数，生成条形码图片，并将其附加到指定对象上。
+     *
+     * @param text    要生成的条形码内容
+     * @param barcode 条形码参数对象，包含条形码的相关设置
+     * @return 返回包含条形码图片信息的Map对象
+     * @throws RuntimeException 如果生成条形码图片时发生异常，则抛出该异常
+     */
     public static Map<String, Object> generateBarcodeToAttach(String text, Barcode barcode) {
         try {
             // 图片信息
@@ -60,6 +70,16 @@ public class BarcodeUtils {
         }
     }
 
+    /**
+     * 生成条形码并转换为Base64编码
+     * <p>
+     * 根据提供的文本和条形码配置，生成条形码图片，并将其转换为Base64编码的字符串。
+     *
+     * @param text    需要生成条形码的文本
+     * @param barcode 条形码配置对象，包含条形码的类型、宽度、高度等信息
+     * @return 返回包含条形码图片的Base64编码字符串
+     * @throws RuntimeException 如果在生成条形码或转换Base64编码时发生错误，则抛出运行时异常
+     */
     public static String generateBarcodeToBase64(String text, Barcode barcode) {
         try {
             String contentType = BarcodePictureFormatEnum.getContentType(barcode.getPictureFormat());
@@ -83,10 +103,12 @@ public class BarcodeUtils {
 
     /**
      * 生成条形码
+     * <p>
+     * 根据给定的内容和条码配置，生成对应的条形码图片，并返回图片的保存路径。
      *
-     * @param text    内容
-     * @param barcode 条码配置
-     * @return
+     * @param text    要显示在条形码上的文本内容
+     * @param barcode 条码配置对象，包含条码的各项参数配置
+     * @return 返回生成的条形码图片保存路径
      */
     public static String generateBarcode(String text, Barcode barcode) {
         // 数据处理

@@ -48,7 +48,8 @@ public class ApiResult<E> {
     /**
      * 设置编码为ApiResultCode.SUCCESS
      *
-     * @return ApiResult
+     * @return ApiResult 类型的对象
+     * @deprecated 该方法已被弃用，请使用新的方法来替代
      */
     @Deprecated
     public ApiResult<E> success() {
@@ -58,9 +59,9 @@ public class ApiResult<E> {
     }
 
     /**
-     * 设置编码为ApiResultCode.ERROR
+     * 设置编码为ApiResultCode.ERROR，表示操作失败。
      *
-     * @return ApiResult
+     * @return 返回ApiResult对象，其中包含操作失败的信息。
      */
     public ApiResult<E> error() {
         this.code = ApiResultCode.ERROR;
@@ -70,6 +71,10 @@ public class ApiResult<E> {
 
     /**
      * 错误，异常处理
+     *
+     * @param exception 异常对象
+     * @param <T>       异常类型，必须是Exception的子类
+     * @return ApiResult<E> 类型的对象，包含错误信息和状态
      */
     public <T extends Exception> ApiResult<E> error(T exception) {
         this.status = ApiResultStatus.FAIL;

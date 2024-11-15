@@ -1,16 +1,16 @@
 package cn.geelato.web.platform.m.security.service;
 
-import cn.geelato.web.platform.m.security.entity.Permission;
-import cn.geelato.web.platform.m.security.entity.Role;
-import cn.geelato.web.platform.m.security.entity.RolePermissionMap;
-import com.alibaba.fastjson2.JSON;
-import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.constants.ResourcesFiles;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.utils.FastJsonUtils;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.base.service.BaseService;
+import cn.geelato.web.platform.m.security.entity.Permission;
+import cn.geelato.web.platform.m.security.entity.Role;
+import cn.geelato.web.platform.m.security.entity.RolePermissionMap;
+import com.alibaba.fastjson2.JSON;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -59,8 +59,10 @@ public class PermissionService extends BaseService {
 
     /**
      * 逻辑删除
+     * <p>
+     * 删除指定的权限模型，并处理相关的角色权限关系。
      *
-     * @param model
+     * @param model 要删除的权限模型对象
      */
     public void isDeleteModel(Permission model) {
         // 用户删除
@@ -77,10 +79,12 @@ public class PermissionService extends BaseService {
     }
 
     /**
-     * 是否是默认权限
+     * 判断是否是默认权限
+     * <p>
+     * 根据提供的权限模型，判断其是否为默认权限。
      *
-     * @param model
-     * @return
+     * @param model 权限模型对象
+     * @return 如果是默认权限，则返回true；否则返回false
      */
     public boolean isDefault(Permission model) {
         List<Permission> defaultPermissions = getDefaultTypePermission(model.getType());
@@ -89,11 +93,13 @@ public class PermissionService extends BaseService {
     }
 
     /**
-     * 是否是默认权限
+     * 判断给定的权限是否为默认权限
+     * <p>
+     * 根据提供的权限模型对象和默认权限列表，判断该权限是否为默认权限。
      *
-     * @param model
-     * @param defaultPermissions 对比的权限
-     * @return
+     * @param model              权限模型对象，包含权限的类型、编码和对象等信息
+     * @param defaultPermissions 默认权限列表，用于与提供的权限模型对象进行对比
+     * @return 如果给定的权限是默认权限，则返回true；否则返回false
      */
     public boolean isDefault(Permission model, List<Permission> defaultPermissions) {
         boolean isDef = false;
@@ -114,9 +120,11 @@ public class PermissionService extends BaseService {
 
     /**
      * 根据不同类型获取默认权限
+     * <p>
+     * 根据传入的权限类型，获取对应的默认权限列表。
      *
-     * @param type
-     * @return
+     * @param type 权限类型，可以是数据权限、模型权限、列权限等
+     * @return 返回对应类型的默认权限列表
      */
     public List<Permission> getDefaultTypePermission(String type) {
         List<Permission> defaultPermissions = new ArrayList<>();
@@ -145,9 +153,11 @@ public class PermissionService extends BaseService {
 
     /**
      * 默认权限，读取json文件
+     * <p>
+     * 从指定的json文件中读取默认权限列表。
      *
-     * @param jsonFile
-     * @return
+     * @param jsonFile 包含默认权限列表的json文件的路径
+     * @return 返回读取到的默认权限列表，如果读取失败则返回空列表
      */
     public List<Permission> getDefaultPermission(String jsonFile) {
         List<Permission> defaultPermissions = new ArrayList<Permission>();
@@ -169,8 +179,12 @@ public class PermissionService extends BaseService {
     }
 
     /**
-     * @param curObject 新的
-     * @param sorObject 旧的
+     * 修改表格和字段权限的对象名称
+     * <p>
+     * 根据提供的当前对象名称和旧对象名称，修改与之相关的表格和字段权限的对象名称。
+     *
+     * @param curObject 当前的对象名称
+     * @param sorObject 旧的对象名称
      */
     public void tablePermissionChangeObject(String curObject, String sorObject) {
         List<Permission> permissions = new ArrayList<>();
@@ -215,9 +229,13 @@ public class PermissionService extends BaseService {
     }
 
     /**
-     * @param tableName 表格
-     * @param curObject 新字段
-     * @param sorObject 旧字段
+     * 更改字段权限对象
+     * <p>
+     * 根据提供的表格名称、新字段和旧字段，更新对应的字段权限对象。
+     *
+     * @param tableName 表格名称
+     * @param curObject 新字段名称
+     * @param sorObject 旧字段名称
      */
     public void columnPermissionChangeObject(String tableName, String curObject, String sorObject) {
         // 字段权限
@@ -243,9 +261,13 @@ public class PermissionService extends BaseService {
 
     /**
      * 重置默认权限
+     * <p>
+     * 根据传入的权限类型、对象和应用ID，重置对应的默认权限。
      *
-     * @param type
-     * @param object
+     * @param type   权限类型，如模型权限、数据权限等
+     * @param object 权限对象，如表名、模型名等
+     * @param appId  应用ID，用于标识需要重置权限的应用
+     * @throws RuntimeException 如果传入的权限类型不合法，则抛出异常
      */
     public void resetDefaultPermission(String type, String object, String appId) {
         if (PermissionTypeEnum.MODEL.getValue().equals(type) ||
@@ -260,10 +282,13 @@ public class PermissionService extends BaseService {
     }
 
     /**
-     * 重置模型默认权限，data，model
+     * 重置模型默认权限，包括数据权限和模型权限
+     * <p>
+     * 根据提供的权限类型、对象名称和应用ID，重置对应模型的默认权限。
      *
-     * @param types
-     * @param object
+     * @param types  权限类型，可以是数据权限或模型权限
+     * @param object 对象名称
+     * @param appId  应用ID
      */
     public void resetTableDefaultPermission(String types, String object, String appId) {
         // 当前权限
@@ -348,10 +373,12 @@ public class PermissionService extends BaseService {
     }
 
     /**
-     * 初始化，默认权限
+     * 初始化，创建默认权限
+     * <p>
+     * 根据提供的对象和默认权限模型，创建对应的默认权限。
      *
-     * @param object
-     * @param dModel
+     * @param object 权限对象，如表名、模型名等
+     * @param dModel 默认权限模型，包含权限的编码等信息
      */
     private void createDefaultPermission(String object, Permission dModel) {
         String defaultCode = dModel.getCode();
@@ -365,9 +392,12 @@ public class PermissionService extends BaseService {
 
     /**
      * 重置模型字段默认权限
+     * <p>
+     * 根据提供的权限类型、模型名称和应用ID，重置模型字段的默认权限。
      *
-     * @param type      cp
-     * @param tableName 模型名称
+     * @param type      权限类型，如"cp"表示列权限
+     * @param tableName 模型名称，即需要重置权限的表名
+     * @param appId     应用ID，用于标识需要重置权限的应用
      */
     public void resetColumnDefaultPermission(String type, String tableName, String appId) {
         // 表头

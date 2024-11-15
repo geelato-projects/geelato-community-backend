@@ -6,9 +6,11 @@ import cn.geelato.core.env.entity.User;
 public class GraalUtils {
 
     /**
-     * 获取匿名接口用户
+     * 获取匿名接口用户的信息。
+     * <p>
+     * 该方法返回一个预配置的User对象，其中包含匿名接口用户的相关信息。
      *
-     * @return
+     * @return 返回一个包含匿名接口用户信息的User对象。
      */
     public static User getUser() {
         User user = new User();
@@ -22,9 +24,11 @@ public class GraalUtils {
     }
 
     /**
-     * 获取匿名接口用户上下文
+     * 获取匿名接口用户上下文。
+     * <p>
+     * 此方法用于获取当前匿名接口的用户上下文信息，包括当前用户信息和租户信息，并返回一个SessionCtx对象。
      *
-     * @return
+     * @return 返回包含当前用户上下文信息的SessionCtx对象。
      */
     public static SessionCtx getCxt() {
         User user = getUser();
@@ -34,9 +38,9 @@ public class GraalUtils {
     }
 
     /**
-     * 获取当前租户编码
+     * 获取当前租户编码。
      *
-     * @return
+     * @return 返回当前租户的编码。
      */
     public static String getCurrentTenantCode() {
         GraalUtils.getCxt();

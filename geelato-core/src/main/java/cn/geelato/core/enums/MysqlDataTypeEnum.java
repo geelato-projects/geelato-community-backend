@@ -49,9 +49,11 @@ public enum MysqlDataTypeEnum {
 
     /**
      * 获取枚举值
+     * 根据传入的字符串类型，从MysqlDataTypeEnum枚举中查找并返回对应的枚举值。
+     * 如果未找到匹配的枚举值，则返回null。
      *
-     * @param type
-     * @return
+     * @param type 要查找的字符串类型
+     * @return 返回与传入的字符串类型对应的MysqlDataTypeEnum枚举值，如果未找到则返回null
      */
     public static MysqlDataTypeEnum getEnum(String type) {
         if (Strings.isNotBlank(type)) {
@@ -65,9 +67,9 @@ public enum MysqlDataTypeEnum {
     }
 
     /**
-     * 获取，char、varchar
+     * 获取char和varchar数据类型的名称列表。
      *
-     * @return
+     * @return 包含char和varchar数据类型名称的列表
      */
     public static List<String> getChars() {
         MysqlDataTypeEnum[] typeEnums = new MysqlDataTypeEnum[]{MysqlDataTypeEnum.CHAR,
@@ -76,9 +78,10 @@ public enum MysqlDataTypeEnum {
     }
 
     /**
-     * 获取text，tinytext、text、mediumtext、longtext
+     * 获取文本类型的数据类型名称列表。
+     * 该方法返回一个包含 TINYTEXT、TEXT、MEDIUMTEXT 和 LONGTEXT 这四种 MySQL 文本类型名称的列表。
      *
-     * @return
+     * @return 包含 TINYTEXT、TEXT、MEDIUMTEXT 和 LONGTEXT 类型名称的列表
      */
     public static List<String> getTexts() {
         MysqlDataTypeEnum[] typeEnums = new MysqlDataTypeEnum[]{MysqlDataTypeEnum.TINYTEXT,
@@ -89,9 +92,10 @@ public enum MysqlDataTypeEnum {
     }
 
     /**
-     * 获取 字符串类型，char、varchar、tinytext、text、mediumtext、longtext
+     * 获取字符串类型的MySQL数据类型枚举的名称列表。
+     * 返回的列表包含以下字符串类型的枚举名称：CHAR、VARCHAR、TINYTEXT、TEXT、MEDIUMTEXT、LONGTEXT以及JSON。
      *
-     * @return
+     * @return 包含字符串类型MySQL数据类型枚举名称的列表
      */
     public static List<String> getStrings() {
         MysqlDataTypeEnum[] typeEnums = new MysqlDataTypeEnum[]{MysqlDataTypeEnum.CHAR,
@@ -104,6 +108,12 @@ public enum MysqlDataTypeEnum {
         return MysqlDataTypeEnum.getNames(typeEnums);
     }
 
+    /**
+     * 获取指定MySQL数据类型枚举的名称列表。
+     * 该方法返回一个包含指定MySQL数据类型枚举名称的列表。
+     *
+     * @return 包含指定MySQL数据类型枚举名称的列表。
+     */
     public static List<String> getBytes() {
         MysqlDataTypeEnum[] typeEnums = new MysqlDataTypeEnum[]{MysqlDataTypeEnum.TINYBLOB,
                 MysqlDataTypeEnum.BLOB,
@@ -113,24 +123,31 @@ public enum MysqlDataTypeEnum {
     }
 
     /**
-     * 获取 布尔值类型，bit
+     * 获取布尔值类型（bit）的名称列表。
      *
-     * @return
+     * @return 返回包含布尔值类型（bit）名称的字符串列表。
      */
     public static List<String> getBooleans() {
         MysqlDataTypeEnum[] typeEnums = new MysqlDataTypeEnum[]{MysqlDataTypeEnum.BIT};
         return MysqlDataTypeEnum.getNames(typeEnums);
     }
 
+    /**
+     * 获取TINYINT数据类型的名称列表。
+     * 该方法返回一个包含TINYINT数据类型的名称的字符串列表。
+     *
+     * @return 包含TINYINT数据类型名称的字符串列表。
+     */
     public static List<String> getTinyBooleans() {
         MysqlDataTypeEnum[] typeEnums = new MysqlDataTypeEnum[]{MysqlDataTypeEnum.TINYINT};
         return MysqlDataTypeEnum.getNames(typeEnums);
     }
 
     /**
-     * 获取 时间类型，year、date、time、datetime、timestamp
+     * 获取时间类型的名称列表。
+     * 该方法返回一个包含时间类型的名称的列表，包括年（YEAR）、日期（DATE）、时间（TIME）、日期时间（DATETIME）和时间戳（TIMESTAMP）。
      *
-     * @return
+     * @return 返回时间类型的名称列表
      */
     public static List<String> getDates() {
         MysqlDataTypeEnum[] typeEnums = new MysqlDataTypeEnum[]{MysqlDataTypeEnum.YEAR,
@@ -142,9 +159,10 @@ public enum MysqlDataTypeEnum {
     }
 
     /**
-     * 获取 整数类型
+     * 获取整数类型的名称列表。
+     * 此方法返回一个包含MySQL数据库中所有整数类型的名称的列表。
      *
-     * @return
+     * @return 返回一个包含整数类型名称的列表。
      */
     public static List<String> getIntegers() {
         MysqlDataTypeEnum[] typeEnums = new MysqlDataTypeEnum[]{MysqlDataTypeEnum.TINYINT,
@@ -157,9 +175,10 @@ public enum MysqlDataTypeEnum {
     }
 
     /**
-     * 获取，浮点数类型
+     * 获取MySQL中浮点数类型的数据类型名称列表。
+     * 该方法返回一个包含MySQL中浮点数类型（FLOAT、DOUBLE、DECIMAL）名称的字符串列表。
      *
-     * @return
+     * @return 包含浮点数类型名称的字符串列表
      */
     public static List<String> getDecimals() {
         MysqlDataTypeEnum[] typeEnums = new MysqlDataTypeEnum[]{MysqlDataTypeEnum.FLOAT,
@@ -169,9 +188,10 @@ public enum MysqlDataTypeEnum {
     }
 
     /**
-     * 获取 数值类型
+     * 获取数值类型的数据库数据类型名称列表。
+     * 该方法返回一个包含所有数值类型数据库数据类型名称的列表。
      *
-     * @return
+     * @return 数值类型的数据库数据类型名称列表
      */
     public static List<String> getNumbers() {
         MysqlDataTypeEnum[] typeEnums = new MysqlDataTypeEnum[]{MysqlDataTypeEnum.TINYINT,
@@ -186,6 +206,12 @@ public enum MysqlDataTypeEnum {
         return MysqlDataTypeEnum.getNames(typeEnums);
     }
 
+    /**
+     * 从给定的枚举数组中获取枚举名称的列表。
+     *
+     * @param typeEnums 包含多个MysqlDataTypeEnum枚举的数组
+     * @return 返回包含枚举名称的列表
+     */
     private static List<String> getNames(MysqlDataTypeEnum[] typeEnums) {
         List<String> typeNames = new ArrayList<>();
         for (MysqlDataTypeEnum typeEnum : typeEnums) {

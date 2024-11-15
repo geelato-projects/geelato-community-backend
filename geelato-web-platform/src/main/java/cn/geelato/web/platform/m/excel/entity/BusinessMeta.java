@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.m.excel.entity;
 
+import cn.geelato.web.platform.m.excel.enums.ExcelEvaluationEnum;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.web.platform.m.excel.enums.ExcelEvaluationEnum;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,29 +15,27 @@ import java.util.List;
 @Getter
 @Setter
 public class BusinessMeta {
-    //表格名称
+    // 表格名称
     private String tableName;
-    //字段名称
+    // 字段名称
     private String columnName;
-    //取值计算方式
+    // 取值计算方式
     private String evaluation;
-    //常量
+    // 常量
     private String constValue;
-    //变量 ${}
+    // 变量 ${}
     private String variableValue;
-    //表达式
+    // 表达式
     private String expression;
-    //数据字典，字典编码；变量对应字典项的label值，求取字典项value值
+    // 数据字典，字典编码；变量对应字典项的label值，求取字典项value值
     private String dictCode;
-    //对应主键，【表格名称:字段名称】；变量对应的表格字段，求取表格的主键值。
+    // 对应主键，【表格名称:字段名称】；变量对应的表格字段，求取表格的主键值。
     private String primaryValue;
-    //备注
+    // 备注
     private String remark;
 
     /**
-     * 取值方式，常量
-     *
-     * @return
+     * 判断取值方式是否为常量 如果取值方式为常量，则返回true；否则返回false
      */
     public boolean isEvaluationTypeConst() {
         return ExcelEvaluationEnum.CONST.name().equalsIgnoreCase(this.evaluation);
@@ -45,8 +43,6 @@ public class BusinessMeta {
 
     /**
      * 取值方式，直接取业务数据值
-     *
-     * @return
      */
     public boolean isEvaluationTypeVariable() {
         return ExcelEvaluationEnum.VARIABLE.name().equalsIgnoreCase(this.evaluation);
@@ -54,8 +50,6 @@ public class BusinessMeta {
 
     /**
      * 取值方式，JavaScript表达式计算
-     *
-     * @return
      */
     public boolean isEvaluationTypeJsExpression() {
         return ExcelEvaluationEnum.JS_EXPRESSION.name().equalsIgnoreCase(this.evaluation);
@@ -63,8 +57,6 @@ public class BusinessMeta {
 
     /**
      * 取值方式，数据字典项value值
-     *
-     * @return
      */
     public boolean isEvaluationTypeCheckBox() {
         return ExcelEvaluationEnum.CHECKBOX.name().equalsIgnoreCase(this.evaluation);
@@ -72,8 +64,6 @@ public class BusinessMeta {
 
     /**
      * 取值方式，数据字典项value值
-     *
-     * @return
      */
     public boolean isEvaluationTypeDictionary() {
         return ExcelEvaluationEnum.DICTIONARY.name().equalsIgnoreCase(this.evaluation);
@@ -81,8 +71,6 @@ public class BusinessMeta {
 
     /**
      * 取值方式，主键id值
-     *
-     * @return
      */
     public boolean isEvaluationTypePrimaryKey() {
         return ExcelEvaluationEnum.PRIMARY_KEY.name().equalsIgnoreCase(this.evaluation);
@@ -90,8 +78,6 @@ public class BusinessMeta {
 
     /**
      * 取值方式，流水号
-     *
-     * @return
      */
     public boolean isEvaluationTypeSerialNumber() {
         return ExcelEvaluationEnum.SERIAL_NUMBER.name().equalsIgnoreCase(this.evaluation);
@@ -99,8 +85,6 @@ public class BusinessMeta {
 
     /**
      * 取值方式，未被清洗过的数值
-     *
-     * @return
      */
     public boolean isEvaluationTypePrimitive() {
         return ExcelEvaluationEnum.PRIMITIVE.name().equalsIgnoreCase(this.evaluation);
@@ -108,8 +92,6 @@ public class BusinessMeta {
 
     /**
      * 求取主键值所需，表格名称
-     *
-     * @return
      */
     public String getPrimaryKeyTable() {
         return getPrimarySplit("table");
@@ -117,8 +99,6 @@ public class BusinessMeta {
 
     /**
      * 求取主键值所需，字段名称
-     *
-     * @return
      */
     public String getPrimaryKeyColumn() {
         return getPrimarySplit("column");

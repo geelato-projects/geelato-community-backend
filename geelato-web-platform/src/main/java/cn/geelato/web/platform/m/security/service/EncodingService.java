@@ -40,8 +40,10 @@ public class EncodingService extends BaseService {
 
     /**
      * 移除缓存
+     * <p>
+     * 根据提供的编码信息，从缓存中移除对应的编码项。
      *
-     * @param encoding
+     * @param encoding 要从缓存中移除的编码信息对象
      */
     public void redisTemplateEncodingDelete(Encoding encoding) {
         encoding.afterSet();
@@ -56,8 +58,10 @@ public class EncodingService extends BaseService {
 
     /**
      * 更新缓存
+     * <p>
+     * 根据提供的编码对象，更新缓存中的相关信息。
      *
-     * @param encoding
+     * @param encoding 编码对象，包含需要更新的编码信息
      */
     public void redisTemplateEncodingUpdate(Encoding encoding) {
         encoding.afterSet();
@@ -78,8 +82,10 @@ public class EncodingService extends BaseService {
 
     /**
      * 设置缓存
+     * <p>
+     * 将指定的编码对象及其对应的流水号列表存储到Redis缓存中，并设置缓存的过期时间。
      *
-     * @param encoding
+     * @param encoding 编码对象，包含编码的ID和日期类型等信息
      */
     private void redisTemplateEncodingItem(Encoding encoding) {
         String redisItemKey = ENCODING_ITEM_PREFIX + encoding.getId();
@@ -89,6 +95,13 @@ public class EncodingService extends BaseService {
         redisTemplate.expire(redisItemKey, DateUtils.timeInterval(encoding.getDateType()), TimeUnit.SECONDS);
     }
 
+    /**
+     * 获取Redis中的编码模板项
+     * <p>
+     * 从Redis中获取编码模板项列表，如果Redis中没有存储，则从数据库中查询并存储到Redis中。
+     *
+     * @return 返回包含编码模板项Redis键的列表
+     */
     public List<Object> redisTemplateEncoding() {
         List<Object> redisItemKeys = redisTemplate.opsForList().range(ENCODING_LIST_PREFIX, 0, -1);
         if (redisItemKeys == null || redisItemKeys.isEmpty()) {
@@ -113,9 +126,11 @@ public class EncodingService extends BaseService {
 
     /**
      * 编码记录，查询流水号
+     * <p>
+     * 根据提供的编码信息，查询对应的流水号记录。
      *
-     * @param encoding
-     * @return
+     * @param encoding 包含编码信息的Encoding对象
+     * @return 返回包含查询到的流水号记录的List集合
      */
     public List<Object> querySerialsByEncodingLog(Encoding encoding) {
         List<Object> serials = new ArrayList<>();
@@ -142,9 +157,12 @@ public class EncodingService extends BaseService {
 
     /**
      * 编码实例生成
+     * <p>
+     * 根据提供的编码表单和参数，生成编码实例。
      *
-     * @param form
-     * @return
+     * @param form     编码表单对象，包含编码模板等信息
+     * @param argument 包含生成编码实例所需参数的Map对象
+     * @return 返回生成的编码实例字符串
      */
     public String generate(Encoding form, Map<String, Object> argument) {
         redisTemplateEncoding();
@@ -221,6 +239,15 @@ public class EncodingService extends BaseService {
         return encodingLog.getExample();
     }
 
+    /**
+     * 通过Redis锁获取流水号
+     * <p>
+     * 根据提供的Redis项键和编码项信息，通过Redis锁机制安全地获取流水号。
+     *
+     * @param redisItemKey Redis项键，用于标识需要获取流水号的Redis项
+     * @param item         编码项信息，包含流水号的类型和位数等信息
+     * @return 返回生成的流水号字符串，如果获取失败则返回null
+     */
     private String getSerialByRedisLock(String redisItemKey, EncodingItem item) {
         // 获取锁 加上uuid防止误删除锁
         String uuid = System.currentTimeMillis() + UUID.randomUUID().toString().replaceAll("-", "");
@@ -256,11 +283,14 @@ public class EncodingService extends BaseService {
     }
 
     /**
-     * 顺序流水号
+     * 获取顺序流水号
+     * <p>
+     * 根据提供的Redis键、流水号位数和是否覆盖前导零的参数，获取下一个顺序流水号。
      *
-     * @param redisItemKey
-     * @param serialDigit
-     * @return
+     * @param redisItemKey Redis键，用于在Redis中存储流水号信息
+     * @param serialDigit  流水号的位数
+     * @param coverPos     是否覆盖前导零
+     * @return 返回下一个顺序流水号字符串
      */
     private String getOrderSerial(String redisItemKey, int serialDigit, boolean coverPos) {
         List<Object> redisSerials = redisTemplate.opsForList().range(redisItemKey, 0, -1);
@@ -274,11 +304,14 @@ public class EncodingService extends BaseService {
     }
 
     /**
-     * 随机流水号
+     * 生成随机流水号
+     * <p>
+     * 根据提供的Redis键、流水号位数和可选的字符范围，生成一个随机的流水号。
      *
-     * @param redisItemKey
-     * @param serialDigit
-     * @return
+     * @param redisItemKey Redis中的键，用于检查生成的流水号是否已经存在
+     * @param serialDigit  流水号的位数
+     * @param range        可选的字符范围，默认为"0123456789"，如果传入空字符串则使用默认值
+     * @return 返回生成的随机流水号字符串，如果无法生成则返回null
      */
     private String getRandomSerial(String redisItemKey, int serialDigit, String range) {
         range = Strings.isBlank(range) ? "0123456789" : range;
@@ -296,10 +329,12 @@ public class EncodingService extends BaseService {
     }
 
     /**
-     * 删除redis，再重新批量添加
+     * 删除redis中的列表，并重新批量添加
+     * <p>
+     * 删除指定Redis键对应的列表，然后重新批量添加新的元素到该列表中。
      *
-     * @param key
-     * @param list
+     * @param key  要操作的Redis键
+     * @param list 包含要添加到列表中的元素列表
      */
     private void redisTemplateListRightPush(String key, List<Object> list) {
         redisTemplate.delete(key);
@@ -312,9 +347,12 @@ public class EncodingService extends BaseService {
 
     /**
      * 集合格式化
+     * <p>
+     * 对传入的集合进行格式化处理，去除空值，并去除重复项。
      *
-     * @param list
-     * @return
+     * @param list 待格式化的集合
+     * @param <T>  集合元素的类型
+     * @return 格式化后的集合
      */
     private <T> List<T> formatList(List<T> list) {
         List<T> nList = new ArrayList<>();
@@ -334,9 +372,11 @@ public class EncodingService extends BaseService {
 
     /**
      * 流水号集合排序
+     * <p>
+     * 对提供的流水号集合进行去重、去空和排序处理。
      *
-     * @param list
-     * @return
+     * @param list 包含流水号的列表
+     * @return 返回处理后的流水号列表
      */
     private List<Object> formatSerialList(List<Object> list) {
         if (list != null && !list.isEmpty()) {
@@ -354,6 +394,15 @@ public class EncodingService extends BaseService {
         return list;
     }
 
+    /**
+     * 获取系统变量
+     * <p>
+     * 根据提供的编码项列表和应用ID，获取对应的系统变量信息。
+     *
+     * @param itemList 编码项列表，包含需要获取系统变量的编码项
+     * @param appId    应用ID，用于获取应用相关的系统变量
+     * @return 返回包含系统变量信息的Map对象
+     */
     private Map<String, Object> getVariable(List<EncodingItem> itemList, String appId) {
         Map<String, Object> resultMap = new HashMap<>();
         List<String> variableKeys = new ArrayList<>();

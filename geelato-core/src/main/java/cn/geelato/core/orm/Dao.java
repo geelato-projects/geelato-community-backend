@@ -1,23 +1,23 @@
 package cn.geelato.core.orm;
 
+import cn.geelato.core.SessionCtx;
+import cn.geelato.core.aop.annotation.MethodLog;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.command.QueryViewCommand;
 import cn.geelato.core.gql.command.SaveCommand;
-import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.gql.parser.*;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.SessionCtx;
-import cn.geelato.core.aop.annotation.MethodLog;
-import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.core.gql.execute.BoundPageSql;
 import cn.geelato.core.gql.execute.BoundSql;
+import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.model.CommonRowMapper;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.IdEntity;
 import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.lang.api.ApiMultiPagedResult;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -81,17 +81,17 @@ public class Dao extends SqlKeyDao {
         List<Map<String, Object>> result;
         try {
             List<Map<String, Object>> list = jdbcTemplate.queryForList(boundSql.getSql(), sqlParams);
-            result=convert(list, metaManager.getByEntityName(command.getEntityName()));
+            result = convert(list, metaManager.getByEntityName(command.getEntityName()));
         } catch (DataAccessException exception) {
             throw new DaoException("queryForMapList exception :" + exception.getCause().getMessage());
         }
         return result;
     }
 
-    public Long queryTotal(BoundPageSql boundPageSql){
+    public Long queryTotal(BoundPageSql boundPageSql) {
         BoundSql boundSql = boundPageSql.getBoundSql();
         Object[] sqlParams = boundSql.getParams();
-        Long total=0L;
+        Long total = 0L;
         try {
             total = jdbcTemplate.queryForObject(boundPageSql.getCountSql(), sqlParams, Long.class);
         } catch (DataAccessException exception) {
@@ -99,6 +99,7 @@ public class Dao extends SqlKeyDao {
         }
         return total;
     }
+
     private List<Map<String, Object>> convert(List<Map<String, Object>> data, EntityMeta entityMeta) {
         for (Map<String, Object> map : data) {
             for (String key : map.keySet()) {
@@ -125,7 +126,7 @@ public class Dao extends SqlKeyDao {
     /**
      * @param withMeta 是否需同时查询带出元数据
      */
-    //todo rewrite
+    // todo rewrite
     public ApiMultiPagedResult.PageData queryForMapListToPageData(BoundPageSql boundPageSql, boolean withMeta) {
         QueryCommand command = (QueryCommand) boundPageSql.getBoundSql().getCommand();
         log.info(boundPageSql.getBoundSql().getSql());
@@ -244,12 +245,13 @@ public class Dao extends SqlKeyDao {
 
     /**
      * 依据两个条件查询实体
+     *
      * @param entityType 实体类型
      * @param fieldName1 实体的属性名1
      * @param value1     实体属性1的值
      * @param fieldName2 实体的属性名2
      * @param value2     实体属性2的值
-     * @return           返回泛型
+     * @return 返回泛型
      */
     public <T> T queryForObject(Class<T> entityType, String fieldName1, Object value1, String fieldName2, Object value2) {
         FilterGroup filterGroup = new FilterGroup().addFilter(fieldName1, value1.toString()).addFilter(fieldName2, value2.toString());
@@ -332,13 +334,14 @@ public class Dao extends SqlKeyDao {
 
 
     /**
-     * 全量查询，特殊的查询条件
+     * 全量查询，使用特殊的查询条件。
+     * 根据指定的实体类型、过滤条件和排序规则，执行全量查询操作。
      *
-     * @param entityType
-     * @param filterGroup
-     * @param orderBy
-     * @param <T>
-     * @return
+     * @param entityType  要查询的实体类型
+     * @param filterGroup 过滤条件组，包含多个过滤条件
+     * @param orderBy     排序规则，用于指定查询结果的排序方式
+     * @param <T>         泛型类型，表示查询结果的数据类型
+     * @return 返回查询结果列表，列表中的元素类型为T
      */
     public <T> List<T> queryList(Class<T> entityType, FilterGroup filterGroup, String orderBy) {
         if (defaultFilterOption && defaultFilterGroup != null) {
@@ -348,31 +351,33 @@ public class Dao extends SqlKeyDao {
         }
         BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, orderBy);
         log.info(boundSql.toString());
-        return jdbcTemplate.query(boundSql.getSql(),  new CommonRowMapper<T>(),boundSql.getParams());
+        return jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<T>(), boundSql.getParams());
     }
 
     /**
-     * 常用全量查询，全等式查询
+     * 常用全量查询，执行全等式查询。
+     * 根据提供的实体类型、查询参数和排序规则，执行全量查询并返回结果列表。
      *
-     * @param entityType
-     * @param params
-     * @param orderBy
-     * @param <T>
-     * @return
+     * @param entityType 要查询的实体类型
+     * @param params     查询参数，以键值对的形式提供
+     * @param orderBy    排序规则，指定返回结果的排序方式
+     * @param <T>        泛型参数，表示查询结果的类型
+     * @return 返回查询结果的列表
      */
     public <T> List<T> queryList(Class<T> entityType, Map<String, Object> params, String orderBy) {
-        FilterGroup filterGroup= generateFilterGroup(params);
+        FilterGroup filterGroup = generateFilterGroup(params);
         return queryList(entityType, filterGroup, orderBy);
     }
 
     /**
-     * 分页查询，特殊条件查询
+     * 分页查询，支持特殊条件查询。
+     * 根据给定的实体类型、过滤器组、分页查询请求，执行分页查询并返回查询结果列表。
      *
-     * @param entityType
-     * @param filterGroup
-     * @param request
-     * @param <T>
-     * @return
+     * @param entityType  要查询的实体类型
+     * @param filterGroup 包含查询条件的过滤器组
+     * @param request     分页查询请求，包含分页信息、排序信息等
+     * @param <T>         实体类型，泛型参数，表示查询结果的数据类型
+     * @return 查询结果列表，元素类型为T
      */
     public <T> List<T> pageQueryList(Class<T> entityType, FilterGroup filterGroup, PageQueryRequest request) {
         if (defaultFilterOption && defaultFilterGroup != null) {
@@ -390,13 +395,14 @@ public class Dao extends SqlKeyDao {
     }
 
     /**
-     * 分页查询，全量查询
+     * 分页查询，全量查询。
+     * 根据传入的实体类型、参数、分页查询请求，执行分页查询并返回查询结果列表。
      *
-     * @param entityType
-     * @param params
-     * @param request
-     * @param <T>
-     * @return
+     * @param entityType 实体类型，用于指定查询的数据类型
+     * @param params     查询参数，包含查询条件等
+     * @param request    分页查询请求，包含分页信息等
+     * @param <T>        泛型参数，表示查询结果的类型
+     * @return 返回一个包含查询结果的列表
      */
     public <T> List<T> pageQueryList(Class<T> entityType, Map<String, Object> params, PageQueryRequest request) {
         FilterGroup filterGroup = generateFilterGroup(params);
@@ -433,7 +439,7 @@ public class Dao extends SqlKeyDao {
     }
 
     public int delete(Class entityType, String fieldName, Object value) {
-        FilterGroup filterGroup = new FilterGroup().    addFilter(fieldName, value.toString());
+        FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
         BoundSql boundSql = sqlManager.generateDeleteSql(entityType, filterGroup);
         log.info(boundSql.toString());
         return jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());

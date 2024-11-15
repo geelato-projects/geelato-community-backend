@@ -1,5 +1,8 @@
 package cn.geelato.web.platform.m.excel.service;
 
+import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.web.platform.exception.file.FileContentIsEmptyException;
+import cn.geelato.web.platform.exception.file.FileContentReadFailedException;
 import cn.geelato.web.platform.m.excel.entity.*;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hssf.usermodel.*;
@@ -9,9 +12,6 @@ import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
-import cn.geelato.core.meta.model.column.ColumnMeta;
-import cn.geelato.web.platform.exception.file.FileContentIsEmptyException;
-import cn.geelato.web.platform.exception.file.FileContentReadFailedException;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,10 +35,13 @@ public class ExcelReader {
     private ExcelCommonUtils excelCommonUtils;
 
     /**
-     * 元数据
+     * 读取业务元数据
+     * <p>
+     * 从Excel工作表中读取业务元数据，并返回按表格分类的映射。
      *
-     * @param sheet
-     * @return
+     * @param sheet Excel工作表对象，包含业务元数据
+     * @return 返回包含业务元数据的映射，键为表格名，值为对应表格的业务元数据列表
+     * @throws FileContentReadFailedException 如果在读取过程中发生错误，将抛出此异常
      */
     public Map<String, List<BusinessMeta>> readBusinessMeta(HSSFSheet sheet) {
         Map<String, List<BusinessMeta>> tableMaps = new HashMap<>();
@@ -86,10 +89,13 @@ public class ExcelReader {
     }
 
     /**
-     * 业务数据类型
+     * 读取业务数据类型数据
+     * <p>
+     * 从Excel工作表中读取业务数据类型数据，并将其存储在一个映射中。
      *
-     * @param sheet
-     * @return
+     * @param sheet Excel工作表对象，包含业务数据类型数据
+     * @return 返回包含业务数据类型数据的映射，键为业务数据类型名称，值为对应的BusinessTypeData对象
+     * @throws FileContentReadFailedException 如果在读取过程中发生错误，将抛出此异常
      */
     public Map<String, BusinessTypeData> readBusinessTypeData(HSSFSheet sheet) {
         int lastRowIndex = sheet.getLastRowNum();
@@ -122,10 +128,13 @@ public class ExcelReader {
     }
 
     /**
-     * 业务数据清洗规则
+     * 读取业务数据清洗规则
+     * <p>
+     * 从Excel工作表中读取业务数据清洗规则，并将其存储在一个集合中。每个元素都是一个映射，键为规则的顺序号，值为对应的BusinessTypeRuleData对象。
      *
-     * @param sheet
-     * @return
+     * @param sheet Excel工作表对象，包含业务数据清洗规则
+     * @return 返回包含业务数据清洗规则的集合，每个元素是一个映射，键为规则的顺序号，值为对应的BusinessTypeRuleData对象
+     * @throws FileContentReadFailedException 如果在读取过程中发生错误，将抛出此异常
      */
     public Set<Map<Integer, BusinessTypeRuleData>> readBusinessTypeRuleData(HSSFSheet sheet) {
         int lastRowIndex = sheet.getLastRowNum();
@@ -176,10 +185,14 @@ public class ExcelReader {
 
     /**
      * 读取业务数据
+     * <p>
+     * 从Excel工作表中读取业务数据，并将其转换为Map<String, BusinessData>的列表形式返回。
      *
-     * @param sheet
-     * @param businessTypeDataMap 数据类型
-     * @return
+     * @param sheet               Excel工作表对象，包含要读取的业务数据
+     * @param evaluator           Excel公式评估器，用于评估公式单元格的值
+     * @param businessTypeDataMap 业务数据类型映射，键为数据类型名称，值为对应的BusinessTypeData对象
+     * @return 返回包含业务数据的列表，每个元素是一个包含业务数据键值对的映射
+     * @throws FileContentIsEmptyException 如果Excel工作表的第一行为空，则抛出此异常
      */
     public List<Map<String, BusinessData>> readBusinessData(@NotNull HSSFSheet sheet, HSSFFormulaEvaluator evaluator, Map<String, BusinessTypeData> businessTypeDataMap) {
         int lastRowIndex = sheet.getLastRowNum();
@@ -285,10 +298,12 @@ public class ExcelReader {
 
     /**
      * 往业务数据中写入校验批注
+     * <p>
+     * 根据提供的业务数据，在Excel工作表中为校验不通过的数据单元格添加批注。
      *
-     * @param sheet
-     * @param style               填充颜色
-     * @param businessDataMapList 业务数据
+     * @param sheet               Excel工作表对象，用于写入批注
+     * @param style               单元格样式，用于设置校验不通过单元格的样式
+     * @param businessDataMapList 包含业务数据的列表，每个元素是一个包含业务数据键值对的映射
      */
     public void writeBusinessData(HSSFSheet sheet, HSSFCellStyle style, List<Map<String, BusinessData>> businessDataMapList) {
         Map<String, BusinessData> mapSet = new HashMap<>();
@@ -335,10 +350,12 @@ public class ExcelReader {
     }
 
     /**
-     * 插入工作表，唯一性约束校验失败
+     * 插入工作表，记录唯一性约束校验失败的数据
+     * <p>
+     * 在给定的工作簿中创建一个新的工作表，用于记录唯一性约束校验失败的数据。
      *
-     * @param workbook
-     * @param repeatedData
+     * @param workbook     Excel工作簿对象，用于创建新的工作表
+     * @param repeatedData 包含重复数据及其数量的映射，键为列元数据对象，值为数据值及其数量的映射
      */
     public void writeRepeatedData(HSSFWorkbook workbook, Map<ColumnMeta, Map<Object, Long>> repeatedData) {
         if (repeatedData != null && repeatedData.size() > 0) {
@@ -366,12 +383,14 @@ public class ExcelReader {
     }
 
     /**
-     * 创建表格
+     * 创建表格行和单元格
+     * <p>
+     * 在给定的Excel工作表中创建或获取指定行和列的单元格，并设置其值。
      *
-     * @param sheet
-     * @param y
-     * @param x
-     * @param value
+     * @param sheet Excel工作表对象
+     * @param y     行索引
+     * @param x     列索引
+     * @param value 要设置的单元格值
      */
     private void createRowCell(HSSFSheet sheet, int y, int x, Object value) {
         HSSFRow row = sheet.getRow(y);
@@ -386,9 +405,11 @@ public class ExcelReader {
     }
 
     /**
-     * 清理 批注，
+     * 清理Excel工作表中的批注和格式
+     * <p>
+     * 遍历指定Excel工作表中的所有单元格，移除其中的批注，并清理单元格的格式。
      *
-     * @param sheet
+     * @param sheet 要清理的Excel工作表对象
      */
     private void cleanSheetStyle(HSSFSheet sheet) {
         int yCount = sheet.getLastRowNum();

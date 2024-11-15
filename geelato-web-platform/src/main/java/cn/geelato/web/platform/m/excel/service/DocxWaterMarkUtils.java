@@ -22,10 +22,13 @@ import java.util.stream.Stream;
 public class DocxWaterMarkUtils {
 
     /**
-     * 基础水印
+     * 设置XWPFDocument文档的基础水印
+     * <p>
+     * 在给定的XWPFDocument文档中设置水印。
      *
-     * @param document
-     * @param markText
+     * @param document 要设置水印的XWPFDocument文档对象
+     * @param markText 水印文本内容
+     * @throws RuntimeException 如果传入的文档对象或水印文本为空，则抛出运行时异常
      */
     public static void setXWPFDocumentWaterMark(XWPFDocument document, String markText) {
         if (document == null || Strings.isBlank(markText)) {
@@ -49,10 +52,11 @@ public class DocxWaterMarkUtils {
     }
 
     /**
-     * 多行，可调样式水印
+     * 为XWPFDocument文档添加多行可调样式水印
      *
-     * @param document
-     * @param markMeta
+     * @param document 需要添加水印的XWPFDocument文档对象
+     * @param markMeta 水印的元数据对象，包含水印的样式和文本等信息
+     * @throws RuntimeException 如果XWPFDocument对象或水印文本为空，则抛出运行时异常
      */
     public static void setXWPFDocumentWaterMark(XWPFDocument document, WordWaterMarkMeta markMeta) {
         if (markMeta == null) {
@@ -88,11 +92,13 @@ public class DocxWaterMarkUtils {
 
     /**
      * 为文档添加水印
+     * <p>
+     * 该方法用于在XWPFDocument对象中添加水印。
      *
-     * @param document
-     * @param markText
-     * @param styleTop
-     * @param markMeta
+     * @param document 要添加水印的文档对象
+     * @param markText 水印文本内容
+     * @param styleTop 水印在文档中的垂直位置样式
+     * @param markMeta 水印的元数据信息，包括字体大小、字体颜色、字体家族和旋转角度等
      */
     private static void xwpfDocumentWaterMark(XWPFDocument document, String markText, String styleTop, WordWaterMarkMeta markMeta) {
         XWPFHeader header = document.createHeader(HeaderFooterType.DEFAULT); // 如果之前已经创建过 DEFAULT 的Header，将会复用之
@@ -134,11 +140,14 @@ public class DocxWaterMarkUtils {
 
     /**
      * 构建Shape的样式参数，开放
+     * <p>
+     * 根据传入的自定义文本、顶部样式、字体大小和旋转角度，构建并返回Shape的样式参数字符串。
      *
-     * @param customText
-     * @param styleTop
-     * @param styleRotation
-     * @return
+     * @param customText    自定义文本内容
+     * @param styleTop      顶部样式，通常用于控制Shape的垂直位置
+     * @param fontSize      字体大小，单位为磅（pt）
+     * @param styleRotation 旋转角度，用于控制Shape的旋转
+     * @return 返回构建好的Shape样式参数字符串
      */
     private static String getShapeStyle(String customText, String styleTop, double fontSize, double styleRotation) {
         StringBuilder sb = new StringBuilder();
@@ -160,8 +169,10 @@ public class DocxWaterMarkUtils {
 
     /**
      * 构建Shape的样式参数，固定
+     * <p>
+     * 生成并返回一个字符串，该字符串包含了Shape的样式参数，用于设置水印的样式。
      *
-     * @return
+     * @return 返回包含Shape样式参数的字符串
      */
     private static String getShapeStyle() {
         StringBuilder sb = new StringBuilder();

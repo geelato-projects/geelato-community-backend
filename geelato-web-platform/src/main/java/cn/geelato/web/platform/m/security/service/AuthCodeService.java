@@ -1,14 +1,14 @@
 package cn.geelato.web.platform.m.security.service;
 
+import cn.geelato.core.orm.Dao;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.m.security.entity.AuthCodeParams;
+import cn.geelato.web.platform.m.security.entity.User;
+import cn.geelato.web.platform.m.security.enums.AuthCodeAction;
+import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import jakarta.annotation.Resource;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.orm.Dao;
-import cn.geelato.web.platform.m.security.enums.AuthCodeAction;
-import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
-import cn.geelato.web.platform.m.security.entity.AuthCodeParams;
-import cn.geelato.web.platform.m.security.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +45,11 @@ public class AuthCodeService {
     private RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * 生成六位纯数字，验证码
+     * 生成六位纯数字验证码
+     * <p>
+     * 使用随机数生成算法，生成一个长度为六位的纯数字验证码。
      *
-     * @return
+     * @return 返回生成的六位纯数字验证码字符串
      */
     public static String generateCode() {
         StringBuilder sb = new StringBuilder(LENGTH);
@@ -61,10 +63,14 @@ public class AuthCodeService {
     }
 
     /**
-     * 验证码，生成
+     * 生成验证码
+     * <p>
+     * 根据提供的表单信息，生成验证码并处理相关逻辑。
      *
-     * @param form
-     * @return
+     * @param form 包含验证码生成所需信息的表单对象
+     * @return 如果验证码生成成功，则返回true；否则返回false
+     * @throws NoSuchFieldException   如果在访问用户对象属性时找不到对应的字段，则抛出该异常
+     * @throws IllegalAccessException 如果在访问用户对象属性时没有访问权限，则抛出该异常
      */
     public boolean generate(AuthCodeParams form) throws NoSuchFieldException, IllegalAccessException {
         String redisKey = form.getRedisKey();
@@ -141,10 +147,12 @@ public class AuthCodeService {
     }
 
     /**
-     * 验证码，验证
+     * 验证码验证
+     * <p>
+     * 验证提供的验证码是否与缓存中的验证码一致。
      *
-     * @param form
-     * @return
+     * @param form 包含验证码验证所需信息的AuthCodeParams对象
+     * @return 如果提供的验证码与缓存中的验证码一致，则返回true；否则返回false
      */
     public boolean validate(AuthCodeParams form) {
         String redisKey = form.getRedisKey();

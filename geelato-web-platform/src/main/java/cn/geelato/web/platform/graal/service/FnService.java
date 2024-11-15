@@ -53,12 +53,12 @@ public class FnService {
     }
 
     /**
-     * 分组求和
+     * 对数据进行分组求和操作。
      *
-     * @param data
-     * @param groupField
-     * @param sumFields
-     * @return
+     * @param data       要处理的数据数组
+     * @param groupField 分组依据的字段名
+     * @param sumFields  需要求和的字段名数组
+     * @return 返回一个包含分组求和结果的Map，键为分组依据的字段值，值为对应字段求和的结果
      */
     public Map<String, Object> groupSum(Object[] data, String groupField, String[] sumFields) {
         Map<String, Object> map = new HashMap<>();
@@ -66,11 +66,14 @@ public class FnService {
     }
 
     /**
-     * 实体保存
+     * 实体保存方法
+     * <p>
+     * 将传入的实体参数和附加参数转换为实体保存请求，并调用保存服务进行保存。
      *
-     * @param entityParams
-     * @param params
-     * @return
+     * @param entityParams 包含实体信息的参数Map，用于指定要保存的实体及其字段值
+     * @param params       附加参数Map，可能包含一些额外的配置或参数
+     * @return 返回保存操作的结果字符串
+     * @throws RuntimeException 如果实体名称或字段为空，则抛出运行时异常
      */
     public String convertEntitySaver(Map<String, Object> entityParams, Map<String, Object> params) {
         EntityGraal entitySaver = JSON.parseObject(JSON.toJSONString(entityParams), EntityGraal.class);
@@ -104,9 +107,12 @@ public class FnService {
 
     /**
      * 实体查询
+     * <p>
+     * 根据提供的实体参数执行查询，并返回查询结果。
      *
-     * @param entityParams
-     * @return
+     * @param entityParams 包含查询所需参数的Map，包括实体名称、字段列表、排序规则、分页信息和查询条件等
+     * @return 返回查询结果，结果以Map列表的形式表示
+     * @throws RuntimeException 如果实体名称或字段列表为空，则抛出此异常
      */
     public Object convertEntityReader(Map<String, Object> entityParams) {
         EntityGraal entityReader = JSON.parseObject(JSON.toJSONString(entityParams), EntityGraal.class);
@@ -159,41 +165,3 @@ public class FnService {
         return ruleService.queryForMapList(entity.toString(), true);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

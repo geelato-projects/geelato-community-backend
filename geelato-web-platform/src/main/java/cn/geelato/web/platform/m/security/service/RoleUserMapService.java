@@ -1,12 +1,12 @@
 package cn.geelato.web.platform.m.security.service;
 
+import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.security.entity.Role;
 import cn.geelato.web.platform.m.security.entity.RoleUserMap;
 import cn.geelato.web.platform.m.security.entity.User;
 import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.web.platform.m.base.service.BaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -129,11 +129,14 @@ public class RoleUserMapService extends BaseService {
     }
 
     /**
-     * 获取拥有的角色
+     * 获取用户拥有的角色
+     * <p>
+     * 根据用户ID、应用ID和租户代码，查询用户所拥有的角色列表。
      *
-     * @param userId
-     * @param appId
-     * @return
+     * @param userId     用户ID
+     * @param appId      应用ID
+     * @param tenantCode 租户代码，如果不为空则使用该值，否则使用当前会话的租户代码
+     * @return 返回用户所拥有的角色列表
      */
     public List<Role> queryRoleByUser(String userId, String appId, String tenantCode) {
         List<Role> result = new ArrayList<>();

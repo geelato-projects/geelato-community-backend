@@ -21,6 +21,12 @@ public class ApiParamService extends BaseService {
     /**
      * 批量查询
      *
+     * 根据提供的API ID、应用ID和租户代码，批量查询API参数信息。
+     *
+     * @param apiId     API ID，用于指定要查询的API
+     * @param appId     应用ID，用于指定要查询的应用
+     * @param tenantCode 租户代码，用于指定要查询的租户
+     * @return 返回包含查询到的API参数信息的列表
      */
     public List<ApiParam> queryModelsByApi(String apiId, String appId, String tenantCode) {
         Map<String, Object> params = new HashMap<>();

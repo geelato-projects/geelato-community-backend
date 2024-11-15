@@ -10,14 +10,16 @@ import java.util.Map;
 
 /**
  * @author geemeta
- *
  */
 @Slf4j
 public class JsTemplateParser extends AbstractParser<JsScriptLexer> {
 
 
     /**
-     * @param lines javascript文件的行列表
+     * 解析给定的javascript文件行列表，并返回一个包含解析结果的Map。
+     *
+     * @param lines javascript文件的行列表，每一行代表文件中的一行内容。
+     * @return 返回一个Map，其中键是解析出的标识符（ID），值是对应的内容字符串。
      */
     @Override
     public Map<String, String> parse(List<String> lines) {

@@ -18,10 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -36,12 +33,12 @@ import java.util.*;
  * Created by hongxueqian on 14-3-23.
  */
 @Slf4j
-@SuppressWarnings({"rawtypes","unchecked"})
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class MetaReflex {
 
     /**
      * -- SETTER --
-     *  如果在spring环境下，可以设置该值，以便可直接获取spring中已创建的bean，不需重新创建
+     * 如果在spring环境下，可以设置该值，以便可直接获取spring中已创建的bean，不需重新创建
      */
     @Setter
     private static ApplicationContext applicationContext;
@@ -288,7 +285,6 @@ public class MetaReflex {
 
     /**
      * 解析get**方法或is**方法的映射，其它的，如set**方法不解析
-     *
      */
     public static HashMap<String, FieldMeta> getColumnFieldMetas(Class clazz) {
         return getColumnFieldMetas(clazz, null);
@@ -302,14 +298,14 @@ public class MetaReflex {
     public static HashMap<String, FieldMeta> getColumnFieldMetas(Class clazz, Collection<TableForeign> tableForeigns) {
         Object bean = getBean(clazz);
         HashMap<String, FieldMeta> map = new HashMap<>();
-        List<String> transientProp=new ArrayList<>();
+        List<String> transientProp = new ArrayList<>();
         for (Class<?> searchType = clazz; searchType != Object.class; searchType = searchType.getSuperclass()) {
-            Field[] fields=searchType.getDeclaredFields();
+            Field[] fields = searchType.getDeclaredFields();
             for (Field field : fields) {
                 try {
                     String fieldName = field.getName();
                     fieldName = firstCharToLow(fieldName);
-                    if (!map.containsKey(fieldName)&&!transientProp.contains(fieldName)) {
+                    if (!map.containsKey(fieldName) && !transientProp.contains(fieldName)) {
                         if (field.getAnnotation(Transient.class) == null) {
                             // 列，可能包括名为id的列
                             Col column = field.getAnnotation(Col.class);
@@ -372,7 +368,7 @@ public class MetaReflex {
                                 cfm.getColumn().afterSet();
                                 map.put(fieldName, cfm);
                             }
-                        }else{
+                        } else {
                             transientProp.add(fieldName);
                         }
                     }
@@ -396,7 +392,7 @@ public class MetaReflex {
                     }
                     // 首字符变小写
                     fieldName = firstCharToLow(fieldName);
-                    if (!map.containsKey(fieldName)&&!transientProp.contains(fieldName)) {
+                    if (!map.containsKey(fieldName) && !transientProp.contains(fieldName)) {
                         // 如果列中有@Transient，则跳过
                         if (method.getAnnotation(Transient.class) == null) {
                             // 列，可能包括名为id的列
@@ -421,7 +417,7 @@ public class MetaReflex {
                                 cfm.getColumn().setRefColName(column.refColName());
                                 cfm.getColumn().setRefTables(column.refTables());
                                 cfm.getColumn().setCharMaxLength(column.charMaxlength() > 0 ?
-                                        column.charMaxlength() :  MapUtils.getLong(dataTypeDefaultMaxLengthMap, column.dataType(), 64L));
+                                        column.charMaxlength() : MapUtils.getLong(dataTypeDefaultMaxLengthMap, column.dataType(), 64L));
                                 cfm.getColumn().setDataType(column.dataType());
                                 try {
                                     Object defaultValue = method.invoke(bean);
@@ -460,7 +456,7 @@ public class MetaReflex {
                             }
                             cfm.getColumn().afterSet();
                             map.put(fieldName, cfm);
-                        }else{
+                        } else {
                             transientProp.add(fieldName);
                         }
                     }
@@ -611,10 +607,15 @@ public class MetaReflex {
     }
 
     /**
-     * 解析get**方法或is**方法的映射，其它的不解析
+     * 解析get**方法或is**方法的映射，并返回包含字典数据源信息的HashMap。
+     * 该方法遍历指定类的所有方法（包括继承的方法），并解析以get或is开头的方法。
+     * 对于每个符合条件的方法，它尝试从方法名中提取字段名，并检查该字段是否已经在HashMap中存在。
+     * 如果不存在，则检查方法上是否有DictDataSrc注解。
+     * 如果有，则创建一个DictDataSource对象，并根据注解中的信息设置其属性，然后将其添加到HashMap中。
+     * 如果在解析过程中发生运行时异常，则记录错误日志并抛出异常。
      *
-     * @param clazz
-     * @return *
+     * @param clazz 要解析的类
+     * @return 包含字典数据源信息的HashMap，键为字段名，值为对应的DictDataSource对象
      */
     public static HashMap<String, DictDataSource> getDictDataSourceMap(Class clazz) {
         HashMap<String, DictDataSource> map = new HashMap<String, DictDataSource>();
@@ -646,9 +647,12 @@ public class MetaReflex {
     }
 
     /**
-     * @param before 不能为空
-     * @param after  不能为空，且与before为相同类型
-     * @return 对象的差异值
+     * 比较两个对象之间的属性值差异，并返回差异值的JSON字符串。
+     *
+     * @param before         要比较的第一个对象，不能为null。
+     * @param after          要比较的第二个对象，不能为null，且应与before为相同类型。
+     * @param ignoreFieldMap 包含需要忽略比较的字段名称和对应值的Map，如果某个字段需要被忽略，则将其名称和任意值添加到该Map中。
+     * @return 返回描述对象间差异值的JSON字符串。如果两个对象相同或差异值为空，则返回空字符串。
      */
     public static String compareEntityValue(Object before, Object after, Map<String, String> ignoreFieldMap) {
         Assert.notNull(before, "不能为空");

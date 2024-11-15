@@ -30,9 +30,10 @@ public class ExcelWriter {
      * 支持单个单元格的写入
      * 支持列表按行动态添加写入，支持多个不同的列表并行动态写入
      *
-     * @param sheet
-     * @param placeholderMetaMap
-     * @param valueMapList
+     * @param sheet              Excel工作表对象，用于写入数据
+     * @param placeholderMetaMap 占位符元数据映射，用于解析和替换sheet中的占位符
+     * @param valueMapList       值映射列表，包含多组要写入的数据
+     * @param valueMap           单个值映射，用于非列表数据的写入
      */
     public void writeSheet(HSSFSheet sheet, Map<String, PlaceholderMeta> placeholderMetaMap, List<Map> valueMapList, Map valueMap) {
         int lastRowIndex = sheet.getLastRowNum();
@@ -75,11 +76,13 @@ public class ExcelWriter {
     }
 
     /**
-     * 按一组值valueMap写入sheet
+     * 按一组值写入Excel工作表
+     * <p>
+     * 根据提供的占位符元数据映射和值映射，将值写入指定的Excel工作表中。
      *
-     * @param sheet
-     * @param placeholderMetaMap
-     * @param valueMap
+     * @param sheet              Excel工作表对象，用于写入数据
+     * @param placeholderMetaMap 占位符元数据映射，键为占位符名称，值为对应的PlaceholderMeta对象
+     * @param valueMap           值映射，包含要写入工作表的数据
      */
     public void writeSheet(HSSFSheet sheet, Map<String, PlaceholderMeta> placeholderMetaMap, Map valueMap) {
         int lastRowIndex = sheet.getLastRowNum();
@@ -156,13 +159,15 @@ public class ExcelWriter {
     }
 
     /**
-     * 设置行值，对于列表行，动态创建行之后再设置行值
+     * 设置行值
+     * <p>
+     * 对于非列表行，直接设置行值；对于列表行，动态创建所需的行，并为每行设置值。
      *
-     * @param sheet
-     * @param rowIndex
-     * @param rowMeta
-     * @param valueMap
-     * @return 返回创建的新行数
+     * @param sheet    Excel工作表对象
+     * @param rowIndex 要设置的行索引
+     * @param rowMeta  行元数据对象，包含行中单元格的元数据信息
+     * @param valueMap 包含要设置到单元格中的值的映射
+     * @return 返回动态创建的新行数
      */
     private int setRowValue(HSSFSheet sheet, int rowIndex, RowMeta rowMeta, Map valueMap) {
         HSSFRow row = sheet.getRow(rowIndex);
@@ -254,13 +259,15 @@ public class ExcelWriter {
 
     /**
      * 合并相同数据的行
+     * <p>
+     * 根据提供的参数，将Excel工作表中相同数据的单元格进行合并。
      *
-     * @param sheet
-     * @param rowIndex
-     * @param cellMetaList
-     * @param valueMap
-     * @param valueList
-     * @param mergeScope
+     * @param sheet        Excel工作表对象
+     * @param rowIndex     当前处理的行索引
+     * @param cellMetaList 单元格元数据列表，包含每个单元格的元数据
+     * @param valueMap     值映射，包含要写入工作表的数据
+     * @param valueList    值列表，包含多组要写入的数据
+     * @param mergeScope   合并范围列表，指定哪些单元格需要合并
      */
     public void setMergeScope(HSSFSheet sheet, int rowIndex, List<CellMeta> cellMetaList, Map valueMap, List<Map> valueList, List<List<Integer>> mergeScope) {
         for (CellMeta cellMeta : cellMetaList) {
@@ -316,13 +323,6 @@ public class ExcelWriter {
         }
     }
 
-    public static void main(String[] args) {
-        String s = "1730777163";
-        System.out.println(s.length());
-        System.out.println(new Date(Long.parseLong(s)));
-        System.out.println(new Date(Long.parseLong(s + "000")));
-    }
-
     private String formatDate(Object value, String in, String out) {
         try {
             if (Strings.isBlank(in) || Strings.isBlank(out)) {
@@ -369,10 +369,13 @@ public class ExcelWriter {
 
     /**
      * 找到需要插入的行数，并新建一个POI的row对象
+     * <p>
+     * 根据给定的Excel工作表和行索引，找到需要插入的行数，并新建一个POI的row对象。
+     * 如果该位置已经存在行，则将其下移一行。
      *
-     * @param sheet
-     * @param rowIndex
-     * @return
+     * @param sheet    Excel工作表对象
+     * @param rowIndex 行索引，表示要插入新行的位置
+     * @return 返回新创建的HSSFRow对象
      */
     private HSSFRow createRow(HSSFSheet sheet, int rowIndex) {
         HSSFRow row = null;
@@ -398,10 +401,12 @@ public class ExcelWriter {
     }
 
     /**
-     * 从excel中读取占位符、变量定义
+     * 从Excel中读取占位符和变量定义
+     * <p>
+     * 从指定的Excel工作表中读取占位符和变量定义，并将它们存储在一个映射中返回。
      *
-     * @param sheet
-     * @return
+     * @param sheet Excel工作表对象，包含占位符和变量定义
+     * @return 返回包含占位符和变量定义的映射，键为占位符名称，值为对应的PlaceholderMeta对象
      */
     public Map<String, PlaceholderMeta> readPlaceholderMeta(HSSFSheet sheet) {
         int lastRowIndex = sheet.getLastRowNum();

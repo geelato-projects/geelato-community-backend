@@ -14,10 +14,12 @@ import java.util.regex.Pattern;
 public class StringUtils extends org.springframework.util.StringUtils {
     private static final Pattern UNDERLINE_PATTERN = Pattern.compile("_([a-z])");
 
-    /***
-     * @param separator 连接字符串
-     * @param array     需要连接的集合
-     * @return
+    /**
+     * 将字符串数组中的元素通过指定的分隔符连接成一个字符串。
+     *
+     * @param array     需要连接的字符串数组
+     * @param separator 用于连接数组元素的分隔符
+     * @return 连接后的字符串
      */
     public static String join(String[] array, String separator) {
         StringBuffer sb = new StringBuffer();
@@ -31,6 +33,13 @@ public class StringUtils extends org.springframework.util.StringUtils {
         return sb.toString();
     }
 
+    /**
+     * 将字符串列表中的元素通过指定的分隔符连接成一个字符串。
+     *
+     * @param array     需要连接的字符串列表
+     * @param separator 用于连接列表元素的分隔符
+     * @return 连接后的字符串
+     */
     public static String join(List<String> array, String separator) {
         StringBuffer sb = new StringBuffer();
         for (int i = 0, len = array.size(); i < len; i++) {
@@ -44,10 +53,12 @@ public class StringUtils extends org.springframework.util.StringUtils {
     }
 
     /**
-     * @param repeatTimes 重复的次数
-     * @param joinValue   重复拼接的内容、值
-     * @param separator   拼接的连接符
-     * @return
+     * 根据指定的重复次数和连接符，将指定的内容拼接成字符串。
+     *
+     * @param repeatTimes 重复的次数，表示要拼接的内容片段的数量
+     * @param joinValue   需要重复拼接的内容或值
+     * @param separator   用于连接各个内容片段的连接符
+     * @return 拼接后的字符串
      */
     public static String join(int repeatTimes, String joinValue, String separator) {
         StringBuffer sb = new StringBuffer();
@@ -62,30 +73,33 @@ public class StringUtils extends org.springframework.util.StringUtils {
     }
 
     /**
-     * 若字符串为null 或 为空，返回 true
+     * 判断给定的字符串是否为null或空字符串。
+     * 如果字符串为null或长度为0（即没有内容），则返回true；否则返回false。
      *
-     * @param text
-     * @return
+     * @param text 要判断的字符串
+     * @return 如果字符串为null或空字符串，则返回true；否则返回false
      */
     public static boolean isEmpty(final String text) {
         return text == null || text.length() == 0;
     }
 
     /**
-     * 若字符串为null 或 为空，返回 false
+     * 判断字符串是否不为null且不为空。
+     * 如果字符串不为null且长度大于0（即包含内容），则返回true；否则返回false。
      *
-     * @param text
-     * @return
+     * @param text 要判断的字符串
+     * @return 如果字符串不为null且不为空，则返回true；否则返回false
      */
     public static boolean isNotEmpty(final String text) {
         return !isEmpty(text);
     }
 
     /**
-     * 若字符串为null 或 为空 或 空字符组成的，返回 true
+     * 判断字符串是否为空、null或仅由空白字符组成。
+     * 如果传入的字符串为null、空字符串或仅由空白字符（如空格、制表符等）组成，则返回true；否则返回false。
      *
-     * @param text
-     * @return
+     * @param text 需要判断的字符串
+     * @return 如果字符串为空、null或仅由空白字符组成，则返回true；否则返回false
      */
     public static boolean isBlank(final String text) {
         if (text != null && !text.isEmpty()) {
@@ -103,10 +117,12 @@ public class StringUtils extends org.springframework.util.StringUtils {
     }
 
     /**
-     * 若字符串为null 或 为空 或 空字符组成的，返回 false
+     * 判断字符串是否非空、非null且不由空白字符组成。
+     * 如果字符串不为null，长度不为0，且不全部由空白字符（如空格、制表符等）组成，则返回true；
+     * 否则返回false。
      *
-     * @param text
-     * @return
+     * @param text 要判断的字符串
+     * @return 如果字符串非空、非null且不由空白字符组成，则返回true；否则返回false
      */
     public static boolean isNotBlank(final String text) {
         return !isBlank(text);
@@ -114,10 +130,12 @@ public class StringUtils extends org.springframework.util.StringUtils {
 
     /**
      * 字符串占位替换 "-{0}-{1}-{2}-"
+     * <p>
+     * 使用提供的替换值来填充字符串模板中的占位符。占位符格式为 "-{数字}-"，其中数字表示替换值的索引。
      *
-     * @param template 字符串模板
-     * @param args     替换值
-     * @return
+     * @param template 字符串模板，其中包含占位符
+     * @param args     替换值数组，按顺序替换模板中的占位符
+     * @return 替换后的字符串
      */
     public static String format(String template, Object... args) {
         if (isEmpty(template)) {
@@ -163,10 +181,12 @@ public class StringUtils extends org.springframework.util.StringUtils {
     }
 
     /**
-     * _a 转成驼峰结构
+     * 将下划线分隔的字符串转换为驼峰结构
+     * <p>
+     * 将输入的下划线分隔的字符串转换为驼峰结构的字符串。
      *
-     * @param s 字符串
-     * @return
+     * @param s 输入的下划线分隔的字符串
+     * @return 返回转换后的驼峰结构字符串
      */
     public static String toCamelCase(String s) {
         Matcher matcher = UNDERLINE_PATTERN.matcher(s);

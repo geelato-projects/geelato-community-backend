@@ -42,9 +42,9 @@ public class DateUtils {
     }
 
     /**
-     * 文件上传日期路径 yyyy/MM/dd/HH/mm/
+     * 获取文件上传的日期路径，格式为 yyyy/MM/dd/HH/mm/
      *
-     * @return
+     * @return 返回按日期时间格式化的路径字符串
      */
     public static String getAttachDatePath() {
         Date date = new Date();
@@ -58,10 +58,14 @@ public class DateUtils {
     }
 
     /**
-     * 时间间隔
+     * 计算时间间隔
+     * 根据传入的日期类型（年、月、日），计算从当前时间到下一个时间节点的时间间隔（秒）。
      *
-     * @param dateType（年、月、日）
-     * @return
+     * @param dateType 日期类型，支持以下格式：
+     *                 - "yyyy" 或 "yy"：表示以年为间隔，计算到明年今天的时间间隔
+     *                 - "yyyyMM" 或 "yyMM"：表示以月为间隔，计算到下个月第一天的时间间隔
+     *                 - "yyyyMMdd" 或 "yyMMdd"：表示以日为间隔，计算到明天的时间间隔
+     * @return 返回时间间隔（秒）。如果传入的日期类型不支持，则返回-1。
      */
     public static long timeInterval(String dateType) {
         Calendar calendar = Calendar.getInstance();

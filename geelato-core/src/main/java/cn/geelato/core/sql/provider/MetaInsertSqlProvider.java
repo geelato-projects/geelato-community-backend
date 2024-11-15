@@ -22,7 +22,7 @@ public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
 
         Object[] objects = new Object[command.getValueMap().size()];
         int i = 0;
-        //值部分
+        // 值部分
         for (Map.Entry<String, Object> entry : command.getValueMap().entrySet()) {
             objects[i] = entry.getValue();
             i++;
@@ -36,7 +36,7 @@ public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
         EntityMeta em = getEntityMeta(command);
         int[] types = new int[command.getValueMap().size()];
         int i = 0;
-        //值部分
+        // 值部分
         for (Map.Entry<String, Object> entry : command.getValueMap().entrySet()) {
             types[i] = TypeConverter.toSqlType(em.getFieldMeta(entry.getKey()).getColumn().getDataType());
             i++;
@@ -45,11 +45,15 @@ public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
     }
 
     /**
-     * INSERT INTO 表名称 VALUES (值1, 值2,....)
-     * INSERT INTO table_name (列1, 列2,...) VALUES (值1, 值2,....)
+     * 构建一个SQL插入语句。
+     * <p>
+     * 根据传入的SaveCommand对象，构建一个用于插入数据的SQL语句。
+     * 支持两种格式的SQL插入语句：
+     * 1. INSERT INTO 表名称 VALUES (值1, 值2,....)
+     * 2. INSERT INTO table_name (列1, 列2,...) VALUES (值1, 值2,....)
      *
-     * @param command
-     * @return
+     * @param command SaveCommand对象，包含要插入的数据信息
+     * @return 构建好的SQL插入语句字符串
      */
     @Override
     protected String buildOneSql(SaveCommand command) {
@@ -68,7 +72,7 @@ public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
     }
 
     protected void buildFields(StringBuilder sb, EntityMeta md, String[] fields) {
-        //重命名查询的结果列表为实体字段名
+        // 重命名查询的结果列表为实体字段名
         for (String fieldName : fields) {
             // 插入字段可以为关键字、保留字
 //            tryAppendKeywords(sb, md.getColumnName(fieldName));
@@ -79,7 +83,7 @@ public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
     }
 
     protected void buildValues(StringBuilder sb, EntityMeta md, String[] fields) {
-        //重命名查询的结果列表为实体字段名
+        // 重命名查询的结果列表为实体字段名
         for (String fieldName : fields) {
             sb.append("?");
             sb.append(",");

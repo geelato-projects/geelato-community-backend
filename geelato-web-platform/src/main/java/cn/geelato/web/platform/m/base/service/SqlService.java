@@ -21,8 +21,11 @@ public class SqlService extends BaseService {
 
     /**
      * 逻辑删除
+     * <p>
+     * 该方法用于逻辑删除指定的CustomSql模型对象。
+     * 在删除前，会先删除与该CustomSql对象相关联的申请记录。
      *
-     * @param model
+     * @param model 要逻辑删除的CustomSql模型对象
      */
     public void isDeleteModel(CustomSql model) {
         // 删除关联申请

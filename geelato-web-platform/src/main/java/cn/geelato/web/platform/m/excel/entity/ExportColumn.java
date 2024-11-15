@@ -32,10 +32,12 @@ public class ExportColumn {
     private int lastCol; // 结束列
 
     /**
-     * 计算节点的
+     * 计算节点的层级和宽度
+     * <p>
+     * 该方法用于计算给定节点的层级和宽度。层级从0开始计数，宽度表示当前层级下节点的数量。
      *
-     * @param currentLevel
-     * @return
+     * @param currentLevel 当前节点的层级
+     * @return 返回当前节点的宽度
      */
     public int calculateLevelAndBreadth(int currentLevel) {
         this.level = currentLevel;
@@ -52,9 +54,11 @@ public class ExportColumn {
     }
 
     /**
-     * 计算节点有多少层
+     * 计算树形结构中节点的最大层级
+     * <p>
+     * 递归遍历树形结构，计算并返回树中节点的最大层级。
      *
-     * @return
+     * @return 返回树形结构中节点的最大层级
      */
     public int findMaxValueInTree() {
         // 当前节点的值
@@ -74,10 +78,12 @@ public class ExportColumn {
     }
 
     /**
-     * 计算高度
+     * 计算深度
+     * <p>
+     * 根据给定的最大深度，计算当前节点的深度。
      *
-     * @param maxDepth
-     * @return
+     * @param maxDepth 最大深度，表示树的最大深度
+     * @return 返回当前节点的深度值
      */
     public int calculateDepth(int maxDepth) {
         int maxChildDepth = 0; // 子节点站的宽度

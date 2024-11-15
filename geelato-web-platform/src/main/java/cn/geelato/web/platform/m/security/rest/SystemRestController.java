@@ -81,9 +81,12 @@ public class SystemRestController extends BaseController {
 
     /**
      * 用于管理员重置密码
+     * <p>
+     * 该方法通过接收密码长度参数（默认为8位，最长为32位），生成一个随机密码，并更新管理员的密码。
      *
-     * @param passwordLength 默认为8位，最长为32位
-     * @return
+     * @param passwordLength 密码长度，默认为8位，最长为32位
+     * @return ApiResult对象，包含操作结果和生成的随机密码
+     * @throws Exception 如果在操作过程中发生异常，则抛出该异常
      */
     @RequestMapping(value = "/resetPassword", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult resetPassword(@RequestParam(defaultValue = "8", required = false) int passwordLength) throws Exception {
@@ -98,9 +101,11 @@ public class SystemRestController extends BaseController {
 
     /**
      * 通过token获取用户信息
+     * <p>
+     * 从当前请求中获取登录名，并通过该登录名查询用户信息。
      *
-     * @return
-     * @throws Exception
+     * @return 返回查询到的用户信息对象
+     * @throws Exception 如果在查询过程中发生异常，则抛出该异常
      */
     private User getUserByToken() throws Exception {
         return dao.queryForObject(User.class, "loginName", this.request.getAttribute("loginName"));
@@ -111,9 +116,11 @@ public class SystemRestController extends BaseController {
     }
 
     /**
-     * 用户所属公司
+     * 设置用户所属公司信息
+     * <p>
+     * 根据登录结果中的公司ID或组织ID，设置登录结果中的公司名称和公司ID。
      *
-     * @param loginResult
+     * @param loginResult 登录结果对象，包含用户登录后的相关信息
      */
     private void setCompany(LoginResult loginResult) {
         if (Strings.isNotBlank(loginResult.getCompanyId())) {

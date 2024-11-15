@@ -30,9 +30,16 @@ public class JsonTextSaveParser extends JsonTextParser {
     private final static String KW_BIZ = "@biz";
 
 
-
     /**
+     * 解析传入的JSON文本，并返回一个SaveCommand对象。
+     * 该方法首先使用JSON.parseObject将传入的JSON文本解析为JSONObject对象。
+     * 如果JSONObject中包含KW_BIZ键，则将其移除。
+     * 然后，从JSONObject中获取第一个键（即实体名称），并使用该实体名称和对应的JSONObject对象，以及一个CommandValidator对象，
+     * 调用另一个parse方法进行解析，最终返回一个SaveCommand对象。
      *
+     * @param jsonText   待解析的JSON文本
+     * @param sessionCtx 会话上下文对象
+     * @return 解析后的SaveCommand对象
      */
     public SaveCommand parse(String jsonText, SessionCtx sessionCtx) {
         JSONObject jo = JSON.parseObject(jsonText);
@@ -117,10 +124,10 @@ public class JsonTextSaveParser extends JsonTextParser {
                 // 对于boolean类型的值，转为数值，以值存到数据库
                 FieldMeta fieldMeta = entityMeta.getFieldMeta(key);
 
-                if(FunctionParser.isFunction(jo.getString(key))){
-                    String afterRefaceExpression= FunctionParser.reconstruct(jo.getString(key),entityMeta.getEntityName());
-                    params.put(key, new FunctionFieldValue(fieldMeta,afterRefaceExpression));
-                }else{
+                if (FunctionParser.isFunction(jo.getString(key))) {
+                    String afterRefaceExpression = FunctionParser.reconstruct(jo.getString(key), entityMeta.getEntityName());
+                    params.put(key, new FunctionFieldValue(fieldMeta, afterRefaceExpression));
+                } else {
                     if (fieldMeta != null && (boolean.class.equals(fieldMeta.getFieldType())
                             || Boolean.class.equals(fieldMeta.getFieldType())
                             || "delStatus".equals(fieldMeta.getFieldName())
@@ -175,7 +182,7 @@ public class JsonTextSaveParser extends JsonTextParser {
     }
 
 
-    private void putUpdateDefaultField(Map<String,Object> entity, SessionCtx sessionCtx) {
+    private void putUpdateDefaultField(Map<String, Object> entity, SessionCtx sessionCtx) {
         if (entity.containsKey("updateAt")) {
             entity.put("updateAt", simpleDateFormat.format(new Date()));
         }
@@ -186,15 +193,16 @@ public class JsonTextSaveParser extends JsonTextParser {
             entity.put("updaterName", SessionCtx.getUserName());
         }
     }
-    private void putInsertDefaultField(Map<String,Object> entity, SessionCtx sessionCtx) {
+
+    private void putInsertDefaultField(Map<String, Object> entity, SessionCtx sessionCtx) {
         if (entity.containsKey("createAt")) {
             entity.put("createAt", simpleDateFormat.format(new Date()));
         }
         if (entity.containsKey("creator")) {
-            entity.put("creator",SessionCtx.getUserId());
+            entity.put("creator", SessionCtx.getUserId());
         }
         if (entity.containsKey("creatorName")) {
-            entity.put("creatorName",SessionCtx.getUserName());
+            entity.put("creatorName", SessionCtx.getUserName());
         }
         if (entity.containsKey("tenantCode")) {
             entity.put("tenantCode", SessionCtx.getCurrentTenantCode());
@@ -207,7 +215,4 @@ public class JsonTextSaveParser extends JsonTextParser {
         }
         putUpdateDefaultField(entity, sessionCtx);
     }
-
-
-
 }

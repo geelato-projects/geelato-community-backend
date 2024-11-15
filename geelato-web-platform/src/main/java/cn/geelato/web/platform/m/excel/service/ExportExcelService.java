@@ -65,15 +65,17 @@ public class ExportExcelService {
 
     /**
      * 导出文件
+     * <p>
+     * 根据提供的模板ID、文件名、数据集合、对象数据、水印文本、水印样式和是否只读等参数，导出文件。
      *
-     * @param templateId   导出模板id
+     * @param templateId   导出模板ID
      * @param fileName     导出文件名称
-     * @param valueMapList 集合数据
-     * @param valueMap     对象数据
-     * @param markText     水印文本，默认样式
-     * @param markKey      配置的水印样式
-     * @param readonly     是否只读
-     * @return
+     * @param valueMapList 数据集合，包含多组值映射，每组值映射是一个Map
+     * @param valueMap     对象数据，包含要写入文件的数据
+     * @param markText     水印文本，用于在文件中添加水印
+     * @param markKey      配置的水印样式，用于定义水印的样式
+     * @param readonly     是否只读，指定导出的文件是否应为只读
+     * @return 返回导出文件的ApiResult对象，包含文件信息或错误信息
      */
     public ApiResult exportWps(String templateId, String fileName, List<Map> valueMapList, Map valueMap, String markText, String markKey, boolean readonly) {
         try {
@@ -132,6 +134,23 @@ public class ExportExcelService {
     }
 
 
+    /**
+     * 根据列元数据导出Excel文件
+     * <p>
+     * 根据提供的列元数据、占位符元数据、值映射列表、单个值映射、水印文本、水印关键字和是否只读标志，导出Excel文件。
+     *
+     * @param appId            应用ID
+     * @param fileName         文件名（可选）
+     * @param valueMapList     值映射列表，包含多组数据
+     * @param valueMap         单个值映射，包含数据
+     * @param exportColumns    导出列信息列表
+     * @param placeholderMetas 占位符元数据列表
+     * @param markText         水印文本（可选）
+     * @param markKey          水印关键字（可选）
+     * @param readonly         是否只读
+     * @return ApiResult对象，包含操作结果和返回数据
+     * @throws Exception 如果在导出过程中发生异常，将抛出该异常
+     */
     public ApiResult exportExcelByColumnMeta(String appId, String fileName, List<Map> valueMapList, Map valueMap, List<ExportColumn> exportColumns, List<PlaceholderMeta> placeholderMetas, String markText, String markKey, boolean readonly) {
         try {
             String tenantCode = SessionCtx.getCurrentTenantCode();
@@ -198,10 +217,12 @@ public class ExportExcelService {
 
     /**
      * 水印处理
+     * <p>
+     * 根据提供的标记文本或标记键，设置水印元数据。
      *
-     * @param markText
-     * @param markKey
-     * @return
+     * @param markText 水印文本，如果提供了有效的标记文本，则使用该文本设置水印
+     * @param markKey  水印配置的标记键，如果提供了有效的标记键，则从系统配置中查询水印配置并设置水印
+     * @return 返回设置好的水印元数据对象
      */
     private WordWaterMarkMeta setWaterMark(String markText, String markKey) {
         WordWaterMarkMeta meta = null;
@@ -233,11 +254,13 @@ public class ExportExcelService {
     }
 
     /**
-     * 占位符元数据
+     * 从Excel文件中获取占位符元数据
+     * <p>
+     * 从给定的Excel文件中读取占位符元数据，并将其存储在Map中返回。
      *
-     * @param file
-     * @return
-     * @throws IOException
+     * @param file 要读取的Excel文件
+     * @return 包含占位符元数据的Map，其中键为占位符名称，值为对应的PlaceholderMeta对象
+     * @throws IOException 如果在读取文件或关闭资源时发生I/O错误
      */
     private Map<String, PlaceholderMeta> getPlaceholderMeta(File file) throws IOException {
         Map<String, PlaceholderMeta> metaMap = new HashMap<>();
@@ -286,9 +309,11 @@ public class ExportExcelService {
 
     /**
      * 模板数据解析
+     * <p>
+     * 将JSON格式的字符串解析为占位符元数据映射。
      *
-     * @param jsonText
-     * @return
+     * @param jsonText JSON格式的字符串，包含占位符元数据
+     * @return 返回包含占位符元数据的映射，键为占位符名称，值为对应的PlaceholderMeta对象；如果解析失败，则返回null
      */
     private Map<String, PlaceholderMeta> getPlaceholderMeta(String jsonText) {
         Map<String, PlaceholderMeta> metaMap = new HashMap<>();
@@ -302,6 +327,14 @@ public class ExportExcelService {
         return metaMap;
     }
 
+    /**
+     * 从占位符元数据列表中获取占位符元数据映射
+     * <p>
+     * 将传入的占位符元数据列表转换为以占位符名称为键，占位符元数据为值的映射。
+     *
+     * @param metas 占位符元数据列表
+     * @return 包含占位符名称和对应占位符元数据的映射
+     */
     private Map<String, PlaceholderMeta> getPlaceholderMeta(List<PlaceholderMeta> metas) {
         Map<String, PlaceholderMeta> metaMap = new HashMap<>();
         if (metas != null && !metas.isEmpty()) {
@@ -317,13 +350,17 @@ public class ExportExcelService {
 
     /**
      * 生成实体文件
+     * <p>
+     * 根据提供的模板文件、占位符元数据、数据集合、单个数据、水印元数据和是否只读标志，生成实体文件。
      *
-     * @param templateFile 模板文件
-     * @param exportFile   实体文件（路径）
-     * @param metaMap      占位符
-     * @param valueMapList 集合数据
-     * @param valueMap     单个数据
-     * @throws IOException
+     * @param templateFile 模板文件，包含要导出的内容模板
+     * @param exportFile   实体文件（路径），用于保存生成的文件
+     * @param metaMap      占位符元数据，包含占位符和对应的信息
+     * @param valueMapList 数据集合，包含多组数据
+     * @param valueMap     单个数据，包含要写入文件的数据
+     * @param markMeta     水印元数据，包含水印的样式和信息
+     * @param readonly     是否只读，指定生成的文件是否应为只读
+     * @throws IOException 如果在文件读写过程中发生I/O异常，将抛出该异常
      */
     private void generateEntityFile(File templateFile, File exportFile, Map<String, PlaceholderMeta> metaMap, List<Map> valueMapList, Map valueMap, WordWaterMarkMeta markMeta, Boolean readonly) throws IOException {
         FileInputStream fileInputStream = null;
@@ -418,6 +455,18 @@ public class ExportExcelService {
     }
 
 
+    /**
+     * 生成并保存Excel模板文件
+     * <p>
+     * 根据提供的租户编码、应用ID、文件名和导出列信息，生成一个Excel模板文件，并将其保存到服务器并返回相应的Base64Info对象。
+     *
+     * @param tenantCode    租户编码
+     * @param appId         应用ID
+     * @param fileName      文件名
+     * @param exportColumns 导出列信息列表
+     * @return 返回包含文件信息的Base64Info对象
+     * @throws IOException 如果在文件操作过程中出现I/O异常
+     */
     private Base64Info getTemplate(String tenantCode, String appId, String fileName, List<ExportColumn> exportColumns) throws IOException {
         Base64Info info = null;
         OutputStream outputStream = null;
@@ -461,10 +510,14 @@ public class ExportExcelService {
     }
 
     /**
-     * 将base64转为file
+     * 将base64字符串转换为文件对象
+     * <p>
+     * 根据提供的base64字符串，将其解码为字节数组，并创建一个临时文件，将字节数组写入该文件。
+     * 如果base64字符串长度大于64，则将其解析为Base64Info对象，并从中提取文件名和base64编码内容。
+     * 如果base64字符串长度不大于64，则将其视为文件ID，并从文件系统中获取对应的文件。
      *
-     * @param template
-     * @return
+     * @param template base64字符串或文件ID
+     * @return 返回包含文件信息和临时文件对象的Base64Info对象，如果转换失败则返回null
      */
     private Base64Info getTemplate(String template) {
         Base64Info info = null;
@@ -503,9 +556,11 @@ public class ExportExcelService {
 
     /**
      * 获取文件
+     * <p>
+     * 根据提供的附件ID获取对应的文件信息。
      *
-     * @param attachId
-     * @return
+     * @param attachId 附件ID
+     * @return 返回对应的文件信息，如果文件不存在或附件ID为空，则返回null
      */
     private Attach getFile(String attachId) {
         if (Strings.isNotBlank(attachId)) {

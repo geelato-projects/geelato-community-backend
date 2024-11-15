@@ -20,10 +20,11 @@ public class FileUtils {
     }
 
     /**
-     * 文件后缀
+     * 获取文件后缀名，但不包括点号（.）
+     * 根据传入的文件名称，返回文件的后缀名部分，但不包括点号（.）。
      *
      * @param fileName 文件名称
-     * @return 例：xlsx，不包含.
+     * @return 返回文件的后缀名，例如"xlsx"，如果不包含后缀名则返回空字符串
      */
     public static String getFileExtensionWithNoDot(String fileName) {
         if (StringUtils.isNotBlank(fileName)) {

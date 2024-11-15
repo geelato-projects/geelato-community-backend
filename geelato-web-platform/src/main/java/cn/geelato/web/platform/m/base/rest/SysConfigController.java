@@ -119,7 +119,6 @@ public class SysConfigController extends BaseController {
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
     public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
-        ApiResult<SysConfig> result = new ApiResult<>();
         try {
             SysConfig model = sysConfigService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);

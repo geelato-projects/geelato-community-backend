@@ -10,7 +10,7 @@ import java.util.Map;
  *
  * @author geemeta
  */
-public class ApiMultiPagedResult<E> extends ApiResult<Map<String,ApiMultiPagedResult.PageData<E>>> {
+public class ApiMultiPagedResult<E> extends ApiResult<Map<String, ApiMultiPagedResult.PageData<E>>> {
 
     /**
      * 分页查询的返回结果
@@ -31,5 +31,4 @@ public class ApiMultiPagedResult<E> extends ApiResult<Map<String,ApiMultiPagedRe
         private Object meta;
 
     }
-
 }

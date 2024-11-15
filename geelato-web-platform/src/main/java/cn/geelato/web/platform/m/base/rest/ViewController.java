@@ -51,15 +51,13 @@ public class ViewController extends BaseController {
 
     @RequestMapping(value = {"/defined/{view_name}"}, method = {RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult export(@PathVariable("view_name") String viewName) {
-        ApiMetaResult result = new ApiMetaResult();
         ViewMeta viewMeta = ViewManager.singleInstance().getByViewName(viewName);
         String viewColumnJson = viewMeta.getViewColumn();
         if (!StringUtils.isBlank(viewColumnJson)) {
             JSONArray jsonArray = JSONArray.parse(viewMeta.getViewColumn());
-            result.setMeta(jsonArray);
+            return ApiMetaResult.success(jsonArray);
         } else {
-            result.setMeta(viewColumnJson);
+            return ApiMetaResult.success(viewColumnJson);
         }
-        return result;
     }
 }

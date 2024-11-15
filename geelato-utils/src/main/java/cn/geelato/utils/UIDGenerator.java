@@ -5,29 +5,39 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author geemeta
- *
  */
 @Slf4j
 public class UIDGenerator {
-
-    private static final long BEGIN_DATE = new Date(116, 6, 6, 6, 6, 6).getTime();
     private static final int localMachineAppend = Integer.parseInt(ip());
     private static AtomicInteger atomicInteger = new AtomicInteger(0);
-    private static final SnowFlake snowFlake=new SnowFlake(1,1);
+    private static final SnowFlake snowFlake = new SnowFlake(1, 1);
+
     public static long generate() {
         return snowFlake.nextId();
     }
+
+    private static long getBeginDate() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.YEAR, 1916); // 注意年份需要正确设置，这里假设你想要的年份是1916年
+        calendar.set(Calendar.MONTH, Calendar.JUNE); // 月份使用Calendar常量
+        calendar.set(Calendar.DAY_OF_MONTH, 6);
+        calendar.set(Calendar.HOUR_OF_DAY, 6);
+        calendar.set(Calendar.MINUTE, 6);
+        calendar.set(Calendar.SECOND, 6);
+        return calendar.getTime().getTime();
+    }
+
     /**
      * 39 bit
      */
     private static String wrapTimeBinaryStr() {
         long currentTime = System.currentTimeMillis();
-        long timeElapse = currentTime - BEGIN_DATE;
+        long timeElapse = currentTime - getBeginDate();
         return StringUtils.leftPad(Long.toBinaryString(timeElapse), 39, '0');
     }
 

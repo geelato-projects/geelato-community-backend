@@ -49,19 +49,17 @@ public class MetaDdlController extends BaseController {
      */
     @RequestMapping(value = {"/table/{entity}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult recreate(@PathVariable("entity") String entity) {
-        ApiMetaResult result = new ApiMetaResult();
         try {
             dbGenerateDao.createOrUpdateOneTable(entity, false);
+            return ApiMetaResult.successNoResult();
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-            result.error().setMsg(ex.getCause().getMessage());
+            return ApiMetaResult.fail(ex.getCause() == null ? ex.getMessage() : ex.getCause().getMessage());
         }
-        return result;
     }
 
     @RequestMapping(value = {"/tables/{appId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult recreates(@PathVariable("appId") String appId) {
-        ApiMetaResult result = new ApiMetaResult();
         Map<String, Object> tableResult = new LinkedHashMap<>();
         String tenantCode = SessionCtx.getCurrentTenantCode();
         String errorModel = "";
@@ -94,10 +92,11 @@ public class MetaDdlController extends BaseController {
                     }
                 }
             }
-            result.setData(tableResult);
+            return ApiMetaResult.success(tableResult);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-            result.error().setMsg(String.format("%s, %s", errorModel, ex.getCause().getMessage())).setData(tableResult);
+            String message = ex.getCause() == null ? ex.getMessage() : ex.getCause().getMessage();
+            return ApiMetaResult.fail(tableResult, String.format("%s, %s", errorModel, message));
         } finally {
             // 刷新缓存
             if (Strings.isNotBlank(appId) && Strings.isNotBlank(tenantCode)) {
@@ -107,12 +106,10 @@ public class MetaDdlController extends BaseController {
                 MetaManager.singleInstance().parseDBMeta(dao, table);
             }
         }
-        return result;
     }
 
     @RequestMapping(value = {"/views/{appId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult reViewCreates(@PathVariable("appId") String appId) {
-        ApiMetaResult result = new ApiMetaResult();
         Map<String, Object> tableResult = new LinkedHashMap<>();
         String tenantCode = SessionCtx.getCurrentTenantCode();
         String errorModel = "";
@@ -171,10 +168,11 @@ public class MetaDdlController extends BaseController {
                     }
                 }
             }
-            result.setData(tableResult);
+            return ApiMetaResult.success(tableResult);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-            result.error().setMsg(String.format("%s, %s", errorModel, ex.getMessage())).setData(tableResult);
+            String message = ex.getCause() == null ? ex.getMessage() : ex.getCause().getMessage();
+            return ApiMetaResult.fail(tableResult, String.format("%s, %s", errorModel, message));
         } finally {
             // 刷新缓存
             if (Strings.isNotBlank(appId) && Strings.isNotBlank(tenantCode)) {
@@ -184,13 +182,10 @@ public class MetaDdlController extends BaseController {
                 MetaManager.singleInstance().parseDBMeta(dao, table);
             }
         }
-
-        return result;
     }
 
     @RequestMapping(value = {"/viewOne/{id}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult reViewCreate(@PathVariable("id") String id) {
-        ApiMetaResult result = new ApiMetaResult();
         String entityName = null;
         try {
             if (Strings.isNotBlank(id)) {
@@ -225,16 +220,15 @@ public class MetaDdlController extends BaseController {
                 entityName = viewMeta.getEntityName();
                 dbGenerateDao.createOrUpdateView(viewMeta.getViewName(), viewMeta.getViewConstruct());
             }
+            return ApiMetaResult.successNoResult();
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-            result.error().setMsg(ex.getMessage());
+            return ApiMetaResult.fail(ex.getMessage());
         } finally {
             if (Strings.isNotBlank(entityName)) {
                 MetaManager.singleInstance().refreshDBMeta(entityName);
             }
         }
-
-        return result;
     }
 
     /**
@@ -242,27 +236,23 @@ public class MetaDdlController extends BaseController {
      */
     @RequestMapping(value = {"/view/{view}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult recreate(@PathVariable("view") String view, @RequestBody Map<String, String> params) {
-        ApiMetaResult result = new ApiMetaResult();
         dbGenerateDao.createOrUpdateView(view, params.get("sql"));
-        return result;
+        return ApiMetaResult.successNoResult();
     }
 
     @RequestMapping(value = {"/view/valid/{connectId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<Boolean> validateView(@PathVariable("connectId") String connectId, @RequestBody Map<String, String> params) {
-        ApiMetaResult<Boolean> result = new ApiMetaResult();
         try {
             boolean isValid = dbGenerateDao.validateViewSql(connectId, params.get("sql"));
-            result.success().setData(isValid);
+            return ApiMetaResult.success(isValid);
         } catch (SQLException e) {
             logger.error(e.getMessage());
-            result.success().setData(false);
+            return ApiMetaResult.success(false);
         }
-        return result;
     }
 
     @RequestMapping(value = {"/redis/refresh"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult refreshRedis(@RequestBody Map<String, String> params) {
-        ApiMetaResult result = new ApiMetaResult();
         try {
             Map<String, String> table = new HashMap<>();
             table.put("id", params.get("tableId"));
@@ -271,12 +261,10 @@ public class MetaDdlController extends BaseController {
             table.put("app_id", params.get("appId"));
             table.put("tenant_code", Strings.isNotBlank(params.get("tenantCode")) ? params.get("tenantCode") : SessionCtx.getCurrentTenantCode());
             MetaManager.singleInstance().parseDBMeta(dao, table);
+            return ApiMetaResult.successNoResult();
         } catch (Exception ex) {
             logger.error(ex.getMessage());
-            result.error().setMsg(ex.getCause().getMessage());
+            return ApiMetaResult.fail(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
         }
-        return result;
     }
-
-
 }

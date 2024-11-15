@@ -227,7 +227,6 @@ public class DevTableController extends BaseController {
 
     @RequestMapping(value = {"/reset/{tableId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult resetModelFormTable(@PathVariable("tableId") String tableId) {
-        ApiMetaResult result = new ApiMetaResult();
         try {
             if (Strings.isNotBlank(tableId)) {
                 // dev_table
@@ -241,11 +240,11 @@ public class DevTableController extends BaseController {
             } else {
                 throw new RuntimeException("tableId is null");
             }
+            return ApiMetaResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.error().setMsg(e.getMessage());
+            return ApiMetaResult.fail(e.getMessage());
         }
-        return result;
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)

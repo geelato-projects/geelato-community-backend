@@ -47,8 +47,6 @@ public class FileController extends BaseController {
         String fileType = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
         String savedFileName = System.currentTimeMillis() + "" + random.nextInt(9) + random.nextInt(9) + "." + fileType;
 
-
-        ApiResult apiResult = new ApiResult();
         try {
             int size = file.getBytes().length;
             saveToFileSystem(file.getBytes(), filePath, savedFileName);
@@ -60,15 +58,11 @@ public class FileController extends BaseController {
             fileInfo.setFileType(fileType);
             fileInfo.setSize(size);
             fileInfo.setDescription(null);
-            apiResult.setData(dao.save(fileInfo));
-            apiResult.success();
-            apiResult.setMsg("上传文件成功！");
+            return ApiResult.success(dao.save(fileInfo), "上传文件成功！");
         } catch (IOException e) {
             log.error("上传文件失败！", e);
-            apiResult.error();
-            apiResult.setMsg("上传文件失败！");
+            return ApiResult.fail("上传文件失败!");
         }
-        return apiResult;
     }
 
     /**

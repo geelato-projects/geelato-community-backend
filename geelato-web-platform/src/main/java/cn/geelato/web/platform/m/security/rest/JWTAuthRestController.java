@@ -52,16 +52,11 @@ public class JWTAuthRestController extends BaseController {
     @IgnoreJWTVerify
     @RequestMapping(value = "/login", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
     public ApiResult login(@RequestBody LoginParams loginParams) {
-        ApiResult apiResult = new ApiResult();
         try {
             // 用户登录校验
             User loginUser = dao.queryForObject(User.class, "loginName", loginParams.getUsername());
             Boolean checkPsdRst = CheckPsd(loginUser, loginParams);
             if (loginUser != null && checkPsdRst) {
-                apiResult.success();
-                apiResult.setMsg("认证成功！");
-                apiResult.setCode(20000);
-
                 String userId = loginUser.getId();
 
                 Map<String, String> payload = new HashMap<>(3);
@@ -76,15 +71,14 @@ public class JWTAuthRestController extends BaseController {
                 loginResult.setRoles(getRoles(userId));
                 // 用户所属公司
                 setCompany(loginResult);
-                apiResult.setData(loginResult);
+                return ApiResult.success(loginResult, "认证成功!");
             } else {
-                return apiResult.error().setMsg("账号或密码不正确");
+                return ApiResult.fail("账号或密码不正确");
             }
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
-            apiResult.error().setMsg("账号或密码不正确");
+            return ApiResult.fail("账号或密码不正确!");
         }
-        return apiResult;
     }
 
     private Boolean CheckPsd(User loginUser, LoginParams loginParams) {
@@ -106,7 +100,7 @@ public class JWTAuthRestController extends BaseController {
         try {
             User user = this.getUserByToken();
             if (user == null) {
-                return new ApiResult().error().setMsg("获取用户失败");
+                return ApiResult.fail("获取用户失败");
             }
 
             LoginResult loginResult = LoginResult.formatLoginResult(user);
@@ -116,10 +110,10 @@ public class JWTAuthRestController extends BaseController {
             // 用户所属公司
             setCompany(loginResult);
 
-            return new ApiResult().success().setData(loginResult);
+            return ApiResult.success(loginResult);
         } catch (Exception e) {
             log.error("getUserInfo", e);
-            return new ApiResult().error().setMsg(e.getMessage());
+            return ApiResult.fail(e.getMessage());
         }
     }
 
@@ -195,7 +189,7 @@ public class JWTAuthRestController extends BaseController {
 
     /**
      * 获取当前用户的菜单
-     *
+     * <p>
      * 根据提供的参数，查询并返回当前用户的菜单列表。
      *
      * @param params 包含查询参数的Map对象，参数包括flag、appId和tenantCode
@@ -244,7 +238,7 @@ public class JWTAuthRestController extends BaseController {
 
     /**
      * 用于管理员重置密码
-     *
+     * <p>
      * 通过该方法，管理员可以重置其密码。默认密码长度为8位，最长为32位。
      *
      * @param passwordLength 密码长度，默认为8位，最长为32位
@@ -407,7 +401,7 @@ public class JWTAuthRestController extends BaseController {
 
     /**
      * 通过token获取用户信息
-     *
+     * <p>
      * 根据当前会话的token获取对应的用户信息。
      *
      * @return 返回获取到的用户信息对象，如果未找到对应的用户则返回null
@@ -428,7 +422,7 @@ public class JWTAuthRestController extends BaseController {
 
     /**
      * 设置用户所属公司
-     *
+     * <p>
      * 根据登录结果中的公司ID或组织ID，设置登录结果中的公司名称和公司ID。
      *
      * @param loginResult 登录结果对象，包含用户的登录信息

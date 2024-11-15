@@ -92,7 +92,6 @@ public class ImportExcelService {
 
     public ApiResult importExcel(HttpServletRequest request, HttpServletResponse response, String importType, String templateId, String attachId) {
         System.gc();
-        ApiResult result = new ApiResult();
         String currentUUID = String.valueOf(UIDGenerator.generate());
         try {
             long importStart = System.currentTimeMillis();
@@ -211,7 +210,7 @@ public class ImportExcelService {
             // 业务数据校验
             if (!validBusinessData(businessDataMapList) || repeatedData.size() > 0) {
                 Attach errorAttach = writeBusinessData(exportTemplate, businessFile, request, response, businessDataMapList, repeatedData, 0);
-                return result.error(new FileContentValidFailedException("For more information, see the error file.")).setData(errorAttach);
+                return ApiResult.fail(errorAttach).exception(new FileContentValidFailedException("For more information, see the error file."));
             }
             // 插入数据 "@biz": "myBizCode",
             long insertStart = System.currentTimeMillis();
@@ -236,18 +235,16 @@ public class ImportExcelService {
                     insertMap.put(table.getKey(), table.getValue());
                 }
                 returnPks = (List<String>) ruleService.batchSave(JSON.toJSONString(insertMap), "all".equalsIgnoreCase(importType));
-                result.setMsg(String.format("导入数量：预计 [%s]，实际 [%s]", businessDataMapList.size(), (returnPks == null ? 0 : returnPks.size())));
             } else {
                 throw new FileContentIsEmptyException("Business Import Data Is Empty");
             }
-            result.setData(currentUUID);
+            String message = String.format("导入数量：预计 [%s]，实际 [%s]", businessDataMapList.size(), (returnPks == null ? 0 : returnPks.size()));
+            return ApiResult.success(currentUUID, message);
         } catch (Exception ex) {
-            result.error(ex).setData(currentUUID);
+            return ApiResult.fail(currentUUID).exception(ex);
         } finally {
             System.gc();
         }
-
-        return result;
     }
 
     private void validateExcel(Map<String, List<BusinessMeta>> businessMetaListMap, Map<String, BusinessTypeData> businessTypeDataMap,

@@ -39,13 +39,8 @@ public class SystemRestController extends BaseController {
     @IgnoreJWTVerify
     @RequestMapping(value = "/getRoleListByPage", method = RequestMethod.GET, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
     public ApiPagedResult getAccountList() {
-        // 初始化返回值
-        ApiPagedResult apiPageResult = new ApiPagedResult<DataItems>();
         List mapList = dao.queryForMapList(Role.class);
-        apiPageResult.setData(new DataItems(mapList, mapList.size()));
-        apiPageResult.success();
-        apiPageResult.setTotal(mapList.size());
-        return apiPageResult;
+        return ApiPagedResult.success(new DataItems(mapList, mapList.size()), 1L, mapList.size(), mapList.size(), mapList.size());
     }
 
     @RequestMapping(value = "/getUserInfo", method = RequestMethod.GET)

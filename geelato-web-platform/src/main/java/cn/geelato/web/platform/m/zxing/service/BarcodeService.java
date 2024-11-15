@@ -21,7 +21,7 @@ public class BarcodeService extends BaseService {
             try {
                 Barcode barcode = getModel(Barcode.class, code);
                 if (barcode != null) {
-                    result.success().setData(barcode);
+                    result = ApiResult.success(barcode);
                     isCode = false;
                 }
             } catch (Exception e) {

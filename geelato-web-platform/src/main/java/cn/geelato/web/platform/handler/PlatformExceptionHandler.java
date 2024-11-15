@@ -2,8 +2,6 @@ package cn.geelato.web.platform.handler;
 
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiResultCode;
-import cn.geelato.lang.constants.ApiResultStatus;
 import cn.geelato.lang.exception.CoreException;
 import cn.geelato.lang.exception.UnSupportedVersionException;
 import cn.geelato.plugin.UnFoundPluginException;
@@ -54,11 +52,7 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {CoreException.class})
     public final ResponseEntity<?> handleException(CoreException ex, WebRequest request) {
-        ApiResult<PlatformRuntimeException> apiResult = new ApiResult<>();
-        apiResult.setCode(ApiResultCode.ERROR);
-        apiResult.setMsg(ex.getErrorMsg());
-        apiResult.setStatus(ApiResultStatus.FAIL);
-        apiResult.setData(coreException2PlatformException(ex));
+        ApiResult<PlatformRuntimeException> apiResult = ApiResult.fail(coreException2PlatformException(ex), ex.getErrorMsg());
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
         return handleExceptionInternal(ex, apiResult, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);
@@ -74,11 +68,8 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {UnFoundPluginException.class})
     public final ResponseEntity<?> handleException(UnFoundPluginException ex, WebRequest request) {
-        ApiResult<UnSupportedVersionException> apiResult = new ApiResult<>();
         UnSupportedVersionException unSupportedVersionException = new UnSupportedVersionException();
-        apiResult.setCode(unSupportedVersionException.getErrorCode());
-        apiResult.setMsg(unSupportedVersionException.getErrorMsg());
-        apiResult.setStatus(ApiResultStatus.FAIL);
+        ApiResult<UnSupportedVersionException> apiResult = ApiResult.fail(unSupportedVersionException.getErrorCode(), unSupportedVersionException.getErrorMsg());
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
         return handleExceptionInternal(ex, apiResult, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);

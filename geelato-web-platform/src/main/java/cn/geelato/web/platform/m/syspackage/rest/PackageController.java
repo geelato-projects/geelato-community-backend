@@ -12,7 +12,6 @@ import cn.geelato.core.orm.DaoException;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiResultCode;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
@@ -85,7 +84,6 @@ public class PackageController extends BaseController {
     @ResponseBody
     public ApiResult packetApp(@NotNull @PathVariable("appId") String appId, String version, String description,
                                @RequestBody(required = false) Map<String, String> appointMetas) throws IOException {
-        ApiResult apiResult = new ApiResult();
         Map<String, String> appDataMap = new HashMap<>();
         Map<String, String> appMetaDataMap = appMetaMap(appId, "package");
         Map<String, String> appBizDataMap = appBizDataMap(appId, "package");
@@ -114,9 +112,7 @@ public class PackageController extends BaseController {
             }
         }
         if (StringUtils.isEmpty(appPackage.getAppCode())) {
-            apiResult.setCode(ApiResultCode.ERROR);
-            apiResult.setMsg("找不到可打包的应用");
-            return apiResult;
+            return ApiResult.fail("找不到可打包的应用");
         }
         appPackage.setAppMetaList(appMetaList);
         AppVersion av = new AppVersion();
@@ -140,15 +136,13 @@ public class PackageController extends BaseController {
         String filePath = writePackageData(av, appPackage);
         av.setPackagePath(filePath);
 
-        apiResult.setData(appVersionService.createModel(av));
-        return apiResult;
+        return ApiResult.success(appVersionService.createModel(av));
     }
 
     @RequestMapping(value = {"/packet/merge"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult packetMergeApp(String appId, String version, String description,
                                     @RequestBody(required = false) Map<String, Map<String, String>> appointMetas) throws IOException {
-        ApiResult apiResult = new ApiResult();
         String[] versionIds = appointMetas.keySet().toArray(new String[0]);
         List<AppPackage> appPackages = getAppointAppPackage(versionIds);
         AppPackage appPackage = mergePackage(appPackages, appointMetas);
@@ -171,8 +165,8 @@ public class PackageController extends BaseController {
         av.setPacketTime(new Date());
         String filePath = writePackageData(av, appPackage);
         av.setPackagePath(filePath);
-        apiResult.setData(appVersionService.createModel(av));
-        return apiResult;
+
+        return ApiResult.success(appVersionService.createModel(av));
     }
 
     private AppPackage mergePackage(List<AppPackage> sourceAppPackageList, Map<String, Map<String, String>> appointMetas) {
@@ -286,7 +280,6 @@ public class PackageController extends BaseController {
     @RequestMapping(value = {"/uploadPackage/{appId}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult uploadPackage(@RequestParam("file") MultipartFile file, @PathVariable("appId") String appId) throws IOException {
-        ApiResult apiResult = new ApiResult();
         byte[] bytes = file.getBytes();
         String targetPath = packageConfigurationProperties.getUploadPath() + file.getOriginalFilename();
         Files.write(Path.of(targetPath), bytes);
@@ -294,9 +287,7 @@ public class PackageController extends BaseController {
         av.setAppId(appId);
         av.setPacketTime(new Date());
         av.setPackagePath(targetPath);
-        apiResult.setData(appVersionService.createModel(av));
-        return apiResult;
-
+        return ApiResult.success(appVersionService.createModel(av));
     }
 
     /*
@@ -305,11 +296,8 @@ public class PackageController extends BaseController {
     @RequestMapping(value = {"/deploy/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult deployPackage(@PathVariable("versionId") String versionId) throws DaoException {
-        ApiResult apiResult = new ApiResult();
         if ("init_source".equals(packageConfigurationProperties.getEnv())) {
-            apiResult.setMsg("本环境无法部署任何应用，请联系管理员！");
-            apiResult.setCode(ApiResultCode.ERROR);
-            return apiResult;
+            return ApiResult.fail("本环境无法部署任何应用，请联系管理员！");
         }
         AppVersion appVersion = appVersionService.getModel(AppVersion.class, versionId);
         String appPackageData = null;
@@ -325,9 +313,7 @@ public class PackageController extends BaseController {
                     appPackageData = ZipUtils.readPackageData(file, ".gdp");
                 }
             } catch (IOException ex) {
-                apiResult.setMsg(ex.toString());
-                apiResult.setCode(ApiResultCode.ERROR);
-                return apiResult;
+                return ApiResult.fail(ex.getMessage());
             }
 
             AppPackage appPackage = resolveAppPackageData(appPackageData);
@@ -338,22 +324,17 @@ public class PackageController extends BaseController {
                     deployAppPackageData(appPackage);
                     refreshApp(appVersion.getAppId());
                 } catch (Exception ex) {
-                    apiResult.setMsg(ex.getMessage());
-                    apiResult.setCode(ApiResultCode.ERROR);
                     if (transactionStatus != null) {
                         dataSourceTransactionManager.rollback(transactionStatus);
                     }
-                    return apiResult;
+                    return ApiResult.fail(ex.getMessage());
                 }
             } else {
-                apiResult.setMsg("无法读取到应用包数据，请检查应用");
-                apiResult.setCode(ApiResultCode.ERROR);
                 log.info("deploy error：无法读取到应用包数据，请检查应用包");
-                return apiResult;
+                return ApiResult.fail("无法读取到应用包数据，请检查应用");
             }
         }
-        apiResult.setMsg("应用部署成功！");
-        return apiResult;
+        return ApiResult.success(null, "应用部署成功！");
     }
 
     private void refreshApp(String appId) {

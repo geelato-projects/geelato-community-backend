@@ -47,7 +47,7 @@ public class ExportTemplateService extends BaseService {
     public ApiResult generateFile(String id, String fileType) throws IOException {
         ApiResult result = new ApiResult();
         if (Strings.isBlank(id) || Strings.isBlank(fileType)) {
-            return result.error().setMsg(ApiErrorMsg.PARAMETER_MISSING);
+            return ApiResult.fail(ApiErrorMsg.PARAMETER_MISSING);
         }
         String[] fileTypes = fileType.split(",");
         ExportTemplate exportTemplate = this.getModel(ExportTemplate.class, id);
@@ -67,14 +67,13 @@ public class ExportTemplateService extends BaseService {
     }
 
     private ApiResult generateImportTemplate(ExportTemplate meta) throws IOException {
-        ApiResult result = new ApiResult();
         OutputStream outputStream = null;
         XSSFWorkbook workbook = null;
         FileInputStream fileInputStream = null;
         try {
             List<BusinessTypeData> businessTypeData = JSON.parseArray(meta.getBusinessTypeData(), BusinessTypeData.class);
             if (businessTypeData == null || businessTypeData.isEmpty()) {
-                return result.error().setMsg("Excel模板字段定义不存在，无法生成文件！");
+                return ApiResult.fail("Excel模板字段定义不存在，无法生成文件！");
             }
             // 创建文件，
             String excelPath = getSavePath(meta, "import-template.xlsx", true);
@@ -95,7 +94,7 @@ public class ExportTemplateService extends BaseService {
             // 模板数据处理，保留备份
             backupsAndUpdateExportTemplate(meta, JSON.toJSONString(templateMap), null);
 
-            result.success().setData(attach);
+            return ApiResult.success(attach);
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         } finally {
@@ -109,27 +108,24 @@ public class ExportTemplateService extends BaseService {
                 workbook.close();
             }
         }
-
-        return result;
     }
 
     private ApiResult generateImportMeta(ExportTemplate meta) throws IOException {
-        ApiResult result = new ApiResult();
         OutputStream outputStream = null;
         XSSFWorkbook workbook = null;
         FileInputStream fileInputStream = null;
         try {
             List<BusinessTypeData> businessTypeData = JSON.parseArray(meta.getBusinessTypeData(), BusinessTypeData.class);
             if (businessTypeData == null || businessTypeData.isEmpty()) {
-                return result.error().setMsg("Excel模板字段定义不存在，无法生成文件！");
+                return ApiResult.fail("Excel模板字段定义不存在，无法生成文件！");
             }
             List<BusinessTypeRuleData> businessTypeRuleData = JSON.parseArray(meta.getBusinessRuleData(), BusinessTypeRuleData.class);
             if (businessTypeRuleData == null || businessTypeRuleData.isEmpty()) {
-                return result.error().setMsg("Excel模板数据处理规则不存在，无法生成文件！");
+                return ApiResult.fail("Excel模板数据处理规则不存在，无法生成文件！");
             }
             List<BusinessMeta> businessMetaData = JSON.parseArray(meta.getBusinessMetaData(), BusinessMeta.class);
             if (businessMetaData == null || businessMetaData.isEmpty()) {
-                return result.error().setMsg("数据保存配置不存在，无法生成文件！");
+                return ApiResult.fail("数据保存配置不存在，无法生成文件！");
             }
             // 创建文件，
             String excelPath = getSavePath(meta, "import-meta.xlsx", true);
@@ -152,7 +148,7 @@ public class ExportTemplateService extends BaseService {
             // 模板数据处理，保留备份
             backupsAndUpdateExportTemplate(meta, null, JSON.toJSONString(templateMap));
 
-            result.success().setData(attach);
+            return ApiResult.success(attach);
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         } finally {
@@ -166,19 +162,16 @@ public class ExportTemplateService extends BaseService {
                 workbook.close();
             }
         }
-
-        return result;
     }
 
     private ApiResult generateExportMeta(ExportTemplate meta) throws IOException {
-        ApiResult result = new ApiResult();
         OutputStream outputStream = null;
         XSSFWorkbook workbook = null;
         FileInputStream fileInputStream = null;
         try {
             List<PlaceholderMeta> placeholderMetas = JSON.parseArray(meta.getBusinessMetaData(), PlaceholderMeta.class);
             if (placeholderMetas == null || placeholderMetas.isEmpty()) {
-                return result.error().setMsg("数据保存配置不存在，无法生成文件！");
+                return ApiResult.fail("数据保存配置不存在，无法生成文件！");
             }
             // 创建文件，
             String excelPath = getSavePath(meta, "export-meta.xlsx", true);
@@ -199,7 +192,7 @@ public class ExportTemplateService extends BaseService {
             // 模板数据处理，保留备份
             backupsAndUpdateExportTemplate(meta, null, JSON.toJSONString(templateMap));
 
-            result.success().setData(attach);
+            return ApiResult.success(attach);
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         } finally {
@@ -213,8 +206,6 @@ public class ExportTemplateService extends BaseService {
                 workbook.close();
             }
         }
-
-        return result;
     }
 
     /**

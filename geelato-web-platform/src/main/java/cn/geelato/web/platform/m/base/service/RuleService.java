@@ -23,7 +23,6 @@ import cn.geelato.core.sql.SqlManager;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiResultCode;
 import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
 import org.apache.commons.collections.map.HashedMap;
@@ -115,16 +114,11 @@ public class RuleService {
 
 
     public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta) {
-        ApiPagedResult<List<Map<String, Object>>> result = new ApiPagedResult<>();
         QueryCommand command = gqlManager.generateQuerySql(gql);
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
         List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
         Long total = dao.queryTotal(boundPageSql);
-        result.setData(list);
-        result.setTotal(total);
-        result.setPage(command.getPageNum());
-        result.setSize(command.getPageSize());
-        result.setDataSize(list.size());
+        ApiPagedResult<List<Map<String, Object>>> result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list.size(), total);
         if (withMeta) {
             result.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
         }
@@ -135,18 +129,14 @@ public class RuleService {
      * @param entity 与platform_tree_node 关联的业务实体带有tree_node_id字段
      */
     public ApiResult<List<Map>> queryForTreeNodeList(String entity, Long treeId) {
-        ApiResult<List<Map>> result = new ApiResult<>();
         if (!metaManager.containsEntity(entity)) {
-            result.setCode(ApiResultCode.ERROR);
-            result.setMsg("不存在该实体");
-            return result;
+            return ApiResult.fail("不存在该实体");
         }
         Map params = new HashedMap();
         EntityMeta entityMeta = metaManager.getByEntityName(entity);
         params.put("tableName", entityMeta.getTableName());
         params.put("treeId", treeId);
-        result.setData(dao.queryForMapList("select_tree_node_left_join", params));
-        return result;
+        return ApiResult.success(dao.queryForMapList("select_tree_node_left_join", params));
     }
 
     /**
@@ -157,7 +147,7 @@ public class RuleService {
         if (!result.isSuccess()) {
             return result;
         }
-        return new ApiResult().setData(toTree(result.getData(), treeId, childrenKey));
+        return ApiResult.success(toTree(result.getData(), treeId, childrenKey));
     }
 
     /**
@@ -195,17 +185,12 @@ public class RuleService {
     }
 
     public ApiPagedResult queryTreeForMapList(String gql, boolean withMeta, String treeId) {
-        ApiPagedResult result = new ApiPagedResult();
         QueryCommand command = gqlManager.generateQuerySql(gql);
         command.getWhere().addFilter("tn.tree_id", treeId);
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
         List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
         Long total = dao.queryTotal(boundPageSql);
-        result.setData(list);
-        result.setTotal(total);
-        result.setPage(command.getPageNum());
-        result.setSize(command.getPageSize());
-        result.setDataSize(list.size());
+        ApiPagedResult result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list.size(), total);
         if (withMeta) {
             result.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
         }

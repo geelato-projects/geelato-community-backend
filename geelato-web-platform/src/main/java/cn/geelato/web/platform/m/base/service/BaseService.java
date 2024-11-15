@@ -45,7 +45,6 @@ public class BaseService {
      * @return 返回分页查询结果，包括分页信息、数据总数、数据列表等
      */
     public ApiPagedResult pageQueryModel(String sqlId, Map<String, Object> params, PageQueryRequest request) {
-        ApiPagedResult result = new ApiPagedResult();
         // dao查询
         params.put("orderBy", request.getOrderBy());
         params.put("pageSize", null);
@@ -54,13 +53,9 @@ public class BaseService {
         params.put("startNum", request.getPageSize() * (request.getPageNum() - 1));
         List<Map<String, Object>> pageQueryList = dao.queryForMapList(sqlId, params);
         // 分页结果
-        result.setPage(request.getPageNum());
-        result.setSize(request.getPageSize());
-        result.setTotal(queryList != null ? queryList.size() : 0);
-        result.setDataSize(pageQueryList != null ? pageQueryList.size() : 0);
-        result.setData(new DataItems<>(pageQueryList, result.getTotal()));
-
-        return result;
+        long total = queryList != null ? queryList.size() : 0;
+        int dataSize = pageQueryList != null ? pageQueryList.size() : 0;
+        return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
     }
 
     /**
@@ -75,7 +70,6 @@ public class BaseService {
      * @return 返回包含分页查询结果的ApiPagedResult对象
      */
     public <T> ApiPagedResult pageQueryModel(Class<T> entity, Map<String, Object> params, PageQueryRequest request) {
-        ApiPagedResult result = new ApiPagedResult();
         // 配置参数
         dao.setDefaultFilter(true, filterGroup);
         String orderBy = Strings.isNotBlank(request.getOrderBy()) ? request.getOrderBy() : BaseService.DEFAULT_ORDER_BY;
@@ -84,13 +78,9 @@ public class BaseService {
         List<T> pageQueryList = dao.pageQueryList(entity, params, request);
         List<T> queryList = dao.queryList(entity, params, orderBy);
         // 分页结果
-        result.setPage(request.getPageNum());
-        result.setSize(request.getPageSize());
-        result.setTotal(queryList != null ? queryList.size() : 0);
-        result.setDataSize(pageQueryList != null ? pageQueryList.size() : 0);
-        result.setData(new DataItems(pageQueryList, result.getTotal()));
-
-        return result;
+        long total = queryList != null ? queryList.size() : 0;
+        int dataSize = pageQueryList != null ? pageQueryList.size() : 0;
+        return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
     }
 
     /**
@@ -105,7 +95,6 @@ public class BaseService {
      * @return 返回分页查询结果，包括分页信息、查询结果等
      */
     public <T> ApiPagedResult pageQueryModel(Class<T> entity, FilterGroup filter, PageQueryRequest request) {
-        ApiPagedResult result = new ApiPagedResult();
         // 配置参数
         dao.setDefaultFilter(true, filterGroup);
         String orderBy = Strings.isNotBlank(request.getOrderBy()) ? request.getOrderBy() : BaseService.DEFAULT_ORDER_BY;
@@ -113,13 +102,9 @@ public class BaseService {
         List<T> pageQueryList = dao.pageQueryList(entity, filter, request);
         List<T> queryList = dao.queryList(entity, filter, orderBy);
         // 分页结果
-        result.setPage(request.getPageNum());
-        result.setSize(request.getPageSize());
-        result.setTotal(queryList != null ? queryList.size() : 0);
-        result.setDataSize(pageQueryList != null ? pageQueryList.size() : 0);
-        result.setData(new DataItems<>(pageQueryList, result.getTotal()));
-
-        return result;
+        long total = queryList != null ? queryList.size() : 0;
+        int dataSize = pageQueryList != null ? pageQueryList.size() : 0;
+        return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
     }
 
     /**

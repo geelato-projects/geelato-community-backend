@@ -49,7 +49,6 @@ public class DevTableForeignController extends BaseController {
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
     public ApiPagedResult<DataItems> pageQuery() {
-        ApiPagedResult<DataItems> result = new ApiPagedResult<>();
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);

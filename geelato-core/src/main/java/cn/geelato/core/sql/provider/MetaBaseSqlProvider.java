@@ -127,7 +127,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         } else if (filter.getOperator().equals(FilterGroup.Operator.nil) || filter.getOperator().equals(FilterGroup.Operator.bt)) {
             // not do anything
         } else {
-            if (!getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType().equals("JSON")) {
+            if (!"JSON".equals(getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType())) {
                 list.add(filter.getValue());
             }
         }
@@ -138,8 +138,9 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             for (FilterGroup.Filter filter : filterGroup.getFilters()) {
                 recombine(filter, list, command);
             }
-            if (!filterGroup.getChildFilterGroup().isEmpty())
+            if (!filterGroup.getChildFilterGroup().isEmpty()) {
                 recursionFilterGroup(filterGroup.getChildFilterGroup(), command, list);
+            }
         }
         return list;
     }
@@ -270,7 +271,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                 sb.append(")");
             } else if (operator == FilterGroup.Operator.nil) {
                 tryAppendKeywords(sb, fm);
-                if (filter.getValue().equals("1")) {
+                if ("1".equals(filter.getValue())) {
                     sb.append(" is NULL");
                 } else {
                     sb.append(" is NOT NULL");
@@ -293,7 +294,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                     || operator == FilterGroup.Operator.lte
                     || operator == FilterGroup.Operator.gt
                     || operator == FilterGroup.Operator.gte) {
-                if (fm.getColumn().getDataType().equals("JSON")) {
+                if ("JSON".equals(fm.getColumn().getDataType())) {
                     sb.append(String.format(" JSON_CONTAINS( %s->'$','%s') >0", fm.getColumnName(), "\"" + filter.getValue() + "\""));
                 } else {
                     tryAppendKeywords(em, sb, fm);
@@ -323,7 +324,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                 sb.append(")");
             } else if (operator == FilterGroup.Operator.nil) {
                 tryAppendKeywords(em, sb, fm);
-                if (filter.getValue().equals("1")) {
+                if ("1".equals(filter.getValue())) {
                     sb.append(" is NULL");
                 } else {
                     sb.append(" is NOT NULL");

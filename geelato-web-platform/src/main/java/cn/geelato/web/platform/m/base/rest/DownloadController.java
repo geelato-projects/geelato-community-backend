@@ -103,7 +103,7 @@ public class DownloadController extends BaseController {
         BufferedReader bufferedReader = null;
         try {
             String ext = FileUtils.getFileExtension(fileName);
-            if (Strings.isBlank(ext) || !ext.equalsIgnoreCase(".config")) {
+            if (Strings.isBlank(ext) || !".config".equalsIgnoreCase(ext)) {
                 fileName += ".config";
             }
             File file = new File(String.format("%s/%s", UploadService.ROOT_CONFIG_DIRECTORY, fileName));

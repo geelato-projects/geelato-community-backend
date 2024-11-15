@@ -150,7 +150,9 @@ public class DbGenerateDao {
         if (columns == null || columns.isEmpty()) {
             isExistsTable = false;
         } else {
-            for (Map<String, Object> columnMap : columns) existscolumnMap.put(columnMap.get("COLUMN_NAME"), columnMap);
+            for (Map<String, Object> columnMap : columns) {
+                existscolumnMap.put(columnMap.get("COLUMN_NAME"), columnMap);
+            }
         }
         // 通过create table创建的字段
         ArrayList<JSONObject> createList = new ArrayList<>();

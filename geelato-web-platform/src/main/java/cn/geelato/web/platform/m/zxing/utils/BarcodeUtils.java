@@ -25,7 +25,6 @@ import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Base64;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -219,7 +218,7 @@ public class BarcodeUtils {
         } else if (StringUtils.isNotBlank(barcode.getCode())) {
             return barcode.getCode();
         }
-        return String.valueOf(new Date().getTime());
+        return String.valueOf(System.currentTimeMillis());
     }
 
     private static int startXPosition(String alignType, int totalWidth, int borderLeftWidth, int borderRightWidth, int textWidth) {

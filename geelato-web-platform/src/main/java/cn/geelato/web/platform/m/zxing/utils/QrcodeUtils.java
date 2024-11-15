@@ -18,7 +18,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,6 +93,6 @@ public class QrcodeUtils {
         } else if (StringUtils.isNotBlank(qrcode.getCode())) {
             return qrcode.getCode();
         }
-        return String.valueOf(new Date().getTime());
+        return String.valueOf(System.currentTimeMillis());
     }
 }

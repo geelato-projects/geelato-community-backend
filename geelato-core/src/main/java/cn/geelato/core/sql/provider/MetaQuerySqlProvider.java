@@ -40,7 +40,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
         if (command.getOriginalWhere() != null) {
             sb.append("  and  ");
-            if (!command.getOriginalWhere().equals("1=1")) {
+            if (!"1=1".equals(command.getOriginalWhere())) {
                 if (md.getTableAlias() != null) {
                     sb.append(md.getTableAlias()).append(".");
                 }
@@ -99,7 +99,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
         if (command.getOriginalWhere() != null) {
             sb.append("  and  ");
-            if (!command.getOriginalWhere().equals("1=1")) {
+            if (!"1=1".equals(command.getOriginalWhere())) {
                 if (md.getTableAlias() != null) {
                     sb.append(md.getTableAlias()).append(".");
                 }

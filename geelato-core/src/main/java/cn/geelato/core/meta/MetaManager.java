@@ -8,17 +8,17 @@ import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.enums.MysqlToJavaEnum;
 import cn.geelato.core.meta.annotation.Entity;
+import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.column.ColumnSelectType;
 import cn.geelato.core.meta.model.entity.EntityLiteMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
-import cn.geelato.core.meta.model.column.ColumnMeta;
-import cn.geelato.core.meta.model.column.ColumnSelectType;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.schema.SchemaForeign;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.utils.FastJsonUtils;
 import cn.geelato.utils.ClassScanner;
+import cn.geelato.utils.FastJsonUtils;
 import cn.geelato.utils.MapUtils;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -190,7 +190,6 @@ public class MetaManager extends AbstractManager {
     }
 
 
-
     public Map<String, Object> newDefaultEntity(Class clazz) {
         return newDefaultEntity(get(clazz));
     }
@@ -309,7 +308,7 @@ public class MetaManager extends AbstractManager {
     public void scanAndParse(String packageName, boolean isUpdateMetadataFormDb) {
         scanAndParse(packageName);
         if (isUpdateMetadataFormDb) {
-            //todo 解析实体类，写入到数据库
+            // todo 解析实体类，写入到数据库
             updateMetadataFromDbAfterParse(null);
         }
     }
@@ -419,7 +418,7 @@ public class MetaManager extends AbstractManager {
 
     public void parseViewEntity(Map<String, Object> view) {
         String viewType = view.get("view_type").toString();
-        if (viewType.equals("custom")) {
+        if ("custom".equalsIgnoreCase(viewType)) {
             String entityName = view.get("view_name").toString();
             if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
                 EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);

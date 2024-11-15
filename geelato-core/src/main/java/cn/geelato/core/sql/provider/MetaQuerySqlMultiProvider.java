@@ -1,20 +1,21 @@
 package cn.geelato.core.sql.provider;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.command.QueryCommand;
+import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
-import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Map;
 
 /**
  * 多表查询
+ *
  * @author liuwq
  */
 @Component
@@ -35,8 +36,8 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
     protected String buildOneSql(QueryCommand command) {
         StringBuilder sb = new StringBuilder();
         EntityMeta md = getEntityMeta(command);
-        //计算主表别名
-        //md.setTableAlias(super.buildTableAlias(md.getTableName()));
+        // 计算主表别名
+        // md.setTableAlias(super.buildTableAlias(md.getTableName()));
         sb.append("select ");
         buildSelectFields(sb, md, command);
         sb.append(" from ");
@@ -47,14 +48,14 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
             sb.append(" where ");
             buildConditions(sb, md, fg);
         }
-        if(command.getOriginalWhere()!=null){
-            sb.append( "  and  ");
-            if(!command.getOriginalWhere().equals("1=1")){
-                if(md.getTableAlias()!=null) {
+        if (command.getOriginalWhere() != null) {
+            sb.append("  and  ");
+            if (!"1=1".equals(command.getOriginalWhere())) {
+                if (md.getTableAlias() != null) {
                     sb.append(md.getTableAlias()).append(".");
                 }
                 sb.append(command.getOriginalWhere());
-            }else {
+            } else {
                 sb.append(command.getOriginalWhere());
             }
         }
@@ -88,7 +89,6 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
 
     /**
      * 构健统计数据
-     *
      */
     public String buildCountSql(QueryCommand command) {
         StringBuilder sb = new StringBuilder();
@@ -124,14 +124,14 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
     }
 
     private void buildSelectFields(StringBuilder sb, EntityMeta md, QueryCommand command) {
-        //表别名
+        // 表别名
         command.appendFrom(md.getTableName(), md.getTableAlias());
         String[] fields = command.getFields();
         Map alias = command.getAlias();
         if (fields == null || fields.length == 0) {
-            if(super.getTableAlias(md.getTableName())!=null){
+            if (super.getTableAlias(md.getTableName()) != null) {
                 sb.append(super.getTableAlias(md.getTableName())).append(".*");
-            }else{
+            } else {
                 sb.append("*");
             }
             return;
@@ -144,24 +144,24 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
             return;
         }
 
-        //重命名查询的结果列表为实体字段名
+        // 重命名查询的结果列表为实体字段名
         for (String fieldName : fields) {
             FieldMeta fm = md.getFieldMeta(fieldName);
             ColumnMeta cm = fm.getColumn();
-            //外表字段
+            // 外表字段
             if (Strings.isNotEmpty(cm.getRefColName())) {
                 if (!cm.getIsRefColumn()) {
-                    //外键
+                    // 外键
                     this.buildForeignJoinSql(command, md, fm);
                 } else if (Strings.isNotEmpty(cm.getRefLocalCol())) {
-                    //非外键时，需要找到本表外键
+                    // 非外键时，需要找到本表外键
                     FieldMeta localFm = md.getFieldMeta(cm.getRefLocalCol());
                     if (localFm != null) {
                         this.buildForeignJoinSql(command, md, localFm);
                     }
                 }
 
-                //外表字段
+                // 外表字段
                 String[] colArr = cm.getRefColName().split("\\.", 2);
                 if (colArr.length == 2) {
                     sb.append(super.buildTableAlias(colArr[0])).append(".").append(colArr[1])
@@ -193,19 +193,19 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
     private void buildForeignJoinSql(QueryCommand command, EntityMeta md, FieldMeta fm) {
         String[] fTables = fm.getColumn().getRefTables().split(",");
         for (int i = 0, len = fTables.length; i < len; i++) {
-            String lastTable = i > 0 ? fTables[i-1] : md.getTableName();
+            String lastTable = i > 0 ? fTables[i - 1] : md.getTableName();
             EntityMeta fEm = super.metaManager.get(fTables[i]);
             TableForeign tf = fEm.getTableForeignsMap().get(lastTable);
-            //外键
+            // 外键
             String tableAlias = super.buildTableAlias(fTables[i]);
             if (command.hasNotJoin(tableAlias)) {
                 if (tf != null) {
-                    //外键在fTables[i]表
+                    // 外键在fTables[i]表
                     command.appendFrom(" left join ").appendFrom(fTables[i], tableAlias)
                             .appendFrom(" on ").appendFrom(tableAlias).appendFrom(".").appendFrom(tf.getMainTableCol())
                             .appendFrom("=").appendFrom(super.getTableAlias(lastTable)).appendFrom(".").appendFrom(tf.getForeignTableCol());
                 } else {
-                    //外键在前一张表
+                    // 外键在前一张表
                     fEm = super.metaManager.get(lastTable);
                     tf = fEm.getTableForeignsMap().get(fTables[i]);
                     if (tf != null) {
@@ -216,7 +216,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
                     }
                 }
 
-                //todo join中存多次引用同一张表场景待实现
+                // todo join中存多次引用同一张表场景待实现
             }
         }
     }
@@ -237,7 +237,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
                         newSql.append(item, 0, seq).append(" ");
                     }
                     String tableAlias = super.buildTableAlias(item.substring(seq));
-                    if(tableAlias!=null){
+                    if (tableAlias != null) {
                         newSql.append(tableAlias).append(".");
                     }
 
@@ -257,7 +257,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
         if (orderBySql != null && !orderBySql.isEmpty()) {
             String[] items = orderBySql.split(",");
             for (int i = 0, len = items.length; i < len; i++) {
-                if (!items[i].contains(".") &&md.getTableAlias()!=null) {
+                if (!items[i].contains(".") && md.getTableAlias() != null) {
                     newSql.append(md.getTableAlias()).append(".");
                 }
                 newSql.append(items[i]);
@@ -280,7 +280,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
                 field = items[1];
             }
         } else {
-            if(md.getTableAlias()!=null){
+            if (md.getTableAlias() != null) {
                 sb.append(md.getTableAlias()).append(".");
             }
         }

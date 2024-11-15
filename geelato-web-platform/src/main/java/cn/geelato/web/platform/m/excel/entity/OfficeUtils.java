@@ -60,7 +60,7 @@ public class OfficeUtils {
                 asposeToPdf(inputPath, outputPath);
             } else if (WORD_DOC_CONTENT_TYPE.equalsIgnoreCase(contentType)) {
                 Rectangle pageSize = null;
-                if (printType.equalsIgnoreCase("RM") && width > 0 && height > 0) {
+                if ("RM".equalsIgnoreCase(printType) && width > 0 && height > 0) {
                     pageSize = new Rectangle(width * 72f / 25.4f, height * 72f / 25.4f);
                 } else if (Strings.isNotBlank(printType)) {
                     Map<String, Rectangle> rectangleMap = getRectangle();

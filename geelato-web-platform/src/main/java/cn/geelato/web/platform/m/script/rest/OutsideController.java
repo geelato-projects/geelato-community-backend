@@ -75,7 +75,7 @@ public class OutsideController extends BaseController {
                 // 记录日志
                 createApiLog("info", api.getAppId(), api.getCode(), parameter, null, null, null, JSONObject.toJSONString(result.get("result")));
                 // 返回结果
-                if (api.getResponseFormat() != null && api.getResponseFormat().equals("custom")) {
+                if (api.getResponseFormat() != null && "custom".equalsIgnoreCase(api.getResponseFormat())) {
                     return JSONObject.toJSONString(result.get("result"));
                 } else {
                     return ApiResult.success(result.get("result"));

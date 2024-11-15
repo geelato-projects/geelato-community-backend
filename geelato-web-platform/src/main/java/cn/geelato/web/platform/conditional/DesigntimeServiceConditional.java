@@ -14,7 +14,7 @@ public class DesigntimeServiceConditional  implements Condition {
         //todo 判断该包是否设计时，如设计时，放行设计时接口
         String webOption=context.getEnvironment().getProperty("geelato.web");
         if (webOption != null) {
-            return webOption.equals("true");
+            return "true".equals(webOption);
         }
         return true;
     }

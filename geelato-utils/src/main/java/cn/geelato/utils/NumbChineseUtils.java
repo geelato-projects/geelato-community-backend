@@ -1,4 +1,5 @@
 package cn.geelato.utils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +26,7 @@ public class NumbChineseUtils {
     public static String byChinese(String num) {
         return byChinese(splitNum(num), false, false);
     }
+
     public static String byChineseAmount(String num) {
         return byChinese(splitNum(num), false, true);
     }
@@ -96,7 +98,7 @@ public class NumbChineseUtils {
             char c = chars[i];
             String s = String.valueOf(c);
             if (oldNum) {
-                if (s.equals(".")) {
+                if (".".equals(s)) {
                     if (!amount) {
                         sb.append(OLD_NUM[OLD_NUM.length - 1]);
                     } else {
@@ -110,7 +112,7 @@ public class NumbChineseUtils {
                     }
                 }
             } else {
-                if (s.equals(".")) {
+                if (".".equals(s)) {
                     if (!amount) {
                         sb.append(NUM[NUM.length - 1]);
                     } else {

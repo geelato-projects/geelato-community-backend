@@ -42,6 +42,7 @@ public class WordXWPFWriter {
     private static final Pattern loopHeadPattern = Pattern.compile("\\{\\?[\\\u4e00-\\\u9fa5,\\w,\\.]+\\}");
     private static final Pattern loopEndPattern = Pattern.compile("\\{\\/[\\\u4e00-\\\u9fa5,\\w,\\.]+\\}");
     private static final Pattern base64Pattern = Pattern.compile("data:image\\/\\w+;base64,(.+)");
+    private static final Pattern splitPattern = Pattern.compile(";");
     private final Logger logger = LoggerFactory.getLogger(WordXWPFWriter.class);
 
     @Autowired
@@ -56,8 +57,7 @@ public class WordXWPFWriter {
      */
     public static String getWaterMarkStyle(String styleStr, double height) {
         // 把拿到的样式用";"切割，切割后保存到数组中
-        Pattern p = Pattern.compile(";");
-        String[] strs = p.split(styleStr);
+        String[] strs = splitPattern.split(styleStr);
         // 遍历保存的数据，找到高度样式，将高度改为参数传入高度的
         for (String str : strs) {
             if (str.startsWith("height:")) {
@@ -119,13 +119,13 @@ public class WordXWPFWriter {
 
     /**
      * 写入文档内容
-     *
+     * <p>
      * 根据提供的文档对象、占位符元数据映射、数据集合、单个数据映射，将内容写入到文档中。
      *
-     * @param document 文档对象，用于写入内容
+     * @param document           文档对象，用于写入内容
      * @param placeholderMetaMap 占位符元数据映射，包含占位符名称和对应的PlaceholderMeta对象
-     * @param valueMapList 数据集合，包含多组值映射，每组值映射是一个Map
-     * @param valueMap 单个值映射，包含要写入文档的数据
+     * @param valueMapList       数据集合，包含多组值映射，每组值映射是一个Map
+     * @param valueMap           单个值映射，包含要写入文档的数据
      */
     public void writeDocument(XWPFDocument document, Map<String, PlaceholderMeta> placeholderMetaMap, List<Map> valueMapList, Map valueMap) {
         // mapList 数据解析
@@ -142,7 +142,7 @@ public class WordXWPFWriter {
 
     /**
      * 对列表数据进行解析
-     *
+     * <p>
      * 将传入的列表数据（每个元素为一个包含键值对的Map）解析为一个新的映射，其中键为原始映射中的键，值为对应的值列表。
      *
      * @param valueMapList 包含列表数据的映射列表，每个元素为一个包含键值对的Map
@@ -166,10 +166,10 @@ public class WordXWPFWriter {
 
     /**
      * 表单循环处理：包括表循环、行循环和列循环
-     *
+     * <p>
      * 遍历Word文档中的所有表格，对每个表格中的每一行和每一列进行处理，根据内容中的特定标记识别出循环类型（表循环、行循环、列循环），并提取出对应的值映射列表。
      *
-     * @param document Word文档对象
+     * @param document     Word文档对象
      * @param valueListMap 包含值映射的映射，键为循环标识，值为对应的值映射列表
      * @return 返回包含Word表格循环元数据的列表
      */

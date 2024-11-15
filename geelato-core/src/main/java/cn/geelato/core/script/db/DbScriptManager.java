@@ -19,8 +19,9 @@ public class DbScriptManager extends AbstractScriptManager {
     private final Map<String, String> sqlResponseMap = new HashMap<>();
 
     public String getSqlResponse(String sqlKey) {
-        if (!__CACHE__)
+        if (!__CACHE__) {
             refresh(sqlKey);
+        }
         return sqlResponseMap.get(sqlKey);
     }
 
@@ -71,12 +72,15 @@ public class DbScriptManager extends AbstractScriptManager {
         String key = null;
         String content = null;
         String response = "null";
-        if (map.get("key_name") != null)
+        if (map.get("key_name") != null) {
             key = map.get("key_name").toString();
-        if (map.get("response_type") != null)
+        }
+        if (map.get("response_type") != null) {
             content = map.get("encoding_content").toString();
-        if (map.get("response_type") != null)
+        }
+        if (map.get("response_type") != null) {
             response = map.get("response_type").toString();
+        }
         if (validateContent(content)) {
             if (sqlMap.containsKey(key)) {
                 sqlMap.replace(key, content);

@@ -269,7 +269,7 @@ public class RuleService {
 //                    returnPks.add(pkValue);
 //                }
                 String pkValue = recursiveBatchSave(saveCommand, dataSourceTransactionManager, transactionStatus);
-                if (pkValue.equals("saveFail")) {
+                if ("saveFail".equals(pkValue)) {
                     TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
                     break;
                 } else {
@@ -281,7 +281,7 @@ public class RuleService {
             for (SaveCommand saveCommand : commandList) {
                 BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
                 String pkValue = dao.save(boundSql);
-                if (pkValue.equals("saveFail")) {
+                if ("saveFail".equals(pkValue)) {
                     continue;
                 } else {
                     returnPks.add(pkValue);
@@ -316,7 +316,7 @@ public class RuleService {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
             throw e;
         }
-        command.setExecution(!rtnValue.equals("saveFail"));
+        command.setExecution(!"saveFail".equals(rtnValue));
         if (command.hasCommands()) {
             command.getCommands().forEach(subCommand -> {
                 subCommand.getValueMap().forEach((key, value) -> {
@@ -338,7 +338,7 @@ public class RuleService {
         if (command.getParentCommand() == null && command.getExecution()) {
             TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
             logger.info("transactionCommit");
-        } else if (!command.getExecution() && !rtnValue.equals("transactionRollback")) {
+        } else if (!command.getExecution() && !"transactionRollback".equals(rtnValue)) {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
             rtnValue = "transactionRollback";
             logger.info("transactionRollback");
@@ -356,7 +356,7 @@ public class RuleService {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
             throw e;
         }
-        command.setExecution(!rtnValue.equals("saveFail"));
+        command.setExecution(!"saveFail".equals(rtnValue));
         if (command.hasCommands()) {
             command.getCommands().forEach(subCommand -> {
                 subCommand.getValueMap().forEach((key, value) -> {

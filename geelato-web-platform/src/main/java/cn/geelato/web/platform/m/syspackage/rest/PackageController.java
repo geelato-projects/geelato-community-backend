@@ -2,9 +2,9 @@ package cn.geelato.web.platform.m.syspackage.rest;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.parser.JsonTextSaveParser;
-import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
@@ -96,7 +96,7 @@ public class PackageController extends BaseController {
         for (String key : appDataMap.keySet()) {
             String value = appDataMap.get(key);
             List<Map<String, Object>> metaData = dao.getJdbcTemplate().queryForList(value);
-            if (key.equals("platform_app") && !metaData.isEmpty()) {
+            if ("platform_app".equals(key) && !metaData.isEmpty()) {
                 appPackage.setAppCode(metaData.get(0).get("code").toString());
                 appPackage.setSourceAppId(appId);
             } else {
@@ -306,7 +306,7 @@ public class PackageController extends BaseController {
     @ResponseBody
     public ApiResult deployPackage(@PathVariable("versionId") String versionId) throws DaoException {
         ApiResult apiResult = new ApiResult();
-        if (packageConfigurationProperties.getEnv().equals("init_source")) {
+        if ("init_source".equals(packageConfigurationProperties.getEnv())) {
             apiResult.setMsg("本环境无法部署任何应用，请联系管理员！");
             apiResult.setCode(ApiResultCode.ERROR);
             return apiResult;
@@ -495,7 +495,7 @@ public class PackageController extends BaseController {
             String packBusData = map.get("pack_bus_data").toString();
             String bizSql = String.format("%s %s where app_id ='%s'", preOperateSql, tableName, appId);
             bizDataSqlMap.put(tableName, bizSql);
-            if (packBusData.equals("1")) {
+            if ("1".equals(packBusData)) {
                 incrementBizMetas.add(tableName);
             }
         }

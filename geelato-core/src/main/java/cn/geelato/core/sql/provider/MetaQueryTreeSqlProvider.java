@@ -1,7 +1,7 @@
 package cn.geelato.core.sql.provider;
 
-import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.command.QueryTreeCommand;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import org.slf4j.Logger;
@@ -43,11 +43,11 @@ public class MetaQueryTreeSqlProvider extends MetaBaseSqlProvider<QueryTreeComma
             sb.append(" where ");
             buildConditions(sb, md, fg.getFilters(), fg.getLogic());
         }
-        if(command.getOriginalWhere()!=null){
-            sb.append( "  and  ");
-            if(!command.getOriginalWhere().equals("1=1")){
+        if (command.getOriginalWhere() != null) {
+            sb.append("  and  ");
+            if (!"1=1".equals(command.getOriginalWhere())) {
                 sb.append(md.getTableAlias()).append(".").append(command.getOriginalWhere());
-            }else {
+            } else {
                 sb.append(command.getOriginalWhere());
             }
         }
@@ -79,7 +79,6 @@ public class MetaQueryTreeSqlProvider extends MetaBaseSqlProvider<QueryTreeComma
 
     /**
      * 构健统计数据
-     *
      */
     public String buildCountSql(QueryTreeCommand command) {
         StringBuilder sb = new StringBuilder();
@@ -90,18 +89,18 @@ public class MetaQueryTreeSqlProvider extends MetaBaseSqlProvider<QueryTreeComma
         sb.append(" from platform_tree_node tn left join ");
         sb.append(md.getTableName());
         sb.append(" t on tn.id=t.tree_node_id ");
-        //where
+        // where
         FilterGroup fg = command.getWhere();
         if (fg != null && fg.getFilters() != null && fg.getFilters().size() > 0) {
             sb.append(" where ");
             buildConditions(sb, md, fg.getFilters(), fg.getLogic());
         }
-        //group by
+        // group by
         if (StringUtils.hasText(command.getGroupBy())) {
             sb.append(" group by ");
             sb.append(command.getGroupBy());
         }
-        //having
+        // having
         if (command.getHaving() != null) {
             sb.append(" having ");
             sb.append(command.getHaving());
@@ -137,7 +136,7 @@ public class MetaQueryTreeSqlProvider extends MetaBaseSqlProvider<QueryTreeComma
             sb.append("*");
             return;
         }
-        //重命名查询的结果列表为实体字段名
+        // 重命名查询的结果列表为实体字段名
         for (String fieldName : fields) {
             FieldMeta fm = md.getFieldMeta(fieldName);
             if (alias.containsKey(fieldName)) {

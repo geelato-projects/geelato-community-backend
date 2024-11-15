@@ -1,6 +1,7 @@
 package cn.geelato.core.gql.parser;
 
 import cn.geelato.core.SessionCtx;
+import cn.geelato.core.env.entity.Permission;
 import cn.geelato.core.gql.command.CommandValidator;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
@@ -9,7 +10,6 @@ import cn.geelato.core.meta.model.parser.FunctionParser;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import cn.geelato.core.env.entity.Permission;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -26,7 +26,7 @@ import java.util.Map;
 @Slf4j
 public class JsonTextQueryParser extends JsonTextParser {
 
-    //page_num即offset，记录位置
+    // page_num即offset，记录位置
     private final static String KEYWORD_FLAG = "@";
     private final static String FILTER_FLAG = "\\|";
     // 可对@fs中的字段进行重命名，字段原名+一到多个空格+字段重命名
@@ -50,7 +50,6 @@ public class JsonTextQueryParser extends JsonTextParser {
 
     /**
      * 批量查询解析
-     *
      */
     public List<QueryCommand> parseMulti(String queryJsonText) {
         JSONArray ja = JSON.parseArray(queryJsonText);
@@ -70,7 +69,6 @@ public class JsonTextQueryParser extends JsonTextParser {
 
     /**
      * 单查询解析
-     *
      */
     public QueryCommand parse(String queryJsonText) {
         JSONObject jo = JSON.parseObject(queryJsonText);
@@ -92,9 +90,9 @@ public class JsonTextQueryParser extends JsonTextParser {
 
         if (SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName) != null) {
             Permission dp = SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName);
-            String rule= dp.getRuleReplaceVariable();
+            String rule = dp.getRuleReplaceVariable();
             command.setOriginalWhere(rule);
-        }else{
+        } else {
             command.setOriginalWhere(String.format("creator='%s'", SessionCtx.getCurrentUser().getUserId()));
         }
 
@@ -102,14 +100,14 @@ public class JsonTextQueryParser extends JsonTextParser {
 
         jo.keySet().forEach(key -> {
             if (key.startsWith(KEYWORD_FLAG) && StringUtils.hasText(jo.getString(key))) {
-                String[] segments= jo.getString(key).split(",(?![^()]*\\))");
+                String[] segments = jo.getString(key).split(",(?![^()]*\\))");
                 switch (key) {
                     case KW_FIELDS:
                         String[] fieldNames = new String[segments.length];
                         for (int i = 0; i < segments.length; i++) {
-                            if(FunctionParser.isFunction(segments[i])){
+                            if (FunctionParser.isFunction(segments[i])) {
                                 fieldNames[i] = segments[i];
-                            }else {
+                            } else {
                                 String[] ary = segments[i].split(ALIAS_FLAG);
                                 if (ary.length == 1) {
                                     validator.validateField(ary[0], KW_FIELDS);
@@ -179,17 +177,17 @@ public class JsonTextQueryParser extends JsonTextParser {
                         validator.appendMessage("不支持;");
                 }
             } else if (key.startsWith(SUB_ENTITY_FLAG)) {
-                //解析子实体
+                // 解析子实体
                 command.getCommands().add(parse(key.substring(1), jo.getJSONObject(key), validator));
             } else {
-                //where子句过滤条件
+                // where子句过滤条件
                 String[] ary = key.split(FILTER_FLAG);
                 String field = ary[0];
-                if(FunctionParser.isFunction((field))) {
-                    field=new FunctionFieldValue(
-                            FunctionParser.reconstruct(field,entityName)
+                if (FunctionParser.isFunction((field))) {
+                    field = new FunctionFieldValue(
+                            FunctionParser.reconstruct(field, entityName)
                     ).getMysqlFunction();
-                }else{
+                } else {
                     validator.validateField(field, "where");
                 }
                 if (ary.length == 1) {
@@ -197,7 +195,7 @@ public class JsonTextQueryParser extends JsonTextParser {
                 } else if (ary.length == 2) {
                     String fn = ary[1];
                     if (!FilterGroup.Operator.contains(fn)) {
-                        validator.appendMessage(String.format("[%s]不支持%s,只支持%s",key,fn,FilterGroup.Operator.getOperatorStrings()));
+                        validator.appendMessage(String.format("[%s]不支持%s,只支持%s", key, fn, FilterGroup.Operator.getOperatorStrings()));
                     } else {
                         FilterGroup.Operator operator = FilterGroup.Operator.fromString(fn);
                         fg.addFilter(field, operator, jo.getString(key));
@@ -238,7 +236,7 @@ public class JsonTextQueryParser extends JsonTextParser {
             for (Object o : ja) {
                 JSONObject jsonObject = (JSONObject) o;
                 jsonObject.keySet().forEach(x -> {
-                    if (x.equals("and") || x.equals("or")) {
+                    if ("and".equals(x) || "or".equals(x)) {
                         FilterGroup andChildGroup = parseKWBracket(validator, jsonObject);
                         childFilterGroup.add(andChildGroup);
                     } else {
@@ -250,7 +248,7 @@ public class JsonTextQueryParser extends JsonTextParser {
                         } else if (ary.length == 2) {
                             String fn = ary[1];
                             if (!FilterGroup.Operator.contains(fn)) {
-                                validator.appendMessage(String.format("[%s]不支持%s,只支持%s",KW_BRACKETS,fn,FilterGroup.Operator.getOperatorStrings()));
+                                validator.appendMessage(String.format("[%s]不支持%s,只支持%s", KW_BRACKETS, fn, FilterGroup.Operator.getOperatorStrings()));
                             } else {
                                 FilterGroup.Operator operator = FilterGroup.Operator.fromString(fn);
                                 filterGroup.addFilter(field, operator, jsonObject.getString(x));

@@ -5,10 +5,10 @@ import cn.geelato.core.meta.MetaManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public enum GFunction implements FunctionResolver{
+public enum GFunction implements FunctionResolver {
 
 
-    increment{
+    increment {
         @Override
         public String resolve(String functionExpression) {
             Pattern pattern = Pattern.compile("\\((.*?)\\)");
@@ -29,14 +29,15 @@ public enum GFunction implements FunctionResolver{
                 return null;
             }
         }
+
         private String resolveSpecialParam(String param) {
-            String[] paramsPartial=param.split("\\.");
-            return MetaManager.singleInstance().getByEntityName(paramsPartial[0].replace("$",""))
+            String[] paramsPartial = param.split("\\.");
+            return MetaManager.singleInstance().getByEntityName(paramsPartial[0].replace("$", ""))
                     .getColumnName(paramsPartial[1]);
         }
 
     },
-    findinset{
+    findinset {
         @Override
         public String resolve(String functionExpression) {
             Pattern pattern = Pattern.compile("\\((.*?)\\)");
@@ -57,23 +58,26 @@ public enum GFunction implements FunctionResolver{
                 return null;
             }
         }
+
         private String resolveSpecialParam(String param) {
-            String[] paramsPartial=param.split("\\.");
-            return MetaManager.singleInstance().getByEntityName(paramsPartial[0].replace("$",""))
+            String[] paramsPartial = param.split("\\.");
+            return MetaManager.singleInstance().getByEntityName(paramsPartial[0].replace("$", ""))
                     .getColumnName(paramsPartial[1]);
         }
     };
     private static final GFunction[] VALUES = values();
+
     public static GFunction lookUp(String expression) {
-        String functionName=null;
+        String functionName = null;
         Pattern pattern = Pattern.compile("(.*)\\(.*\\)");
         Matcher matcher = pattern.matcher(expression);
         if (matcher.find()) {
-            functionName=matcher.group(1);
+            functionName = matcher.group(1);
         }
         for (GFunction value : VALUES) {
-            if(value.name().equals(functionName))
+            if (value.name().equals(functionName)) {
                 return value;
+            }
         }
         return null;
     }

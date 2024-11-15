@@ -15,13 +15,15 @@ public class GraalManager extends AbstractManager {
     private static GraalManager instance;
 
     @Getter
-    private final Map<String,Object> graalServiceMap=new HashMap<>();
+    private final Map<String, Object> graalServiceMap = new HashMap<>();
     @Getter
-    private final Map<String,Object> graalVariableMap=new HashMap<>();
-    private final Map<String,Object> globalGraalServiceMap=new HashMap<>();
+    private final Map<String, Object> graalVariableMap = new HashMap<>();
+    private final Map<String, Object> globalGraalServiceMap = new HashMap<>();
+
     private GraalManager() {
         log.info("GraalManager Instancing...");
     }
+
     public static GraalManager singleInstance() {
         lock.lock();
         if (instance == null) {
@@ -31,7 +33,7 @@ public class GraalManager extends AbstractManager {
         return instance;
     }
 
-    public void initGraalService(String parkeName){
+    public void initGraalService(String parkeName) {
         log.info("开始从包{}中扫描到包含注解{}的服务类......", parkeName, GraalService.class);
         List<Class<?>> classes = ClassScanner.scan(parkeName, true, GraalService.class);
         for (Class<?> clazz : classes) {
@@ -44,7 +46,7 @@ public class GraalManager extends AbstractManager {
         }
     }
 
-    public void initGraalVariable(String parkeName){
+    public void initGraalVariable(String parkeName) {
         log.info("开始从包{}中扫描到包含注解{}的参数类......", parkeName, GraalVariable.class);
         List<Class<?>> classes = ClassScanner.scan(parkeName, true, GraalVariable.class);
         for (Class<?> clazz : classes) {
@@ -60,13 +62,13 @@ public class GraalManager extends AbstractManager {
     private void initGraalServiceBean(Class<?> clazz) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         GraalService graalService = clazz.getAnnotation(GraalService.class);
         if (graalService != null) {
-            String serviceName=graalService.name();
-            String built=graalService.built();
-            Object serviceBean= clazz.getDeclaredConstructor().newInstance();
-            if(built.equals("true")){
-                globalGraalServiceMap.put(serviceName,serviceBean);
-            }else{
-                graalServiceMap.put(serviceName,serviceBean);
+            String serviceName = graalService.name();
+            String built = graalService.built();
+            Object serviceBean = clazz.getDeclaredConstructor().newInstance();
+            if ("true".equals(built)) {
+                globalGraalServiceMap.put(serviceName, serviceBean);
+            } else {
+                graalServiceMap.put(serviceName, serviceBean);
             }
         }
     }
@@ -74,13 +76,13 @@ public class GraalManager extends AbstractManager {
     private void initGraalVariableBean(Class<?> clazz) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         GraalVariable graalVariable = clazz.getAnnotation(GraalVariable.class);
         if (graalVariable != null) {
-            String variableName=graalVariable.name();
-            Object variableBean= clazz.getDeclaredConstructor().newInstance();
-            graalVariableMap.put(variableName,variableBean);
+            String variableName = graalVariable.name();
+            Object variableBean = clazz.getDeclaredConstructor().newInstance();
+            graalVariableMap.put(variableName, variableBean);
         }
     }
 
-    public Map<String,Object> getGlobalGraalVariableMap(){
+    public Map<String, Object> getGlobalGraalVariableMap() {
         return globalGraalServiceMap;
     }
 }

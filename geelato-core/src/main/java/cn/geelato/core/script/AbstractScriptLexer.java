@@ -64,6 +64,8 @@ public abstract class AbstractScriptLexer {
                         if (line.charAt(1) == '-') {
                             continue;
                         }
+                    default:
+                        break;
                 }
 
                 if (scriptStatement != null) {

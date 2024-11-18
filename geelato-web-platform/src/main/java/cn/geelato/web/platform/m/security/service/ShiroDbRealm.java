@@ -20,6 +20,7 @@ package cn.geelato.web.platform.m.security.service;
 
 import cn.geelato.web.platform.m.security.entity.User;
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
@@ -33,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -89,17 +91,20 @@ public class ShiroDbRealm extends AuthorizingRealm {
     @PostConstruct
     public void initCredentialsMatcher() {
         HashedCredentialsMatcher matcher = new HashedCredentialsMatcher(AccountService.HASH_ALGORITHM);
-        matcher.setHashIterations(AccountService.HASH_INTERATIONS);
+        matcher.setHashIterations(AccountService.HASH_ITERATIONS);
         setCredentialsMatcher(matcher);
     }
 
     /**
      * 自定义Authentication对象，使得Subject除了携带用户的登录名外还可以携带更多信息.
      */
-    public class ShiroUser implements Serializable {
+    public static class ShiroUser implements Serializable {
+        @Serial
         private static final long serialVersionUID = -1373760761780840081L;
+
         public String id;
         public String loginName;
+        @Getter
         public String name;
 
         public ShiroUser(String id, String loginName, String name) {
@@ -108,9 +113,6 @@ public class ShiroDbRealm extends AuthorizingRealm {
             this.name = name;
         }
 
-        public String getName() {
-            return name;
-        }
         /**
          * 本函数输出将作为默认的<shiro:principal/>输出.
          */
@@ -143,13 +145,8 @@ public class ShiroDbRealm extends AuthorizingRealm {
             }
             ShiroUser other = (ShiroUser) obj;
             if (loginName == null) {
-                if (other.loginName != null) {
-                    return false;
-                }
-            } else if (!loginName.equals(other.loginName)) {
-                return false;
-            }
-            return true;
+                return other.loginName == null;
+            } else return loginName.equals(other.loginName);
         }
     }
 }

@@ -188,7 +188,7 @@ public class UserRestController extends BaseController {
                 }
             } else {
                 form.setPlainPassword(UUIDUtils.generatePassword(DEFAULT_PASSWORD_DIGIT));
-                accountService.entryptPassword(form);
+                accountService.encryptPassword(form);
                 uMap = userService.createModel(form);
                 uMap.setPlainPassword(form.getPlainPassword());
             }
@@ -212,7 +212,7 @@ public class UserRestController extends BaseController {
                 Map<String, Object> params = new HashMap<>();
                 params.put("loginName", form.getLoginName());
                 List<User> users = userService.queryModel(User.class, params);
-                if (users != null && users.size() > 0) {
+                if (users != null && !users.isEmpty()) {
                     throw new RuntimeException("用户已存在！");
                 }
             } else {
@@ -222,7 +222,7 @@ public class UserRestController extends BaseController {
             setUserOrg(form);
             // 组织ID为空方可插入
             form.setPlainPassword(UUIDUtils.generatePassword(DEFAULT_PASSWORD_DIGIT));
-            accountService.entryptPassword(form);
+            accountService.encryptPassword(form);
             // 创建用户
             uMap = userService.createModel(form);
             uMap.setPlainPassword(form.getPlainPassword());
@@ -264,7 +264,7 @@ public class UserRestController extends BaseController {
             User user = userService.getModel(CLAZZ, id);
             Assert.notNull(user, ApiErrorMsg.IS_NULL);
             user.setPlainPassword(UUIDUtils.generatePassword(DEFAULT_PASSWORD_DIGIT));
-            accountService.entryptPassword(user);
+            accountService.encryptPassword(user);
             userService.updateModel(user);
             return ApiResult.success(user.getPlainPassword());
         } catch (Exception e) {
@@ -279,7 +279,7 @@ public class UserRestController extends BaseController {
             User user = userService.getModel(CLAZZ, id);
             Assert.notNull(user, ApiErrorMsg.IS_NULL);
             user.setPlainPassword(UUIDUtils.generatePassword(DEFAULT_PASSWORD_DIGIT));
-            accountService.entryptPassword(user);
+            accountService.encryptPassword(user);
             ApiResult result = userService.sendMessage(user, type);
             if (result.isError()) {
                 return result;

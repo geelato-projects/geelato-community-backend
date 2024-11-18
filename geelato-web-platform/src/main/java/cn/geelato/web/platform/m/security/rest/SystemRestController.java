@@ -88,7 +88,7 @@ public class SystemRestController extends BaseController {
         User user = this.getUserByToken();
         String plainPassword = RandomStringUtils.randomAlphanumeric(passwordLength > 32 ? 32 : passwordLength);
         user.setPlainPassword(plainPassword);
-        accountService.entryptPassword(user);
+        accountService.encryptPassword(user);
         dao.save(user);
         return ApiResult.success(plainPassword);
     }

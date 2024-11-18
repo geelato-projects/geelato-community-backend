@@ -25,14 +25,13 @@ import java.util.Map;
 @Component
 public class AccountService {
     public static final String HASH_ALGORITHM = "SHA-1";
-    public static final int HASH_INTERATIONS = 1024;
+    public static final int HASH_ITERATIONS = 1024;
     private static final int SALT_SIZE = 8;
 
 
     private Dao dao;
     @Autowired
     protected RuleService ruleService;
-//    private static AccountService ref;
 
     private CacheChannel cache = J2Cache.getChannel();
 
@@ -46,7 +45,7 @@ public class AccountService {
     }
 
     public void registerUser(User user) {
-        entryptPassword(user);
+        encryptPassword(user);
         if (StringUtils.isBlank(user.getName())) {
             user.setName(user.getLoginName());
         }
@@ -65,17 +64,17 @@ public class AccountService {
     /**
      * 设定安全的密码，生成随机的salt并经过1024次 sha-1 hash
      */
-    public User entryptPassword(User user) {
+    public User encryptPassword(User user) {
         byte[] salt = Digests.generateSalt(SALT_SIZE);
         user.setSalt(Encodes.encodeHex(salt));
 
-        byte[] hashPassword = Digests.sha1(user.getPlainPassword().getBytes(), salt, HASH_INTERATIONS);
+        byte[] hashPassword = Digests.sha1(user.getPlainPassword().getBytes(), salt, HASH_ITERATIONS);
         user.setPassword(Encodes.encodeHex(hashPassword));
         return user;
     }
 
-    public String entryptPassword(String plainPassword, String salt) {
-        byte[] hashPassword = Digests.sha1(plainPassword.getBytes(), Encodes.decodeHex(salt), HASH_INTERATIONS);
+    public String encryptPassword(String plainPassword, String salt) {
+        byte[] hashPassword = Digests.sha1(plainPassword.getBytes(), Encodes.decodeHex(salt), HASH_ITERATIONS);
         return Encodes.encodeHex(hashPassword);
     }
 

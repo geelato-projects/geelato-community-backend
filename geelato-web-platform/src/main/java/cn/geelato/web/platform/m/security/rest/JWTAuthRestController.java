@@ -33,8 +33,6 @@ public class JWTAuthRestController extends BaseController {
     protected AccountService accountService;
     protected AuthCodeService authCodeService;
     protected OrgService orgService;
-    private final UploadService uploadService;
-    private final AttachService attachService;
 
     @Autowired
     public JWTAuthRestController(AccountService accountService,
@@ -45,8 +43,6 @@ public class JWTAuthRestController extends BaseController {
         this.accountService = accountService;
         this.authCodeService = authCodeService;
         this.orgService = orgService;
-        this.uploadService = uploadService;
-        this.attachService = attachService;
     }
 
     @IgnoreJWTVerify

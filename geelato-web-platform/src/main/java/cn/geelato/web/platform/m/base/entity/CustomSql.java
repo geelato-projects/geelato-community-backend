@@ -6,13 +6,9 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
-import cn.geelato.utils.StringUtils;
+import cn.geelato.utils.Base64Utils;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.io.UnsupportedEncodingException;
-import java.util.Base64;
-import java.util.Locale;
 
 /**
  * @author diabl
@@ -51,25 +47,8 @@ public class CustomSql extends BaseEntity {
 
     @Override
     public void afterSet() {
-        if (StringUtils.isNotBlank(this.getEncodingContent())) {
-            if (this.getEncodingContent().toLowerCase(Locale.ENGLISH).indexOf(MediaTypes.TEXT_PLAIN_BASE64) != -1) {
-                String decodedString = null;
-                try {
-                    // 创建一个Base64解码器
-                    Base64.Decoder decoder = Base64.getDecoder();
-                    // 将Base64编码的字符串解码为字节数组
-                    String[] parts = this.getEncodingContent().split(",");
-                    if (parts.length == 2 && StringUtils.isNotBlank(parts[1])) {
-                        byte[] decodedBytes = decoder.decode(parts[1]);
-                        // 将字节数组转换为字符串（使用UTF-8编码，因为原始字符串是UTF-8编码的）
-                        decodedString = new String(decodedBytes, "UTF-8");
-                    }
-                    decodedString = StringUtils.isNotBlank(decodedString) ? decodedString : null;
-                } catch (UnsupportedEncodingException e) {
-                    decodedString = null;
-                }
-                this.setEncodingContent(decodedString);
-            }
+        if (Base64Utils.isBase64(this.getEncodingContent(), MediaTypes.TEXT_PLAIN_BASE64)) {
+            this.setEncodingContent(Base64Utils.decode(this.getEncodingContent()));
         }
     }
 }

@@ -31,6 +31,7 @@ import java.util.Map;
  * @author geemeta
  */
 @Slf4j
+@SuppressWarnings("rawtypes")
 public class Dao extends SqlKeyDao {
 
 
@@ -158,9 +159,9 @@ public class Dao extends SqlKeyDao {
         try {
             log.info(boundSql.getSql());
             jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
-        } catch (DataAccessException e) {
-            e.printStackTrace();
-            throw new DaoException("dao exception:" + e.getMessage());
+        } catch (DataAccessException ex) {
+            log.error(ex.getMessage(),ex);
+            throw new DaoException(ex.getMessage());
         }
         return command.getPK();
     }
@@ -178,8 +179,9 @@ public class Dao extends SqlKeyDao {
         }
         try {
             jdbcTemplate.batchUpdate(boundSqlList.get(0).getSql(), paramsObjs);
-        } catch (DataAccessException e) {
-            e.printStackTrace();
+        } catch (DataAccessException ex) {
+            log.error(ex.getMessage(),ex);
+            throw new DaoException(ex.getMessage());
         }
         return returnPks;
     }
@@ -195,10 +197,11 @@ public class Dao extends SqlKeyDao {
                 jdbcTemplate.update(bs.getSql(), bs.getParams());
             }
             TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
-        } catch (DataAccessException e) {
-            e.printStackTrace();
+        } catch (DataAccessException ex) {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
             returnPks.clear();
+            log.error(ex.getMessage(),ex);
+            throw new DaoException(ex.getMessage());
         }
         return returnPks;
     }
@@ -391,7 +394,7 @@ public class Dao extends SqlKeyDao {
         command.setOrderBy(request.getOrderBy());
         BoundSql boundSql = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
         log.info(boundSql.toString());
-        return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<T>());
+        return jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<T>(), boundSql.getParams());
     }
 
     /**

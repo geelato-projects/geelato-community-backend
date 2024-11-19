@@ -51,6 +51,7 @@
         <pf4j-spring.version>0.9.0</pf4j-spring.version>
         <pf4j-update.version>2.3.0</pf4j-update.version>
         <geelato.schedule.version>0.0.1-SNAPSHOT</geelato.schedule.version>
+        <geelato.auth.version>0.0.1-SNAPSHOT</geelato.auth.version>
     </properties>
 
 

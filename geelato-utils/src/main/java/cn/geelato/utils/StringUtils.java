@@ -22,7 +22,7 @@ public class StringUtils extends org.springframework.util.StringUtils {
      * @return 连接后的字符串
      */
     public static String join(String[] array, String separator) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0, len = array.length; i < len; i++) {
             if (i == (len - 1)) {
                 sb.append(array[i]);
@@ -41,7 +41,7 @@ public class StringUtils extends org.springframework.util.StringUtils {
      * @return 连接后的字符串
      */
     public static String join(List<String> array, String separator) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0, len = array.size(); i < len; i++) {
             if (i == (len - 1)) {
                 sb.append(array.get(i));
@@ -61,9 +61,9 @@ public class StringUtils extends org.springframework.util.StringUtils {
      * @return 拼接后的字符串
      */
     public static String join(int repeatTimes, String joinValue, String separator) {
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0, len = repeatTimes; i < len; i++) {
-            if (i == (len - 1)) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < repeatTimes; i++) {
+            if (i == (repeatTimes - 1)) {
                 sb.append(joinValue);
             } else {
                 sb.append(joinValue).append(separator);
@@ -80,7 +80,7 @@ public class StringUtils extends org.springframework.util.StringUtils {
      * @return 如果字符串为null或空字符串，则返回true；否则返回false
      */
     public static boolean isEmpty(final String text) {
-        return text == null || text.length() == 0;
+        return text == null || text.isEmpty();
     }
 
     /**
@@ -146,8 +146,7 @@ public class StringUtils extends org.springframework.util.StringUtils {
             int length = 0;
             int tokenCount = args.length;
 
-            for (int i = 0; i < tokenCount; ++i) {
-                Object sourceString = args[i];
+            for (Object sourceString : args) {
                 if (sourceString != null) {
                     length += sourceString.toString().length();
                 }
@@ -190,9 +189,9 @@ public class StringUtils extends org.springframework.util.StringUtils {
      */
     public static String toCamelCase(String s) {
         Matcher matcher = UNDERLINE_PATTERN.matcher(s);
-        StringBuffer sb = new StringBuffer(s);
+        StringBuilder sb = new StringBuilder(s);
         if (matcher.find()) {
-            sb = new StringBuffer();
+            sb = new StringBuilder();
             matcher.appendReplacement(sb, matcher.group(1).toUpperCase(Locale.ENGLISH));
             matcher.appendTail(sb);
         } else {

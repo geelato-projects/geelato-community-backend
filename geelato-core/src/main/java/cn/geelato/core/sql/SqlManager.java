@@ -147,19 +147,22 @@ public class SqlManager extends AbstractManager {
         queryCommand.setOrderBy(orderBy);
         return metaQuerySqlProvider.generate(queryCommand);
     }
-
+    public <T> BoundSql generatePageQuerySql(QueryCommand queryCommand, Class<T> clazz, boolean isArray, FilterGroup filterGroup, String[] fields) {
+        EntityMeta em = metaManager.get(clazz);
+        queryCommand.setEntityName(em.getEntityName());
+        queryCommand.setFields(fields != null && fields.length > 0 ? fields : em.getFieldNames());
+        queryCommand.setQueryForList(isArray);
+        queryCommand.setWhere(filterGroup);
+        return metaQuerySqlProvider.generate(queryCommand);
+    }
     /**
      * 删除服务
      */
     public BoundSql generateDeleteSql(Class clazz, FilterGroup filterGroup) {
-        return generateDeleteSql(clazz, filterGroup, null);
-    }
-
-    private BoundSql generateDeleteSql(Class clazz, FilterGroup filterGroup, String[] fields) {
         DeleteCommand deleteCommand = new DeleteCommand();
         EntityMeta em = metaManager.get(clazz);
         deleteCommand.setEntityName(em.getEntityName());
-        deleteCommand.setFields(fields != null && fields.length > 0 ? fields : em.getFieldNames());
+        deleteCommand.setFields(em.getFieldNames());
         deleteCommand.setWhere(filterGroup);
         return metaDeleteSqlProvider.generate(deleteCommand);
     }
@@ -174,7 +177,6 @@ public class SqlManager extends AbstractManager {
         DeleteCommand deleteCommand = new DeleteCommand();
         EntityMeta em = metaManager.getByEntityName(entityName);
         deleteCommand.setEntityName(em.getEntityName());
-        SessionCtx sessionCtx = new SessionCtx();
         Map<String, Object> params = new HashMap<>();
         String newDataString = simpleDateFormat.format(new Date());
         if (validator.hasKeyField("delStatus")) {
@@ -200,14 +202,7 @@ public class SqlManager extends AbstractManager {
         return metaDeleteSqlProvider.generate(deleteCommand);
     }
 
-    public <T> BoundSql generatePageQuerySql(QueryCommand queryCommand, Class<T> clazz, boolean isArray, FilterGroup filterGroup, String[] fields) {
-        EntityMeta em = metaManager.get(clazz);
-        queryCommand.setEntityName(em.getEntityName());
-        queryCommand.setFields(fields != null && fields.length > 0 ? fields : em.getFieldNames());
-        queryCommand.setQueryForList(isArray);
-        queryCommand.setWhere(filterGroup);
-        return metaQuerySqlProvider.generate(queryCommand);
-    }
+
 
     public <T> BoundSql generatePageQuerySql(QueryViewCommand queryCommand, String entityName, boolean isArray, FilterGroup filterGroup, String[] fields) {
         EntityMeta em = metaManager.getByEntityName(entityName);

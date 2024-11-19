@@ -16,6 +16,7 @@ import java.util.*;
 /**
  * @author geemeta
  */
+@SuppressWarnings("rawtypes")
 public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     protected Boolean LogicDelete = true;  // 是否开启软删除
     protected Boolean PermissionControl = true;
@@ -71,6 +72,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
      *
      * @param command QueryCommand、UpdateCommand等
      */
+    @SuppressWarnings("unchecked")
     public BoundSql generate(E command) {
         BoundSql boundSql = new BoundSql();
         boundSql.setName(command.getEntityName());
@@ -80,7 +82,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         // 解析子级的command
         if (command.getCommands() != null) {
             command.getCommands().forEach(item -> {
-                BoundSql subBoundSql = generate((E) item);
+                BoundSql subBoundSql = generate((E)item);
                 if (boundSql.getBoundSqlMap() == null) {
                     boundSql.setBoundSqlMap(new HashMap<>());
                 }

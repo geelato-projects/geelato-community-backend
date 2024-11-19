@@ -63,7 +63,7 @@ public class AuthCodeParams {
      */
     public String getRedisValue(String authCode) {
         if (Strings.isNotBlank(authCode)) {
-            return Encodes.encodeHex(Digests.sha1(authCode.getBytes(), this.userId.getBytes(), AccountService.HASH_INTERATIONS));
+            return Encodes.encodeHex(Digests.sha1(authCode.getBytes(), this.userId.getBytes(), AccountService.HASH_ITERATIONS));
         }
 
         return null;

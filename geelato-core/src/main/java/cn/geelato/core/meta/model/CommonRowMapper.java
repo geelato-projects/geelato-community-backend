@@ -4,8 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.Converter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
@@ -22,6 +20,7 @@ import java.util.Date;
  * @author geemeta
  */
 @Slf4j
+@SuppressWarnings("ALL")
 public class CommonRowMapper<T> implements RowMapper<T> {
     private static final MetaManager metaManager = MetaManager.singleInstance();
 
@@ -34,8 +33,8 @@ public class CommonRowMapper<T> implements RowMapper<T> {
 
     @Override
     public T mapRow(ResultSet resultSet, int i) throws SQLException {
-        ResultSetMetaData rsmd = resultSet.getMetaData();
-        String tableName = rsmd.getTableName(1);
+        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+        String tableName = resultSetMetaData.getTableName(1);
         EntityMeta em = metaManager.get(tableName);
 
         Converter c = ConvertUtils.lookup(Date.class);
@@ -44,9 +43,9 @@ public class CommonRowMapper<T> implements RowMapper<T> {
         T bean;
         if (em.getClassType() != null) {
             try {
-                bean = (T) em.getClassType().newInstance();
-                for (int _iterator = 0; _iterator < rsmd.getColumnCount(); _iterator++) {
-                    String columnName = rsmd.getColumnName(_iterator + 1);
+                bean = (T) em.getClassType().getDeclaredConstructor().newInstance();
+                for (int _iterator = 0; _iterator < resultSetMetaData.getColumnCount(); _iterator++) {
+                    String columnName = resultSetMetaData.getColumnName(_iterator + 1);
                     Object columnValue = resultSet.getObject(_iterator + 1);
                     for (FieldMeta fm : em.getFieldMetas()) {
                         if (columnName.equals(fm.getColumnName())) {
@@ -56,11 +55,12 @@ public class CommonRowMapper<T> implements RowMapper<T> {
                     }
                 }
                 return bean;
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            } catch (InstantiationException
+                     | IllegalAccessException
+                     | InvocationTargetException
+                     | NoSuchMethodException e) {
                 log.error(String.valueOf(e));
             }
-        } else {
-            //map?
         }
         return null;
     }

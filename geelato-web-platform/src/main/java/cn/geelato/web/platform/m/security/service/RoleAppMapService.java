@@ -53,7 +53,7 @@ public class RoleAppMapService extends BaseService {
     public List<RoleAppMap> insertModels(RoleAppMap model) {
         // 角色存在，
         List<Role> roles = roleService.getModelsById(Role.class, model.getRoleId());
-        if (roles == null || roles.size() == 0) {
+        if (roles == null || roles.isEmpty()) {
             throw new RuntimeException(ApiErrorMsg.IS_NULL);
         }
         // 应用
@@ -68,7 +68,7 @@ public class RoleAppMapService extends BaseService {
         for (Role role : roles) {
             for (App app : apps) {
                 boolean isExist = false;
-                if (maps != null && maps.size() > 0) {
+                if (maps != null && !maps.isEmpty()) {
                     for (RoleAppMap map : maps) {
                         if (role.getId().equals(map.getRoleId()) && app.getId().equals(map.getAppId())) {
                             isExist = true;

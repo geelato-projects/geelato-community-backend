@@ -59,8 +59,13 @@ public class MetaDaoSql {
      */
     public static final String SQL_RENAME_TABLE = "RENAME TABLE %s TO %s;";
     /**
-     * 查询视图信息
+     * 查询视图信息,第一个：视图名称
      */
     public static final String SQL_SHOW_CREATE_VIEW = "SHOW CREATE VIEW %s;";
+
+    /**
+     * 查询表约束信息,第一个：表模式；第二个：约束类型；第三个：约束名称
+     */
+    public static final String SQL_QUERY_TABLE_CONSTRAINTS = "SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = '%s' AND CONSTRAINT_TYPE = '%s' AND CONSTRAINT_NAME = '%s';";
 
 }

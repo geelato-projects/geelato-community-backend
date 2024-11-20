@@ -56,6 +56,12 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "视图语句")
     @Col(name = "view_sql")
     private String viewSql;
+    @Title(title = "跨应用")
+    @Col(name = "across_app")
+    private boolean acrossApp = false;
+    @Title(title = "跨工作流")
+    @Col(name = "across_workflow")
+    private boolean acrossWorkflow = false;
 
     public TableMeta() {
     }
@@ -80,10 +86,11 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         this.enableStatus = Boolean.TRUE.equals(enableStatus) ? 1 : 0;
         this.linked = map.get("linked") == null ? null : Integer.parseInt(map.get("linked").toString());
         this.description = map.get("description") == null ? null : map.get("description").toString();
-        this.synced = map.get("synced") != null && Boolean.parseBoolean(map.get("synced").toString());
         this.synced = map.get("synced") == null ? false : Boolean.parseBoolean(map.get("synced").toString());
         this.sourceType = map.get("source_type") == null ? null : map.get("source_type").toString();
         this.packBusData = map.get("pack_bus_data") == null ? 0 : Integer.parseInt(map.get("pack_bus_data").toString());
         this.viewSql = map.get("view_sql") == null ? null : map.get("view_sql").toString();
+        this.acrossApp = map.get("across_app") == null ? false : Boolean.parseBoolean(map.get("across_app").toString());
+        this.acrossWorkflow = map.get("across_workflow") == null ? false : Boolean.parseBoolean(map.get("across_workflow").toString());
     }
 }

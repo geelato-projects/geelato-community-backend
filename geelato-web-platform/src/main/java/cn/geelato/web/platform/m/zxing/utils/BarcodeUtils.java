@@ -63,7 +63,7 @@ public class BarcodeUtils {
             attach.setPath(picturePath);
             attach.setGenre("Barcode");
             attach.setAppId(barcode.getAppId());
-            return dao().save(attach);
+            return  dao().save(attach);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

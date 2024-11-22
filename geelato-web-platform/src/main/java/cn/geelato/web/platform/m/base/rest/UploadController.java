@@ -222,7 +222,7 @@ public class UploadController extends BaseController {
             }
             String sql = String.format("select %s from %s where id = '%s'", fieldNames, entityName, id);
             Map<String, Object> columnMap = dao.getJdbcTemplate().queryForMap(sql);
-            if (columnMap == null || columnMap.isEmpty()) {
+            if (columnMap.isEmpty()) {
                 return ApiResult.fail("Entity Query Is Null");
             }
             for (Map.Entry<String, Object> columnEntry : columnMap.entrySet()) {
@@ -253,7 +253,6 @@ public class UploadController extends BaseController {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("tableName", tableName);
-            // params.put("enableStatus", EnableStatusEnum.ENABLED.getCode());
             List<ColumnMeta> columnMetas = devTableColumnService.queryModel(ColumnMeta.class, params);
             if (columnMetas != null && !columnMetas.isEmpty()) {
                 Set<String> fields = new LinkedHashSet<>();

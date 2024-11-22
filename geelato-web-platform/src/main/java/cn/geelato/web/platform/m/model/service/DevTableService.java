@@ -4,11 +4,13 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.enums.*;
 import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaTable;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.SchemaUtils;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -34,10 +36,31 @@ public class DevTableService extends BaseSortableService {
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
     @Lazy
     @Autowired
+    private DevDbConnectService devDbConnectService;
+    @Lazy
+    @Autowired
     private DevTableColumnService devTableColumnService;
     @Lazy
     @Autowired
     private DevTableForeignService devTableForeignService;
+
+    /**
+     * 设置TableMeta对象后的处理
+     *
+     * @param form TableMeta对象
+     * @throws RuntimeException 当表id为空或连接不存在时抛出异常
+     */
+    public void afterSet(TableMeta form) {
+        // 判断表id是否为空
+        if (StringUtils.isBlank(form.getConnectId())) {
+            throw new RuntimeException("connect id can not be null");
+        }
+        ConnectMeta connectMeta = devDbConnectService.getModel(ConnectMeta.class, form.getConnectId());
+        if (connectMeta == null) {
+            throw new RuntimeException("connect not exist");
+        }
+        form.setTableSchema(connectMeta.getDbSchema());
+    }
 
     /**
      * 全量查询

@@ -6,6 +6,8 @@ import cn.geelato.core.meta.annotation.Title;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 @Getter
 @Setter
 @Title(title = "应用数据模型检查表")
@@ -47,4 +49,25 @@ public class TableCheck extends BaseEntity implements EntityEnableAble {
     private int enableStatus;
     @Title(title = "同步状态")
     private Boolean synced = false;
+
+    public TableCheck() {
+    }
+
+    public TableCheck(Map<String, Object> map) {
+        this.appId = map.get("app_id") == null ? null : map.get("app_id").toString();
+        this.title = map.get("title") == null ? null : map.get("title").toString();
+        this.code = map.get("code") == null ? null : map.get("code").toString();
+        this.type = map.get("type") == null ? null : map.get("type").toString();
+        this.checkClause = map.get("check_clause") == null ? null : map.get("check_clause").toString();
+        this.connectId = map.get("connect_id") == null ? null : map.get("connect_id").toString();
+        this.tableSchema = map.get("table_schema") == null ? null : map.get("table_schema").toString();
+        this.tableId = map.get("table_id") == null ? null : map.get("table_id").toString();
+        this.tableName = map.get("table_name") == null ? null : map.get("table_name").toString();
+        this.columnId = map.get("column_id") == null ? null : map.get("column_id").toString();
+        this.columnName = map.get("column_name") == null ? null : map.get("column_name").toString();
+        this.description = map.get("description") == null ? null : map.get("description").toString();
+        Boolean enableStatus = map.get("enable_status") == null ? null : Boolean.parseBoolean(map.get("enable_status").toString());
+        this.enableStatus = Boolean.TRUE.equals(enableStatus) ? 1 : 0;
+        this.synced = map.get("synced") == null ? false : Boolean.parseBoolean(map.get("synced").toString());
+    }
 }

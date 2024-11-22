@@ -2,7 +2,6 @@ package cn.geelato.web.platform.m.model.service;
 
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.column.ColumnMeta;
-import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.utils.StringUtils;
@@ -18,9 +17,6 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class DevTableCheckService extends BaseService {
-    @Lazy
-    @Autowired
-    private DevDbConnectService devDbConnectService;
     @Lazy
     @Autowired
     private DevTableService devTableService;
@@ -46,18 +42,10 @@ public class DevTableCheckService extends BaseService {
             throw new RuntimeException("table not exist");
         }
         form.setConnectId(tableMeta.getConnectId());
+        form.setTableSchema(tableMeta.getTableSchema());
         form.setTableName(tableMeta.getEntityName());
         form.setAppId(tableMeta.getAppId());
         form.setTenantCode(tableMeta.getTenantCode());
-        // 判断connectId是否为空
-        if (StringUtils.isBlank(form.getConnectId())) {
-            throw new RuntimeException("connect id can not be null");
-        }
-        ConnectMeta connectMeta = devDbConnectService.getModel(ConnectMeta.class, form.getConnectId());
-        if (connectMeta == null) {
-            throw new RuntimeException("connect not exist");
-        }
-        form.setTableSchema(connectMeta.getDbSchema());
         // 如果有指定列，则获取列名称
         if (StringUtils.isNotBlank(form.getColumnId())) {
             FilterGroup filter = new FilterGroup();

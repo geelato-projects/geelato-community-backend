@@ -125,7 +125,7 @@ public class DevTableCheckController extends BaseController {
                 return ApiResult.success(false);
             }
             List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(
-                    String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS, form.getTableSchema(), form.getType().toUpperCase(Locale.ENGLISH), form.getCode()));
+                    String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME, form.getTableSchema(), form.getType().toUpperCase(Locale.ENGLISH), form.getCode()));
             return ApiResult.success(mapList.isEmpty());
         } catch (Exception e) {
             log.error(e.getMessage());

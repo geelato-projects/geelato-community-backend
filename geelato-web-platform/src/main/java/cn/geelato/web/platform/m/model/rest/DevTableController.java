@@ -99,6 +99,7 @@ public class DevTableController extends BaseController {
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult createOrUpdate(@RequestBody TableMeta form, Boolean isAlter) {
         try {
+            devTableService.afterSet(form);
             TableMeta resultMap = new TableMeta();
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {

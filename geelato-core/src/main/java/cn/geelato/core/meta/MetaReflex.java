@@ -6,6 +6,7 @@ import cn.geelato.core.enums.MysqlToJavaEnum;
 import cn.geelato.core.gql.TypeConverter;
 import cn.geelato.core.meta.annotation.*;
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
@@ -101,6 +102,12 @@ public class MetaReflex {
         return new TableMeta(getTableName(clazz), title != null ? title.title() : "", getEntityName(clazz), title != null ? title.description() : "");
     }
 
+    /**
+     * 根据给定的map生成TableMeta对象
+     *
+     * @param map 包含表元数据的map
+     * @return 生成的TableMeta对象
+     */
     public static TableMeta getTableMeta(Map map) {
         TableMeta tableMeta = new TableMeta(map);
         Integer delStatus = map.get("del_status") == null ? null : Integer.parseInt(map.get("del_status").toString());
@@ -153,7 +160,7 @@ public class MetaReflex {
         return em;
     }
 
-    public static EntityMeta getEntityMetaByTable(Map tmap, List columnList, List viewList, List foreignList) {
+    public static EntityMeta getEntityMetaByTable(Map tmap, List columnList, List viewList,List checkList, List foreignList) {
         EntityMeta em = new EntityMeta();
         em.setTableMeta(getTableMeta(tmap));
         em.setEntityName(tmap.get("entity_name").toString());
@@ -164,6 +171,9 @@ public class MetaReflex {
         em.setFieldMetas(columnMap.values());
         HashMap<String, ViewMeta> viewMap = getViewMetas(viewList);
         em.setViewMetas(viewMap.values());
+
+        List<TableCheck> checks = getTableCheckMetas(checkList);
+        em.setTableChecks(checks);
 
         List<TableForeign> foreigns = getTableForeignMetas(foreignList);
         em.setTableForeigns(foreigns);
@@ -610,6 +620,26 @@ public class MetaReflex {
         }
 
         return foreigns;
+    }
+
+    public static List<TableCheck> getTableCheckMetas(List<HashMap> checkList) {
+        List<TableCheck> checks = new ArrayList<>();
+        if (checkList != null && !checkList.isEmpty()) {
+            for (Map f_map : checkList) {
+                try {
+                    Integer delStatus = f_map.get("del_status") == null ? null : Integer.parseInt(f_map.get("del_status").toString());
+                    String id = f_map.get("id") == null ? null : f_map.get("id").toString();
+                    TableCheck ck = new TableCheck(f_map);
+                    ck.setId(id);
+                    ck.setDelStatus(delStatus);
+                    checks.add(ck);
+                } catch (RuntimeException e) {
+                    throw e;
+                }
+            }
+        }
+
+        return checks;
     }
 
     /**

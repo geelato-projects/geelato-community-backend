@@ -48,15 +48,28 @@ CREATE TABLE IF NOT EXISTS $.tableName (
       ,
     @/if
   @/for
+  @for i in $.checkList
+    CONSTRAINT `$.checkList[i].code` CHECK ($.checkList[i].checkClause)
+    @if i<$.uniqueList.length-1
+     ,
+    @/if
+  @/for
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '$.tableTitle';
 UPDATE platform_dev_table SET table_name = '$.tableName', synced = 1 WHERE entity_name = '$.tableName';
 UPDATE platform_dev_column SET synced = 1 WHERE del_status = 0 AND table_name = '$.tableName';
+UPDATE platform_dev_table_check SET synced = 1 WHERE del_status = 0 AND table_name = '$.tableName';
 -- @for i in $.uniqueList
 --   alter table $.tableName add unique key(`$.uniqueList[i].name`);
 -- @/for
 -- @if $.primaryKey!='' && $.primaryKey!=null
 --   ALTER TABLE $.tableName ADD PRIMARY KEY ($.primaryKey);
 -- @/if
+
+-- 删除表检查
+-- @sql deleteTableChecks
+@for i in $.delCheckList
+    ALTER TABLE $.delCheckList[i].tableName DROP CHECK $.delCheckList[i].constraintName;
+@/for
 
 -- 更新表
 -- @sql upgradeOneTable
@@ -123,8 +136,15 @@ ALTER TABLE $.tableName ADD UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i]
 ALTER TABLE $.tableName ADD UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`) USING BTREE;
     @/if
 @/for
+@for i in $.delCheckList
+    ALTER TABLE $.delCheckList[i].tableName DROP CHECK $.delCheckList[i].constraintName;
+@/for
+@for i in $.checkList
+  ALTER TABLE $.checkList[i].tableName ADD CONSTRAINT `$.checkList[i].code` CHECK ($.checkList[i].checkClause);
+@/for
 UPDATE platform_dev_table SET synced = 1 WHERE entity_name = '$.tableName';
 UPDATE platform_dev_column SET synced = 1 WHERE del_status = 0 AND table_name = '$.tableName';
+UPDATE platform_dev_table_check SET synced = 1 WHERE del_status = 0 AND table_name = '$.tableName';
 
 -- 更改表
 -- @sql createOrUpdateOneTable

@@ -77,6 +77,4 @@ public class TableForeign extends BaseSortableEntity implements EntityEnableAble
         this.deleteAction = map.get("delete_action") == null ? ColumnDefault.FOREIGN_ACTION_VALUE : map.get("delete_action").toString();
         this.updateAction = map.get("update_action") == null ? ColumnDefault.FOREIGN_ACTION_VALUE : map.get("update_action").toString();
     }
-
-
 }

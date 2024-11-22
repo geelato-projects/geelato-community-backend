@@ -26,6 +26,9 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "数据库连接id")
     @Col(name = "connect_id")
     private String connectId;
+    @Col(name = "table_schema")
+    @Title(title = "数据库schema")
+    private String tableSchema;
     @Title(title = "表名", description = "与数据库中的表名一致")
     @Col(name = "table_name")
     private String tableName;
@@ -78,6 +81,7 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         this.appId = map.get("app_id") == null ? null : map.get("app_id").toString();
         this.title = map.get("title") == null ? null : map.get("title").toString();
         this.connectId = map.get("connect_id") == null ? null : map.get("connect_id").toString();
+        this.tableSchema = map.get("table_schema") == null ? null : map.get("table_schema").toString();
         this.tableName = map.get("table_name") == null ? null : map.get("table_name").toString();
         this.entityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
         this.tableType = map.get("table_type") == null ? null : map.get("table_type").toString();

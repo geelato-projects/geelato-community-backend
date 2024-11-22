@@ -1,10 +1,12 @@
 package cn.geelato.web.platform.m.security.entity;
 
+import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import cn.geelato.utils.Base64Utils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,4 +35,11 @@ public class Permission extends BaseEntity {
 
     @Transient
     private boolean perDefault;
+
+    @Override
+    public void afterSet() {
+        if (Base64Utils.isBase64(this.getRule(), MediaTypes.TEXT_PLAIN_BASE64)) {
+            this.setRule(Base64Utils.decode(this.getRule()));
+        }
+    }
 }

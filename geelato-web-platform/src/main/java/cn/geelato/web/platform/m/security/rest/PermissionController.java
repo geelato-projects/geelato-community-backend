@@ -103,6 +103,7 @@ public class PermissionController extends BaseController {
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult createOrUpdate(@RequestBody Permission form) {
         try {
+            form.afterSet();
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
                 return ApiResult.success(permissionService.updateModel(form));

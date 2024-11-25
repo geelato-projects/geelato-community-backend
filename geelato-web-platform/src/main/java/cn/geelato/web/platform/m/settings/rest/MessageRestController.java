@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -35,7 +36,7 @@ public class MessageRestController extends BaseController {
     public ApiPagedResult pageQuery() {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, null);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, new HashMap<>());
             return messageService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage());

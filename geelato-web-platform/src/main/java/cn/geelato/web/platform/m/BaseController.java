@@ -4,6 +4,7 @@ import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.m.base.service.RuleService;
+import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -60,13 +62,12 @@ public class BaseController extends ParameterOperator implements InitializingBea
      * 根据接口传递的参数，构建查询条件
      */
     public FilterGroup getFilterGroup(Class elementType, Map<String, List<String>> operatorMap) throws ParseException {
-        Map<String, Object> params = this.getQueryParameters(elementType, this.request);
-        return this.getFilterGroup(params, operatorMap);
+        return this.getFilterGroup(elementType, this.request, operatorMap);
     }
 
     @Deprecated
     public FilterGroup getFilterGroup(Class elementType, HttpServletRequest request, Map<String, List<String>> operatorMap) throws ParseException {
-        Map<String, Object> params = this.getQueryParameters(elementType, request);
+        Map<String, Object> params = this.getQueryParameters(elementType, request, false);
         return this.getFilterGroup(params, operatorMap);
     }
 
@@ -159,6 +160,84 @@ public class BaseController extends ParameterOperator implements InitializingBea
         }
 
         return filterGroup;
+    }
+
+    /**
+     * 获取指定元素类型的过滤组。
+     *
+     * @param elementType 元素类型
+     * @return 指定元素类型的过滤组
+     * @throws ParseException 如果解析过程中发生错误，则抛出该异常
+     */
+    public FilterGroup getFilterGroup(Class elementType) throws ParseException {
+        return this.getFilterGroup(elementType, this.request);
+    }
+
+    @Deprecated
+    public FilterGroup getFilterGroup(Class elementType, HttpServletRequest request) throws ParseException {
+        Map<String, Object> params = this.getQueryParameters(elementType, request, true);
+        return this.getFilterGroup(params);
+    }
+
+    /**
+     * 构建查询条件
+     */
+    private FilterGroup getFilterGroup(Map<String, Object> params) throws ParseException {
+        FilterGroup filterGroup = new FilterGroup();
+        if (params != null && !params.isEmpty()) {
+            for (Map.Entry<String, Object> entry : params.entrySet()) {
+                Map<String, String> keyMap = this.formatMapKey(entry.getKey());
+                String key = keyMap.get("key");
+                if (Strings.isBlank(key)) {
+                    throw new RuntimeException("不支持的查询条件：" + entry.getKey());
+                }
+                String operator = keyMap.get("operator");
+                // value 不为空，“”也算空
+                if (entry.getValue() == null || Strings.isBlank(entry.getValue().toString())) {
+                    continue;
+                }
+                if (Strings.isNotBlank(operator)) {
+                    if (FilterGroup.Operator.bt.getText().equals(operator)) {
+                        Object value = entry.getValue();
+                        if (value instanceof String) {
+                            value = value.toString().split(",");
+                        }
+                        filterGroup.addFilter(key, FilterGroup.Operator.bt, JSON.toJSONString(value));
+                    } else if (FilterGroup.Operator.nil.getText().equals(operator)) {
+                        filterGroup.addFilter(key, FilterGroup.Operator.nil, Strings.isNotBlank(entry.getValue().toString()) ? "1" : null);
+                    } else {
+                        boolean isOp = false;
+                        for (FilterGroup.Operator op : FilterGroup.Operator.values()) {
+                            if (op.getText().equals(operator)) {
+                                filterGroup.addFilter(key, op, entry.getValue().toString());
+                                isOp = true;
+                                break;
+                            }
+                        }
+                        if (!isOp) {
+                            throw new RuntimeException("不支持的运算符：" + operator);
+                        }
+                    }
+                } else {
+                    filterGroup.addFilter(key, entry.getValue().toString());
+                }
+            }
+        }
+
+        return filterGroup;
+    }
+
+    private Map<String, String> formatMapKey(String key) {
+        Map<String, String> map = new HashMap<>();
+        map.put("key", key);
+        if (Strings.isNotBlank(key) && key.contains(ParameterOperator.OPERATOR_SEPARATOR)) {
+            int index = key.lastIndexOf(ParameterOperator.OPERATOR_SEPARATOR);
+            map.put("key", key.substring(0, index));
+            if (key.length() > index + 1) {
+                map.put("operator", key.substring(index + 1));
+            }
+        }
+        return map;
     }
 
 

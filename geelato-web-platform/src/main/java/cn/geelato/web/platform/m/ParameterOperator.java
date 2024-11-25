@@ -9,17 +9,23 @@ import java.util.*;
 
 @SuppressWarnings("rawtypes")
 public class ParameterOperator extends RequestOperator {
+    public static final String OPERATOR_SEPARATOR = "@";
 
     protected Map<String, Object> getQueryParameters(Class elementType) {
-        return getQueryParameters(elementType, this.request);
+        return getQueryParameters(elementType, false);
+    }
+
+    protected Map<String, Object> getQueryParameters(Class elementType, boolean isOperation) {
+        return getQueryParameters(elementType, this.request, isOperation);
     }
 
     @Deprecated
-    protected Map<String, Object> getQueryParameters(Class elementType, HttpServletRequest request) {
+    protected Map<String, Object> getQueryParameters(Class elementType, HttpServletRequest request, boolean isOperation) {
         Map<String, Object> queryParamsMap = new LinkedHashMap<>();
         for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
             Set<String> fieldNames = getClassFieldNames(elementType);
-            if (fieldNames.contains(entry.getKey())) {
+            String key = getParameterMapKey(entry.getKey(), isOperation);
+            if (fieldNames.contains(key)) {
                 List<String> values = List.of(entry.getValue());
                 if (values.size() == 1) {
                     queryParamsMap.put(entry.getKey(), values.get(0));
@@ -98,5 +104,12 @@ public class ParameterOperator extends RequestOperator {
         }
 
         return fieldsList;
+    }
+
+    private String getParameterMapKey(String key, boolean isOperation) {
+        if (isOperation && Strings.isNotBlank(key) && key.contains(OPERATOR_SEPARATOR)) {
+            return key.substring(0, key.lastIndexOf(OPERATOR_SEPARATOR));
+        }
+        return key;
     }
 }

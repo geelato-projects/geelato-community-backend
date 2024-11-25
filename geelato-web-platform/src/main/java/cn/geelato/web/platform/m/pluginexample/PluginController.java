@@ -26,12 +26,12 @@ public class PluginController extends BaseController {
     }
 
     @RequestMapping(value = "/example", method = RequestMethod.GET)
-    public ApiResult<Greeting> example() {
+    public ApiResult<String> example() {
 
         Map<String,Object> pars= getQueryParameters();
         Object par1= pars.get("par1");
         Object par2=pars.get("par2");
         Greeting greeting = pluginBeanProvider.getBean(Greeting.class, PluginInfo.PluginId);
-        return ApiPagedResult.success(greeting);
+        return ApiPagedResult.success(greeting.getGreeting());
     }
 }

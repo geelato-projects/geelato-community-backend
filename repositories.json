@@ -1,7 +1,5 @@
-[
-  {
-    "id": "platform",
-    "url": "D:\\geelato-enterprise\\plugins",
-    "pluginsJsonFileName": "plugins.json"
-  }
-]
+{
+  "id": "folder",
+  "url": "file:D:\\geelato\\geelato-enterprise\\plugins",
+  "pluginsJsonFileName": "plugins.json"
+}

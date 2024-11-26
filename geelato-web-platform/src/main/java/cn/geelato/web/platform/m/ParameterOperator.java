@@ -1,6 +1,8 @@
 package cn.geelato.web.platform.m;
 
 import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.web.platform.utils.GqlUtil;
+import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;
 
@@ -9,7 +11,7 @@ import java.util.*;
 
 @SuppressWarnings("rawtypes")
 public class ParameterOperator extends RequestOperator {
-    public static final String OPERATOR_SEPARATOR = "@";
+    public static final String OPERATOR_SEPARATOR = "|";
 
     protected Map<String, Object> getQueryParameters(Class elementType) {
         return getQueryParameters(elementType, false);
@@ -84,6 +86,44 @@ public class ParameterOperator extends RequestOperator {
         queryRequest.setOrderBy(orderBy);
 
         return queryRequest;
+    }
+
+    protected Map<String, Object> getRequestBody() {
+        Map<String, Object> requestBodyMap = new LinkedHashMap<>();
+        try {
+            String requestBody = GqlUtil.resolveGql(this.request);
+            requestBodyMap = JSON.parseObject(requestBody, Map.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return requestBodyMap;
+    }
+
+    @Deprecated
+    protected PageQueryRequest getPageQueryParameters(Map<String, Object> requestBodyMap) {
+        PageQueryRequest queryRequest = new PageQueryRequest();
+        Object current = requestBodyMap.get("current");
+        queryRequest.setPageNum(current == null || Strings.isBlank(current.toString()) ? 1 : Integer.parseInt(current.toString()));
+        Object pageSize = requestBodyMap.get("pageSize");
+        queryRequest.setPageSize(pageSize == null || Strings.isBlank(pageSize.toString()) ? 10 : Integer.parseInt(pageSize.toString()));
+        String orderBy = requestBodyMap.get("orderBy") == null ? "" : requestBodyMap.get("orderBy").toString();
+        orderBy = orderBy.replaceAll("\\|", " ");
+        queryRequest.setOrderBy(orderBy);
+
+        return queryRequest;
+    }
+
+    @Deprecated
+    protected Map<String, Object> getQueryParameters(Class elementType, Map<String, Object> requestBodyMap, boolean isOperation) {
+        Map<String, Object> queryParamsMap = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : requestBodyMap.entrySet()) {
+            Set<String> fieldNames = getClassFieldNames(elementType);
+            String key = getParameterMapKey(entry.getKey(), isOperation);
+            if (fieldNames.contains(key)) {
+                queryParamsMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return queryParamsMap;
     }
 
     private Set<String> getClassFieldNames(Class elementType) {

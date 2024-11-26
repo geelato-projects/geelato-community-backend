@@ -5,6 +5,7 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
@@ -179,6 +180,11 @@ public class BaseController extends ParameterOperator implements InitializingBea
         return this.getFilterGroup(params);
     }
 
+    public FilterGroup getFilterGroup(Class elementType, Map<String, Object> requestBodyMap, boolean isOperation) throws ParseException {
+        Map<String, Object> params = this.getQueryParameters(elementType, requestBodyMap, isOperation);
+        return this.getFilterGroup(params);
+    }
+
     /**
      * 构建查询条件
      */
@@ -198,11 +204,17 @@ public class BaseController extends ParameterOperator implements InitializingBea
                 }
                 if (Strings.isNotBlank(operator)) {
                     if (FilterGroup.Operator.bt.getText().equals(operator)) {
-                        Object value = entry.getValue();
-                        if (value instanceof String) {
-                            value = value.toString().split(",");
+                        if (entry.getValue() instanceof String) {
+                            String[] values = entry.getValue().toString().split(",");
+                            if (values.length == 2 && Strings.isNotBlank(values[0]) && Strings.isNotBlank(values[1])) {
+                                filterGroup.addFilter(key, FilterGroup.Operator.bt, JSON.toJSONString(values));
+                            }
+                        } else if (entry.getValue() instanceof JSONArray) {
+                            JSONArray values = (JSONArray) entry.getValue();
+                            if (values.size() == 2 && Strings.isNotBlank(values.getString(0)) && Strings.isNotBlank(values.getString(1))) {
+                                filterGroup.addFilter(key, FilterGroup.Operator.bt, JSON.toJSONString(entry.getValue()));
+                            }
                         }
-                        filterGroup.addFilter(key, FilterGroup.Operator.bt, JSON.toJSONString(value));
                     } else if (FilterGroup.Operator.nil.getText().equals(operator)) {
                         filterGroup.addFilter(key, FilterGroup.Operator.nil, Strings.isNotBlank(entry.getValue().toString()) ? "1" : null);
                     } else {

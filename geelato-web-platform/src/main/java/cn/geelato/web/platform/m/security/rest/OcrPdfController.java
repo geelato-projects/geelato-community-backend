@@ -33,11 +33,12 @@ public class OcrPdfController extends BaseController {
         this.ocrPdfService = ocrPdfService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return ocrPdfService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

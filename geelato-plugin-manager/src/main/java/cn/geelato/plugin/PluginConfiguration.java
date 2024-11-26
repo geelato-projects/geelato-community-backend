@@ -23,7 +23,7 @@ public class PluginConfiguration {
     @Bean
     public SpringPluginManager pluginManager() {
         SpringPluginManager spm=new SpringPluginManager(
-                Paths.get("D:\\geelato-enterprise\\plugins\\")
+                Paths.get("D:\\geelato\\geelato-enterprise\\plugins\\")
         );
         spm.loadPlugins();
         spm.startPlugins();

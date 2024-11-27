@@ -57,12 +57,14 @@ public class OcrPdfService extends BaseService {
      * @param model OCR PDF模型对象
      * @return 创建后的OCR PDF模型对象
      */
-    public OcrPdf createModel(OcrPdf model) {
+    public OcrPdf createModel(OcrPdf model, Boolean hasMeta) {
         // 创建自己
         OcrPdf op = super.createModel(model);
         // 创建子表
-        op.setMetas(model.getMetas());
-        createOcrPdfMeta(op);
+        if (hasMeta != null && hasMeta.booleanValue()) {
+            op.setMetas(model.getMetas());
+            createOcrPdfMeta(op);
+        }
 
         return op;
     }
@@ -74,14 +76,17 @@ public class OcrPdfService extends BaseService {
      * @param model OCR PDF模型对象
      * @return 更新后的OCR PDF模型对象
      */
-    public OcrPdf updateModel(OcrPdf model) {
+    public OcrPdf updateModel(OcrPdf model, Boolean hasMeta) {
         // 更新自己
         OcrPdf op = super.updateModel(model);
-        // 删除子表
-        ocrPdfMetaService.isDeleteModelByPdfId(model.getId());
         // 更新子表
-        op.setMetas(model.getMetas());
-        createOcrPdfMeta(op);
+        if (hasMeta != null && hasMeta.booleanValue()) {
+            // 删除子表
+            ocrPdfMetaService.isDeleteModelByPdfId(model.getId());
+            // 更新子表
+            op.setMetas(model.getMetas());
+            createOcrPdfMeta(op);
+        }
 
         return op;
     }

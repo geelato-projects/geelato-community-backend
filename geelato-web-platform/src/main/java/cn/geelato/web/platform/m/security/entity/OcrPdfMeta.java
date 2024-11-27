@@ -18,14 +18,12 @@ public class OcrPdfMeta extends BaseEntity {
     @Title(title = "所属PDF")
     @Col(name = "pdf_id")
     private String pdfId;
-    @Title(title = "标题")
-    private String title;
     @Title(title = "名称")
     private String name;
     @Title(title = "类型")
     private String type;
     @Title(title = "内容")
-    private String content;
+    private String rule;
     @Title(title = "位置")
     private String position;
     @Title(title = "描述")

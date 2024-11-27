@@ -47,6 +47,5 @@
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-utils</artifactId>
     </dependency>
-
   </dependencies>
 </project>

@@ -5,8 +5,12 @@ import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.ocr.OCRService;
 import cn.geelato.plugin.ocr.PDFAnnotationMeta;
 import cn.geelato.plugin.ocr.PluginInfo;
+import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.base.entity.Attach;
+import cn.geelato.web.platform.m.base.service.AttachService;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +23,8 @@ import java.util.List;
 @ApiRestController(value = "/ocr")
 @Slf4j
 public class OCRController extends BaseController {
-
+    @Resource
+    private AttachService attachService;
     PluginBeanProvider pluginBeanProvider;
 
     @Autowired
@@ -28,9 +33,10 @@ public class OCRController extends BaseController {
     }
     @RequestMapping(value = "/pdf/meta/{fileId}", method = RequestMethod.GET)
     public ApiResult<List<PDFAnnotationMeta>> meta(@PathVariable String fileId){
+        Attach attach = attachService.getModel(fileId);
+        File file = FileUtils.pathToFile(attach.getPath());
         OCRService ocrService= pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
-        String filePath="C:\\Users\\39139\\Desktop\\8810980387.pdf";
-        List<PDFAnnotationMeta> pdfAnnotationMetaList=ocrService.resolvePDFAnnotationMeta(new File(filePath));
+        List<PDFAnnotationMeta> pdfAnnotationMetaList=ocrService.resolvePDFAnnotationMeta(file);
         return ApiResult.success(pdfAnnotationMetaList);
     }
 }

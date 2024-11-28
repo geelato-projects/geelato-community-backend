@@ -4,6 +4,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.ocr.OCRService;
 import cn.geelato.plugin.ocr.PDFAnnotationMeta;
+import cn.geelato.plugin.ocr.PDFResolveData;
 import cn.geelato.plugin.ocr.PluginInfo;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
@@ -38,5 +39,16 @@ public class OCRController extends BaseController {
         OCRService ocrService= pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
         List<PDFAnnotationMeta> pdfAnnotationMetaList=ocrService.resolvePDFAnnotationMeta(file);
         return ApiResult.success(pdfAnnotationMetaList);
+    }
+
+    @RequestMapping(value = "/pdf/resolve", method = RequestMethod.GET)
+    public ApiResult<PDFResolveData> meta(String fileId, String templateId){
+        Attach file = attachService.getModel(fileId);
+        Attach template = attachService.getModel(templateId);
+        File pdfFile = FileUtils.pathToFile(file.getPath());
+        File templateFile = FileUtils.pathToFile(template.getPath());
+        OCRService ocrService= pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
+        PDFResolveData pdfResolveData= ocrService.resolvePDFFile(templateFile,pdfFile);
+        return ApiResult.success(pdfResolveData);
     }
 }

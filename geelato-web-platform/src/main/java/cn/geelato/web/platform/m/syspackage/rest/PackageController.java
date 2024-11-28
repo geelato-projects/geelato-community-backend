@@ -519,7 +519,7 @@ public class PackageController extends BaseController {
         String packageSuffix = ".zgdp";
         String appPackageName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String appPackageFullName = (Strings.isNotBlank(appVersion.getVersion()) ? appVersion.getVersion() : appPackageName) + packageSuffix;
-        String targetZipPath = packageConfigurationProperties.getPath() + appPackageFullName;
+        String targetZipPath;
         targetZipPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), SessionCtx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
         ZipUtils.compressDirectory(sourcePackageFolder, targetZipPath);
         File file = new File(targetZipPath);
@@ -552,7 +552,7 @@ public class PackageController extends BaseController {
             Object appMetaData = appMeta.getMetaData();
             EntityMeta entityMeta = metaManager.getByEntityName(appMetaName);
             String tableName = entityMeta.getTableName();
-            Boolean increment = incrementMetas.contains(tableName);
+            boolean increment = incrementMetas.contains(tableName);
             List<String> ids = null;
             if (increment) {
                 ids = incrementMetaIds.get(tableName);
@@ -561,7 +561,7 @@ public class PackageController extends BaseController {
             for (int i = 0; i < jsonArray.size(); i++) {
                 JSONObject jo = jsonArray.getJSONObject(i);
                 Map<String, Object> columnMap = new HashMap<>();
-                Boolean upgradeToTarget = true;
+                boolean upgradeToTarget = true;
                 for (String key : jo.keySet()) {
                     FieldMeta fieldMeta = entityMeta.getFieldMetaByColumn(key);
                     if ("id".equals(key)) {

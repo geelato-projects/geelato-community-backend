@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.security.entity;
+package cn.geelato.web.platform.m.ocr.entity;
 
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;

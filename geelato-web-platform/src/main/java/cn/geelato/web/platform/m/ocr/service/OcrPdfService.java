@@ -1,8 +1,8 @@
-package cn.geelato.web.platform.m.security.service;
+package cn.geelato.web.platform.m.ocr.service;
 
 import cn.geelato.web.platform.m.base.service.BaseService;
-import cn.geelato.web.platform.m.security.entity.OcrPdf;
-import cn.geelato.web.platform.m.security.entity.OcrPdfMeta;
+import cn.geelato.web.platform.m.ocr.entity.OcrPdf;
+import cn.geelato.web.platform.m.ocr.entity.OcrPdfMeta;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;

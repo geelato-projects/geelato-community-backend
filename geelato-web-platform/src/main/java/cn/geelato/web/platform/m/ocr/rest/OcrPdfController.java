@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.security.rest;
+package cn.geelato.web.platform.m.ocr.rest;
 
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
@@ -8,15 +8,10 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.plugin.PluginBeanProvider;
-import cn.geelato.plugin.ocr.OCRService;
-import cn.geelato.plugin.ocr.PDFAnnotationMeta;
-import cn.geelato.plugin.ocr.PluginInfo;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Base64Info;
-import cn.geelato.web.platform.m.security.entity.OcrPdf;
-import cn.geelato.web.platform.m.security.service.OcrPdfService;
-import com.alibaba.fastjson2.JSON;
+import cn.geelato.web.platform.m.ocr.entity.OcrPdf;
+import cn.geelato.web.platform.m.ocr.service.OcrPdfService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Base64;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @ApiRestController("ocr/pdf")
 @Slf4j
@@ -106,33 +96,6 @@ public class OcrPdfController extends BaseController {
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
-            return ApiResult.fail(e.getMessage());
-        }
-    }
-
-    @RequestMapping(value = "/analysis", method = RequestMethod.POST)
-    public ApiResult analysis(@RequestBody OcrPdf form) {
-        try {
-            if (Strings.isBlank(form.getTemplate())) {
-                throw new IllegalArgumentException("模板不能为空");
-            }
-            Base64Info bi = JSON.parseObject(form.getTemplate(), Base64Info.class);
-            if (bi != null && Strings.isNotBlank(bi.getName()) && Strings.isNotBlank(bi.getBase64())) {
-                byte[] decodedBytes = Base64.getDecoder().decode(bi.getBase64());
-                String fileExt = bi.getName().substring(bi.getName().lastIndexOf("."));
-                File tempFile = File.createTempFile("temp_base64_ocrpdf_analysis" + UUID.randomUUID(), fileExt);
-                tempFile.deleteOnExit();
-                try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                    fos.write(decodedBytes);
-                }
-                OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
-                List<PDFAnnotationMeta> pdfAnnotationMetaList = ocrService.resolvePDFAnnotationMeta(tempFile);
-                return ApiResult.success(pdfAnnotationMetaList);
-            } else {
-                throw new IllegalArgumentException("模板格式错误");
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

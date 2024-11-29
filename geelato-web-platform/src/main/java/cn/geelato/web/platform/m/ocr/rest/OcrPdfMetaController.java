@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.security.rest;
+package cn.geelato.web.platform.m.ocr.rest;
 
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
@@ -8,8 +8,8 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.security.entity.OcrPdfMeta;
-import cn.geelato.web.platform.m.security.service.OcrPdfMetaService;
+import cn.geelato.web.platform.m.ocr.entity.OcrPdfMeta;
+import cn.geelato.web.platform.m.ocr.service.OcrPdfMetaService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;

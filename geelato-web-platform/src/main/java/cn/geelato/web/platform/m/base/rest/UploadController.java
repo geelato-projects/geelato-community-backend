@@ -48,7 +48,6 @@ public class UploadController extends BaseController {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }
-
         try {
             Attach attach = new Attach(file);
             attach.setObjectId(objectId);

@@ -7,14 +7,13 @@ import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.entity.Base64Info;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdf;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfContent;
 import cn.geelato.web.platform.m.ocr.enums.LocaleEnum;
 import cn.geelato.web.platform.m.ocr.service.OcrPdfService;
 import cn.geelato.web.platform.m.ocr.service.OcrService;
-import com.alibaba.fastjson2.JSON;
+import cn.geelato.web.platform.m.ocr.service.OcrUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -25,15 +24,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
 
 @ApiRestController(value = "/ocr")
 @Slf4j
@@ -87,20 +82,27 @@ public class OCRController extends BaseController {
     @RequestMapping(value = "/pdf/meta/resolve", method = RequestMethod.GET)
     public ApiResult<?> metaResolve(String fileId, String templateId) {
         try {
+            // 需要处理的文件
             Attach file = attachService.getModel(fileId);
+            File pdfFile = FileUtils.pathToFile(file.getPath());
+            if (pdfFile == null || !pdfFile.exists()) {
+                throw new IllegalArgumentException("file not found");
+            }
+            // 获取模板文件
             OcrPdf ocrPdf = ocrPdfService.getModel(templateId, true);
-            if (Strings.isBlank(ocrPdf.getTemplate())) {
+            if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate())) {
                 throw new IllegalArgumentException("模板不能为空");
             }
-            File pdfFile = FileUtils.pathToFile(file.getPath());
-            File tempFile = this.getTempFile(ocrPdf.getTemplate());
+            File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
+            // 获取OCR服务，解析PDF文件
             OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
             List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(tempFile, pdfFile);
             if (pdfAnnotationPickContentList == null || pdfAnnotationPickContentList.size() == 0) {
                 return ApiResult.success(pdfAnnotationPickContentList);
             }
+            // 解析数据处理
             List<OcrPdfContent> ocrPdfContentList = oService.formatContent(pdfAnnotationPickContentList, ocrPdf.getMetas());
-            return ApiResult.success(pdfAnnotationPickContentList);
+            return ApiResult.success(ocrPdfContentList);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
@@ -119,9 +121,9 @@ public class OCRController extends BaseController {
     public ApiResult analysis(@RequestBody OcrPdf form) {
         try {
             if (Strings.isBlank(form.getTemplate())) {
-                throw new IllegalArgumentException("模板不能为空");
+                throw new IllegalArgumentException("pdf template is blank");
             }
-            File tempFile = getTempFile(form.getTemplate());
+            File tempFile = OcrUtils.getTempFile(form.getTemplate());
             OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
             List<PDFAnnotationMeta> pdfAnnotationMetaList = ocrService.resolvePDFAnnotationMeta(tempFile);
             return ApiResult.success(pdfAnnotationMetaList);
@@ -143,46 +145,23 @@ public class OCRController extends BaseController {
     public ApiResult<?> validateTime(String format, String timeZone, String locale) {
         try {
             if (Strings.isBlank(format)) {
-                throw new IllegalArgumentException("时间格式不能为空");
+                throw new IllegalArgumentException("time format cannot be empty");
             }
-            if (format.indexOf("zzz") != -1 && Strings.isBlank(timeZone)) {
-                throw new IllegalArgumentException("时区不能为空");
+            if (format.indexOf(OcrUtils.TIME_ZONE_SIGN) != -1 && Strings.isBlank(timeZone)) {
+                throw new IllegalArgumentException("time zone cannot be empty");
             }
+            // 获取默认语言环境
             Locale localeObj = LocaleEnum.getDefaultLocale(locale);
-            DateTimeFormatter utcFormatter = DateTimeFormatter.ofPattern(format, localeObj);
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern(format, localeObj);
+            // 获取当前时间
             ZonedDateTime nowTime = ZonedDateTime.now();
-            if (format.indexOf("zzz") != -1 && Strings.isNotBlank(timeZone)) {
+            if (format.indexOf(OcrUtils.TIME_ZONE_SIGN) != -1 && Strings.isNotBlank(timeZone)) {
                 nowTime = ZonedDateTime.now(ZoneId.of(timeZone));
             }
-            return ApiResult.success(utcFormatter.format(nowTime));
+            return ApiResult.success(dtf.format(nowTime));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
-    }
-
-    /**
-     * 根据Base64编码的字符串生成临时文件
-     *
-     * @param base64 包含Base64编码信息的字符串
-     * @return 生成的临时文件对象
-     * @throws IOException      如果在文件操作过程中发生I/O错误，则抛出此异常
-     * @throws RuntimeException 如果提供的Base64信息格式错误，则抛出此异常，并附带“模板格式错误”的错误信息
-     */
-    private File getTempFile(String base64) throws IOException {
-        File tempFile = null;
-        Base64Info bi = JSON.parseObject(base64, Base64Info.class);
-        if (bi != null && Strings.isNotBlank(bi.getName()) && Strings.isNotBlank(bi.getBase64())) {
-            byte[] decodedBytes = Base64.getDecoder().decode(bi.getBase64());
-            String fileExt = bi.getName().substring(bi.getName().lastIndexOf("."));
-            tempFile = File.createTempFile("temp_base64_ocrpdf_analysis" + UUID.randomUUID(), fileExt);
-            tempFile.deleteOnExit();
-            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                fos.write(decodedBytes);
-            }
-        } else {
-            throw new RuntimeException("模板格式错误");
-        }
-        return tempFile;
     }
 }

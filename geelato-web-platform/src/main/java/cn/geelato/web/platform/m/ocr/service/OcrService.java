@@ -15,20 +15,15 @@ import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfContent;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfMeta;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfMetaRule;
-import cn.geelato.web.platform.m.ocr.enums.LocaleEnum;
 import cn.geelato.web.platform.m.ocr.enums.MetaTypeEnum;
 import cn.geelato.web.platform.m.ocr.enums.RuleTypeEnum;
-import cn.geelato.web.platform.m.ocr.enums.TimeUnitEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Component
 @Slf4j
@@ -43,7 +38,7 @@ public class OcrService extends BaseService {
         Map<String, OcrPdfMeta> pmMap = OcrPdfMeta.toMap(ocrPdfMetas);
         for (OcrPdfContent pc : pcList) {
             // pdf,word 去读会自动带上换行符，这里去掉
-            String content = removeLf(pc.getContent());
+            String content = OcrUtils.removeLf(pc.getContent());
             // 如果没有配置规则 则直接返回内容
             if (!pmMap.containsKey(pc.getName())) {
                 pc.setResult(content);
@@ -74,12 +69,7 @@ public class OcrService extends BaseService {
                         }
                     } else if (RuleTypeEnum.EXTRACT.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule())) {
-                            Matcher matcher = Pattern.compile(rule.getRule()).matcher(content);
-                            StringBuilder result = new StringBuilder();
-                            while (matcher.find()) {
-                                result.append(matcher.group());
-                            }
-                            content = result.toString();
+                            content = OcrUtils.extract(content, rule.getRule());
                         } else {
                             throw new RuntimeException("[Extract] rule is empty");
                         }
@@ -121,8 +111,8 @@ public class OcrService extends BaseService {
                         }
                     } else if (RuleTypeEnum.TIMECONVERSION.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal()) && Strings.isNotBlank(rule.getLocale())) {
-                            if (rule.getRule().indexOf("zzz") != -1 && Strings.isNotBlank(rule.getTimeZone())) {
-                                content = convertTime(content, rule.getRule(), rule.getGoal(), rule.getLocale(), rule.getTimeZone());
+                            if (rule.getRule().indexOf(OcrUtils.TIME_ZONE_SIGN) != -1 && Strings.isNotBlank(rule.getTimeZone())) {
+                                content = OcrUtils.convertTime(content, rule.getRule(), rule.getGoal(), rule.getLocale(), rule.getTimeZone());
                             } else {
                                 throw new RuntimeException("[TimeConversion] timeZone is empty");
                             }
@@ -131,7 +121,7 @@ public class OcrService extends BaseService {
                         }
                     } else if (RuleTypeEnum.TIMECHANGE.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal()) && Strings.isNotBlank(rule.getExtra())) {
-                            content = calculateTime(content, rule.getRule(), rule.getGoal(), rule.getExtra());
+                            content = OcrUtils.calculateTime(content, rule.getRule(), rule.getGoal(), rule.getExtra());
                         } else {
                             throw new RuntimeException("[TimeChange] rule or goal or extra is empty");
                         }
@@ -179,81 +169,6 @@ public class OcrService extends BaseService {
             }
         }
         return result;
-    }
-
-    /**
-     * 移除字符串末尾的换行符（包括"\r\n"、"\n"或"\r"）
-     *
-     * @param str 待处理的字符串
-     * @return 移除换行符后的字符串
-     */
-    private String removeLf(String str) {
-        if (str != null) {
-            if (str.endsWith("\r\n")) {
-                str = str.substring(0, str.length() - 2);
-            } else if (str.endsWith("\n")) {
-                str = str.substring(0, str.length() - 1);
-            } else if (str.endsWith("\r")) {
-                str = str.substring(0, str.length() - 1);
-            }
-        }
-
-        return str;
-    }
-
-    /**
-     * 将指定格式的时间字符串转换为另一种格式的时间字符串
-     *
-     * @param time     待转换的时间字符串
-     * @param parse    原始时间字符串的格式
-     * @param format   目标时间字符串的格式
-     * @param timeZone 时间时区
-     * @param locale   地区设置
-     * @return 转换后的时间字符串
-     * @throws ParseException 如果时间字符串的格式与指定的格式不匹配，则抛出此异常
-     */
-    private String convertTime(String time, String parse, String format, String timeZone, String locale) throws ParseException {
-        Date date = convertTime(time, parse, timeZone, locale);
-        return new SimpleDateFormat(format).format(date);
-    }
-
-    /**
-     * 将指定格式的字符串转换为Date对象
-     *
-     * @param time     待转换的时间字符串
-     * @param parse    时间字符串的格式
-     * @param timeZone 时间时区
-     * @param locale   地区设置
-     * @return 转换后的Date对象
-     * @throws ParseException 如果时间字符串的格式与指定的格式不匹配，则抛出此异常
-     */
-    private Date convertTime(String time, String parse, String timeZone, String locale) throws ParseException {
-        TimeZone tz = TimeZone.getTimeZone(timeZone);
-        Locale le = LocaleEnum.getDefaultLocale(locale);
-        SimpleDateFormat sdf = new SimpleDateFormat(parse, le);
-        sdf.setTimeZone(tz);
-        return sdf.parse(time);
-    }
-
-    /**
-     * 根据给定的时间、格式、数量和时间单位计算新的时间
-     *
-     * @param time   原始时间字符串
-     * @param format 时间格式
-     * @param amount 增减的时间数量
-     * @param unit   时间单位
-     * @return 计算后的时间字符串
-     * @throws ParseException 如果解析时间字符串时发生错误，则抛出此异常
-     */
-    private String calculateTime(String time, String format, String amount, String unit) throws ParseException {
-        Date date = new SimpleDateFormat(format).parse(time);
-        Calendar calendar = Calendar.getInstance();
-        int unitValue = TimeUnitEnum.getValueByName(unit);
-        calendar.setTime(date);
-        if (unitValue > -1 && amount.matches("^-?\\d+$")) {
-            calendar.add(unitValue, Integer.parseInt(amount));
-        }
-        return new SimpleDateFormat(format).format(calendar.getTime());
     }
 
     /**
@@ -307,7 +222,7 @@ public class OcrService extends BaseService {
      * @return 如果找到匹配的字典项，则返回其字典项编码列表，以逗号分隔；否则返回null
      */
     private String calculateItemCodes(String itemNames, String dictCode) {
-        List<String> names = stringToList(itemNames, ",");
+        List<String> names = OcrUtils.stringToList(itemNames);
         if (names == null || names.size() == 0) {
             return null;
         }
@@ -388,7 +303,7 @@ public class OcrService extends BaseService {
             String[] arr = rule.split(":");
             if (arr.length == 2) {
                 tableName = arr[0];
-                columnNames = stringToList(arr[1], ",");
+                columnNames = OcrUtils.stringToListDr(arr[1]);
             }
         }
         if (Strings.isBlank(tableName) || columnNames == null || columnNames.size() == 0) {
@@ -435,28 +350,6 @@ public class OcrService extends BaseService {
             }
         }
         return columnMap;
-    }
-
-    /**
-     * 将以指定分隔符分隔的字符串转换为字符串列表
-     *
-     * @param arrString 待转换的字符串
-     * @param split     分隔符
-     * @return 转换后的字符串列表，如果输入字符串为空或分割后没有有效项，则返回空列表
-     */
-    private List<String> stringToList(String arrString, String split) {
-        List<String> list = new ArrayList<>();
-        if (arrString != null) {
-            String[] arr = arrString.split(split);
-            if (arr != null) {
-                for (String item : arr) {
-                    if (Strings.isNotBlank(item)) {
-                        list.add(item);
-                    }
-                }
-            }
-        }
-        return list;
     }
 }
 

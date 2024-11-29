@@ -51,7 +51,9 @@ public class OcrPdfContent {
         Map<String, Object> map = new HashMap<>();
         if (list != null && !list.isEmpty()) {
             for (OcrPdfContent pc : list) {
-                map.put(pc.getName(), pc.getResult() == null ? pc.getContent() : pc.getResult());
+                if (Strings.isNotBlank(pc.getName()) && !map.containsKey(pc.getName())) {
+                    map.put(pc.getName(), pc.getResult() == null ? pc.getContent() : pc.getResult());
+                }
             }
         }
         return map;

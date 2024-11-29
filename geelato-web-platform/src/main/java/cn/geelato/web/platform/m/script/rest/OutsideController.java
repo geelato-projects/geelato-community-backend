@@ -13,6 +13,7 @@ import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Source;
@@ -73,7 +74,7 @@ public class OutsideController extends BaseController {
                 Source source = Source.newBuilder("js", scriptContent, "graal.mjs").build();
                 Map result = context.eval(source).execute(JSON.parse(parameter)).as(Map.class);
                 // 记录日志
-                createApiLog("info", api.getAppId(), api.getCode(), parameter, null, null, null, JSONObject.toJSONString(result.get("result")));
+                createApiLogByLevel(api.getLogLevel(), "info", api.getAppId(), api.getCode(), parameter, null, null, null, JSONObject.toJSONString(result.get("result")));
                 // 返回结果
                 if (api.getResponseFormat() != null && "custom".equalsIgnoreCase(api.getResponseFormat())) {
                     return JSONObject.toJSONString(result.get("result"));
@@ -81,12 +82,18 @@ public class OutsideController extends BaseController {
                     return ApiResult.success(result.get("result"));
                 }
             } catch (Exception e) {
-                createApiLog("error", api.getAppId(), api.getCode(), parameter, null, null, null, e.getMessage());
+                createApiLogByLevel(api.getLogLevel(), "error", api.getAppId(), api.getCode(), parameter, null, null, null, e.getMessage());
                 log.error("script error:{}", e.getMessage());
                 return ApiResult.fail(e.getMessage());
             }
         } else {
             return ApiResult.fail("not found script");
+        }
+    }
+
+    private void createApiLogByLevel(String level, String dg, String appId, String code, String rp, String rb, String rh, String rc, String resp) {
+        if (Strings.isNotBlank(level) && level.indexOf("dg") != -1) {
+            createApiLog(dg, appId, code, rp, rb, rh, rc, resp);
         }
     }
 
@@ -112,7 +119,7 @@ public class OutsideController extends BaseController {
         gql.append("\"").append("requestHeaders").append("\":").append(JSON.toJSONString(rh)).append(",");
         gql.append("\"").append("requestCookies").append("\":").append(JSON.toJSONString(rc)).append(",");
         gql.append("\"").append("responseParams").append("\":").append(JSON.toJSONString(resp)).append(",");
-        gql.append("\"").append("debugGrade").append("\":").append(JSON.toJSONString(dg)).append(",");
+        gql.append("\"").append("logLevel").append("\":").append(JSON.toJSONString(dg)).append(",");
         gql.append("\"").append("appId").append("\":").append(JSON.toJSONString(appId)).append(",");
         gql.deleteCharAt(gql.length() - 1);
         gql.append("}}");

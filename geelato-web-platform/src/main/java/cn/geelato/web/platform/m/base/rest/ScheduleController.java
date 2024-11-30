@@ -49,7 +49,7 @@ public class ScheduleController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return scheduleService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -62,7 +62,7 @@ public class ScheduleController extends BaseController {
             List<Schedule> list = scheduleService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(list);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -73,7 +73,7 @@ public class ScheduleController extends BaseController {
             Schedule model = scheduleService.getModel(CLAZZ, id);
             return ApiResult.success(model);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -93,7 +93,7 @@ public class ScheduleController extends BaseController {
             }
             return ApiResult.success(result);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -106,7 +106,7 @@ public class ScheduleController extends BaseController {
             scheduleService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -122,7 +122,7 @@ public class ScheduleController extends BaseController {
             boolean isValid = scheduleService.validate("platform_schedule", form.getId(), params);
             return ApiResult.success(isValid);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -136,7 +136,7 @@ public class ScheduleController extends BaseController {
             Schedule form = scheduleService.updateModel(model);
             return ApiResult.success(form);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

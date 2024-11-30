@@ -65,7 +65,7 @@ public class DateTimeConverter implements Converter {
                     return value;
                 }
             } catch (Exception e) {
-                log.error(e.getMessage());
+                log.error(e.getMessage(), e);
             }
         }
         log.info("【！！！】未识别的日期类型，type:{} value:{}", type.toString(), value);

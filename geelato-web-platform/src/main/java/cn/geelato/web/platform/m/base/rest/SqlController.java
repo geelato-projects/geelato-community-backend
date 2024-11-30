@@ -60,7 +60,7 @@ public class SqlController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return sqlService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -73,7 +73,7 @@ public class SqlController extends BaseController {
             List<CustomSql> list = sqlService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(list);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -84,7 +84,7 @@ public class SqlController extends BaseController {
             CustomSql model = sqlService.getModel(CLAZZ, id);
             return ApiResult.success(model);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -101,7 +101,7 @@ public class SqlController extends BaseController {
             }
             return ApiResult.success(result);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -114,7 +114,7 @@ public class SqlController extends BaseController {
             sqlService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -130,7 +130,7 @@ public class SqlController extends BaseController {
             boolean isValid = sqlService.validate("platform_sql", form.getId(), params);
             return ApiResult.success(isValid);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -172,7 +172,7 @@ public class SqlController extends BaseController {
             }
             return ApiResult.success(customSqls);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

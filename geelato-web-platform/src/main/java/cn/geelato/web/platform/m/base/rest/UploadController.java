@@ -77,7 +77,7 @@ public class UploadController extends BaseController {
                 return ApiResult.success(attach1);
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -146,7 +146,7 @@ public class UploadController extends BaseController {
             oops.writeObject(params);
             return ApiResult.success(file.getName());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         } finally {
             if (oops != null) {
@@ -191,7 +191,7 @@ public class UploadController extends BaseController {
             bufferedWriter.write(JsonData);
             return ApiResult.success(file.getName());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         } finally {
             if (bufferedWriter != null) {
@@ -242,7 +242,7 @@ public class UploadController extends BaseController {
             }*/
             return uploadJson(JSON.toJSONString(columnMap), fileName, "");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -261,7 +261,7 @@ public class UploadController extends BaseController {
                 fieldName = String.join(",", fields);
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
 
         return fieldName;

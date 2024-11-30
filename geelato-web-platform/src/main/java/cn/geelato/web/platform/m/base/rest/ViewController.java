@@ -44,7 +44,7 @@ public class ViewController extends BaseController {
 
             return ApiPagedResult.success(new DataItems(pageQueryList, pageQueryList.size()), pageQueryRequest.getPageNum(), pageQueryRequest.getPageSize(), pageQueryList.size(), 999);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }

@@ -56,7 +56,7 @@ public class BarcodeController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return barcodeService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -68,7 +68,7 @@ public class BarcodeController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(barcodeService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -78,7 +78,7 @@ public class BarcodeController extends BaseController {
         try {
             return ApiResult.success(barcodeService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -94,7 +94,7 @@ public class BarcodeController extends BaseController {
                 return ApiResult.success(barcodeService.createModel(form));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -107,7 +107,7 @@ public class BarcodeController extends BaseController {
             barcodeService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -122,7 +122,7 @@ public class BarcodeController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(barcodeService.validate("platform_barcode", form.getId(), params));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -135,7 +135,7 @@ public class BarcodeController extends BaseController {
             Object obj = generateByType(type, text, barcode);
             return ApiResult.success(obj);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -147,7 +147,7 @@ public class BarcodeController extends BaseController {
             Object obj = generateByType(type, text, form);
             return ApiResult.success(obj);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -179,7 +179,7 @@ public class BarcodeController extends BaseController {
             }
             return ApiResult.success(fonts);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

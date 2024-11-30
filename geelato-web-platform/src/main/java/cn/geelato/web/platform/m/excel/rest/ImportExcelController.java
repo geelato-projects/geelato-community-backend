@@ -44,7 +44,7 @@ public class ImportExcelController extends BaseController {
         try {
             return ApiResult.success(exportTemplateService.getModel(ExportTemplate.class, templateId));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

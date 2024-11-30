@@ -61,7 +61,7 @@ public class DictItemController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return dictItemService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -73,7 +73,7 @@ public class DictItemController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(dictItemService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -83,7 +83,7 @@ public class DictItemController extends BaseController {
         try {
             return ApiResult.success(dictItemService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -98,7 +98,7 @@ public class DictItemController extends BaseController {
                 return ApiResult.success(dictItemService.createModel(form));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -109,7 +109,7 @@ public class DictItemController extends BaseController {
             dictItemService.batchCreateOrUpdate(dictId, parentId, forms);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -123,7 +123,7 @@ public class DictItemController extends BaseController {
             dictItemService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -145,7 +145,7 @@ public class DictItemController extends BaseController {
             }
             return ApiResult.success(buildTree(iResult));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -181,7 +181,7 @@ public class DictItemController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(dictService.validate("platform_dict_item", form.getId(), params, lowers));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -210,7 +210,7 @@ public class DictItemController extends BaseController {
             }
             return ApiResult.success(dict);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -238,7 +238,7 @@ public class DictItemController extends BaseController {
             }
             return ApiResult.success(tags);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

@@ -52,7 +52,7 @@ public class ExportTemplateController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return exportTemplateService.pageQueryModel("page_query_platform_export_template", params, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -64,7 +64,7 @@ public class ExportTemplateController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(exportTemplateService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -74,7 +74,7 @@ public class ExportTemplateController extends BaseController {
         try {
             return ApiResult.success(exportTemplateService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -91,7 +91,7 @@ public class ExportTemplateController extends BaseController {
             exportTemplateService.generateFile(form.getId(), "template");
             return ApiResult.success(form);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -105,7 +105,7 @@ public class ExportTemplateController extends BaseController {
             exportTemplateService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -116,7 +116,7 @@ public class ExportTemplateController extends BaseController {
             String fileType = (String) params.get("fileType");
             return exportTemplateService.generateFile(id, fileType);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

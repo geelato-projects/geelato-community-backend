@@ -34,7 +34,6 @@ public class ConfigController extends BaseController {
         if (!configMap.isEmpty()) {
             for (Map.Entry<String, SysConfig> entry : configMap.entrySet()) {
                 SysConfig config = entry.getValue();
-                System.out.println(JSON.toJSONString(config));
                 if (StringUtils.isEmpty(config.getTenantCode())) {
                     globalConfigMap.put(config.getConfigKey(), config.getConfigValue());
                     rtnConfigMap.put("platform", globalConfigMap);

@@ -35,7 +35,7 @@ public class AttachController extends BaseController {
         try {
             return ApiResult.success(attachService.getModel(id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -49,7 +49,7 @@ public class AttachController extends BaseController {
                 return ApiResult.fail("Params is null");
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -68,7 +68,7 @@ public class AttachController extends BaseController {
             }
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

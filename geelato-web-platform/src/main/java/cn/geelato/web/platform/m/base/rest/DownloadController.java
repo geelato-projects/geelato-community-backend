@@ -90,7 +90,7 @@ public class DownloadController extends BaseController {
             // 下载
             downloadService.downloadFile(file, name, isPreview, this.request, this.response, null);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -118,7 +118,7 @@ public class DownloadController extends BaseController {
             }
             return ApiResult.success(contentBuilder.toString());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         } finally {
             if (bufferedReader != null) {

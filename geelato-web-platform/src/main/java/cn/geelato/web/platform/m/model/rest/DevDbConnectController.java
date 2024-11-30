@@ -54,7 +54,7 @@ public class DevDbConnectController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return devDbConnectService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -66,7 +66,7 @@ public class DevDbConnectController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(devDbConnectService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -76,7 +76,7 @@ public class DevDbConnectController extends BaseController {
         try {
             return ApiResult.success(devDbConnectService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -93,7 +93,7 @@ public class DevDbConnectController extends BaseController {
                 return ApiResult.success(devDbConnectService.createModel(form));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -107,7 +107,7 @@ public class DevDbConnectController extends BaseController {
             devDbConnectService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -118,7 +118,7 @@ public class DevDbConnectController extends BaseController {
             Boolean isConnected = ConnectUtils.connectionTest(form);
             return ApiResult.success(isConnected);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -139,7 +139,7 @@ public class DevDbConnectController extends BaseController {
             devDbConnectService.batchCreate(appId, connectIds, userName, password);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

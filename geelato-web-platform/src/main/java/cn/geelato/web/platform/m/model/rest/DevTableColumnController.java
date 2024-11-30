@@ -64,7 +64,7 @@ public class DevTableColumnController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return devTableColumnService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -76,7 +76,7 @@ public class DevTableColumnController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(devTableColumnService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -86,7 +86,7 @@ public class DevTableColumnController extends BaseController {
         try {
             return ApiResult.success(devTableColumnService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -123,7 +123,7 @@ public class DevTableColumnController extends BaseController {
             }
             return ApiResult.success(resultMap);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -189,7 +189,7 @@ public class DevTableColumnController extends BaseController {
             }
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -208,7 +208,7 @@ public class DevTableColumnController extends BaseController {
             }
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -219,7 +219,7 @@ public class DevTableColumnController extends BaseController {
             List<ColumnMeta> defaultColumnMetaList = metaManager.getDefaultColumn();
             return ApiResult.success(defaultColumnMetaList);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -230,7 +230,7 @@ public class DevTableColumnController extends BaseController {
             List<ColumnSelectType> selectTypes = metaManager.getColumnSelectType();
             return ApiResult.success(selectTypes);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -246,7 +246,7 @@ public class DevTableColumnController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(devTableColumnService.validate("platform_dev_column", form.getId(), params));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

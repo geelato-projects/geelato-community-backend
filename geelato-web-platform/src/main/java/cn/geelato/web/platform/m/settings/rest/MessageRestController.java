@@ -39,7 +39,7 @@ public class MessageRestController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, new HashMap<>());
             return messageService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -51,7 +51,7 @@ public class MessageRestController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(messageService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -61,7 +61,7 @@ public class MessageRestController extends BaseController {
         try {
             return ApiResult.success(new Message[]{});
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

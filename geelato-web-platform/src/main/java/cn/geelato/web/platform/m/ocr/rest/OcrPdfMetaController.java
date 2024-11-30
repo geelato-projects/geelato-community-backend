@@ -40,7 +40,7 @@ public class OcrPdfMetaController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return ocrPdfMetaService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -52,7 +52,7 @@ public class OcrPdfMetaController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(ocrPdfMetaService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -62,7 +62,7 @@ public class OcrPdfMetaController extends BaseController {
         try {
             return ApiResult.success(ocrPdfMetaService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -77,7 +77,7 @@ public class OcrPdfMetaController extends BaseController {
             }
             return ApiResult.success(form);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -90,7 +90,7 @@ public class OcrPdfMetaController extends BaseController {
             ocrPdfMetaService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

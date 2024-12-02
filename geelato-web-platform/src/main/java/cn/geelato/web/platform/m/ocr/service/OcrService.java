@@ -37,109 +37,123 @@ public class OcrService extends BaseService {
         }
         Map<String, OcrPdfMeta> pmMap = OcrPdfMeta.toMap(ocrPdfMetas);
         for (OcrPdfContent pc : pcList) {
-            // pdf,word 去读会自动带上换行符，这里去掉
-            String content = OcrUtils.removeLf(pc.getContent());
             // 如果没有配置规则 则直接返回内容
             if (!pmMap.containsKey(pc.getName())) {
+                // pdf,word 去读会自动带上换行符，这里去掉
+                String content = OcrUtils.removeLf(pc.getContent());
                 pc.setResult(content);
                 continue;
             }
             // 如果有配置规则，则根据规则进行处理
             OcrPdfMeta pm = pmMap.get(pc.getName());
             List<OcrPdfMetaRule> rules = pm.toRules();
-            if (content != null && rules != null && !rules.isEmpty()) {
-                for (OcrPdfMetaRule rule : rules) {
-                    if (RuleTypeEnum.TRIM.name().equalsIgnoreCase(rule.getType())) {
-                        content = content.trim();
-                    } else if (RuleTypeEnum.UPPERCASE.name().equalsIgnoreCase(rule.getType())) {
-                        content = content.toUpperCase(Locale.ENGLISH);
-                    } else if (RuleTypeEnum.LOWERCASE.name().equalsIgnoreCase(rule.getType())) {
-                        content = content.toLowerCase(Locale.ENGLISH);
-                    } else if (RuleTypeEnum.DELETES.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule())) {
-                            content = content.replaceAll(rule.getRule(), "");
-                        } else {
-                            throw new RuntimeException("[Deletes] rule is empty");
-                        }
-                    } else if (RuleTypeEnum.REPLACE.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
-                            content = content.replaceAll(rule.getRule(), rule.getGoal());
-                        } else {
-                            throw new RuntimeException("[Replace] rule or goal is empty");
-                        }
-                    } else if (RuleTypeEnum.EXTRACT.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule())) {
-                            content = OcrUtils.extract(content, rule.getRule());
-                        } else {
-                            throw new RuntimeException("[Extract] rule is empty");
-                        }
-                    } else if (RuleTypeEnum.PREFIX.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule())) {
-                            content = String.format("%s%s", rule.getRule(), content);
-                        } else {
-                            throw new RuntimeException("[Prefix] rule is empty");
-                        }
-                    } else if (RuleTypeEnum.SUFFIX.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule())) {
-                            content = String.format("%s%s", content, rule.getRule());
-                        } else {
-                            throw new RuntimeException("[Suffix] rule is empty");
-                        }
-                    } else if (RuleTypeEnum.CHECKBOX.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule())) {
-                            content = calculateItemCodes(content, rule.getRule());
-                        } else {
-                            throw new RuntimeException("[Checkbox] rule is empty");
-                        }
-                    } else if (RuleTypeEnum.DICTIONARY.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule())) {
-                            content = calculateItemCode(content, rule.getRule());
-                        } else {
-                            throw new RuntimeException("[Checkbox] rule is empty");
-                        }
-                    } else if (RuleTypeEnum.QUERYGOAL.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
-                            content = calculateTables(content, rule.getRule(), rule.getGoal());
-                        } else {
-                            throw new RuntimeException("[QueryGoal] rule or goal is empty");
-                        }
-                    } else if (RuleTypeEnum.QUERYRULE.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
-                            content = calculateTables(content, rule.getRule(), rule.getGoal());
-                        } else {
-                            throw new RuntimeException("[QueryGoal] rule or goal is empty");
-                        }
-                    } else if (RuleTypeEnum.TIMECONVERSION.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal()) && Strings.isNotBlank(rule.getLocale())) {
-                            if (rule.getRule().indexOf(OcrUtils.TIME_ZONE_SIGN) != -1 && Strings.isNotBlank(rule.getTimeZone())) {
-                                content = OcrUtils.convertTime(content, rule.getRule(), rule.getGoal(), rule.getLocale(), rule.getTimeZone());
-                            } else {
-                                throw new RuntimeException("[TimeConversion] timeZone is empty");
-                            }
-                        } else {
-                            throw new RuntimeException("[TimeConversion] rule or goal or locale is empty");
-                        }
-                    } else if (RuleTypeEnum.TIMECHANGE.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal()) && Strings.isNotBlank(rule.getExtra())) {
-                            content = OcrUtils.calculateTime(content, rule.getRule(), rule.getGoal(), rule.getExtra());
-                        } else {
-                            throw new RuntimeException("[TimeChange] rule or goal or extra is empty");
-                        }
-                    } else if (RuleTypeEnum.EXPRESSION.name().equalsIgnoreCase(rule.getType())) {
-                        Map<String, Object> valueMap = OcrPdfContent.toMap(pcList);
-                        if (Strings.isNotBlank(rule.getRule())) {
-                            content = JsProvider.executeExpression(rule.getRule(), valueMap).toString();
-                        } else {
-                            throw new RuntimeException("[Expression] rule is empty");
-                        }
-                    }
-                }
-            }
+            // 数据处理
+            String content = handleRules(pc.getContent(), rules, pcList);
             // 数据类型处理
             pc.setResult(toFormat(content, pm.getType()));
         }
 
         return pcList;
+    }
+
+    /**
+     * 根据给定的规则和OCR PDF内容列表处理输入内容。
+     *
+     * @param content        待处理的内容字符串
+     * @param rules          处理规则列表
+     * @param ocrPdfContents OCR PDF内容列表
+     * @return 处理后的内容字符串
+     * @throws ParseException 如果解析规则时发生错误
+     */
+    public String handleRules(String content, List<OcrPdfMetaRule> rules, List<OcrPdfContent> ocrPdfContents) throws ParseException {
+        // pdf,word 去读会自动带上换行符，这里去掉
+        content = OcrUtils.removeLf(content);
+        // 规则处理
+        if (content != null && rules != null && !rules.isEmpty()) {
+            for (OcrPdfMetaRule rule : rules) {
+                if (RuleTypeEnum.TRIM.name().equalsIgnoreCase(rule.getType())) {
+                    content = content.trim();
+                } else if (RuleTypeEnum.UPPERCASE.name().equalsIgnoreCase(rule.getType())) {
+                    content = content.toUpperCase(Locale.ENGLISH);
+                } else if (RuleTypeEnum.LOWERCASE.name().equalsIgnoreCase(rule.getType())) {
+                    content = content.toLowerCase(Locale.ENGLISH);
+                } else if (RuleTypeEnum.DELETES.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule())) {
+                        content = content.replaceAll(rule.getRule(), "");
+                    } else {
+                        throw new RuntimeException("[Deletes] rule is empty");
+                    }
+                } else if (RuleTypeEnum.REPLACE.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
+                        content = content.replaceAll(rule.getRule(), rule.getGoal());
+                    } else {
+                        throw new RuntimeException("[Replace] rule or goal is empty");
+                    }
+                } else if (RuleTypeEnum.EXTRACT.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule())) {
+                        content = OcrUtils.extract(content, rule.getRule());
+                    } else {
+                        throw new RuntimeException("[Extract] rule is empty");
+                    }
+                } else if (RuleTypeEnum.PREFIX.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule())) {
+                        content = String.format("%s%s", rule.getRule(), content);
+                    } else {
+                        throw new RuntimeException("[Prefix] rule is empty");
+                    }
+                } else if (RuleTypeEnum.SUFFIX.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule())) {
+                        content = String.format("%s%s", content, rule.getRule());
+                    } else {
+                        throw new RuntimeException("[Suffix] rule is empty");
+                    }
+                } else if (RuleTypeEnum.CHECKBOX.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule())) {
+                        content = calculateItemCodes(content, rule.getRule());
+                    } else {
+                        throw new RuntimeException("[Checkbox] rule is empty");
+                    }
+                } else if (RuleTypeEnum.DICTIONARY.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule())) {
+                        content = calculateItemCode(content, rule.getRule());
+                    } else {
+                        throw new RuntimeException("[Checkbox] rule is empty");
+                    }
+                } else if (RuleTypeEnum.QUERYGOAL.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
+                        content = calculateTables(content, rule.getRule(), rule.getGoal());
+                    } else {
+                        throw new RuntimeException("[QueryGoal] rule or goal is empty");
+                    }
+                } else if (RuleTypeEnum.QUERYRULE.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
+                        content = calculateTables(content, rule.getRule(), rule.getGoal());
+                    } else {
+                        throw new RuntimeException("[QueryGoal] rule or goal is empty");
+                    }
+                } else if (RuleTypeEnum.TIMECONVERSION.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal()) && Strings.isNotBlank(rule.getLocale())) {
+                        content = OcrUtils.convertTime(content, rule.getRule(), rule.getGoal(), rule.getTimeZone(), rule.getLocale());
+                    } else {
+                        throw new RuntimeException("[TimeConversion] rule or goal or locale is empty");
+                    }
+                } else if (RuleTypeEnum.TIMECHANGE.name().equalsIgnoreCase(rule.getType())) {
+                    if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal()) && Strings.isNotBlank(rule.getExtra())) {
+                        content = OcrUtils.calculateTime(content, rule.getRule(), rule.getGoal(), rule.getExtra());
+                    } else {
+                        throw new RuntimeException("[TimeChange] rule or goal or extra is empty");
+                    }
+                } else if (RuleTypeEnum.EXPRESSION.name().equalsIgnoreCase(rule.getType())) {
+                    Map<String, Object> valueMap = OcrPdfContent.toMap(ocrPdfContents);
+                    if (Strings.isNotBlank(rule.getRule())) {
+                        content = JsProvider.executeExpression(rule.getRule(), valueMap).toString();
+                    } else {
+                        throw new RuntimeException("[Expression] rule is empty");
+                    }
+                }
+            }
+        }
+        return content;
     }
 
     /**

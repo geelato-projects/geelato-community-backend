@@ -10,10 +10,12 @@ import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdf;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfContent;
+import cn.geelato.web.platform.m.ocr.entity.OcrPdfMetaRule;
 import cn.geelato.web.platform.m.ocr.enums.LocaleEnum;
 import cn.geelato.web.platform.m.ocr.service.OcrPdfService;
 import cn.geelato.web.platform.m.ocr.service.OcrService;
 import cn.geelato.web.platform.m.ocr.service.OcrUtils;
+import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -24,11 +26,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.File;
+import java.text.ParseException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @ApiRestController(value = "/ocr")
 @Slf4j
@@ -107,6 +111,18 @@ public class OCRController extends BaseController {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
+    }
+
+    @RequestMapping(value = "/pdf/meta/test", method = RequestMethod.POST)
+    public ApiResult<?> ruleTest(@RequestBody Map<String, Object> data) throws ParseException {
+        String content = data.get("content") == null ? null : data.get("content").toString();
+        String ruleStr = data.get("rule") == null ? null : data.get("rule").toString();
+        String metaStr = data.get("metas") == null ? null : data.get("metas").toString();
+        List<OcrPdfMetaRule> rules = JSON.parseArray(ruleStr, OcrPdfMetaRule.class);
+        List<OcrPdfContent> metas = JSON.parseArray(metaStr, OcrPdfContent.class);
+
+        String result = oService.handleRules(content, rules, metas);
+        return ApiResult.success(result);
     }
 
 

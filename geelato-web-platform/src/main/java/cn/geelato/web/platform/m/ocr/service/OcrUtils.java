@@ -182,10 +182,15 @@ public class OcrUtils {
      * @throws ParseException 如果时间字符串的格式与指定的格式不匹配，则抛出此异常
      */
     public static Date convertTime(String time, String parse, String timeZone, String locale) throws ParseException {
-        TimeZone tz = TimeZone.getTimeZone(timeZone);
+        if (time.indexOf(OcrUtils.TIME_ZONE_SIGN) > -1 && Strings.isBlank(timeZone)) {
+            throw new ParseException("Time zone is not specified", 0);
+        }
         Locale le = LocaleEnum.getDefaultLocale(locale);
         SimpleDateFormat sdf = new SimpleDateFormat(parse, le);
-        sdf.setTimeZone(tz);
+        if (timeZone != null) {
+            TimeZone tz = TimeZone.getTimeZone(timeZone);
+            sdf.setTimeZone(tz);
+        }
         return sdf.parse(time);
     }
 

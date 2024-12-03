@@ -9,12 +9,14 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.plugin.ocr.PDFAnnotationPickContent;
+import cn.geelato.plugin.ocr.PDFResolveData;
 import cn.geelato.web.platform.m.base.entity.Dict;
 import cn.geelato.web.platform.m.base.entity.DictItem;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfContent;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfMeta;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfMetaRule;
+import cn.geelato.web.platform.m.ocr.entity.OcrPdfWhole;
 import cn.geelato.web.platform.m.ocr.enums.MetaTypeEnum;
 import cn.geelato.web.platform.m.ocr.enums.RuleTypeEnum;
 import lombok.extern.slf4j.Slf4j;
@@ -30,13 +32,44 @@ import java.util.*;
 public class OcrService extends BaseService {
     private final MetaManager metaManager = MetaManager.singleInstance();
 
+    /**
+     * 数据处理
+     *
+     * @param pdfResolveData PDF解析数据
+     * @param ocrPdfMetas    ocr元数据
+     * @return 处理后的数据
+     * @throws ParseException 如果解析规则时发生错误
+     */
+    public OcrPdfWhole formatContent(PDFResolveData pdfResolveData, List<OcrPdfMeta> ocrPdfMetas) throws ParseException {
+        OcrPdfWhole ocrPdfWhole = new OcrPdfWhole();
+        List<PDFAnnotationPickContent> pdfAnnotationPickContents = new ArrayList<>();
+        if (pdfResolveData == null) {
+            pdfAnnotationPickContents = pdfResolveData.getPdfAnnotationPickContentList();
+            ocrPdfWhole.setWholeContent(pdfResolveData.getWholeContent());
+        }
+        List<OcrPdfContent> ocrPdfContents = formatContent(pdfAnnotationPickContents, ocrPdfMetas);
+        ocrPdfWhole.setOcrPdfContent(ocrPdfContents);
+        return ocrPdfWhole;
+    }
+
+    /**
+     * 数据处理
+     *
+     * @param pdfAnnotationPickContents PDF解析数据
+     * @param ocrPdfMetas               ocr元数据
+     * @return 处理后的数据
+     * @throws ParseException 如果解析规则时发生错误
+     */
     public List<OcrPdfContent> formatContent(List<PDFAnnotationPickContent> pdfAnnotationPickContents, List<OcrPdfMeta> ocrPdfMetas) throws ParseException {
-        List<OcrPdfContent> pcList = OcrPdfContent.buildList(pdfAnnotationPickContents);
+        List<OcrPdfContent> ocrPdfContents = OcrPdfContent.buildList(pdfAnnotationPickContents);
+        if (ocrPdfContents == null || ocrPdfContents.isEmpty()) {
+            return ocrPdfContents;
+        }
         if (ocrPdfMetas == null || ocrPdfMetas.isEmpty()) {
-            return pcList;
+            return ocrPdfContents;
         }
         Map<String, OcrPdfMeta> pmMap = OcrPdfMeta.toMap(ocrPdfMetas);
-        for (OcrPdfContent pc : pcList) {
+        for (OcrPdfContent pc : ocrPdfContents) {
             // 如果没有配置规则 则直接返回内容
             if (!pmMap.containsKey(pc.getName())) {
                 // pdf,word 去读会自动带上换行符，这里去掉
@@ -48,12 +81,12 @@ public class OcrService extends BaseService {
             OcrPdfMeta pm = pmMap.get(pc.getName());
             List<OcrPdfMetaRule> rules = pm.toRules();
             // 数据处理
-            String content = handleRules(pc.getContent(), rules, pcList);
+            String content = handleRules(pc.getContent(), rules, ocrPdfContents);
             // 数据类型处理
             pc.setResult(toFormat(content, pm.getType()));
         }
 
-        return pcList;
+        return ocrPdfContents;
     }
 
     /**
@@ -195,7 +228,7 @@ public class OcrService extends BaseService {
         FilterGroup filter1 = new FilterGroup();
         filter1.addFilter("dictCode", FilterGroup.Operator.in, dictCode);
         filter1.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(DeleteStatusEnum.NO.getCode()));
-        List<Dict> dicts = dao.queryList(Dict.class, filter1, "updatedAt desc");
+        List<Dict> dicts = dao.queryList(Dict.class, filter1, "update_at DESC");
         if (dicts != null && !dicts.isEmpty()) {
             FilterGroup filter2 = new FilterGroup();
             filter2.addFilter("dictId", FilterGroup.Operator.in, dicts.get(0).getId());

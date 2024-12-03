@@ -11,6 +11,7 @@ import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdf;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfContent;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfMetaRule;
+import cn.geelato.web.platform.m.ocr.entity.OcrPdfWhole;
 import cn.geelato.web.platform.m.ocr.enums.LocaleEnum;
 import cn.geelato.web.platform.m.ocr.service.OcrPdfService;
 import cn.geelato.web.platform.m.ocr.service.OcrService;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -37,11 +39,11 @@ import java.util.Map;
 @ApiRestController(value = "/ocr")
 @Slf4j
 public class OCRController extends BaseController {
+    private final OcrPdfService ocrPdfService;
+    private final OcrService oService;
     PluginBeanProvider pluginBeanProvider;
     @Resource
     private AttachService attachService;
-    private final OcrPdfService ocrPdfService;
-    private final OcrService oService;
 
     @Autowired
     public OCRController(PluginBeanProvider pluginBeanProvider, OcrPdfService ocrPdfService, OcrService oService) {
@@ -59,7 +61,7 @@ public class OCRController extends BaseController {
         return ApiResult.success(pdfAnnotationMetaList);
     }
 
-    @RequestMapping(value = "/pdf/resolve", method = RequestMethod.GET)
+    @RequestMapping(value = "/pdf/resolve0", method = RequestMethod.GET)
     public ApiResult<?> meta(String fileId, String templateId, boolean wholeContent) {
         Attach file = attachService.getModel(fileId);
         Attach template = attachService.getModel(templateId);
@@ -78,38 +80,36 @@ public class OCRController extends BaseController {
     /**
      * 解析PDF文件的元数据
      *
-     * @param fileId     PDF文件的附件id
-     * @param templateId PDF模板id
+     * @param fileId       PDF文件的附件id
+     * @param templateId   PDF模板id
+     * @param wholeContent 是否返回整个PDF文件的内容
      * @return ApiResult<?> 如果解析成功，则返回包含成功信息的ApiResult对象；如果解析失败，则返回包含错误信息的ApiResult对象
      * @throws Exception 当发生异常时抛出
      */
-    @RequestMapping(value = "/pdf/meta/resolve", method = RequestMethod.GET)
-    public ApiResult<?> metaResolve(String fileId, String templateId) {
-        try {
-            // 需要处理的文件
-            Attach file = attachService.getModel(fileId);
-            File pdfFile = FileUtils.pathToFile(file.getPath());
-            if (pdfFile == null || !pdfFile.exists()) {
-                throw new IllegalArgumentException("file not found");
-            }
-            // 获取模板文件
-            OcrPdf ocrPdf = ocrPdfService.getModel(templateId, true);
-            if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate())) {
-                throw new IllegalArgumentException("模板不能为空");
-            }
-            File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
-            // 获取OCR服务，解析PDF文件
-            OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
+    @RequestMapping(value = "/pdf/resolve", method = RequestMethod.GET)
+    public ApiResult<?> metaResolve(String fileId, String templateId, boolean wholeContent) throws IOException, ParseException {
+        // 需要处理的文件
+        Attach file = attachService.getModel(fileId);
+        File pdfFile = FileUtils.pathToFile(file.getPath());
+        if (pdfFile == null || !pdfFile.exists()) {
+            throw new IllegalArgumentException("file not found");
+        }
+        // 获取模板文件
+        OcrPdf ocrPdf = ocrPdfService.getModel(templateId, true);
+        if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate())) {
+            throw new IllegalArgumentException("模板不能为空");
+        }
+        File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
+        // 获取OCR服务，解析PDF文件
+        OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
+        if (wholeContent) {
+            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(tempFile, pdfFile);
+            OcrPdfWhole ocrPdfWhole = oService.formatContent(pdfResolveData, ocrPdf.getMetas());
+            return ApiResult.success(ocrPdfWhole);
+        } else {
             List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(tempFile, pdfFile);
-            if (pdfAnnotationPickContentList == null || pdfAnnotationPickContentList.size() == 0) {
-                return ApiResult.success(pdfAnnotationPickContentList);
-            }
-            // 解析数据处理
             List<OcrPdfContent> ocrPdfContentList = oService.formatContent(pdfAnnotationPickContentList, ocrPdf.getMetas());
             return ApiResult.success(ocrPdfContentList);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
         }
     }
 
@@ -134,19 +134,14 @@ public class OCRController extends BaseController {
      * @throws IllegalArgumentException 如果模板为空或格式错误，则抛出此异常
      */
     @RequestMapping(value = "/pdf/analysis", method = RequestMethod.POST)
-    public ApiResult analysis(@RequestBody OcrPdf form) {
-        try {
-            if (Strings.isBlank(form.getTemplate())) {
-                throw new IllegalArgumentException("pdf template is blank");
-            }
-            File tempFile = OcrUtils.getTempFile(form.getTemplate());
-            OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
-            List<PDFAnnotationMeta> pdfAnnotationMetaList = ocrService.resolvePDFAnnotationMeta(tempFile);
-            return ApiResult.success(pdfAnnotationMetaList);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
+    public ApiResult analysis(@RequestBody OcrPdf form) throws IOException {
+        if (Strings.isBlank(form.getTemplate())) {
+            throw new IllegalArgumentException("pdf template is blank");
         }
+        File tempFile = OcrUtils.getTempFile(form.getTemplate());
+        OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
+        List<PDFAnnotationMeta> pdfAnnotationMetaList = ocrService.resolvePDFAnnotationMeta(tempFile);
+        return ApiResult.success(pdfAnnotationMetaList);
     }
 
     /**
@@ -159,25 +154,20 @@ public class OCRController extends BaseController {
      */
     @RequestMapping(value = "/time/validate", method = RequestMethod.GET)
     public ApiResult<?> validateTime(String format, String timeZone, String locale) {
-        try {
-            if (Strings.isBlank(format)) {
-                throw new IllegalArgumentException("time format cannot be empty");
-            }
-            if (format.indexOf(OcrUtils.TIME_ZONE_SIGN) != -1 && Strings.isBlank(timeZone)) {
-                throw new IllegalArgumentException("time zone cannot be empty");
-            }
-            // 获取默认语言环境
-            Locale localeObj = LocaleEnum.getDefaultLocale(locale);
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern(format, localeObj);
-            // 获取当前时间
-            ZonedDateTime nowTime = ZonedDateTime.now();
-            if (format.indexOf(OcrUtils.TIME_ZONE_SIGN) != -1 && Strings.isNotBlank(timeZone)) {
-                nowTime = ZonedDateTime.now(ZoneId.of(timeZone));
-            }
-            return ApiResult.success(dtf.format(nowTime));
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
+        if (Strings.isBlank(format)) {
+            throw new IllegalArgumentException("time format cannot be empty");
         }
+        if (format.indexOf(OcrUtils.TIME_ZONE_SIGN) != -1 && Strings.isBlank(timeZone)) {
+            throw new IllegalArgumentException("time zone cannot be empty");
+        }
+        // 获取默认语言环境
+        Locale localeObj = LocaleEnum.getDefaultLocale(locale);
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern(format, localeObj);
+        // 获取当前时间
+        ZonedDateTime nowTime = ZonedDateTime.now();
+        if (format.indexOf(OcrUtils.TIME_ZONE_SIGN) != -1 && Strings.isNotBlank(timeZone)) {
+            nowTime = ZonedDateTime.now(ZoneId.of(timeZone));
+        }
+        return ApiResult.success(dtf.format(nowTime));
     }
 }

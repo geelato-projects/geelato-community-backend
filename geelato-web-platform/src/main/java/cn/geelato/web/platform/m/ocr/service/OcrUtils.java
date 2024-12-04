@@ -167,31 +167,33 @@ public class OcrUtils {
      * @throws ParseException 如果时间字符串的格式与指定的格式不匹配，则抛出此异常
      */
     public static String convertTime(String time, String parse, String format, String timeZone, String locale) throws ParseException {
-        Date date = convertTime(time, parse, timeZone, locale);
-        return new SimpleDateFormat(format).format(date);
+        SimpleDateFormat parseSDF = buildSimpleDateFormat(parse, timeZone, locale);
+        Date date = parseSDF.parse(time);
+        // 将Date对象转换为目标格式的字符串
+        SimpleDateFormat formatSDF = buildSimpleDateFormat(format, timeZone, locale);
+        return formatSDF.format(date);
     }
 
     /**
-     * 将指定格式的字符串转换为Date对象
+     * 构建一个SimpleDateFormat对象
      *
-     * @param time     待转换的时间字符串
-     * @param parse    时间字符串的格式
-     * @param timeZone 时间时区
-     * @param locale   地区设置
-     * @return 转换后的Date对象
-     * @throws ParseException 如果时间字符串的格式与指定的格式不匹配，则抛出此异常
+     * @param format   日期格式字符串
+     * @param timeZone 时区字符串
+     * @param locale   地域字符串
+     * @return 构建好的SimpleDateFormat对象
      */
-    public static Date convertTime(String time, String parse, String timeZone, String locale) throws ParseException {
-        if (time.indexOf(OcrUtils.TIME_ZONE_SIGN) > -1 && Strings.isBlank(timeZone)) {
+    private static SimpleDateFormat buildSimpleDateFormat(String format, String timeZone, String locale) throws ParseException {
+        if (format.indexOf(OcrUtils.TIME_ZONE_SIGN) > -1 && Strings.isBlank(timeZone)) {
             throw new ParseException("Time zone is not specified", 0);
         }
+        // 解析时间字符串为Date对象
         Locale le = LocaleEnum.getDefaultLocale(locale);
-        SimpleDateFormat sdf = new SimpleDateFormat(parse, le);
-        if (timeZone != null) {
+        SimpleDateFormat sdf = new SimpleDateFormat(format, le);
+        if (format.indexOf(OcrUtils.TIME_ZONE_SIGN) > -1 && Strings.isNotBlank(timeZone)) {
             TimeZone tz = TimeZone.getTimeZone(timeZone);
             sdf.setTimeZone(tz);
         }
-        return sdf.parse(time);
+        return sdf;
     }
 
 }

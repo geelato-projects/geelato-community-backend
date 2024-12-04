@@ -120,8 +120,15 @@ public class OCRController extends BaseController {
         String metaStr = data.get("metas") == null ? null : data.get("metas").toString();
         List<OcrPdfMetaRule> rules = JSON.parseArray(ruleStr, OcrPdfMetaRule.class);
         List<OcrPdfContent> metas = JSON.parseArray(metaStr, OcrPdfContent.class);
-
-        String result = oService.handleRules(content, rules, metas);
+        String result = null;
+        try {
+            // pdf,word 去读会自动带上换行符，这里去掉
+            content = OcrUtils.removeLf(content);
+            // 处理规则
+            result = oService.handleRules(content, rules, metas);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("解析内容【%s】出错，%s。", content, e.getMessage()), e);
+        }
         return ApiResult.success(result);
     }
 

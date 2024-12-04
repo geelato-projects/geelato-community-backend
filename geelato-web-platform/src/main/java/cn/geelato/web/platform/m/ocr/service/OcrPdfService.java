@@ -99,10 +99,12 @@ public class OcrPdfService extends BaseService {
     private void createOcrPdfMeta(OcrPdf model) {
         List<OcrPdfMeta> ocrPdfMetas = new ArrayList<>();
         if (model.getMetas() != null && !model.getMetas().isEmpty()) {
+            long seqNo = 0;
             for (OcrPdfMeta opm : model.getMetas()) {
                 opm.setPdfId(model.getId());
                 opm.setAppId(model.getAppId());
                 opm.setTenantCode(model.getTenantCode());
+                opm.setSeqNo(seqNo++);
                 ocrPdfMetas.add(ocrPdfMetaService.createModel(opm));
             }
         }

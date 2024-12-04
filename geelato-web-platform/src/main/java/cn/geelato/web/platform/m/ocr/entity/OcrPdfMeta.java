@@ -4,6 +4,7 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +18,7 @@ import java.util.Map;
 @Setter
 @Title(title = "PDF批准信息")
 @Entity(name = "platform_ocr_pdf_meta")
-public class OcrPdfMeta extends BaseEntity {
+public class OcrPdfMeta extends BaseSortableEntity {
     @Title(title = "应用ID")
     @Col(name = "app_id")
     private String appId;

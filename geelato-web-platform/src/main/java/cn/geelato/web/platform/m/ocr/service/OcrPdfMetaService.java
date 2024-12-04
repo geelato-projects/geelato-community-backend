@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.ocr.service;
 
 import cn.geelato.web.platform.m.base.service.BaseService;
+import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfMeta;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -12,7 +13,7 @@ import java.util.Map;
 
 @Component
 @Slf4j
-public class OcrPdfMetaService extends BaseService {
+public class OcrPdfMetaService extends BaseSortableService {
 
     /**
      * 根据PDF ID查询OCR PDF元数据模型列表

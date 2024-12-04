@@ -62,17 +62,26 @@ public class OCRController extends BaseController {
     }
 
     @RequestMapping(value = "/pdf/resolve0", method = RequestMethod.GET)
-    public ApiResult<?> meta(String fileId, String templateId, boolean wholeContent) {
+    public ApiResult<?> meta(String fileId, String templateId, boolean wholeContent) throws IOException {
+        // 需要处理的文件
         Attach file = attachService.getModel(fileId);
-        Attach template = attachService.getModel(templateId);
         File pdfFile = FileUtils.pathToFile(file.getPath());
-        File templateFile = FileUtils.pathToFile(template.getPath());
+        if (pdfFile == null || !pdfFile.exists()) {
+            throw new IllegalArgumentException("file not found");
+        }
+        // 获取模板文件
+        OcrPdf ocrPdf = ocrPdfService.getModel(templateId, true);
+        if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate())) {
+            throw new IllegalArgumentException("模板不能为空");
+        }
+        File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
+        // 获取OCR服务，解析PDF文件
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
         if (wholeContent) {
-            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(templateFile, pdfFile);
+            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(tempFile, pdfFile);
             return ApiResult.success(pdfResolveData);
         } else {
-            List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(templateFile, pdfFile);
+            List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(tempFile, pdfFile);
             return ApiResult.success(pdfAnnotationPickContentList);
         }
     }

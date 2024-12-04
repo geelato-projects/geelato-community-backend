@@ -48,7 +48,7 @@ public class OcrService extends BaseService {
             ocrPdfWhole.setWholeContent(pdfResolveData.getWholeContent());
         }
         List<OcrPdfContent> ocrPdfContents = formatContent(pdfAnnotationPickContents, ocrPdfMetas);
-        ocrPdfWhole.setOcrPdfContent(ocrPdfContents);
+        ocrPdfWhole.setOcrPdfContents(ocrPdfContents);
         return ocrPdfWhole;
     }
 
@@ -82,12 +82,13 @@ public class OcrService extends BaseService {
             List<OcrPdfMetaRule> rules = pm.toRules();
             // 数据处理
             try {
-                content = handleRules(pc.getContent(), rules, ocrPdfContents);
+                content = handleRules(content, rules, ocrPdfContents);
+                // 数据类型处理
+                pc.setResult(toFormat(content, pm.getType()));
             } catch (Exception e) {
-                throw new RuntimeException(String.format("解析 %s 的内容【%s】出错，%s。", pc.getName(), content, e.getMessage()), e);
+                // String errorMsg = String.format("解析 %s 的内容【%s】出错，%s。", pc.getName(), content, e.getMessage());
+                pc.setErrorMsg(e.getMessage());
             }
-            // 数据类型处理
-            pc.setResult(toFormat(content, pm.getType()));
         }
 
         return ocrPdfContents;

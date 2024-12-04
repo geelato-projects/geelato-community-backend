@@ -9,5 +9,5 @@ import java.util.List;
 @Setter
 public class OcrPdfWhole {
     private String wholeContent;
-    private List<OcrPdfContent> OcrPdfContent;
+    private List<OcrPdfContent> ocrPdfContents;
 }

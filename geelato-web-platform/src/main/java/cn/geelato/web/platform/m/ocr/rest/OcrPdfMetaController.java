@@ -94,4 +94,15 @@ public class OcrPdfMetaController extends BaseController {
             return ApiResult.fail(e.getMessage());
         }
     }
+
+    @RequestMapping(value = "/rule/{pdfId}", method = RequestMethod.POST)
+    public ApiResult updateMetaRules(@PathVariable(required = true) String pdfId, @RequestBody Map<String, Object> params) {
+        try {
+            ocrPdfMetaService.updateMetaRules(pdfId, params);
+            return ApiResult.successNoResult();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
 }

@@ -16,16 +16,18 @@ public class OcrPdfContent {
     private String name;
     private String content;
     private Object result;
+    private String errorMsg;
 
     public static List<OcrPdfContent> buildList(List<PDFAnnotationPickContent> pdfAnnotationPickContents) {
         List<OcrPdfContent> list = new ArrayList<>();
         if (pdfAnnotationPickContents != null && !pdfAnnotationPickContents.isEmpty()) {
             for (PDFAnnotationPickContent pdfAnnotationPickContent : pdfAnnotationPickContents) {
-                OcrPdfContent ocrPdfContent = new OcrPdfContent();
-                ocrPdfContent.setName(pdfAnnotationPickContent.getAnnotationAreaContent());
-                ocrPdfContent.setContent(pdfAnnotationPickContent.getInstanceAreaContent());
-                ocrPdfContent.setResult(null);
-                list.add(ocrPdfContent);
+                OcrPdfContent opc = new OcrPdfContent();
+                opc.setName(pdfAnnotationPickContent.getAnnotationAreaContent());
+                opc.setContent(pdfAnnotationPickContent.getInstanceAreaContent());
+                opc.setResult(null);
+                opc.setErrorMsg(null);
+                list.add(opc);
             }
         }
         return list;
@@ -39,6 +41,7 @@ public class OcrPdfContent {
                 opc.setName(apc.getAnnotationAreaContent());
                 opc.setContent(apc.getInstanceAreaContent());
                 opc.setResult(null);
+                opc.setErrorMsg(null);
                 if (Strings.isNotBlank(opc.getName()) && !map.containsKey(opc.getName())) {
                     map.put(opc.getName(), opc);
                 }

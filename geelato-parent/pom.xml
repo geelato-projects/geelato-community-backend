@@ -52,6 +52,7 @@
         <pf4j-update.version>2.3.0</pf4j-update.version>
         <geelato.schedule.version>0.0.1-SNAPSHOT</geelato.schedule.version>
         <geelato.auth.version>0.0.1-SNAPSHOT</geelato.auth.version>
+        <geelato.oss.version>0.0.1-SNAPSHOT</geelato.oss.version>
     </properties>
 
 
@@ -183,6 +184,13 @@
                 <groupId>cn.geelato</groupId>
                 <artifactId>geelato-schedule-starter</artifactId>
                 <version>${geelato.schedule.version}</version>
+            </dependency>
+
+            <!--enterprise module-->
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-web-oss</artifactId>
+                <version>${geelato.oss.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

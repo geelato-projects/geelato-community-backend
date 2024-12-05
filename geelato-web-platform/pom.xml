@@ -32,6 +32,11 @@
             <groupId>cn.geelato</groupId>
             <artifactId>plugin-all</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-web-oss</artifactId>
+        </dependency>
 <!--        <dependency>-->
 <!--            <groupId>cn.geelato</groupId>-->
 <!--            <artifactId>geelato-orm</artifactId>-->

@@ -70,8 +70,8 @@ public class OcrService extends BaseService {
         }
         Map<String, OcrPdfMeta> pmMap = OcrPdfMeta.toMap(ocrPdfMetas);
         for (OcrPdfContent pc : ocrPdfContents) {
-            // pdf,word 去读会自动带上换行符，这里去掉
-            String content = OcrUtils.removeLf(pc.getContent());
+            // 初始化规则
+            String content = initRules(pc.getContent());
             // 如果没有配置规则 则直接返回内容
             if (!pmMap.containsKey(pc.getName())) {
                 pc.setResult(content);
@@ -80,8 +80,8 @@ public class OcrService extends BaseService {
             // 如果有配置规则，则根据规则进行处理
             OcrPdfMeta pm = pmMap.get(pc.getName());
             List<OcrPdfMetaRule> rules = pm.toRules();
-            // 数据处理
             try {
+                // 数据处理
                 content = handleRules(content, rules, ocrPdfContents);
                 // 数据类型处理
                 pc.setResult(toFormat(content, pm.getType()));
@@ -92,6 +92,22 @@ public class OcrService extends BaseService {
         }
 
         return ocrPdfContents;
+    }
+
+    /**
+     * 初始化规则
+     *
+     * @param content 传入的内容
+     * @return 初始化后的内容
+     */
+    private String initRules(String content) {
+        // pdf,word 去读会自动带上换行符，这里去掉
+        content = OcrUtils.removeLf(content);
+        // 去掉前后空格
+        if (Strings.isNotBlank(content)) {
+            content = content.trim();
+        }
+        return content;
     }
 
     /**
@@ -106,6 +122,7 @@ public class OcrService extends BaseService {
         // 规则处理
         if (content != null && rules != null && !rules.isEmpty()) {
             for (OcrPdfMetaRule rule : rules) {
+                String ruleLabel = RuleTypeEnum.getLabelByValue(rule.getType());
                 try {
                     if (RuleTypeEnum.TRIM.name().equalsIgnoreCase(rule.getType())) {
                         content = content.trim();
@@ -188,7 +205,7 @@ public class OcrService extends BaseService {
                         }
                     }
                 } catch (Exception e) {
-                    throw new RuntimeException(String.format("[%s](%s)", rule.getType(), e.getMessage()), e);
+                    throw new RuntimeException(String.format("[%s](%s)", Strings.isNotBlank(ruleLabel) ? ruleLabel : rule.getType(), e.getMessage()), e);
                 }
             }
         }
@@ -210,7 +227,11 @@ public class OcrService extends BaseService {
             if (Strings.isBlank(str)) {
                 result = 0;
             } else if (str.indexOf(".") == -1) {
-                result = Long.parseLong(str);
+                if (Long.parseLong(str) < Integer.MAX_VALUE) {
+                    result = Integer.parseInt(str);
+                } else {
+                    result = Long.parseLong(str);
+                }
             } else {
                 result = new BigDecimal(str).doubleValue();
             }

@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.arco.tree;
+package cn.geelato.web.platform.m.arco.entity;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -14,6 +14,7 @@ public enum RuleTypeEnum {
     DELETES("删除字符", "删除字符串中‘正则表达式’匹配的字符。", false),
     REPLACE("替换字符", "将字符串中‘正则表达式’匹配的字符替换为指定字符。", false),
     EXTRACT("提取字符", "保留字符串中‘正则表达式’匹配的字符。", false),
+    CONSTANT("常量", "直接返回指定字符。", false),
     TIMECONVERSION("时间转换", "用指定的解析格式解析时间，再用输出格式转换时间。", false),
     TIMECHANGE("时间增减", "以目标时间增加或减少指定时间，返回计算结果。", false),
     PREFIX("添加前缀", "在字符串前面添加指定字符。", false),

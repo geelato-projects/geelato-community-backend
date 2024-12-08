@@ -148,6 +148,8 @@ public class OcrService extends BaseService {
                         } else {
                             throw new RuntimeException("Regular expression is empty");
                         }
+                    } else if (RuleTypeEnum.CONSTANT.name().equalsIgnoreCase(rule.getType())) {
+                        content = rule.getRule();
                     } else if (RuleTypeEnum.PREFIX.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule())) {
                             content = String.format("%s%s", rule.getRule(), content);

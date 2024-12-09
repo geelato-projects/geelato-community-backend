@@ -11,7 +11,6 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.model.service.DevTableForeignService;
-import cn.geelato.web.platform.m.security.entity.DataItems;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +47,7 @@ public class DevTableForeignController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult<DataItems> pageQuery() {
+    public ApiPagedResult<?> pageQuery() {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);

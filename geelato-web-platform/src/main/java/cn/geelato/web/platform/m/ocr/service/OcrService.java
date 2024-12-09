@@ -60,7 +60,7 @@ public class OcrService extends BaseService {
      * @return 处理后的数据
      * @throws ParseException 如果解析规则时发生错误
      */
-    public List<OcrPdfContent> formatContent(List<PDFAnnotationPickContent> pdfAnnotationPickContents, List<OcrPdfMeta> ocrPdfMetas) throws ParseException {
+    public List<OcrPdfContent> formatContent(List<PDFAnnotationPickContent> pdfAnnotationPickContents, List<OcrPdfMeta> ocrPdfMetas) {
         List<OcrPdfContent> ocrPdfContents = OcrPdfContent.buildList(pdfAnnotationPickContents);
         if (ocrPdfContents == null || ocrPdfContents.isEmpty()) {
             return ocrPdfContents;
@@ -69,20 +69,25 @@ public class OcrService extends BaseService {
             return ocrPdfContents;
         }
         Map<String, OcrPdfMeta> pmMap = OcrPdfMeta.toMap(ocrPdfMetas);
+        // 初始化规则
         for (OcrPdfContent pc : ocrPdfContents) {
-            // 初始化规则
             String content = initRules(pc.getContent());
+            pc.setResult(content);
+        }
+        Map<String, Object> opcMap = OcrPdfContent.toMap(ocrPdfContents);
+        // 如果有配置规则，则根据规则进行处理
+        for (OcrPdfContent pc : ocrPdfContents) {
             // 如果没有配置规则 则直接返回内容
             if (!pmMap.containsKey(pc.getName())) {
-                pc.setResult(content);
                 continue;
             }
             // 如果有配置规则，则根据规则进行处理
             OcrPdfMeta pm = pmMap.get(pc.getName());
             List<OcrPdfMetaRule> rules = pm.toRules();
             try {
+                String content = pc.getResult() == null ? pc.getContent() : pc.getResult().toString();
                 // 数据处理
-                content = handleRules(content, rules, ocrPdfContents);
+                content = handleRules(content, rules, opcMap);
                 // 数据类型处理
                 pc.setResult(toFormat(content, pm.getType()));
             } catch (Exception e) {
@@ -92,6 +97,35 @@ public class OcrService extends BaseService {
         }
 
         return ocrPdfContents;
+    }
+
+    /**
+     * 根据给定的内容、规则和OCR PDF内容列表，执行规则测试并返回处理后的内容。
+     *
+     * @param content        待处理的内容字符串。
+     * @param rules          规则列表，用于处理content。
+     * @param ocrPdfContents OCR PDF内容列表，用于初始化规则。
+     * @return 处理后的内容字符串。
+     * @throws RuntimeException 如果解析内容过程中出现错误，将抛出运行时异常。
+     */
+    public String ruleTest(String content, List<OcrPdfMetaRule> rules, List<OcrPdfContent> ocrPdfContents) {
+        try {
+            // 初始化规则
+            Map<String, Object> opcMap = new HashMap<>();
+            if (ocrPdfContents != null && !ocrPdfContents.isEmpty()) {
+                for (OcrPdfContent pc : ocrPdfContents) {
+                    String result = initRules(pc.getContent());
+                    pc.setResult(result);
+                }
+                opcMap = OcrPdfContent.toMap(ocrPdfContents);
+            }
+            // 数据处理
+            content = initRules(content);
+            content = handleRules(content, rules, opcMap);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("解析内容【%s】出错，%s。", content, e.getMessage()), e);
+        }
+        return content;
     }
 
     /**
@@ -113,17 +147,21 @@ public class OcrService extends BaseService {
     /**
      * 根据给定的规则和OCR PDF内容列表处理输入内容。
      *
-     * @param content        待处理的内容字符串
-     * @param rules          处理规则列表
-     * @param ocrPdfContents OCR PDF内容列表
+     * @param content 待处理的内容字符串
+     * @param rules   处理规则列表
+     * @param opcMap  OCR PDF内容列表
      * @return 处理后的内容字符串
      */
-    public String handleRules(String content, List<OcrPdfMetaRule> rules, List<OcrPdfContent> ocrPdfContents) {
+    public String handleRules(String content, List<OcrPdfMetaRule> rules, Map<String, Object> opcMap) {
         // 规则处理
         if (content != null && rules != null && !rules.isEmpty()) {
             for (OcrPdfMetaRule rule : rules) {
                 String ruleLabel = RuleTypeEnum.getLabelByValue(rule.getType());
                 try {
+                    // 循环处理中，如果内容为空，且规则的传入值不能为空，则跳过
+                    if (content == null && RuleTypeEnum.isNotNull(rule.getType())) {
+                        continue;
+                    }
                     if (RuleTypeEnum.TRIM.name().equalsIgnoreCase(rule.getType())) {
                         content = content.trim();
                     } else if (RuleTypeEnum.UPPERCASE.name().equalsIgnoreCase(rule.getType())) {
@@ -137,7 +175,7 @@ public class OcrService extends BaseService {
                             throw new RuntimeException("Regular expression is empty");
                         }
                     } else if (RuleTypeEnum.REPLACE.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
+                        if (Strings.isNotBlank(rule.getRule()) && rule.getGoal() != null) {
                             content = content.replaceAll(rule.getRule(), rule.getGoal());
                         } else {
                             throw new RuntimeException("Regular expression or replace is empty");
@@ -148,6 +186,8 @@ public class OcrService extends BaseService {
                         } else {
                             throw new RuntimeException("Regular expression is empty");
                         }
+                    } else if (RuleTypeEnum.CONSTANT.name().equalsIgnoreCase(rule.getType())) {
+                        content = rule.getRule();
                     } else if (RuleTypeEnum.PREFIX.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule())) {
                             content = String.format("%s%s", rule.getRule(), content);
@@ -197,9 +237,9 @@ public class OcrService extends BaseService {
                             throw new RuntimeException("Amount or unit or timeParse is empty");
                         }
                     } else if (RuleTypeEnum.EXPRESSION.name().equalsIgnoreCase(rule.getType())) {
-                        Map<String, Object> valueMap = OcrPdfContent.toMap(ocrPdfContents);
                         if (Strings.isNotBlank(rule.getRule())) {
-                            content = JsProvider.executeExpression(rule.getRule(), valueMap).toString();
+                            Object jsResult = JsProvider.executeExpression(rule.getRule(), opcMap);
+                            content = jsResult != null ? jsResult.toString() : null;
                         } else {
                             throw new RuntimeException("Javascript expression is empty");
                         }

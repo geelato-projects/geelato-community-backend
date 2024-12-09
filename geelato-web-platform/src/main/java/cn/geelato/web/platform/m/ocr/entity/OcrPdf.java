@@ -1,9 +1,6 @@
 package cn.geelato.web.platform.m.ocr.entity;
 
-import cn.geelato.core.meta.annotation.Col;
-import cn.geelato.core.meta.annotation.Entity;
-import cn.geelato.core.meta.annotation.Title;
-import cn.geelato.core.meta.annotation.Transient;
+import cn.geelato.core.meta.annotation.*;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import lombok.Getter;
@@ -25,8 +22,10 @@ public class OcrPdf extends BaseEntity implements EntityEnableAble {
     @Col(name = "group_code")
     private String groupCode;
     @Title(title = "内容")
+    @Ignore(type = {IgnoreType.PAGE_QUERY})
     private String content;
     @Title(title = "模板")
+    @Ignore(type = {IgnoreType.PAGE_QUERY})
     private String template;
     @Title(title = "描述")
     private String description;

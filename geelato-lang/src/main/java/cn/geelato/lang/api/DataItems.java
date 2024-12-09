@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.security.entity;
+package cn.geelato.lang.api;
 
 import lombok.Getter;
 import lombok.Setter;

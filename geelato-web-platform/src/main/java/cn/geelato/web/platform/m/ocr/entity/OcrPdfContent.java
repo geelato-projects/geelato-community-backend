@@ -55,7 +55,7 @@ public class OcrPdfContent {
         if (list != null && !list.isEmpty()) {
             for (OcrPdfContent pc : list) {
                 if (Strings.isNotBlank(pc.getName()) && !map.containsKey(pc.getName())) {
-                    map.put(pc.getName(), pc.getResult() == null ? pc.getContent() : pc.getResult());
+                    map.put(pc.getName(), pc.getResult());
                 }
             }
         }

@@ -10,6 +10,8 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.arco.entity.SelectOptionData;
+import cn.geelato.web.platform.m.arco.entity.SelectOptionGroup;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdf;
 import cn.geelato.web.platform.m.ocr.service.OcrPdfService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +23,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @ApiRestController("ocr/pdf")
 @Slf4j
@@ -98,5 +103,53 @@ public class OcrPdfController extends BaseController {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
+    }
+
+    @RequestMapping(value = "/select/group", method = RequestMethod.GET)
+    public ApiResult<?> querySelectOptions() {
+        String sql = "SELECT p2.id pid, p2.title, p1.id, p1.`name` FROM platform_ocr_pdf_meta p1 " +
+                "LEFT JOIN platform_ocr_pdf p2 ON p2.id = p1.pdf_id " +
+                "WHERE 1=1 " +
+                "AND p2.del_status = 0 AND p1.del_status = 0 " +
+                "AND p2.enable_status = 1 " +
+                "AND p2.title IS NOT NULL AND p2.title != '' " +
+                "AND p1.rule IS NOT NULL AND p1.rule != '' " +
+                "AND p1.`name` IS NOT NULL AND p1.`name` != '' " +
+                "ORDER BY p2.update_at DESC,p1.seq_no ASC;";
+        List<Map<String, Object>> list = dao.getJdbcTemplate().queryForList(sql);
+        if (list == null || list.isEmpty()) {
+            return ApiResult.successNoResult();
+        }
+        List<String> pIds = list.stream()
+                .map(map -> map.get("pid") == null ? null : map.get("pid").toString())
+                .filter(id -> Strings.isNotBlank(id))
+                .distinct()
+                .collect(Collectors.toList());
+        if (pIds.isEmpty()) {
+            return ApiResult.successNoResult();
+        }
+        List<SelectOptionGroup> groups = new ArrayList<>();
+        for (String pid : pIds) {
+            SelectOptionGroup group = new SelectOptionGroup();
+            group.setIsGroup(true);
+            List<SelectOptionData> options = new ArrayList<>();
+            for (Map<String, Object> map : list) {
+                if (pid.equals(map.get("pid"))) {
+                    String title = map.get("title") != null ? map.get("title").toString() : "";
+                    String id = map.get("id") != null ? map.get("id").toString() : "";
+                    String name = map.get("name") != null ? map.get("name").toString() : "";
+                    if (Strings.isNotBlank(title) && Strings.isNotBlank(id) && Strings.isNotBlank(name)) {
+                        SelectOptionData option = new SelectOptionData();
+                        group.setLabel(title);
+                        option.setValue(id);
+                        option.setLabel(name);
+                        options.add(option);
+                    }
+                }
+            }
+            group.setOptions(options.toArray(new SelectOptionData[0]));
+            groups.add(group);
+        }
+        return ApiResult.success(groups);
     }
 }

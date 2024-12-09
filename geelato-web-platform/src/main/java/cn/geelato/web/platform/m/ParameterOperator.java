@@ -106,7 +106,7 @@ public class ParameterOperator extends RequestOperator {
         queryRequest.setPageNum(current == null || Strings.isBlank(current.toString()) ? 1 : Integer.parseInt(current.toString()));
         Object pageSize = requestBodyMap.get("pageSize");
         queryRequest.setPageSize(pageSize == null || Strings.isBlank(pageSize.toString()) ? 10 : Integer.parseInt(pageSize.toString()));
-        String orderBy = requestBodyMap.get("orderBy") == null ? "" : requestBodyMap.get("orderBy").toString();
+        String orderBy = requestBodyMap.get("order") == null ? "" : requestBodyMap.get("order").toString();
         orderBy = orderBy.replaceAll("\\|", " ");
         queryRequest.setOrderBy(orderBy);
 

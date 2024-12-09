@@ -8,7 +8,7 @@ import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.web.platform.m.security.entity.DataItems;
+import cn.geelato.lang.api.DataItems;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import org.apache.logging.log4j.util.Strings;
@@ -75,12 +75,7 @@ public class BaseService {
         String orderBy = Strings.isNotBlank(request.getOrderBy()) ? request.getOrderBy() : BaseService.DEFAULT_ORDER_BY;
         request.setOrderBy(orderBy);
         // dao查询
-        List<T> pageQueryList = dao.pageQueryList(entity, params, request);
-        List<T> queryList = dao.queryList(entity, params, orderBy);
-        // 分页结果
-        long total = queryList != null ? queryList.size() : 0;
-        int dataSize = pageQueryList != null ? pageQueryList.size() : 0;
-        return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
+        return dao.pageQueryResult(entity, params, request);
     }
 
     /**
@@ -99,12 +94,7 @@ public class BaseService {
         dao.setDefaultFilter(true, filterGroup);
         String orderBy = Strings.isNotBlank(request.getOrderBy()) ? request.getOrderBy() : BaseService.DEFAULT_ORDER_BY;
         request.setOrderBy(orderBy);
-        List<T> pageQueryList = dao.pageQueryList(entity, filter, request);
-        List<T> queryList = dao.queryList(entity, filter, orderBy);
-        // 分页结果
-        long total = queryList != null ? queryList.size() : 0;
-        int dataSize = pageQueryList != null ? pageQueryList.size() : 0;
-        return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
+        return dao.pageQueryResult(entity, filter, request);
     }
 
     /**

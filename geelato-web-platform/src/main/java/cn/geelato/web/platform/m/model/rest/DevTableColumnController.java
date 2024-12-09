@@ -5,9 +5,9 @@ import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.column.ColumnSelectType;
+import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
@@ -18,7 +18,6 @@ import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import cn.geelato.web.platform.m.model.service.DevViewService;
-import cn.geelato.web.platform.m.security.entity.DataItems;
 import cn.geelato.web.platform.m.security.service.PermissionService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -58,7 +57,7 @@ public class DevTableColumnController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult<DataItems> pageQuery() {
+    public ApiPagedResult<?> pageQuery() {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);

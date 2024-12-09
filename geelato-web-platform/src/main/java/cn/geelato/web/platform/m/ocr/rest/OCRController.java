@@ -122,25 +122,23 @@ public class OCRController extends BaseController {
         }
     }
 
+    /**
+     * 测试PDF元数据规则接口
+     *
+     * @param data 包含请求数据的Map对象，其中包括"content"（内容字符串）、"rule"（规则字符串）和"metas"（元数据字符串）三个字段
+     * @return ApiResult对象，包含处理结果
+     * @throws ParseException 如果解析请求数据时出现异常，则抛出此异常
+     */
     @RequestMapping(value = "/pdf/meta/test", method = RequestMethod.POST)
-    public ApiResult<?> ruleTest(@RequestBody Map<String, Object> data) throws ParseException {
+    public ApiResult<?> ruleTest(@RequestBody Map<String, Object> data) {
         String content = data.get("content") == null ? null : data.get("content").toString();
         String ruleStr = data.get("rule") == null ? null : data.get("rule").toString();
         String metaStr = data.get("metas") == null ? null : data.get("metas").toString();
         List<OcrPdfMetaRule> rules = JSON.parseArray(ruleStr, OcrPdfMetaRule.class);
         List<OcrPdfContent> metas = JSON.parseArray(metaStr, OcrPdfContent.class);
-        String result = null;
-        try {
-            // pdf,word 去读会自动带上换行符，这里去掉
-            content = OcrUtils.removeLf(content);
-            // 处理规则
-            result = oService.handleRules(content, rules, metas);
-        } catch (Exception e) {
-            throw new RuntimeException(String.format("解析内容【%s】出错，%s。", content, e.getMessage()), e);
-        }
+        String result = oService.ruleTest(content, rules, metas);
         return ApiResult.success(result);
     }
-
 
     /**
      * 分析PDF文件

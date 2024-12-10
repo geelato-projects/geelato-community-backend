@@ -40,19 +40,16 @@ public class OpLogAOPConfig {
         MethodSignature methodSignature = (MethodSignature)proceedingJoinPoint.getSignature();
         Method method = methodSignature.getMethod();
         OpLog opLog=method.getAnnotation(OpLog.class);
-        Object ret= null;
+        Object ret;
         try {
             ret = proceedingJoinPoint.proceed();
-        } catch (Throwable e) {
-            e.printStackTrace();
+        } catch (Throwable ex) {
+            throw new AOPException(ex.getMessage());
         }
-        switch(opLog.type()){
-            case "save":
-                resolveSaveOpRecord(proceedingJoinPoint,ret);
-            default:
-                break;
+        if (opLog.type().equals("save")) {
+            resolveSaveOpRecord(proceedingJoinPoint, ret);
         }
-            return ret;
+        return ret;
     }
 
 
@@ -85,8 +82,8 @@ public class OpLogAOPConfig {
                     }
                     if(fieldName!=null&&fieldValue!=null){
                         //todo 如需改为“原值”修改为“目标值”,需多一次数据库，暂定不实现。
-                        String filedChangeRecod = String.format("%s修改为%s", fieldName, fieldValue);
-                        filedChangeRecords.add(filedChangeRecod);
+                        String filedChangeRecord = String.format("%s修改为%s", fieldName, fieldValue);
+                        filedChangeRecords.add(filedChangeRecord);
                     }
                 }
                 opRecord= JSONArray.toJSONString(filedChangeRecords);

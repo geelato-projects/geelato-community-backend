@@ -2,6 +2,7 @@ package cn.geelato.web.platform.boot;
 
 
 import cn.geelato.web.platform.m.security.service.ShiroDbRealm;
+import com.fasterxml.jackson.databind.ser.Serializers;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
@@ -24,7 +25,7 @@ import java.util.Map;
 @Configuration
 @Slf4j
 @ConditionalOnProperty(value = "geelato.application.shiro",havingValue = "true")
-public class ShiroConfiguration {
+public class ShiroConfiguration extends BaseConfiguration {
 
 
     @Bean

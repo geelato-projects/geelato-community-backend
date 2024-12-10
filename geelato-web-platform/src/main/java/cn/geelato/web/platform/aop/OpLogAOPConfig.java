@@ -75,7 +75,7 @@ public class OpLogAOPConfig {
             }
             if (saveCommand.getCommandType() == CommandType.Update) {
                 opType = "u";
-                ArrayList<String> filedChangeRecods= new ArrayList<String>();
+                ArrayList<String> filedChangeRecords= new ArrayList<String>();
                 for (Map.Entry<String, Object> entry : saveCommand.getValueMap().entrySet()) {
                     String fieldKey = entry.getKey();
                     String fieldName = entityMeta.getFieldMeta(fieldKey).getTitle();
@@ -86,10 +86,10 @@ public class OpLogAOPConfig {
                     if(fieldName!=null&&fieldValue!=null){
                         //todo 如需改为“原值”修改为“目标值”,需多一次数据库，暂定不实现。
                         String filedChangeRecod = String.format("%s修改为%s", fieldName, fieldValue);
-                        filedChangeRecods.add(filedChangeRecod);
+                        filedChangeRecords.add(filedChangeRecod);
                     }
                 }
-                opRecord= JSONArray.toJSONString(filedChangeRecods);
+                opRecord= JSONArray.toJSONString(filedChangeRecords);
             } else if (saveCommand.getCommandType() == CommandType.Insert) {
                 opType = "c";
                 opRecord = "新增记录";

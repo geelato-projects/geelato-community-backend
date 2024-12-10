@@ -16,15 +16,12 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.annotation.Order;
 
 @Configuration
-public class MetaConfiguration implements ApplicationContextAware {
+public class MetaConfiguration extends BaseConfiguration{
     @Resource
     @Qualifier("primaryDao")
     private Dao dao;
 
     MetaManager metaManager=MetaManager.singleInstance();
-
-
-    protected ApplicationContext applicationContext;
 
     public MetaConfiguration() {
 
@@ -41,10 +38,10 @@ public class MetaConfiguration implements ApplicationContextAware {
         metaManager.parseDBMeta(dao);
     }
 
-    protected String getProperty(String key, String defaultValue) {
-        String value = applicationContext.getEnvironment().getProperty(key);
-        return value == null ? defaultValue : value;
-    }
+//    public String getProperty(String key, String defaultValue) {
+//        String value = applicationContext.getEnvironment().getProperty(key);
+//        return value == null ? defaultValue : value;
+//    }
 
     @Override
     public void setApplicationContext(@NotNull ApplicationContext context) throws BeansException {

@@ -11,7 +11,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author geemeta
  */
 @Configuration
-public class InterceptorConfiguration implements WebMvcConfigurer {
+public class InterceptorConfiguration extends BaseConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {

@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.pluginexample;
+package cn.geelato.web.platform.m.example;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.plugin.PluginBeanProvider;

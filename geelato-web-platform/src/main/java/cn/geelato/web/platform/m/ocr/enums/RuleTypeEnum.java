@@ -21,6 +21,7 @@ public enum RuleTypeEnum {
     SUFFIX("添加后缀", "在字符串后面添加指定字符。", false, false),
     CHECKBOX("数据字典，多值匹配", "选择数据字典，匹配多个字典项，返回字典项编码。", false, true),
     DICTIONARY("数据字典，单值匹配", "选择数据字典，匹配单个字典项，返回字典项编码。", false, true),
+    RADIO("数据字典，单值匹配（静态）", "创建数据字典[key:value]，匹配key值，返回value值。", false, false),
     QUERYGOAL("查询模型某字段值", "查询模型，查询字段与输入值匹配[或]，回写目标字段（不属于查询字段）值。", false, true),
     QUERYRULE("查询模型某字段值", "查询模型，查询字段与输入值匹配[或]，回写目标字段（属于查询字段）值。", false, true),
     EXPRESSION("Javascript计算公式", "使用Javascript计算公式，返回计算结果。例：$.A?$.B:$.C。", false, false);

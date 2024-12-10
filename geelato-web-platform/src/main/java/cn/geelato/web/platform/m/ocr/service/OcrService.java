@@ -19,6 +19,7 @@ import cn.geelato.web.platform.m.ocr.entity.OcrPdfMetaRule;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfWhole;
 import cn.geelato.web.platform.m.ocr.enums.MetaTypeEnum;
 import cn.geelato.web.platform.m.ocr.enums.RuleTypeEnum;
+import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
@@ -212,6 +213,12 @@ public class OcrService extends BaseService {
                         } else {
                             throw new RuntimeException("Dictionary encoding is empty");
                         }
+                    } else if (RuleTypeEnum.RADIO.name().equalsIgnoreCase(rule.getType())) {
+                        if (Strings.isNotBlank(rule.getRule())) {
+                            content = calculateRadio(content, rule.getRule());
+                        } else {
+                            throw new RuntimeException("Dictionary encoding is empty");
+                        }
                     } else if (RuleTypeEnum.QUERYGOAL.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
                             content = calculateTables(content, rule.getRule(), rule.getGoal());
@@ -326,6 +333,26 @@ public class OcrService extends BaseService {
             }
         }
         return itemCode;
+    }
+
+    /**
+     * 根据给定的内容和字典映射字符串，计算并返回对应的值。
+     *
+     * @param content    需要查找的内容
+     * @param dictMapStr 包含字典映射关系的JSON字符串
+     * @return 如果找到对应的内容，则返回对应的值；否则返回null
+     * @throws RuntimeException 如果字典映射字符串格式不正确，则抛出运行时异常
+     */
+    private String calculateRadio(String content, String dictMapStr) {
+        try {
+            Map<String, String> dictMap = JSON.parseObject(dictMapStr, Map.class);
+            if (dictMap != null && dictMap.size() > 0) {
+                return dictMap.get(content);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("The data dictionary format is incorrect", e);
+        }
+        return null;
     }
 
     /**

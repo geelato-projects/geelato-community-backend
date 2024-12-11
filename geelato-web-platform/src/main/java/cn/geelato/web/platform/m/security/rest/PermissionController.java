@@ -52,7 +52,7 @@ public class PermissionController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return permissionService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -64,7 +64,7 @@ public class PermissionController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(permissionService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -83,7 +83,7 @@ public class PermissionController extends BaseController {
             List<Map<String, Object>> appList = dao.queryForMapList("query_permission_by_role_user", params);
             return ApiResult.success(appList);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -95,7 +95,7 @@ public class PermissionController extends BaseController {
             model.setPerDefault(permissionService.isDefault(model));
             return ApiResult.success(model);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -111,7 +111,7 @@ public class PermissionController extends BaseController {
                 return ApiResult.success(permissionService.createModel(form));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -124,7 +124,7 @@ public class PermissionController extends BaseController {
             permissionService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -138,7 +138,7 @@ public class PermissionController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(permissionService.validate("platform_permission", form.getId(), params));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -149,7 +149,7 @@ public class PermissionController extends BaseController {
             permissionService.resetDefaultPermission(type, object, appId);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

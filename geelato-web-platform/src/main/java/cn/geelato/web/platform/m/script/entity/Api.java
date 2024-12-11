@@ -55,6 +55,9 @@ public class Api extends BaseEntity {
     @Title(title = "响应参数类型")
     @Col(name = "response_type")
     private String responseType;
+    @Title(title = "日志级别")
+    @Col(name = "log_level")
+    private String logLevel;
     @Title(title = "请求参数")
     @Transient
     private List<ApiParam> requestParams;

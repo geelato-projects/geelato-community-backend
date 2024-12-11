@@ -136,7 +136,7 @@ public class JWTAuthRestController extends BaseController {
             dao.save(user);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -162,7 +162,7 @@ public class JWTAuthRestController extends BaseController {
             dao.save(user);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -224,7 +224,7 @@ public class JWTAuthRestController extends BaseController {
             }
             return ApiResult.success(menuItemList);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -248,7 +248,7 @@ public class JWTAuthRestController extends BaseController {
             dao.save(user);
             return ApiResult.success(plainPassword);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -279,7 +279,7 @@ public class JWTAuthRestController extends BaseController {
                 throw new RuntimeException("user not found");
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -306,7 +306,7 @@ public class JWTAuthRestController extends BaseController {
             dao.save(user);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -346,7 +346,7 @@ public class JWTAuthRestController extends BaseController {
             }
             throw new RuntimeException("验证失败");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -387,7 +387,7 @@ public class JWTAuthRestController extends BaseController {
             }
             throw new RuntimeException("绑定失败");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

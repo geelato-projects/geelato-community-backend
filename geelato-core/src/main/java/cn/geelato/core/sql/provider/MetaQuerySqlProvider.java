@@ -7,6 +7,7 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -147,7 +148,12 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             sb.append("*");
             return;
         }
+
         for (String fieldName : command.getFields()) {
+            // 忽略的字段不查询
+            if (ArrayUtils.contains(command.getIgnoreFields(), fieldName)) {
+                continue;
+            }
             if (FunctionParser.isFunction(fieldName)) {
                 String afterRefaceExpression = FunctionParser.reconstruct(fieldName, md.getEntityName());
                 sb.append(new FunctionFieldValue(afterRefaceExpression).getMysqlFunction()).append(" ");

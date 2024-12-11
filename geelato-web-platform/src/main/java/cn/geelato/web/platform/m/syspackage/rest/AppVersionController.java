@@ -61,7 +61,7 @@ public class AppVersionController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return appVersionService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -74,7 +74,7 @@ public class AppVersionController extends BaseController {
             appVersionService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -85,7 +85,7 @@ public class AppVersionController extends BaseController {
             AppVersion model = appVersionService.getModel(CLAZZ, id);
             return ApiResult.success(model);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -119,7 +119,7 @@ public class AppVersionController extends BaseController {
                 throw new RuntimeException("AppVersion package path does not exist");
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -134,7 +134,7 @@ public class AppVersionController extends BaseController {
                 return ApiResult.success(appVersionService.createModel(form));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -149,7 +149,7 @@ public class AppVersionController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(appVersionService.validate("platform_app_version", form.getId(), params));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

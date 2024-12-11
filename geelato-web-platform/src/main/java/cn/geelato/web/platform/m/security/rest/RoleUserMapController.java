@@ -51,7 +51,7 @@ public class RoleUserMapController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return roleUserMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -63,7 +63,7 @@ public class RoleUserMapController extends BaseController {
             Map<String, Object> params = this.getQueryParameters();
             return roleUserMapService.pageQueryModel("page_query_platform_role_r_user", params, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -75,7 +75,7 @@ public class RoleUserMapController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(roleUserMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -85,7 +85,7 @@ public class RoleUserMapController extends BaseController {
         try {
             return ApiResult.success(roleUserMapService.insertModels(form));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -96,7 +96,7 @@ public class RoleUserMapController extends BaseController {
             roleUserMapService.switchModel(form);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -109,7 +109,7 @@ public class RoleUserMapController extends BaseController {
             roleUserMapService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -120,7 +120,7 @@ public class RoleUserMapController extends BaseController {
         try {
             return ApiResult.success(roleUserMapService.queryRoleByUser(userId, appId, tenantCode));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

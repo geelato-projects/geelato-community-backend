@@ -49,7 +49,7 @@ public class RoleTreeNodeMapController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return roleTreeNodeMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -61,7 +61,7 @@ public class RoleTreeNodeMapController extends BaseController {
             Map<String, Object> params = this.getQueryParameters();
             return roleTreeNodeMapService.pageQueryModel("page_query_platform_role_r_tree_node", params, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -73,7 +73,7 @@ public class RoleTreeNodeMapController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(roleTreeNodeMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -83,7 +83,7 @@ public class RoleTreeNodeMapController extends BaseController {
         try {
             return ApiResult.success(roleTreeNodeMapService.insertModels(form));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -94,7 +94,7 @@ public class RoleTreeNodeMapController extends BaseController {
             roleTreeNodeMapService.cancelModels(form);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -107,7 +107,7 @@ public class RoleTreeNodeMapController extends BaseController {
             roleTreeNodeMapService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -129,7 +129,7 @@ public class RoleTreeNodeMapController extends BaseController {
             }
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.boot.extend;
 
 import cn.geelato.utils.DateUtils;
+import cn.geelato.web.platform.boot.BaseConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -24,7 +25,7 @@ import java.time.format.DateTimeFormatter;
  * @author hongxq
  */
 @Configuration
-public class SerializerConfiguration {
+public class SerializerConfiguration extends BaseConfiguration {
 
     /**
      * 防止json时出现错误FAIL_ON_EMPTY_BEANS

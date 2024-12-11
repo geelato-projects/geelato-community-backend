@@ -11,7 +11,6 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.model.service.DevTableForeignService;
-import cn.geelato.web.platform.m.security.entity.DataItems;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,13 +47,13 @@ public class DevTableForeignController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult<DataItems> pageQuery() {
+    public ApiPagedResult<?> pageQuery() {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return devTableForeignService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -66,7 +65,7 @@ public class DevTableForeignController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(devTableForeignService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -76,7 +75,7 @@ public class DevTableForeignController extends BaseController {
         try {
             return ApiResult.success(devTableForeignService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -90,7 +89,7 @@ public class DevTableForeignController extends BaseController {
                 return ApiResult.success(devTableForeignService.createModel(form));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -104,7 +103,7 @@ public class DevTableForeignController extends BaseController {
             devTableForeignService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

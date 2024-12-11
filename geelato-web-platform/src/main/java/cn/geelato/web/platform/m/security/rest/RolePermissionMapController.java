@@ -53,7 +53,7 @@ public class RolePermissionMapController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return rolePermissionMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -65,7 +65,7 @@ public class RolePermissionMapController extends BaseController {
             Map<String, Object> params = this.getQueryParameters();
             return rolePermissionMapService.pageQueryModel("page_query_platform_role_r_permission", params, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -77,7 +77,7 @@ public class RolePermissionMapController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(rolePermissionMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -87,7 +87,7 @@ public class RolePermissionMapController extends BaseController {
         try {
             return ApiResult.success(rolePermissionMapService.insertModels(form));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -98,7 +98,7 @@ public class RolePermissionMapController extends BaseController {
             rolePermissionMapService.switchModel(form);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -111,7 +111,7 @@ public class RolePermissionMapController extends BaseController {
             rolePermissionMapService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -121,7 +121,7 @@ public class RolePermissionMapController extends BaseController {
         try {
             return ApiResult.success(rolePermissionMapService.queryTablePermissions(type, object, appId, tenantCode));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -131,7 +131,7 @@ public class RolePermissionMapController extends BaseController {
         try {
             return ApiResult.success(rolePermissionMapService.queryColumnPermissions(type, object, appId, tenantCode));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -142,7 +142,7 @@ public class RolePermissionMapController extends BaseController {
             rolePermissionMapService.insertTablePermission(form);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -159,7 +159,7 @@ public class RolePermissionMapController extends BaseController {
             rolePermissionMapService.insertTableViewPermission(form);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -176,7 +176,7 @@ public class RolePermissionMapController extends BaseController {
             rolePermissionMapService.insertColumnPermission(roleId, columnId, rule);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

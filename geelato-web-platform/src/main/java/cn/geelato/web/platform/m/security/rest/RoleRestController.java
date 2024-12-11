@@ -50,7 +50,7 @@ public class RoleRestController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return roleService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -62,7 +62,7 @@ public class RoleRestController extends BaseController {
             Map<String, Object> params = this.getQueryParameters();
             return roleService.pageQueryModel("page_query_platform_role_app", params, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -74,7 +74,7 @@ public class RoleRestController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(roleService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -84,7 +84,7 @@ public class RoleRestController extends BaseController {
         try {
             return ApiResult.success(roleService.getModel(id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -98,7 +98,7 @@ public class RoleRestController extends BaseController {
                 return ApiResult.success(roleService.createModel(form));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -111,7 +111,7 @@ public class RoleRestController extends BaseController {
             roleService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -126,7 +126,7 @@ public class RoleRestController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(roleService.validate("platform_role", form.getId(), params));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

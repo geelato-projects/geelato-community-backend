@@ -3,11 +3,15 @@ package cn.geelato.web.platform.m.security.rest;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.security.entity.*;
+import cn.geelato.web.platform.m.security.entity.LoginResult;
+import cn.geelato.web.platform.m.security.entity.Org;
+import cn.geelato.web.platform.m.security.entity.Role;
+import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import cn.geelato.web.platform.m.security.service.OrgService;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +44,7 @@ public class SystemRestController extends BaseController {
     @RequestMapping(value = "/getRoleListByPage", method = RequestMethod.GET, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
     public ApiPagedResult getAccountList() {
         List mapList = dao.queryForMapList(Role.class);
-        return ApiPagedResult.success(new DataItems(mapList, mapList.size()), 1L, mapList.size(), mapList.size(), mapList.size());
+        return ApiPagedResult.success(new DataItems<>(mapList, mapList.size()), 1L, mapList.size(), mapList.size(), mapList.size());
     }
 
     @RequestMapping(value = "/getUserInfo", method = RequestMethod.GET)

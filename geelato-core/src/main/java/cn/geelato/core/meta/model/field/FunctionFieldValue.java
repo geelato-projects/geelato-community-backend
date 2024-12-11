@@ -14,11 +14,15 @@ public class FunctionFieldValue extends FieldValue {
     private String mysqlFunction;
     public FunctionFieldValue(FieldMeta fieldMeta, String functionExpression){
         GFunction gFunction=GFunction.lookUp(functionExpression);
-        this.mysqlFunction=gFunction.resolve(functionExpression);
+        if (gFunction != null) {
+            this.mysqlFunction=gFunction.resolve(functionExpression);
+        }
         this.fieldMeta = fieldMeta;
     }
     public FunctionFieldValue(String functionExpression){
         GFunction gFunction=GFunction.lookUp(functionExpression);
-        this.mysqlFunction=gFunction.resolve(functionExpression);
+        if (gFunction != null) {
+            this.mysqlFunction=gFunction.resolve(functionExpression);
+        }
     }
 }

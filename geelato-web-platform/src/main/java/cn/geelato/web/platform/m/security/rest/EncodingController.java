@@ -47,7 +47,7 @@ public class EncodingController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return encodingService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -59,7 +59,7 @@ public class EncodingController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(encodingService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -69,7 +69,7 @@ public class EncodingController extends BaseController {
         try {
             return ApiResult.success(encodingService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -86,7 +86,7 @@ public class EncodingController extends BaseController {
             encodingService.redisTemplateEncodingUpdate(form);
             return ApiResult.success(form);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -101,7 +101,7 @@ public class EncodingController extends BaseController {
             encodingService.redisTemplateEncodingDelete(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -132,7 +132,7 @@ public class EncodingController extends BaseController {
             Assert.notNull(encoding, ApiErrorMsg.IS_NULL);
             return ApiResult.success(encodingService.generate(encoding, argument));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

@@ -41,7 +41,7 @@ public class UserStockMapController extends BaseController {
             ApiPagedResult result = userStockMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
             return result;
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -54,7 +54,7 @@ public class UserStockMapController extends BaseController {
             List<UserStockMap> list = userStockMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(list);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -68,7 +68,7 @@ public class UserStockMapController extends BaseController {
             List<UserStockMap> list = userStockMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(list == null ? 0 : list.size());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -94,7 +94,7 @@ public class UserStockMapController extends BaseController {
             }
             return ApiResult.success(uMap);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -105,7 +105,7 @@ public class UserStockMapController extends BaseController {
             isDelete(SessionCtx.getCurrentUser().getUserId(), stockId);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

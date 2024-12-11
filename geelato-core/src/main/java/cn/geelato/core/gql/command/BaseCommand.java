@@ -33,6 +33,8 @@ public class BaseCommand<E extends BaseCommand> {
     protected String entityName;
     // 指定字段
     protected String[] fields;
+    // 忽略字段
+    protected String[] ignoreFields;
     // 指定条件
     protected FilterGroup where;
     //指定原始where语句

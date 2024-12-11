@@ -11,7 +11,7 @@ public class ColumnDefault {
     /**
      * 默认排序 默认值[999]
      */
-    public static final long SEQ_NO_VALUE = 999;
+    public static final long SEQ_NO_VALUE = 0;
     public static final long SEQ_NO_ZEROTH = 0;
     public static final long SEQ_NO_FIRST = 1;
     public static final long SEQ_NO_DELETE = 999999999L;

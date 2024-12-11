@@ -49,7 +49,7 @@ public class ScheduleLogController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return scheduleLogService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -62,7 +62,7 @@ public class ScheduleLogController extends BaseController {
             List<ScheduleLog> list = scheduleLogService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(list);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -73,7 +73,7 @@ public class ScheduleLogController extends BaseController {
             ScheduleLog model = scheduleLogService.getModel(CLAZZ, id);
             return ApiResult.success(model);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -90,7 +90,7 @@ public class ScheduleLogController extends BaseController {
             }
             return ApiResult.success(result);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -103,7 +103,7 @@ public class ScheduleLogController extends BaseController {
             scheduleLogService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

@@ -28,6 +28,9 @@ public class Dict extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "字典名称")
     @Col(name = "dict_name")
     private String dictName;
+    @Title(title = "字典英文名称")
+    @Col(name = "dict_name_en")
+    private String dictNameEn;
     @Title(title = "字典编码")
     @Col(name = "dict_code")
     private String dictCode;

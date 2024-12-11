@@ -50,7 +50,7 @@ public class OrgRestController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return orgService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -62,7 +62,7 @@ public class OrgRestController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(orgService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -77,7 +77,7 @@ public class OrgRestController extends BaseController {
             filterGroup.addFilter("id", FilterGroup.Operator.in, String.valueOf(params.get("ids")));
             return ApiResult.success(orgService.queryModel(CLAZZ, filterGroup));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -88,7 +88,7 @@ public class OrgRestController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(orgService.queryTree(params));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -98,7 +98,7 @@ public class OrgRestController extends BaseController {
         try {
             return ApiResult.success(orgService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -112,7 +112,7 @@ public class OrgRestController extends BaseController {
                 return ApiResult.success(orgService.createModel(form));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -125,7 +125,7 @@ public class OrgRestController extends BaseController {
             orgService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -139,7 +139,7 @@ public class OrgRestController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(orgService.validate("platform_org", form.getId(), params));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -149,7 +149,7 @@ public class OrgRestController extends BaseController {
         try {
             return ApiResult.success(orgService.getCompany(id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

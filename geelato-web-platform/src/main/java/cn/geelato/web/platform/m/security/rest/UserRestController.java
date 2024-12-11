@@ -6,13 +6,13 @@ import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.security.entity.DataItems;
 import cn.geelato.web.platform.m.security.entity.Org;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.entity.UserStockMap;
@@ -77,7 +77,7 @@ public class UserRestController extends BaseController {
             userStockFormat(dataItems.getItems(), SessionCtx.getCurrentUser().getUserId());
             return result;
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -112,7 +112,7 @@ public class UserRestController extends BaseController {
             }
             return result;
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -124,7 +124,7 @@ public class UserRestController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return userService.pageQueryModelOf(filterGroup, pageQueryRequest, appId, tenantCode);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -137,7 +137,7 @@ public class UserRestController extends BaseController {
             List<User> list = userService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(userFormat(list));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -153,7 +153,7 @@ public class UserRestController extends BaseController {
             List<User> list = userService.queryModel(CLAZZ, filterGroup);
             return ApiResult.success(userFormat(list));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -164,7 +164,7 @@ public class UserRestController extends BaseController {
             User model = userService.getModel(CLAZZ, id);
             return ApiResult.success(userFormat(model));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -199,7 +199,7 @@ public class UserRestController extends BaseController {
             uMap.setPassword(null);
             return ApiResult.success(uMap);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -233,7 +233,7 @@ public class UserRestController extends BaseController {
             uMap.setPassword(null);
             return ApiResult.success(uMap);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -268,7 +268,7 @@ public class UserRestController extends BaseController {
             userService.updateModel(user);
             return ApiResult.success(user.getPlainPassword());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -287,7 +287,7 @@ public class UserRestController extends BaseController {
             userService.updateModel(user);
             return ApiResult.success(user.getPlainPassword());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -299,7 +299,7 @@ public class UserRestController extends BaseController {
             Assert.notNull(user, ApiErrorMsg.IS_NULL);
             return userService.sendMessage(user, type, message);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -313,7 +313,7 @@ public class UserRestController extends BaseController {
             userService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -341,7 +341,7 @@ public class UserRestController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(userService.validate("platform_user", form.getId(), params));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -356,7 +356,7 @@ public class UserRestController extends BaseController {
             }
             return ApiResult.success(orgService.getCompany(user.getOrgId()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -380,7 +380,7 @@ public class UserRestController extends BaseController {
             }
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

@@ -5,9 +5,9 @@ import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.column.ColumnSelectType;
+import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
@@ -18,7 +18,6 @@ import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import cn.geelato.web.platform.m.model.service.DevViewService;
-import cn.geelato.web.platform.m.security.entity.DataItems;
 import cn.geelato.web.platform.m.security.service.PermissionService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -58,13 +57,13 @@ public class DevTableColumnController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult<DataItems> pageQuery() {
+    public ApiPagedResult<?> pageQuery() {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return devTableColumnService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -76,7 +75,7 @@ public class DevTableColumnController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(devTableColumnService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -86,7 +85,7 @@ public class DevTableColumnController extends BaseController {
         try {
             return ApiResult.success(devTableColumnService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -123,7 +122,7 @@ public class DevTableColumnController extends BaseController {
             }
             return ApiResult.success(resultMap);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -189,7 +188,7 @@ public class DevTableColumnController extends BaseController {
             }
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -208,7 +207,7 @@ public class DevTableColumnController extends BaseController {
             }
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -219,7 +218,7 @@ public class DevTableColumnController extends BaseController {
             List<ColumnMeta> defaultColumnMetaList = metaManager.getDefaultColumn();
             return ApiResult.success(defaultColumnMetaList);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -230,7 +229,7 @@ public class DevTableColumnController extends BaseController {
             List<ColumnSelectType> selectTypes = metaManager.getColumnSelectType();
             return ApiResult.success(selectTypes);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -246,7 +245,7 @@ public class DevTableColumnController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(devTableColumnService.validate("platform_dev_column", form.getId(), params));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

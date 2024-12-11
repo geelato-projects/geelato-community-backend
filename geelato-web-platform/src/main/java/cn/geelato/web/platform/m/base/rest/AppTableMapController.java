@@ -52,7 +52,7 @@ public class AppTableMapController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return appTableMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -64,7 +64,7 @@ public class AppTableMapController extends BaseController {
             Map<String, Object> params = this.getQueryParameters();
             return appTableMapService.pageQueryModel("page_query_platform_app_r_table", params, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -77,7 +77,7 @@ public class AppTableMapController extends BaseController {
             List<AppTableMap> list = appTableMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(list);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -87,7 +87,7 @@ public class AppTableMapController extends BaseController {
         try {
             return ApiResult.success(appTableMapService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -103,7 +103,7 @@ public class AppTableMapController extends BaseController {
                 return ApiResult.success(appTableMapService.createModel(form));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -116,7 +116,7 @@ public class AppTableMapController extends BaseController {
             appTableMapService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

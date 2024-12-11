@@ -8,6 +8,7 @@ import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
@@ -16,7 +17,6 @@ import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
-import cn.geelato.web.platform.m.security.entity.DataItems;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +63,7 @@ public class SysConfigController extends BaseController {
             setConfigAssist(dataItems.getItems());
             return result;
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -76,7 +76,7 @@ public class SysConfigController extends BaseController {
             List<SysConfig> list = sysConfigService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy());
             return ApiResult.success(setConfigAssist(list));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -92,7 +92,7 @@ public class SysConfigController extends BaseController {
             model.setSm2Key(null);
             return ApiResult.success(model);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -112,7 +112,7 @@ public class SysConfigController extends BaseController {
             }
             return ApiResult.success(form);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -126,7 +126,7 @@ public class SysConfigController extends BaseController {
             sysConfigService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -141,7 +141,7 @@ public class SysConfigController extends BaseController {
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(sysConfigService.validate("platform_sys_config", form.getId(), params));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -157,7 +157,7 @@ public class SysConfigController extends BaseController {
             }
             return ApiResult.success("");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

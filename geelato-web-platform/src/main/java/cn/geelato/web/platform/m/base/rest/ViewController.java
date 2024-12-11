@@ -8,10 +8,10 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.view.ViewMeta;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.DataItems;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.ViewService;
-import cn.geelato.web.platform.m.security.entity.DataItems;
 import com.alibaba.fastjson2.JSONArray;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -44,7 +44,7 @@ public class ViewController extends BaseController {
 
             return ApiPagedResult.success(new DataItems(pageQueryList, pageQueryList.size()), pageQueryRequest.getPageNum(), pageQueryRequest.getPageSize(), pageQueryList.size(), 999);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }

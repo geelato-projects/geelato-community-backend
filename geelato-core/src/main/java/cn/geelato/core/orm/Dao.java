@@ -9,11 +9,15 @@ import cn.geelato.core.gql.execute.BoundPageSql;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.meta.annotation.Ignore;
+import cn.geelato.core.meta.annotation.IgnoreType;
 import cn.geelato.core.meta.model.CommonRowMapper;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.IdEntity;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.lang.api.ApiMultiPagedResult;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.DataItems;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
@@ -23,9 +27,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author geemeta
@@ -160,7 +167,7 @@ public class Dao extends SqlKeyDao {
             log.info(boundSql.getSql());
             jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
         } catch (DataAccessException ex) {
-            log.error(ex.getMessage(),ex);
+            log.error(ex.getMessage(), ex);
             throw new DaoException(ex.getMessage());
         }
         return command.getPK();
@@ -180,7 +187,7 @@ public class Dao extends SqlKeyDao {
         try {
             jdbcTemplate.batchUpdate(boundSqlList.get(0).getSql(), paramsObjs);
         } catch (DataAccessException ex) {
-            log.error(ex.getMessage(),ex);
+            log.error(ex.getMessage(), ex);
             throw new DaoException(ex.getMessage());
         }
         return returnPks;
@@ -200,7 +207,7 @@ public class Dao extends SqlKeyDao {
         } catch (DataAccessException ex) {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
             returnPks.clear();
-            log.error(ex.getMessage(),ex);
+            log.error(ex.getMessage(), ex);
             throw new DaoException(ex.getMessage());
         }
         return returnPks;
@@ -392,24 +399,43 @@ public class Dao extends SqlKeyDao {
         command.setPageNum(request.getPageNum());
         command.setPageSize(request.getPageSize());
         command.setOrderBy(request.getOrderBy());
+        String[] ignoreFields = getIgnoreFields(entityType, IgnoreType.PAGE_QUERY);
+        command.setIgnoreFields(ignoreFields);
         BoundSql boundSql = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
         log.info(boundSql.toString());
         return jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<T>(), boundSql.getParams());
     }
 
-    /**
-     * 分页查询，全量查询。
-     * 根据传入的实体类型、参数、分页查询请求，执行分页查询并返回查询结果列表。
-     *
-     * @param entityType 实体类型，用于指定查询的数据类型
-     * @param params     查询参数，包含查询条件等
-     * @param request    分页查询请求，包含分页信息等
-     * @param <T>        泛型参数，表示查询结果的类型
-     * @return 返回一个包含查询结果的列表
-     */
-    public <T> List<T> pageQueryList(Class<T> entityType, Map<String, Object> params, PageQueryRequest request) {
+    public <T> ApiPagedResult pageQueryResult(Class<T> entityType, FilterGroup filterGroup, PageQueryRequest request) {
+        if (defaultFilterOption && defaultFilterGroup != null) {
+            for (FilterGroup.Filter filter : defaultFilterGroup.getFilters()) {
+                filterGroup.addFilter(filter);
+            }
+        }
+        QueryCommand command = new QueryCommand();
+        command.setOrderBy(request.getOrderBy());
+        // 忽略字段
+        String[] ignoreFields = getIgnoreFields(entityType, IgnoreType.PAGE_QUERY);
+        command.setIgnoreFields(ignoreFields);
+        // 查询总数
+        BoundSql boundSql = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
+        log.info(boundSql.toString());
+        List<T> queryList = jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<T>(), boundSql.getParams());
+        // 分页查询
+        command.setPageNum(request.getPageNum());
+        command.setPageSize(request.getPageSize());
+        boundSql = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
+        log.info(boundSql.toString());
+        List<T> pageQueryList = jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<T>(), boundSql.getParams());
+        // 分页结果
+        long total = queryList != null ? queryList.size() : 0;
+        int dataSize = pageQueryList != null ? pageQueryList.size() : 0;
+        return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
+    }
+
+    public <T> ApiPagedResult pageQueryResult(Class<T> entityType, Map<String, Object> params, PageQueryRequest request) {
         FilterGroup filterGroup = generateFilterGroup(params);
-        return pageQueryList(entityType, filterGroup, request);
+        return pageQueryResult(entityType, filterGroup, request);
     }
 
     private FilterGroup generateFilterGroup(Map<String, Object> params) {
@@ -446,5 +472,50 @@ public class Dao extends SqlKeyDao {
         BoundSql boundSql = sqlManager.generateDeleteSql(entityType, filterGroup);
         log.info(boundSql.toString());
         return jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
+    }
+
+    /**
+     * 根据实体类型和忽略类型获取需要忽略的字段数组
+     *
+     * @param entityType 实体类型
+     * @param ignoreType 忽略类型
+     * @return 需要忽略的字段数组，若不存在则返回null
+     */
+    private String[] getIgnoreFields(Class entityType, IgnoreType ignoreType) {
+        Map<IgnoreType, String[]> ignoreFields = getIgnoreFields(entityType);
+        return ignoreFields.get(ignoreType);
+    }
+
+    /**
+     * 根据实体类型获取需要忽略的字段
+     *
+     * @param entityType 实体类型
+     * @return 需要忽略的字段的Map，键为忽略类型，值为字段数组
+     */
+    private Map<IgnoreType, String[]> getIgnoreFields(Class entityType) {
+        Map<String, IgnoreType[]> fieldIgnores = new HashMap<>();
+        // 获取所有字段上的@Ignore注解
+        for (Class<?> searchType = entityType; searchType != Object.class; searchType = searchType.getSuperclass()) {
+            Field[] fields = searchType.getDeclaredFields();
+            for (Field field : fields) {
+                Ignore ig = field.getAnnotation(Ignore.class);
+                if (ig != null && ig.type().length > 0) {
+                    fieldIgnores.put(field.getName(), ig.type());
+                }
+            }
+        }
+        // 将@Ignore注解中指定的类型和字段名转换为Map
+        Map<IgnoreType, List<String>> ignoreFieldList = new HashMap<>();
+        for (Map.Entry<String, IgnoreType[]> entry : fieldIgnores.entrySet()) {
+            String key = entry.getKey();
+            IgnoreType[] values = entry.getValue();
+            for (IgnoreType value : values) {
+                ignoreFieldList.computeIfAbsent(value, k -> new ArrayList<>()).add(key);
+            }
+        }
+        // 将Map中的List转换为数组
+        Map<IgnoreType, String[]> ignoreFields = ignoreFieldList.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toArray(new String[0])));
+
+        return ignoreFields;
     }
 }

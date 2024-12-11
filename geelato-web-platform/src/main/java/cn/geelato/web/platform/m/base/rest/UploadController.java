@@ -48,7 +48,6 @@ public class UploadController extends BaseController {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }
-
         try {
             Attach attach = new Attach(file);
             attach.setObjectId(objectId);
@@ -78,7 +77,7 @@ public class UploadController extends BaseController {
                 return ApiResult.success(attach1);
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -147,7 +146,7 @@ public class UploadController extends BaseController {
             oops.writeObject(params);
             return ApiResult.success(file.getName());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         } finally {
             if (oops != null) {
@@ -192,7 +191,7 @@ public class UploadController extends BaseController {
             bufferedWriter.write(JsonData);
             return ApiResult.success(file.getName());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         } finally {
             if (bufferedWriter != null) {
@@ -222,7 +221,7 @@ public class UploadController extends BaseController {
             }
             String sql = String.format("select %s from %s where id = '%s'", fieldNames, entityName, id);
             Map<String, Object> columnMap = dao.getJdbcTemplate().queryForMap(sql);
-            if (columnMap == null || columnMap.isEmpty()) {
+            if (columnMap.isEmpty()) {
                 return ApiResult.fail("Entity Query Is Null");
             }
             for (Map.Entry<String, Object> columnEntry : columnMap.entrySet()) {
@@ -243,7 +242,7 @@ public class UploadController extends BaseController {
             }*/
             return uploadJson(JSON.toJSONString(columnMap), fileName, "");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -253,7 +252,6 @@ public class UploadController extends BaseController {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("tableName", tableName);
-            // params.put("enableStatus", EnableStatusEnum.ENABLED.getCode());
             List<ColumnMeta> columnMetas = devTableColumnService.queryModel(ColumnMeta.class, params);
             if (columnMetas != null && !columnMetas.isEmpty()) {
                 Set<String> fields = new LinkedHashSet<>();
@@ -263,7 +261,7 @@ public class UploadController extends BaseController {
                 fieldName = String.join(",", fields);
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
 
         return fieldName;

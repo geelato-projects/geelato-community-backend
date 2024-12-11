@@ -53,7 +53,7 @@ public class AppController extends BaseController {
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
             return appService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
         }
     }
@@ -65,7 +65,7 @@ public class AppController extends BaseController {
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
             return ApiResult.success(appService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -86,7 +86,7 @@ public class AppController extends BaseController {
             List<Map<String, Object>> appList = dao.queryForMapList("query_app_by_role_user", map);
             return ApiResult.success(appList);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -96,7 +96,7 @@ public class AppController extends BaseController {
         try {
             return ApiResult.success(appService.getModel(CLAZZ, id));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -117,7 +117,7 @@ public class AppController extends BaseController {
                 return ApiResult.success(appService.createModel(form));
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -130,7 +130,7 @@ public class AppController extends BaseController {
             appService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -153,7 +153,7 @@ public class AppController extends BaseController {
                 throw new RuntimeException("type is error");
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -165,7 +165,7 @@ public class AppController extends BaseController {
             List<Map<String, Object>> queryList = dao.queryForMapList("platform_permission_by_app_page", params);
             return ApiResult.success(queryList);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
@@ -177,7 +177,7 @@ public class AppController extends BaseController {
             List<Map<String, Object>> queryList = dao.queryForMapList("platform_role_r_permission_by_app_page", params);
             return ApiResult.success(queryList);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }

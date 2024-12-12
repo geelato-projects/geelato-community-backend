@@ -459,8 +459,7 @@ public class MetaManager extends AbstractManager {
         parseTableEntity(map, columnList, viewList, null, null);
     }
 
-    public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList,
-                                 List<Map<String, Object>> checkList, List<Map<String, Object>> foreignList) {
+    public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList, List<Map<String, Object>> checkList, List<Map<String, Object>> foreignList) {
         String entityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
             EntityMeta entityMeta = MetaReflex.getEntityMetaByTable(map, columnList, viewList, checkList, foreignList);
@@ -578,5 +577,29 @@ public class MetaManager extends AbstractManager {
         }
 
         return columnSelectTypes;
+    }
+
+    /**
+     * 获取表升级列信息列表
+     *
+     * @return 包含列信息的Map，键为列名，值为列信息对象
+     * @throws IOException 当读取JSON文件时发生IO异常
+     */
+    public Map<String, ColumnMeta> getTableUpgradeList() {
+        Map<String, ColumnMeta> columnMetaMap = new HashMap<>();
+        try {
+            String jsonStr = FastJsonUtils.readJsonFile(ResourcesFiles.TABLE_UPGRADE_JSON);
+            List<ColumnMeta> columnMetaList = JSON.parseArray(jsonStr, ColumnMeta.class);
+            if (columnMetaList != null && !columnMetaList.isEmpty()) {
+                for (ColumnMeta columnMeta : columnMetaList) {
+                    columnMeta.afterSet();
+                    columnMetaMap.put(columnMeta.getFieldName(), columnMeta);
+                }
+            }
+        } catch (IOException e) {
+            columnMetaMap = new HashMap<>();
+        }
+
+        return columnMetaMap;
     }
 }

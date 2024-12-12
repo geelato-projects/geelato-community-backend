@@ -7,6 +7,7 @@ import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.lang.api.ApiMetaResult;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author diabl
@@ -165,6 +167,66 @@ public class DevTableController extends BaseController {
                 metaManager.refreshDBMeta(form.getEntityName());
             }
             return ApiResult.success(form);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/upgradesTable", method = RequestMethod.POST)
+    public ApiResult<?> upgradesTable(@RequestBody Map<String, Object> params) {
+        try {
+            String tableId = params.get("tableId") == null ? null : params.get("tableId").toString();
+            String columnNames = params.get("columnNames") == null ? null : params.get("columnNames").toString();
+            String upgradeType = params.get("upgradeType") == null ? null : params.get("upgradeType").toString();
+
+            if (Strings.isBlank(tableId) || Strings.isBlank(columnNames)) {
+                throw new RuntimeException("tableId or columnNames is null");
+            }
+            String[] columnNameArray = columnNames.split(",");
+            if (columnNameArray == null && columnNameArray.length == 0) {
+                throw new RuntimeException("columnNames is null");
+            }
+            Map<String, ColumnMeta> columnMetaMap = metaManager.getTableUpgradeList();
+            Assert.notNull(columnMetaMap, "Upgrade template not found");
+            TableMeta tableMeta = devTableService.getModel(CLAZZ, tableId);
+            Assert.notNull(tableMeta, "Table not found");
+            List<String> columnNameList = new ArrayList<>();
+            Map<String, Object> columnParams = new HashMap<>();
+            columnParams.put("tableId", tableMeta.getId());
+            List<ColumnMeta> columnMetas = devTableColumnService.queryModel(ColumnMeta.class, columnParams);
+            if (columnMetas != null && columnMetas.size() > 0) {
+                columnNameList = columnMetas.stream().map(ColumnMeta::getFieldName).collect(Collectors.toList());
+            }
+            for (String columnName : columnNameArray) {
+                if (!columnNameList.contains(columnName)) {
+                    ColumnMeta columnMeta = columnMetaMap.get(columnName);
+                    if (columnMeta != null) {
+                        columnMeta.setTableId(tableMeta.getId());
+                        columnMeta.setTableName(tableMeta.getEntityName());
+                        columnMeta.setTableSchema(tableMeta.getTableSchema());
+                        columnMeta.setAppId(tableMeta.getAppId());
+                        columnMeta.setTenantCode(tableMeta.getTenantCode());
+                        devTableColumnService.createModel(columnMeta);
+                    } else {
+                        throw new RuntimeException(columnName + " not found");
+                    }
+                }
+            }
+            if (Strings.isNotBlank(upgradeType)) {
+                if (upgradeType.indexOf("app") != -1) {
+                    tableMeta.setAcrossApp(true);
+                }
+                if (upgradeType.indexOf("workflow") != -1) {
+                    tableMeta.setAcrossWorkflow(true);
+                }
+                devTableService.updateModel(tableMeta);
+            }
+
+            if (Strings.isNotEmpty(tableMeta.getEntityName())) {
+                metaManager.refreshDBMeta(tableMeta.getEntityName());
+            }
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

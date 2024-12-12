@@ -42,7 +42,7 @@ public class OcrPdfService extends BaseService {
         OcrPdf model = super.getModel(OcrPdf.class, id);
         // 获取子表
         List<OcrPdfMeta> ocrPdfMetas = new ArrayList<>();
-        if (hasMeta != null && hasMeta.booleanValue()) {
+        if (hasMeta != null && hasMeta) {
             ocrPdfMetas = ocrPdfMetaService.queryModelByPdfId(id);
         }
         model.setMetas(ocrPdfMetas);

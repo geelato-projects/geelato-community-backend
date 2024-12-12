@@ -4,17 +4,19 @@ import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.model.service.DevTableCheckService;
-import cn.geelato.web.platform.m.security.entity.DataItems;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +37,7 @@ public class DevTableCheckController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
+    private final MetaManager metaManager = MetaManager.singleInstance();
     private final DevTableCheckService devTableCheckService;
 
     @Autowired
@@ -83,10 +86,15 @@ public class DevTableCheckController extends BaseController {
             devTableCheckService.afterSet(form);
             form.setSynced(false);
             if (StringUtils.isNotBlank(form.getId())) {
-                return ApiResult.success(devTableCheckService.updateModel(form));
+                form = devTableCheckService.updateModel(form);
             } else {
-                return ApiResult.success(devTableCheckService.createModel(form));
+                form = devTableCheckService.createModel(form);
             }
+            // 刷新实体缓存
+            if (Strings.isNotEmpty(form.getTableName())) {
+                metaManager.refreshDBMeta(form.getTableName());
+            }
+            return ApiResult.success(form);
         } catch (Exception e) {
             log.error(e.getMessage());
             return ApiResult.fail(e.getMessage());
@@ -99,6 +107,10 @@ public class DevTableCheckController extends BaseController {
             TableCheck model = devTableCheckService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             devTableCheckService.isDeleteModel(model);
+            // 刷新实体缓存
+            if (Strings.isNotEmpty(model.getTableName())) {
+                metaManager.refreshDBMeta(model.getTableName());
+            }
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -125,7 +137,7 @@ public class DevTableCheckController extends BaseController {
                 return ApiResult.success(false);
             }
             List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(
-                    String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME, form.getTableSchema(), form.getType().toUpperCase(Locale.ENGLISH), form.getCode()));
+                    String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME+" AND TABLE_NAME != '%s';", form.getTableSchema(), form.getType().toUpperCase(Locale.ENGLISH), form.getCode(),form.getTableName()));
             return ApiResult.success(mapList.isEmpty());
         } catch (Exception e) {
             log.error(e.getMessage());

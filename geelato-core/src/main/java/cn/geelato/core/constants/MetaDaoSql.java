@@ -77,9 +77,9 @@ public class MetaDaoSql {
     /**
      * 查询表约束信息,第一个：表模式；第二个：约束类型；第三个：约束名称
      */
-    public static final String SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME = SQL_QUERY_TABLE_CONSTRAINTS + " AND FIND_IN_SET(CONSTRAINT_NAME, '%s');";
+    public static final String SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME = SQL_QUERY_TABLE_CONSTRAINTS + " AND FIND_IN_SET(CONSTRAINT_NAME, '%s')";
     /**
      * 查询表约束信息,第一个：表模式；第二个：约束类型；第三个：表名称
      */
-    public static final String SQL_QUERY_TABLE_CONSTRAINTS_BY_TABLE = SQL_QUERY_TABLE_CONSTRAINTS + " AND TABLE_NAME = '%s';";
+    public static final String SQL_QUERY_TABLE_CONSTRAINTS_BY_TABLE = SQL_QUERY_TABLE_CONSTRAINTS + " AND TABLE_NAME = '%s'";
 }

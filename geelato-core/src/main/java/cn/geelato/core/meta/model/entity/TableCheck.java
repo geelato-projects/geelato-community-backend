@@ -66,8 +66,8 @@ public class TableCheck extends BaseEntity implements EntityEnableAble {
         this.columnId = map.get("column_id") == null ? null : map.get("column_id").toString();
         this.columnName = map.get("column_name") == null ? null : map.get("column_name").toString();
         this.description = map.get("description") == null ? null : map.get("description").toString();
-        Boolean enableStatus = map.get("enable_status") == null ? null : Boolean.parseBoolean(map.get("enable_status").toString());
-        this.enableStatus = Boolean.TRUE.equals(enableStatus) ? 1 : 0;
-        this.synced = map.get("synced") == null ? false : Boolean.parseBoolean(map.get("synced").toString());
+        this.enableStatus = map.get("enable_status") == null ? 0 : Integer.parseInt(map.get("enable_status").toString());
+        Integer synced = map.get("synced") == null ? 0 : Integer.parseInt(map.get("synced").toString());
+        this.synced = synced.intValue() == 1 ? true : false;
     }
 }

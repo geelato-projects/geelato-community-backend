@@ -135,8 +135,7 @@ public class DbGenerateDao {
      * @param dropBeforeCreate 存在表时，是否删除
      */
     public void createOrUpdateOneTable(String entityName, boolean dropBeforeCreate) {
-        // createOrUpdateOneTable(metaManager.getByEntityName(entityName,false), dropBeforeCreate);
-        EntityMeta entityMeta = metaManager.getByEntityName(entityName, false);
+        EntityMeta entityMeta = metaManager.getByEntityName(entityName, dropBeforeCreate);
         if (TableTypeEnum.TABLE.getCode().equals(entityMeta.getTableMeta().getTableType())) {
             createOrUpdateOneTable(entityMeta);
         } else if (TableTypeEnum.VIEW.getCode().equals(entityMeta.getTableMeta().getTableType())) {
@@ -350,7 +349,9 @@ public class DbGenerateDao {
         map.put("checkList", checkList);
         // 表检查 - 删除
         map.put("delCheckList", delCheckList);
-        dao.execute("deleteTableChecks", map);
+        if (delCheckList != null && !delCheckList.isEmpty()) {
+            dao.execute("deleteTableChecks", map);
+        }
         dao.execute("createOneTable", map);
     }
 

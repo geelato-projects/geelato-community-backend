@@ -55,6 +55,10 @@ public class MetaManager extends AbstractManager {
      * 简化实体数据集合，标识，标题，类型
      */
     private final List<EntityLiteMeta> entityLiteMetaList = new ArrayList<>();
+    /**
+     * 实体类
+     */
+    private final HashMap<String, Class> entityMetaClassMap = new HashMap<>();
 
     public static MetaManager singleInstance() {
         lock.lock();
@@ -422,6 +426,7 @@ public class MetaManager extends AbstractManager {
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
             EntityMeta entityMeta = MetaReflex.getEntityMeta(clazz);
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
+            entityMetaClassMap.put(entityMeta.getTableName(), clazz);
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Class));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
             if (log.isDebugEnabled()) {
@@ -438,6 +443,13 @@ public class MetaManager extends AbstractManager {
         }
     }
 
+    public void parseOneOther(EntityMeta entityMeta) {
+        List checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_name='%s'", entityMeta.getTableName()));
+        if (checkList != null && !checkList.isEmpty()) {
+            entityMeta.setTableChecks(MetaReflex.getTableCheckMetas(checkList));
+        }
+    }
+
 
     public void parseOne(Map<String, Object> map, List<Map<String, Object>> columnList) {
         parseTableEntity(map, columnList, null);
@@ -449,9 +461,14 @@ public class MetaManager extends AbstractManager {
 
     public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList,
                                  List<Map<String, Object>> checkList, List<Map<String, Object>> foreignList) {
-        String entityName = map.get("entity_name").toString();
+        String entityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
             EntityMeta entityMeta = MetaReflex.getEntityMetaByTable(map, columnList, viewList, checkList, foreignList);
+            // EntityType = class
+            if (entityMetaClassMap.containsKey(entityName)) {
+                entityMeta.setClassType(entityMetaClassMap.get(entityName));
+                entityMeta.setEntityType(EntityType.Class);
+            }
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
@@ -466,16 +483,13 @@ public class MetaManager extends AbstractManager {
     }
 
     public void parseViewEntity(Map<String, Object> view) {
-        String viewType = view.get("view_type").toString();
-        if ("custom".equalsIgnoreCase(viewType)) {
-            String entityName = view.get("view_name").toString();
-            if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
-                EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);
-                entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
-                removeLiteMeta(entityMeta.getEntityName());
-                entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.View));
-                tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
-            }
+        String entityName = view.get("view_name").toString();
+        if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
+            EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);
+            entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
+            removeLiteMeta(entityMeta.getEntityName());
+            entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.View));
+            tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
         }
     }
 

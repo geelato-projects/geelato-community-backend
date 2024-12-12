@@ -3,7 +3,6 @@ package cn.geelato.web.platform.m.ocr.entity;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
-import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
@@ -37,6 +36,15 @@ public class OcrPdfMeta extends BaseSortableEntity {
     private String example;
     @Title(title = "描述")
     private String description;
+    @Title(title = "批注原始序号")
+    @Col(name = "annotation_index")
+    private Integer annotationIndex;
+    @Title(title = "是否可浮动")
+    @Col(name = "float_area_y")
+    private Boolean floatAreaY;
+    @Title(title = "行高")
+    @Col(name = "line_height")
+    private Integer lineHeight;
 
     /**
      * 将OcrPdfMeta对象列表转换为Map集合

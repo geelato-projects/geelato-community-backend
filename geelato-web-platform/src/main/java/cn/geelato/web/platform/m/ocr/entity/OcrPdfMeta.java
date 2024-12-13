@@ -4,11 +4,13 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
+import cn.geelato.plugin.ocr.PDFAnnotationMeta;
 import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +32,7 @@ public class OcrPdfMeta extends BaseSortableEntity {
     private String type;
     @Title(title = "内容")
     private String rule;
-    @Title(title = "位置")
+    @Title(title = "位置", description = "pageIndex,x,y,width,height")
     private String position;
     @Title(title = "示例")
     private String example;
@@ -62,6 +64,49 @@ public class OcrPdfMeta extends BaseSortableEntity {
             }
         }
         return map;
+    }
+
+    /**
+     * 将OCR PDF元数据列表转换为PDF注释元数据列表
+     *
+     * @param list OCR PDF元数据列表
+     * @return PDF注释元数据列表
+     */
+    public static List<PDFAnnotationMeta> toPDFAnnotationMetaList(List<OcrPdfMeta> list) {
+        List<PDFAnnotationMeta> pamList = new ArrayList<>();
+        if (list != null && !list.isEmpty()) {
+            for (OcrPdfMeta ocrPdfMeta : list) {
+                pamList.add(OcrPdfMeta.toPDFAnnotationMeta(ocrPdfMeta));
+            }
+        }
+        return pamList;
+    }
+
+    /**
+     * 将OCR PDF元数据转换为PDF注释元数据
+     *
+     * @param ocrPdfMeta OCR PDF元数据对象
+     * @return 转换后的PDF注释元数据对象
+     */
+    public static PDFAnnotationMeta toPDFAnnotationMeta(OcrPdfMeta ocrPdfMeta) {
+        PDFAnnotationMeta pam = new PDFAnnotationMeta();
+        pam.setAnnotationIndex(ocrPdfMeta.getAnnotationIndex());
+        pam.setTemplateAreaContent(ocrPdfMeta.getExample());
+        pam.setContent(ocrPdfMeta.getName());
+        pam.setFloatArea(ocrPdfMeta.getFloatAreaY());
+        pam.setLineHeight(ocrPdfMeta.getLineHeight());
+        //  pageIndex,x,y,width,height
+        if (Strings.isNotBlank(ocrPdfMeta.getPosition())) {
+            String[] positionArr = ocrPdfMeta.getPosition().split(",");
+            if (positionArr != null && positionArr.length == 5) {
+                pam.setPageIndex(positionArr[0] == null ? 0 : Integer.parseInt(positionArr[0]));
+                pam.setX(positionArr[1] == null ? 0f : Float.parseFloat(positionArr[1]));
+                pam.setY(positionArr[2] == null ? 0f : Float.parseFloat(positionArr[2]));
+                pam.setWidth(positionArr[3] == null ? 0f : Float.parseFloat(positionArr[3]));
+                pam.setHeight(positionArr[4] == null ? 0f : Float.parseFloat(positionArr[4]));
+            }
+        }
+        return pam;
     }
 
     /**

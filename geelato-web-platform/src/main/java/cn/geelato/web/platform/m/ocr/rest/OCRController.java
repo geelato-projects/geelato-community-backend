@@ -8,10 +8,7 @@ import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.AttachService;
-import cn.geelato.web.platform.m.ocr.entity.OcrPdf;
-import cn.geelato.web.platform.m.ocr.entity.OcrPdfContent;
-import cn.geelato.web.platform.m.ocr.entity.OcrPdfMetaRule;
-import cn.geelato.web.platform.m.ocr.entity.OcrPdfWhole;
+import cn.geelato.web.platform.m.ocr.entity.*;
 import cn.geelato.web.platform.m.ocr.enums.LocaleEnum;
 import cn.geelato.web.platform.m.ocr.service.OcrPdfService;
 import cn.geelato.web.platform.m.ocr.service.OcrService;
@@ -74,14 +71,18 @@ public class OCRController extends BaseController {
         if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate())) {
             throw new IllegalArgumentException("模板不能为空");
         }
-        File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
+        // File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
+        if (ocrPdf.getMetas() == null || ocrPdf.getMetas().isEmpty()) {
+            throw new IllegalArgumentException("模板元数据不能为空");
+        }
+        List<PDFAnnotationMeta> pdfAnnotationMetaList = OcrPdfMeta.toPDFAnnotationMetaList(ocrPdf.getMetas());
         // 获取OCR服务，解析PDF文件
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
         if (wholeContent) {
-            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(tempFile, pdfFile);
+            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(pdfAnnotationMetaList, pdfFile);
             return ApiResult.success(pdfResolveData);
         } else {
-            List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(tempFile, pdfFile);
+            List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(pdfAnnotationMetaList, pdfFile);
             return ApiResult.success(pdfAnnotationPickContentList);
         }
     }
@@ -108,15 +109,19 @@ public class OCRController extends BaseController {
         if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate())) {
             throw new IllegalArgumentException("模板不能为空");
         }
-        File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
+        // File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
+        if (ocrPdf.getMetas() == null || ocrPdf.getMetas().isEmpty()) {
+            throw new IllegalArgumentException("模板元数据不能为空");
+        }
+        List<PDFAnnotationMeta> pdfAnnotationMetaList = OcrPdfMeta.toPDFAnnotationMetaList(ocrPdf.getMetas());
         // 获取OCR服务，解析PDF文件
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
         if (wholeContent) {
-            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(tempFile, pdfFile);
+            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(pdfAnnotationMetaList, pdfFile);
             OcrPdfWhole ocrPdfWhole = oService.formatContent(pdfResolveData, ocrPdf.getMetas());
             return ApiResult.success(ocrPdfWhole);
         } else {
-            List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(tempFile, pdfFile);
+            List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(pdfAnnotationMetaList, pdfFile);
             List<OcrPdfContent> ocrPdfContentList = oService.formatContent(pdfAnnotationPickContentList, ocrPdf.getMetas());
             return ApiResult.success(ocrPdfContentList);
         }

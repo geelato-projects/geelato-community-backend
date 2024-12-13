@@ -9,6 +9,10 @@ public class MetaDaoSql {
      */
     public static final String TABLE_SCHEMA_METHOD = "DATABASE()";
     /**
+     * 查询 platform_dev_db_connect
+     */
+    public static final String SQL_CONNECT_LIST = String.format("select * from platform_dev_db_connect where del_status =%d", ColumnDefault.DEL_STATUS_VALUE);
+    /**
      * 查询 platform_dev_table
      */
     public static final String SQL_TABLE_LIST = String.format("select * from platform_dev_table where del_status =%d", ColumnDefault.DEL_STATUS_VALUE);
@@ -24,6 +28,10 @@ public class MetaDaoSql {
      * 查询 platform_dev_table_foreign
      */
     public static final String SQL_FOREIGN_LIST_BY_TABLE = String.format("select * from platform_dev_table_foreign where del_status=%d", ColumnDefault.DEL_STATUS_VALUE);
+    /**
+     * 查询 platform_dev_table_check
+     */
+    public static final String SQL_CHECK_LIST_BY_TABLE = String.format("select * from platform_dev_table_check where del_status=%d", ColumnDefault.DEL_STATUS_VALUE);
     /**
      * 查询 所有表信息
      */
@@ -59,8 +67,19 @@ public class MetaDaoSql {
      */
     public static final String SQL_RENAME_TABLE = "RENAME TABLE %s TO %s;";
     /**
-     * 查询视图信息
+     * 查询视图信息,第一个：视图名称
      */
     public static final String SQL_SHOW_CREATE_VIEW = "SHOW CREATE VIEW %s;";
-
+    /**
+     * 查询表约束信息,第一个：表模式；第二个：约束类型
+     */
+    public static final String SQL_QUERY_TABLE_CONSTRAINTS = "SELECT t.* FROM (SELECT t1.CONSTRAINT_CATALOG,t1.CONSTRAINT_SCHEMA,t1.TABLE_SCHEMA,t1.TABLE_NAME,t1.CONSTRAINT_TYPE,t1.ENFORCED,t1.CONSTRAINT_NAME,t2.CHECK_CLAUSE FROM information_schema.TABLE_CONSTRAINTS t1 JOIN information_schema.CHECK_CONSTRAINTS t2 ON t1.CONSTRAINT_NAME = t2.CONSTRAINT_NAME WHERE t1.TABLE_SCHEMA = '%s' AND t1.CONSTRAINT_TYPE = '%s') t WHERE 1=1";
+    /**
+     * 查询表约束信息,第一个：表模式；第二个：约束类型；第三个：约束名称
+     */
+    public static final String SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME = SQL_QUERY_TABLE_CONSTRAINTS + " AND FIND_IN_SET(CONSTRAINT_NAME, '%s')";
+    /**
+     * 查询表约束信息,第一个：表模式；第二个：约束类型；第三个：表名称
+     */
+    public static final String SQL_QUERY_TABLE_CONSTRAINTS_BY_TABLE = SQL_QUERY_TABLE_CONSTRAINTS + " AND TABLE_NAME = '%s'";
 }

@@ -7,9 +7,11 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.core.meta.schema.SchemaCheck;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.util.ConnectUtils;
 import cn.geelato.utils.SqlParams;
@@ -133,8 +135,7 @@ public class DbGenerateDao {
      * @param dropBeforeCreate 存在表时，是否删除
      */
     public void createOrUpdateOneTable(String entityName, boolean dropBeforeCreate) {
-        // createOrUpdateOneTable(metaManager.getByEntityName(entityName,false), dropBeforeCreate);
-        EntityMeta entityMeta = metaManager.getByEntityName(entityName, false);
+        EntityMeta entityMeta = metaManager.getByEntityName(entityName, dropBeforeCreate);
         if (TableTypeEnum.TABLE.getCode().equals(entityMeta.getTableMeta().getTableType())) {
             createOrUpdateOneTable(entityMeta);
         } else if (TableTypeEnum.VIEW.getCode().equals(entityMeta.getTableMeta().getTableType())) {
@@ -208,8 +209,22 @@ public class DbGenerateDao {
                 }
             }
         }
+        // 表检查 - 需要删除的
+        List<SchemaCheck> schemaCheckList = metaManager.queryTableChecks(em.getTableSchema(), em.getTableName(), em.getTableChecks());
+        ArrayList<JSONObject> delCheckList = new ArrayList<>();
+        for (SchemaCheck tc : schemaCheckList) {
+            delCheckList.add(JSONObject.parseObject(JSONObject.toJSONString(tc)));
+        }
+        // 表检查 - 需要添加的
+        ArrayList<JSONObject> checkList = new ArrayList<>();
+        for (TableCheck tc : em.getTableChecks()) {
+            if (tc.getEnableStatus() == EnableStatusEnum.DISABLED.getCode()) {
+                continue;
+            }
+            checkList.add(JSONObject.parseObject(JSONObject.toJSONString(tc)));
+        }
         if (!isExistsTable) {
-            createTable(em.getTableMeta(), createList, foreignList, hasDelStatus);
+            createTable(em.getTableMeta(), createList, foreignList, delCheckList, checkList, hasDelStatus);
         } else {
             // 唯一约束索引
             List<SchemaIndex> schemaIndexList = metaManager.queryIndexes(em.getTableName());
@@ -221,7 +236,7 @@ public class DbGenerateDao {
                     keyNames.add(meta.getKeyName());
                 }
             }
-            upgradeTable(em.getTableMeta(), addList, modifyList, indexList, uniqueList, String.join(",", primaryList), hasDelStatus);
+            upgradeTable(em.getTableMeta(), addList, modifyList, indexList, uniqueList, delCheckList, checkList, String.join(",", primaryList), hasDelStatus);
         }
     }
 
@@ -304,9 +319,11 @@ public class DbGenerateDao {
      * @param tableMeta        表元数据对象，包含表的基本信息
      * @param createColumnList 包含列信息的JSONObject列表
      * @param foreignList      包含外键信息的JSONObject列表
+     * @param delCheckList     包含删除检查信息的JSONObject列表
+     * @param checkList        包含检查信息的JSONObject列表
      * @param hasDelStatus     是否有删除状态标志，用于决定是否在表中添加删除状态字段
      */
-    private void createTable(TableMeta tableMeta, List<JSONObject> createColumnList, List<JSONObject> foreignList, boolean hasDelStatus) {
+    private void createTable(TableMeta tableMeta, List<JSONObject> createColumnList, List<JSONObject> foreignList, List<JSONObject> delCheckList, List<JSONObject> checkList, boolean hasDelStatus) {
         Map<String, Object> map = new HashMap<>();
         ArrayList<JSONObject> uniqueColumnList = getUniqueColumn(createColumnList);
         String primaryKey = getPrimaryColumn(createColumnList);
@@ -328,6 +345,13 @@ public class DbGenerateDao {
         map.put("primaryKey", primaryKey);
         // 表外键 - 添加
         map.put("foreignList", foreignList);
+        // 表检查 - 添加
+        map.put("checkList", checkList);
+        // 表检查 - 删除
+        map.put("delCheckList", delCheckList);
+        if (delCheckList != null && !delCheckList.isEmpty()) {
+            dao.execute("deleteTableChecks", map);
+        }
         dao.execute("createOneTable", map);
     }
 
@@ -341,11 +365,13 @@ public class DbGenerateDao {
      * @param modifyList   修改字段列表，每个元素为一个JSONObject，包含字段相关信息
      * @param indexList    索引列表，每个元素为一个JSONObject，包含索引相关信息
      * @param uniqueList   唯一约束列表，每个元素为一个JSONObject，包含唯一约束相关信息
+     * @param delCheckList 删除检查列表，每个元素为一个JSONObject，包含删除检查相关信息
+     * @param checkList    检查列表，每个元素为一个JSONObject，包含检查相关信息
      * @param primaryKey   主键名称
      * @param hasDelStatus 是否存在删除状态标志
      */
     private void upgradeTable(TableMeta tableMeta, List<JSONObject> addList, List<JSONObject> modifyList, List<JSONObject> indexList,
-                              List<JSONObject> uniqueList, String primaryKey, boolean hasDelStatus) {
+                              List<JSONObject> uniqueList, List<JSONObject> delCheckList, List<JSONObject> checkList, String primaryKey, boolean hasDelStatus) {
         Map<String, Object> map = new HashMap<>();
         // 表单信息
         map.put("tableName", tableMeta.getTableName());
@@ -369,6 +395,10 @@ public class DbGenerateDao {
         // 表索引 - 唯一约束 - 添加
         map.put("uniqueList", uniqueList);
         map.put("hasDelStatus", hasDelStatus);
+        // 表检查 - 添加
+        map.put("checkList", checkList);
+        // 表检查 - 删除
+        map.put("delCheckList", delCheckList);
         dao.execute("upgradeOneTable", map);
     }
 

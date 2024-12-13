@@ -203,31 +203,36 @@ public class OcrService extends BaseService {
                         }
                     } else if (RuleTypeEnum.CHECKBOX.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule())) {
-                            content = calculateItemCodes(content, rule.getRule());
+                            String result = calculateItemCodes(content, rule.getRule());
+                            content = rule.isRetain() && Strings.isBlank(result) ? content : result;
                         } else {
                             throw new RuntimeException("Dictionary encoding is empty");
                         }
                     } else if (RuleTypeEnum.DICTIONARY.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule())) {
-                            content = calculateItemCode(content, rule.getRule());
+                            String result = calculateItemCode(content, rule.getRule());
+                            content = rule.isRetain() && Strings.isBlank(result) ? content : result;
                         } else {
                             throw new RuntimeException("Dictionary encoding is empty");
                         }
                     } else if (RuleTypeEnum.RADIO.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule())) {
-                            content = calculateRadio(content, rule.getRule());
+                        if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
+                            String result = calculateRadio(content, rule.getRule(), rule.getGoal());
+                            content = rule.isRetain() && Strings.isBlank(result) ? content : result;
                         } else {
-                            throw new RuntimeException("Dictionary encoding is empty");
+                            throw new RuntimeException("Dictionary encoding or type is empty");
                         }
                     } else if (RuleTypeEnum.QUERYGOAL.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
-                            content = calculateTables(content, rule.getRule(), rule.getGoal());
+                            String result = calculateTables(content, rule.getRule(), rule.getGoal());
+                            content = rule.isRetain() && Strings.isBlank(result) ? content : result;
                         } else {
                             throw new RuntimeException("Entity or column is empty");
                         }
                     } else if (RuleTypeEnum.QUERYRULE.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
-                            content = calculateTables(content, rule.getRule(), rule.getGoal());
+                            String result = calculateTables(content, rule.getRule(), rule.getGoal());
+                            content = rule.isRetain() && Strings.isBlank(result) ? content : result;
                         } else {
                             throw new RuntimeException("Entity or column is empty");
                         }
@@ -343,11 +348,19 @@ public class OcrService extends BaseService {
      * @return 如果找到对应的内容，则返回对应的值；否则返回null
      * @throws RuntimeException 如果字典映射字符串格式不正确，则抛出运行时异常
      */
-    private String calculateRadio(String content, String dictMapStr) {
+    private String calculateRadio(String content, String dictMapStr, String type) {
         try {
             Map<String, String> dictMap = JSON.parseObject(dictMapStr, Map.class);
             if (dictMap != null && dictMap.size() > 0) {
-                return dictMap.get(content);
+                if (Strings.isNotBlank(content) && "contains".equalsIgnoreCase(type)) {
+                    for (Map.Entry<String, String> entry : dictMap.entrySet()) {
+                        if (content.indexOf(entry.getKey()) != -1) {
+                            return content.replaceAll(entry.getKey(), entry.getValue());
+                        }
+                    }
+                } else {
+                    return dictMap.get(content);
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException("The data dictionary format is incorrect", e);

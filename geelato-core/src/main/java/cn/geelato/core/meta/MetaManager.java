@@ -12,20 +12,23 @@ import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.column.ColumnSelectType;
 import cn.geelato.core.meta.model.entity.EntityLiteMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import cn.geelato.core.meta.schema.SchemaForeign;
+import cn.geelato.core.meta.schema.SchemaCheck;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.ClassScanner;
 import cn.geelato.utils.FastJsonUtils;
 import cn.geelato.utils.MapUtils;
+import cn.geelato.utils.StringUtils;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author geemeta
@@ -36,11 +39,26 @@ public class MetaManager extends AbstractManager {
 
     private Dao dao;
     private static MetaManager instance;
+    /**
+     * 实体类名称和实体类对象的映射关系,key:entityName，value为实体类对象
+     */
     private final HashMap<String, EntityMeta> entityMetadataMap = new HashMap<>();
-    private final List<EntityLiteMeta> entityLiteMetaList = new ArrayList<>();
+    /**
+     * 实体类名称和实体类对象的映射关系,key:tableName，value为实体类对象,已在数据库中创建的实体类
+     */
     private final HashMap<String, EntityMeta> tableNameMetadataMap = new HashMap<>();
+    /**
+     * 实体字段，key:字段标识或名称，columnName,fieldName，value：字段标题title
+     */
     private static final HashMap<String, String> entityFieldNameTitleMap = new HashMap<>();
-    private final Map<String, FieldMeta> commonFieldMetas = new HashMap<>();
+    /**
+     * 简化实体数据集合，标识，标题，类型
+     */
+    private final List<EntityLiteMeta> entityLiteMetaList = new ArrayList<>();
+    /**
+     * 实体类
+     */
+    private final HashMap<String, Class> entityMetaClassMap = new HashMap<>();
 
     public static MetaManager singleInstance() {
         lock.lock();
@@ -71,21 +89,20 @@ public class MetaManager extends AbstractManager {
 //        addCommonFieldMeta("login_name", "loginName", "登录名");
     }
 
+    /**
+     * 解析数据库元数据
+     * <br>所有表，视图，字段，外键，检查
+     *
+     * @param dao 数据访问对象
+     */
     public void parseDBMeta(Dao dao) {
         this.dao = dao;
-        log.info("parse meta data in database...");
-        List<Map<String, Object>> tableList = dao.getJdbcTemplate().queryForList(MetaDaoSql.SQL_TABLE_LIST);
-        for (Map<String, Object> map : tableList) {
-            List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
-            List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and entity_name='%s'", map.get("entity_name")));
-            parseTableEntity(map, columnList, viewList);
-            parseViewEntity(viewList);
-        }
+        parseDBMeta(dao, null);
     }
 
     /**
      * 根据需求刷新模型和视图。
-     * 根据传入的参数，从数据库中查询表信息、列信息和视图信息，并对这些信息进行处理以刷新模型和视图。
+     * <br>根据传入的参数，从数据库中查询表信息、列信息和视图信息，并对这些信息进行处理以刷新模型和视图。
      *
      * @param dao    数据访问对象，用于执行数据库操作
      * @param params 包含查询参数的Map，支持的参数包括appId、connectId、tableId和entityName
@@ -105,11 +122,17 @@ public class MetaManager extends AbstractManager {
         for (Map<String, Object> map : tableList) {
             List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
             List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and entity_name='%s'", map.get("entity_name")));
-            parseTableEntity(map, columnList, viewList);
+            List<Map<String, Object>> checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
+            parseTableEntity(map, columnList, viewList, checkList, null);
             parseViewEntity(viewList);
         }
     }
 
+    /**
+     * 刷新数据库元数据
+     *
+     * @param entityName 实体名称
+     */
     public void refreshDBMeta(String entityName) {
         log.info("refresh meta...{}", entityName);
         refreshTableMeta(entityName);
@@ -117,18 +140,28 @@ public class MetaManager extends AbstractManager {
 
     }
 
-    private void refreshViewMeta(String entityName) {
+    /**
+     * 刷新视图元数据,删除原来的，重新解析
+     *
+     * @param viewName 视图名称
+     */
+    private void refreshViewMeta(String viewName) {
         String viewListSql = MetaDaoSql.SQL_VIEW_LIST_BY_TABLE;
-        if (Strings.isNotEmpty(entityName)) {
-            viewListSql = String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and view_name='%s'", entityName);
+        if (Strings.isNotEmpty(viewName)) {
+            viewListSql = String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and view_name='%s'", viewName);
         }
         List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(viewListSql);
         for (Map<String, Object> map : viewList) {
-            removeOne(entityName);
+            removeOne(viewName);
             parseViewEntity(map);
         }
     }
 
+    /**
+     * 刷新表元数据
+     *
+     * @param entityName 实体名称
+     */
     private void refreshTableMeta(String entityName) {
         String tableListSql = MetaDaoSql.SQL_TABLE_LIST;
         if (Strings.isNotEmpty(entityName)) {
@@ -137,11 +170,19 @@ public class MetaManager extends AbstractManager {
         List<Map<String, Object>> tableList = dao.getJdbcTemplate().queryForList(tableListSql);
         for (Map<String, Object> map : tableList) {
             List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
+            List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and entity_name='%s'", map.get("entity_name")));
+            List<Map<String, Object>> checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
             removeOne(entityName);
-            parseOne(map, columnList);
+            parseTableEntity(map, columnList, viewList, checkList, null);
         }
     }
 
+    /**
+     * 查询指定表的索引信息
+     *
+     * @param tableName 表名
+     * @return 包含索引信息的列表
+     */
     public List<SchemaIndex> queryIndexes(String tableName) {
         List<SchemaIndex> indexList = new ArrayList<>();
         if (Strings.isEmpty(tableName)) {
@@ -152,25 +193,37 @@ public class MetaManager extends AbstractManager {
         return indexList;
     }
 
-    public List<SchemaIndex> queryIndexes(String tableName, String columnName, Boolean isUnique, Boolean isPrimary) {
-        List<SchemaIndex> indexList = new ArrayList<>();
-        if (!Strings.isEmpty(tableName)) {
-            List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_INDEXES_NO_PRIMARY, tableName));
-            indexList = SchemaIndex.buildData(mapList);
+    /**
+     * 查询指定表模式的检查约束
+     *
+     * @param tableSchema 表模式
+     * @param tableName   表名
+     * @param checkList   表检查约束列表
+     * @return 包含表检查约束的列表
+     */
+    public List<SchemaCheck> queryTableChecks(String tableSchema, String tableName, Collection<TableCheck> checkList) {
+        List<SchemaCheck> indexList = new ArrayList<>();
+        if (Strings.isBlank(tableSchema)) {
+            return indexList;
+        }
+        if (Strings.isNotBlank(tableName)) {
+            List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_TABLE, tableSchema, "CHECK", tableName));
+            indexList.addAll(SchemaCheck.buildData(mapList));
+        }
+        if (checkList != null && !checkList.isEmpty()) {
+            List<String> checkNames = checkList.stream().map(TableCheck::getCode).collect(Collectors.toList());
+            List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME, tableSchema, "CHECK", StringUtils.join(checkNames, ",")));
+            indexList.addAll(SchemaCheck.buildData(mapList));
         }
         return indexList;
     }
 
-    public List<SchemaForeign> queryForeignKeys(String tableName) {
-        List<SchemaForeign> keyList = new ArrayList<>();
-        if (Strings.isEmpty(tableName)) {
-            return keyList;
-        }
-        List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_FOREIGN_KEY, tableName));
-        keyList = SchemaForeign.buildTableForeignKeys(mapList);
-        return keyList;
-    }
-
+    /**
+     * 根据类名获取实体元数据
+     *
+     * @param clazz 类对象
+     * @return 实体元数据对象，如果不存在则返回null
+     */
     public EntityMeta get(Class clazz) {
         String entityName = MetaReflex.getEntityName(clazz);
         if (entityMetadataMap.containsKey(entityName)) {
@@ -178,6 +231,48 @@ public class MetaManager extends AbstractManager {
         } else {
             Iterator<String> it = entityMetadataMap.keySet().iterator();
             log.warn("Key({}) not found in entityMetadataMap by class", clazz.getName());
+            while (it.hasNext()) {
+                log.warn(it.next());
+            }
+            return null;
+        }
+    }
+
+    /**
+     * 根据实体名称获取实体元数据。
+     * 通过传入的实体名称（entityName）在entityMetadataMap中查找对应的实体元数据，并返回。
+     * 如果未找到对应的实体元数据，则记录警告日志并返回null。
+     *
+     * @param entityName 实体名称。如果是Java元数据，则entityName应为长类名（包名+类名）。
+     * @return 返回找到的实体元数据对象，如果未找到则返回null。
+     */
+    public EntityMeta getByEntityName(String entityName) {
+        if (entityMetadataMap.containsKey(entityName)) {
+            return entityMetadataMap.get(entityName);
+        } else {
+            Iterator<String> it = entityMetadataMap.keySet().iterator();
+            log.warn("Key({}) not found in entityMetadataMap by entityName", entityName);
+            while (it.hasNext()) {
+                log.warn(it.next());
+            }
+            return null;
+        }
+    }
+
+    public EntityMeta getByEntityName(String entityName, boolean cache) {
+        if (cache) {
+            return getByEntityName(entityName);
+        }
+        refreshDBMeta(entityName);
+        return getByEntityName(entityName);
+    }
+
+    public EntityMeta get(String tableName) {
+        if (tableNameMetadataMap.containsKey(tableName)) {
+            return tableNameMetadataMap.get(tableName);
+        } else {
+            Iterator<String> it = tableNameMetadataMap.keySet().iterator();
+            log.warn("Key({}) not found in tableNameMetadataMap by tableName", tableName);
             while (it.hasNext()) {
                 log.warn(it.next());
             }
@@ -215,51 +310,8 @@ public class MetaManager extends AbstractManager {
         return map;
     }
 
-
-    /**
-     * 根据实体名称获取实体元数据。
-     * 通过传入的实体名称（entityName）在entityMetadataMap中查找对应的实体元数据，并返回。
-     * 如果未找到对应的实体元数据，则记录警告日志并返回null。
-     *
-     * @param entityName 实体名称。如果是Java元数据，则entityName应为长类名（包名+类名）。
-     * @return 返回找到的实体元数据对象，如果未找到则返回null。
-     */
-    public EntityMeta getByEntityName(String entityName) {
-        if (entityMetadataMap.containsKey(entityName)) {
-            return entityMetadataMap.get(entityName);
-        } else {
-            Iterator<String> it = entityMetadataMap.keySet().iterator();
-            log.warn("Key({}) not found in entityMetadataMap by entityName", entityName);
-            while (it.hasNext()) {
-                log.warn(it.next());
-            }
-            return null;
-        }
-    }
-
-    public EntityMeta getByEntityName(String entityName, boolean cache) {
-        if (cache) {
-            return getByEntityName(entityName);
-        }
-        refreshDBMeta(entityName);
-        return getByEntityName(entityName);
-    }
-
     public boolean containsEntity(String entityName) {
         return entityMetadataMap.containsKey(entityName);
-    }
-
-    public EntityMeta get(String tableName) {
-        if (tableNameMetadataMap.containsKey(tableName)) {
-            return tableNameMetadataMap.get(tableName);
-        } else {
-            Iterator<String> it = tableNameMetadataMap.keySet().iterator();
-            log.warn("Key({}) not found in tableNameMetadataMap by tableName", tableName);
-            while (it.hasNext()) {
-                log.warn(it.next());
-            }
-            return null;
-        }
     }
 
     public Collection<EntityMeta> getAll() {
@@ -374,6 +426,7 @@ public class MetaManager extends AbstractManager {
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
             EntityMeta entityMeta = MetaReflex.getEntityMeta(clazz);
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
+            entityMetaClassMap.put(entityMeta.getTableName(), clazz);
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Class));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
             if (log.isDebugEnabled()) {
@@ -390,19 +443,31 @@ public class MetaManager extends AbstractManager {
         }
     }
 
+    public void parseOneOther(EntityMeta entityMeta) {
+        List checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_name='%s'", entityMeta.getTableName()));
+        if (checkList != null && !checkList.isEmpty()) {
+            entityMeta.setTableChecks(MetaReflex.getTableCheckMetas(checkList));
+        }
+    }
+
 
     public void parseOne(Map<String, Object> map, List<Map<String, Object>> columnList) {
         parseTableEntity(map, columnList, null);
     }
 
     public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList) {
-        parseTableEntity(map, columnList, viewList, null);
+        parseTableEntity(map, columnList, viewList, null, null);
     }
 
-    public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList, List<Map<String, Object>> foreignList) {
-        String entityName = map.get("entity_name").toString();
+    public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList, List<Map<String, Object>> checkList, List<Map<String, Object>> foreignList) {
+        String entityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
-            EntityMeta entityMeta = MetaReflex.getEntityMetaByTable(map, columnList, viewList, foreignList);
+            EntityMeta entityMeta = MetaReflex.getEntityMetaByTable(map, columnList, viewList, checkList, foreignList);
+            // EntityType = class
+            if (entityMetaClassMap.containsKey(entityName)) {
+                entityMeta.setClassType(entityMetaClassMap.get(entityName));
+                entityMeta.setEntityType(EntityType.Class);
+            }
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
@@ -417,19 +482,21 @@ public class MetaManager extends AbstractManager {
     }
 
     public void parseViewEntity(Map<String, Object> view) {
-        String viewType = view.get("view_type").toString();
-        if ("custom".equalsIgnoreCase(viewType)) {
-            String entityName = view.get("view_name").toString();
-            if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
-                EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);
-                entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
-                removeLiteMeta(entityMeta.getEntityName());
-                entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.View));
-                tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
-            }
+        String entityName = view.get("view_name").toString();
+        if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
+            EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);
+            entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
+            removeLiteMeta(entityMeta.getEntityName());
+            entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.View));
+            tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
         }
     }
 
+    /**
+     * 移除指定实体的元数据
+     *
+     * @param entityName 要移除的实体名称或视图名称
+     */
     public void removeOne(String entityName) {
         if (entityMetadataMap.containsKey(entityName)) {
             EntityMeta entityMeta = entityMetadataMap.get(entityName);
@@ -439,6 +506,11 @@ public class MetaManager extends AbstractManager {
         }
     }
 
+    /**
+     * 移除轻量级实体元数据
+     *
+     * @param entityName 要移除的实体名称
+     */
     public void removeLiteMeta(String entityName) {
         List<EntityLiteMeta> removeList = new ArrayList<>();
         if (!entityLiteMetaList.isEmpty()) {
@@ -505,5 +577,29 @@ public class MetaManager extends AbstractManager {
         }
 
         return columnSelectTypes;
+    }
+
+    /**
+     * 获取表升级列信息列表
+     *
+     * @return 包含列信息的Map，键为列名，值为列信息对象
+     * @throws IOException 当读取JSON文件时发生IO异常
+     */
+    public Map<String, ColumnMeta> getTableUpgradeList() {
+        Map<String, ColumnMeta> columnMetaMap = new HashMap<>();
+        try {
+            String jsonStr = FastJsonUtils.readJsonFile(ResourcesFiles.TABLE_UPGRADE_JSON);
+            List<ColumnMeta> columnMetaList = JSON.parseArray(jsonStr, ColumnMeta.class);
+            if (columnMetaList != null && !columnMetaList.isEmpty()) {
+                for (ColumnMeta columnMeta : columnMetaList) {
+                    columnMeta.afterSet();
+                    columnMetaMap.put(columnMeta.getFieldName(), columnMeta);
+                }
+            }
+        } catch (IOException e) {
+            columnMetaMap = new HashMap<>();
+        }
+
+        return columnMetaMap;
     }
 }

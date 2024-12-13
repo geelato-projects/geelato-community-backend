@@ -24,4 +24,8 @@ public class ResourcesFiles {
      * column permission，实体字段权限
      */
     public static final String PERMISSION_COLUMN_DEFAULT_JSON = "gelato/web/platform/data/permission_column_default.json";
+    /**
+     * 表升级配置
+     */
+    public static final String TABLE_UPGRADE_JSON = "gelato/web/platform/data/table_upgrade.json";
 }

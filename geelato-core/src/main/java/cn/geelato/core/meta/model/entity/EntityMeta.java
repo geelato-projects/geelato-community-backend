@@ -20,8 +20,8 @@ public class EntityMeta {
 
     /**
      * -- GETTER --
-     *  对于基于java类解析的实体，则返回类名（不包括包名）
-     *  对于基于页面配置的实体，则返回配置的实体名称
+     * 对于基于java类解析的实体，则返回类名（不包括包名）
+     * 对于基于页面配置的实体，则返回配置的实体名称
      */
     // 实体的编码，如：user_info
     @Setter
@@ -36,15 +36,15 @@ public class EntityMeta {
     private Class classType;
     /**
      * -- GETTER --
-     *  对于基于java类解析的实体，则有具体的类类型
-     *  对于基于页面配置的实体，则返回值为空
+     * 对于基于java类解析的实体，则有具体的类类型
+     * 对于基于页面配置的实体，则返回值为空
      */
     @Setter
     @Getter
     private EntityType entityType;
     /**
      * -- GETTER --
-     *  基于@Id获取实体中的主键字段名
+     * 基于@Id获取实体中的主键字段名
      */
     @Getter
     private FieldMeta id;
@@ -63,7 +63,9 @@ public class EntityMeta {
     private Collection<ViewMeta> viewMetas;
     @Getter
     private Collection<TableForeign> tableForeigns;
-
+    @Getter
+    @Setter
+    private Collection<TableCheck> tableChecks;
     @Getter
     @Setter
     private Map<String, DictDataSource> dictDataSourceMap;
@@ -209,6 +211,10 @@ public class EntityMeta {
 
     public String getTableName() {
         return tableMeta.getTableName();
+    }
+
+    public String getTableSchema() {
+        return tableMeta.getTableSchema();
     }
 
     public String getColumnName(String fieldName) {

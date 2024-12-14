@@ -63,26 +63,30 @@ public class OCRController extends BaseController {
         // 需要处理的文件
         Attach file = attachService.getModel(fileId);
         File pdfFile = FileUtils.pathToFile(file.getPath());
+
+
+        Attach templatefile = attachService.getModel(templateId);
+        File templatePdfFile = FileUtils.pathToFile(templatefile.getPath());
         if (pdfFile == null || !pdfFile.exists()) {
             throw new IllegalArgumentException("file not found");
         }
-        // 获取模板文件
-        OcrPdf ocrPdf = ocrPdfService.getModel(templateId, true);
-        if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate())) {
-            throw new IllegalArgumentException("模板不能为空");
-        }
-        // File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
-        if (ocrPdf.getMetas() == null || ocrPdf.getMetas().isEmpty()) {
-            throw new IllegalArgumentException("模板元数据不能为空");
-        }
-        List<PDFAnnotationMeta> pdfAnnotationMetaList = OcrPdfMeta.toPDFAnnotationMetaList(ocrPdf.getMetas());
+//        // 获取模板文件
+//        OcrPdf ocrPdf = ocrPdfService.getModel(templateId, true);
+//        if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate())) {
+//            throw new IllegalArgumentException("模板不能为空");
+//        }
+//        // File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
+//        if (ocrPdf.getMetas() == null || ocrPdf.getMetas().isEmpty()) {
+//            throw new IllegalArgumentException("模板元数据不能为空");
+//        }
+//        List<PDFAnnotationMeta> pdfAnnotationMetaList = OcrPdfMeta.toPDFAnnotationMetaList(ocrPdf.getMetas());
         // 获取OCR服务，解析PDF文件
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
         if (wholeContent) {
-            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(pdfAnnotationMetaList, pdfFile);
+            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(templatePdfFile, pdfFile);
             return ApiResult.success(pdfResolveData);
         } else {
-            List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(pdfAnnotationMetaList, pdfFile);
+            List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(templatePdfFile, pdfFile);
             return ApiResult.success(pdfAnnotationPickContentList);
         }
     }
@@ -101,6 +105,7 @@ public class OCRController extends BaseController {
         // 需要处理的文件
         Attach file = attachService.getModel(fileId);
         File pdfFile = FileUtils.pathToFile(file.getPath());
+
         if (pdfFile == null || !pdfFile.exists()) {
             throw new IllegalArgumentException("file not found");
         }

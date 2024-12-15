@@ -404,7 +404,7 @@ public class OcrService extends BaseService {
      */
     private String calculateTables(String value, String rule, String goal) {
         Map<String, Object> map = parseRuleMap(rule, goal);
-        if (map == null) {
+        if (Strings.isBlank(value) || map == null) {
             return null;
         }
         String tableName = map.get("tableName") == null ? "" : map.get("tableName").toString();

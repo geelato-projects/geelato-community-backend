@@ -29,6 +29,8 @@ public class OcrPdf extends BaseEntity implements EntityEnableAble {
     private String template;
     @Title(title = "描述")
     private String description;
+    @Title(title = "检测规则")
+    private String rule;
     @Title(title = "状态")
     @Col(name = "enable_status")
     private int enableStatus;

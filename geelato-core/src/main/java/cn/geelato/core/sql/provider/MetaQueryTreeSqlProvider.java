@@ -44,12 +44,13 @@ public class MetaQueryTreeSqlProvider extends MetaBaseSqlProvider<QueryTreeComma
             buildConditions(sb, md, fg.getFilters(), fg.getLogic());
         }
         if (command.getOriginalWhere() != null) {
-            sb.append("  and  ");
+            sb.append("  and  (");
             if (!"1=1".equals(command.getOriginalWhere())) {
                 sb.append(md.getTableAlias()).append(".").append(command.getOriginalWhere());
             } else {
                 sb.append(command.getOriginalWhere());
             }
+            sb.append(" )");
         }
         // group by
         if (StringUtils.hasText(command.getGroupBy())) {
@@ -91,7 +92,7 @@ public class MetaQueryTreeSqlProvider extends MetaBaseSqlProvider<QueryTreeComma
         sb.append(" t on tn.id=t.tree_node_id ");
         // where
         FilterGroup fg = command.getWhere();
-        if (fg != null && fg.getFilters() != null && fg.getFilters().size() > 0) {
+        if (fg != null && fg.getFilters() != null && !fg.getFilters().isEmpty()) {
             sb.append(" where ");
             buildConditions(sb, md, fg.getFilters(), fg.getLogic());
         }
@@ -119,12 +120,10 @@ public class MetaQueryTreeSqlProvider extends MetaBaseSqlProvider<QueryTreeComma
         }
         // 只取第一个字段用于统计总数，默认按主键统计
         if (md.getId() != null) {
-//            sb.append(md.getId().getColumnName());
             tryAppendKeywords(sb, md.getId().getColumnName());
         } else {
             FieldMeta fm = md.getFieldMeta(fields[0]);
             tryAppendKeywords(sb, fm.getColumnName());
-//            sb.append(fm.getColumnName());
         }
     }
 
@@ -142,21 +141,15 @@ public class MetaQueryTreeSqlProvider extends MetaBaseSqlProvider<QueryTreeComma
             if (alias.containsKey(fieldName)) {
                 // 有指定的重命名要求时
                 tryAppendKeywords(sb, fm.getColumnName());
-//                sb.append(fm.getColumnName());
                 sb.append(" ");
                 tryAppendKeywords(sb, alias.get(fieldName).toString());
-//                sb.append(alias.get(fieldName));
             } else {
-                // 无指定的重命名要求，将数据库的字段格式转成实体字段格式，如role_id to roleId
                 if (fm.isEquals()) {
                     tryAppendKeywords(sb, fm.getColumnName());
-//                    sb.append(fm.getColumnName());
                 } else {
                     tryAppendKeywords(sb, fm.getColumnName());
-//                    sb.append(fm.getColumnName());
                     sb.append(" ");
                     tryAppendKeywords(sb, fm.getFieldName());
-//                    sb.append(fm.getFieldName());
                 }
             }
             sb.append(",");

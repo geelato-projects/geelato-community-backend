@@ -27,6 +27,7 @@ public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
             objects[i] = entry.getValue();
             i++;
         }
+
         return objects;
     }
 

@@ -32,12 +32,10 @@ public class User {
         List<Permission> entityPermission = this.dataPermissions.stream().filter(x -> x.getEntity().equals(entity)).toList();
         List<Permission> maxRoleWeightPermissionList=null;
         Permission rtnPermission=null;
-        if(entityPermission!=null){
-            Optional<Permission> maxRoleWeightPermission=entityPermission.stream().max(Comparator.comparing(Permission::getRoleWeight));
-            if(maxRoleWeightPermission.isPresent()){
-               int maxRoleWeight=maxRoleWeightPermission.get().getRoleWeight();
-               maxRoleWeightPermissionList=entityPermission.stream().filter(x->x.getRoleWeight()==maxRoleWeight).toList();
-            }
+        Optional<Permission> maxRoleWeightPermission = entityPermission.stream().max(Comparator.comparing(Permission::getRoleWeight));
+        if(maxRoleWeightPermission.isPresent()){
+           int maxRoleWeight=maxRoleWeightPermission.get().getRoleWeight();
+           maxRoleWeightPermissionList=entityPermission.stream().filter(x->x.getRoleWeight()==maxRoleWeight).toList();
         }
         if(maxRoleWeightPermissionList!=null){
             rtnPermission= maxRoleWeightPermissionList.stream().max(Comparator.comparing(Permission::getWeight)).orElse(null);

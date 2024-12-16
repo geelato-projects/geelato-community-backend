@@ -49,7 +49,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
             buildConditions(sb, md, fg);
         }
         if (command.getOriginalWhere() != null) {
-            sb.append("  and  ");
+            sb.append("  and (");
             if (!"1=1".equals(command.getOriginalWhere())) {
                 if (md.getTableAlias() != null) {
                     sb.append(md.getTableAlias()).append(".");
@@ -58,6 +58,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
             } else {
                 sb.append(command.getOriginalWhere());
             }
+            sb.append(" )");
         }
         // group by
         if (StringUtils.hasText(command.getGroupBy())) {

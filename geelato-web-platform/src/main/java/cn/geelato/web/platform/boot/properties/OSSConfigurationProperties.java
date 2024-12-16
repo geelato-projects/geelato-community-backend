@@ -11,6 +11,6 @@ public class OSSConfigurationProperties {
     private String accessKeyId;
     private String accessKeySecret;
     private String endPoint;
-    private String bucketName ;
+    private String bucketName;
     private String region;
 }

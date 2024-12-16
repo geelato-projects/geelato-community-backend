@@ -176,10 +176,10 @@ public class OcrService extends BaseService {
                             throw new RuntimeException("Regular expression is empty");
                         }
                     } else if (RuleTypeEnum.REPLACE.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule()) && rule.getGoal() != null) {
-                            content = content.replaceAll(rule.getRule(), rule.getGoal());
+                        if (Strings.isNotBlank(rule.getRule())) {
+                            content = content.replaceAll(rule.getRule(), rule.getGoal() == null ? "" : rule.getGoal());
                         } else {
-                            throw new RuntimeException("Regular expression or replace is empty");
+                            throw new RuntimeException("Regular expression is empty");
                         }
                     } else if (RuleTypeEnum.EXTRACT.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule())) {

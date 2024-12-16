@@ -287,7 +287,7 @@ public class OcrService extends BaseService {
         if (pdfAnnotationPickContentList == null || pdfAnnotationPickContentList.isEmpty()) {
             return false;
         }
-        if (ocrPdfRule.getName() == null || ocrPdfRule.getName().length == 0) {
+        if (ocrPdfRule == null || ocrPdfRule.getName() == null || ocrPdfRule.getName().length == 0) {
             return true;
         }
         List<String> templateNames = pdfAnnotationPickContentList.stream().map(PDFAnnotationPickContent::getAnnotationAreaContent).distinct().collect(Collectors.toList());
@@ -324,7 +324,7 @@ public class OcrService extends BaseService {
         if (ocrPdfContentList == null || ocrPdfContentList.isEmpty()) {
             return false;
         }
-        if (ocrPdfRule.getExpression() == null || ocrPdfRule.getExpression().length == 0) {
+        if (ocrPdfRule == null || ocrPdfRule.getExpression() == null || ocrPdfRule.getExpression().length == 0) {
             return true;
         }
         Map<String, Object> resultMap = OcrPdfContent.toMap(ocrPdfContentList);

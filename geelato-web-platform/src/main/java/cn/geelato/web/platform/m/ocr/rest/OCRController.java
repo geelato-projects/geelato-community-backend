@@ -109,27 +109,48 @@ public class OCRController extends BaseController {
         if (pdfFile == null || !pdfFile.exists()) {
             throw new IllegalArgumentException("file not found");
         }
-        // 获取模板文件
-        OcrPdf ocrPdf = ocrPdfService.getModel(templateId, true);
-        if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate())) {
-            throw new IllegalArgumentException("模板不能为空");
+        List<String> pdfIds = OcrUtils.stringToListDr(templateId);
+        if (pdfIds == null || pdfIds.isEmpty()) {
+            throw new IllegalArgumentException("templateId is blank");
         }
-        // File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
-        if (ocrPdf.getMetas() == null || ocrPdf.getMetas().isEmpty()) {
-            throw new IllegalArgumentException("模板元数据不能为空");
-        }
-        List<PDFAnnotationMeta> pdfAnnotationMetaList = OcrPdfMeta.toPDFAnnotationMetaList(ocrPdf.getMetas());
         // 获取OCR服务，解析PDF文件
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
-        if (wholeContent) {
-            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(pdfAnnotationMetaList, pdfFile);
-            OcrPdfWhole ocrPdfWhole = oService.formatContent(pdfResolveData, ocrPdf.getMetas());
-            return ApiResult.success(ocrPdfWhole);
-        } else {
-            List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(pdfAnnotationMetaList, pdfFile);
-            List<OcrPdfContent> ocrPdfContentList = oService.formatContent(pdfAnnotationPickContentList, ocrPdf.getMetas());
-            return ApiResult.success(ocrPdfContentList);
+        // 遍历模板id列表，逐个处理每个PDF文件
+        for (String pdfId : pdfIds) {
+            // 获取模板信息
+            OcrPdf ocrPdf = ocrPdfService.getModel(pdfId, true);
+            if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate()) || ocrPdf.getMetas() == null || ocrPdf.getMetas().isEmpty()) {
+                continue;
+            }
+            // 获取模板检验规则
+            OcrPdfRule ocrPdfRule = ocrPdf.toRules();
+            // 获取模板文件
+            List<PDFAnnotationMeta> pdfAnnotationMetaList = OcrPdfMeta.toPDFAnnotationMetaList(ocrPdf.getMetas());
+            if (wholeContent) {
+                PDFResolveData pdfResolveData = ocrService.resolvePDFFile(pdfAnnotationMetaList, pdfFile);
+                // 验证模板名称是否匹配
+                if (!oService.validateTemplateName(ocrPdfRule, pdfResolveData)) {
+                    continue;
+                }
+                OcrPdfWhole ocrPdfWhole = oService.formatContent(pdfResolveData, ocrPdf.getMetas());
+                if (!oService.validateTemplateExpression(ocrPdfRule, ocrPdfWhole)) {
+                    continue;
+                }
+                return ApiResult.success(ocrPdfWhole);
+            } else {
+                List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(pdfAnnotationMetaList, pdfFile);
+                // 验证模板名称是否匹配
+                if (!oService.validateTemplateName(ocrPdfRule, pdfAnnotationPickContentList)) {
+                    continue;
+                }
+                List<OcrPdfContent> ocrPdfContentList = oService.formatContent(pdfAnnotationPickContentList, ocrPdf.getMetas());
+                if (!oService.validateTemplateExpression(ocrPdfRule, ocrPdfContentList)) {
+                    continue;
+                }
+                return ApiResult.success(ocrPdfContentList);
+            }
         }
+        return ApiResult.fail("Template matching failure");
     }
 
     /**

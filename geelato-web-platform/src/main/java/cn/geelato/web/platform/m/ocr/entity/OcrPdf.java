@@ -3,8 +3,10 @@ package cn.geelato.web.platform.m.ocr.entity;
 import cn.geelato.core.meta.annotation.*;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
+import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.logging.log4j.util.Strings;
 
 import java.util.List;
 
@@ -36,4 +38,21 @@ public class OcrPdf extends BaseEntity implements EntityEnableAble {
     private int enableStatus;
     @Transient
     private List<OcrPdfMeta> metas;
+
+    /**
+     * 将当前对象转换为OcrPdfRule对象
+     *
+     * @return OcrPdfRule对象，如果转换失败则返回null
+     */
+    public OcrPdfRule toRules() {
+        OcrPdfRule opr = null;
+        if (Strings.isNotBlank(this.getRule())) {
+            try {
+                opr = JSON.parseObject(this.getRule(), OcrPdfRule.class);
+            } catch (Exception e) {
+                opr = null;
+            }
+        }
+        return opr;
+    }
 }

@@ -41,6 +41,9 @@ public class OcrPdfMeta extends BaseSortableEntity {
     @Title(title = "批注原始序号")
     @Col(name = "annotation_index")
     private Integer annotationIndex;
+    @Title(title = "是否未知区域")
+    @Col(name = "unknown_area")
+    private Boolean unknownArea;
     @Title(title = "是否可浮动")
     @Col(name = "float_area_y")
     private Boolean floatAreaY;
@@ -93,6 +96,7 @@ public class OcrPdfMeta extends BaseSortableEntity {
         pam.setAnnotationIndex(ocrPdfMeta.getAnnotationIndex());
         pam.setTemplateAreaContent(ocrPdfMeta.getExample());
         pam.setContent(ocrPdfMeta.getName());
+        pam.setUnknownArea(ocrPdfMeta.getUnknownArea());
         pam.setFloatArea(ocrPdfMeta.getFloatAreaY());
         pam.setLineHeight(ocrPdfMeta.getLineHeight());
         //  pageIndex,x,y,width,height

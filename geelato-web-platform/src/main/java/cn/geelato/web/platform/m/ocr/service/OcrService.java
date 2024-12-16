@@ -13,10 +13,7 @@ import cn.geelato.plugin.ocr.PDFResolveData;
 import cn.geelato.web.platform.m.base.entity.Dict;
 import cn.geelato.web.platform.m.base.entity.DictItem;
 import cn.geelato.web.platform.m.base.service.BaseService;
-import cn.geelato.web.platform.m.ocr.entity.OcrPdfContent;
-import cn.geelato.web.platform.m.ocr.entity.OcrPdfMeta;
-import cn.geelato.web.platform.m.ocr.entity.OcrPdfMetaRule;
-import cn.geelato.web.platform.m.ocr.entity.OcrPdfWhole;
+import cn.geelato.web.platform.m.ocr.entity.*;
 import cn.geelato.web.platform.m.ocr.enums.MetaTypeEnum;
 import cn.geelato.web.platform.m.ocr.enums.RuleTypeEnum;
 import com.alibaba.fastjson2.JSON;
@@ -27,6 +24,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -135,7 +133,7 @@ public class OcrService extends BaseService {
      * @param content 传入的内容
      * @return 初始化后的内容
      */
-    private String initRules(String content) {
+    public String initRules(String content) {
         // pdf,word 去读会自动带上换行符，这里去掉
         content = OcrUtils.removeLf(content);
         // 去掉前后空格
@@ -176,10 +174,10 @@ public class OcrService extends BaseService {
                             throw new RuntimeException("Regular expression is empty");
                         }
                     } else if (RuleTypeEnum.REPLACE.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule()) && rule.getGoal() != null) {
-                            content = content.replaceAll(rule.getRule(), rule.getGoal());
+                        if (Strings.isNotBlank(rule.getRule())) {
+                            content = content.replaceAll(rule.getRule(), rule.getGoal() == null ? "" : rule.getGoal());
                         } else {
-                            throw new RuntimeException("Regular expression or replace is empty");
+                            throw new RuntimeException("Regular expression is empty");
                         }
                     } else if (RuleTypeEnum.EXTRACT.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule())) {
@@ -262,6 +260,83 @@ public class OcrService extends BaseService {
             }
         }
         return content;
+    }
+
+    /**
+     * 验证模板名称是否有效
+     *
+     * @param ocrPdfRule     OCR PDF规则对象
+     * @param pdfResolveData PDF解析数据对象
+     * @return 如果模板名称有效，则返回true；否则返回false
+     */
+    public boolean validateTemplateName(OcrPdfRule ocrPdfRule, PDFResolveData pdfResolveData) {
+        if (pdfResolveData == null) {
+            return false;
+        }
+        return validateTemplateName(ocrPdfRule, pdfResolveData.getPdfAnnotationPickContentList());
+    }
+
+    /**
+     * 验证模板名称是否有效
+     *
+     * @param ocrPdfRule                   OCR PDF规则对象
+     * @param pdfAnnotationPickContentList PDF注解选择内容列表
+     * @return 如果模板名称有效，则返回true；否则返回false
+     */
+    public boolean validateTemplateName(OcrPdfRule ocrPdfRule, List<PDFAnnotationPickContent> pdfAnnotationPickContentList) {
+        if (pdfAnnotationPickContentList == null || pdfAnnotationPickContentList.isEmpty()) {
+            return false;
+        }
+        if (ocrPdfRule == null || ocrPdfRule.getName() == null || ocrPdfRule.getName().length == 0) {
+            return true;
+        }
+        List<String> templateNames = pdfAnnotationPickContentList.stream().map(PDFAnnotationPickContent::getAnnotationAreaContent).distinct().collect(Collectors.toList());
+        for (String name : ocrPdfRule.getName()) {
+            if (Strings.isNotBlank(name) && !templateNames.contains(name)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 验证模板表达式是否有效
+     *
+     * @param ocrPdfRule  OCR PDF规则对象
+     * @param ocrPdfWhole OCR PDF整体对象
+     * @return 如果模板表达式有效，则返回true；否则返回false
+     */
+    public boolean validateTemplateExpression(OcrPdfRule ocrPdfRule, OcrPdfWhole ocrPdfWhole) {
+        if (ocrPdfWhole == null) {
+            return false;
+        }
+        return validateTemplateExpression(ocrPdfRule, ocrPdfWhole.getOcrPdfContents());
+    }
+
+    /**
+     * 验证模板表达式是否有效
+     *
+     * @param ocrPdfRule        OCR PDF规则对象
+     * @param ocrPdfContentList OCR PDF内容列表
+     * @return 如果模板表达式有效，则返回true；否则返回false
+     */
+    public boolean validateTemplateExpression(OcrPdfRule ocrPdfRule, List<OcrPdfContent> ocrPdfContentList) {
+        if (ocrPdfContentList == null || ocrPdfContentList.isEmpty()) {
+            return false;
+        }
+        if (ocrPdfRule == null || ocrPdfRule.getExpression() == null || ocrPdfRule.getExpression().length == 0) {
+            return true;
+        }
+        Map<String, Object> resultMap = OcrPdfContent.toMap(ocrPdfContentList);
+        for (String expression : ocrPdfRule.getExpression()) {
+            if (Strings.isNotBlank(expression)) {
+                Object result = JsProvider.executeExpression(expression, resultMap);
+                if (result == null || !Boolean.parseBoolean(result.toString())) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -404,7 +479,7 @@ public class OcrService extends BaseService {
      */
     private String calculateTables(String value, String rule, String goal) {
         Map<String, Object> map = parseRuleMap(rule, goal);
-        if (map == null) {
+        if (Strings.isBlank(value) || map == null) {
             return null;
         }
         String tableName = map.get("tableName") == null ? "" : map.get("tableName").toString();

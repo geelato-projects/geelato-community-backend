@@ -201,24 +201,24 @@ public class OcrService extends BaseService {
                         }
                     } else if (RuleTypeEnum.CHECKBOX.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule())) {
-                            String result = calculateItemCodes(content, rule.getRule());
+                            String result = calculateItemCodes(content, rule.getRule(), rule.getGoal());
                             content = rule.isRetain() && Strings.isBlank(result) ? content : result;
                         } else {
                             throw new RuntimeException("Dictionary encoding is empty");
                         }
                     } else if (RuleTypeEnum.DICTIONARY.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule())) {
-                            String result = calculateItemCode(content, rule.getRule());
+                            String result = calculateItemCode(content, rule.getRule(), rule.getGoal());
                             content = rule.isRetain() && Strings.isBlank(result) ? content : result;
                         } else {
                             throw new RuntimeException("Dictionary encoding is empty");
                         }
                     } else if (RuleTypeEnum.RADIO.name().equalsIgnoreCase(rule.getType())) {
-                        if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
+                        if (Strings.isNotBlank(rule.getRule())) {
                             String result = calculateRadio(content, rule.getRule(), rule.getGoal());
                             content = rule.isRetain() && Strings.isBlank(result) ? content : result;
                         } else {
-                            throw new RuntimeException("Dictionary encoding or type is empty");
+                            throw new RuntimeException("Dictionary encoding is empty");
                         }
                     } else if (RuleTypeEnum.QUERYGOAL.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal())) {
@@ -395,24 +395,34 @@ public class OcrService extends BaseService {
     /**
      * 根据字典编码和字典项名称计算字典项编码
      *
-     * @param itemName 字典项名称
+     * @param content  字典项名称
      * @param dictCode 字典编码
+     * @param type     计算类型，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
      * @return 如果找到匹配的字典项，则返回其字典项编码；否则返回null
      */
-    private String calculateItemCode(String itemName, String dictCode) {
-        String itemCode = null;
+    private String calculateItemCode(String content, String dictCode, String type) {
+        if (Strings.isBlank(content)) {
+            return null;
+        }
         // 获取字典项
         List<DictItem> dictItemList = queryDictItemsByDictCode(dictCode);
         // 比对
         if (dictItemList != null && dictItemList.size() > 0) {
-            for (DictItem dictItem : dictItemList) {
-                if (Strings.isNotBlank(itemName) && itemName.equals(dictItem.getItemName())) {
-                    itemCode = dictItem.getItemCode();
-                    break;
+            if ("CONTAINS".equalsIgnoreCase(type)) {
+                for (DictItem dictItem : dictItemList) {
+                    if (content.indexOf(dictItem.getItemName()) != -1) {
+                        return content.replaceAll(dictItem.getItemName(), dictItem.getItemCode());
+                    }
+                }
+            } else {
+                for (DictItem dictItem : dictItemList) {
+                    if (content.equals(dictItem.getItemName())) {
+                        return dictItem.getItemCode();
+                    }
                 }
             }
         }
-        return itemCode;
+        return null;
     }
 
     /**
@@ -420,14 +430,18 @@ public class OcrService extends BaseService {
      *
      * @param content    需要查找的内容
      * @param dictMapStr 包含字典映射关系的JSON字符串
+     * @param type       计算类型，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
      * @return 如果找到对应的内容，则返回对应的值；否则返回null
      * @throws RuntimeException 如果字典映射字符串格式不正确，则抛出运行时异常
      */
     private String calculateRadio(String content, String dictMapStr, String type) {
+        if (Strings.isBlank(content)) {
+            return null;
+        }
         try {
             Map<String, String> dictMap = JSON.parseObject(dictMapStr, Map.class);
             if (dictMap != null && dictMap.size() > 0) {
-                if (Strings.isNotBlank(content) && "contains".equalsIgnoreCase(type)) {
+                if ("CONTAINS".equalsIgnoreCase(type)) {
                     for (Map.Entry<String, String> entry : dictMap.entrySet()) {
                         if (content.indexOf(entry.getKey()) != -1) {
                             return content.replaceAll(entry.getKey(), entry.getValue());
@@ -446,12 +460,13 @@ public class OcrService extends BaseService {
     /**
      * 根据字典编码和多个字典项名称计算对应的字典项编码
      *
-     * @param itemNames 字典项名称列表，以逗号分隔
-     * @param dictCode  字典编码
+     * @param content  字典项名称列表，以逗号分隔
+     * @param dictCode 字典编码
+     * @param type     计算类型，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
      * @return 如果找到匹配的字典项，则返回其字典项编码列表，以逗号分隔；否则返回null
      */
-    private String calculateItemCodes(String itemNames, String dictCode) {
-        List<String> names = OcrUtils.stringToList(itemNames);
+    private String calculateItemCodes(String content, String dictCode, String type) {
+        List<String> names = OcrUtils.stringToList(content);
         if (names == null || names.size() == 0) {
             return null;
         }
@@ -460,9 +475,19 @@ public class OcrService extends BaseService {
         List<DictItem> dictItemList = queryDictItemsByDictCode(dictCode);
         // 比对
         if (dictItemList != null && dictItemList.size() > 0) {
-            for (DictItem dictItem : dictItemList) {
-                if (names.contains(dictItem.getItemName())) {
-                    codes.add(dictItem.getItemCode());
+            if ("CONTAINS".equalsIgnoreCase(type)) {
+                for (String name : names) {
+                    for (DictItem dictItem : dictItemList) {
+                        if (name.indexOf(dictItem.getItemName()) != -1) {
+                            codes.add(name.replaceAll(dictItem.getItemName(), dictItem.getItemCode()));
+                        }
+                    }
+                }
+            } else {
+                for (DictItem dictItem : dictItemList) {
+                    if (names.contains(dictItem.getItemName())) {
+                        codes.add(dictItem.getItemCode());
+                    }
                 }
             }
         }

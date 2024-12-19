@@ -30,9 +30,7 @@ public class ArcoController extends BaseController {
         Class<?> clazz = ArcoEnum.getClassByCode(code);
         if (clazz != null) {
             Method staticMethod = clazz.getMethod("getSelectOptions", String.class);
-            if (staticMethod != null) {
-                return ApiResult.success(staticMethod.invoke(null));
-            }
+            return ApiResult.success(staticMethod.invoke(null));
         }
         return ApiResult.successNoResult();
     }

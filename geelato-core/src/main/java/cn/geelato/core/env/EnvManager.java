@@ -124,8 +124,7 @@ public class EnvManager  extends AbstractManager {
     }
 
     private List<Permission> StructElementPermission(String userId) {
-        List<Permission> elementPermissionList=new ArrayList<>();
-        return elementPermissionList;
+        return new ArrayList<>();
     }
 
 

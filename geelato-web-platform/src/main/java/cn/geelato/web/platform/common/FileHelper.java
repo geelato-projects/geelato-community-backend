@@ -1,5 +1,8 @@
 package cn.geelato.web.platform.common;
 
+import cn.geelato.utils.SnowFlake;
+import cn.geelato.utils.UIDGenerator;
+import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.oss.*;
 import cn.geelato.web.oss.ali.AliFileObjectSrvProvider;
 import cn.geelato.web.oss.ali.AliOSSConfiguration;
@@ -15,15 +18,15 @@ import java.io.InputStream;
 public class FileHelper {
     FileObjectSrvProvider fileObjectSrvProvider;
     @Autowired
-    public FileHelper(OSSConfigurationProperties ossConfigurationProperties){
+    public FileHelper(OSSConfigurationProperties ossConfigurationProperties) {
         AliOSSConfiguration aliOSSConfiguration = new AliOSSConfiguration()
                 .setAccessKeyId(ossConfigurationProperties.getAccessKeyId())
                 .setAccessKeySecret(ossConfigurationProperties.getAccessKeySecret())
                 .setEndPoint(ossConfigurationProperties.getEndPoint())
                 .setRegion(ossConfigurationProperties.getRegion())
                 .setBucketName(ossConfigurationProperties.getBucketName())
-                .setGenerateObjectNameFn((fileMeta)-> generateFilePrefix()+"/"+fileMeta.getFileName());
-        fileObjectSrvProvider=new AliFileObjectSrvProvider(aliOSSConfiguration);
+                .setGenerateObjectNameFn((fileMeta) -> generateFilePrefix() + UIDGenerator.generate());
+        fileObjectSrvProvider = new AliFileObjectSrvProvider(aliOSSConfiguration);
     }
 
     public OSSResult putFile(MultipartFile file) throws IOException {
@@ -43,7 +46,7 @@ public class FileHelper {
     }
 
     private String generateFilePrefix() {
-        return "ok/chengx";
+        return "";
     }
 }
 

@@ -8,8 +8,8 @@ public enum ArcoEnum {
     RULE_TYPE_ENUM("RuleTypeEnum", RuleTypeEnum.class);
 
 
-    private String code;
-    private Class<?> clazz;
+    private final String code;
+    private final Class<?> clazz;
 
     ArcoEnum(String code, Class<?> clazz) {
         this.code = code;

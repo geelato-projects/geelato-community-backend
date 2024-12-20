@@ -126,28 +126,19 @@ public class OCRController extends BaseController {
             OcrPdfRule ocrPdfRule = ocrPdf.toRules();
             // 获取模板文件
             List<PDFAnnotationMeta> pdfAnnotationMetaList = OcrPdfMeta.toPDFAnnotationMetaList(ocrPdf.getMetas());
+            PDFResolveData pdfResolveData = ocrService.resolvePDFFile(pdfAnnotationMetaList, pdfFile);
+            // 验证模板名称是否匹配
+            // 验证模板内容正则匹配
+            // 格式化内容
+            OcrPdfWhole ocrPdfWhole = oService.formatContent(pdfResolveData, ocrPdf.getMetas());
+            // 验证模板布尔表达式
+            if (!oService.validateTemplateRegExp(ocrPdfRule, ocrPdfWhole)) {
+                continue;
+            }
             if (wholeContent) {
-                PDFResolveData pdfResolveData = ocrService.resolvePDFFile(pdfAnnotationMetaList, pdfFile);
-                // 验证模板名称是否匹配
-                if (!oService.validateTemplateName(ocrPdfRule, pdfResolveData)) {
-                    continue;
-                }
-                OcrPdfWhole ocrPdfWhole = oService.formatContent(pdfResolveData, ocrPdf.getMetas());
-                if (!oService.validateTemplateExpression(ocrPdfRule, ocrPdfWhole)) {
-                    continue;
-                }
                 return ApiResult.success(ocrPdfWhole);
             } else {
-                List<PDFAnnotationPickContent> pdfAnnotationPickContentList = ocrService.pickPDFAnnotationContent(pdfAnnotationMetaList, pdfFile);
-                // 验证模板名称是否匹配
-                if (!oService.validateTemplateName(ocrPdfRule, pdfAnnotationPickContentList)) {
-                    continue;
-                }
-                List<OcrPdfContent> ocrPdfContentList = oService.formatContent(pdfAnnotationPickContentList, ocrPdf.getMetas());
-                if (!oService.validateTemplateExpression(ocrPdfRule, ocrPdfContentList)) {
-                    continue;
-                }
-                return ApiResult.success(ocrPdfContentList);
+                return ApiResult.success(ocrPdfWhole.getOcrPdfContents());
             }
         }
         return ApiResult.fail("Template matching failure");

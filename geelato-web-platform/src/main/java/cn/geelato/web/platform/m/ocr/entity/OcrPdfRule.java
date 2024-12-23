@@ -8,6 +8,7 @@ import java.util.Map;
 @Getter
 @Setter
 public class OcrPdfRule {
+    public static final String REG_EXP_ALL = "ALL";
     private String[] name;
     private String[] expression;
     private Map<String, String> regexp;

@@ -385,11 +385,11 @@ public class OcrService extends BaseService {
         for (Map.Entry<String, String> entry : ocrPdfRule.getRegexp().entrySet()) {
             if (Strings.isNotBlank(entry.getKey()) && Strings.isNotBlank(entry.getValue())) {
                 // 此处使用ALL关键字匹配整个PDF内容，而非单个OCR PDF内容的匹配
-                String content = "ALL".equalsIgnoreCase(entry.getKey()) ? wholeContent : (
+                String content = OcrPdfRule.REG_EXP_ALL.equals(entry.getKey()) ? wholeContent : (
                         resultMap.get(entry.getKey()) == null ? null : resultMap.get(entry.getKey()).toString()
                 );
                 // 正则匹配，如果匹配失败则返回false
-                if (!Pattern.compile(entry.getValue()).matcher(content).find()) {
+                if (Strings.isBlank(content) || !Pattern.compile(entry.getValue()).matcher(content).find()) {
                     return false;
                 }
             }

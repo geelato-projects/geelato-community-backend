@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @ApiRestController(value = "/ocr")
 @Slf4j
@@ -124,14 +125,17 @@ public class OCRController extends BaseController {
             }
             // 获取模板检验规则
             OcrPdfRule ocrPdfRule = ocrPdf.toRules();
-            // 获取模板文件
+            // 是否存在全文正则匹配，如果存在，则进行匹配
+            if (!this.validateTemplateRegExpAll(ocrService, pdfFile, ocrPdfRule)) {
+                continue;
+            }
+            // 模板元数据转换为PDF注释元数据列表
             List<PDFAnnotationMeta> pdfAnnotationMetaList = OcrPdfMeta.toPDFAnnotationMetaList(ocrPdf.getMetas());
+            // 获取文件信息，标记，全文
             PDFResolveData pdfResolveData = ocrService.resolvePDFFile(pdfAnnotationMetaList, pdfFile);
-            // 验证模板名称是否匹配
-            // 验证模板内容正则匹配
             // 格式化内容
             OcrPdfWhole ocrPdfWhole = oService.formatContent(pdfResolveData, ocrPdf.getMetas());
-            // 验证模板布尔表达式
+            // 验证提取内容是否与正则匹配
             if (!oService.validateTemplateRegExp(ocrPdfRule, ocrPdfWhole)) {
                 continue;
             }
@@ -205,5 +209,27 @@ public class OCRController extends BaseController {
             nowTime = ZonedDateTime.now(ZoneId.of(timeZone));
         }
         return ApiResult.success(dtf.format(nowTime));
+    }
+
+    /**
+     * 验证PDF文件是否满足正则表达式规则
+     *
+     * @param ocrService OCR服务接口
+     * @param pdfFile    PDF文件
+     * @param ocrPdfRule OCR PDF规则
+     * @return 如果PDF文件满足所有正则表达式规则，则返回true；否则返回false
+     */
+    private boolean validateTemplateRegExpAll(OCRService ocrService, File pdfFile, OcrPdfRule ocrPdfRule) {
+        if (ocrPdfRule != null && ocrPdfRule.getRegexp() != null && ocrPdfRule.getRegexp().size() > 0) {
+            String regex = ocrPdfRule.getRegexp().get(OcrPdfRule.REG_EXP_ALL);
+            if (Strings.isNotBlank(regex)) {
+                ocrPdfRule.getRegexp().remove(OcrPdfRule.REG_EXP_ALL);
+                String wholeContent = ocrService.pickPDFWholeContent(pdfFile);
+                if (Strings.isBlank(wholeContent) || !Pattern.compile(regex).matcher(wholeContent).find()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

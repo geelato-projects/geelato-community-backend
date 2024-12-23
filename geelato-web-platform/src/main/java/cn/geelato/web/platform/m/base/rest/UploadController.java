@@ -5,7 +5,9 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.ImageUtils;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.web.oss.OSSResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.common.FileHelper;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.Attach;
@@ -15,6 +17,7 @@ import cn.geelato.web.platform.m.base.service.ResourcesService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,50 +38,79 @@ public class UploadController extends BaseController {
     private final AttachService attachService;
     private final ResourcesService resourcesService;
     private final DevTableColumnService devTableColumnService;
+    private final FileHelper fileHelper;
 
     @Autowired
-    public UploadController(AttachService attachService, ResourcesService resourcesService, DevTableColumnService devTableColumnService) {
+    public UploadController(AttachService attachService, ResourcesService resourcesService, DevTableColumnService devTableColumnService, FileHelper fileHelper) {
         this.attachService = attachService;
         this.resourcesService = resourcesService;
         this.devTableColumnService = devTableColumnService;
+        this.fileHelper = fileHelper;
     }
 
+    /**
+     * 上传文件接口
+     *
+     * @param file        上传的文件
+     * @param tableType   表类型
+     * @param genre       文件类型
+     * @param root        文件根目录
+     * @param isThumbnail 是否生成缩略图
+     * @param isRename    是否重命名文件
+     * @param dimension   缩略图尺寸
+     * @param appId       应用ID
+     * @param tenantCode  租户编码
+     * @return ApiResult 对象，包含操作结果和返回数据
+     */
     @RequestMapping(value = "/file", method = RequestMethod.POST)
-    public ApiResult uploadFile(@RequestParam("file") MultipartFile file, String tableType, String objectId, String genre, String root, boolean isThumbnail, Boolean isRename, Integer dimension, String appId, String tenantCode) {
+    public ApiResult uploadFile(@RequestParam("file") MultipartFile file, String tableType, String genre, String root, boolean isThumbnail, Boolean isRename, Integer dimension, String appId, String tenantCode) throws IOException {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }
-        try {
-            Attach attach = new Attach(file);
-            attach.setObjectId(objectId);
-            attach.setGenre(genre);
-            attach.setAppId(appId);
-            if (Strings.isNotBlank(root)) {
-                attach.setPath(UploadService.getSaveRootPath(root, attach.getName(), true));
-            } else {
-                // upload/存放表/租户编码/应用Id
-                attach.setPath(UploadService.getSavePath(UploadService.ROOT_DIRECTORY, tableType, tenantCode, appId, attach.getName(), true));
+        String path = "";
+        if (Strings.isNotBlank(root)) {
+            path = UploadService.getSaveRootPath(root, file.getOriginalFilename(), true);
+        } else {
+            // upload/存放表/租户编码/应用Id
+            path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, tableType, tenantCode, appId, file.getOriginalFilename(), true);
+        }
+        if (AttachmentSourceEnum.PLATFORM_RESOURCES.getValue().equalsIgnoreCase(tableType)) {
+            // 附件存附件表
+            Resources resources = new Resources(file);
+            resources.setAppId(appId);
+            resources.setGenre(genre);
+            resources.setPath(path);
+            // 保存文件到磁盘
+            byte[] bytes = file.getBytes();
+            Files.write(Paths.get(resources.getPath()), bytes);
+            // 保存附件信息到数据库
+            resources = resourcesService.createModel(resources);
+            if (isThumbnail) {
+                thumbnail(resources, dimension);
             }
+            return ApiResult.success(resources);
+        } else if (AttachmentSourceEnum.PLATFORM_OSS_ALI.getValue().equalsIgnoreCase(tableType)) {
+            OSSResult ossResult = fileHelper.putFile(file);
+            if (ossResult.getSuccess()) {
+                return ApiResult.success(JSONObject.toJSONString(ossResult));
+            } else {
+                return ApiResult.fail(ossResult.getMessage());
+            }
+        } else {
+            // 附件存附件表
+            Attach attach = new Attach(file);
+            attach.setAppId(appId);
+            attach.setGenre(genre);
+            attach.setPath(path);
+            // 保存文件到磁盘
             byte[] bytes = file.getBytes();
             Files.write(Paths.get(attach.getPath()), bytes);
-            // 资源存资源表
-            if (AttachmentSourceEnum.PLATFORM_RESOURCES.getValue().equalsIgnoreCase(tableType)) {
-                Resources target = UploadService.copyProperties(attach, Resources.class);
-                Resources resources = resourcesService.createModel(target);
-                if (isThumbnail) {
-                    thumbnail(resources, dimension);
-                }
-                return ApiResult.success(resources);
-            } else {
-                Attach attach1 = attachService.createModel(attach);
-                if (isThumbnail) {
-                    thumbnail(attach1, dimension);
-                }
-                return ApiResult.success(attach1);
+            // 保存附件信息到数据库
+            attach = attachService.createModel(attach);
+            if (isThumbnail) {
+                thumbnail(attach, dimension);
             }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
+            return ApiResult.success(attach);
         }
     }
 

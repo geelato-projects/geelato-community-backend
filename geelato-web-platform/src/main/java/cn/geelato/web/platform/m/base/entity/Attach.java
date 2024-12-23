@@ -6,6 +6,7 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import cn.geelato.web.oss.OSSFile;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -56,5 +57,14 @@ public class Attach extends BaseEntity {
         this.name = file.getName();
         this.type = Files.probeContentType(file.toPath());
         this.size = file.length();
+    }
+
+    public Attach(OSSFile ossFile) {
+        setDelStatus(DeleteStatusEnum.NO.getCode());
+        this.objectId = ossFile.getObjectId();
+        this.path = ossFile.getObjectName();
+        this.name = ossFile.getFileMeta().getFileName();
+        this.type = ossFile.getFileMeta().getFileContentType();
+        this.size = ossFile.getFileMeta().getFileSize();
     }
 }

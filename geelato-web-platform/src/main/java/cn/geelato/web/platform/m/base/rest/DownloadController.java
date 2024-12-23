@@ -6,7 +6,9 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.web.oss.OSSResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.common.FileHelper;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.AttachService;
@@ -19,9 +21,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -44,31 +44,43 @@ public class DownloadController extends BaseController {
 
     private final DownloadService downloadService;
     private final AttachService attachService;
+    private final FileHelper fileHelper;
 
     @Autowired
-    public DownloadController(DownloadService downloadService, AttachService attachService) {
+    public DownloadController(DownloadService downloadService, AttachService attachService, FileHelper fileHelper) {
         this.downloadService = downloadService;
         this.attachService = attachService;
+        this.fileHelper = fileHelper;
     }
 
     @RequestMapping(value = "/file", method = RequestMethod.GET)
     public void downloadFile(String id, String name, String path, boolean isPdf, boolean isPreview, boolean isThumbnail) throws Exception {
+        File file = null;
+        String appId = null;
+        String tenantCode = null;
+        InputStream inputStream = null;
         try {
-            File file = null;
-            String appId = null;
-            String tenantCode = null;
             if (Strings.isNotBlank(id)) {
                 Attach attach = attachService.getModelThumbnail(id, isThumbnail);
                 Assert.notNull(attach, ApiErrorMsg.IS_NULL);
                 appId = attach.getAppId();
                 tenantCode = attach.getTenantCode();
-                file = FileUtils.pathToFile(attach.getPath());
+                if (Strings.isNotBlank(attach.getObjectId())) {
+                    OSSResult ossResult = fileHelper.getFile(attach.getPath());
+                    if (ossResult.getSuccess()) {
+                        inputStream = ossResult.getOssFile().getFileMeta().getFileInputStream();
+                    } else {
+                        throw new RuntimeException("downloadFile: ossResult is null");
+                    }
+                } else {
+                    file = FileUtils.pathToFile(attach.getPath());
+                }
                 name = attach.getName();
             } else if (Strings.isNotBlank(path)) {
                 file = FileUtils.pathToFile(path);
                 name = Strings.isNotBlank(name) ? name : file.getName();
             }
-            if (file == null || !file.exists()) {
+            if (!(inputStream != null || (file != null && file.exists()))) {
                 throw new RuntimeException("downloadFile: file is null or not exists");
             }
             // 转为pdf文件
@@ -77,21 +89,47 @@ public class DownloadController extends BaseController {
                 if (StringUtils.isBlank(ext)) {
                     throw new RuntimeException("downloadFile: invalid file extension");
                 }
-                name = String.format("%s.pdf", FileUtils.getFileName(name));
-                file = downloadService.toPdf(file, ext, appId, tenantCode);
+                if (inputStream != null) {
+                    File tempFile = File.createTempFile(name + "_temp_", ext);
+                    tempFile.deleteOnExit();
+                    try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                        byte[] buffer = new byte[1024];
+                        int length;
+                        while ((length = inputStream.read(buffer)) > 0) {
+                            fos.write(buffer, 0, length);
+                        }
+                    }
+                    if (tempFile.exists()) {
+                        file = downloadService.toPdf(tempFile, ext, appId, tenantCode);
+                        tempFile.delete();
+                    } else {
+                        throw new RuntimeException("downloadFile: temp file is null or not exists");
+                    }
+                } else {
+                    file = downloadService.toPdf(file, ext, appId, tenantCode);
+                }
                 if (file == null || !file.exists()) {
                     throw new RuntimeException("downloadFile: file is null or not exists");
                 }
+                name = String.format("%s.pdf", FileUtils.getFileName(name));
             }
             // 设置缓存
             this.response.setHeader("Cache-Control", "public, max-age=3600, must-revalidate");
             this.response.setHeader("ETag", id);
-            this.response.setDateHeader("Last-Modified", file.lastModified());
             // 下载
-            downloadService.downloadFile(file, name, isPreview, this.request, this.response, null);
+            if (file == null && inputStream != null) {
+                downloadService.downloadFile(inputStream, name, isPreview, this.request, this.response, null);
+            } else {
+                this.response.setDateHeader("Last-Modified", file.lastModified());
+                downloadService.downloadFile(file, name, isPreview, this.request, this.response, null);
+            }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
         }
     }
 

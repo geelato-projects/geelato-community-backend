@@ -12,10 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -121,6 +118,33 @@ public class DownloadService {
             this.setResponse(request, response, name, isPreview, mineType);
             // 读取文件
             in = new FileInputStream(file);
+            int len = 0;
+            byte[] buffer = new byte[1024];
+            while ((len = in.read(buffer)) > 0) {
+                out.write(buffer, 0, len);
+            }
+            out.flush();
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+            if (in != null) {
+                in.close();
+            }
+        }
+    }
+
+    public void downloadFile(InputStream in, String name, boolean isPreview, HttpServletRequest request, HttpServletResponse response, String mineType) throws IOException {
+        OutputStream out = null;
+        try {
+            if (in == null || StringUtils.isBlank(name)) {
+                throw new RuntimeException("downloadFile: File does not exist");
+            }
+            out = response.getOutputStream();
+            this.setResponse(request, response, name, isPreview, mineType);
+            // 读取文件
             int len = 0;
             byte[] buffer = new byte[1024];
             while ((len = in.read(buffer)) > 0) {

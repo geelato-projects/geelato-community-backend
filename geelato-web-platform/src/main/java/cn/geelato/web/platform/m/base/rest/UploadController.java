@@ -8,6 +8,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.oss.OSSResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.common.FileHelper;
+import cn.geelato.web.platform.enums.AttachmentServiceEnum;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.Attach;
@@ -17,7 +18,6 @@ import cn.geelato.web.platform.m.base.service.ResourcesService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,55 +63,96 @@ public class UploadController extends BaseController {
      * @return ApiResult 对象，包含操作结果和返回数据
      */
     @RequestMapping(value = "/file", method = RequestMethod.POST)
-    public ApiResult uploadFile(@RequestParam("file") MultipartFile file, String tableType, String genre, String root, boolean isThumbnail, Boolean isRename, Integer dimension, String appId, String tenantCode) throws IOException {
+    public ApiResult uploadFile(@RequestParam("file") MultipartFile file, String serviceType, String tableType, String genre, String root, boolean isThumbnail, Boolean isRename, Integer dimension, String appId, String tenantCode) throws IOException {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }
-        String path = "";
-        if (Strings.isNotBlank(root)) {
-            path = UploadService.getSaveRootPath(root, file.getOriginalFilename(), true);
-        } else {
-            // upload/存放表/租户编码/应用Id
-            path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, tableType, tenantCode, appId, file.getOriginalFilename(), true);
-        }
-        if (AttachmentSourceEnum.PLATFORM_RESOURCES.getValue().equalsIgnoreCase(tableType)) {
-            // 附件存附件表
-            Resources resources = new Resources(file);
-            resources.setAppId(appId);
-            resources.setGenre(genre);
-            resources.setPath(path);
-            // 保存文件到磁盘
-            byte[] bytes = file.getBytes();
-            Files.write(Paths.get(resources.getPath()), bytes);
-            // 保存附件信息到数据库
-            resources = resourcesService.createModel(resources);
-            if (isThumbnail) {
-                thumbnail(resources, dimension);
-            }
-            return ApiResult.success(resources);
-        } else if (AttachmentSourceEnum.PLATFORM_OSS_ALI.getValue().equalsIgnoreCase(tableType)) {
+        if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(serviceType)) {
             OSSResult ossResult = fileHelper.putFile(file);
-            if (ossResult.getSuccess()) {
-                return ApiResult.success(JSONObject.toJSONString(ossResult));
+            if (ossResult.getSuccess() == null || ossResult.getSuccess()) {
+                if (ossResult.getOssFile() != null && ossResult.getOssFile().getFileMeta() != null) {
+                    String attachmentId = getAttachmentId(ossResult.getOssFile().getObjectName());
+                    // 附件存附件表和资源表
+                    if (AttachmentSourceEnum.PLATFORM_RESOURCES.getValue().equalsIgnoreCase(tableType)) {
+                        Resources resources = new Resources(ossResult.getOssFile());
+                        resources.setAppId(appId);
+                        resources.setGenre(genre);
+                        resources = resourcesService.createModel(resources);
+                        if (Strings.isNotBlank(attachmentId)) {
+                            dao.getJdbcTemplate().update("update platform_resources set id = ? where id = ?", attachmentId, resources.getId());
+                            resources.setId(attachmentId);
+                        }
+                        return ApiResult.success(resources);
+                    } else {
+                        Attach attach = new Attach(ossResult.getOssFile());
+                        attach.setAppId(appId);
+                        attach.setGenre(genre);
+                        attach = attachService.createModel(attach);
+                        if (Strings.isNotBlank(attachmentId)) {
+                            dao.getJdbcTemplate().update("update platform_attach set id = ? where id = ?", attachmentId, attach.getId());
+                            attach.setId(attachmentId);
+                        }
+                        return ApiResult.success(attach);
+                    }
+                } else {
+                    return ApiResult.fail("OSS file meta is null");
+                }
             } else {
                 return ApiResult.fail(ossResult.getMessage());
             }
         } else {
-            // 附件存附件表
-            Attach attach = new Attach(file);
-            attach.setAppId(appId);
-            attach.setGenre(genre);
-            attach.setPath(path);
-            // 保存文件到磁盘
-            byte[] bytes = file.getBytes();
-            Files.write(Paths.get(attach.getPath()), bytes);
-            // 保存附件信息到数据库
-            attach = attachService.createModel(attach);
-            if (isThumbnail) {
-                thumbnail(attach, dimension);
+            String path = "";
+            if (Strings.isNotBlank(root)) {
+                path = UploadService.getSaveRootPath(root, file.getOriginalFilename(), true);
+            } else {
+                // upload/存放表/租户编码/应用Id
+                path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, tableType, tenantCode, appId, file.getOriginalFilename(), true);
             }
-            return ApiResult.success(attach);
+            if (AttachmentSourceEnum.PLATFORM_RESOURCES.getValue().equalsIgnoreCase(tableType)) {
+                // 附件存附件表
+                Resources resources = new Resources(file);
+                resources.setAppId(appId);
+                resources.setGenre(genre);
+                resources.setPath(path);
+                // 保存文件到磁盘
+                byte[] bytes = file.getBytes();
+                Files.write(Paths.get(resources.getPath()), bytes);
+                // 保存附件信息到数据库
+                resources = resourcesService.createModel(resources);
+                if (isThumbnail) {
+                    thumbnail(resources, dimension);
+                }
+                return ApiResult.success(resources);
+            } else {
+                // 附件存附件表
+                Attach attach = new Attach(file);
+                attach.setAppId(appId);
+                attach.setGenre(genre);
+                attach.setPath(path);
+                // 保存文件到磁盘
+                byte[] bytes = file.getBytes();
+                Files.write(Paths.get(attach.getPath()), bytes);
+                // 保存附件信息到数据库
+                attach = attachService.createModel(attach);
+                if (isThumbnail) {
+                    thumbnail(attach, dimension);
+                }
+                return ApiResult.success(attach);
+            }
         }
+    }
+
+    private String getAttachmentId(String objectName) {
+        // 检查是否包含斜杠
+        if (Strings.isNotBlank(objectName) && objectName.contains("/")) {
+            // 使用lastIndexOf找到最后一个斜杠的位置，然后截取斜杠后的部分
+            int lastIndex = objectName.lastIndexOf("/");
+            String id = objectName.substring(lastIndex + 1);
+            if (Strings.isNotBlank(id)) {
+                return id;
+            }
+        }
+        return null;
     }
 
     private void thumbnail(Attach source, Integer dimension) throws IOException {

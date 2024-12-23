@@ -79,20 +79,12 @@ public class UploadController extends BaseController {
                         resources.setAppId(appId);
                         resources.setGenre(genre);
                         resources = resourcesService.createModel(resources);
-                        if (Strings.isNotBlank(attachmentId)) {
-                            dao.getJdbcTemplate().update("update platform_resources set id = ? where id = ?", attachmentId, resources.getId());
-                            resources.setId(attachmentId);
-                        }
                         return ApiResult.success(resources);
                     } else {
                         Attach attach = new Attach(ossResult.getOssFile(), file);
                         attach.setAppId(appId);
                         attach.setGenre(genre);
                         attach = attachService.createModel(attach);
-                        if (Strings.isNotBlank(attachmentId)) {
-                            dao.getJdbcTemplate().update("update platform_attach set id = ? where id = ?", attachmentId, attach.getId());
-                            attach.setId(attachmentId);
-                        }
                         return ApiResult.success(attach);
                     }
                 } else {

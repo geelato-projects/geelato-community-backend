@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.common;
 
+import cn.geelato.core.SessionCtx;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.oss.FileMeta;
 import cn.geelato.web.oss.FileObjectSrvProvider;
@@ -28,7 +29,7 @@ public class FileHelper {
                 .setEndPoint(ossConfigurationProperties.getEndPoint())
                 .setRegion(ossConfigurationProperties.getRegion())
                 .setBucketName(ossConfigurationProperties.getBucketName())
-                .setGenerateObjectNameFn((fileMeta) -> generateFilePrefix() + UIDGenerator.generate());
+                .setGenerateObjectNameFn((fileMeta) -> generateFilePrefix() + UIDGenerator.generate() + "." + fileMeta.getFileExtension());
         fileObjectSrvProvider = new AliFileObjectSrvProvider(aliOSSConfiguration);
     }
 
@@ -46,7 +47,7 @@ public class FileHelper {
     }
 
     private String generateFilePrefix() {
-        return "";
+        return SessionCtx.getCurrentTenantCode() + "/";
     }
 }
 

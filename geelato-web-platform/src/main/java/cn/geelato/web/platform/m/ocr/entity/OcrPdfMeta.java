@@ -96,13 +96,12 @@ public class OcrPdfMeta extends BaseSortableEntity {
         pam.setAnnotationIndex(ocrPdfMeta.getAnnotationIndex());
         pam.setTemplateAreaContent(ocrPdfMeta.getExample());
         pam.setContent(ocrPdfMeta.getName());
-        pam.setUnknownArea(ocrPdfMeta.getUnknownArea());
         pam.setFloatArea(ocrPdfMeta.getFloatAreaY());
         pam.setLineHeight(ocrPdfMeta.getLineHeight());
         //  pageIndex,x,y,width,height
         if (Strings.isNotBlank(ocrPdfMeta.getPosition())) {
             String[] positionArr = ocrPdfMeta.getPosition().split(",");
-            if (positionArr != null && positionArr.length == 5) {
+            if (positionArr.length == 5) {
                 pam.setPageIndex(positionArr[0] == null ? 0 : Integer.parseInt(positionArr[0]));
                 pam.setX(positionArr[1] == null ? 0f : Float.parseFloat(positionArr[1]));
                 pam.setY(positionArr[2] == null ? 0f : Float.parseFloat(positionArr[2]));

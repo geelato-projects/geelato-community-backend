@@ -52,6 +52,7 @@ public class UploadController extends BaseController {
      * 上传文件接口
      *
      * @param file        上传的文件
+     * @param serviceType 文件服务器类型
      * @param tableType   表类型
      * @param genre       文件类型
      * @param root        文件根目录
@@ -74,7 +75,7 @@ public class UploadController extends BaseController {
                     String attachmentId = getAttachmentId(ossResult.getOssFile().getObjectName());
                     // 附件存附件表和资源表
                     if (AttachmentSourceEnum.PLATFORM_RESOURCES.getValue().equalsIgnoreCase(tableType)) {
-                        Resources resources = new Resources(ossResult.getOssFile());
+                        Resources resources = new Resources(ossResult.getOssFile(), file);
                         resources.setAppId(appId);
                         resources.setGenre(genre);
                         resources = resourcesService.createModel(resources);
@@ -84,7 +85,7 @@ public class UploadController extends BaseController {
                         }
                         return ApiResult.success(resources);
                     } else {
-                        Attach attach = new Attach(ossResult.getOssFile());
+                        Attach attach = new Attach(ossResult.getOssFile(), file);
                         attach.setAppId(appId);
                         attach.setGenre(genre);
                         attach = attachService.createModel(attach);

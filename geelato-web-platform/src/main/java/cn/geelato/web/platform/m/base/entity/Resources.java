@@ -64,13 +64,18 @@ public class Resources extends BaseEntity {
         this.size = file.length();
     }
 
-    public Resources(OSSFile ossFile) {
+    public Resources(OSSFile ossFile, MultipartFile file) {
         setDelStatus(DeleteStatusEnum.NO.getCode());
         this.objectId = ossFile.getObjectId();
         this.path = ossFile.getObjectName();
-        this.name = ossFile.getFileMeta().getFileName();
-        this.type = ossFile.getFileMeta().getFileContentType();
-        this.size = ossFile.getFileMeta().getFileSize();
+        if (file != null) {
+            this.name = file.getOriginalFilename();
+            this.type = file.getContentType();
+            this.size = file.getSize();
+        } else {
+            this.name = ossFile.getFileMeta().getFileName();
+            this.type = ossFile.getFileMeta().getFileContentType();
+            this.size = ossFile.getFileMeta().getFileSize();
+        }
     }
-
 }

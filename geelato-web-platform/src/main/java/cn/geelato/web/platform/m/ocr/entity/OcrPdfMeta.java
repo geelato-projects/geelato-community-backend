@@ -4,6 +4,7 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
+import cn.geelato.plugin.ocr.PDFAnnotationDiscernRule;
 import cn.geelato.plugin.ocr.PDFAnnotationMeta;
 import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
@@ -30,7 +31,7 @@ public class OcrPdfMeta extends BaseSortableEntity {
     private String name;
     @Title(title = "类型")
     private String type;
-    @Title(title = "内容")
+    @Title(title = "内容处理规则")
     private String rule;
     @Title(title = "位置", description = "pageIndex,x,y,width,height")
     private String position;
@@ -41,15 +42,15 @@ public class OcrPdfMeta extends BaseSortableEntity {
     @Title(title = "批注原始序号")
     @Col(name = "annotation_index")
     private Integer annotationIndex;
-    @Title(title = "是否未知区域")
-    @Col(name = "unknown_area")
-    private Boolean unknownArea;
     @Title(title = "是否可浮动")
     @Col(name = "float_area_y")
     private Boolean floatAreaY;
     @Title(title = "行高")
     @Col(name = "line_height")
     private Integer lineHeight;
+    @Title(title = "浮动识别规则")
+    @Col(name = "discern_rule")
+    private String discernRule;
 
     /**
      * 将OcrPdfMeta对象列表转换为Map集合
@@ -109,6 +110,37 @@ public class OcrPdfMeta extends BaseSortableEntity {
                 pam.setHeight(positionArr[4] == null ? 0f : Float.parseFloat(positionArr[4]));
             }
         }
+        // bem,lem,rem,discernWidth,unionType
+        PDFAnnotationDiscernRule padRule = null;
+        if (Strings.isNotBlank(ocrPdfMeta.getDiscernRule())) {
+            try {
+                padRule = JSON.parseObject(ocrPdfMeta.getDiscernRule(), PDFAnnotationDiscernRule.class);
+            } catch (Exception e) {
+                padRule = null;
+            }
+        }
+        pam.setPdfAnnotationDiscernRule(padRule);
+        // 注释属性
+        Map<String, Object> annotationAttrs = new HashMap<>();
+        if (pam.getFloatArea()) {
+            annotationAttrs.put("floatArea", "true");
+        }
+        if (padRule != null) {
+            if (Strings.isNotBlank(padRule.getBem()) && !padRule.getBem().equals("blank")) {
+                annotationAttrs.put("bem", padRule.getBem());
+            }
+            if (Strings.isNotBlank(padRule.getLem()) && !padRule.getLem().equals("blank")) {
+                annotationAttrs.put("lem", padRule.getLem());
+            }
+            if (Strings.isNotBlank(padRule.getRem()) && !padRule.getRem().equals("blank")) {
+                annotationAttrs.put("rem", padRule.getRem());
+            }
+            if (annotationAttrs.size() > 0) {
+                annotationAttrs.put("floatArea", "true");
+            }
+        }
+        pam.setAnnotationAttrs(annotationAttrs);
+
         return pam;
     }
 

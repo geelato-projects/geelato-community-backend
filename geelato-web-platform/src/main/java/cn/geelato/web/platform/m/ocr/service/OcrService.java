@@ -43,7 +43,7 @@ public class OcrService extends BaseService {
     public OcrPdfWhole formatContent(PDFResolveData pdfResolveData, List<OcrPdfMeta> ocrPdfMetas) throws ParseException {
         OcrPdfWhole ocrPdfWhole = new OcrPdfWhole();
         List<PDFAnnotationPickContent> pdfAnnotationPickContents = new ArrayList<>();
-        if (pdfResolveData == null) {
+        if (pdfResolveData != null) {
             pdfAnnotationPickContents = pdfResolveData.getPdfAnnotationPickContentList();
             ocrPdfWhole.setWholeContent(pdfResolveData.getWholeContent());
         }

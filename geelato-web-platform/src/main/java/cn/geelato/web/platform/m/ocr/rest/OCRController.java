@@ -91,6 +91,16 @@ public class OCRController extends BaseController {
         }
     }
 
+    @RequestMapping(value = "/pdf/content/clear", method = RequestMethod.POST)
+    public ApiResult<?> meta(String fileId,@RequestBody List<AnnotationPositionMeta> annotationPositionMetaList) throws IOException {
+        Attach file = attachService.getModel(fileId);
+        File fileInstance = FileUtils.pathToFile(file.getPath());
+        OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
+        File targetFile = File.createTempFile("ocr_clear", ".pdf",new File("C:\\Users\\39139\\Desktop\\testfile"));
+        ocrService.clearContent(annotationPositionMetaList,fileInstance,targetFile);
+        return ApiResult.success(targetFile);
+    }
+
     /**
      * 解析PDF文件的元数据
      *

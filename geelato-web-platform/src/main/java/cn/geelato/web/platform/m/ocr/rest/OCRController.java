@@ -32,7 +32,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 @ApiRestController(value = "/ocr")
 @Slf4j
@@ -221,13 +220,13 @@ public class OCRController extends BaseController {
      */
     private boolean validateTemplateRegExpAll(OCRService ocrService, File pdfFile, OcrPdfRule ocrPdfRule) {
         if (ocrPdfRule != null && ocrPdfRule.getRegexp() != null && ocrPdfRule.getRegexp().size() > 0) {
-            String regex = ocrPdfRule.getRegexp().get(OcrPdfRule.REG_EXP_ALL);
-            if (Strings.isNotBlank(regex)) {
-                ocrPdfRule.getRegexp().remove(OcrPdfRule.REG_EXP_ALL);
+            // 正则匹配，全文匹配
+            OcrPdfRuleRegExp regExp = ocrPdfRule.regExpIncludeAll();
+            if (regExp != null) {
+                // 查询全文内容
                 String wholeContent = ocrService.pickPDFWholeContent(pdfFile);
-                if (Strings.isBlank(wholeContent) || !Pattern.compile(regex).matcher(wholeContent).find()) {
-                    return false;
-                }
+                boolean isValid = oService.validateTemplateRegExp(wholeContent, regExp.getExpression(), regExp.isMatching());
+                return isValid;
             }
         }
         return true;

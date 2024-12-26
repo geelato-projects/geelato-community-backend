@@ -44,4 +44,7 @@ public class PluginConfiguration {
 
     }
 
+    public SpringPluginManager getSpringPluginManager() {
+        return springPluginManager;
+    }
 }

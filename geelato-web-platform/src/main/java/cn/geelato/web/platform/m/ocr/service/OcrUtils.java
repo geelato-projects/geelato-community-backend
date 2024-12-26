@@ -96,15 +96,13 @@ public class OcrUtils {
         split = split == null ? "," : split;
         if (arrString != null) {
             String[] arr = arrString.split(split);
-            if (arr != null) {
-                for (String item : arr) {
-                    if (deRepetition) {
-                        if (Strings.isNotBlank(item) && !list.contains(item)) {
-                            list.add(item);
-                        }
-                    } else {
+            for (String item : arr) {
+                if (deRepetition) {
+                    if (Strings.isNotBlank(item) && !list.contains(item)) {
                         list.add(item);
                     }
+                } else {
+                    list.add(item);
                 }
             }
         }

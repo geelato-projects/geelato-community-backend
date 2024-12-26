@@ -322,7 +322,8 @@ public class OcrService extends BaseService {
      * @param pdfAnnotationPickContentList PDF内容列表
      * @return 如果PDF模板的正则表达式与给定的PDF内容和内容列表匹配，则返回true；否则返回false
      */
-    public boolean validateTemplateRegExp1(OcrPdfRule ocrPdfRule, String wholeContent, List<PDFAnnotationPickContent> pdfAnnotationPickContentList) {
+    public boolean validateTemplateRegExp1(OcrPdfRule ocrPdfRule, String wholeContent,
+                                           List<PDFAnnotationPickContent> pdfAnnotationPickContentList) {
         if (Strings.isBlank(wholeContent) || pdfAnnotationPickContentList == null || pdfAnnotationPickContentList.isEmpty()) {
             return false;
         }
@@ -528,10 +529,10 @@ public class OcrService extends BaseService {
         // 获取字典项
         List<DictItem> dictItemList = queryDictItemsByDictCode(dictCode);
         // 比对
-        if (dictItemList != null && dictItemList.size() > 0) {
+        if (dictItemList != null && !dictItemList.isEmpty()) {
             if ("CONTAINS".equalsIgnoreCase(type)) {
                 for (DictItem dictItem : dictItemList) {
-                    if (content.indexOf(dictItem.getItemName()) != -1) {
+                    if (content.contains(dictItem.getItemName())) {
                         return content.replaceAll(dictItem.getItemName(), dictItem.getItemCode());
                     }
                 }
@@ -561,10 +562,10 @@ public class OcrService extends BaseService {
         }
         try {
             Map<String, String> dictMap = JSON.parseObject(dictMapStr, Map.class);
-            if (dictMap != null && dictMap.size() > 0) {
+            if (dictMap != null && !dictMap.isEmpty()) {
                 if ("CONTAINS".equalsIgnoreCase(type)) {
                     for (Map.Entry<String, String> entry : dictMap.entrySet()) {
-                        if (content.indexOf(entry.getKey()) != -1) {
+                        if (content.contains(entry.getKey())) {
                             return content.replaceAll(entry.getKey(), entry.getValue());
                         }
                     }

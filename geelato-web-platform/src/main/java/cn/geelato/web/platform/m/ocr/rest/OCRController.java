@@ -98,7 +98,6 @@ public class OCRController extends BaseController {
      * @param templateId   PDF模板id
      * @param wholeContent 是否返回整个PDF文件的内容
      * @return ApiResult<?> 如果解析成功，则返回包含成功信息的ApiResult对象；如果解析失败，则返回包含错误信息的ApiResult对象
-     * @throws Exception 当发生异常时抛出
      */
     @RequestMapping(value = "/pdf/resolve", method = RequestMethod.GET)
     public ApiResult<?> metaResolve(String fileId, String templateId, boolean wholeContent) throws IOException, ParseException {
@@ -110,7 +109,7 @@ public class OCRController extends BaseController {
             throw new IllegalArgumentException("file not found");
         }
         List<String> pdfIds = OcrUtils.stringToListDr(templateId);
-        if (pdfIds == null || pdfIds.isEmpty()) {
+        if (pdfIds.isEmpty()) {
             throw new IllegalArgumentException("templateId is blank");
         }
         // 获取OCR服务，解析PDF文件
@@ -152,7 +151,6 @@ public class OCRController extends BaseController {
      *
      * @param data 包含请求数据的Map对象，其中包括"content"（内容字符串）、"rule"（规则字符串）和"metas"（元数据字符串）三个字段
      * @return ApiResult对象，包含处理结果
-     * @throws ParseException 如果解析请求数据时出现异常，则抛出此异常
      */
     @RequestMapping(value = "/pdf/meta/test", method = RequestMethod.POST)
     public ApiResult<?> ruleTest(@RequestBody Map<String, Object> data) {
@@ -196,7 +194,7 @@ public class OCRController extends BaseController {
         if (Strings.isBlank(format)) {
             throw new IllegalArgumentException("time format cannot be empty");
         }
-        if (format.indexOf(OcrUtils.TIME_ZONE_SIGN) != -1 && Strings.isBlank(timeZone)) {
+        if (format.contains(OcrUtils.TIME_ZONE_SIGN) && Strings.isBlank(timeZone)) {
             throw new IllegalArgumentException("time zone cannot be empty");
         }
         // 获取默认语言环境
@@ -204,7 +202,7 @@ public class OCRController extends BaseController {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern(format, localeObj);
         // 获取当前时间
         ZonedDateTime nowTime = ZonedDateTime.now();
-        if (format.indexOf(OcrUtils.TIME_ZONE_SIGN) != -1 && Strings.isNotBlank(timeZone)) {
+        if (format.contains(OcrUtils.TIME_ZONE_SIGN) && Strings.isNotBlank(timeZone)) {
             nowTime = ZonedDateTime.now(ZoneId.of(timeZone));
         }
         return ApiResult.success(dtf.format(nowTime));
@@ -219,14 +217,13 @@ public class OCRController extends BaseController {
      * @return 如果PDF文件满足所有正则表达式规则，则返回true；否则返回false
      */
     private boolean validateTemplateRegExpAll(OCRService ocrService, File pdfFile, OcrPdfRule ocrPdfRule) {
-        if (ocrPdfRule != null && ocrPdfRule.getRegexp() != null && ocrPdfRule.getRegexp().size() > 0) {
+        if (ocrPdfRule != null && ocrPdfRule.getRegexp() != null && !ocrPdfRule.getRegexp().isEmpty()) {
             // 正则匹配，全文匹配
             OcrPdfRuleRegExp regExp = ocrPdfRule.regExpIncludeAll();
             if (regExp != null) {
                 // 查询全文内容
                 String wholeContent = ocrService.pickPDFWholeContent(pdfFile);
-                boolean isValid = oService.validateTemplateRegExp(wholeContent, regExp.getExpression(), regExp.isMatching());
-                return isValid;
+                return oService.validateTemplateRegExp(wholeContent, regExp.getExpression(), regExp.isMatching());
             }
         }
         return true;

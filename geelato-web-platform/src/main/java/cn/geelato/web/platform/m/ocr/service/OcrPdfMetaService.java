@@ -1,6 +1,5 @@
 package cn.geelato.web.platform.m.ocr.service;
 
-import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import cn.geelato.web.platform.m.ocr.entity.OcrPdfMeta;
 import lombok.extern.slf4j.Slf4j;
@@ -41,17 +40,19 @@ public class OcrPdfMetaService extends BaseSortableService {
         }
     }
 
-    public void updateMetaRules(String pdfId, Map<String, Object> metaRules) {
+    public void updateMetaRules(String pdfId, Map<String, OcrPdfMeta> metaRules) {
         if (metaRules == null || metaRules.isEmpty()) {
             return;
         }
         List<OcrPdfMeta> ocrPdfMetas = this.queryModelByPdfId(pdfId);
         if (ocrPdfMetas != null && !ocrPdfMetas.isEmpty()) {
             for (OcrPdfMeta ocrPdfMeta : ocrPdfMetas) {
-                Object rule = metaRules.get(ocrPdfMeta.getName());
-                if (rule != null) {
-                    String ruleStr = rule.toString();
-                    ocrPdfMeta.setRule(Strings.isNotBlank(ruleStr) ? ruleStr : null);
+                OcrPdfMeta meta = metaRules.get(ocrPdfMeta.getName());
+                if (meta != null) {
+                    ocrPdfMeta.setRule(Strings.isNotBlank(meta.getRule()) ? meta.getRule() : null);
+                    ocrPdfMeta.setDiscernRule(Strings.isNotBlank(meta.getDiscernRule()) ? meta.getDiscernRule() : null);
+                    ocrPdfMeta.setFloatAreaY(meta.getFloatAreaY());
+                    ocrPdfMeta.setLineHeight(meta.getLineHeight());
                     this.updateModel(ocrPdfMeta);
                 }
             }

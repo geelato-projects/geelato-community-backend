@@ -96,7 +96,7 @@ public class OcrPdfMetaController extends BaseController {
     }
 
     @RequestMapping(value = "/rule/{pdfId}", method = RequestMethod.POST)
-    public ApiResult updateMetaRules(@PathVariable(required = true) String pdfId, @RequestBody Map<String, Object> params) {
+    public ApiResult updateMetaRules(@PathVariable(required = true) String pdfId, @RequestBody Map<String, OcrPdfMeta> params) {
         try {
             ocrPdfMetaService.updateMetaRules(pdfId, params);
             return ApiResult.successNoResult();

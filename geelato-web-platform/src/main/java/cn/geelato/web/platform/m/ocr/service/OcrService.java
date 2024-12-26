@@ -377,22 +377,44 @@ public class OcrService extends BaseService {
         if (Strings.isBlank(wholeContent) || ocrPdfContentList == null || ocrPdfContentList.isEmpty()) {
             return false;
         }
-        if (ocrPdfRule == null || ocrPdfRule.getRegexp() == null || ocrPdfRule.getRegexp().isEmpty()) {
+        // 正则匹配，非全文匹配，排除ALL关键字
+        List<OcrPdfRuleRegExp> ruleRegExps = ocrPdfRule.regExpListExcludeAll();
+        if (ocrPdfRule == null || ruleRegExps == null || ruleRegExps.isEmpty()) {
             return true;
         }
         // 并将PDF内容列表转换为Map对象
         Map<String, Object> resultMap = OcrPdfContent.toMap(ocrPdfContentList);
-        for (Map.Entry<String, String> entry : ocrPdfRule.getRegexp().entrySet()) {
-            if (Strings.isNotBlank(entry.getKey()) && Strings.isNotBlank(entry.getValue())) {
-                // 此处使用ALL关键字匹配整个PDF内容，而非单个OCR PDF内容的匹配
-                String content = OcrPdfRule.REG_EXP_ALL.equals(entry.getKey()) ? wholeContent : (
-                        resultMap.get(entry.getKey()) == null ? null : resultMap.get(entry.getKey()).toString()
-                );
-                // 正则匹配，如果匹配失败则返回false
-                if (Strings.isBlank(content) || !Pattern.compile(entry.getValue()).matcher(content).find()) {
+        for (OcrPdfRuleRegExp regExp : ruleRegExps) {
+            String content = resultMap.get(regExp.getLabel()) == null ? null : resultMap.get(regExp.getLabel()).toString();
+            boolean isValid = validateTemplateRegExp(content, regExp.getExpression(), regExp.isMatching());
+            if (!isValid) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 根据正则表达式验证模板内容是否匹配。
+     *
+     * @param content    要验证的内容
+     * @param expression 用于验证内容的正则表达式
+     * @param isMatching 是否需要匹配到内容
+     * @return 如果内容不为空且符合匹配条件则返回true，否则返回false
+     */
+    public boolean validateTemplateRegExp(String content, String expression, boolean isMatching) {
+        if (Strings.isNotBlank(content)) {
+            if (isMatching) {// 匹配到
+                if (!Pattern.compile(expression).matcher(content).find()) {
+                    return false;
+                }
+            } else {// 匹配不到
+                if (Pattern.compile(expression).matcher(content).find()) {
                     return false;
                 }
             }
+        } else {
+            return false;
         }
         return true;
     }

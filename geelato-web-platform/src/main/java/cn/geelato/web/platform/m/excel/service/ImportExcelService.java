@@ -10,11 +10,11 @@ import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
+import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.exception.file.FileNotFoundException;
 import cn.geelato.web.platform.exception.file.*;
 import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.entity.Base64Info;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.base.service.UploadService;
@@ -898,29 +898,13 @@ public class ImportExcelService {
         if (Strings.isNotBlank(template)) {
             if (template.length() > 64) {
                 try {
-                    Base64Info bi = JSON.parseObject(template, Base64Info.class);
-                    if (bi != null && Strings.isNotBlank(bi.getName()) && Strings.isNotBlank(bi.getBase64())) {
-                        // 解码Base64字符串为字节数组
-                        byte[] decodedBytes = Base64.getDecoder().decode(bi.getBase64());
-                        // 创建临时文件
-                        String fileExt = bi.getName().substring(bi.getName().lastIndexOf("."));
-                        File tempFile = File.createTempFile("temp_base64_import", fileExt);
-                        tempFile.deleteOnExit();
-                        // 将字节数组写入临时文件
-                        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                            fos.write(decodedBytes);
-                        }
-                        // 将临时文件吸入file
-                        file = tempFile;
-                    }
+                    file = Base64Helper.toTempFile(template);
                 } catch (Exception ex) {
                     logger.info(ex.getMessage(), ex);
                 }
             } else {
                 Attach attach = getFile(template);
-                if (attach != null) {
-                    file = new File(attach.getPath());
-                }
+                file = new File(attach.getPath());
             }
         }
 

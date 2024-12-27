@@ -1,5 +1,6 @@
 package cn.geelato.utils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -198,5 +199,51 @@ public class StringUtils extends org.springframework.util.StringUtils {
             return sb.toString().replaceAll("_", "");
         }
         return toCamelCase(sb.toString());
+    }
+
+    /**
+     * 将字符串转换为字符串列表（不去重）
+     *
+     * @param arrayString 待转换的字符串,以逗号分隔
+     * @return 转换后的字符串列表
+     */
+    public static List<String> toList(String arrayString) {
+        return toList(arrayString, null, false);
+    }
+
+    /**
+     * 将字符串转换为字符串列表（去重）
+     *
+     * @param arrayString 待转换的字符串,以逗号分隔
+     * @return 转换后的字符串列表
+     */
+    public static List<String> toListDr(String arrayString) {
+        return toList(arrayString, null, true);
+    }
+
+    /**
+     * 将以指定分隔符分隔的字符串转换为字符串列表
+     *
+     * @param arrayString    待转换的字符串
+     * @param split        分隔符
+     * @param deRepetition 是否去重
+     * @return 转换后的字符串列表，如果输入字符串为空或分割后没有有效项，则返回空列表
+     */
+    public static List<String> toList(String arrayString, String split, boolean deRepetition) {
+        List<String> list = new ArrayList<>();
+        split = split == null ? "," : split;
+        if (arrayString != null) {
+            String[] arr = arrayString.split(split);
+            for (String item : arr) {
+                if (deRepetition) {
+                    if (StringUtils.isNotBlank(item) && !list.contains(item)) {
+                        list.add(item);
+                    }
+                } else {
+                    list.add(item);
+                }
+            }
+        }
+        return list;
     }
 }

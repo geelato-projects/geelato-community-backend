@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.excel.service;
 
+import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.m.base.entity.Attach;
@@ -627,22 +628,8 @@ public class WordXWPFWriter {
                     value = mp.group(1);
                 }
                 if (StringUtils.isNotBlank(value)) {
-                    FileOutputStream fos = null;
-                    try {
-                        byte[] decodedBytes = Base64.getDecoder().decode(value);
-                        File tempFile = File.createTempFile("temp_base64_export", ".png");
-                        tempFile.deleteOnExit();
-                        fos = new FileOutputStream(tempFile);
-                        fos.write(decodedBytes);
-                        fos.flush();
-                        value = tempFile.getAbsolutePath();
-                    } catch (Exception e) {
-                        value = null;
-                    } finally {
-                        if (fos != null) {
-                            fos.close();
-                        }
-                    }
+                    File tempFile = FileUtils.createTempFile(value, "temp.png");
+                    value = tempFile != null && tempFile.exists() ? tempFile.getAbsolutePath() : null;
                 }
             } else if (meta.isImageSourceRelativePath()) {
                 if (!value.startsWith("/" + UploadService.ROOT_DIRECTORY)) {
@@ -653,33 +640,20 @@ public class WordXWPFWriter {
                     value = null;
                 }
                 InputStream inputStream = null;
-                FileOutputStream outputStream = null;
                 HttpURLConnection httpConn = null;
                 try {
                     URL url = new URL(value);
                     httpConn = (HttpURLConnection) url.openConnection();
                     int responseCode = httpConn.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
-                        inputStream = httpConn.getInputStream();
-                        File tempFile = File.createTempFile("temp_base64_export", ".png");
-                        tempFile.deleteOnExit();
-                        outputStream = new FileOutputStream(tempFile);
-                        byte[] buffer = new byte[4096];
-                        int bytesRead = -1;
-                        while ((bytesRead = inputStream.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, bytesRead);
-                        }
-                        outputStream.flush();
-                        value = tempFile.getAbsolutePath();
+                        File tempFile = FileUtils.createTempFile(httpConn.getInputStream(), "temp.png");
+                        value = tempFile != null && tempFile.exists() ? tempFile.getAbsolutePath() : null;
                     }
                 } catch (Exception ex) {
                     value = null;
                 } finally {
                     if (inputStream != null) {
                         inputStream.close();
-                    }
-                    if (outputStream != null) {
-                        outputStream.close();
                     }
                     if (httpConn != null) {
                         httpConn.disconnect();

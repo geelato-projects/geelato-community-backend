@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.ocr.enums;
+package cn.geelato.utils.enums;
 
 import lombok.Getter;
 

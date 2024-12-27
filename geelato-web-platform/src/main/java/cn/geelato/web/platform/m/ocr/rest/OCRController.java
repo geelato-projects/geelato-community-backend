@@ -3,16 +3,18 @@ package cn.geelato.web.platform.m.ocr.rest;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.ocr.*;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.FileUtils;
+import cn.geelato.utils.StringUtils;
+import cn.geelato.utils.enums.LocaleEnum;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.Attach;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.ocr.entity.*;
-import cn.geelato.web.platform.m.ocr.enums.LocaleEnum;
 import cn.geelato.web.platform.m.ocr.service.OcrPdfService;
 import cn.geelato.web.platform.m.ocr.service.OcrService;
-import cn.geelato.web.platform.m.ocr.service.OcrUtils;
 import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -92,12 +94,12 @@ public class OCRController extends BaseController {
     }
 
     @RequestMapping(value = "/pdf/content/clear", method = RequestMethod.POST)
-    public ApiResult<?> meta(String fileId,@RequestBody List<AnnotationPositionMeta> annotationPositionMetaList) throws IOException {
+    public ApiResult<?> meta(String fileId, @RequestBody List<AnnotationPositionMeta> annotationPositionMetaList) throws IOException {
         Attach file = attachService.getModel(fileId);
         File fileInstance = FileUtils.pathToFile(file.getPath());
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
-        File targetFile = File.createTempFile("ocr_clear", ".pdf",new File("C:\\Users\\39139\\Desktop\\testfile"));
-        ocrService.clearContent(annotationPositionMetaList,fileInstance,targetFile);
+        File targetFile = File.createTempFile("ocr_clear", ".pdf", new File("C:\\Users\\39139\\Desktop\\testfile"));
+        ocrService.clearContent(annotationPositionMetaList, fileInstance, targetFile);
         return ApiResult.success(targetFile);
     }
 
@@ -118,7 +120,7 @@ public class OCRController extends BaseController {
         if (pdfFile == null || !pdfFile.exists()) {
             throw new IllegalArgumentException("file not found");
         }
-        List<String> pdfIds = OcrUtils.stringToListDr(templateId);
+        List<String> pdfIds = StringUtils.toListDr(templateId);
         if (pdfIds.isEmpty()) {
             throw new IllegalArgumentException("templateId is blank");
         }
@@ -185,7 +187,7 @@ public class OCRController extends BaseController {
         if (Strings.isBlank(form.getTemplate())) {
             throw new IllegalArgumentException("pdf template is blank");
         }
-        File tempFile = OcrUtils.getTempFile(form.getTemplate());
+        File tempFile = Base64Helper.toTempFile(form.getTemplate());
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
         List<PDFAnnotationMeta> pdfAnnotationMetaList = ocrService.resolvePDFAnnotationMeta(tempFile);
         return ApiResult.success(pdfAnnotationMetaList);
@@ -204,7 +206,7 @@ public class OCRController extends BaseController {
         if (Strings.isBlank(format)) {
             throw new IllegalArgumentException("time format cannot be empty");
         }
-        if (format.contains(OcrUtils.TIME_ZONE_SIGN) && Strings.isBlank(timeZone)) {
+        if (format.contains(DateUtils.TIME_ZONE_SIGN) && Strings.isBlank(timeZone)) {
             throw new IllegalArgumentException("time zone cannot be empty");
         }
         // 获取默认语言环境
@@ -212,7 +214,7 @@ public class OCRController extends BaseController {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern(format, localeObj);
         // 获取当前时间
         ZonedDateTime nowTime = ZonedDateTime.now();
-        if (format.contains(OcrUtils.TIME_ZONE_SIGN) && Strings.isNotBlank(timeZone)) {
+        if (format.contains(DateUtils.TIME_ZONE_SIGN) && Strings.isNotBlank(timeZone)) {
             nowTime = ZonedDateTime.now(ZoneId.of(timeZone));
         }
         return ApiResult.success(dtf.format(nowTime));

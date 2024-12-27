@@ -19,6 +19,7 @@ public class MediaTypes {
 
     public static final String TEXT_PLAIN = "text/plain";
     public static final String TEXT_PLAIN_BASE64 = "data:text/plain;base64";
+    public static final String IMAGE_PNG_BASE64 = "data:image/png;base64";
     public static final String TEXT_PLAIN_UTF_8 = "text/plain; charset=UTF-8";
 
     public static final String TEXT_XML = "text/xml";

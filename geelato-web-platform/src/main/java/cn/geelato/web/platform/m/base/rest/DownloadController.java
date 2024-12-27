@@ -21,7 +21,10 @@ import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -90,15 +93,7 @@ public class DownloadController extends BaseController {
                     throw new RuntimeException("downloadFile: invalid file extension");
                 }
                 if (inputStream != null) {
-                    File tempFile = File.createTempFile(name + "_temp_", ext);
-                    tempFile.deleteOnExit();
-                    try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                        byte[] buffer = new byte[1024];
-                        int length;
-                        while ((length = inputStream.read(buffer)) > 0) {
-                            fos.write(buffer, 0, length);
-                        }
-                    }
+                    File tempFile = FileUtils.createTempFile(inputStream, ext);
                     if (tempFile.exists()) {
                         file = downloadService.toPdf(tempFile, ext, appId, tenantCode);
                         tempFile.delete();

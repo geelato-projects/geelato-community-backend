@@ -4,6 +4,7 @@ import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.Base64Utils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.m.BaseController;
@@ -22,7 +23,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by hongxq on 2022/5/1.
@@ -123,16 +127,7 @@ public class JWTAuthRestController extends BaseController {
             if (file == null || file.isEmpty()) {
                 throw new RuntimeException("Avatar file is null");
             }
-            // 存入附件表
-            // Attach attach = new Attach(file);
-            // attach.setPath(uploadService.getSavePath(UploadService.ROOT_AVATAR_DIRECTORY, attach.getName(), true));
-            // byte[] bytes = file.getBytes();
-            // Files.write(Paths.get(attach.getPath()), bytes);
-            // Map<String, Object> attachMap = attachService.createModel(attach);
-            // Base64，存数据库
-            byte[] fileBytes = file.getBytes();
-            String base64String = Base64.getEncoder().encodeToString(fileBytes);
-            user.setAvatar(UploadService.AVATAR_BASE64_PREFIX + base64String);
+            user.setAvatar(Base64Utils.fromFile(file.getBytes(), "image/png"));
             dao.save(user);
             return ApiResult.successNoResult();
         } catch (Exception e) {

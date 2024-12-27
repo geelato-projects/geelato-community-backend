@@ -4,9 +4,9 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
+import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.entity.Base64Info;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
@@ -37,7 +37,10 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -85,11 +88,11 @@ public class ExportExcelService {
             ExportTemplate exportTemplate = exportTemplateService.getModel(ExportTemplate.class, templateId);
             Assert.notNull(exportTemplate, "导出模板不存在");
             // 模板
-            Base64Info templateAttach = getTemplate(exportTemplate.getTemplate());
+            Base64Helper templateAttach = getTemplate(exportTemplate.getTemplate());
             Assert.notNull(templateAttach, "导出模板文件不存在");
             // 模板源数据
             Map<String, PlaceholderMeta> metaMap = null;
-            Base64Info templateRuleAttach = getTemplate(exportTemplate.getTemplateRule());
+            Base64Helper templateRuleAttach = getTemplate(exportTemplate.getTemplateRule());
             if (templateRuleAttach != null) {
                 // 读取，模板源数据
                 metaMap = getPlaceholderMeta(templateRuleAttach.getFile());
@@ -171,7 +174,7 @@ public class ExportExcelService {
             barcodeFormat(metaMap);
             // 生成导出模板
             String templateName = String.format("%s_%s%s", fileName, "导出模板", templateExt);
-            Base64Info templateAttach = getTemplate(tenantCode, appId, templateName, exportColumns);
+            Base64Helper templateAttach = getTemplate(tenantCode, appId, templateName, exportColumns);
             Assert.notNull(templateAttach, "导出模板创建失败！");
             // 实体文件 upload/存放表/租户编码/应用Id
             String exportFileName = String.format("%s_%s%s", fileName, sdf.format(new Date()), templateExt);
@@ -467,8 +470,8 @@ public class ExportExcelService {
      * @return 返回包含文件信息的Base64Info对象
      * @throws IOException 如果在文件操作过程中出现I/O异常
      */
-    private Base64Info getTemplate(String tenantCode, String appId, String fileName, List<ExportColumn> exportColumns) throws IOException {
-        Base64Info info = null;
+    private Base64Helper getTemplate(String tenantCode, String appId, String fileName, List<ExportColumn> exportColumns) throws IOException {
+        Base64Helper info = null;
         OutputStream outputStream = null;
         XSSFWorkbook workbook = null;
         FileInputStream fileInputStream = null;
@@ -491,7 +494,7 @@ public class ExportExcelService {
             attach.setAppId(appId);
             attach = attachService.createModel(attach);
             // 数据转换
-            info = Base64Info.getBase64InfoByAttach(attach);
+            info = Base64Helper.fromAttachment(attach);
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         } finally {
@@ -519,35 +522,19 @@ public class ExportExcelService {
      * @param template base64字符串或文件ID
      * @return 返回包含文件信息和临时文件对象的Base64Info对象，如果转换失败则返回null
      */
-    private Base64Info getTemplate(String template) {
-        Base64Info info = null;
+    private Base64Helper getTemplate(String template) {
+        Base64Helper info = null;
         if (Strings.isNotBlank(template)) {
             if (template.length() > 64) {
                 try {
-                    Base64Info bi = JSON.parseObject(template, Base64Info.class);
-                    if (bi != null && Strings.isNotBlank(bi.getName()) && Strings.isNotBlank(bi.getBase64())) {
-                        // 解码Base64字符串为字节数组
-                        byte[] decodedBytes = Base64.getDecoder().decode(bi.getBase64());
-                        // 创建临时文件
-                        String fileExt = bi.getName().substring(bi.getName().lastIndexOf("."));
-                        File tempFile = File.createTempFile("temp_base64_export", fileExt);
-                        tempFile.deleteOnExit();
-                        // 将字节数组写入临时文件
-                        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                            fos.write(decodedBytes);
-                        }
-                        // 将临时文件吸入file
-                        info = bi;
-                        info.setFile(tempFile);
-                    }
+                    info = Base64Helper.fromString(template);
+                    info.setFile(info.toTempFile());
                 } catch (Exception ex) {
                     logger.info(ex.getMessage(), ex);
                 }
             } else {
                 Attach attach = getFile(template);
-                if (attach != null) {
-                    info = Base64Info.getBase64InfoByAttach(attach);
-                }
+                info = Base64Helper.fromAttachment(attach);
             }
         }
 

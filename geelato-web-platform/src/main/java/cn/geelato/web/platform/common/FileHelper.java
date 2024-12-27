@@ -29,7 +29,7 @@ public class FileHelper {
                 .setEndPoint(ossConfigurationProperties.getEndPoint())
                 .setRegion(ossConfigurationProperties.getRegion())
                 .setBucketName(ossConfigurationProperties.getBucketName())
-                .setGenerateObjectNameFn((fileMeta) -> generateFilePrefix() + UIDGenerator.generate() + "." + fileMeta.getFileExtension());
+                .setGenerateObjectNameFn(fileMeta -> generateFilePrefix() + UIDGenerator.generate() + "." + fileMeta.getFileExtension());
         fileObjectSrvProvider = new AliFileObjectSrvProvider(aliOSSConfiguration);
     }
 

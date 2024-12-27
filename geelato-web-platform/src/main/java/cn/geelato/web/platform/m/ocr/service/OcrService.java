@@ -10,6 +10,8 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.plugin.ocr.PDFAnnotationPickContent;
 import cn.geelato.plugin.ocr.PDFResolveData;
+import cn.geelato.utils.DateUtils;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.entity.Dict;
 import cn.geelato.web.platform.m.base.entity.DictItem;
 import cn.geelato.web.platform.m.base.service.BaseService;
@@ -237,13 +239,13 @@ public class OcrService extends BaseService {
                         }
                     } else if (RuleTypeEnum.TIMECONVERSION.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal()) && Strings.isNotBlank(rule.getLocale())) {
-                            content = OcrUtils.convertTime(content, rule.getRule(), rule.getGoal(), rule.getTimeZone(), rule.getLocale());
+                            content = DateUtils.convertTime(content, rule.getRule(), rule.getGoal(), rule.getTimeZone(), rule.getLocale());
                         } else {
                             throw new RuntimeException("TimeFormat or TimeParse or locale is empty");
                         }
                     } else if (RuleTypeEnum.TIMECHANGE.name().equalsIgnoreCase(rule.getType())) {
                         if (Strings.isNotBlank(rule.getRule()) && Strings.isNotBlank(rule.getGoal()) && Strings.isNotBlank(rule.getExtra())) {
-                            content = OcrUtils.calculateTime(content, rule.getExtra(), rule.getRule(), rule.getGoal());
+                            content = DateUtils.calculateTime(content, rule.getExtra(), rule.getRule(), rule.getGoal());
                         } else {
                             throw new RuntimeException("Amount or unit or timeParse is empty");
                         }
@@ -588,7 +590,7 @@ public class OcrService extends BaseService {
      * @return 如果找到匹配的字典项，则返回其字典项编码列表，以逗号分隔；否则返回null
      */
     private String calculateItemCodes(String content, String dictCode, String type) {
-        List<String> names = OcrUtils.stringToList(content);
+        List<String> names = StringUtils.toList(content);
         if (names == null || names.size() == 0) {
             return null;
         }
@@ -679,7 +681,7 @@ public class OcrService extends BaseService {
             String[] arr = rule.split(":");
             if (arr.length == 2) {
                 tableName = arr[0];
-                columnNames = OcrUtils.stringToListDr(arr[1]);
+                columnNames = StringUtils.toListDr(arr[1]);
             }
         }
         if (Strings.isBlank(tableName) || columnNames == null || columnNames.size() == 0) {

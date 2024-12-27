@@ -2,6 +2,7 @@ package cn.geelato.web.platform.m.zxing.utils;
 
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.orm.Dao;
+import cn.geelato.utils.Base64Utils;
 import cn.geelato.utils.ColorUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
@@ -21,10 +22,8 @@ import javax.sql.DataSource;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,7 +62,7 @@ public class BarcodeUtils {
             attach.setPath(picturePath);
             attach.setGenre("Barcode");
             attach.setAppId(barcode.getAppId());
-            return  dao().save(attach);
+            return dao().save(attach);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -91,10 +90,7 @@ public class BarcodeUtils {
             if (!file.exists()) {
                 throw new RuntimeException("Generate Barcode Image is not exists！");
             }
-            FileInputStream fileInputStream = new FileInputStream(file);
-            byte[] fileBytes = fileInputStream.readAllBytes();
-            String base64String = Base64.getEncoder().encodeToString(fileBytes);
-            return String.format("data:%s;base64,%s", contentType, base64String);
+            return Base64Utils.fromFile(file, contentType);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -185,10 +181,7 @@ public class BarcodeUtils {
                 // log.info(String.format("条形码位置：（%d，%d）", startX, startY));
                 for (int x = 0; x < bitMatrix.getWidth(); x++) {
                     for (int y = 0; y < bitMatrix.getHeight(); y++) {
-                        barcodeImage.setRGB(startX + x, startY + y,
-                                bitMatrix.get(x, y) ? fontColor.getRGB() :
-                                        (barcode.getLucency() ? new Color(0, 0, 0, 0).getRGB() :
-                                                backgroundColor.getRGB()));
+                        barcodeImage.setRGB(startX + x, startY + y, bitMatrix.get(x, y) ? fontColor.getRGB() : (barcode.getLucency() ? new Color(0, 0, 0, 0).getRGB() : backgroundColor.getRGB()));
                     }
                 }
             }

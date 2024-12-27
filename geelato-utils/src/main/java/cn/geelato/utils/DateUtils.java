@@ -1,13 +1,15 @@
 package cn.geelato.utils;
 
+import cn.geelato.utils.enums.LocaleEnum;
+import cn.geelato.utils.enums.TimeUnitEnum;
+
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.*;
 
 /**
  * @author geemeta
@@ -24,6 +26,9 @@ public class DateUtils {
     public static final String TIMESTAMP = "yyyy-MM-dd HH:mm:ss.SSS";
 
     public static final String TIMEZONE = "GMT+8";
+
+    public static final String TIME_ZONE_SIGN = "zzz";
+    public static final String REGEX_INTEGER = "^-?\\d+$";
 
     public static Date asDate(LocalDate localDate) {
         return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
@@ -90,5 +95,70 @@ public class DateUtils {
         Date tonight = calendar.getTime(); // 获取今天晚上的时间
         long diff = tonight.getTime() - System.currentTimeMillis(); // 计算时间差(毫秒)
         return diff / 1000;
+    }
+
+    /**
+     * 将指定格式的时间字符串转换为另一种格式的时间字符串
+     *
+     * @param time     待转换的时间字符串
+     * @param parse    原始时间字符串的格式
+     * @param format   目标时间字符串的格式
+     * @param timeZone 时间时区
+     * @param locale   地区设置
+     * @return 转换后的时间字符串
+     * @throws ParseException 如果时间字符串的格式与指定的格式不匹配，则抛出此异常
+     */
+    public static String convertTime(String time, String parse, String format, String timeZone, String locale) throws ParseException {
+        SimpleDateFormat parseSDF = buildSimpleDateFormat(parse, timeZone, locale);
+        Date date = parseSDF.parse(time);
+        // 将Date对象转换为目标格式的字符串
+        SimpleDateFormat formatSDF = buildSimpleDateFormat(format, timeZone, locale);
+        return formatSDF.format(date);
+    }
+
+    /**
+     * 构建一个SimpleDateFormat对象
+     *
+     * @param format   日期格式字符串
+     * @param timeZone 时区字符串
+     * @param locale   地域字符串
+     * @return 构建好的SimpleDateFormat对象
+     */
+    private static SimpleDateFormat buildSimpleDateFormat(String format, String timeZone, String locale) throws ParseException {
+        if (format.indexOf(DateUtils.TIME_ZONE_SIGN) > -1 && StringUtils.isBlank(timeZone)) {
+            throw new ParseException("Time zone is not specified", 0);
+        }
+        // 解析时间字符串为Date对象
+        Locale le = LocaleEnum.getDefaultLocale(locale);
+        SimpleDateFormat sdf = new SimpleDateFormat(format, le);
+        if (format.indexOf(DateUtils.TIME_ZONE_SIGN) > -1 && StringUtils.isNotBlank(timeZone)) {
+            TimeZone tz = TimeZone.getTimeZone(timeZone);
+            sdf.setTimeZone(tz);
+        }
+        return sdf;
+    }
+
+    /**
+     * 根据给定的时间、格式、数量和时间单位计算新的时间
+     *
+     * @param time   原始时间字符串
+     * @param format 时间格式
+     * @param amount 增减的时间数量
+     * @param unit   时间单位
+     * @return 计算后的时间字符串
+     * @throws ParseException 如果解析时间字符串时发生错误，则抛出此异常
+     */
+    public static String calculateTime(String time, String format, String amount, String unit) throws ParseException {
+        // 将时间字符串转换为Date对象
+        Date date = new SimpleDateFormat(format).parse(time);
+        // 获取当前时间的Calendar对象
+        Calendar calendar = Calendar.getInstance();
+        int unitValue = TimeUnitEnum.getValueByName(unit);
+        calendar.setTime(date);
+        // 根据时间单位和数量进行时间计算
+        if (unitValue > -1 && amount.matches(DateUtils.REGEX_INTEGER)) {
+            calendar.add(unitValue, Integer.parseInt(amount));
+        }
+        return new SimpleDateFormat(format).format(calendar.getTime());
     }
 }

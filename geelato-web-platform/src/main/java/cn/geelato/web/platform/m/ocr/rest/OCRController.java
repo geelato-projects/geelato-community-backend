@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.ocr.rest;
 
+import cn.geelato.core.SessionCtx;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.ocr.*;
@@ -96,9 +97,11 @@ public class OCRController extends BaseController {
         Attach file = attachService.getModel(fileId);
         File fileInstance = FileUtils.pathToFile(file.getPath());
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
-        File targetFile = File.createTempFile("ocr_clear", ".pdf",new File("C:\\Users\\39139\\Desktop\\testfile"));
+        String directory="C:\\Users\\39139\\Desktop\\testfile";
+        File targetFile = File.createTempFile("ocr_clear", ".pdf",new File(directory));
         ocrService.clearContent(annotationPositionMetaList,fileInstance,targetFile);
-        return ApiResult.success(targetFile);
+        Attach attach= attachService.saveByFile(targetFile,targetFile.getName(),"clearPdf",null, SessionCtx.getCurrentTenantCode());
+        return ApiResult.success(attach.getId());
     }
 
     /**

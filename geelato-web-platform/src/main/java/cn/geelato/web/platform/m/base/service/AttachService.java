@@ -70,7 +70,7 @@ public class AttachService extends BaseService {
         Map<String, Object> params = new HashMap<>();
         params.put("id", StringUtils.join(ids, ","));
         List<Map<String, Object>> mapList = dao.queryForMapList("platform_attachment_by_more", params);
-        if (mapList != null && mapList.size() > 0) {
+        if (mapList != null && !mapList.isEmpty()) {
             if (mapList.size() == 1) {
                 return JSON.parseObject(JSON.toJSONString(mapList.get(0)), Attach.class);
             } else if (mapList.size() > 1) {

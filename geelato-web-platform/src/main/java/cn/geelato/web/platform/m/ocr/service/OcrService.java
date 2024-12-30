@@ -64,7 +64,7 @@ public class OcrService extends BaseService {
      */
     public List<OcrPdfContent> formatContent(List<PDFAnnotationPickContent> pdfAnnotationPickContents, List<OcrPdfMeta> ocrPdfMetas) {
         List<OcrPdfContent> ocrPdfContents = OcrPdfContent.buildList(pdfAnnotationPickContents);
-        if (ocrPdfContents == null || ocrPdfContents.isEmpty()) {
+        if (ocrPdfContents.isEmpty()) {
             return ocrPdfContents;
         }
         if (ocrPdfMetas == null || ocrPdfMetas.isEmpty()) {

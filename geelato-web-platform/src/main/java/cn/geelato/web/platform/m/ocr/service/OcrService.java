@@ -381,8 +381,11 @@ public class OcrService extends BaseService {
             return false;
         }
         // 正则匹配，非全文匹配，排除ALL关键字
+        if (ocrPdfRule == null) {
+            return true;
+        }
         List<OcrPdfRuleRegExp> ruleRegExps = ocrPdfRule.regExpListExcludeAll();
-        if (ocrPdfRule == null || ruleRegExps == null || ruleRegExps.isEmpty()) {
+        if (ruleRegExps == null || ruleRegExps.isEmpty()) {
             return true;
         }
         // 并将PDF内容列表转换为Map对象

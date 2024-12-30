@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.ocr.entity;
 
+import cn.geelato.plugin.ocr.AnnotationPositionMeta;
 import cn.geelato.plugin.ocr.PDFAnnotationPickContent;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +18,7 @@ public class OcrPdfContent {
     private String content;
     private Object result;
     private String errorMsg;
+    private AnnotationPositionMeta positionMeta;
 
     public static List<OcrPdfContent> buildList(List<PDFAnnotationPickContent> pdfAnnotationPickContents) {
         List<OcrPdfContent> list = new ArrayList<>();
@@ -25,12 +27,24 @@ public class OcrPdfContent {
                 OcrPdfContent opc = new OcrPdfContent();
                 opc.setName(pdfAnnotationPickContent.getAnnotationAreaContent());
                 opc.setContent(pdfAnnotationPickContent.getInstanceAreaContent());
+                opc.setPositionMeta(getPositionMeta(pdfAnnotationPickContent));
                 opc.setResult(null);
                 opc.setErrorMsg(null);
                 list.add(opc);
             }
         }
         return list;
+    }
+
+    public static AnnotationPositionMeta getPositionMeta(PDFAnnotationPickContent pdfAnnotationPickContent) {
+        AnnotationPositionMeta positionMeta = new AnnotationPositionMeta();
+        positionMeta.setAnnotationIndex(pdfAnnotationPickContent.getAnnotationIndex());
+        positionMeta.setPageIndex(pdfAnnotationPickContent.getPageIndex());
+        positionMeta.setX(pdfAnnotationPickContent.getX());
+        positionMeta.setY(pdfAnnotationPickContent.getY());
+        positionMeta.setWidth(pdfAnnotationPickContent.getWidth());
+        positionMeta.setHeight(pdfAnnotationPickContent.getHeight());
+        return positionMeta;
     }
 
     public static Map<String, OcrPdfContent> buildMap(List<PDFAnnotationPickContent> pdfAnnotationPickContents) {

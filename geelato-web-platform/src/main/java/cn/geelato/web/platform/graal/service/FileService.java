@@ -66,7 +66,7 @@ public class FileService {
             // 其他参数
             String markText = options.get("markText") == null ? "" : String.valueOf(options.get("markText"));
             String markKey = options.get("markKey") == null ? "" : String.valueOf(options.get("markKey"));
-            Boolean readonly = options.get("readonly") != null && Boolean.valueOf(String.valueOf(options.get("readonly")));
+            boolean readonly = options.get("readonly") != null && Boolean.parseBoolean(String.valueOf(options.get("readonly")));
             // 导出
             ApiResult result = exportExcelService.exportWps(templateId, fileName, valueMapList, valueMap, markText, markKey, readonly);
             if (result.isSuccess()) {

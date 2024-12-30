@@ -4,12 +4,16 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.ocr.*;
 import cn.geelato.utils.DateUtils;
+import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.enums.LocaleEnum;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.common.Base64Helper;
+import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.base.entity.Attachment;
+import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.ocr.entity.*;
 import cn.geelato.web.platform.m.ocr.service.OcrPdfService;
 import cn.geelato.web.platform.m.ocr.service.OcrService;
@@ -35,6 +39,7 @@ import java.util.Map;
 @ApiRestController(value = "/ocr")
 @Slf4j
 public class OCRController extends BaseController {
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
     private final OcrPdfService ocrPdfService;
     private final OcrService oService;
     private final FileHandler fileHandler;
@@ -85,11 +90,16 @@ public class OCRController extends BaseController {
 
     @RequestMapping(value = "/pdf/content/clear", method = RequestMethod.POST)
     public ApiResult<?> meta(String fileId, @RequestBody List<AnnotationPositionMeta> annotationPositionMetaList) throws IOException {
-        File fileInstance = fileHandler.toFile(fileId);
+        Attachment attachment = fileHandler.getAttachment(fileId);
+        File fileInstance = fileHandler.toFile(attachment);
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
-        File targetFile = File.createTempFile("ocr_clear", ".pdf", new File("C:\\Users\\39139\\Desktop\\testfile"));
+        String fileName = FileUtils.setPdfFileName(attachment.getName());
+        String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, null, fileName, true);
+        File targetFile = new File(directory);
         ocrService.clearContent(annotationPositionMetaList, fileInstance, targetFile);
-        return ApiResult.success(targetFile);
+        String genre = StringUtils.splice(",", attachment.getGenre(), "clearPdf");
+        Attachment targetAttach = fileHandler.save(SAVE_TABLE_TYPE, targetFile, fileName, directory, null, genre, attachment.getAppId(), attachment.getTenantCode());
+        return ApiResult.success(targetAttach.getId());
     }
 
     /**

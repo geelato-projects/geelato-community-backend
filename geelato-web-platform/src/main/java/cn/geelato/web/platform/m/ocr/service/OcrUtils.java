@@ -1,9 +1,38 @@
 package cn.geelato.web.platform.m.ocr.service;
 
+import cn.geelato.core.constants.ColumnDefault;
+import cn.geelato.core.ds.DataSourceManager;
+import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.meta.MetaManager;
+import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.core.orm.Dao;
+import cn.geelato.utils.StringUtils;
+import cn.geelato.web.platform.m.base.entity.Dict;
+import cn.geelato.web.platform.m.base.entity.DictItem;
+import com.alibaba.fastjson2.JSON;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import javax.sql.DataSource;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Slf4j
 public class OcrUtils {
+    private static final Dao dao;
+    private static final MetaManager metaManager = MetaManager.singleInstance();
+
+    static {
+        DataSource ds = (DataSource) DataSourceManager.singleInstance().getDynamicDataSourceMap().get("primary");
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        jdbcTemplate.setDataSource(ds);
+        dao = new Dao(jdbcTemplate);
+    }
 
     /**
      * 从给定内容中提取与正则表达式匹配的子串
@@ -39,5 +68,237 @@ public class OcrUtils {
         }
 
         return str;
+    }
+
+    /**
+     * 根据字典编码查询字典项列表
+     *
+     * @param dictCode 字典编码
+     * @return 返回与给定字典编码匹配的字典项列表，如果未找到匹配的字典项，则返回null
+     */
+    private static List<DictItem> queryDictItemsByDictCode(String dictCode) {
+        FilterGroup filter1 = new FilterGroup();
+        filter1.addFilter("dictCode", FilterGroup.Operator.in, dictCode);
+        filter1.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(DeleteStatusEnum.NO.getCode()));
+        List<Dict> dicts = dao.queryList(Dict.class, filter1, "update_at DESC");
+        if (dicts != null && !dicts.isEmpty()) {
+            FilterGroup filter2 = new FilterGroup();
+            filter2.addFilter("dictId", FilterGroup.Operator.in, dicts.get(0).getId());
+            filter2.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(DeleteStatusEnum.NO.getCode()));
+            return dao.queryList(DictItem.class, filter2, null);
+        }
+        return null;
+    }
+
+    /**
+     * 根据字典编码和字典项名称计算字典项编码
+     *
+     * @param content  字典项名称
+     * @param dictCode 字典编码
+     * @param type     计算类型，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
+     * @return 如果找到匹配的字典项，则返回其字典项编码；否则返回null
+     */
+    public static String calculateItemCode(String content, String dictCode, String type) {
+        if (Strings.isNotBlank(content)) {
+            // 获取字典项
+            List<DictItem> dictItemList = queryDictItemsByDictCode(dictCode);
+            // 比对
+            if (dictItemList != null && !dictItemList.isEmpty()) {
+                if ("CONTAINS".equalsIgnoreCase(type)) {
+                    for (DictItem dictItem : dictItemList) {
+                        if (content.contains(dictItem.getItemName())) {
+                            return content.replaceAll(dictItem.getItemName(), dictItem.getItemCode());
+                        }
+                    }
+                } else {
+                    for (DictItem dictItem : dictItemList) {
+                        if (content.equals(dictItem.getItemName())) {
+                            return dictItem.getItemCode();
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 根据给定的内容和字典映射字符串，计算并返回对应的值。
+     *
+     * @param content    需要查找的内容
+     * @param dictMapStr 包含字典映射关系的JSON字符串
+     * @param type       计算类型，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
+     * @return 如果找到对应的内容，则返回对应的值；否则返回null
+     * @throws RuntimeException 如果字典映射字符串格式不正确，则抛出运行时异常
+     */
+    public static String calculateRadio(String content, String dictMapStr, String type) {
+        if (Strings.isNotBlank(content)) {
+            try {
+                Map<String, String> dictMap = JSON.parseObject(dictMapStr, Map.class);
+                if (dictMap != null && !dictMap.isEmpty()) {
+                    if ("CONTAINS".equalsIgnoreCase(type)) {
+                        for (Map.Entry<String, String> entry : dictMap.entrySet()) {
+                            if (content.contains(entry.getKey())) {
+                                return content.replaceAll(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    } else {
+                        return dictMap.get(content);
+                    }
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("The data dictionary format is incorrect", e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 根据字典编码和多个字典项名称计算对应的字典项编码
+     *
+     * @param content  字典项名称列表，以逗号分隔
+     * @param dictCode 字典编码
+     * @param type     计算类型，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
+     * @return 如果找到匹配的字典项，则返回其字典项编码列表，以逗号分隔；否则返回null
+     */
+    public static String calculateItemCodes(String content, String dictCode, String type) {
+        List<String> names = StringUtils.toList(content);
+        if (names == null || names.size() == 0) {
+            return null;
+        }
+        List<String> codes = new ArrayList<>();
+        // 获取字典项
+        List<DictItem> dictItemList = queryDictItemsByDictCode(dictCode);
+        // 比对
+        if (dictItemList != null && dictItemList.size() > 0) {
+            if ("CONTAINS".equalsIgnoreCase(type)) {
+                for (String name : names) {
+                    for (DictItem dictItem : dictItemList) {
+                        if (name.indexOf(dictItem.getItemName()) != -1) {
+                            codes.add(name.replaceAll(dictItem.getItemName(), dictItem.getItemCode()));
+                        }
+                    }
+                }
+            } else {
+                for (DictItem dictItem : dictItemList) {
+                    if (names.contains(dictItem.getItemName())) {
+                        codes.add(dictItem.getItemCode());
+                    }
+                }
+            }
+        }
+        return codes.size() > 0 ? String.join(",", codes) : null;
+    }
+
+    /**
+     * 根据给定的规则和目标列名，从数据库中查询并返回目标列的值
+     *
+     * @param value 字段值
+     * @param rule  规则字符串，格式为"表名:列名1,列名2..."
+     * @param goal  目标列名
+     * @return 查询结果，如果查询成功则返回目标列的值，否则返回null
+     */
+    public static String calculateTables(String value, String rule, String goal) {
+        Map<String, Object> map = parseRuleMap(rule, goal);
+        if (Strings.isBlank(value) || map == null) {
+            return null;
+        }
+        String tableName = map.get("tableName") == null ? "" : map.get("tableName").toString();
+        List<String> columnNames = map.get("query") == null ? null : (List<String>) map.get("query");
+        String goalColumnName = map.get("goal") == null ? null : map.get("goal").toString();
+        if (Strings.isBlank(tableName) || columnNames == null || columnNames.isEmpty() || goalColumnName == null) {
+            return null;
+        }
+        boolean hasDel = map.get("hasDel") != null && Boolean.parseBoolean(map.get("hasDel").toString());
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("select ").append(goalColumnName).append(" from ").append(tableName).append(" where ");
+        if (hasDel) {
+            sql.append(" del_status = 0 and ");
+        }
+        sql.append("(");
+        for (int i = 0; i < columnNames.size(); i++) {
+            sql.append(columnNames.get(i)).append(" = '").append(value).append("'");
+            if (i != columnNames.size() - 1) {
+                sql.append(" or ");
+            }
+        }
+        sql.append(")");
+        try {
+            List<Map<String, Object>> list = dao.getJdbcTemplate().queryForList(sql.toString());
+            if (list != null && list.size() > 0) {
+                Object obj = list.get(0).get(goalColumnName);
+                return obj != null ? obj.toString() : null;
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+
+        return null;
+    }
+
+    /**
+     * 解析规则字符串并生成包含规则信息的映射表
+     *
+     * @param rule 规则字符串，格式为"表名:列名1,列名2..."
+     * @param goal 目标列名
+     * @return 包含规则信息的映射表，如果解析失败则返回null
+     */
+    private static Map<String, Object> parseRuleMap(String rule, String goal) {
+        // 解析规则
+        Map<String, Object> map = new HashMap<>();
+        String tableName = null;
+        List<String> columnNames = new ArrayList<>();
+        if (rule.contains(":")) {
+            String[] arr = rule.split(":");
+            if (arr.length == 2) {
+                tableName = arr[0];
+                columnNames = StringUtils.toListDr(arr[1]);
+            }
+        }
+        if (Strings.isBlank(tableName) || columnNames == null || columnNames.size() == 0) {
+            return null;
+        }
+        // 校验表名
+        EntityMeta entityMeta = metaManager.getByEntityName(tableName);
+        if (entityMeta == null) {
+            return null;
+        }
+        map.put("tableName", tableName);
+        // 校验列名
+        Map<String, ColumnMeta> columnMap = getColumnMap(entityMeta);
+        if (!columnMap.containsKey(goal)) {
+            return null;
+        }
+        map.put("goal", columnMap.get(goal).getName());
+        // 校验列名
+        List<String> querys = new ArrayList<>();
+        for (String columnName : columnNames) {
+            if (!columnMap.containsKey(columnName)) {
+                return null;
+            }
+            querys.add(columnMap.get(columnName).getName());
+        }
+        map.put("query", querys);
+        map.put("hasDel", columnMap.containsKey("delStatus"));
+        return map;
+    }
+
+
+    /**
+     * 根据实体元数据生成列名映射
+     *
+     * @param entityMeta 实体元数据对象
+     * @return 包含字段名和列元数据的映射表
+     */
+    private static Map<String, ColumnMeta> getColumnMap(EntityMeta entityMeta) {
+        Collection<FieldMeta> fieldMetas = entityMeta.getFieldMetas();
+        Map<String, ColumnMeta> columnMap = new HashMap<>();
+        for (FieldMeta fieldMeta : fieldMetas) {
+            if (fieldMeta.getColumnMeta() != null) {
+                columnMap.put(fieldMeta.getFieldName(), fieldMeta.getColumnMeta());
+            }
+        }
+        return columnMap;
     }
 }

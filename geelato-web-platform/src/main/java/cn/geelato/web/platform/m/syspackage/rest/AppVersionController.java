@@ -7,14 +7,11 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.service.AttachService;
-import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.syspackage.entity.AppPackage;
 import cn.geelato.web.platform.m.syspackage.entity.AppVersion;
 import cn.geelato.web.platform.m.syspackage.service.AppVersionService;
@@ -50,9 +47,7 @@ public class AppVersionController extends BaseController {
     @Autowired
     private AppVersionService appVersionService;
     @Resource
-    private AttachService attachService;
-    @Resource
-    private DownloadService downloadService;
+    private FileHandler fileHandler;
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
     public ApiPagedResult pageQuery() {
@@ -100,8 +95,7 @@ public class AppVersionController extends BaseController {
                 if (appVersion.getPackagePath().contains(".zgdp")) {
                     appPackageData = ZipUtils.readPackageData(appVersion.getPackagePath(), ".gdp");
                 } else {
-                    Attach attach = attachService.getModel(appVersion.getPackagePath());
-                    File file = FileUtils.pathToFile(attach.getPath());
+                    File file = fileHandler.toFile(appVersion.getPackagePath());
                     if (file != null) {
                         appPackageData = ZipUtils.readPackageData(file, ".gdp");
                     } else {

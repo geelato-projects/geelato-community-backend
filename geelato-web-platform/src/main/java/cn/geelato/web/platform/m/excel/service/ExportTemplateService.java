@@ -6,9 +6,9 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
-import cn.geelato.web.platform.m.base.entity.Resources;
+import cn.geelato.web.platform.handler.file.FileHandler;
+import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.BaseService;
-import cn.geelato.web.platform.m.base.service.ResourcesService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
 import com.alibaba.fastjson2.JSON;
@@ -16,16 +16,13 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -38,11 +35,9 @@ public class ExportTemplateService extends BaseService {
     public static final String[] IMPORT_META_TYPE_HEADER = {"列名", "类型", "格式", "多值分隔符", "多值场景", "清洗规则", "备注"};
     public static final String[] IMPORT_META_META_HEADER = {"表格", "字段名称", "取值计算方式", "常量取值", "变量取值", "表达式取值", "数据字典取值", "模型取值", "备注"};
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
-    private final Logger logger = LoggerFactory.getLogger(ExportTemplateService.class);
+    @Lazy
     @Autowired
-    private UploadService uploadService;
-    @Autowired
-    private ResourcesService resourcesService;
+    private FileHandler fileHandler;
 
     public ApiResult generateFile(String id, String fileType) throws IOException {
         ApiResult result = new ApiResult();
@@ -81,20 +76,20 @@ public class ExportTemplateService extends BaseService {
             workbook = new XSSFWorkbook();
             importTemplateSheet(workbook, "IMPORT TEMPLATE", businessTypeData);
             // 输出数据到文件
-            outputStream = new BufferedOutputStream(new FileOutputStream(new File(excelPath)));
+            outputStream = new BufferedOutputStream(new FileOutputStream(excelPath));
             workbook.write(outputStream);
             outputStream.flush();
             workbook.close();
             // 保存附件
             String excelFileName = String.format("%s：导入模板 %s.xlsx", meta.getTitle(), sdf.format(new Date()));
-            Resources attach = saveAttach(meta, excelPath, excelFileName);
+            Attachment attachment = saveAttach(meta, excelPath, excelFileName);
             // 转base64
-            fileInputStream = new FileInputStream(new File(excelPath));
-            Map<String, Object> templateMap = fileToBase64(fileInputStream, attach);
+            fileInputStream = new FileInputStream(excelPath);
+            Map<String, Object> templateMap = fileToBase64(fileInputStream, attachment);
             // 模板数据处理，保留备份
             backupsAndUpdateExportTemplate(meta, JSON.toJSONString(templateMap), null);
 
-            return ApiResult.success(attach);
+            return ApiResult.success(attachment);
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         } finally {
@@ -135,20 +130,20 @@ public class ExportTemplateService extends BaseService {
             importMetaRuleSheet(workbook, "Excel模板数据处理规则", businessTypeRuleData);
             importMetaMetaSheet(workbook, "数据保存配置", businessMetaData);
             // 输出数据到文件
-            outputStream = new BufferedOutputStream(new FileOutputStream(new File(excelPath)));
+            outputStream = new BufferedOutputStream(new FileOutputStream(excelPath));
             workbook.write(outputStream);
             outputStream.flush();
             workbook.close();
             // 保存附件
             String excelFileName = String.format("%s：元数据 %s.xlsx", meta.getTitle(), sdf.format(new Date()));
-            Resources attach = saveAttach(meta, excelPath, excelFileName);
+            Attachment attachment = saveAttach(meta, excelPath, excelFileName);
             // 转base64
-            fileInputStream = new FileInputStream(new File(excelPath));
-            Map<String, Object> templateMap = fileToBase64(fileInputStream, attach);
+            fileInputStream = new FileInputStream(excelPath);
+            Map<String, Object> templateMap = fileToBase64(fileInputStream, attachment);
             // 模板数据处理，保留备份
             backupsAndUpdateExportTemplate(meta, null, JSON.toJSONString(templateMap));
 
-            return ApiResult.success(attach);
+            return ApiResult.success(attachment);
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         } finally {
@@ -179,20 +174,20 @@ public class ExportTemplateService extends BaseService {
             workbook = new XSSFWorkbook();
             exportMetaSheet(workbook, "EXPORT META", placeholderMetas);
             // 输出数据到文件
-            outputStream = new BufferedOutputStream(new FileOutputStream(new File(excelPath)));
+            outputStream = new BufferedOutputStream(new FileOutputStream(excelPath));
             workbook.write(outputStream);
             outputStream.flush();
             workbook.close();
             // 保存附件
             String excelFileName = String.format("%s：元数据 %s.xlsx", meta.getTitle(), sdf.format(new Date()));
-            Resources attach = saveAttach(meta, excelPath, excelFileName);
+            Attachment attachment = saveAttach(meta, excelPath, excelFileName);
             // 转base64
-            fileInputStream = new FileInputStream(new File(excelPath));
-            Map<String, Object> templateMap = fileToBase64(fileInputStream, attach);
+            fileInputStream = new FileInputStream(excelPath);
+            Map<String, Object> templateMap = fileToBase64(fileInputStream, attachment);
             // 模板数据处理，保留备份
             backupsAndUpdateExportTemplate(meta, null, JSON.toJSONString(templateMap));
 
-            return ApiResult.success(attach);
+            return ApiResult.success(attachment);
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         } finally {
@@ -429,19 +424,9 @@ public class ExportTemplateService extends BaseService {
      * @return 返回保存后的资源对象
      * @throws IOException 如果在文件读写或保存过程中出现I/O异常，将抛出该异常
      */
-    public Resources saveAttach(ExportTemplate meta, String excelPath, String fileName) throws IOException {
+    public Attachment saveAttach(ExportTemplate meta, String excelPath, String fileName) throws IOException {
         File excelFile = new File(excelPath);
-        BasicFileAttributes attributes = Files.readAttributes(excelFile.toPath(), BasicFileAttributes.class);
-        Resources attach = new Resources();
-        attach.setName(fileName);
-        attach.setType(Files.probeContentType(excelFile.toPath()));
-        attach.setSize(attributes.size());
-        attach.setPath(excelPath);
-        attach.setGenre("fileTemplate");
-        // attach.setObjectId(meta.getId());
-        attach.setAppId(meta.getAppId());
-
-        return resourcesService.createModel(attach);
+        return fileHandler.save(AttachmentSourceEnum.PLATFORM_RESOURCES.getValue(), excelFile, fileName, excelPath, null, "fileTemplate", meta.getAppId(), meta.getTenantCode());
     }
 
     /**
@@ -450,19 +435,18 @@ public class ExportTemplateService extends BaseService {
      * 将提供的文件输入流转换为Base64编码的字符串，并将相关信息存储在一个Map中返回。
      *
      * @param fileInputStream 文件输入流，包含要转换的文件数据
-     * @param attach          资源对象，包含文件的类型、大小、名称等信息
+     * @param attachment      资源对象，包含文件的类型、大小、名称等信息
      * @return 返回包含文件信息的Map，包括文件的Base64编码内容、类型、大小和名称
      * @throws IOException 如果在文件读取过程中发生I/O异常，将抛出该异常
      */
-    private Map<String, Object> fileToBase64(FileInputStream fileInputStream, Resources attach) throws IOException {
+    private Map<String, Object> fileToBase64(FileInputStream fileInputStream, Attachment attachment) throws IOException {
         Map<String, Object> templateMap = new HashMap<>();
         byte[] excelBytes = fileInputStream.readAllBytes();
         String base64Content = Base64.getEncoder().encodeToString(excelBytes);
-        templateMap.put("type", attach.getType());
-        templateMap.put("size", attach.getSize());
-        templateMap.put("name", attach.getName());
+        templateMap.put("type", attachment.getType());
+        templateMap.put("size", attachment.getSize());
+        templateMap.put("name", attachment.getName());
         templateMap.put("base64", base64Content);
-
         return templateMap;
     }
 

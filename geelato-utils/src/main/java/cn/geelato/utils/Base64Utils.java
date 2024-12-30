@@ -9,9 +9,13 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Base64;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Base64Utils {
     private static final Logger logger = LoggerFactory.getLogger(Base64Utils.class);
+    private static final String DATA_URI_REGEX = "^data:[\\w+/]+;base64,(.+)$";
+    private static final Pattern pattern = Pattern.compile(DATA_URI_REGEX);
 
     /**
      * 将Base64编码的字符串解码为纯文本字符串
@@ -86,5 +90,35 @@ public class Base64Utils {
     public static String fromFile(byte[] fileBytes, String contentType) {
         String base64String = Base64.getEncoder().encodeToString(fileBytes);
         return String.format("data:%s;base64,%s", contentType, base64String);
+    }
+
+    /**
+     * 将输入的字符串转换为Base64编码格式的字符串。
+     *
+     * @param base64String 待转换的字符串
+     * @return 转换后的Base64编码字符串
+     * @throws IOException 如果在字符串处理过程中发生I/O错误
+     */
+    public static String toBase64String(String base64String) throws IOException {
+        Matcher matcher = pattern.matcher(base64String);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
+        return base64String;
+    }
+
+    /**
+     * 将Base64编码的字符串转换为字节数组。
+     *
+     * @param base64String Base64编码的字符串
+     * @return 转换后的字节数组，如果输入字符串为空或只包含空白字符，则返回一个空的字节数组
+     * @throws IOException 如果在解码过程中发生I/O错误
+     */
+    public static byte[] toBytes(String base64String) throws IOException {
+        base64String = toBase64String(base64String);
+        if (StringUtils.isNotBlank(base64String)) {
+            return Base64.getDecoder().decode(base64String);
+        }
+        return new byte[0];
     }
 }

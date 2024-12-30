@@ -8,8 +8,6 @@ import cn.geelato.utils.Base64Utils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.service.AttachService;
-import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import cn.geelato.web.platform.m.security.service.*;
@@ -39,11 +37,7 @@ public class JWTAuthRestController extends BaseController {
     protected OrgService orgService;
 
     @Autowired
-    public JWTAuthRestController(AccountService accountService,
-                                 AuthCodeService authCodeService,
-                                 OrgService orgService,
-                                 UploadService uploadService,
-                                 AttachService attachService) {
+    public JWTAuthRestController(AccountService accountService, AuthCodeService authCodeService, OrgService orgService) {
         this.accountService = accountService;
         this.authCodeService = authCodeService;
         this.orgService = orgService;

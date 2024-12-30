@@ -14,8 +14,8 @@ import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.exception.file.FileNotFoundException;
 import cn.geelato.web.platform.exception.file.*;
-import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.service.AttachService;
+import cn.geelato.web.platform.handler.file.FileHandler;
+import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
@@ -47,7 +47,6 @@ import org.springframework.util.Assert;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
@@ -80,11 +79,7 @@ public class ImportExcelService {
     @Autowired
     private ExcelXSSFReader excelXSSFReader;
     @Autowired
-    private ExcelSXSSFWriter excelSXSSFWriter;
-    @Autowired
-    private UploadService uploadService;
-    @Autowired
-    private AttachService attachService;
+    private FileHandler fileHandler;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
     @Autowired
@@ -104,7 +99,7 @@ public class ImportExcelService {
             ExportTemplate exportTemplate = exportTemplateService.getModel(ExportTemplate.class, templateId);
             ExcelCommonUtils.notNull(exportTemplate, new FileNotFoundException("ExportTemplate Data Not Found"));
             // 事务，模板元数据
-            // Attach templateRuleAttach = getFile(exportTemplate.getTemplateRule());
+            // Attachment templateRuleAttach = getFile(exportTemplate.getTemplateRule());
             // ExcelCommonUtils.notNull(templateRuleAttach, new FileNotFoundException("Business Data Type And Meta File Not Found"));
             File templateRuleFile = getTemplate(currentUUID, exportTemplate.getTemplateRule());
             if (templateRuleFile != null) {
@@ -129,9 +124,9 @@ public class ImportExcelService {
                 throw new FileNotFoundException("Business Data Type And Meta File Not Found");
             }
             // 事务，业务数据
-            Attach businessFile = null;
+            Attachment businessFile = null;
             if (Strings.isNotBlank(attachId)) {
-                businessFile = getFile(attachId);
+                businessFile = fileHandler.getAttachment(attachId);
                 ExcelCommonUtils.notNull(businessFile, new FileNotFoundException("Business Data File Not Found"));
             }
             businessDataMapList = getBusinessData(businessFile, request, businessTypeDataMap, 0);
@@ -209,7 +204,7 @@ public class ImportExcelService {
             redisTemplate.delete(cacheKeys);
             // 业务数据校验
             if (!validBusinessData(businessDataMapList) || repeatedData.size() > 0) {
-                Attach errorAttach = writeBusinessData(exportTemplate, businessFile, request, response, businessDataMapList, repeatedData, 0);
+                Attachment errorAttach = writeBusinessData(exportTemplate, businessFile, request, response, businessDataMapList, repeatedData, 0);
                 return ApiResult.fail(errorAttach).exception(new FileContentValidFailedException("For more information, see the error file."));
             }
             // 插入数据 "@biz": "myBizCode",
@@ -651,7 +646,7 @@ public class ImportExcelService {
      * @return 返回包含业务数据的列表，每个元素为一个映射，键为列名，值为对应的业务数据对象
      * @throws IOException 如果在文件读取或解析过程中发生I/O异常，将抛出该异常
      */
-    private List<Map<String, BusinessData>> getBusinessData(Attach businessFile, HttpServletRequest request, Map<String, BusinessTypeData> businessTypeDataMap, int sheetIndex) throws IOException {
+    private List<Map<String, BusinessData>> getBusinessData(Attachment businessFile, HttpServletRequest request, Map<String, BusinessTypeData> businessTypeDataMap, int sheetIndex) throws IOException {
         List<Map<String, BusinessData>> businessDataMapList = new ArrayList<>();
         InputStream inputStream = null;
         FileInputStream fileInputStream = null;
@@ -660,7 +655,7 @@ public class ImportExcelService {
         try {
             String contentType = null;
             if (businessFile != null) {
-                File file = new File(businessFile.getPath());
+                File file = fileHandler.toFile(businessFile);
                 contentType = Files.probeContentType(file.toPath());
                 fileInputStream = new FileInputStream(file);
                 bufferedInputStream = new BufferedInputStream(fileInputStream);
@@ -752,8 +747,8 @@ public class ImportExcelService {
      * @return 返回包含新生成文件信息的Attach对象
      * @throws IOException 如果在文件读写或处理过程中发生I/O异常，将抛出该异常
      */
-    private Attach writeBusinessData(ExportTemplate exportTemplate, Attach businessFile, HttpServletRequest request, HttpServletResponse response, List<Map<String, BusinessData>> businessDataMapList, Map<ColumnMeta, Map<Object, Long>> repeatedData, int sheetIndex) throws IOException {
-        Attach attachMap = new Attach();
+    private Attachment writeBusinessData(ExportTemplate exportTemplate, Attachment businessFile, HttpServletRequest request, HttpServletResponse response, List<Map<String, BusinessData>> businessDataMapList, Map<ColumnMeta, Map<Object, Long>> repeatedData, int sheetIndex) throws IOException {
+        Attachment attachment = new Attachment();
 
         InputStream inputStream = null;
         FileInputStream fileInputStream = null;
@@ -767,7 +762,7 @@ public class ImportExcelService {
             String contentType = null;
             String fileName = null;
             if (businessFile != null) {
-                File file = new File(businessFile.getPath());
+                File file = fileHandler.toFile(businessFile);
                 contentType = Files.probeContentType(file.toPath());
                 fileName = businessFile.getName();
                 // 输入流
@@ -831,14 +826,7 @@ public class ImportExcelService {
                 throw new FileTypeNotSupportedException("Business Data, Excel Type: " + contentType);
             }
             // 保存文件信息
-            BasicFileAttributes attributes = Files.readAttributes(errorFile.toPath(), BasicFileAttributes.class);
-            Attach attach = new Attach();
-            attach.setGenre(IMPORT_ERROR_FILE_GENRE);
-            attach.setName(errorFileName);
-            attach.setType(Files.probeContentType(errorFile.toPath()));
-            attach.setSize(attributes.size());
-            attach.setPath(directory);
-            attachMap = attachService.createModel(attach);
+            attachment = fileHandler.save(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), errorFile, errorFileName, directory, null, IMPORT_ERROR_FILE_GENRE, null, null);
             // 可下载
             /*responseOut = response.getOutputStream();
             responseIn = new FileInputStream(errorFile);
@@ -881,7 +869,7 @@ public class ImportExcelService {
             }
         }
 
-        return attachMap;
+        return attachment;
     }
 
     /**
@@ -903,36 +891,11 @@ public class ImportExcelService {
                     logger.info(ex.getMessage(), ex);
                 }
             } else {
-                Attach attach = getFile(template);
-                file = new File(attach.getPath());
+                file = fileHandler.toFile(template);
             }
         }
 
         return file;
-    }
-
-    /**
-     * 获取文件
-     * <p>
-     * 根据提供的附件ID获取对应的文件对象。
-     *
-     * @param attachId 附件ID
-     * @return 如果成功获取到文件对象，则返回该文件对象；否则返回null
-     */
-    private Attach getFile(String attachId) {
-        try {
-            if (Strings.isNotBlank(attachId)) {
-                Attach attach = attachService.getModel(attachId);
-                File file = new File(attach.getPath());
-                if (file.exists()) {
-                    return attach;
-                }
-            }
-        } catch (Exception ex) {
-            logger.info(ex.getMessage(), ex);
-        }
-
-        return null;
     }
 
     /**

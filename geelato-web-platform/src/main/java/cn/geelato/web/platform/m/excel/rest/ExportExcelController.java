@@ -5,8 +5,11 @@ import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.Attach;
+import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.excel.entity.ExportColumn;
@@ -41,12 +44,14 @@ public class ExportExcelController extends BaseController {
     private final AttachService attachService;
     private final ExportExcelService exportExcelService;
     private final DownloadService downloadService;
+    private final FileHandler fileHandler;
 
     @Autowired
-    public ExportExcelController(AttachService attachService, ExportExcelService exportExcelService, DownloadService downloadService) {
+    public ExportExcelController(AttachService attachService, ExportExcelService exportExcelService, DownloadService downloadService, FileHandler fileHandler) {
         this.attachService = attachService;
         this.exportExcelService = exportExcelService;
         this.downloadService = downloadService;
+        this.fileHandler = fileHandler;
     }
 
     @RequestMapping(value = "/list", method = RequestMethod.GET)
@@ -154,12 +159,12 @@ public class ExportExcelController extends BaseController {
         try {
             if (result.isSuccess() && result.getData() != null) {
                 if (isPdf) {
-                    Attach attach = (Attach) result.getData();
-                    result = ApiResult.success(downloadService.toPdfAndSave(attach));
+                    Attachment attachment = (Attachment) result.getData();
+                    result = ApiResult.success(fileHandler.toPdf(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), attachment));
                 }
                 if (isDownload) {
-                    Attach attach = (Attach) result.getData();
-                    downloadService.downloadFile(attach, false, this.request, this.response, null);
+                    Attachment attachment = (Attachment) result.getData();
+                    downloadService.downloadFile(attachment, false, this.request, this.response, null);
                 }
             }
             return result;

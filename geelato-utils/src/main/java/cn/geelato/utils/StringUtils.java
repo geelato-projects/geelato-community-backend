@@ -1,10 +1,12 @@
 package cn.geelato.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * 继承org.springframework.util.StringUtils,
@@ -224,7 +226,7 @@ public class StringUtils extends org.springframework.util.StringUtils {
     /**
      * 将以指定分隔符分隔的字符串转换为字符串列表
      *
-     * @param arrayString    待转换的字符串
+     * @param arrayString  待转换的字符串
      * @param split        分隔符
      * @param deRepetition 是否去重
      * @return 转换后的字符串列表，如果输入字符串为空或分割后没有有效项，则返回空列表
@@ -245,5 +247,16 @@ public class StringUtils extends org.springframework.util.StringUtils {
             }
         }
         return list;
+    }
+
+    /**
+     * 将多个字符串使用指定的分隔符拼接成一个字符串
+     *
+     * @param split 分隔符
+     * @param args  要拼接的字符串数组
+     * @return 拼接后的字符串
+     */
+    public static String splice(String split, String... args) {
+        return Arrays.stream(args).filter(StringUtils::isNotBlank).collect(Collectors.joining(split));
     }
 }

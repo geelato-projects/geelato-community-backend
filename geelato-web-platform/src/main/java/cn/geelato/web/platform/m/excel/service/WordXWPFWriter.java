@@ -3,8 +3,7 @@ package cn.geelato.web.platform.m.excel.service;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UIDGenerator;
-import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.service.AttachService;
+import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
 import cn.geelato.web.platform.m.excel.enums.WordTableLoopTypeEnum;
@@ -25,7 +24,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
@@ -47,7 +49,7 @@ public class WordXWPFWriter {
     private final Logger logger = LoggerFactory.getLogger(WordXWPFWriter.class);
 
     @Autowired
-    private AttachService attachService;
+    private FileHandler fileHandler;
 
     /**
      * 修改水印样式高度的方法,如果不想改高度可以不用方法
@@ -614,10 +616,8 @@ public class WordXWPFWriter {
         }
         try {
             if (meta.isImageSourceAttachment()) {
-                Attach attach = attachService.getModel(value);
-                if (attach != null) {
-                    value = attach.getPath();
-                }
+                File file = fileHandler.toFile(value);
+                value = file != null && file.exists() ? file.getAbsolutePath() : null;
             } else if (meta.isImageSourceBarcode()) {
                 if (meta.getBarcode() != null) {
                     value = BarcodeUtils.generateBarcode(value, meta.getBarcode());

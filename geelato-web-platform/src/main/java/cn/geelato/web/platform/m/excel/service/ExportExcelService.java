@@ -6,9 +6,9 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
-import cn.geelato.web.platform.m.base.entity.Attach;
+import cn.geelato.web.platform.handler.file.FileHandler;
+import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
-import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.ExportColumn;
@@ -35,7 +35,6 @@ import org.springframework.util.Assert;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -62,7 +61,7 @@ public class ExportExcelService {
     @Autowired
     private SysConfigService sysConfigService;
     @Autowired
-    private AttachService attachService;
+    private FileHandler fileHandler;
     @Autowired
     private BarcodeService barcodeService;
 
@@ -121,16 +120,8 @@ public class ExportExcelService {
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
             // 保存文件信息
-            BasicFileAttributes attributes = Files.readAttributes(exportFile.toPath(), BasicFileAttributes.class);
-            Attach attach = new Attach()
-                    .setAppId(exportTemplate.getAppId())
-                    .setGenre("exportFile")
-                    .setName(fileName)
-                    .setType(Files.probeContentType(exportFile.toPath()))
-                    .setSize(attributes.size())
-                    .setPath(directory);
-            Attach attachMap = attachService.createModel(attach);
-            return ApiResult.success(attachMap);
+            Attachment attachment = fileHandler.save(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), exportFile, fileName, directory, null, "exportFile", exportTemplate.getAppId(), exportTemplate.getTenantCode());
+            return ApiResult.success(attachment);
         } catch (Exception e) {
             return ApiResult.fail(e.getMessage());
         }
@@ -183,16 +174,8 @@ public class ExportExcelService {
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
             // 保存文件信息
-            BasicFileAttributes attributes = Files.readAttributes(exportFile.toPath(), BasicFileAttributes.class);
-            Attach attach = new Attach();
-            attach.setAppId(appId);
-            attach.setGenre("exportFile");
-            attach.setName(exportFileName);
-            attach.setType(Files.probeContentType(exportFile.toPath()));
-            attach.setSize(attributes.size());
-            attach.setPath(directory);
-            Attach attachMap = attachService.createModel(attach);
-            return ApiResult.success(attachMap);
+            Attachment attachment = fileHandler.save(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), exportFile, exportFileName, directory, null, "exportFile", appId, tenantCode);
+            return ApiResult.success(attachment);
         } catch (Exception e) {
             return ApiResult.fail(e.getMessage());
         }
@@ -487,14 +470,9 @@ public class ExportExcelService {
             outputStream.flush();
             workbook.close();
             // 保存附件
-            Attach attach = new Attach(new File(exportPath));
-            attach.setName(fileName);
-            attach.setPath(exportPath);
-            attach.setGenre("exportTemplate");
-            attach.setAppId(appId);
-            attach = attachService.createModel(attach);
+            Attachment attachment = fileHandler.save(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), new File(exportPath), fileName, exportPath, null, "exportTemplate", appId, tenantCode);
             // 数据转换
-            info = Base64Helper.fromAttachment(attach);
+            info = Base64Helper.fromAttachment(attachment);
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         } finally {
@@ -533,31 +511,9 @@ public class ExportExcelService {
                     logger.info(ex.getMessage(), ex);
                 }
             } else {
-                Attach attach = getFile(template);
-                info = Base64Helper.fromAttachment(attach);
+                info = fileHandler.toBase64Helper(template);
             }
         }
-
         return info;
-    }
-
-    /**
-     * 获取文件
-     * <p>
-     * 根据提供的附件ID获取对应的文件信息。
-     *
-     * @param attachId 附件ID
-     * @return 返回对应的文件信息，如果文件不存在或附件ID为空，则返回null
-     */
-    private Attach getFile(String attachId) {
-        if (Strings.isNotBlank(attachId)) {
-            Attach attach = attachService.getModel(attachId);
-            File file = new File(attach.getPath());
-            if (file.exists()) {
-                return attach;
-            }
-        }
-
-        return null;
     }
 }

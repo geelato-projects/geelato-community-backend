@@ -12,14 +12,12 @@ import cn.geelato.core.orm.DaoException;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.service.AttachService;
-import cn.geelato.web.platform.m.base.service.DownloadService;
+import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.syspackage.PackageConfigurationProperties;
 import cn.geelato.web.platform.m.syspackage.entity.AppMeta;
@@ -53,6 +51,7 @@ public class PackageController extends BaseController {
     private DataSourceTransactionManager dataSourceTransactionManager;
     private TransactionStatus transactionStatus;
     private final String defaultPackageName = "geelatoApp";
+    private static final String SAVE_ZIP_TO_TABLE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
 
     private final ArrayList<String> incrementMetas = new ArrayList<>();
 
@@ -66,9 +65,7 @@ public class PackageController extends BaseController {
     @Resource
     private PackageConfigurationProperties packageConfigurationProperties;
     @Resource
-    private AttachService attachService;
-    @Resource
-    private DownloadService downloadService;
+    private FileHandler fileHandler;
     @Resource
     AppVersionService appVersionService;
 
@@ -220,8 +217,7 @@ public class PackageController extends BaseController {
                     if (appVersion.getPackagePath().contains(".zgdp")) {
                         appPackageData = ZipUtils.readPackageData(appVersion.getPackagePath(), ".gdp");
                     } else {
-                        Attach attach = attachService.getModel(appVersion.getPackagePath());
-                        File file = FileUtils.pathToFile(attach.getPath());
+                        File file = fileHandler.toFile(appVersion.getPackagePath());
                         appPackageData = ZipUtils.readPackageData(file, ".gdp");
                     }
                 } catch (IOException ex) {
@@ -308,8 +304,7 @@ public class PackageController extends BaseController {
                     // 测试用
 //                    appPackageData = ZipUtils.readPackageData("D:\\geelato-project\\app_package_temp\\upload_temp\\ob.zgdp", ".gdp");
                 } else {
-                    Attach attach = attachService.getModel(appVersion.getPackagePath());
-                    File file = FileUtils.pathToFile(attach.getPath());
+                    File file = fileHandler.toFile(appVersion.getPackagePath());
                     appPackageData = ZipUtils.readPackageData(file, ".gdp");
                 }
             } catch (IOException ex) {
@@ -520,16 +515,11 @@ public class PackageController extends BaseController {
         String appPackageName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String appPackageFullName = (Strings.isNotBlank(appVersion.getVersion()) ? appVersion.getVersion() : appPackageName) + packageSuffix;
         String targetZipPath;
-        targetZipPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), SessionCtx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
+        targetZipPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_ZIP_TO_TABLE, SessionCtx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
         ZipUtils.compressDirectory(sourcePackageFolder, targetZipPath);
         File file = new File(targetZipPath);
-        Attach attach = new Attach(file);
-        attach.setName(appPackageFullName);
-        attach.setPath(targetZipPath);
-        attach.setGenre("package");
-        attach.setAppId(appPackage.getSourceAppId());
-        Attach attachRst = attachService.createModel(attach);
-        return attachRst.getId();
+        Attachment attachment = fileHandler.save(SAVE_ZIP_TO_TABLE, file, appPackageFullName, targetZipPath, null, "package", appPackage.getSourceAppId(), null);
+        return attachment.getId();
     }
 
     private AppPackage resolveAppPackageData(String appPackageData) {

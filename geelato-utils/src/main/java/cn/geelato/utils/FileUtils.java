@@ -1,13 +1,11 @@
 package cn.geelato.utils;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Base64;
+import java.util.Objects;
 
 public class FileUtils {
     public static final String TEMPORARY_FILE_PREFIX = "_temp_";
@@ -58,7 +56,7 @@ public class FileUtils {
                 return fileName.substring(0, lastIndexOfDot);
             }
         }
-        return "";
+        return fileName;
     }
 
     /**
@@ -123,7 +121,7 @@ public class FileUtils {
      */
     public static File createTempFile(String base64String, String fileName) throws IOException {
         // 解码Base64字符串为字节数组
-        byte[] decodedBytes = Base64.getDecoder().decode(base64String);
+        byte[] decodedBytes = Base64Utils.toBytes(base64String);
         // 创建临时文件
         String fileExt = FileUtils.getFileExtension(fileName);
         File tempFile = FileUtils.createTempFile(fileExt);
@@ -146,5 +144,65 @@ public class FileUtils {
         File tempFile = File.createTempFile(TEMPORARY_FILE_PREFIX, fileExt);
         tempFile.deleteOnExit();
         return tempFile;
+    }
+
+    /**
+     * 将字节数组保存到指定路径的文件中
+     *
+     * @param fileBytes 要保存的字节数组
+     * @param path      文件保存的路径
+     * @throws IOException 如果在写入文件时发生I/O错误
+     */
+    public static void saveFile(byte[] fileBytes, String path) throws IOException {
+        Files.write(Paths.get(path), fileBytes);
+    }
+
+    /**
+     * 打开文件的输入流
+     *
+     * @param file 要打开的文件
+     * @return 文件的输入流
+     * @throws IOException          如果在打开文件输入流时发生I/O错误
+     * @throws NullPointerException 如果提供的文件为null
+     */
+    public static FileInputStream openInputStream(File file) throws IOException {
+        Objects.requireNonNull(file, "file");
+        return new FileInputStream(file);
+    }
+
+    /**
+     * 验证文件是否存在
+     *
+     * @param file    待验证的文件对象
+     * @param message 自定义的错误信息，如果为空则使用默认的错误信息
+     * @throws FileNotFoundException 如果文件不存在或者文件对象为null，则抛出此异常
+     */
+    public static void validateExist(File file, String message) throws FileNotFoundException {
+        if (file == null || !file.exists()) {
+            throw new FileNotFoundException(StringUtils.isNotBlank(message) ? message : "File not found");
+        }
+    }
+
+    public static void validateExist(File file) throws FileNotFoundException {
+        validateExist(file, null);
+    }
+
+    public static String setPdfFileName(String fileName) {
+        return String.format("%s.pdf", FileUtils.getFileName(fileName));
+    }
+
+    /**
+     * 将Base64编码的字符串保存到指定路径的文件中。
+     *
+     * @param base64String Base64编码的字符串
+     * @param path         文件保存的路径
+     * @throws IOException 如果在文件写入过程中发生I/O错误
+     */
+    public static void saveFile(String base64String, String path) throws IOException {
+        byte[] base64Bytes = Base64Utils.toBytes(base64String);
+        try (FileOutputStream fos = new FileOutputStream(path)) {
+            fos.write(base64Bytes);
+            fos.flush();
+        }
     }
 }

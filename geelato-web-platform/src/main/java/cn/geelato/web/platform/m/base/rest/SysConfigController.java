@@ -12,10 +12,10 @@ import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Attach;
+import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
-import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -45,12 +45,12 @@ public class SysConfigController extends BaseController {
     }
 
     private final SysConfigService sysConfigService;
-    private final AttachService attachService;
+    private final FileHandler fileHandler;
 
     @Autowired
-    public SysConfigController(SysConfigService sysConfigService, AttachService attachService) {
+    public SysConfigController(SysConfigService sysConfigService, FileHandler fileHandler) {
         this.sysConfigService = sysConfigService;
-        this.attachService = attachService;
+        this.fileHandler = fileHandler;
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
@@ -174,13 +174,13 @@ public class SysConfigController extends BaseController {
         if (fileIds.size() > 0) {
             Map<String, Object> filter = new HashMap<>();
             filter.put("ids", String.join(",", fileIds));
-            List<Attach> attachList = attachService.list(filter);
-            if (attachList != null && attachList.size() > 0) {
+            List<Attachment> attachmentList = fileHandler.getAttachments(filter);
+            if (attachmentList != null && attachmentList.size() > 0) {
                 for (SysConfig model : sysConfigs) {
                     if (CONFIG_TYPE_UPLOAD.equalsIgnoreCase(model.getValueType()) && Strings.isNotBlank(model.getConfigValue())) {
-                        for (Attach attach : attachList) {
-                            if (Strings.isNotBlank(attach.getName()) && model.getConfigValue().equals(attach.getId())) {
-                                model.setConfigAssist(attach.getName());
+                        for (Attachment attachment : attachmentList) {
+                            if (Strings.isNotBlank(attachment.getName()) && model.getConfigValue().equals(attachment.getId())) {
+                                model.setConfigAssist(attachment.getName());
                                 break;
                             }
                         }

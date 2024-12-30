@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.common;
 
 import cn.geelato.utils.FileUtils;
-import cn.geelato.web.platform.m.base.entity.Attach;
+import cn.geelato.web.platform.m.base.entity.Attachment;
 import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,20 +25,19 @@ public class Base64Helper {
     private String remark;
 
     /**
-     * 从附件对象创建一个Base64信息对象
+     * 将附件转换为Base64Helper对象,仅用于本地存储
      *
-     * @param attach 附件对象
-     * @return 包含附件信息的Base64信息对象
+     * @param attachment
+     * @return
      */
-    public static Base64Helper fromAttachment(Attach attach) {
+    public static Base64Helper fromAttachment(Attachment attachment) {
         Base64Helper helper = new Base64Helper();
-        if (attach != null) {
-            helper.setId(attach.getId());
-            helper.setName(attach.getName());
-            helper.setType(attach.getType());
-            helper.setSize(attach.getSize());
-            File aFile = new File(attach.getPath());
-            helper.setFile(aFile.exists() ? aFile : null);
+        if (attachment != null) {
+            helper.setId(attachment.getId());
+            helper.setName(attachment.getName());
+            helper.setType(attachment.getType());
+            helper.setSize(attachment.getSize());
+            helper.setFile(FileUtils.pathToFile(attachment.getPath()));
         }
         return helper;
     }

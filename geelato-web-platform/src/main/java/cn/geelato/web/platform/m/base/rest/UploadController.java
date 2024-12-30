@@ -1,20 +1,13 @@
 package cn.geelato.web.platform.m.base.rest;
 
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.FileUtils;
-import cn.geelato.utils.ImageUtils;
-import cn.geelato.utils.StringUtils;
-import cn.geelato.web.oss.OSSResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.common.FileHelper;
-import cn.geelato.web.platform.enums.AttachmentServiceEnum;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.entity.Resources;
-import cn.geelato.web.platform.m.base.service.AttachService;
-import cn.geelato.web.platform.m.base.service.ResourcesService;
+import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import com.alibaba.fastjson2.JSON;
@@ -25,8 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -35,17 +26,13 @@ import java.util.*;
 @ApiRestController("/upload")
 @Slf4j
 public class UploadController extends BaseController {
-    private final AttachService attachService;
-    private final ResourcesService resourcesService;
     private final DevTableColumnService devTableColumnService;
-    private final FileHelper fileHelper;
+    private final FileHandler fileHandler;
 
     @Autowired
-    public UploadController(AttachService attachService, ResourcesService resourcesService, DevTableColumnService devTableColumnService, FileHelper fileHelper) {
-        this.attachService = attachService;
-        this.resourcesService = resourcesService;
+    public UploadController(DevTableColumnService devTableColumnService, FileHandler fileHandler) {
         this.devTableColumnService = devTableColumnService;
-        this.fileHelper = fileHelper;
+        this.fileHandler = fileHandler;
     }
 
     /**
@@ -68,116 +55,12 @@ public class UploadController extends BaseController {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }
-        if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(serviceType)) {
-            OSSResult ossResult = fileHelper.putFile(file);
-            if (ossResult.getSuccess() == null || ossResult.getSuccess()) {
-                if (ossResult.getOssFile() != null && ossResult.getOssFile().getFileMeta() != null) {
-                    String attachmentId = getAttachmentId(ossResult.getOssFile().getObjectName());
-                    // 附件存附件表和资源表
-                    if (AttachmentSourceEnum.PLATFORM_RESOURCES.getValue().equalsIgnoreCase(tableType)) {
-                        Resources resources = new Resources(ossResult.getOssFile(), file);
-                        resources.setAppId(appId);
-                        resources.setGenre(genre);
-                        resources = resourcesService.createModel(resources);
-                        return ApiResult.success(resources);
-                    } else {
-                        Attach attach = new Attach(ossResult.getOssFile(), file);
-                        attach.setAppId(appId);
-                        attach.setGenre(genre);
-                        attach = attachService.createModel(attach);
-                        return ApiResult.success(attach);
-                    }
-                } else {
-                    return ApiResult.fail("OSS file meta is null");
-                }
-            } else {
-                return ApiResult.fail(ossResult.getMessage());
-            }
-        } else {
-            String path = "";
-            if (Strings.isNotBlank(root)) {
-                path = UploadService.getSaveRootPath(root, file.getOriginalFilename(), true);
-            } else {
-                // upload/存放表/租户编码/应用Id
-                path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, tableType, tenantCode, appId, file.getOriginalFilename(), true);
-            }
-            if (AttachmentSourceEnum.PLATFORM_RESOURCES.getValue().equalsIgnoreCase(tableType)) {
-                // 附件存附件表
-                Resources resources = new Resources(file);
-                resources.setAppId(appId);
-                resources.setGenre(genre);
-                resources.setPath(path);
-                // 保存文件到磁盘
-                byte[] bytes = file.getBytes();
-                Files.write(Paths.get(resources.getPath()), bytes);
-                // 保存附件信息到数据库
-                resources = resourcesService.createModel(resources);
-                if (isThumbnail) {
-                    thumbnail(resources, dimension);
-                }
-                return ApiResult.success(resources);
-            } else {
-                // 附件存附件表
-                Attach attach = new Attach(file);
-                attach.setAppId(appId);
-                attach.setGenre(genre);
-                attach.setPath(path);
-                // 保存文件到磁盘
-                byte[] bytes = file.getBytes();
-                Files.write(Paths.get(attach.getPath()), bytes);
-                // 保存附件信息到数据库
-                attach = attachService.createModel(attach);
-                if (isThumbnail) {
-                    thumbnail(attach, dimension);
-                }
-                return ApiResult.success(attach);
-            }
+        tenantCode = Strings.isBlank(tenantCode) ? SessionCtx.getCurrentTenantCode() : tenantCode;
+        Attachment attachment = fileHandler.upload(file, serviceType, tableType, genre, root, isThumbnail, isRename, dimension, appId, tenantCode);
+        if (attachment == null) {
+            return ApiResult.fail("Upload failed");
         }
-    }
-
-    private String getAttachmentId(String objectName) {
-        // 检查是否包含斜杠
-        if (Strings.isNotBlank(objectName) && objectName.contains("/")) {
-            // 使用lastIndexOf找到最后一个斜杠的位置，然后截取斜杠后的部分
-            int lastIndex = objectName.lastIndexOf("/");
-            String id = objectName.substring(lastIndex + 1);
-            if (Strings.isNotBlank(id)) {
-                return id;
-            }
-        }
-        return null;
-    }
-
-    private void thumbnail(Attach source, Integer dimension) throws IOException {
-        File sourceFile = new File(source.getPath());
-        int dis = dimension == null ? 0 : dimension.intValue();
-        if (ImageUtils.isThumbnail(sourceFile, dis)) {
-            String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), source.getTenantCode(), source.getAppId(), source.getName(), true);
-            File file = new File(path);
-            ImageUtils.thumbnail(sourceFile, file, dis);
-            if (!file.exists()) {
-                throw new RuntimeException("saveBase64：thumbnail save failed");
-            }
-            String genre = StringUtils.isNotBlank(source.getGenre()) ? source.getGenre() + "," + ImageUtils.THUMBNAIL_GENRE : ImageUtils.THUMBNAIL_GENRE;
-            Attach attach = attachService.saveByFile(file, source.getName(), genre, source.getAppId(), source.getTenantCode());
-            dao.getJdbcTemplate().update("update platform_attach set id = ? where id = ?", source.getId() + ImageUtils.THUMBNAIL_SUFFIX, attach.getId());
-        }
-    }
-
-    private void thumbnail(Resources source, Integer dimension) throws IOException {
-        File sourceFile = new File(source.getPath());
-        int dis = dimension == null ? 0 : dimension.intValue();
-        if (ImageUtils.isThumbnail(sourceFile, dis)) {
-            String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_RESOURCES.getValue(), source.getTenantCode(), source.getAppId(), source.getName(), true);
-            File file = new File(path);
-            ImageUtils.thumbnail(sourceFile, file, dis);
-            if (!file.exists()) {
-                throw new RuntimeException("saveBase64：thumbnail save failed");
-            }
-            String genre = StringUtils.isNotBlank(source.getGenre()) ? source.getGenre() + "," + ImageUtils.THUMBNAIL_GENRE : ImageUtils.THUMBNAIL_GENRE;
-            Resources attach = resourcesService.saveByFile(file, source.getName(), genre, source.getAppId(), source.getTenantCode());
-            dao.getJdbcTemplate().update("update platform_resources set id = ? where id = ?", source.getId() + ImageUtils.THUMBNAIL_SUFFIX, attach.getId());
-        }
+        return ApiResult.success(attachment);
     }
 
     @RequestMapping(value = "/object", method = RequestMethod.POST)

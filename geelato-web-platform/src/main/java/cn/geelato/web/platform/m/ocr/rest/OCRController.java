@@ -4,19 +4,16 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.ocr.*;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.enums.LocaleEnum;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.common.Base64Helper;
+import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.service.AttachService;
 import cn.geelato.web.platform.m.ocr.entity.*;
 import cn.geelato.web.platform.m.ocr.service.OcrPdfService;
 import cn.geelato.web.platform.m.ocr.service.OcrService;
 import com.alibaba.fastjson2.JSON;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,21 +37,20 @@ import java.util.Map;
 public class OCRController extends BaseController {
     private final OcrPdfService ocrPdfService;
     private final OcrService oService;
+    private final FileHandler fileHandler;
     PluginBeanProvider pluginBeanProvider;
-    @Resource
-    private AttachService attachService;
 
     @Autowired
-    public OCRController(PluginBeanProvider pluginBeanProvider, OcrPdfService ocrPdfService, OcrService oService) {
+    public OCRController(PluginBeanProvider pluginBeanProvider, OcrPdfService ocrPdfService, OcrService oService, FileHandler fileHandler) {
         this.pluginBeanProvider = pluginBeanProvider;
         this.ocrPdfService = ocrPdfService;
         this.oService = oService;
+        this.fileHandler = fileHandler;
     }
 
     @RequestMapping(value = "/pdf/meta/{fileId}", method = RequestMethod.GET)
     public ApiResult<List<PDFAnnotationMeta>> meta(@PathVariable String fileId) {
-        Attach attach = attachService.getModel(fileId);
-        File file = FileUtils.pathToFile(attach.getPath());
+        File file = fileHandler.toFile(fileId);
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
         List<PDFAnnotationMeta> pdfAnnotationMetaList = ocrService.resolvePDFAnnotationMeta(file);
         return ApiResult.success(pdfAnnotationMetaList);
@@ -63,12 +59,7 @@ public class OCRController extends BaseController {
     @RequestMapping(value = "/pdf/resolve0", method = RequestMethod.GET)
     public ApiResult<?> meta(String fileId, String templateId, boolean wholeContent) throws IOException {
         // 需要处理的文件
-        Attach file = attachService.getModel(fileId);
-        File pdfFile = FileUtils.pathToFile(file.getPath());
-
-
-//        Attach templatefile = attachService.getModel(templateId);
-//        File templatePdfFile = FileUtils.pathToFile(templatefile.getPath());
+        File pdfFile = fileHandler.toFile(fileId);
         if (pdfFile == null || !pdfFile.exists()) {
             throw new IllegalArgumentException("file not found");
         }
@@ -77,7 +68,6 @@ public class OCRController extends BaseController {
         if (ocrPdf == null || Strings.isBlank(ocrPdf.getTemplate())) {
             throw new IllegalArgumentException("模板不能为空");
         }
-        // File tempFile = OcrUtils.getTempFile(ocrPdf.getTemplate());
         if (ocrPdf.getMetas() == null || ocrPdf.getMetas().isEmpty()) {
             throw new IllegalArgumentException("模板元数据不能为空");
         }
@@ -95,8 +85,7 @@ public class OCRController extends BaseController {
 
     @RequestMapping(value = "/pdf/content/clear", method = RequestMethod.POST)
     public ApiResult<?> meta(String fileId, @RequestBody List<AnnotationPositionMeta> annotationPositionMetaList) throws IOException {
-        Attach file = attachService.getModel(fileId);
-        File fileInstance = FileUtils.pathToFile(file.getPath());
+        File fileInstance = fileHandler.toFile(fileId);
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
         File targetFile = File.createTempFile("ocr_clear", ".pdf", new File("C:\\Users\\39139\\Desktop\\testfile"));
         ocrService.clearContent(annotationPositionMetaList, fileInstance, targetFile);
@@ -114,9 +103,7 @@ public class OCRController extends BaseController {
     @RequestMapping(value = "/pdf/resolve", method = RequestMethod.GET)
     public ApiResult<?> metaResolve(String fileId, String templateId, boolean wholeContent) throws IOException, ParseException {
         // 需要处理的文件
-        Attach file = attachService.getModel(fileId);
-        File pdfFile = FileUtils.pathToFile(file.getPath());
-
+        File pdfFile = fileHandler.toFile(fileId);
         if (pdfFile == null || !pdfFile.exists()) {
             throw new IllegalArgumentException("file not found");
         }

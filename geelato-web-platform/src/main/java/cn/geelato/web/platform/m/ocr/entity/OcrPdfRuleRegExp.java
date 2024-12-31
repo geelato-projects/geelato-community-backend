@@ -8,5 +8,5 @@ import lombok.Setter;
 public class OcrPdfRuleRegExp {
     private String label;
     private String expression;
-    private boolean matching;
+    private boolean matching = false;
 }

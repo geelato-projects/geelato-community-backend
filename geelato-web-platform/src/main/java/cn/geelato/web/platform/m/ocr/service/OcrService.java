@@ -224,58 +224,6 @@ public class OcrService extends BaseService {
     /**
      * 验证PDF文件中的模板正则表达式是否与给定的规则匹配
      *
-     * @param ocrPdfRule     PDF模板规则对象
-     * @param pdfResolveData PDF文件整体对象
-     * @return 如果PDF文件中的模板与给定的规则匹配，则返回true；否则返回false
-     */
-    public boolean validateTemplateRegExp1(OcrPdfRule ocrPdfRule, PDFResolveData pdfResolveData) {
-        if (pdfResolveData == null) {
-            return false;
-        }
-        return validateTemplateRegExp1(ocrPdfRule, pdfResolveData.getWholeContent(), pdfResolveData.getPdfAnnotationPickContentList());
-    }
-
-    /**
-     * 验证PDF模板的正则表达式是否与给定的PDF内容和内容列表匹配
-     *
-     * @param ocrPdfRule                   PDF模板规则对象
-     * @param wholeContent                 PDF文件整体内容
-     * @param pdfAnnotationPickContentList PDF内容列表
-     * @return 如果PDF模板的正则表达式与给定的PDF内容和内容列表匹配，则返回true；否则返回false
-     */
-    public boolean validateTemplateRegExp1(OcrPdfRule ocrPdfRule, String wholeContent,
-                                           List<PDFAnnotationPickContent> pdfAnnotationPickContentList) {
-        if (Strings.isBlank(wholeContent) || pdfAnnotationPickContentList == null || pdfAnnotationPickContentList.isEmpty()) {
-            return false;
-        }
-        if (ocrPdfRule == null || ocrPdfRule.getRegexp() == null || ocrPdfRule.getRegexp().isEmpty()) {
-            return true;
-        }
-        // 并将PDF内容列表转换为Map对象
-        Map<String, String> resultMap = new HashMap<>();
-        for (PDFAnnotationPickContent pdfAnnotationPickContent : pdfAnnotationPickContentList) {
-            String key = pdfAnnotationPickContent.getAnnotationAreaContent();
-            String value = initRules(pdfAnnotationPickContent.getInstanceAreaContent());
-            if (Strings.isNotBlank(key) && Strings.isNotBlank(value)) {
-                resultMap.put(key, value);
-            }
-        }
-        for (Map.Entry<String, String> entry : ocrPdfRule.getRegexp().entrySet()) {
-            if (Strings.isNotBlank(entry.getKey()) && Strings.isNotBlank(entry.getValue())) {
-                // 此处使用ALL关键字匹配整个PDF内容，而非单个OCR PDF内容的匹配
-                String content = "ALL".equalsIgnoreCase(entry.getKey()) ? wholeContent : resultMap.get(entry.getKey());
-                // 正则匹配，如果匹配失败则返回false
-                if (Strings.isBlank(content) || !Pattern.compile(entry.getValue()).matcher(content).find()) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    /**
-     * 验证PDF文件中的模板正则表达式是否与给定的规则匹配
-     *
      * @param ocrPdfRule  PDF模板规则对象
      * @param ocrPdfWhole PDF文件整体对象
      * @return 如果PDF文件中的模板与给定的规则匹配，则返回true；否则返回false

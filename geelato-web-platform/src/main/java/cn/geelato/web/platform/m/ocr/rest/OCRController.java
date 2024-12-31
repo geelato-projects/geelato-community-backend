@@ -228,11 +228,16 @@ public class OCRController extends BaseController {
     private boolean validateTemplateRegExpAll(OCRService ocrService, File pdfFile, OcrPdfRule ocrPdfRule) {
         if (ocrPdfRule != null && ocrPdfRule.getRegexp() != null && !ocrPdfRule.getRegexp().isEmpty()) {
             // 正则匹配，全文匹配
-            OcrPdfRuleRegExp regExp = ocrPdfRule.regExpIncludeAll();
-            if (regExp != null) {
-                // 查询全文内容
-                String wholeContent = ocrService.pickPDFWholeContent(pdfFile);
-                return oService.validateTemplateRegExp(wholeContent, regExp.getExpression(), regExp.isMatching());
+            List<OcrPdfRuleRegExp> ruleRegExps = ocrPdfRule.regExpIncludeAll();
+            if (ruleRegExps == null || ruleRegExps.isEmpty()) {
+                return true;
+            }
+            String wholeContent = ocrService.pickPDFWholeContent(pdfFile);
+            for (OcrPdfRuleRegExp regExp : ruleRegExps) {
+                boolean isValid = oService.validateTemplateRegExp(wholeContent, regExp.getExpression(), regExp.isMatching());
+                if (!isValid) {
+                    return false;
+                }
             }
         }
         return true;

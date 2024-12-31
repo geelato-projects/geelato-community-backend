@@ -109,11 +109,14 @@ public class DateUtils {
      * @throws ParseException 如果时间字符串的格式与指定的格式不匹配，则抛出此异常
      */
     public static String convertTime(String time, String parse, String format, String timeZone, String locale) throws ParseException {
-        SimpleDateFormat parseSDF = buildSimpleDateFormat(parse, timeZone, locale);
-        Date date = parseSDF.parse(time);
-        // 将Date对象转换为目标格式的字符串
-        SimpleDateFormat formatSDF = buildSimpleDateFormat(format, timeZone, locale);
-        return formatSDF.format(date);
+        if (StringUtils.isNotBlank(time)) {
+            SimpleDateFormat parseSDF = buildSimpleDateFormat(parse, timeZone, locale);
+            Date date = parseSDF.parse(time);
+            // 将Date对象转换为目标格式的字符串
+            SimpleDateFormat formatSDF = buildSimpleDateFormat(format, timeZone, locale);
+            return formatSDF.format(date);
+        }
+        return null;
     }
 
     /**
@@ -149,16 +152,19 @@ public class DateUtils {
      * @throws ParseException 如果解析时间字符串时发生错误，则抛出此异常
      */
     public static String calculateTime(String time, String format, String amount, String unit) throws ParseException {
-        // 将时间字符串转换为Date对象
-        Date date = new SimpleDateFormat(format).parse(time);
-        // 获取当前时间的Calendar对象
-        Calendar calendar = Calendar.getInstance();
-        int unitValue = TimeUnitEnum.getValueByName(unit);
-        calendar.setTime(date);
-        // 根据时间单位和数量进行时间计算
-        if (unitValue > -1 && amount.matches(DateUtils.REGEX_INTEGER)) {
-            calendar.add(unitValue, Integer.parseInt(amount));
+        if (StringUtils.isNotBlank(time)) {
+            // 将时间字符串转换为Date对象
+            Date date = new SimpleDateFormat(format).parse(time);
+            // 获取当前时间的Calendar对象
+            Calendar calendar = Calendar.getInstance();
+            int unitValue = TimeUnitEnum.getValueByName(unit);
+            calendar.setTime(date);
+            // 根据时间单位和数量进行时间计算
+            if (unitValue > -1 && amount.matches(DateUtils.REGEX_INTEGER)) {
+                calendar.add(unitValue, Integer.parseInt(amount));
+            }
+            return new SimpleDateFormat(format).format(calendar.getTime());
         }
-        return new SimpleDateFormat(format).format(calendar.getTime());
+        return null;
     }
 }

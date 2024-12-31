@@ -53,7 +53,6 @@ public enum MetaTypeEnum {
      */
     public static MetaTypeEnum lookUp(String name) {
         for (MetaTypeEnum metaType : MetaTypeEnum.values()) {
-            System.out.println(metaType.name());
             if (metaType.name().equalsIgnoreCase(name)) {
                 return metaType;
             }

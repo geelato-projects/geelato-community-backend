@@ -12,6 +12,7 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.entity.Dict;
 import cn.geelato.web.platform.m.base.entity.DictItem;
+import cn.geelato.web.platform.m.ocr.enums.DictDisposeEnum;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -95,7 +96,7 @@ public class OcrUtils {
      *
      * @param content  字典项名称
      * @param dictCode 字典编码
-     * @param type     计算类型，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
+     * @param type     处理规则，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
      * @return 如果找到匹配的字典项，则返回其字典项编码；否则返回null
      */
     public static String calculateItemCode(String content, String dictCode, String type) {
@@ -104,18 +105,11 @@ public class OcrUtils {
             List<DictItem> dictItemList = queryDictItemsByDictCode(dictCode);
             // 比对
             if (dictItemList != null && !dictItemList.isEmpty()) {
-                if ("CONTAINS".equalsIgnoreCase(type)) {
-                    for (DictItem dictItem : dictItemList) {
-                        if (content.contains(dictItem.getItemName())) {
-                            return content.replaceAll(dictItem.getItemName(), dictItem.getItemCode());
-                        }
-                    }
+                DictDisposeEnum disposeEnum = DictDisposeEnum.lookUp(type);
+                if (disposeEnum != null) {
+                    return disposeEnum.dispose(content, dictItemList);
                 } else {
-                    for (DictItem dictItem : dictItemList) {
-                        if (content.equals(dictItem.getItemName())) {
-                            return dictItem.getItemCode();
-                        }
-                    }
+                    throw new RuntimeException("暂不支持该处理规则");
                 }
             }
         }
@@ -127,7 +121,7 @@ public class OcrUtils {
      *
      * @param content    需要查找的内容
      * @param dictMapStr 包含字典映射关系的JSON字符串
-     * @param type       计算类型，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
+     * @param type       处理规则，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
      * @return 如果找到对应的内容，则返回对应的值；否则返回null
      * @throws RuntimeException 如果字典映射字符串格式不正确，则抛出运行时异常
      */
@@ -136,14 +130,11 @@ public class OcrUtils {
             try {
                 Map<String, String> dictMap = JSON.parseObject(dictMapStr, Map.class);
                 if (dictMap != null && !dictMap.isEmpty()) {
-                    if ("CONTAINS".equalsIgnoreCase(type)) {
-                        for (Map.Entry<String, String> entry : dictMap.entrySet()) {
-                            if (content.contains(entry.getKey())) {
-                                return content.replaceAll(entry.getKey(), entry.getValue());
-                            }
-                        }
+                    DictDisposeEnum disposeEnum = DictDisposeEnum.lookUp(type);
+                    if (disposeEnum != null) {
+                        return disposeEnum.dispose(content, dictMap);
                     } else {
-                        return dictMap.get(content);
+                        throw new RuntimeException("暂不支持该处理规则");
                     }
                 }
             } catch (Exception e) {
@@ -158,7 +149,7 @@ public class OcrUtils {
      *
      * @param content  字典项名称列表，以逗号分隔
      * @param dictCode 字典编码
-     * @param type     计算类型，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
+     * @param type     处理规则，例如"CONTAINS"表示包含关系，"EQUALS"表示相等
      * @return 如果找到匹配的字典项，则返回其字典项编码列表，以逗号分隔；否则返回null
      */
     public static String calculateItemCodes(String content, String dictCode, String type) {
@@ -171,20 +162,11 @@ public class OcrUtils {
         List<DictItem> dictItemList = queryDictItemsByDictCode(dictCode);
         // 比对
         if (dictItemList != null && dictItemList.size() > 0) {
-            if ("CONTAINS".equalsIgnoreCase(type)) {
-                for (String name : names) {
-                    for (DictItem dictItem : dictItemList) {
-                        if (name.indexOf(dictItem.getItemName()) != -1) {
-                            codes.add(name.replaceAll(dictItem.getItemName(), dictItem.getItemCode()));
-                        }
-                    }
-                }
+            DictDisposeEnum disposeEnum = DictDisposeEnum.lookUp(type);
+            if (disposeEnum != null) {
+                codes = disposeEnum.dispose(names, dictItemList);
             } else {
-                for (DictItem dictItem : dictItemList) {
-                    if (names.contains(dictItem.getItemName())) {
-                        codes.add(dictItem.getItemCode());
-                    }
-                }
+                throw new RuntimeException("暂不支持该处理规则");
             }
         }
         return codes.size() > 0 ? String.join(",", codes) : null;

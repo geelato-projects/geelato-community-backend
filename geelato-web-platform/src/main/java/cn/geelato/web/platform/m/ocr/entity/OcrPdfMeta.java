@@ -98,7 +98,7 @@ public class OcrPdfMeta extends BaseSortableEntity {
         pam.setTemplateAreaContent(ocrPdfMeta.getExample());
         pam.setContent(ocrPdfMeta.getName());
         pam.setFloatArea(ocrPdfMeta.getFloatAreaY());
-        pam.setLineHeight(ocrPdfMeta.getLineHeight());
+        pam.setLineHeight(ocrPdfMeta.getLineHeight() > 0 ? ocrPdfMeta.getLineHeight() : null);
         //  pageIndex,x,y,width,height
         if (Strings.isNotBlank(ocrPdfMeta.getPosition())) {
             String[] positionArr = ocrPdfMeta.getPosition().split(",");
@@ -111,14 +111,7 @@ public class OcrPdfMeta extends BaseSortableEntity {
             }
         }
         // bem,lem,rem,discernWidth,unionType
-        PDFAnnotationDiscernRule padRule = null;
-        if (Strings.isNotBlank(ocrPdfMeta.getDiscernRule())) {
-            try {
-                padRule = JSON.parseObject(ocrPdfMeta.getDiscernRule(), PDFAnnotationDiscernRule.class);
-            } catch (Exception e) {
-                padRule = null;
-            }
-        }
+        PDFAnnotationDiscernRule padRule = ocrPdfMeta.formatPDFAnnotationDiscernRule();
         pam.setPdfAnnotationDiscernRule(padRule);
         // 注释属性
         Map<String, Object> annotationAttrs = new HashMap<>();
@@ -162,5 +155,21 @@ public class OcrPdfMeta extends BaseSortableEntity {
             }
         }
         return rules;
+    }
+
+    private PDFAnnotationDiscernRule formatPDFAnnotationDiscernRule() {
+        PDFAnnotationDiscernRule padRule = null;
+        if (Strings.isNotBlank(this.getDiscernRule())) {
+            try {
+                padRule = JSON.parseObject(this.getDiscernRule(), PDFAnnotationDiscernRule.class);
+                padRule.setBem(Strings.isNotBlank(padRule.getBem()) ? padRule.getBem() : null);
+                padRule.setLem(Strings.isNotBlank(padRule.getLem()) ? padRule.getLem() : null);
+                padRule.setRem(Strings.isNotBlank(padRule.getRem()) ? padRule.getRem() : null);
+                padRule.setDiscernWidth(padRule.getDiscernWidth() > 0 ? padRule.getDiscernWidth() : null);
+            } catch (Exception e) {
+                padRule = null;
+            }
+        }
+        return padRule;
     }
 }

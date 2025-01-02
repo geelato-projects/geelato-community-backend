@@ -6,6 +6,7 @@ import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.plugin.ocr.PDFAnnotationDiscernRule;
 import cn.geelato.plugin.ocr.PDFAnnotationMeta;
+import com.alibaba.fastjson.parser.ParserConfig;
 import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
 import lombok.Setter;
@@ -111,21 +112,25 @@ public class OcrPdfMeta extends BaseSortableEntity {
             }
         }
         // bem,lem,rem,discernWidth,unionType
-        PDFAnnotationDiscernRule padRule = ocrPdfMeta.formatPDFAnnotationDiscernRule();
-        pam.setPdfAnnotationDiscernRule(padRule);
+        PDFAnnotationDiscernRule padRule = null;
+        if (Strings.isNotBlank(ocrPdfMeta.getDiscernRule())) {
+            ParserConfig.getGlobalInstance().putDeserializer(PDFAnnotationDiscernRule.class, new PDFAnnotationDiscernRuleDeserializer());
+            padRule = JSON.parseObject(ocrPdfMeta.getDiscernRule(), PDFAnnotationDiscernRule.class);
+        }
+        pam.setPdfAnnotationDiscernRule(padRule == null ? new PDFAnnotationDiscernRule() : padRule);
         // 注释属性
         Map<String, Object> annotationAttrs = new HashMap<>();
         if (pam.getFloatArea()) {
             annotationAttrs.put("floatArea", "true");
         }
         if (padRule != null) {
-            if (Strings.isNotBlank(padRule.getBem()) && !padRule.getBem().equals("blank")) {
+            if (Strings.isNotEmpty(padRule.getBem()) && !padRule.getBem().equals("blank")) {
                 annotationAttrs.put("bem", padRule.getBem());
             }
-            if (Strings.isNotBlank(padRule.getLem()) && !padRule.getLem().equals("blank")) {
+            if (Strings.isNotEmpty(padRule.getLem()) && !padRule.getLem().equals("blank")) {
                 annotationAttrs.put("lem", padRule.getLem());
             }
-            if (Strings.isNotBlank(padRule.getRem()) && !padRule.getRem().equals("blank")) {
+            if (Strings.isNotEmpty(padRule.getRem()) && !padRule.getRem().equals("blank")) {
                 annotationAttrs.put("rem", padRule.getRem());
             }
             if (annotationAttrs.size() > 0) {
@@ -155,21 +160,5 @@ public class OcrPdfMeta extends BaseSortableEntity {
             }
         }
         return rules;
-    }
-
-    private PDFAnnotationDiscernRule formatPDFAnnotationDiscernRule() {
-        PDFAnnotationDiscernRule padRule = null;
-        if (Strings.isNotBlank(this.getDiscernRule())) {
-            try {
-                padRule = JSON.parseObject(this.getDiscernRule(), PDFAnnotationDiscernRule.class);
-                padRule.setBem(Strings.isNotBlank(padRule.getBem()) ? padRule.getBem() : null);
-                padRule.setLem(Strings.isNotBlank(padRule.getLem()) ? padRule.getLem() : null);
-                padRule.setRem(Strings.isNotBlank(padRule.getRem()) ? padRule.getRem() : null);
-                padRule.setDiscernWidth(padRule.getDiscernWidth() > 0 ? padRule.getDiscernWidth() : null);
-            } catch (Exception e) {
-                padRule = null;
-            }
-        }
-        return padRule;
     }
 }

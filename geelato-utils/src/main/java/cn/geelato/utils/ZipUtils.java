@@ -1,15 +1,48 @@
 package cn.geelato.utils;
 
+import cn.geelato.utils.entity.FileIS;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class ZipUtils {
+
+    public static void compressFiles(List<FileIS> fileISList, String zipFilePath) throws IOException {
+        FileOutputStream fos = null;
+        ZipOutputStream zos = null;
+        try {
+            fos = new FileOutputStream(zipFilePath);
+            zos = new ZipOutputStream(fos);
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            FileIS.repeatFileNameToNewFileName(fileISList);
+            for (FileIS fileIs : fileISList) {
+                ZipEntry zipEntry = new ZipEntry(fileIs.getFileName());
+                zos.putNextEntry(zipEntry);
+                while ((bytesRead = fileIs.getInputStream().read(buffer)) != -1) {
+                    zos.write(buffer, 0, bytesRead);
+                }
+                fileIs.getInputStream().close();
+                zos.closeEntry();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (zos != null) {
+                zos.close();
+            }
+            if (fos != null) {
+                fos.close();
+            }
+        }
+    }
+
 
     public static void compressDirectory(String sourceFolder, String zipFilePath) {
         try {

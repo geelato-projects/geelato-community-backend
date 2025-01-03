@@ -58,6 +58,12 @@ public class BaseController extends ParameterOperator implements InitializingBea
         this.response = response;
     }
 
+    public String getAppId() {
+        if (this.request != null) {
+            return this.request.getHeader("App-Id");
+        }
+        return null;
+    }
 
     /**
      * 根据接口传递的参数，构建查询条件

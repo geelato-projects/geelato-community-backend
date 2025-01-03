@@ -60,6 +60,7 @@ public class UploadController extends BaseController {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }
+        appId = Strings.isBlank(appId) ? getAppId() : appId;
         tenantCode = Strings.isBlank(tenantCode) ? SessionCtx.getCurrentTenantCode() : tenantCode;
         String path = UploadService.getSavePath(root, tableType, file.getOriginalFilename(), isRename, appId, tenantCode);
         FileParam fileParam = new FileParam(serviceType, tableType, objectId, formIds, genre, invalidTime, appId, tenantCode, isThumbnail, dimension, thumbScale);

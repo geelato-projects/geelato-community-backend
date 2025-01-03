@@ -28,6 +28,12 @@ public class FileParam extends ThumbnailParam {
         this.sourceType = sourceType;
     }
 
+    public FileParam(String serviceType, String sourceType, String objectId, String formIds, String genre, Date invalidTime, String appId, String tenantCode) {
+        super(objectId, formIds, genre, invalidTime, appId, tenantCode, null, null, null);
+        this.serviceType = serviceType;
+        this.sourceType = sourceType;
+    }
+
     public FileParam(String serviceType, String sourceType, String objectId, String formIds, String genre, Date invalidTime, String appId, String tenantCode, Boolean thumbnail, Integer dimension, Double thumbScale) {
         super(objectId, formIds, genre, invalidTime, appId, tenantCode, thumbnail, dimension, thumbScale);
         this.serviceType = serviceType;
@@ -36,13 +42,5 @@ public class FileParam extends ThumbnailParam {
 
     public ThumbnailParam toThumbnailParam() {
         return new ThumbnailParam(this.getObjectId(), this.getFormIds(), this.getGenre(), this.getInvalidTime(), this.isThumbnail(), this.getDimension(), this.getThumbScale());
-    }
-
-    public static FileParam setAttach(String genre, String appId, String tenantCode) {
-        return new FileParam(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), null, null, genre, null, appId, tenantCode);
-    }
-
-    public static FileParam setResource(String genre, String appId, String tenantCode) {
-        return new FileParam(AttachmentSourceEnum.PLATFORM_RESOURCES.getValue(), genre, appId, tenantCode);
     }
 }

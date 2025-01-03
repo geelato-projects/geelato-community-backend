@@ -59,6 +59,17 @@ public class FileUtils {
         return fileName;
     }
 
+    public static String spliceFileName(String fileName, String prefix, String suffix) {
+        String fileExt = FileUtils.getFileExtension(fileName);
+        fileName = FileUtils.getFileName(fileName);
+        prefix = StringUtils.isBlank(prefix) ? "" : prefix;
+        suffix = StringUtils.isBlank(suffix) ? "" : suffix;
+        if (StringUtils.isNotBlank(fileName) && StringUtils.isNotBlank(fileExt)) {
+            return String.format("%s%s%s%s", prefix, fileName, suffix, fileExt);
+        }
+        return "";
+    }
+
     /**
      * 将源文件复制到目标路径，如果目标文件已存在则覆盖。
      *

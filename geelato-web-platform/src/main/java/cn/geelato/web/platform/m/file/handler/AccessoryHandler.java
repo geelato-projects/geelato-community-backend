@@ -121,6 +121,10 @@ public class AccessoryHandler {
         return getAttachHandler(AttachHandler.ATTACHMENT_SOURCE).list(params);
     }
 
+    public List<Attachment> getAttachments(String attachmentIds) {
+        return getAttachHandler(AttachHandler.ATTACHMENT_SOURCE).list(attachmentIds);
+    }
+
     /**
      * 删除附件
      *
@@ -170,6 +174,8 @@ public class AccessoryHandler {
     private AttachmentHandler<?> getAttachHandler(String handlerType) {
         if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(handlerType)) {
             return resourcesHandler;
+        } else if (CompressHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(handlerType)) {
+            return compressHandler;
         } else {
             return attachHandler;
         }

@@ -3,6 +3,8 @@ package cn.geelato.web.platform.handler.file;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.ImageUtils;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.utils.ZipUtils;
+import cn.geelato.utils.entity.FileIS;
 import cn.geelato.web.oss.OSSResult;
 import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.common.FileHelper;
@@ -19,13 +21,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class FileHandler extends BaseHandler {
+    private static final long COMPRESS_MAX_SIZE = 50 * 1024 * 1024;// 50M 压缩最大容量
+    private static final int COMPRESS_MAX_AMOUNT = 1000; // 压缩最大数量
     private final FileHelper fileHelper;
 
     public FileHandler(AccessoryHandler accessoryHandler, DownloadService downloadService, FileHelper fileHelper) {
@@ -294,5 +300,105 @@ public class FileHandler extends BaseHandler {
             return FileUtils.pathToFile(attachment.getPath());
         }
         return null;
+    }
+
+    public InputStream toInputStream(Attachment attachment) throws FileNotFoundException {
+        if (attachment != null && Strings.isNotBlank(attachment.getObjectId())) {
+            OSSResult ossResult = fileHelper.getFile(attachment.getPath());
+            if (ossResult.getSuccess() && ossResult.getOssFile() != null && ossResult.getOssFile().getFileMeta() != null) {
+                return ossResult.getOssFile().getFileMeta().getFileInputStream();
+            }
+        } else {
+            File file = FileUtils.pathToFile(attachment.getPath());
+            if (file != null) {
+                return new FileInputStream(file);
+            }
+        }
+        return null;
+    }
+
+    public List<Attachment> compress(String attachmentIds, String fileName, Integer maxNumber, FileParam param) throws IOException {
+        List<Attachment> attachments = new ArrayList<>();
+        // 参数验证
+        if (Strings.isBlank(fileName)) {
+            throw new IllegalArgumentException("File name is blank");
+        }
+        fileName = FileUtils.getFileName(fileName);
+        List<String> ids = StringUtils.toListDr(attachmentIds);
+        if (ids == null || ids.isEmpty()) {
+            throw new IllegalArgumentException("Attachment id is empty");
+        }
+        // 获取附件信息
+        List<Attachment> attachmentList = accessoryHandler.getAttachments(String.join(",", ids));
+        if (attachmentList == null || attachmentList.isEmpty()) {
+            throw new RuntimeException("Attachment not find");
+        }
+        // 获取附件文件
+        Map<String, FileIS> fileMap = new HashMap<>();
+        for (Attachment attachment : attachmentList) {
+            InputStream inputStream = toInputStream(attachment);
+            if (inputStream != null) {
+                fileMap.put(attachment.getId(), new FileIS(attachment.getName(), inputStream));
+            }
+        }
+        if (fileMap.isEmpty()) {
+            throw new RuntimeException("Attachment file is not exist");
+        }
+        // 仅保留存在的文件
+        attachmentList = attachmentList.stream().filter(attachment -> fileMap.containsKey(attachment.getId())).collect(Collectors.toList());
+        // 分组
+        int amount = maxNumber != null && maxNumber > 0 ? maxNumber.intValue() : COMPRESS_MAX_AMOUNT;
+        List<List<Attachment>> lists = splitList(attachmentList, COMPRESS_MAX_SIZE, Math.min(COMPRESS_MAX_AMOUNT, amount));
+        // 压缩
+        for (int i = 0; i < lists.size(); i += 1) {
+            List<String> fileIds = lists.get(i).stream().map(Attachment::getId).collect(Collectors.toList());
+            String zipFileName = String.format("%s%s.zip", fileName, i > 0 ? "（" + i + "）" : "");
+            String zpiFilePath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, param.getSourceType(), param.getTenantCode(), param.getAppId(), zipFileName, true);
+            List<FileIS> fileISs = new ArrayList<>();
+            for (Attachment attachment : lists.get(i)) {
+                fileISs.add(fileMap.get(attachment.getId()));
+            }
+            ZipUtils.compressFiles(fileISs, zpiFilePath);
+            // 上传至Oss，保存附件信息
+            FileParam zipFileParam = new FileParam(param.getServiceType(), param.getSourceType(), null, String.join(",", fileIds), param.getGenre(), param.getInvalidTime(), param.getTenantCode(), param.getAppId());
+            if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(param.getServiceType())) {
+                attachments.add(uploadCloud(new File(zpiFilePath), zipFileName, zipFileParam));
+            } else {
+                attachments.add(save(new File(zpiFilePath), zipFileName, zpiFilePath, zipFileParam));
+            }
+        }
+        return attachments;
+    }
+
+    private List<List<Attachment>> splitList(List<Attachment> list, long maxSize, int amount) {
+        List<List<Attachment>> result = new ArrayList<>();
+        List<Attachment> currentGroup = new ArrayList<>();
+        long currentGroupSize = 0;
+
+        for (Attachment item : list) {
+            if (currentGroup.size() < amount && currentGroupSize + item.getSize() <= maxSize) {
+                currentGroup.add(item);
+                currentGroupSize += item.getSize();
+            } else {
+                if (!currentGroup.isEmpty()) {
+                    result.add(new ArrayList<>(currentGroup));
+                    currentGroup = new ArrayList<>();
+                    currentGroupSize = 0;
+                }
+                if (currentGroup.size() < amount && currentGroupSize + item.getSize() <= maxSize) {
+                    currentGroup.add(item);
+                    currentGroupSize += item.getSize();
+                } else {
+                    List<Attachment> singleItemGroup = new ArrayList<>();
+                    singleItemGroup.add(item);
+                    result.add(singleItemGroup);
+                }
+            }
+        }
+        if (!currentGroup.isEmpty()) {
+            result.add(new ArrayList<>(currentGroup));
+        }
+
+        return result;
     }
 }

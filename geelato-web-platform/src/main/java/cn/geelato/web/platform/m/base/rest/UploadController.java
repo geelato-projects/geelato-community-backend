@@ -7,8 +7,9 @@ import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.UploadService;
+import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -51,12 +52,18 @@ public class UploadController extends BaseController {
      * @return ApiResult 对象，包含操作结果和返回数据
      */
     @RequestMapping(value = "/file", method = RequestMethod.POST)
-    public ApiResult uploadFile(@RequestParam("file") MultipartFile file, String serviceType, String tableType, String genre, String root, boolean isThumbnail, Boolean isRename, Integer dimension, String appId, String tenantCode) throws IOException {
+    public ApiResult uploadFile(@RequestParam("file") MultipartFile file,
+                                String serviceType, String tableType, String root, Boolean isRename,
+                                String objectId, String formIds, String genre, Date invalidTime,
+                                Boolean isThumbnail, Integer dimension, Double thumbScale,
+                                String appId, String tenantCode) throws IOException {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }
         tenantCode = Strings.isBlank(tenantCode) ? SessionCtx.getCurrentTenantCode() : tenantCode;
-        Attachment attachment = fileHandler.upload(file, serviceType, tableType, genre, root, isThumbnail, isRename, dimension, appId, tenantCode);
+        String path = UploadService.getSavePath(root, tableType, file.getOriginalFilename(), isRename, appId, tenantCode);
+        FileParam fileParam = new FileParam(serviceType, tableType, objectId, formIds, genre, invalidTime, appId, tenantCode, isThumbnail, dimension, thumbScale);
+        Attachment attachment = fileHandler.upload(file, path, fileParam);
         if (attachment == null) {
             return ApiResult.fail("Upload failed");
         }

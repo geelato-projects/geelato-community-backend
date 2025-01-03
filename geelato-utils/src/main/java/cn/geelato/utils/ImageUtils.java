@@ -19,7 +19,7 @@ public class ImageUtils {
      * @param output 输出文件
      */
     public static void thumbnail(File input, File output) {
-        ImageUtils.thumbnail(input, output, MIN_DIMENSION);
+        ImageUtils.thumbnail(input, output, MIN_DIMENSION, 1.0);
     }
 
 
@@ -31,12 +31,14 @@ public class ImageUtils {
      * @param dimension 缩略图的最小边长
      * @throws RuntimeException 如果在处理过程中发生异常，则抛出运行时异常
      */
-    public static void thumbnail(File input, File output, int dimension) {
+    public static void thumbnail(File input, File output, int dimension, double minScale) {
         try {
             // 读取原始图片
             BufferedImage originalImage = ImageIO.read(input);
             // 计算缩略图的宽度和高度（假设缩略图大小为原始图片的一半）
-            double minScale = minScale(originalImage.getWidth(), originalImage.getHeight(), Math.max(dimension, MIN_DIMENSION));
+            if (minScale < 1 && minScale > 0) {
+                minScale = minScale(originalImage.getWidth(), originalImage.getHeight(), Math.max(dimension, MIN_DIMENSION));
+            }
             int scaledWidth = (int) (originalImage.getWidth() / minScale);
             int scaledHeight = (int) (originalImage.getHeight() / minScale);
             // 创建缩略图图片

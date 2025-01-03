@@ -1,12 +1,12 @@
-package cn.geelato.web.platform.m.base.entity;
+package cn.geelato.web.platform.m.file.entity;
 
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
-import cn.geelato.utils.FileUtils;
-import cn.geelato.web.oss.OSSFile;
+import cn.geelato.utils.DateUtils;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -36,12 +37,16 @@ public class Attachment extends BaseEntity {
     @Col(name = "path")
     @Title(title = "绝对地址")
     private String path;
-    @Col(name = "url")
-    @Title(title = "相对地址")
-    private String url;
     @Col(name = "object_id")
     @Title(title = "对象id")
     private String objectId;
+    @Col(name = "form_ids")
+    @Title(title = "表单id")
+    private String formIds;
+    @Col(name = "invalid_time")
+    @Title(title = "失效时间")
+    @JsonFormat(pattern = DateUtils.DATETIME, timezone = DateUtils.TIMEZONE)
+    private Date invalidTime;
 
     @Transient
     private String source;

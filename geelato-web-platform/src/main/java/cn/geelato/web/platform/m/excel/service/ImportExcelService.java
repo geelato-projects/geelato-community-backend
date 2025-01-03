@@ -11,14 +11,15 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.common.Base64Helper;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.exception.file.FileNotFoundException;
 import cn.geelato.web.platform.exception.file.*;
 import cn.geelato.web.platform.handler.file.FileHandler;
-import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
+import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.param.FileParam;
 import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,6 +63,7 @@ public class ImportExcelService {
     private static final String REDIS_UNIQUE_KEY = "uniques";
     private static final double IMPORT_PAGE_SIZE = 100.0;
     private static final int ROW_ACCESS_WINDOW_SIZE = 50;
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
     private final Logger logger = LoggerFactory.getLogger(ImportExcelService.class);
     private final MetaManager metaManager = MetaManager.singleInstance();
 
@@ -781,7 +783,7 @@ public class ImportExcelService {
             String templateName = fileName.substring(0, fileName.lastIndexOf("."));
             // 错误文件 upload/存放表/租户编码/应用Id
             String errorFileName = String.format("%s：%s%s%s", templateName, "错误提示 ", sdf_dv.format(new Date()), templateExt);
-            String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), exportTemplate.getTenantCode(), exportTemplate.getAppId(), errorFileName, true);
+            String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, exportTemplate.getTenantCode(), exportTemplate.getAppId(), errorFileName, true);
             File errorFile = new File(directory);
             // 文件处理
             if (MediaTypes.APPLICATION_EXCEL_XLS.equals(contentType)) {
@@ -826,7 +828,8 @@ public class ImportExcelService {
                 throw new FileTypeNotSupportedException("Business Data, Excel Type: " + contentType);
             }
             // 保存文件信息
-            attachment = fileHandler.save(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), errorFile, errorFileName, directory, null, IMPORT_ERROR_FILE_GENRE, null, null);
+            FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, IMPORT_ERROR_FILE_GENRE, exportTemplate.getAppId(), exportTemplate.getTenantCode());
+            attachment = fileHandler.save(errorFile, errorFileName, directory, fileParam);
             // 可下载
             /*responseOut = response.getOutputStream();
             responseIn = new FileInputStream(errorFile);

@@ -1,11 +1,13 @@
-package cn.geelato.web.platform.handler.attachment;
+package cn.geelato.web.platform.m.file.handler;
 
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.ImageUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.UploadService;
+import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.param.AttachmentParam;
+import cn.geelato.web.platform.m.file.param.ThumbnailParam;
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,101 +31,89 @@ public abstract class AttachmentHandler<E extends Attachment> {
     /**
      * 保存文件并返回附件对象
      *
-     * @param file       要上传的文件
-     * @param path       文件路径（地址或oss）
-     * @param objectId   oss服务返回的唯一标识
-     * @param genre      文件类型
-     * @param appId      应用ID
-     * @param tenantCode 租户代码
+     * @param file 要上传的文件
+     * @param path 文件路径（地址或oss）
      * @return 保存后的附件对象
      */
-    public abstract E save(MultipartFile file, String path, String objectId, String genre, String appId, String tenantCode);
+    public abstract E save(MultipartFile file, String path, AttachmentParam param);
 
-    public abstract E save(File file, String path, String objectId, String genre, String appId, String tenantCode) throws IOException;
+    public abstract E save(File file, String path, AttachmentParam param) throws IOException;
 
     /**
      * 设置文件名，保存文件并返回附件对象
      */
-    public abstract E save(File file, String name, String path, String objectId, String genre, String appId, String tenantCode) throws IOException;
+    public abstract E save(File file, String name, String path, AttachmentParam param) throws IOException;
 
     /**
      * 根据提供的文件信息构建一个附件对象
      *
-     * @param file       要上传的文件(name,type,size)
-     * @param path       文件保存的路径
-     * @param objectId   对象ID
-     * @param genre      文件类型
-     * @param appId      应用ID
-     * @param tenantCode 租户代码
+     * @param file 要上传的文件(name,type,size)
+     * @param path 文件保存的路径
      * @return 构建好的附件对象
      */
-    public abstract E build(MultipartFile file, String path, String objectId, String genre, String appId, String tenantCode);
+    public abstract E build(MultipartFile file, String path, AttachmentParam param);
 
-    public abstract E build(File file, String path, String objectId, String genre, String appId, String tenantCode) throws IOException;
+    public abstract E build(File file, String path, AttachmentParam param) throws IOException;
 
     /**
      * 根据提供的文件信息构建一个附件对象，并设置文件名
      */
-    public abstract E build(File file, String name, String path, String objectId, String genre, String appId, String tenantCode) throws IOException;
+    public abstract E build(File file, String name, String path, AttachmentParam param) throws IOException;
 
-    public E build(E attachment, String path, String objectId, String genre, String appId, String tenantCode) {
+    public E build(E attachment, String path, AttachmentParam param) {
         attachment.setPath(path);
-        attachment.setObjectId(objectId);
-        attachment.setGenre(genre);
-        attachment.setAppId(appId);
-        attachment.setTenantCode(tenantCode);
+        attachment.setObjectId(param.getObjectId());
+        attachment.setFormIds(param.getFormIds());
+        attachment.setGenre(param.getGenre());
+        attachment.setInvalidTime(param.getInvalidTime());
+        attachment.setAppId(param.getAppId());
+        attachment.setTenantCode(param.getTenantCode());
         return attachment;
     }
 
     /**
      * 上传文件并保存到磁盘和数据库，同时可选生成缩略图
      *
-     * @param file        要上传的文件
-     * @param path        文件保存的路径
-     * @param appId       应用ID
-     * @param tenantCode  租户代码
-     * @param genre       文件类型
-     * @param isThumbnail 是否生成缩略图
-     * @param dimension   缩略图的尺寸（宽度或高度）
+     * @param file 要上传的文件
+     * @param path 文件保存的路径
      * @return 上传后的附件对象
      * @throws IOException 如果在文件处理过程中发生I/O错误
      */
-    public abstract E upload(MultipartFile file, String path, String appId, String tenantCode, String genre, boolean isThumbnail, Integer dimension) throws IOException;
+    public abstract E upload(MultipartFile file, String path, ThumbnailParam param) throws IOException;
 
-    public abstract E upload(String base64String, String name, String path, String appId, String tenantCode, String genre, boolean isThumbnail, Integer dimension) throws IOException;
+    public abstract E upload(String base64String, String name, String path, ThumbnailParam param) throws IOException;
 
     /**
      * 为给定的附件生成缩略图
      *
-     * @param source      要生成缩略图的原始附件对象
-     * @param isThumbnail 是否生成缩略图
-     * @param dimension   缩略图的尺寸（宽度或高度），如果为null则不进行尺寸判断
+     * @param source 要生成缩略图的原始附件对象
      * @return 如果生成了缩略图，则返回新的缩略图附件对象，否则返回null
      * @throws IOException 如果在生成缩略图或保存缩略图时发生I/O错误
      */
-    public abstract E thumbnail(E source, boolean isThumbnail, Integer dimension) throws IOException;
+    public abstract E thumbnail(E source, ThumbnailParam param) throws IOException;
 
     /**
      * 为给定的附件生成缩略图
      *
      * @param source           要生成缩略图的原始附件对象
-     * @param dimension        缩略图的尺寸（宽度或高度），如果为null则不进行尺寸判断
      * @param attachmentSource 附件来源，例如：avatar,convert等
+     * @param dimension        缩略图的尺寸（宽度或高度），如果为null则不进行尺寸判断
      * @return 如果生成了缩略图，则返回新的缩略图附件对象，否则返回null
      * @throws IOException 如果在生成缩略图或保存缩略图时发生I/O错误
      */
-    public E createThumbnail(E source, Integer dimension, String attachmentSource) throws IOException {
+    public E createThumbnail(E source, String attachmentSource, Integer dimension, Double thumbScale) throws IOException {
         File sourceFile = new File(source.getPath());
         int dis = dimension == null ? 0 : dimension.intValue();
+        double ths = thumbScale == null ? 1.0 : thumbScale;
         if (ImageUtils.isThumbnail(sourceFile, dis)) {
             String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, attachmentSource, source.getTenantCode(), source.getAppId(), source.getName(), true);
             File file = new File(path);
-            ImageUtils.thumbnail(sourceFile, file, dis);
+            ImageUtils.thumbnail(sourceFile, file, dis, ths);
             if (!file.exists()) {
                 throw new RuntimeException("thumbnail save failed");
             }
             String genre = StringUtils.splice(",", source.getGenre(), ImageUtils.THUMBNAIL_GENRE);
-            return build(file, source.getName(), path, null, genre, source.getAppId(), source.getTenantCode());
+            return build(file, source.getName(), path, new AttachmentParam(null, null, genre, null, source.getAppId(), source.getTenantCode()));
         }
         return null;
     }
@@ -246,6 +236,8 @@ public abstract class AttachmentHandler<E extends Attachment> {
      */
     public abstract void isDelete(E attachment);
 
+    public abstract void delete(E attachment);
+
 
     /**
      * 删除文件
@@ -253,7 +245,7 @@ public abstract class AttachmentHandler<E extends Attachment> {
      * @param path 文件的路径
      * @return 如果文件删除成功则返回true，否则返回false
      */
-    public boolean delete(String path) {
+    public boolean deleteFile(String path) {
         if (StringUtils.isNotBlank(path)) {
             File file = FileUtils.pathToFile(path);
             if (file != null) {

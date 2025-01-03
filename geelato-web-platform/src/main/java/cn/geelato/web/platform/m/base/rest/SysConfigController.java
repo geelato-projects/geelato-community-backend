@@ -14,7 +14,7 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Attachment;
+import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import lombok.extern.slf4j.Slf4j;

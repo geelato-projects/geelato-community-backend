@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.zxing.utils;
 
 import cn.geelato.utils.ColorUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.zxing.entity.Qrcode;
 import cn.geelato.web.platform.m.zxing.enums.BarcodePictureFormatEnum;

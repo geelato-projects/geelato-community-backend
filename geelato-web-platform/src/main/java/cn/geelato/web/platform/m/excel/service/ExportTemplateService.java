@@ -5,12 +5,13 @@ import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.handler.file.FileHandler;
-import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
+import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.param.FileParam;
 import com.alibaba.fastjson2.JSON;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.util.Strings;
@@ -35,6 +36,7 @@ public class ExportTemplateService extends BaseService {
     public static final String[] IMPORT_META_TYPE_HEADER = {"列名", "类型", "格式", "多值分隔符", "多值场景", "清洗规则", "备注"};
     public static final String[] IMPORT_META_META_HEADER = {"表格", "字段名称", "取值计算方式", "常量取值", "变量取值", "表达式取值", "数据字典取值", "模型取值", "备注"};
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_RESOURCES.getValue();
     @Lazy
     @Autowired
     private FileHandler fileHandler;
@@ -410,7 +412,7 @@ public class ExportTemplateService extends BaseService {
      * @return 返回文件的保存路径
      */
     private String getSavePath(ExportTemplate meta, String fileName, boolean isRename) {
-        return UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_RESOURCES.getValue(), meta.getTenantCode(), meta.getAppId(), fileName, isRename);
+        return UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, meta.getTenantCode(), meta.getAppId(), fileName, isRename);
     }
 
     /**
@@ -426,7 +428,8 @@ public class ExportTemplateService extends BaseService {
      */
     public Attachment saveAttach(ExportTemplate meta, String excelPath, String fileName) throws IOException {
         File excelFile = new File(excelPath);
-        return fileHandler.save(AttachmentSourceEnum.PLATFORM_RESOURCES.getValue(), excelFile, fileName, excelPath, null, "fileTemplate", meta.getAppId(), meta.getTenantCode());
+        FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, "fileTemplate", meta.getAppId(), meta.getTenantCode());
+        return fileHandler.save(excelFile, fileName, excelPath, fileParam);
     }
 
     /**

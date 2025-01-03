@@ -1,8 +1,10 @@
-package cn.geelato.web.platform.handler.attachment;
+package cn.geelato.web.platform.m.file.handler;
 
-import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.entity.Attachment;
-import cn.geelato.web.platform.m.base.entity.Resources;
+import cn.geelato.web.platform.m.file.entity.Attach;
+import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.entity.Compress;
+import cn.geelato.web.platform.m.file.entity.Resources;
+import cn.geelato.web.platform.m.file.param.FileParam;
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
@@ -19,46 +21,48 @@ import java.util.Map;
 @Component
 public class AccessoryHandler {
     private final AttachHandler attachHandler;
+    private final CompressHandler compressHandler;
     private final ResourcesHandler resourcesHandler;
 
-    public AccessoryHandler(AttachHandler attachHandler, ResourcesHandler resourcesHandler) {
+    public AccessoryHandler(AttachHandler attachHandler, CompressHandler compressHandler, ResourcesHandler resourcesHandler) {
         this.attachHandler = attachHandler;
+        this.compressHandler = compressHandler;
         this.resourcesHandler = resourcesHandler;
     }
 
     /**
      * 上传到本地磁盘（MultipartFile）
      */
-    public Attachment upload(String handlerType, MultipartFile file, String path, String appId, String tenantCode, String genre, boolean isThumbnail, Integer dimension) throws IOException {
-        return getAttachHandler(handlerType).upload(file, path, appId, tenantCode, genre, isThumbnail, dimension);
+    public <T extends Attachment> T upload(MultipartFile file, String path, FileParam param) throws IOException {
+        return (T) getAttachHandler(param.getSourceType()).upload(file, path, param.toThumbnailParam());
     }
 
     /**
      * 上传到本地磁盘（base64字符串文件）
      */
-    public Attachment upload(String handlerType, String base64String, String name, String path, String appId, String tenantCode, String genre, boolean isThumbnail, Integer dimension) throws IOException {
-        return getAttachHandler(handlerType).upload(base64String, name, path, appId, tenantCode, genre, isThumbnail, dimension);
+    public <T extends Attachment> T upload(String base64String, String name, String path, FileParam param) throws IOException {
+        return (T) getAttachHandler(param.getSourceType()).upload(base64String, name, path, param.toThumbnailParam());
     }
 
     /**
      * 保存文件信息（MultipartFile）
      */
-    public Attachment save(String handlerType, MultipartFile file, String path, String objectId, String genre, String appId, String tenantCode) {
-        return getAttachHandler(handlerType).save(file, path, objectId, genre, appId, tenantCode);
+    public <T extends Attachment> T save(MultipartFile file, String path, FileParam param) {
+        return (T) getAttachHandler(param.getSourceType()).save(file, path, param.toAttachmentParam());
     }
 
     /**
      * 保存文件信息（File）
      */
-    public Attachment save(String handlerType, File file, String path, String objectId, String genre, String appId, String tenantCode) throws IOException {
-        return getAttachHandler(handlerType).save(file, path, objectId, genre, appId, tenantCode);
+    public <T extends Attachment> T save(File file, String path, FileParam param) throws IOException {
+        return (T) getAttachHandler(param.getSourceType()).save(file, path, param.toAttachmentParam());
     }
 
     /**
      * 保存文件信息并重命名（File）
      */
-    public Attachment save(String handlerType, File file, String name, String path, String objectId, String genre, String appId, String tenantCode) throws IOException {
-        return getAttachHandler(handlerType).save(file, name, path, objectId, genre, appId, tenantCode);
+    public <T extends Attachment> T save(File file, String name, String path, FileParam param) throws IOException {
+        return (T) getAttachHandler(param.getSourceType()).save(file, name, path, param.toAttachmentParam());
     }
 
     /**
@@ -130,22 +134,34 @@ public class AccessoryHandler {
             // 查询附件的原图和缩略图
             List<Attachment> attachments = attachmentHandler.list(ids);
             for (Attachment attachment : attachments) {
-                // 逻辑删除附件的原图和缩略图
-                if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
-                    Attach attach = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
-                    attachHandler.isDelete(attach);
-                } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
-                    Resources resources = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
-                    resourcesHandler.isDelete(resources);
-                } else {
-                    continue;
-                }
-                // 物理删除附件的原图和缩略图（本地存储）
                 if (isRemoved && Strings.isBlank(attachment.getObjectId())) {
-                    // 如果附件没有关联对象，则删除本地文件
-                    attachmentHandler.delete(attachment.getPath());
-                    // 更新附件的删除标识
-                    updateDeleteId(attachment.getSource(), attachment.getId());
+                    // 物理删除附件的原图和缩略图（本地存储）
+                    if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+                        Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
+                        attachHandler.delete(model);
+                    } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+                        Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
+                        compressHandler.delete(model);
+                    } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+                        Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
+                        resourcesHandler.delete(model);
+                    } else {
+                        continue;
+                    }
+                } else {
+                    // 逻辑删除附件的原图和缩略图
+                    if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+                        Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
+                        attachHandler.isDelete(model);
+                    } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+                        Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
+                        compressHandler.isDelete(model);
+                    } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+                        Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
+                        resourcesHandler.isDelete(model);
+                    } else {
+                        continue;
+                    }
                 }
             }
         }

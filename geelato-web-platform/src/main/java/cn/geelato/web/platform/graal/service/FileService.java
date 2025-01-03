@@ -8,9 +8,10 @@ import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.graal.ApplicationContextProvider;
 import cn.geelato.web.platform.graal.GraalUtils;
 import cn.geelato.web.platform.handler.file.FileHandler;
-import cn.geelato.web.platform.m.base.entity.Attach;
-import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.excel.service.ExportExcelService;
+import cn.geelato.web.platform.m.file.entity.Attach;
+import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.param.FileParam;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import org.apache.logging.log4j.util.Strings;
@@ -96,7 +97,8 @@ public class FileService {
         }
         fileName = FileUtils.getFileName(fileName) + "." + suffix;
         String tenantCode = GraalUtils.getCurrentTenantCode();
-        Attachment attachment = fileHandler.upload(base64String, fileName, serviceType, tableType, "Api,Base64", isThumbnail, true, dimension, null, tenantCode);
+        FileParam fileParam = new FileParam(serviceType, tableType, null, null, "Api,Base64", null, null, tenantCode, isThumbnail, dimension, null);
+        Attachment attachment = fileHandler.upload(base64String, fileName, fileParam);
         if (attachment == null) {
             throw new RuntimeException("saveBase64：upload file error");
         }

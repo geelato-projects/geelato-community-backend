@@ -1,11 +1,12 @@
 package cn.geelato.web.platform.handler.file;
 
 import cn.geelato.utils.FileUtils;
-import cn.geelato.web.platform.handler.attachment.AccessoryHandler;
-import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.OfficeUtils;
+import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.handler.AccessoryHandler;
+import cn.geelato.web.platform.m.file.param.FileParam;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -58,41 +59,6 @@ public class BaseHandler {
     }
 
     /**
-     * 保存附件信息
-     *
-     * @param handlerType 处理器类型
-     * @param file        要保存的文件
-     * @param path        文件路径
-     * @param objectId    对象ID
-     * @param genre       文件类型
-     * @param appId       应用ID
-     * @param tenantCode  租户代码
-     * @return 返回保存的附件对象
-     * @throws IOException 如果发生I/O异常则抛出此异常
-     */
-    public Attachment save(String handlerType, File file, String path, String objectId, String genre, String appId, String tenantCode) throws IOException {
-        return accessoryHandler.save(handlerType, file, path, objectId, genre, appId, tenantCode);
-    }
-
-    /**
-     * 保存附件信息, 指定文件名
-     *
-     * @param handlerType 处理器类型
-     * @param file        要保存的文件
-     * @param name        文件名
-     * @param path        文件路径
-     * @param objectId    对象ID
-     * @param genre       文件类型
-     * @param appId       应用ID
-     * @param tenantCode  租户代码
-     * @return 保存的附件对象
-     * @throws IOException 如果发生I/O异常则抛出此异常
-     */
-    public Attachment save(String handlerType, File file, String name, String path, String objectId, String genre, String appId, String tenantCode) throws IOException {
-        return accessoryHandler.save(handlerType, file, name, path, objectId, genre, appId, tenantCode);
-    }
-
-    /**
      * 删除附件
      *
      * @param id        附件的ID
@@ -103,45 +69,53 @@ public class BaseHandler {
     }
 
     /**
+     * 保存附件信息
+     *
+     * @param file 要保存的文件
+     * @param path 文件路径
+     * @return 返回保存的附件对象
+     * @throws IOException 如果发生I/O异常则抛出此异常
+     */
+    public Attachment save(File file, String path, FileParam param) throws IOException {
+        return accessoryHandler.save(file, path, param);
+    }
+
+    /**
+     * 保存附件信息, 指定文件名
+     *
+     * @param file 要保存的文件
+     * @param name 文件名
+     * @param path 文件路径
+     * @return 保存的附件对象
+     * @throws IOException 如果发生I/O异常则抛出此异常
+     */
+    public Attachment save(File file, String name, String path, FileParam param) throws IOException {
+        return accessoryHandler.save(file, name, path, param);
+    }
+
+    /**
      * 上传附件到本地存储
      * <br/>指定存储位置；指定是否重命名；选择是否为缩略图；指定缩略图的尺寸
      *
-     * @param tableType   指定上传信息保存位置
-     * @param file        上传的文件
-     * @param genre       文件分类
-     * @param root        根目录路径
-     * @param isRename    是否重命名文件
-     * @param isThumbnail 是否为缩略图
-     * @param dimension   缩略图尺寸
-     * @param appId       应用ID
-     * @param tenantCode  租户代码
+     * @param file 上传的文件
      * @return 上传后的附件对象
      * @throws IOException 如果在上传过程中发生I/O错误，则抛出IOException
      */
-    public Attachment upload(String tableType, MultipartFile file, String genre, String root, Boolean isRename, boolean isThumbnail, Integer dimension, String appId, String tenantCode) throws IOException {
-        String path = setPath(root, file.getOriginalFilename(), tableType, isRename, tenantCode, appId);
-        return accessoryHandler.upload(tableType, file, path, appId, tenantCode, genre, isThumbnail, dimension);
+    public Attachment uploadLocal(MultipartFile file, String path, FileParam param) throws IOException {
+        return accessoryHandler.upload(file, path, param);
     }
 
     /**
      * 上传base64字符串文件到本地存储
      * <br/>指定存储位置；指定是否重命名；选择是否为缩略图；指定缩略图的尺寸
      *
-     * @param tableType    指定上传信息保存位置
      * @param base64String base64字符串，包含要上传的文件内容
      * @param name         文件名
-     * @param genre        文件分类
-     * @param isRename     是否重命名文件
-     * @param isThumbnail  是否为缩略图
-     * @param dimension    缩略图尺寸
-     * @param appId        应用ID
-     * @param tenantCode   租户代码
      * @return 上传后的附件对象
      * @throws IOException 如果在上传过程中发生I/O错误，则抛出IOException
      */
-    public Attachment upload(String tableType, String base64String, String name, String genre, Boolean isRename, boolean isThumbnail, Integer dimension, String appId, String tenantCode) throws IOException {
-        String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, tableType, tenantCode, appId, name, isRename);
-        return accessoryHandler.upload(tableType, base64String, name, path, appId, tenantCode, genre, isThumbnail, dimension);
+    public Attachment uploadLocal(String base64String, String name, String path, FileParam param) throws IOException {
+        return accessoryHandler.upload(base64String, name, path, param);
     }
 
     /**
@@ -295,21 +269,10 @@ public class BaseHandler {
         if (file == null) {
             throw new RuntimeException("toPdfAndSave: PDF File does not exist");
         }
-        // 保存文件
-        return accessoryHandler.save(tableType, file, name, file.getPath(), null, "TOPDF", appId, tenantCode);
+        return accessoryHandler.save(file, name, file.getPath(), new FileParam(null, tableType, null, null, "TOPDF", null, appId, tenantCode, null, null, null));
     }
 
     public Attachment toPdf(String tableType, Attachment attachment) throws Exception {
         return toPdf(tableType, FileUtils.pathToFile(attachment.getPath()), attachment.getName(), attachment.getAppId(), attachment.getTenantCode());
-    }
-
-
-    private String setPath(String root, String name, String tableType, boolean isRename, String tenantCode, String appId) {
-        if (Strings.isNotBlank(root)) {
-            return UploadService.getSaveRootPath(root, name, isRename);
-        } else {
-            // upload/存放表/租户编码/应用Id
-            return UploadService.getSavePath(UploadService.ROOT_DIRECTORY, tableType, tenantCode, appId, name, isRename);
-        }
     }
 }

@@ -3,15 +3,10 @@ package cn.geelato.web.platform.m.base.service;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
-import cn.geelato.web.platform.handler.file.FileHandler;
-import cn.geelato.web.platform.m.base.entity.Attachment;
-import cn.geelato.web.platform.m.excel.entity.OfficeUtils;
+import cn.geelato.web.platform.m.file.entity.Attachment;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.*;

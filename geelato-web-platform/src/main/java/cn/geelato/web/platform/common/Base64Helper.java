@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.common;
 
 import cn.geelato.utils.FileUtils;
-import cn.geelato.web.platform.m.base.entity.Attachment;
+import cn.geelato.web.platform.m.file.entity.Attachment;
 import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
 import lombok.Setter;

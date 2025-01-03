@@ -1,11 +1,11 @@
-package cn.geelato.web.platform.m.base.rest;
+package cn.geelato.web.platform.m.file.rest;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.handler.attachment.AccessoryHandler;
+import cn.geelato.web.platform.m.file.handler.AccessoryHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Attachment;
+import cn.geelato.web.platform.m.file.entity.Attachment;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;

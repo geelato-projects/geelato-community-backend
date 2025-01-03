@@ -1,8 +1,7 @@
-package cn.geelato.web.platform.m.base.entity;
+package cn.geelato.web.platform.m.file.entity;
 
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
-import cn.geelato.web.oss.OSSFile;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;

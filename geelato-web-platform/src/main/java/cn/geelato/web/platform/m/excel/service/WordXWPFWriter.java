@@ -46,7 +46,6 @@ public class WordXWPFWriter {
     private static final Pattern loopEndPattern = Pattern.compile("\\{\\/[\\\u4e00-\\\u9fa5,\\w,\\.]+\\}");
     private static final Pattern base64Pattern = Pattern.compile("data:image\\/\\w+;base64,(.+)");
     private static final Pattern splitPattern = Pattern.compile(";");
-    private final Logger logger = LoggerFactory.getLogger(WordXWPFWriter.class);
 
     @Autowired
     private FileHandler fileHandler;

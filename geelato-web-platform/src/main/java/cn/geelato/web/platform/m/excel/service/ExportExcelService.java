@@ -5,9 +5,7 @@ import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.common.Base64Helper;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.handler.file.FileHandler;
-import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.base.service.UploadService;
@@ -15,6 +13,9 @@ import cn.geelato.web.platform.m.excel.entity.ExportColumn;
 import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.WordWaterMarkMeta;
+import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import cn.geelato.web.platform.m.zxing.service.BarcodeService;
 import com.alibaba.fastjson2.JSON;
@@ -50,6 +51,7 @@ public class ExportExcelService {
     private static final Pattern pattern = Pattern.compile("^[a-zA-Z0-9_\\-]+\\.[a-zA-Z0-9]{1,5}$");
     private final Logger logger = LoggerFactory.getLogger(ExportExcelService.class);
     private final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
     @Autowired
     private ExportTemplateService exportTemplateService;
     @Autowired
@@ -115,12 +117,13 @@ public class ExportExcelService {
                 fileName = String.format("%s_%s%s", templateName, sdf.format(new Date()), templateExt);
             }
             // 实体文件 upload/存放表/租户编码/应用Id
-            String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), exportTemplate.getTenantCode(), exportTemplate.getAppId(), fileName, true);
+            String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, exportTemplate.getTenantCode(), exportTemplate.getAppId(), fileName, true);
             File exportFile = new File(directory);
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
             // 保存文件信息
-            Attachment attachment = fileHandler.save(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), exportFile, fileName, directory, null, "exportFile", exportTemplate.getAppId(), exportTemplate.getTenantCode());
+            FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, "exportFile", exportTemplate.getAppId(), exportTemplate.getTenantCode());
+            Attachment attachment = fileHandler.save(exportFile, fileName, directory, fileParam);
             return ApiResult.success(attachment);
         } catch (Exception e) {
             return ApiResult.fail(e.getMessage());
@@ -169,12 +172,13 @@ public class ExportExcelService {
             Assert.notNull(templateAttach, "导出模板创建失败！");
             // 实体文件 upload/存放表/租户编码/应用Id
             String exportFileName = String.format("%s_%s%s", fileName, sdf.format(new Date()), templateExt);
-            String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), tenantCode, appId, exportFileName, true);
+            String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, tenantCode, appId, exportFileName, true);
             File exportFile = new File(directory);
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
             // 保存文件信息
-            Attachment attachment = fileHandler.save(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), exportFile, exportFileName, directory, null, "exportFile", appId, tenantCode);
+            FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, "exportFile", appId, tenantCode);
+            Attachment attachment = fileHandler.save(exportFile, fileName, directory, fileParam);
             return ApiResult.success(attachment);
         } catch (Exception e) {
             return ApiResult.fail(e.getMessage());
@@ -460,17 +464,18 @@ public class ExportExcelService {
         FileInputStream fileInputStream = null;
         try {
             // 创建文件
-            String exportPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), tenantCode, appId, fileName, true);
+            String exportPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, tenantCode, appId, fileName, true);
             // 读取文件，
             workbook = new XSSFWorkbook();
             excelXSSFWriter.generateTemplateFile(workbook, "list", exportColumns);
             // 输出数据到文件
-            outputStream = new BufferedOutputStream(new FileOutputStream(new File(exportPath)));
+            outputStream = new BufferedOutputStream(new FileOutputStream(exportPath));
             workbook.write(outputStream);
             outputStream.flush();
             workbook.close();
             // 保存附件
-            Attachment attachment = fileHandler.save(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), new File(exportPath), fileName, exportPath, null, "exportTemplate", appId, tenantCode);
+            FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, "exportTemplate", appId, tenantCode);
+            Attachment attachment = fileHandler.save(new File(exportPath), fileName, exportPath, fileParam);
             // 数据转换
             info = Base64Helper.fromAttachment(attachment);
         } catch (Exception ex) {

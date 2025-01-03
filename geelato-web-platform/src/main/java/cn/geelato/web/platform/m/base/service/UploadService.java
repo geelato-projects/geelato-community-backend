@@ -4,8 +4,8 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.UIDGenerator;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
-import cn.geelato.web.platform.m.base.entity.Attach;
+import cn.geelato.web.platform.m.file.entity.Attach;
+import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
@@ -105,6 +105,25 @@ public class UploadService {
         rootPath = String.format("%s/%s", subPath, sourceEnum.getValue());
 
         return getSavePath(rootPath, tenantCode, appId, fileName, isRename);
+    }
+
+    /**
+     * 获取文件保存路径
+     *
+     * @param root       根目录路径
+     * @param tableType  表类型
+     * @param name       文件名
+     * @param isRename   是否需要重命名
+     * @param appId      应用ID
+     * @param tenantCode 租户代码
+     * @return 文件保存路径
+     */
+    public static String getSavePath(String root, String tableType, String name, boolean isRename, String appId, String tenantCode) {
+        if (Strings.isNotBlank(root)) {
+            return UploadService.getSaveRootPath(root, name, isRename);
+        } else {
+            return UploadService.getSavePath(UploadService.ROOT_DIRECTORY, tableType, tenantCode, appId, name, isRename);
+        }
     }
 
     /**

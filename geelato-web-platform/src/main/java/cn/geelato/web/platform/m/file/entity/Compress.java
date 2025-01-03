@@ -1,8 +1,7 @@
-package cn.geelato.web.platform.m.base.entity;
+package cn.geelato.web.platform.m.file.entity;
 
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
-import cn.geelato.web.oss.OSSFile;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -11,25 +10,22 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author diabl
- */
 @Getter
 @Setter
-@Entity(name = "platform_attach")
-@Title(title = "附件")
+@Entity(name = "platform_compress")
+@Title(title = "压缩文件")
 @Accessors(chain = true)
-public class Attach extends Attachment {
+public class Compress extends Attachment {
 
-    public Attach() {
+    public Compress() {
         super();
     }
 
-    public Attach(MultipartFile file) {
+    public Compress(MultipartFile file) {
         super(file);
     }
 
-    public Attach(File file) throws IOException {
+    public Compress(File file) throws IOException {
         super(file);
     }
 }

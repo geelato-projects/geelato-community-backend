@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.enums;
+package cn.geelato.web.platform.m.file.enums;
 
 import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
@@ -8,8 +8,9 @@ import org.apache.logging.log4j.util.Strings;
  */
 @Getter
 public enum AttachmentSourceEnum {
-    PLATFORM_ATTACH("附件表", "attach"),
-    PLATFORM_RESOURCES("资源表", "resources");
+    PLATFORM_ATTACH("附属文件表", "attach"),
+    PLATFORM_COMPRESS("压缩文件表", "compress"),
+    PLATFORM_RESOURCES("资源文件表", "resources");
 
     private final String label;// 选项内容
     private final String value;// 选项值

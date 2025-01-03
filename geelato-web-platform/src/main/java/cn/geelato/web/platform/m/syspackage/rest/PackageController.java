@@ -14,11 +14,12 @@ import cn.geelato.core.sql.SqlManager;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
-import cn.geelato.web.platform.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Attachment;
 import cn.geelato.web.platform.m.base.service.UploadService;
+import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.syspackage.PackageConfigurationProperties;
 import cn.geelato.web.platform.m.syspackage.entity.AppMeta;
 import cn.geelato.web.platform.m.syspackage.entity.AppPackage;
@@ -51,7 +52,7 @@ public class PackageController extends BaseController {
     private DataSourceTransactionManager dataSourceTransactionManager;
     private TransactionStatus transactionStatus;
     private final String defaultPackageName = "geelatoApp";
-    private static final String SAVE_ZIP_TO_TABLE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
 
     private final ArrayList<String> incrementMetas = new ArrayList<>();
 
@@ -515,10 +516,11 @@ public class PackageController extends BaseController {
         String appPackageName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String appPackageFullName = (Strings.isNotBlank(appVersion.getVersion()) ? appVersion.getVersion() : appPackageName) + packageSuffix;
         String targetZipPath;
-        targetZipPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_ZIP_TO_TABLE, SessionCtx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
+        targetZipPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, SessionCtx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
         ZipUtils.compressDirectory(sourcePackageFolder, targetZipPath);
         File file = new File(targetZipPath);
-        Attachment attachment = fileHandler.save(SAVE_ZIP_TO_TABLE, file, appPackageFullName, targetZipPath, null, "package", appPackage.getSourceAppId(), null);
+        FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, "package", appPackage.getSourceAppId(), appVersion.getTenantCode());
+        Attachment attachment = fileHandler.save(file, appPackageFullName, targetZipPath, fileParam);
         return attachment.getId();
     }
 

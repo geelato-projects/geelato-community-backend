@@ -302,6 +302,13 @@ public class FileHandler extends BaseHandler {
         return null;
     }
 
+    /**
+     * 将附件转换为输入流
+     *
+     * @param attachment 附件对象
+     * @return 附件对应的输入流，如果转换失败则返回null
+     * @throws FileNotFoundException 如果附件文件不存在则抛出此异常
+     */
     public InputStream toInputStream(Attachment attachment) throws FileNotFoundException {
         if (attachment != null && Strings.isNotBlank(attachment.getObjectId())) {
             OSSResult ossResult = fileHelper.getFile(attachment.getPath());
@@ -317,6 +324,16 @@ public class FileHandler extends BaseHandler {
         return null;
     }
 
+    /**
+     * 压缩附件列表
+     *
+     * @param attachmentIds 附件ID字符串，多个ID以逗号分隔
+     * @param fileName      压缩文件的名称
+     * @param maxNumber     每个压缩包中允许的最大附件数量，如果为null则使用默认数量
+     * @param param         文件参数对象，包含服务类型、来源类型、文件类型、失效时间、租户代码、应用ID等信息
+     * @return 压缩后的附件列表
+     * @throws IOException 如果在文件操作中发生I/O异常
+     */
     public List<Attachment> compress(String attachmentIds, String fileName, Integer maxNumber, FileParam param) throws IOException {
         List<Attachment> attachments = new ArrayList<>();
         // 参数验证

@@ -20,6 +20,7 @@ import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
+import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import cn.geelato.web.platform.m.syspackage.PackageConfigurationProperties;
 import cn.geelato.web.platform.m.syspackage.entity.AppMeta;
 import cn.geelato.web.platform.m.syspackage.entity.AppPackage;
@@ -519,7 +520,7 @@ public class PackageController extends BaseController {
         targetZipPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, SessionCtx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
         ZipUtils.compressDirectory(sourcePackageFolder, targetZipPath);
         File file = new File(targetZipPath);
-        FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, "package", appPackage.getSourceAppId(), appVersion.getTenantCode());
+        FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "package", appPackage.getSourceAppId(), appVersion.getTenantCode());
         Attachment attachment = fileHandler.save(file, appPackageFullName, targetZipPath, fileParam);
         return attachment.getId();
     }

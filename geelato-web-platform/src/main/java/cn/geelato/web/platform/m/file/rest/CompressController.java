@@ -6,11 +6,15 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
+import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.param.CompressRequestBody;
+import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.service.CompressService;
+import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import cn.geelato.web.platform.utils.GqlResolveException;
+import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,36 +31,46 @@ import java.util.Map;
 @Slf4j
 public class CompressController extends BaseController {
     private final CompressService compressService;
+    private final FileHandler fileHandler;
 
     @Autowired
-    public CompressController(CompressService compressService) {
+    public CompressController(CompressService compressService, FileHandler fileHandler) {
         this.compressService = compressService;
+        this.fileHandler = fileHandler;
     }
 
-    @RequestMapping(value = "/compress", method = RequestMethod.POST)
-    public ApiResult compress(@RequestBody CompressRequestBody compBody) throws IOException {
+    @RequestMapping(value = "/batch", method = RequestMethod.POST)
+    public ApiResult batch(@RequestBody Map<String, Object> params) throws IOException {
+        CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
         return build(compBody);
     }
 
     @RequestMapping(value = "/meta", method = RequestMethod.POST)
-    public ApiResult meta(@RequestBody CompressRequestBody compBody) throws IOException {
+    public ApiResult meta(@RequestBody Map<String, Object> params) throws IOException {
+        CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
         List<String> attachmentIds = getAttachmentIdsByGql(compBody.getGql());
         return build(compBody, attachmentIds);
     }
 
     @RequestMapping(value = "/il_cargo_info_collection", method = RequestMethod.POST)
-    public ApiResult ilCargoInfoCollection(@RequestBody CompressRequestBody compBody) throws IOException {
+    public ApiResult ilCargoInfoCollection(@RequestBody Map<String, Object> params) throws IOException {
+        CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
         List<String> attachmentIds = compressService.queryIlCargoInfoCollection(compBody);
+        compBody.setGenre(StringUtils.splice(",", compBody.getGenre(), compBody.getOrderNo(), compBody.getCtnNo()));
         return build(compBody, attachmentIds);
     }
 
     private ApiResult<List<Attachment>> build(CompressRequestBody compBody, List<String> attachmentIds) throws IOException {
-        compBody.setAttachmentIds(String.format(",", attachmentIds));
+        compBody.setAttachmentIds(String.join(",", attachmentIds));
         return build(compBody);
     }
 
     private ApiResult<List<Attachment>> build(CompressRequestBody compBody) throws IOException {
-        List<Attachment> attachments = compressService.compress(compBody.getAttachmentIds(), compBody.getFileName(), compBody.getServiceType(), compBody.getInvalidTime(), compBody.getAmount(), getAppId());
+        String batchNo = String.valueOf(System.currentTimeMillis());
+        String appId = getAppId();
+        String tenantCode = getTenantCode();
+        FileParam fileParam = FileParamUtils.byBuildCompress(compBody.getServiceType(), compBody.getGenre(), compBody.getInvalidTime(), batchNo, appId, tenantCode);
+        List<Attachment> attachments = fileHandler.compress(compBody.getAttachmentIds(), compBody.getFileName(), compBody.getAmount(), fileParam);
         return ApiResult.success(attachments);
     }
 

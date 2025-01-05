@@ -2,12 +2,13 @@ package cn.geelato.web.platform.m.file.handler;
 
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.FileUtils;
-import cn.geelato.utils.ImageUtils;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.utils.ThumbnailUtils;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.param.AttachmentParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailParam;
+import cn.geelato.web.platform.m.file.utils.AttachmentParamUtils;
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,13 +63,7 @@ public abstract class AttachmentHandler<E extends Attachment> {
 
     public E build(E attachment, String path, AttachmentParam param) {
         attachment.setPath(path);
-        attachment.setObjectId(param.getObjectId());
-        attachment.setFormIds(param.getFormIds());
-        attachment.setGenre(param.getGenre());
-        attachment.setInvalidTime(param.getInvalidTime());
-        attachment.setAppId(param.getAppId());
-        attachment.setTenantCode(param.getTenantCode());
-        return attachment;
+        return param.toAttachment(attachment);
     }
 
     /**
@@ -103,17 +98,16 @@ public abstract class AttachmentHandler<E extends Attachment> {
      */
     public E createThumbnail(E source, String attachmentSource, Integer dimension, Double thumbScale) throws IOException {
         File sourceFile = new File(source.getPath());
-        int dis = dimension == null ? 0 : dimension.intValue();
-        double ths = thumbScale == null ? 1.0 : thumbScale;
-        if (ImageUtils.isThumbnail(sourceFile, dis)) {
+        if (ThumbnailUtils.isThumbnail(sourceFile, dimension)) {
             String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, attachmentSource, source.getTenantCode(), source.getAppId(), source.getName(), true);
             File file = new File(path);
-            ImageUtils.thumbnail(sourceFile, file, dis, ths);
+            ThumbnailUtils.thumbnail(sourceFile, file, dimension, thumbScale);
             if (!file.exists()) {
                 throw new RuntimeException("thumbnail save failed");
             }
-            String genre = StringUtils.splice(",", source.getGenre(), ImageUtils.THUMBNAIL_GENRE);
-            return build(file, source.getName(), path, new AttachmentParam(null, null, genre, null, source.getAppId(), source.getTenantCode()));
+            String genre = StringUtils.splice(",", source.getGenre(), ThumbnailUtils.THUMBNAIL_GENRE);
+            AttachmentParam attachmentParam = AttachmentParamUtils.byThumbnail(genre, source.getAppId(), source.getTenantCode());
+            return build(file, source.getName(), path, attachmentParam);
         }
         return null;
     }
@@ -125,7 +119,7 @@ public abstract class AttachmentHandler<E extends Attachment> {
      * @return 缩略图的ID
      */
     public String setThumbnailId(String id) {
-        return id + ImageUtils.THUMBNAIL_SUFFIX;
+        return id + ThumbnailUtils.THUMBNAIL_SUFFIX;
     }
 
     /**
@@ -135,7 +129,7 @@ public abstract class AttachmentHandler<E extends Attachment> {
      * @return 去除缩略图后缀后的原始图片ID
      */
     public String setPrimevalId(String targetId) {
-        return targetId.substring(0, targetId.lastIndexOf(ImageUtils.THUMBNAIL_SUFFIX));
+        return targetId.substring(0, targetId.lastIndexOf(ThumbnailUtils.THUMBNAIL_SUFFIX));
     }
 
     /**
@@ -156,7 +150,7 @@ public abstract class AttachmentHandler<E extends Attachment> {
      */
     public String getPriAndThuId(String id) {
         if (Strings.isNotBlank(id)) {
-            if (id.endsWith(ImageUtils.THUMBNAIL_SUFFIX)) {
+            if (id.endsWith(ThumbnailUtils.THUMBNAIL_SUFFIX)) {
                 return StringUtils.splice(",", id, setPrimevalId(id));
             } else {
                 return StringUtils.splice(",", id, setThumbnailId(id));
@@ -191,7 +185,7 @@ public abstract class AttachmentHandler<E extends Attachment> {
         if (Strings.isNotBlank(ids)) {
             List<Attachment> attachments = list(ids);
             for (Attachment attachment : attachments) {
-                if (attachment.getId().endsWith(ImageUtils.THUMBNAIL_SUFFIX)) {
+                if (attachment.getId().endsWith(ThumbnailUtils.THUMBNAIL_SUFFIX)) {
                     thumbnail = attachment;
                 } else {
                     primeval = attachment;

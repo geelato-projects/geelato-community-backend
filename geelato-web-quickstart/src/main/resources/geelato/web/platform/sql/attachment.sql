@@ -9,6 +9,7 @@ SELECT
     p.path,
     p.genre,
     p.invalid_time as invalidTime,
+    p.batch_no as batchNo,
     p.dept_id as deptId,
     p.bu_id as buId,
     p.app_id as appId,
@@ -67,6 +68,9 @@ FROM (
 @/if
 @if $.ltInvalidTime!=null&&$.ltInvalidTime!=''
   AND p.invalid_time <= '$.ltInvalidTime'
+@/if
+@if $.batchNo!=null&&$.batchNo!=''
+  AND find_in_set(p.batch_no, '$.batchNo')
 @/if
 @if $.source!=null&&$.source!=''
   AND find_in_set(p.source, '$.source')

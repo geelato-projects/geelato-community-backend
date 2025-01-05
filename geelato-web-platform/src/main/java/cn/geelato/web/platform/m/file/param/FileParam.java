@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.m.file.param;
 
 import cn.geelato.core.meta.annotation.Title;
-import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,29 +17,13 @@ public class FileParam extends ThumbnailParam {
     public FileParam() {
     }
 
-    public FileParam(String sourceType, String genre, String appId, String tenantCode) {
-        super(null, null, genre, null, appId, tenantCode, null, null, null);
-        this.sourceType = sourceType;
-    }
-
-    public FileParam(String sourceType, String objectId, String formIds, String genre, Date invalidTime, String appId, String tenantCode) {
-        super(objectId, formIds, genre, invalidTime, appId, tenantCode, null, null, null);
-        this.sourceType = sourceType;
-    }
-
-    public FileParam(String serviceType, String sourceType, String objectId, String formIds, String genre, Date invalidTime, String appId, String tenantCode) {
-        super(objectId, formIds, genre, invalidTime, appId, tenantCode, null, null, null);
-        this.serviceType = serviceType;
-        this.sourceType = sourceType;
-    }
-
-    public FileParam(String serviceType, String sourceType, String objectId, String formIds, String genre, Date invalidTime, String appId, String tenantCode, Boolean thumbnail, Integer dimension, Double thumbScale) {
-        super(objectId, formIds, genre, invalidTime, appId, tenantCode, thumbnail, dimension, thumbScale);
+    public FileParam(String serviceType, String sourceType, String objectId, String formIds, String genre, Date invalidTime, String batchNo, String appId, String tenantCode, Boolean thumbnail, Integer dimension, Double thumbScale) {
+        super(objectId, formIds, genre, invalidTime, batchNo, appId, tenantCode, thumbnail, dimension, thumbScale);
         this.serviceType = serviceType;
         this.sourceType = sourceType;
     }
 
     public ThumbnailParam toThumbnailParam() {
-        return new ThumbnailParam(this.getObjectId(), this.getFormIds(), this.getGenre(), this.getInvalidTime(), this.isThumbnail(), this.getDimension(), this.getThumbScale());
+        return new ThumbnailParam(this.getObjectId(), this.getFormIds(), this.getGenre(), this.getInvalidTime(), this.getBatchNo(), this.getAppId(), this.getTenantCode(), this.getThumbnail(), this.getDimension(), this.getThumbScale());
     }
 }

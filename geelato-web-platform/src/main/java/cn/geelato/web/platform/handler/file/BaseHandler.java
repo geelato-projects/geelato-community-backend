@@ -7,6 +7,7 @@ import cn.geelato.web.platform.m.excel.entity.OfficeUtils;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.handler.AccessoryHandler;
 import cn.geelato.web.platform.m.file.param.FileParam;
+import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -269,7 +270,8 @@ public class BaseHandler {
         if (file == null) {
             throw new RuntimeException("toPdfAndSave: PDF File does not exist");
         }
-        return accessoryHandler.save(file, name, file.getPath(), new FileParam(null, tableType, null, null, "TOPDF", null, appId, tenantCode, null, null, null));
+        FileParam fileParam = FileParamUtils.byLocal(tableType, "TOPDF", appId, tenantCode);
+        return accessoryHandler.save(file, name, file.getPath(), fileParam);
     }
 
     public Attachment toPdf(String tableType, Attachment attachment) throws Exception {

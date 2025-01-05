@@ -1,8 +1,8 @@
 package cn.geelato.web.platform.handler.file;
 
 import cn.geelato.utils.FileUtils;
-import cn.geelato.utils.ImageUtils;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.utils.ThumbnailUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.utils.entity.FileIS;
 import cn.geelato.web.oss.OSSResult;
@@ -14,6 +14,7 @@ import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentServiceEnum;
 import cn.geelato.web.platform.m.file.handler.AccessoryHandler;
 import cn.geelato.web.platform.m.file.param.FileParam;
+import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
@@ -86,7 +87,8 @@ public class FileHandler extends BaseHandler {
             // 生成缩略图
             File thumbnail = createThumbnail(file, param.getDimension(), param.getThumbScale());
             // 上传缩略图，并保存缩略图信息，并更新附件ID
-            uploadThumbnail(thumbnail, attachment.getName(), attachment.getId(), new FileParam(param.getSourceType(), null, null, attachment.getGenre(), null, attachment.getAppId(), attachment.getTenantCode()));
+            FileParam fileParam = FileParamUtils.byThumbnail(param.getServiceType(), param.getSourceType(), attachment.getGenre(), attachment.getAppId(), attachment.getTenantCode());
+            uploadThumbnail(thumbnail, attachment.getName(), attachment.getId(), fileParam);
         }
         return attachment;
     }
@@ -113,7 +115,8 @@ public class FileHandler extends BaseHandler {
             // 生成缩略图
             File thumbnail = createThumbnail(file, param.getDimension(), param.getThumbScale());
             // 上传缩略图，并保存缩略图信息，并更新附件ID
-            uploadThumbnail(thumbnail, name, attachment.getId(), new FileParam(param.getSourceType(), null, null, attachment.getGenre(), null, attachment.getAppId(), attachment.getTenantCode()));
+            FileParam fileParam = FileParamUtils.byThumbnail(param.getServiceType(), param.getSourceType(), attachment.getGenre(), attachment.getAppId(), attachment.getTenantCode());
+            uploadThumbnail(thumbnail, name, attachment.getId(), fileParam);
         }
         return attachment;
     }
@@ -153,11 +156,9 @@ public class FileHandler extends BaseHandler {
         File sourceFile = FileUtils.createTempFile(file.getInputStream(), fileExt);
         // 缩略图临时文件
         try {
-            int dis = dimension == null ? 0 : dimension.intValue();
-            double ths = dimension == null ? 0 : thumbScale.doubleValue();
-            if (ImageUtils.isThumbnail(sourceFile, dis)) {
+            if (ThumbnailUtils.isThumbnail(sourceFile, dimension)) {
                 File targetFile = FileUtils.createTempFile(fileExt);
-                ImageUtils.thumbnail(sourceFile, targetFile, dis, ths);
+                ThumbnailUtils.thumbnail(sourceFile, targetFile, dimension, thumbScale);
                 if (!targetFile.exists()) {
                     throw new RuntimeException("thumbnail save failed");
                 }
@@ -183,11 +184,9 @@ public class FileHandler extends BaseHandler {
         // 原始临时文件
         String fileExt = FileUtils.getFileExtension(sourceFile.getName());
         // 缩略图临时文件
-        int dis = dimension == null ? 0 : dimension.intValue();
-        double ths = dimension == null ? 0 : thumbScale.doubleValue();
-        if (ImageUtils.isThumbnail(sourceFile, dis)) {
+        if (ThumbnailUtils.isThumbnail(sourceFile, dimension)) {
             File targetFile = FileUtils.createTempFile(fileExt);
-            ImageUtils.thumbnail(sourceFile, targetFile, dis, ths);
+            ThumbnailUtils.thumbnail(sourceFile, targetFile, dimension, thumbScale);
             if (!targetFile.exists()) {
                 throw new RuntimeException("thumbnail save failed");
             }
@@ -208,8 +207,9 @@ public class FileHandler extends BaseHandler {
         if (thumbnail != null) {
             try {
                 // 上传缩略图
-                String thumbnailGenre = StringUtils.splice(",", param.getGenre(), ImageUtils.THUMBNAIL_GENRE);
-                Attachment target = uploadCloud(thumbnail, name, new FileParam(param.getSourceType(), null, null, thumbnailGenre, null, param.getAppId(), param.getTenantCode()));
+                String thumbnailGenre = StringUtils.splice(",", param.getGenre(), ThumbnailUtils.THUMBNAIL_GENRE);
+                FileParam fileParam = FileParamUtils.byThumbnail(param.getServiceType(), param.getSourceType(), thumbnailGenre, param.getAppId(), param.getTenantCode());
+                Attachment target = uploadCloud(thumbnail, name, fileParam);
                 // 更新附件ID
                 accessoryHandler.updateThumbnailId(param.getSourceType(), sourceId, target.getId());
             } finally {
@@ -377,7 +377,7 @@ public class FileHandler extends BaseHandler {
             }
             ZipUtils.compressFiles(fileISs, zpiFilePath);
             // 上传至Oss，保存附件信息
-            FileParam zipFileParam = new FileParam(param.getServiceType(), param.getSourceType(), null, String.join(",", fileIds), param.getGenre(), param.getInvalidTime(), param.getTenantCode(), param.getAppId());
+            FileParam zipFileParam = FileParamUtils.bySaveCompress(param.getServiceType(), param.getSourceType(), String.join(",", fileIds), param.getGenre(), param.getInvalidTime(), param.getBatchNo(), param.getTenantCode(), param.getAppId());
             if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(param.getServiceType())) {
                 attachments.add(uploadCloud(new File(zpiFilePath), zipFileName, zipFileParam));
             } else {

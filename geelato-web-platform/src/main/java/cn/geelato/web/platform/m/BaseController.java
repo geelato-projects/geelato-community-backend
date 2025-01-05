@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m;
 
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.DateUtils;
@@ -58,11 +59,25 @@ public class BaseController extends ParameterOperator implements InitializingBea
         this.response = response;
     }
 
+    /**
+     * 获取请求中的应用ID
+     */
     public String getAppId() {
         if (this.request != null) {
             return this.request.getHeader("App-Id");
         }
         return null;
+    }
+
+    /**
+     * 获取请求中的或上下文中的租户代码
+     */
+    public String getTenantCode() {
+        String tenantCode = null;
+        if (this.request != null) {
+            return this.request.getHeader("Tenant-Code");
+        }
+        return Strings.isNotBlank(tenantCode) ? tenantCode : SessionCtx.getCurrentTenantCode();
     }
 
     /**

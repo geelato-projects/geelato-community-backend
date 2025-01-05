@@ -47,6 +47,9 @@ public class Attachment extends BaseEntity {
     @Title(title = "失效时间")
     @JsonFormat(pattern = DateUtils.DATETIME, timezone = DateUtils.TIMEZONE)
     private Date invalidTime;
+    @Col(name = "batch_no")
+    @Title(title = "批次号")
+    private String batchNo;
 
     @Transient
     private String source;

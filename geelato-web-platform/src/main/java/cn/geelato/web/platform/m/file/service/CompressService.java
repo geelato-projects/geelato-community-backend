@@ -1,20 +1,14 @@
 package cn.geelato.web.platform.m.file.service;
 
-import cn.geelato.core.SessionCtx;
-import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.base.service.BaseService;
-import cn.geelato.web.platform.m.file.entity.Attachment;
-import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.CompressRequestBody;
-import cn.geelato.web.platform.m.file.param.FileParam;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author diabl
@@ -22,29 +16,6 @@ import java.util.*;
 @Component
 public class CompressService extends BaseService {
     private static final String IlCargoInfoCollection = "SELECT DISTINCT pic_id FROM il_cargo_info_collection WHERE del_status = 0";
-
-    @Lazy
-    @Autowired
-    private FileHandler fileHandler;
-
-    /**
-     * 压缩附件
-     *
-     * @param attachmentIds 附件ID字符串，多个附件ID用逗号分隔
-     * @param fileName      压缩后的文件名
-     * @param serviceType   服务类型
-     * @param invalidTime   失效时间
-     * @param amount        压缩包中的附件数量
-     * @param appId         应用ID
-     * @return 压缩后的附件列表
-     * @throws IOException    如果在文件操作过程中发生I/O错误
-     * @throws ParseException 如果解析日期时发生错误
-     */
-    public List<Attachment> compress(String attachmentIds, String fileName, String serviceType, Date invalidTime, Integer amount, String appId) throws IOException {
-        FileParam fileParam = new FileParam(serviceType, AttachmentSourceEnum.PLATFORM_COMPRESS.getValue(), null, null, "ZIP", invalidTime, appId, SessionCtx.getCurrentTenantCode());
-        List<Attachment> attachments = fileHandler.compress(attachmentIds, fileName, amount, fileParam);
-        return attachments;
-    }
 
     /**
      * 查询货物信息集合中的附件ID列表
@@ -60,13 +31,13 @@ public class CompressService extends BaseService {
             params.put("ctn_no", compBody.getCtnNo());
         }
         if (Strings.isNotBlank(compBody.getOrderNo())) {
-            params.put("ctn_no", compBody.getOrderNo());
+            params.put("order_no", compBody.getOrderNo());
         }
         if (!params.isEmpty()) {
             // 组装查询Sql
             String sql = IlCargoInfoCollection;
             for (Map.Entry<String, Object> entry : params.entrySet()) {
-                sql += " AND find_in_set(" + entry.getKey() + "," + entry.getValue() + ") ";
+                sql += " AND find_in_set(" + entry.getKey() + ", '" + entry.getValue() + "') ";
             }
             // 查询
             List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(sql);
@@ -82,6 +53,4 @@ public class CompressService extends BaseService {
         }
         return attachmentIds;
     }
-
-
 }

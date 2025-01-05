@@ -19,31 +19,18 @@ public class ThumbnailParam extends AttachmentParam {
     public ThumbnailParam() {
     }
 
-    public ThumbnailParam(boolean thumbnail, Integer dimension, Double thumbScale) {
-        this.thumbnail = thumbnail;
-        this.dimension = dimension;
-        this.thumbScale = thumbScale;
-    }
-
-    public ThumbnailParam(String objectId, String formIds, String genre, Date invalidTime, Boolean thumbnail, Integer dimension, Double thumbScale) {
-        super(objectId, formIds, genre, invalidTime);
-        this.thumbnail = thumbnail;
-        this.dimension = dimension;
-        this.thumbScale = thumbScale;
-    }
-
-    public ThumbnailParam(String objectId, String formIds, String genre, Date invalidTime, String appId, String tenantCode, Boolean thumbnail, Integer dimension, Double thumbScale) {
-        super(objectId, formIds, genre, invalidTime, appId, tenantCode);
+    public ThumbnailParam(String objectId, String formIds, String genre, Date invalidTime, String batchNo, String appId, String tenantCode, Boolean thumbnail, Integer dimension, Double thumbScale) {
+        super(objectId, formIds, genre, invalidTime, batchNo, appId, tenantCode);
         this.thumbnail = thumbnail;
         this.dimension = dimension;
         this.thumbScale = thumbScale;
     }
 
     public AttachmentParam toAttachmentParam() {
-        return new AttachmentParam(getObjectId(), getFormIds(), getGenre(), getInvalidTime(), getAppId(), getTenantCode());
+        return new AttachmentParam(this.getObjectId(), this.getFormIds(), this.getGenre(), this.getInvalidTime(), this.getBatchNo(), this.getAppId(), this.getTenantCode());
     }
 
     public boolean isThumbnail() {
-        return this.getThumbnail() == null ? false : this.getThumbnail().booleanValue();
+        return this.getThumbnail() != null && this.getThumbnail().booleanValue();
     }
 }

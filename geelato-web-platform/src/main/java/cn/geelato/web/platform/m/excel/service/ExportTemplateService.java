@@ -12,6 +12,7 @@ import cn.geelato.web.platform.m.excel.entity.*;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
+import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import com.alibaba.fastjson2.JSON;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.util.Strings;
@@ -428,7 +429,7 @@ public class ExportTemplateService extends BaseService {
      */
     public Attachment saveAttach(ExportTemplate meta, String excelPath, String fileName) throws IOException {
         File excelFile = new File(excelPath);
-        FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, "fileTemplate", meta.getAppId(), meta.getTenantCode());
+        FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "fileTemplate", meta.getAppId(), meta.getTenantCode());
         return fileHandler.save(excelFile, fileName, excelPath, fileParam);
     }
 

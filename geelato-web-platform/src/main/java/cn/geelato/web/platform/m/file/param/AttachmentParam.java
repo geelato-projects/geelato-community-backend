@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.file.param;
 
 import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.web.platform.m.file.entity.Attachment;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,6 +18,8 @@ public class AttachmentParam {
     private String genre;
     @Title(title = "失效时间")
     private Date invalidTime;
+    @Title(title = "批次号")
+    private String batchNo;
 
     @Title(title = "归属应用")
     private String appId;
@@ -26,19 +29,24 @@ public class AttachmentParam {
     public AttachmentParam() {
     }
 
-    public AttachmentParam(String objectId, String formIds, String genre, Date invalidTime) {
+    public AttachmentParam(String objectId, String formIds, String genre, Date invalidTime, String batchNo, String appId, String tenantCode) {
         this.objectId = objectId;
         this.formIds = formIds;
         this.genre = genre;
         this.invalidTime = invalidTime;
-    }
-
-    public AttachmentParam(String objectId, String formIds, String genre, Date invalidTime, String appId, String tenantCode) {
-        this.objectId = objectId;
-        this.formIds = formIds;
-        this.genre = genre;
-        this.invalidTime = invalidTime;
+        this.batchNo = batchNo;
         this.appId = appId;
         this.tenantCode = tenantCode;
+    }
+
+    public <T extends Attachment> T toAttachment(T attachment) {
+        attachment.setObjectId(this.getObjectId());
+        attachment.setFormIds(this.getFormIds());
+        attachment.setGenre(this.getGenre());
+        attachment.setInvalidTime(this.getInvalidTime());
+        attachment.setBatchNo(this.getBatchNo());
+        attachment.setAppId(this.getAppId());
+        attachment.setTenantCode(this.getTenantCode());
+        return attachment;
     }
 }

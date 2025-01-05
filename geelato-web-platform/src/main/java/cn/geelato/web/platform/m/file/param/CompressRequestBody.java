@@ -11,9 +11,10 @@ import java.util.Date;
 public class CompressRequestBody {
     private String serviceType;
     private Date invalidTime;
-    private Integer amount;
-    private String fileName;
+    private String genre;
     private String attachmentIds;
+    private String fileName;
+    private Integer amount;
     // meta
     @Title(title = "gql语句")
     private String gql;

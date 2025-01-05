@@ -20,6 +20,7 @@ import cn.geelato.web.platform.m.excel.entity.*;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
+import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -828,7 +829,7 @@ public class ImportExcelService {
                 throw new FileTypeNotSupportedException("Business Data, Excel Type: " + contentType);
             }
             // 保存文件信息
-            FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, IMPORT_ERROR_FILE_GENRE, exportTemplate.getAppId(), exportTemplate.getTenantCode());
+            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, IMPORT_ERROR_FILE_GENRE, exportTemplate.getAppId(), exportTemplate.getTenantCode());
             attachment = fileHandler.save(errorFile, errorFileName, directory, fileParam);
             // 可下载
             /*responseOut = response.getOutputStream();

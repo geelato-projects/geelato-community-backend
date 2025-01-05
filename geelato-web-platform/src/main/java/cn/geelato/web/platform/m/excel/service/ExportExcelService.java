@@ -16,6 +16,7 @@ import cn.geelato.web.platform.m.excel.entity.WordWaterMarkMeta;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
+import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import cn.geelato.web.platform.m.zxing.service.BarcodeService;
 import com.alibaba.fastjson2.JSON;
@@ -122,7 +123,7 @@ public class ExportExcelService {
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
             // 保存文件信息
-            FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, "exportFile", exportTemplate.getAppId(), exportTemplate.getTenantCode());
+            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "exportFile", exportTemplate.getAppId(), exportTemplate.getTenantCode());
             Attachment attachment = fileHandler.save(exportFile, fileName, directory, fileParam);
             return ApiResult.success(attachment);
         } catch (Exception e) {
@@ -177,7 +178,7 @@ public class ExportExcelService {
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
             // 保存文件信息
-            FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, "exportFile", appId, tenantCode);
+            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "exportFile", appId, tenantCode);
             Attachment attachment = fileHandler.save(exportFile, fileName, directory, fileParam);
             return ApiResult.success(attachment);
         } catch (Exception e) {
@@ -474,7 +475,7 @@ public class ExportExcelService {
             outputStream.flush();
             workbook.close();
             // 保存附件
-            FileParam fileParam = new FileParam(SAVE_TABLE_TYPE, "exportTemplate", appId, tenantCode);
+            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "exportTemplate", appId, tenantCode);
             Attachment attachment = fileHandler.save(new File(exportPath), fileName, exportPath, fileParam);
             // 数据转换
             info = Base64Helper.fromAttachment(attachment);

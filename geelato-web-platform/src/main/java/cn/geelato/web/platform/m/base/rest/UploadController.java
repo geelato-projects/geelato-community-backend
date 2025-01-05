@@ -10,6 +10,7 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.param.FileParam;
+import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +55,7 @@ public class UploadController extends BaseController {
     @RequestMapping(value = "/file", method = RequestMethod.POST)
     public ApiResult uploadFile(@RequestParam("file") MultipartFile file,
                                 String serviceType, String tableType, String root, Boolean isRename,
-                                String objectId, String formIds, String genre, Date invalidTime,
+                                String objectId, String formIds, String genre, Date invalidTime, String batchNo,
                                 Boolean isThumbnail, Integer dimension, Double thumbScale,
                                 String appId, String tenantCode) throws IOException {
         if (file == null || file.isEmpty()) {
@@ -63,7 +64,7 @@ public class UploadController extends BaseController {
         appId = Strings.isBlank(appId) ? getAppId() : appId;
         tenantCode = Strings.isBlank(tenantCode) ? SessionCtx.getCurrentTenantCode() : tenantCode;
         String path = UploadService.getSavePath(root, tableType, file.getOriginalFilename(), isRename, appId, tenantCode);
-        FileParam fileParam = new FileParam(serviceType, tableType, objectId, formIds, genre, invalidTime, appId, tenantCode, isThumbnail, dimension, thumbScale);
+        FileParam fileParam = FileParamUtils.by(serviceType, tableType, objectId, formIds, genre, invalidTime, batchNo, appId, tenantCode, isThumbnail, dimension, thumbScale);
         Attachment attachment = fileHandler.upload(file, path, fileParam);
         if (attachment == null) {
             return ApiResult.fail("Upload failed");

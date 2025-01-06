@@ -328,25 +328,35 @@ public class FileHandler extends BaseHandler {
      * 压缩附件列表
      *
      * @param attachmentIds 附件ID字符串，多个ID以逗号分隔
+     * @param batchNos      批次号字符串，多个ID以逗号分隔
      * @param fileName      压缩文件的名称
      * @param maxNumber     每个压缩包中允许的最大附件数量，如果为null则使用默认数量
      * @param param         文件参数对象，包含服务类型、来源类型、文件类型、失效时间、租户代码、应用ID等信息
      * @return 压缩后的附件列表
      * @throws IOException 如果在文件操作中发生I/O异常
      */
-    public List<Attachment> compress(String attachmentIds, String fileName, Integer maxNumber, FileParam param) throws IOException {
+    public List<Attachment> compress(String attachmentIds, String batchNos, String fileName, Integer maxNumber, FileParam param) throws IOException {
         List<Attachment> attachments = new ArrayList<>();
         // 参数验证
         if (Strings.isBlank(fileName)) {
             throw new IllegalArgumentException("File name is blank");
         }
         fileName = FileUtils.getFileName(fileName);
+        // 查询参数
+        Map<String, Object> queryParams = new HashMap<>();
         List<String> ids = StringUtils.toListDr(attachmentIds);
-        if (ids == null || ids.isEmpty()) {
-            throw new IllegalArgumentException("Attachment id is empty");
+        if (ids != null && !ids.isEmpty()) {
+            queryParams.put("ids", String.join(",", ids));
+        }
+        List<String> nos = StringUtils.toListDr(batchNos);
+        if (nos != null && !nos.isEmpty()) {
+            queryParams.put("batchNo", String.join(",", nos));
+        }
+        if (queryParams == null || queryParams.isEmpty()) {
+            throw new IllegalArgumentException("Attachment ids and batch nos is blank");
         }
         // 获取附件信息
-        List<Attachment> attachmentList = accessoryHandler.getAttachments(String.join(",", ids));
+        List<Attachment> attachmentList = accessoryHandler.getAttachments(queryParams);
         if (attachmentList == null || attachmentList.isEmpty()) {
             throw new RuntimeException("Attachment not find");
         }

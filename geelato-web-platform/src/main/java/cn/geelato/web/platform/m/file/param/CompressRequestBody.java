@@ -13,14 +13,10 @@ public class CompressRequestBody {
     private Date invalidTime;
     private String genre;
     private String attachmentIds;
+    private String batchNos;
     private String fileName;
     private Integer amount;
     // meta
     @Title(title = "gql语句")
     private String gql;
-    // il_cargo_info_collection
-    @Title(title = "所属订单编码", description = "该信息从接口中采集")
-    private String orderNo;
-    @Title(title = "我司内部的箱号")
-    private String ctnNo;
 }

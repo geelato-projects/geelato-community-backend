@@ -47,17 +47,10 @@ public class CompressController extends BaseController {
 
     @RequestMapping(value = "/meta", method = RequestMethod.POST)
     public ApiResult meta(@RequestBody Map<String, Object> params) throws IOException {
-        CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
-        List<String> attachmentIds = getAttachmentIdsByGql(compBody.getGql());
-        return build(compBody, attachmentIds);
-    }
-
-    @RequestMapping(value = "/il_cargo_info_collection", method = RequestMethod.POST)
-    public ApiResult ilCargoInfoCollection(@RequestBody Map<String, Object> params) throws IOException {
-        CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
-        List<String> attachmentIds = compressService.queryIlCargoInfoCollection(compBody);
-        compBody.setGenre(StringUtils.splice(",", compBody.getGenre(), compBody.getOrderNo(), compBody.getCtnNo()));
-        return build(compBody, attachmentIds);
+        // CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
+        // List<String> attachmentIds = getAttachmentIdsByGql(compBody.getGql());
+        // return build(compBody, attachmentIds);
+        return ApiResult.successNoResult();
     }
 
     private ApiResult<List<Attachment>> build(CompressRequestBody compBody, List<String> attachmentIds) throws IOException {
@@ -70,7 +63,7 @@ public class CompressController extends BaseController {
         String appId = getAppId();
         String tenantCode = getTenantCode();
         FileParam fileParam = FileParamUtils.byBuildCompress(compBody.getServiceType(), compBody.getGenre(), compBody.getInvalidTime(), batchNo, appId, tenantCode);
-        List<Attachment> attachments = fileHandler.compress(compBody.getAttachmentIds(), compBody.getFileName(), compBody.getAmount(), fileParam);
+        List<Attachment> attachments = fileHandler.compress(compBody.getAttachmentIds(), compBody.getBatchNos(), compBody.getFileName(), compBody.getAmount(), fileParam);
         return ApiResult.success(attachments);
     }
 

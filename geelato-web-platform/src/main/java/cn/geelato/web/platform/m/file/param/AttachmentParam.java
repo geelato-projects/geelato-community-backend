@@ -10,6 +10,8 @@ import java.util.Date;
 @Getter
 @Setter
 public class AttachmentParam {
+    @Title(title = "父id")
+    private String pid;
     @Title(title = "云服务器判断信息")
     private String objectId;
     @Title(title = "组成该压缩文件的文件id")
@@ -20,6 +22,8 @@ public class AttachmentParam {
     private Date invalidTime;
     @Title(title = "批次号")
     private String batchNo;
+    @Title(title = "分辨率", description = "像素,单位:px")
+    private String resolution;
 
     @Title(title = "归属应用")
     private String appId;
@@ -29,9 +33,11 @@ public class AttachmentParam {
     public AttachmentParam() {
     }
 
-    public AttachmentParam(String objectId, String formIds, String genre, Date invalidTime, String batchNo, String appId, String tenantCode) {
+    public AttachmentParam(String pid, String objectId, String formIds, String resolution, String genre, Date invalidTime, String batchNo, String appId, String tenantCode) {
+        this.pid = pid;
         this.objectId = objectId;
         this.formIds = formIds;
+        this.resolution = resolution;
         this.genre = genre;
         this.invalidTime = invalidTime;
         this.batchNo = batchNo;
@@ -40,8 +46,10 @@ public class AttachmentParam {
     }
 
     public <T extends Attachment> T toAttachment(T attachment) {
+        attachment.setPid(this.getPid());
         attachment.setObjectId(this.getObjectId());
         attachment.setFormIds(this.getFormIds());
+        attachment.setResolution(this.getResolution());
         attachment.setGenre(this.getGenre());
         attachment.setInvalidTime(this.getInvalidTime());
         attachment.setBatchNo(this.getBatchNo());

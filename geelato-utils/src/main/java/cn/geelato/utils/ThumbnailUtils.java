@@ -1,88 +1,101 @@
 package cn.geelato.utils;
 
+import cn.geelato.utils.entity.Resolution;
 import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ThumbnailUtils {
-    public static final String THUMBNAIL_SUFFIX = "_thumb";
     public static final String THUMBNAIL_GENRE = "Thumbnail";
     private static final int MIN_DIMENSION = 83;
-    private static final double MAX_THUMBNAIL_SCALE = 1.0;
-    private static final double MIN_THUMBNAIL_SCALE = 0.0;
+    private static final double MAX_THUMBNAIL_SCALE = 1.00;
+    private static final double MIN_THUMBNAIL_SCALE = 0.00;
 
     /**
      * 生成指定文件的缩略图并保存到指定输出文件中。
      *
-     * @param input  原始文件
-     * @param output 输出文件
-     */
-    public static void thumbnail(File input, File output) {
-        ThumbnailUtils.thumbnail(input, output, null, null);
-    }
-
-
-    /**
-     * 生成指定文件的缩略图并保存到指定输出文件中。
-     *
-     * @param input     原始文件
-     * @param output    输出文件
-     * @param dimension 缩略图的最小边长
+     * @param input      原始文件
+     * @param output     输出文件
+     * @param resolution 缩略图的分辨率，如果为null则使用默认的83x83
      * @throws RuntimeException 如果在处理过程中发生异常，则抛出运行时异常
      */
-    public static void thumbnail(File input, File output, Integer dimension, Double thumbScale) {
+    public static void thumbnail(File input, File output, Resolution resolution) {
         try {
-            // 读取原始图片
-            BufferedImage originalImage = ImageIO.read(input);
-            // 计算缩略图的宽度和高度（假设缩略图大小为原始图片的一半）
-            double minScale = 1 / setThumbScale(thumbScale);
-            if (minScale <= MAX_THUMBNAIL_SCALE) {
-                minScale = minScale(originalImage.getWidth(), originalImage.getHeight(), setDimension(dimension));
+            if (!Resolution.validate(resolution)) {
+                throw new RuntimeException("缩略图分辨率不合法");
             }
-            int scaledWidth = (int) (originalImage.getWidth() / minScale);
-            int scaledHeight = (int) (originalImage.getHeight() / minScale);
             // 创建缩略图图片
-            Thumbnails.of(input).size(scaledWidth, scaledHeight).outputQuality(minScale > 1 ? 0.8f : 1.0f).toFile(output);
+            Thumbnails.of(input).size(resolution.getWidth(), resolution.getHeight()).toFile(output);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
+
     /**
-     * 判断给定文件是否为缩略图。
+     * 根据输入的图片文件和指定的尺寸、缩放比例生成一系列的缩略图分辨率。
      *
-     * @param input 需要判断的文件
-     * @return 如果文件是缩略图，则返回 true；否则返回 false
+     * @param input      输入的图片文件
+     * @param dimension  尺寸字符串，例如 "100,200"
+     * @param thumbScale 缩放比例字符串，例如 "0.5,0.75"
+     * @return 包含所有生成的缩略图分辨率的列表
+     * @throws IOException 如果读取文件时发生I/O异常
      */
-    public static boolean isThumbnail(File input) {
-        return isThumbnail(input, null);
+    public static List<Resolution> resolution(File input, String dimension, String thumbScale) throws IOException {
+        List<Resolution> resolutions = new ArrayList<>();
+        if (!ThumbnailUtils.isImage(input)) {
+            return resolutions;
+        }
+        BufferedImage originalImage = ImageIO.read(input);
+        Set<Double> scales = new LinkedHashSet<>();
+        // 解析缩略图尺寸
+        List<String> dimensions = StringUtils.toListDr(dimension);
+        for (String dis : dimensions) {
+            double minScale = minScale(originalImage.getWidth(), originalImage.getHeight(), setDimension(dis));
+            scales.add(1 / minScale);
+        }
+        // 解析缩略图缩放比例
+        List<String> thumbScales = StringUtils.toListDr(thumbScale);
+        for (String ts : thumbScales) {
+            scales.add(setThumbScale(ts));
+        }
+        // 如果没有指定尺寸和缩放比例，则默认使用最小边长为83的缩略图
+        if (scales.isEmpty()) {
+            double minScale = minScale(originalImage.getWidth(), originalImage.getHeight(), setDimension(null));
+            scales.add(1 / minScale);
+        }
+        // 生成缩略图分辨率
+        for (Double scale : scales) {
+            if (scale > MIN_THUMBNAIL_SCALE && scale < MAX_THUMBNAIL_SCALE) {
+                int scaledWidth = (int) (originalImage.getWidth() * scale);
+                int scaledHeight = (int) (originalImage.getHeight() * scale);
+                resolutions.add(new Resolution(scaledWidth, scaledHeight));
+            }
+        }
+        return Resolution.distinct(resolutions);
     }
 
     /**
-     * 判断给定文件是否为缩略图。
+     * 判断给定文件是否为图片文件
      *
-     * @param input     待判断的文件
-     * @param dimension 缩略图的最小尺寸
-     * @return 如果文件是缩略图，则返回 true；否则返回 false
+     * @param input 要判断的文件
+     * @return 如果文件存在且是图片文件，则返回true；否则返回false
+     * @throws IOException 如果文件无法读取或发生其他I/O错误，则抛出IOException
      */
-    public static boolean isThumbnail(File input, Integer dimension) {
-        try {
-            if (!input.exists()) {
-                return false;
-            }
-            String mimeType = Files.probeContentType(input.toPath());
-            if (StringUtils.isBlank(mimeType) || !mimeType.startsWith("image/")) {
-                return false;
-            }
-            BufferedImage originalImage = ImageIO.read(input);
-            double minScale = minScale(originalImage.getWidth(), originalImage.getHeight(), setDimension(dimension));
-            return minScale > 1;
-        } catch (Exception e) {
+    public static boolean isImage(File input) throws IOException {
+        if (!input.exists()) {
             return false;
         }
+        String mimeType = Files.probeContentType(input.toPath());
+        return !StringUtils.isBlank(mimeType) && mimeType.startsWith("image/");
     }
 
     /**
@@ -106,17 +119,18 @@ public class ThumbnailUtils {
      * @param dimension 缩略图的尺寸
      * @return 缩略图的尺寸，最小为MIN_DIMENSION
      */
-    private static int setDimension(Integer dimension) {
-        return Math.max(dimension == null ? 0 : dimension.intValue(), MIN_DIMENSION);
+    private static int setDimension(String dimension) {
+        return Math.max(dimension == null ? 0 : Integer.valueOf(dimension), MIN_DIMENSION);
     }
 
     /**
-     * 设置缩略图的缩放比例
+     * 设置缩略图缩放比例
      *
-     * @param thumbScale 缩略图的缩放比例
-     * @return 调整后的缩放比例，最小为0.0，最大为MAX_THUMBNAIL_SCALE
+     * @param thumbScale 缩放比例字符串，可为null
+     * @return 缩放比例值，double类型
      */
-    private static double setThumbScale(Double thumbScale) {
-        return Math.min(thumbScale == null ? MAX_THUMBNAIL_SCALE : Math.max(thumbScale.doubleValue(), MIN_THUMBNAIL_SCALE), MAX_THUMBNAIL_SCALE);
+    private static double setThumbScale(String thumbScale) {
+        double scale = (thumbScale == null) ? MIN_THUMBNAIL_SCALE : Math.max(Double.valueOf(thumbScale), MIN_THUMBNAIL_SCALE);
+        return scale > MAX_THUMBNAIL_SCALE ? (1 / scale) : scale;
     }
 }

@@ -56,7 +56,7 @@ public class UploadController extends BaseController {
     public ApiResult uploadFile(@RequestParam("file") MultipartFile file,
                                 String serviceType, String tableType, String root, Boolean isRename,
                                 String objectId, String formIds, String genre, Date invalidTime, String batchNo,
-                                Boolean isThumbnail, Integer dimension, Double thumbScale,
+                                Boolean isThumbnail, Boolean onlyThumb, String dimension, String thumbScale,
                                 String appId, String tenantCode) throws IOException {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
@@ -64,7 +64,7 @@ public class UploadController extends BaseController {
         appId = Strings.isBlank(appId) ? getAppId() : appId;
         tenantCode = Strings.isBlank(tenantCode) ? SessionCtx.getCurrentTenantCode() : tenantCode;
         String path = UploadService.getSavePath(root, tableType, file.getOriginalFilename(), isRename, appId, tenantCode);
-        FileParam fileParam = FileParamUtils.by(serviceType, tableType, objectId, formIds, genre, invalidTime, batchNo, appId, tenantCode, isThumbnail, dimension, thumbScale);
+        FileParam fileParam = FileParamUtils.by(serviceType, tableType, objectId, formIds, genre, invalidTime, batchNo, appId, tenantCode, isThumbnail, onlyThumb, dimension, thumbScale);
         Attachment attachment = fileHandler.upload(file, path, fileParam);
         if (attachment == null) {
             return ApiResult.fail("Upload failed");

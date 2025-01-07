@@ -1,6 +1,7 @@
 -- @sql platform_attachment_by_more
 SELECT
     p.id,
+    p.pid,
     p.object_id as objectId,
     p.form_ids as formIds,
     p.name,
@@ -10,6 +11,7 @@ SELECT
     p.genre,
     p.invalid_time as invalidTime,
     p.batch_no as batchNo,
+    p.resolution,
     p.dept_id as deptId,
     p.bu_id as buId,
     p.app_id as appId,
@@ -42,6 +44,12 @@ FROM (
 @if $.id!=null&&$.id!=''
   AND find_in_set(p.id, '$.id')
 @/if
+@if $.pid!=null&&$.pid!=''
+  AND find_in_set(p.pid, '$.pid')
+@/if
+@if $.pids!=null&&$.pids!=''
+  AND (find_in_set(p.pid, '$.pids') OR find_in_set(p.id, '$.pids'))
+@/if
 @if $.objectId!=null&&$.objectId!=''
   AND p.object_id = '$.objectId'
 @/if
@@ -71,6 +79,9 @@ FROM (
 @/if
 @if $.batchNo!=null&&$.batchNo!=''
   AND find_in_set(p.batch_no, '$.batchNo')
+@/if
+@if $.resolution!=null&&$.resolution!=''
+  AND find_in_set(p.resolution, '$.resolution')
 @/if
 @if $.source!=null&&$.source!=''
   AND find_in_set(p.source, '$.source')

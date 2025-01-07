@@ -66,41 +66,6 @@ public class AccessoryHandler {
     }
 
     /**
-     * 更新附件或资源ID
-     *
-     * @param handlerType 处理器类型
-     * @param sourceId    原附件ID
-     * @param targetId    目标附件ID
-     * @return 更新后的附件ID
-     */
-    public String updateId(String handlerType, String sourceId, String targetId) {
-        return getAttachHandler(handlerType).updateId(sourceId, targetId);
-    }
-
-    /**
-     * 更新缩略图ID
-     *
-     * @param handlerType 处理器类型
-     * @param sourceId    源ID
-     * @param targetId    目标ID
-     * @return 更新后的ID
-     */
-    public String updateThumbnailId(String handlerType, String sourceId, String targetId) {
-        return getAttachHandler(handlerType).updateId(attachHandler.setThumbnailId(sourceId), targetId);
-    }
-
-    /**
-     * 更新删除标识的ID
-     *
-     * @param handlerType 处理器类型
-     * @param sourceId    源ID
-     * @return 更新后的ID
-     */
-    public String updateDeleteId(String handlerType, String sourceId) {
-        return getAttachHandler(handlerType).updateId(attachHandler.setDeleteId(sourceId), sourceId);
-    }
-
-    /**
      * 根据附件ID和是否为缩略图获取附件信息
      *
      * @param id          附件ID
@@ -125,6 +90,10 @@ public class AccessoryHandler {
         return getAttachHandler(AttachHandler.ATTACHMENT_SOURCE).list(attachmentIds);
     }
 
+    public void updateChildThumbnail(String handlerType, String parentId, List<String> ids) {
+        getAttachHandler(handlerType).updateChildThumbnail(parentId, ids);
+    }
+
     /**
      * 删除附件
      *
@@ -133,10 +102,9 @@ public class AccessoryHandler {
      */
     public void delete(String id, Boolean isRemoved) {
         AttachmentHandler<?> attachmentHandler = getAttachHandler(AttachHandler.ATTACHMENT_SOURCE);
-        String ids = attachmentHandler.getPriAndThuId(id);
-        if (Strings.isNotBlank(ids)) {
+        if (Strings.isNotBlank(id)) {
             // 查询附件的原图和缩略图
-            List<Attachment> attachments = attachmentHandler.list(ids);
+            List<Attachment> attachments = attachmentHandler.list("pids", id);
             for (Attachment attachment : attachments) {
                 if (isRemoved && Strings.isBlank(attachment.getObjectId())) {
                     // 物理删除附件的原图和缩略图（本地存储）
@@ -149,8 +117,6 @@ public class AccessoryHandler {
                     } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
                         Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
                         resourcesHandler.delete(model);
-                    } else {
-                        continue;
                     }
                 } else {
                     // 逻辑删除附件的原图和缩略图
@@ -163,8 +129,6 @@ public class AccessoryHandler {
                     } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
                         Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
                         resourcesHandler.isDelete(model);
-                    } else {
-                        continue;
                     }
                 }
             }

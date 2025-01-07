@@ -11,26 +11,33 @@ import java.util.Date;
 public class ThumbnailParam extends AttachmentParam {
     @Title(title = "缩略图")
     private Boolean thumbnail;
+    @Title(title = "仅保存缩略图")
+    private Boolean onlyThumb;
     @Title(title = "缩略图尺寸")
-    private Integer dimension;
+    private String dimension;
     @Title(title = "缩略图尺寸比例")
-    private Double thumbScale;
+    private String thumbScale;
 
     public ThumbnailParam() {
     }
 
-    public ThumbnailParam(String objectId, String formIds, String genre, Date invalidTime, String batchNo, String appId, String tenantCode, Boolean thumbnail, Integer dimension, Double thumbScale) {
-        super(objectId, formIds, genre, invalidTime, batchNo, appId, tenantCode);
+    public ThumbnailParam(String pid, String objectId, String formIds, String resolution, String genre, Date invalidTime, String batchNo, String appId, String tenantCode, Boolean thumbnail, Boolean onlyThumb, String dimension, String thumbScale) {
+        super(pid, objectId, formIds, resolution, genre, invalidTime, batchNo, appId, tenantCode);
         this.thumbnail = thumbnail;
+        this.onlyThumb = onlyThumb;
         this.dimension = dimension;
         this.thumbScale = thumbScale;
     }
 
     public AttachmentParam toAttachmentParam() {
-        return new AttachmentParam(this.getObjectId(), this.getFormIds(), this.getGenre(), this.getInvalidTime(), this.getBatchNo(), this.getAppId(), this.getTenantCode());
+        return new AttachmentParam(this.getPid(), this.getObjectId(), this.getFormIds(), this.getResolution(), this.getGenre(), this.getInvalidTime(), this.getBatchNo(), this.getAppId(), this.getTenantCode());
     }
 
     public boolean isThumbnail() {
         return this.getThumbnail() != null && this.getThumbnail().booleanValue();
+    }
+
+    public boolean isOnlyThumb() {
+        return this.getOnlyThumb() != null && this.getOnlyThumb().booleanValue();
     }
 }

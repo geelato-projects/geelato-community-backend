@@ -17,13 +17,17 @@ public class FileParam extends ThumbnailParam {
     public FileParam() {
     }
 
-    public FileParam(String serviceType, String sourceType, String objectId, String formIds, String genre, Date invalidTime, String batchNo, String appId, String tenantCode, Boolean thumbnail, Integer dimension, Double thumbScale) {
-        super(objectId, formIds, genre, invalidTime, batchNo, appId, tenantCode, thumbnail, dimension, thumbScale);
+    public FileParam(String serviceType, String sourceType, String pid, String objectId, String formIds, String resolution, String genre, Date invalidTime, String batchNo, String appId, String tenantCode, Boolean thumbnail, Boolean onlyThumb, String dimension, String thumbScale) {
+        super(pid, objectId, formIds, resolution, genre, invalidTime, batchNo, appId, tenantCode, thumbnail, onlyThumb, dimension, thumbScale);
         this.serviceType = serviceType;
         this.sourceType = sourceType;
     }
 
     public ThumbnailParam toThumbnailParam() {
-        return new ThumbnailParam(this.getObjectId(), this.getFormIds(), this.getGenre(), this.getInvalidTime(), this.getBatchNo(), this.getAppId(), this.getTenantCode(), this.getThumbnail(), this.getDimension(), this.getThumbScale());
+        return new ThumbnailParam(this.getPid(), this.getObjectId(), this.getFormIds(), this.getResolution(), this.getGenre(), this.getInvalidTime(), this.getBatchNo(), this.getAppId(), this.getTenantCode(), this.isThumbnail(), this.isOnlyThumb(), this.getDimension(), this.getThumbScale());
+    }
+
+    public FileParam toFileParam() {
+        return new FileParam(this.getServiceType(), this.getSourceType(), this.getPid(), this.getObjectId(), this.getFormIds(), this.getResolution(), this.getGenre(), this.getInvalidTime(), this.getBatchNo(), this.getAppId(), this.getTenantCode(), this.isThumbnail(), this.isOnlyThumb(), this.getDimension(), this.getThumbScale());
     }
 }

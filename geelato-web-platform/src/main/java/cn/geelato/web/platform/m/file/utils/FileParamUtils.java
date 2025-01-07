@@ -17,7 +17,7 @@ public class FileParamUtils {
      * @return 生成的文件参数对象
      */
     public static FileParam byLocal(String sourceType, String genre, String appId, String tenantCode) {
-        return new FileParam(null, sourceType, null, null, genre, null, null, appId, tenantCode, null, null, null);
+        return new FileParam(null, sourceType, null, null, null, null, genre, null, null, appId, tenantCode, null, null, null, null);
     }
 
     /**
@@ -32,7 +32,7 @@ public class FileParamUtils {
      * @return 生成的文件参数对象
      */
     public static FileParam byBuildCompress(String serviceType, String genre, Date invalidTime, String batchNo, String appId, String tenantCode) {
-        return new FileParam(serviceType, CompressHandler.ATTACHMENT_SOURCE, null, null, genre, invalidTime, batchNo, appId, tenantCode, null, null, null);
+        return new FileParam(serviceType, CompressHandler.ATTACHMENT_SOURCE, null, null, null, null, genre, invalidTime, batchNo, appId, tenantCode, null, null, null, null);
     }
 
 
@@ -50,7 +50,7 @@ public class FileParamUtils {
      * @return 生成的文件参数对象
      */
     public static FileParam bySaveCompress(String serviceType, String sourceType, String formIds, String genre, Date invalidTime, String batchNo, String appId, String tenantCode) {
-        return new FileParam(serviceType, sourceType, null, formIds, genre, invalidTime, batchNo, appId, tenantCode, null, null, null);
+        return new FileParam(serviceType, sourceType, null, null, formIds, null, genre, invalidTime, batchNo, appId, tenantCode, null, null, null, null);
     }
 
 
@@ -65,7 +65,7 @@ public class FileParamUtils {
      * @return 生成的文件参数对象
      */
     public static FileParam byThumbnail(String ServiceType, String sourceType, String genre, String appId, String tenantCode) {
-        return new FileParam(ServiceType, sourceType, null, null, genre, null, null, appId, tenantCode, null, null, null);
+        return new FileParam(ServiceType, sourceType, null, null, null, null, genre, null, null, appId, tenantCode, null, null, null, null);
     }
 
     /**
@@ -77,11 +77,10 @@ public class FileParamUtils {
      * @param tenantCode  租户代码
      * @param thumbnail   是否生成缩略图
      * @param dimension   缩略图尺寸
-     * @param thumbScale  缩略图缩放比例
      * @return 生成的文件参数对象
      */
-    public static FileParam byBase64AndThumbnail(String serviceType, String sourceType, String genre, String tenantCode, Boolean thumbnail, Integer dimension, Double thumbScale) {
-        return new FileParam(serviceType, sourceType, null, null, genre, null, null, null, tenantCode, thumbnail, dimension, thumbScale);
+    public static FileParam byBase64AndThumbnail(String serviceType, String sourceType, String genre, String batchNo, String tenantCode, Boolean thumbnail, Boolean onlyThumb, String dimension) {
+        return new FileParam(serviceType, sourceType, null, null, null, null, genre, null, batchNo, null, tenantCode, thumbnail, onlyThumb, dimension, null);
     }
 
     /**
@@ -101,7 +100,7 @@ public class FileParamUtils {
      * @param thumbScale  缩略图缩放比例
      * @return 创建的FileParam对象
      */
-    public static FileParam by(String serviceType, String sourceType, String objectId, String formIds, String genre, Date invalidTime, String batchNo, String appId, String tenantCode, Boolean thumbnail, Integer dimension, Double thumbScale) {
-        return new FileParam(serviceType, sourceType, objectId, formIds, genre, invalidTime, batchNo, appId, tenantCode, thumbnail, dimension, thumbScale);
+    public static FileParam by(String serviceType, String sourceType, String objectId, String formIds, String genre, Date invalidTime, String batchNo, String appId, String tenantCode, Boolean thumbnail, Boolean onlyThumb, String dimension, String thumbScale) {
+        return new FileParam(serviceType, sourceType, null, objectId, formIds, null, genre, invalidTime, batchNo, appId, tenantCode, thumbnail, onlyThumb, dimension, thumbScale);
     }
 }

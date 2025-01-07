@@ -12,6 +12,7 @@ import org.apache.commons.collections.map.HashedMap;
 import org.springframework.util.Assert;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author geemeta
@@ -237,6 +238,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
      * 构建单个过滤条件
      */
     protected void buildConditionSegment(StringBuilder sb, EntityMeta em, FilterGroup.Filter filter) {
+        //todo refactor enum interface
         if (filter.getFilterFieldType() == FilterGroup.FilterFieldType.Function) {
             FilterGroup.Operator operator = filter.getOperator();
             String fm = filter.getField();
@@ -337,7 +339,28 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                 String startTime = ja.get(0).toString();
                 String endTime = ja.get(1).toString();
                 sb.append(String.format("  between '%s' and '%s' ", startTime, endTime));
-            } else {
+            }else if (operator==FilterGroup.Operator.fis){
+                if ("JSON".equals(fm.getColumn().getDataType())) {
+                    String[] parts;
+                    if (Pattern.matches("^\\[(\".+\")(,(\".+\"))*]$", filter.getValue())) {
+                        JSONArray jsonArray= JSONArray.parse(filter.getValue());
+                        parts=jsonArray.toArray(String.class);
+                    } else {
+                        parts =  filter.getValue().split(",");
+                    }
+                    sb.append("(  ");
+                    for (int i=0;i<parts.length;i++){
+                        sb.append(String.format(" JSON_CONTAINS( %s->'$','%s') >0", fm.getColumnName(), "\"" + parts[i] + "\""));
+                        if(i<parts.length-1) {
+                            sb.append("  or  ");
+                        }
+                    }
+                    sb.append("  )");
+                } else {
+                    throw new RuntimeException("该字段不支持fis过滤函数：" + fm.getColumnName());
+                }
+            }
+            else {
                 throw new RuntimeException("未实现Operator：" + operator);
             }
         }

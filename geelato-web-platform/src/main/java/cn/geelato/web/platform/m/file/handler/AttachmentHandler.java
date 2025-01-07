@@ -4,11 +4,12 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ThumbnailUtils;
+import cn.geelato.utils.entity.Resolution;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.param.AttachmentParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailParam;
-import cn.geelato.web.platform.m.file.utils.AttachmentParamUtils;
+import cn.geelato.web.platform.m.file.param.ThumbnailResolution;
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public abstract class AttachmentHandler<E extends Attachment> {
@@ -78,96 +76,47 @@ public abstract class AttachmentHandler<E extends Attachment> {
 
     public abstract E upload(String base64String, String name, String path, ThumbnailParam param) throws IOException;
 
-    /**
-     * 为给定的附件生成缩略图
-     *
-     * @param source 要生成缩略图的原始附件对象
-     * @return 如果生成了缩略图，则返回新的缩略图附件对象，否则返回null
-     * @throws IOException 如果在生成缩略图或保存缩略图时发生I/O错误
-     */
-    public abstract E thumbnail(E source, ThumbnailParam param) throws IOException;
+    public abstract E thumbAndSave(File file, String name, String path, ThumbnailParam param) throws IOException;
 
-    /**
-     * 为给定的附件生成缩略图
-     *
-     * @param source           要生成缩略图的原始附件对象
-     * @param attachmentSource 附件来源，例如：avatar,convert等
-     * @param dimension        缩略图的尺寸（宽度或高度），如果为null则不进行尺寸判断
-     * @return 如果生成了缩略图，则返回新的缩略图附件对象，否则返回null
-     * @throws IOException 如果在生成缩略图或保存缩略图时发生I/O错误
-     */
-    public E createThumbnail(E source, String attachmentSource, Integer dimension, Double thumbScale) throws IOException {
-        File sourceFile = new File(source.getPath());
-        if (ThumbnailUtils.isThumbnail(sourceFile, dimension)) {
-            String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, attachmentSource, source.getTenantCode(), source.getAppId(), source.getName(), true);
-            File file = new File(path);
-            ThumbnailUtils.thumbnail(sourceFile, file, dimension, thumbScale);
-            if (!file.exists()) {
-                throw new RuntimeException("thumbnail save failed");
+    public List<ThumbnailResolution> createThumbnail(File file, String fileName, String attachmentSource, String appId, String tenantCode, String dimension, String thumbScale) throws IOException {
+        List<ThumbnailResolution> thumbnailResolutions = new ArrayList<>();
+        // 根据原始图片的尺寸和缩略图比例，计算需要生成的缩略图的分辨率列表
+        List<Resolution> thumbResolutions = ThumbnailUtils.resolution(file, dimension, thumbScale);
+        if (thumbResolutions != null && !thumbResolutions.isEmpty()) {
+            for (Resolution resolution : thumbResolutions) {
+                String thumbPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, attachmentSource, tenantCode, appId, fileName, true);
+                File thumbFile = new File(thumbPath);
+                ThumbnailUtils.thumbnail(file, thumbFile, resolution);
+                if (thumbFile == null || !thumbFile.exists()) {
+                    throw new RuntimeException("thumbnail save failed");
+                }
+                thumbnailResolutions.add(new ThumbnailResolution(resolution, thumbFile, thumbPath));
             }
-            String genre = StringUtils.splice(",", source.getGenre(), ThumbnailUtils.THUMBNAIL_GENRE);
-            AttachmentParam attachmentParam = AttachmentParamUtils.byThumbnail(genre, source.getAppId(), source.getTenantCode());
-            return build(file, source.getName(), path, attachmentParam);
+        }
+        return thumbnailResolutions;
+    }
+
+    public abstract void updateChildThumbnail(String parentId, List<String> updateIds);
+
+    public void updateChildThumbnail(String updatePidSql, String parentId, List<String> updateIds) {
+        if (parentId != null && updateIds != null) {
+            for (String id : updateIds) {
+                if (parentId.equals(id)) {
+                    continue;
+                }
+                dao.getJdbcTemplate().update(updatePidSql, parentId, id);
+            }
+        }
+    }
+
+    public E getParentThumbnail(Map<Integer, E> thumbMap) {
+        if (!thumbMap.isEmpty()) {
+            Optional<Integer> optional = thumbMap.keySet().stream().sorted(Comparator.reverseOrder()).findFirst();
+            return thumbMap.get(optional.get());
         }
         return null;
     }
 
-    /**
-     * 设置缩略图的ID
-     *
-     * @param id 原始图片的ID
-     * @return 缩略图的ID
-     */
-    public String setThumbnailId(String id) {
-        return id + ThumbnailUtils.THUMBNAIL_SUFFIX;
-    }
-
-    /**
-     * 设置原始图片ID
-     *
-     * @param targetId 目标ID，通常为包含缩略图后缀的字符串
-     * @return 去除缩略图后缀后的原始图片ID
-     */
-    public String setPrimevalId(String targetId) {
-        return targetId.substring(0, targetId.lastIndexOf(ThumbnailUtils.THUMBNAIL_SUFFIX));
-    }
-
-    /**
-     * 设置删除标识的ID（删除文本后）
-     *
-     * @param id 需要设置删除标识的ID
-     * @return 返回添加了删除标识的ID
-     */
-    public String setDeleteId(String id) {
-        return id + "_delete";
-    }
-
-    /**
-     * 获取原始图片ID和缩略图ID
-     *
-     * @param id 图片ID，可以是原始图片ID或缩略图ID
-     * @return 以逗号分隔的原始图片ID和缩略图ID字符串，如果id为空或无效则返回空字符串
-     */
-    public String getPriAndThuId(String id) {
-        if (Strings.isNotBlank(id)) {
-            if (id.endsWith(ThumbnailUtils.THUMBNAIL_SUFFIX)) {
-                return StringUtils.splice(",", id, setPrimevalId(id));
-            } else {
-                return StringUtils.splice(",", id, setThumbnailId(id));
-            }
-        }
-        return "";
-    }
-
-
-    /**
-     * 更新指定目标ID为新的ID
-     *
-     * @param updateId 新的ID，用于替换目标ID
-     * @param sourceId 目标ID，需要被更新的ID
-     * @return 更新后的ID字符串
-     */
-    public abstract String updateId(String updateId, String sourceId);
 
     /**
      * 获取附件信息
@@ -180,17 +129,14 @@ public abstract class AttachmentHandler<E extends Attachment> {
      */
     public Attachment single(String id, boolean isThumbnail) {
         Attachment primeval = null;
+        if (Strings.isNotBlank(id)) {
+            List<Attachment> attachments = list(id);
+            primeval = attachments.stream().findFirst().orElse(null);
+        }
         Attachment thumbnail = null;
-        String ids = getPriAndThuId(id);
-        if (Strings.isNotBlank(ids)) {
-            List<Attachment> attachments = list(ids);
-            for (Attachment attachment : attachments) {
-                if (attachment.getId().endsWith(ThumbnailUtils.THUMBNAIL_SUFFIX)) {
-                    thumbnail = attachment;
-                } else {
-                    primeval = attachment;
-                }
-            }
+        if (isThumbnail && Strings.isNotBlank(id)) {
+            List<Attachment> attachments = list("pid", id);
+            thumbnail = minResolutions(attachments);
         }
         // 根据是否需要缩略图返回对应的附件信息
         return isThumbnail && thumbnail != null ? thumbnail : primeval;
@@ -204,6 +150,22 @@ public abstract class AttachmentHandler<E extends Attachment> {
         Map<String, Object> params = new HashMap<>();
         params.put(fieldName, value);
         return list(params);
+    }
+
+    public Attachment minResolutions(List<Attachment> thumbnail) {
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            Map<String, Attachment> thumbnailMap = new HashMap<>();
+            for (Attachment attachment : thumbnail) {
+                if (Strings.isNotBlank(attachment.getResolution())) {
+                    thumbnailMap.put(attachment.getResolution(), attachment);
+                }
+            }
+            if (!thumbnailMap.isEmpty()) {
+                Resolution resolution = Resolution.min(thumbnailMap.keySet());
+                return thumbnailMap.get(resolution == null ? "0x0" : resolution.getProduct());
+            }
+        }
+        return null;
     }
 
     /**

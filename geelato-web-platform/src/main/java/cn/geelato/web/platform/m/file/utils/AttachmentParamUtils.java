@@ -12,6 +12,6 @@ public class AttachmentParamUtils {
      * @return 构建好的附件参数对象
      */
     public static AttachmentParam byThumbnail(String genre, String appId, String tenantCode) {
-        return new AttachmentParam(null, null, genre, null, null, appId, tenantCode);
+        return new AttachmentParam(null, null, null, null, genre, null, null, appId, tenantCode);
     }
 }

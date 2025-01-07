@@ -11,7 +11,6 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.param.CompressRequestBody;
 import cn.geelato.web.platform.m.file.param.FileParam;
-import cn.geelato.web.platform.m.file.service.CompressService;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import cn.geelato.web.platform.utils.GqlResolveException;
 import com.alibaba.fastjson2.JSON;
@@ -24,24 +23,37 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-@ApiRestController("/compress")
+@ApiRestController("/pack")
 @Slf4j
 public class CompressController extends BaseController {
-    private final CompressService compressService;
     private final FileHandler fileHandler;
 
     @Autowired
-    public CompressController(CompressService compressService, FileHandler fileHandler) {
-        this.compressService = compressService;
+    public CompressController(FileHandler fileHandler) {
         this.fileHandler = fileHandler;
     }
 
-    @RequestMapping(value = "/batch", method = RequestMethod.POST)
-    public ApiResult batch(@RequestBody Map<String, Object> params) throws IOException {
+    @RequestMapping(value = "/by/fileIds", method = RequestMethod.POST)
+    public ApiResult byFileIds(@RequestBody Map<String, Object> params) throws IOException {
         CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
+        return build(compBody);
+    }
+
+    @RequestMapping(value = "/by/batch", method = RequestMethod.POST)
+    public ApiResult byBatchNos(@RequestBody Map<String, Object> params) throws IOException {
+        CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
+        return build(compBody);
+    }
+
+    @RequestMapping(value = "/by/thumb", method = RequestMethod.POST)
+    public ApiResult byThumbs(@RequestBody Map<String, Object> params) throws IOException {
+        CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
+        compBody.setAttachmentIds(buildThumb(compBody.getAttachmentIds()));
         return build(compBody);
     }
 
@@ -53,18 +65,36 @@ public class CompressController extends BaseController {
         return ApiResult.successNoResult();
     }
 
-    private ApiResult<List<Attachment>> build(CompressRequestBody compBody, List<String> attachmentIds) throws IOException {
+    private String buildThumb(String attachmentIds) {
+        Map<String, Object> queryParams = new HashMap<>();
+        queryParams.put("pids", attachmentIds);
+        List<Attachment> attachmentList = fileHandler.getAttachments(queryParams);
+        if (attachmentList == null || attachmentList.isEmpty()) {
+            return "";
+        }
+        List<String> ids = attachmentList.stream().map(Attachment::getId).collect(Collectors.toList());
+        return String.join(",", ids);
+    }
+
+    private ApiResult build(CompressRequestBody compBody, List<String> attachmentIds) throws IOException {
         compBody.setAttachmentIds(String.join(",", attachmentIds));
         return build(compBody);
     }
 
-    private ApiResult<List<Attachment>> build(CompressRequestBody compBody) throws IOException {
+    private ApiResult build(CompressRequestBody compBody) throws IOException {
         String batchNo = String.valueOf(System.currentTimeMillis());
         String appId = getAppId();
         String tenantCode = getTenantCode();
         FileParam fileParam = FileParamUtils.byBuildCompress(compBody.getServiceType(), compBody.getGenre(), compBody.getInvalidTime(), batchNo, appId, tenantCode);
         List<Attachment> attachments = fileHandler.compress(compBody.getAttachmentIds(), compBody.getBatchNos(), compBody.getFileName(), compBody.getAmount(), fileParam);
-        return ApiResult.success(attachments);
+        if (attachments == null || attachments.isEmpty()) {
+            return ApiResult.fail("压缩失败");
+        }
+        List<String> attachmentIds = attachments.stream().map(Attachment::getId).collect(Collectors.toList());
+        Map<String, Object> result = new HashMap<>();
+        result.put("attachmentIds", attachmentIds);
+        result.put("batchNo", batchNo);
+        return ApiResult.success(result);
     }
 
     /**

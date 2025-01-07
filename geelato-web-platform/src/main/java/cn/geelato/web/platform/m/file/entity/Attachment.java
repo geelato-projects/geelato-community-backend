@@ -19,6 +19,8 @@ import java.util.Date;
 @Getter
 @Setter
 public class Attachment extends BaseEntity {
+    @Title(title = "父id")
+    private String pid;
     @Col(name = "app_id")
     @Title(title = "所属应用")
     private String appId;
@@ -50,6 +52,8 @@ public class Attachment extends BaseEntity {
     @Col(name = "batch_no")
     @Title(title = "批次号")
     private String batchNo;
+    @Title(title = "分辨率", description = "像素,单位:px")
+    private String resolution;
 
     @Transient
     private String source;

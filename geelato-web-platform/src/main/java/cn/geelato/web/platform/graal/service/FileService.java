@@ -87,34 +87,23 @@ public class FileService {
      * @param base64String Base64编码的图片字符串
      * @param fileName     保存的文件名
      * @param suffix       文件的后缀名
+     * @param batchNo      批次号
      * @param isThumbnail  是否生成缩略图
      * @param dimension    缩略图的尺寸，默认为100
      * @return 保存的图片的附件ID
      * @throws IOException 如果在保存文件或生成缩略图时发生I/O异常
      */
-    public String saveBase64(String base64String, String fileName, String suffix, String serviceType, String tableType, Boolean isThumbnail, Integer dimension) throws IOException {
+    public String saveBase64(String base64String, String fileName, String suffix, String serviceType, String tableType, String batchNo, Boolean isThumbnail,Boolean onlyThumb, String dimension) throws IOException {
         if (Strings.isBlank(base64String) || Strings.isBlank(fileName) || Strings.isBlank(suffix)) {
             throw new RuntimeException("saveBase64：base64String or fileName or suffix can not be empty");
         }
         fileName = FileUtils.getFileName(fileName) + "." + suffix;
         String tenantCode = GraalUtils.getCurrentTenantCode();
-        FileParam fileParam = FileParamUtils.byBase64AndThumbnail(serviceType, tableType, "Api,Base64", tenantCode, isThumbnail, dimension, null);
+        FileParam fileParam = FileParamUtils.byBase64AndThumbnail(serviceType, tableType, "Api,Base64", batchNo, tenantCode, isThumbnail,onlyThumb, dimension);
         Attachment attachment = fileHandler.upload(base64String, fileName, fileParam);
         if (attachment == null) {
             throw new RuntimeException("saveBase64：upload file error");
         }
         return attachment.getId();
-    }
-
-    public String saveBase64(String base64String, String fileName, String suffix, String serviceType, String tableType) throws IOException {
-        return saveBase64(base64String, fileName, suffix, serviceType, tableType, false, 0);
-    }
-
-    public String saveBase64(String base64String, String fileName, String suffix) throws IOException {
-        return saveBase64(base64String, fileName, suffix, null, null, false, 0);
-    }
-
-    public String saveBase64(String base64String, String fileName, String suffix, Boolean isThumbnail, Integer dimension) throws IOException {
-        return saveBase64(base64String, fileName, suffix, null, null, isThumbnail, dimension);
     }
 }

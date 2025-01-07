@@ -5,6 +5,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ThumbnailUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.utils.entity.FileIS;
+import cn.geelato.utils.entity.Resolution;
 import cn.geelato.web.oss.OSSResult;
 import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.common.FileHelper;
@@ -14,6 +15,7 @@ import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentServiceEnum;
 import cn.geelato.web.platform.m.file.handler.AccessoryHandler;
 import cn.geelato.web.platform.m.file.param.FileParam;
+import cn.geelato.web.platform.m.file.param.ThumbnailResolution;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,10 +25,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -66,6 +65,17 @@ public class FileHandler extends BaseHandler {
         }
     }
 
+    public Attachment uploadCloud(File file, String name, FileParam param) throws IOException {
+        OSSResult ossResult = fileHelper.putFile(name, FileUtils.openInputStream(file));
+        if (ossResult.getSuccess() == null || ossResult.getSuccess()) {
+            if (ossResult.getOssFile() != null) {
+                param.setObjectId(ossResult.getOssFile().getObjectId());
+                return accessoryHandler.save(file, name, ossResult.getOssFile().getObjectName(), param);
+            }
+        }
+        return null;
+    }
+
     /**
      * 上传文件（阿里云存储）
      * <br/>设置：信息存放位置；生产缩略图
@@ -75,50 +85,15 @@ public class FileHandler extends BaseHandler {
      * @throws IOException 如果在上传过程中发生I/O错误，则抛出IOException
      */
     public Attachment uploadCloud(MultipartFile file, FileParam param) throws IOException {
-        Attachment attachment = null;
-        OSSResult ossResult = fileHelper.putFile(file);
-        if (ossResult.getSuccess() == null || ossResult.getSuccess()) {
-            if (ossResult.getOssFile() != null) {
-                param.setObjectId(ossResult.getOssFile().getObjectId());
-                attachment = accessoryHandler.save(file, ossResult.getOssFile().getObjectName(), param);
+        String fileExt = FileUtils.getFileExtension(file.getOriginalFilename());
+        File tempFile = FileUtils.createTempFile(file.getInputStream(), fileExt);
+        try {
+            return uploadCloudAndThumb(tempFile, file.getOriginalFilename(), param);
+        } finally {
+            if (tempFile != null) {
+                tempFile.delete();
             }
         }
-        if (attachment != null && param.isThumbnail()) {
-            // 生成缩略图
-            File thumbnail = createThumbnail(file, param.getDimension(), param.getThumbScale());
-            // 上传缩略图，并保存缩略图信息，并更新附件ID
-            FileParam fileParam = FileParamUtils.byThumbnail(param.getServiceType(), param.getSourceType(), attachment.getGenre(), attachment.getAppId(), attachment.getTenantCode());
-            uploadThumbnail(thumbnail, attachment.getName(), attachment.getId(), fileParam);
-        }
-        return attachment;
-    }
-
-    /**
-     * 读取本地文件上传（阿里云存储）
-     * <br/>设置：信息存放位置；生产缩略图
-     *
-     * @param file 待上传的文件对象
-     * @param name 文件名
-     * @return 上传后的附件对象
-     * @throws IOException 如果在上传过程中发生I/O错误，则抛出IOException
-     */
-    public Attachment uploadCloud(File file, String name, FileParam param) throws IOException {
-        Attachment attachment = null;
-        OSSResult ossResult = fileHelper.putFile(name, FileUtils.openInputStream(file));
-        if (ossResult.getSuccess() == null || ossResult.getSuccess()) {
-            if (ossResult.getOssFile() != null) {
-                param.setObjectId(ossResult.getOssFile().getObjectId());
-                attachment = accessoryHandler.save(file, name, ossResult.getOssFile().getObjectName(), param);
-            }
-        }
-        if (attachment != null && param.isThumbnail()) {
-            // 生成缩略图
-            File thumbnail = createThumbnail(file, param.getDimension(), param.getThumbScale());
-            // 上传缩略图，并保存缩略图信息，并更新附件ID
-            FileParam fileParam = FileParamUtils.byThumbnail(param.getServiceType(), param.getSourceType(), attachment.getGenre(), attachment.getAppId(), attachment.getTenantCode());
-            uploadThumbnail(thumbnail, name, attachment.getId(), fileParam);
-        }
-        return attachment;
     }
 
     /**
@@ -134,7 +109,7 @@ public class FileHandler extends BaseHandler {
         File tempFile = null;
         try {
             tempFile = FileUtils.createTempFile(base64String, name);
-            return uploadCloud(tempFile, name, param);
+            return uploadCloudAndThumb(tempFile, name, param);
         } finally {
             if (tempFile != null) {
                 tempFile.delete();
@@ -143,82 +118,77 @@ public class FileHandler extends BaseHandler {
     }
 
     /**
-     * 创建缩略图（临时文件）
+     * 读取本地文件上传（阿里云存储）
+     * <br/>设置：信息存放位置；生产缩略图
      *
-     * @param file      要生成缩略图的多部分文件
-     * @param dimension 缩略图的尺寸，如果为null则不进行尺寸限制
-     * @return 生成的缩略图文件，如果无法生成则返回null
-     * @throws IOException 如果文件操作过程中出现I/O异常
+     * @param file 待上传的文件对象
+     * @param name 文件名
+     * @return 上传后的附件对象
+     * @throws IOException 如果在上传过程中发生I/O错误，则抛出IOException
      */
-    public File createThumbnail(MultipartFile file, Integer dimension, Double thumbScale) throws IOException {
-        // 原始临时文件
-        String fileExt = FileUtils.getFileExtension(file.getOriginalFilename());
-        File sourceFile = FileUtils.createTempFile(file.getInputStream(), fileExt);
-        // 缩略图临时文件
-        try {
-            if (ThumbnailUtils.isThumbnail(sourceFile, dimension)) {
-                File targetFile = FileUtils.createTempFile(fileExt);
-                ThumbnailUtils.thumbnail(sourceFile, targetFile, dimension, thumbScale);
-                if (!targetFile.exists()) {
+    public Attachment uploadCloudAndThumb(File file, String name, FileParam param) throws IOException {
+        if (param.isThumbnail() && ThumbnailUtils.isImage(file)) {
+            Map<Integer, Attachment> targetMap = new HashMap<>();
+            // 生成缩略图
+            String fileExt = FileUtils.getFileExtension(name);
+            List<ThumbnailResolution> thumbnails = createThumbnail(file, fileExt, param.getDimension(), param.getThumbScale());
+            if (thumbnails != null && !thumbnails.isEmpty()) {
+                // 上传并保存缩略图信息
+                for (ThumbnailResolution tr : thumbnails) {
+                    FileParam fileParam = param.toFileParam();
+                    fileParam.setResolution(tr.getProduct());
+                    fileParam.setGenre(StringUtils.splice(",", param.getGenre(), ThumbnailUtils.THUMBNAIL_GENRE));
+                    Attachment target = uploadCloud(tr.getFile(), name, fileParam);
+                    targetMap.put(tr.getAmass(), target);
+                    tr.getFile().delete();
+                }
+            }
+            // 如果只需要缩略图，则删除原始文件，否则保存原始文件
+            if (!targetMap.isEmpty() && param.isOnlyThumb()) {
+            } else {
+                // 生成缩略图并保存到数据库
+                Resolution resolution = Resolution.get(file);
+                FileParam fileParam = param.toFileParam();
+                fileParam.setResolution(resolution.getProduct());
+                Attachment target = uploadCloud(file, name, fileParam);
+                targetMap.put(resolution.getAmass(), target);
+            }
+            Attachment parent = getParentThumbnail(targetMap);
+            if (parent != null) {
+                List<String> ids = targetMap.values().stream().map(Attachment::getId).collect(Collectors.toList());
+                accessoryHandler.updateChildThumbnail(param.getSourceType(), parent.getId(), ids);
+            }
+            return parent;
+        } else {
+            return uploadCloud(file, name, param);
+        }
+    }
+
+    public Attachment getParentThumbnail(Map<Integer, Attachment> thumbMap) {
+        if (!thumbMap.isEmpty()) {
+            Optional<Integer> optional = thumbMap.keySet().stream().sorted(Comparator.reverseOrder()).findFirst();
+            return thumbMap.get(optional.get());
+        }
+        return null;
+    }
+
+    public List<ThumbnailResolution> createThumbnail(File file, String fileExt, String dimension, String thumbScale) throws IOException {
+        List<ThumbnailResolution> thumbnailResolutions = new ArrayList<>();
+        // 根据原始图片的尺寸和缩略图比例，计算需要生成的缩略图的分辨率列表
+        List<Resolution> thumbResolutions = ThumbnailUtils.resolution(file, dimension, thumbScale);
+        if (thumbResolutions != null && !thumbResolutions.isEmpty()) {
+            for (Resolution resolution : thumbResolutions) {
+                File thumbFile = FileUtils.createTempFile(fileExt);
+                ThumbnailUtils.thumbnail(file, thumbFile, resolution);
+                if (thumbFile == null || !thumbFile.exists()) {
                     throw new RuntimeException("thumbnail save failed");
                 }
-                return targetFile;
-            }
-        } finally {
-            if (sourceFile != null) {
-                sourceFile.delete();
+                thumbnailResolutions.add(new ThumbnailResolution(resolution, thumbFile));
             }
         }
-        return null;
+        return thumbnailResolutions;
     }
 
-    /**
-     * 创建缩略图（临时文件）
-     *
-     * @param sourceFile 原始文件
-     * @param dimension  缩略图的尺寸，如果为null则不进行尺寸限制
-     * @return 生成的缩略图文件，如果无法生成则返回null
-     * @throws IOException 如果文件操作过程中出现I/O异常
-     */
-    public File createThumbnail(File sourceFile, Integer dimension, Double thumbScale) throws IOException {
-        // 原始临时文件
-        String fileExt = FileUtils.getFileExtension(sourceFile.getName());
-        // 缩略图临时文件
-        if (ThumbnailUtils.isThumbnail(sourceFile, dimension)) {
-            File targetFile = FileUtils.createTempFile(fileExt);
-            ThumbnailUtils.thumbnail(sourceFile, targetFile, dimension, thumbScale);
-            if (!targetFile.exists()) {
-                throw new RuntimeException("thumbnail save failed");
-            }
-            return targetFile;
-        }
-        return null;
-    }
-
-    /**
-     * 上传临时缩略图（阿里云服务器）
-     *
-     * @param thumbnail 缩略图文件
-     * @param name      缩略图名称
-     * @param sourceId  源文件ID
-     * @throws IOException 如果文件上传过程中出现I/O异常
-     */
-    public void uploadThumbnail(File thumbnail, String name, String sourceId, FileParam param) throws IOException {
-        if (thumbnail != null) {
-            try {
-                // 上传缩略图
-                String thumbnailGenre = StringUtils.splice(",", param.getGenre(), ThumbnailUtils.THUMBNAIL_GENRE);
-                FileParam fileParam = FileParamUtils.byThumbnail(param.getServiceType(), param.getSourceType(), thumbnailGenre, param.getAppId(), param.getTenantCode());
-                Attachment target = uploadCloud(thumbnail, name, fileParam);
-                // 更新附件ID
-                accessoryHandler.updateThumbnailId(param.getSourceType(), sourceId, target.getId());
-            } finally {
-                if (thumbnail != null) {
-                    thumbnail.delete();
-                }
-            }
-        }
-    }
 
     /**
      * 下载附件文件（多服务器）

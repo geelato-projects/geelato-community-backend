@@ -1,10 +1,14 @@
 package cn.geelato.web.platform.m.file.handler;
 
 import cn.geelato.utils.FileUtils;
+import cn.geelato.utils.ThumbnailUtils;
+import cn.geelato.utils.entity.Resolution;
+import cn.geelato.web.platform.m.file.entity.Attach;
 import cn.geelato.web.platform.m.file.entity.Compress;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.AttachmentParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailParam;
+import cn.geelato.web.platform.m.file.param.ThumbnailResolution;
 import cn.geelato.web.platform.m.file.service.CompressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,10 +16,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class CompressHandler extends AttachmentHandler<Compress> {
-    public static final String SQL_UPDATE_ID = "update platform_compress set id = ? where id = ?";
+    public static final String SQL_UPDATE_PID = "update platform_compress set pid = ? where id = ?";
     public static final String ATTACHMENT_SOURCE = AttachmentSourceEnum.PLATFORM_COMPRESS.getValue();
     private final CompressService compressService;
 
@@ -93,11 +102,7 @@ public class CompressHandler extends AttachmentHandler<Compress> {
         // 保存文件到磁盘
         FileUtils.saveFile(file.getBytes(), path);
         // 附件存附件表
-        Compress model = save(file, path, param.toAttachmentParam());
-        // 生成缩略图
-        thumbnail(model, param);
-        // 返回附件对象
-        return model;
+        return thumbAndSave(FileUtils.pathToFile(path), file.getOriginalFilename(), path, param);
     }
 
     @Override
@@ -105,47 +110,49 @@ public class CompressHandler extends AttachmentHandler<Compress> {
         // 保存文件到磁盘
         FileUtils.saveFile(base64String, path);
         // 附件存附件表
-        Compress model = save(FileUtils.pathToFile(path), name, path, param.toAttachmentParam());
-        // 生成缩略图
-        thumbnail(model, param);
-        // 返回附件对象
-        return model;
+        return thumbAndSave(FileUtils.pathToFile(path), name, path, param);
     }
 
-    /**
-     * 为给定的附件生成缩略图
-     *
-     * @param source 要生成缩略图的原始附件对象
-     * @return 如果生成了缩略图，则返回新的缩略图附件对象，否则返回null
-     * @throws IOException 如果在生成缩略图或保存缩略图时发生I/O错误
-     */
     @Override
-    public Compress thumbnail(Compress source, ThumbnailParam param) throws IOException {
-        if (param.isThumbnail()) {
-            // 生成缩略图并构建缩略图附件对象
-            Compress target = createThumbnail(source, ATTACHMENT_SOURCE, param.getDimension(), param.getThumbScale());
-            if (target != null) {
-                // 保存缩略图附件对象到数据库
-                target = compressService.createModel(target);
-                // 更新附件对象的缩略图ID
-                target.setId(updateId(setThumbnailId(source.getId()), target.getId()));
-                return target;
+    public Compress thumbAndSave(File file, String name, String path, ThumbnailParam param) throws IOException {
+        if (param.isThumbnail() && ThumbnailUtils.isImage(file)) {
+            Map<Integer, Compress> targetMap = new HashMap<>();
+            // 生成缩略图
+            List<ThumbnailResolution> thumbnails = createThumbnail(file, name, ATTACHMENT_SOURCE, param.getAppId(), param.getTenantCode(), param.getDimension(), param.getThumbScale());
+            if (thumbnails != null && !thumbnails.isEmpty()) {
+                // 保存到数据库
+                for (ThumbnailResolution tr : thumbnails) {
+                    AttachmentParam attachmentParam = param.toAttachmentParam();
+                    attachmentParam.setResolution(tr.getProduct());
+                    Compress target = save(tr.getFile(), name, tr.getPath(), attachmentParam);
+                    targetMap.put(tr.getAmass(), target);
+                }
             }
+            // 如果只需要缩略图，则删除原始文件，否则保存原始文件
+            if (!targetMap.isEmpty() && param.isOnlyThumb()) {
+                // 则删除原始文件
+                deleteFile(path);
+            } else {
+                // 生成缩略图并保存到数据库
+                Resolution resolution = Resolution.get(file);
+                AttachmentParam attachmentParam = param.toAttachmentParam();
+                attachmentParam.setResolution(resolution.getProduct());
+                targetMap.put(resolution.getAmass(), save(file, name, path, param.toAttachmentParam()));
+            }
+            Compress parent = getParentThumbnail(targetMap);
+            if (parent != null) {
+                List<String> ids = targetMap.values().stream().map(Compress::getId).collect(Collectors.toList());
+                updateChildThumbnail(parent.getId(), ids);
+            }
+            return parent;
+        } else {
+            return save(file, name, path, param.toAttachmentParam());
         }
-        return null;
     }
 
-    /**
-     * 更新指定目标ID为新的ID
-     *
-     * @param updateId 新的ID，用于替换目标ID
-     * @param sourceId 目标ID，需要被更新的ID
-     * @return 更新后的ID字符串
-     */
     @Override
-    public String updateId(String updateId, String sourceId) {
-        dao.getJdbcTemplate().update(SQL_UPDATE_ID, updateId, sourceId);
-        return updateId;
+    public void updateChildThumbnail(String parentId, List<String> updateIds) {
+        updateChildThumbnail(SQL_UPDATE_PID, parentId, updateIds);
     }
 
     /**

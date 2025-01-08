@@ -335,6 +335,11 @@ public class FileHandler extends BaseHandler {
         for (Attachment attachment : attachmentList) {
             InputStream inputStream = toInputStream(attachment);
             if (inputStream != null) {
+                // 处理分辨率命名规则，例如：附件名_分辨率.后缀
+                if (Strings.isNotBlank(attachment.getResolution()) && attachment.getType().startsWith("image/")) {
+                    String repeatName = FileUtils.spliceFileName(attachment.getName(), null, " " + attachment.getResolution());
+                    attachment.setName(repeatName);
+                }
                 fileMap.put(attachment.getId(), new FileIS(attachment.getName(), inputStream));
             }
         }

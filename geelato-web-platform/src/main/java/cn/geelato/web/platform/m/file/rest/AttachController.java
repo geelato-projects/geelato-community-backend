@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,14 @@ public class AttachController extends BaseController {
     public ApiResult get(@PathVariable(required = true) String id) {
         Attachment attachment = fileHandler.getAttachment(id, false);
         return ApiResult.success(attachment);
+    }
+
+    @RequestMapping(value = "/image/{id}", method = RequestMethod.POST)
+    public ApiResult image(@PathVariable(required = true) String id) {
+        Map<String, Object> queryParams = new HashMap<>();
+        queryParams.put("pids", id);
+        List<Attachment> attachmentList = fileHandler.getAttachments(queryParams);
+        return ApiResult.success(attachmentList);
     }
 
     @RequestMapping(value = "/list", method = RequestMethod.POST)

@@ -119,10 +119,19 @@ public class MetaManager extends AbstractManager {
             }
         }
         List<Map<String, Object>> tableList = dao.getJdbcTemplate().queryForList(sql);
+        List<Map<String, Object>> allColumnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE));
+        List<Map<String, Object>>  allViewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE ));
+        List<Map<String, Object>> allCheckList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE));
         for (Map<String, Object> map : tableList) {
-            List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
-            List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and entity_name='%s'", map.get("entity_name")));
-            List<Map<String, Object>> checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
+//            List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
+//            List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and entity_name='%s'", map.get("entity_name")));
+//            List<Map<String, Object>> checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
+            List<Map<String, Object>> columnList=allColumnList.stream().filter(
+                    x -> x.get("table_id").equals(map.get("id"))).collect(Collectors.toList());
+            List<Map<String, Object>> viewList=allViewList.stream().filter(
+                    x -> x.get("entity_name").equals(map.get("entity_name"))).collect(Collectors.toList());
+            List<Map<String, Object>> checkList=allCheckList.stream().filter(
+                    x -> x.get("table_id").equals(map.get("id"))).collect(Collectors.toList());
             parseTableEntity(map, columnList, viewList, checkList, null);
             parseViewEntity(viewList);
         }

@@ -183,7 +183,12 @@ public class FilterGroup {
         in("in"),
         notin("nin"),
         nil("nil"),
-        bt("bt");
+        bt("bt"),
+
+
+        fis("fis");
+
+
 
         private final String text;
 

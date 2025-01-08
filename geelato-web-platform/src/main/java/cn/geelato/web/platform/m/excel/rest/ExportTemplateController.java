@@ -7,9 +7,11 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.service.ExportTemplateService;
+import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -119,5 +122,31 @@ public class ExportTemplateController extends BaseController {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
+    }
+
+    @RequestMapping(value = "/index/{id}", method = RequestMethod.GET)
+    public ApiResult indexTemplate(@PathVariable(required = true) String id) {
+        Map<Integer, Object> result = new LinkedHashMap<>();
+        ExportTemplate exportTemplate = exportTemplateService.getModel(ExportTemplate.class, id);
+        if (exportTemplate != null) {
+            for (int i = 1; i <= 9; i++) {
+                try {
+                    Field field = ExportTemplate.class.getDeclaredField("template" + (i == 1 ? "" : i));
+                    if (field == null) {
+                        field.setAccessible(true);
+                        Object value = field.get(exportTemplate);
+                        if (value != null) {
+                            Base64Helper helper = JSON.parseObject(value.toString(), Base64Helper.class);
+                            if (helper != null && Strings.isNotBlank(helper.getName())) {
+                                result.put(i, helper.getName());
+                            }
+                        }
+                    }
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return ApiResult.success(result);
     }
 }

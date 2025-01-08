@@ -462,6 +462,21 @@ WHERE 1=1 AND del_status = 0
   LIMIT $.pageSize OFFSET $.startNum
 @/if
 
+-- @sql page_query_platform_export_template_index
+SELECT
+    template,template2,template3,template4,template5,template6,template7,template8,template9
+FROM platform_export_template
+WHERE 1=1 AND del_status = 0
+@if $.id!=null&&$.id!=''
+  AND id = '$.id'
+@/if
+@if $.appId!=null&&$.appId!=''
+  AND app_id = '$.appId'
+@/if
+@if $.tenantCode!=null&&$.tenantCode!=''
+  AND tenant_code = '$.tenantCode'
+@/if
+
 -- @sql page_query_platform_app_r_table
 
 -- @sql page_query_platform_role_app

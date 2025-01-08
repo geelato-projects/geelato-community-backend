@@ -179,7 +179,7 @@ public class ExportExcelService {
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
             // 保存文件信息
             FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "exportFile", appId, tenantCode);
-            Attachment attachment = fileHandler.save(exportFile, fileName, directory, fileParam);
+            Attachment attachment = fileHandler.save(exportFile, exportFileName, directory, fileParam);
             return ApiResult.success(attachment);
         } catch (Exception e) {
             return ApiResult.fail(e.getMessage());

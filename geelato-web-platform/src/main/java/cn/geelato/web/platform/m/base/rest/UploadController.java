@@ -3,7 +3,9 @@ package cn.geelato.web.platform.m.base.rest;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.FileUtils;
+import cn.geelato.utils.enums.TimeUnitEnum;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
@@ -54,17 +56,28 @@ public class UploadController extends BaseController {
      */
     @RequestMapping(value = "/file", method = RequestMethod.POST)
     public ApiResult uploadFile(@RequestParam("file") MultipartFile file,
-                                String serviceType, String tableType, String root, Boolean isRename,
-                                String objectId, String formIds, String genre, Date invalidTime, String batchNo,
+                                String serviceType, String tableType,
+                                String root, Boolean isRename,
+                                String objectId, String formIds,
+                                String genre, String batchNo,
+                                Date invalidTime, Integer validDuration,
                                 Boolean isThumbnail, Boolean onlyThumb, String dimension, String thumbScale,
                                 String appId, String tenantCode) throws IOException {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }
+        // 参数校验和赋值
         appId = Strings.isBlank(appId) ? getAppId() : appId;
         tenantCode = Strings.isBlank(tenantCode) ? SessionCtx.getCurrentTenantCode() : tenantCode;
+        // 生成文件路径
         String path = UploadService.getSavePath(root, tableType, file.getOriginalFilename(), isRename, appId, tenantCode);
+        // 处理有效期参数，如果设置了有效时长则计算失效时间
+        if (validDuration != null && validDuration.intValue() > 0) {
+            invalidTime = DateUtils.calculateTime(validDuration.toString(), TimeUnitEnum.SECOND.name());
+        }
+        // 构建文件参数对象
         FileParam fileParam = FileParamUtils.by(serviceType, tableType, objectId, formIds, genre, invalidTime, batchNo, appId, tenantCode, isThumbnail, onlyThumb, dimension, thumbScale);
+        // 上传文件并获取附件信息
         Attachment attachment = fileHandler.upload(file, path, fileParam);
         if (attachment == null) {
             return ApiResult.fail("Upload failed");

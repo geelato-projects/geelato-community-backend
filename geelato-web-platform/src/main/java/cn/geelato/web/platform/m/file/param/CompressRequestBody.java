@@ -10,7 +10,8 @@ import java.util.Date;
 @Setter
 public class CompressRequestBody {
     private String serviceType;
-    private Date invalidTime;
+    @Title(title = "有效时长", description = "单位：秒")
+    private Integer validDuration;
     private String genre;
     private String attachmentIds;
     private String batchNos;
@@ -19,4 +20,6 @@ public class CompressRequestBody {
     // meta
     @Title(title = "gql语句")
     private String gql;
+    @Title(title = "失效时间")
+    private Date invalidTime;
 }

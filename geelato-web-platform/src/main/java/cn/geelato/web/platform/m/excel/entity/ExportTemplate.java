@@ -51,4 +51,21 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
     @Title(title = "元数据")
     @Col(name = "business_meta_data")
     private String businessMetaData;// 元数据
+
+    @Title(title = "状态")
+    private String template2;
+    @Title(title = "状态")
+    private String template3;
+    @Title(title = "状态")
+    private String template4;
+    @Title(title = "状态")
+    private String template5;
+    @Title(title = "状态")
+    private String template6;
+    @Title(title = "状态")
+    private String template7;
+    @Title(title = "状态")
+    private String template8;
+    @Title(title = "状态")
+    private String template9;
 }

@@ -167,4 +167,26 @@ public class DateUtils {
         }
         return null;
     }
+
+    /**
+     * 根据给定的时间单位和数量计算时间，并返回格式化后的时间字符串。
+     * 当前时间
+     *
+     * @param amount 时间数量，必须为整数。
+     * @param unit   时间单位，对应TimeUnitEnum枚举类中的名称。
+     * @return 格式化后的时间字符串，格式为"yyyy-MM-dd HH:mm:ss"。
+     */
+    public static Date calculateTime(String amount, String unit) {
+        // 将时间字符串转换为Date对象
+        Date date = new Date();
+        // 获取当前时间的Calendar对象
+        Calendar calendar = Calendar.getInstance();
+        int unitValue = TimeUnitEnum.getValueByName(unit);
+        calendar.setTime(date);
+        // 根据时间单位和数量进行时间计算
+        if (unitValue > -1 && amount.matches(DateUtils.REGEX_INTEGER)) {
+            calendar.add(unitValue, Integer.parseInt(amount));
+        }
+        return calendar.getTime();
+    }
 }

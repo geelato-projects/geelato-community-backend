@@ -3,7 +3,9 @@ package cn.geelato.web.platform.m.file.rest;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.utils.enums.TimeUnitEnum;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
 import cn.geelato.web.platform.handler.file.FileHandler;
@@ -22,10 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @ApiRestController("/pack")
@@ -82,6 +81,10 @@ public class CompressController extends BaseController {
     }
 
     private ApiResult build(CompressRequestBody compBody) throws IOException {
+        if (compBody.getValidDuration() != null && compBody.getValidDuration().intValue() > 0) {
+            Date invalidTime = DateUtils.calculateTime(compBody.getValidDuration().toString(), TimeUnitEnum.SECOND.name());
+            compBody.setInvalidTime(invalidTime);
+        }
         String batchNo = String.valueOf(System.currentTimeMillis());
         String appId = getAppId();
         String tenantCode = getTenantCode();

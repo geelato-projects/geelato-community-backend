@@ -5,16 +5,16 @@ import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.file.entity.Attach;
-import cn.geelato.web.platform.m.file.entity.Attachment;
-import cn.geelato.web.platform.m.file.service.AttachService;
 import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.excel.entity.ExportColumn;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.service.ExportExcelService;
+import cn.geelato.web.platform.m.file.entity.Attach;
+import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.service.AttachService;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
@@ -138,6 +138,7 @@ public class ExportExcelController extends BaseController {
             if (metas == null && metas.size() == 0) {
                 throw new RuntimeException("The data definition information cannot be empty");
             }
+            appId = Strings.isBlank(appId) ? getAppId() : appId;
             ApiResult result = exportExcelService.exportExcelByColumnMeta(appId, fileName, valueMapList, valueMap, columns, metas, markText, markKey, readonly);
             return downloadOrPdf(result, isDownload, isPdf);
         } catch (Exception e) {

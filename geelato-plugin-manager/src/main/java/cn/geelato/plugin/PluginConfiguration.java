@@ -6,6 +6,7 @@ import org.pf4j.ExtensionFactory;
 import org.pf4j.JarPluginManager;
 import org.pf4j.PluginManager;
 import org.pf4j.spring.SpringPluginManager;
+import org.pf4j.update.DefaultUpdateRepository;
 import org.pf4j.update.UpdateManager;
 import org.pf4j.update.UpdateRepository;
 import org.springframework.context.annotation.Bean;
@@ -31,13 +32,14 @@ public class PluginConfiguration {
         return spm;
     }
 
-//    @Bean
-//    @DependsOn("pluginManager")
-//    public UpdateManager updateManager(){
-//        UpdateManager um = new UpdateManager(springPluginManager);
-//        List<UpdateRepository> pluginRepositories=um.getRepositories();
-//        return um;
-//    }
+    @Bean
+    @DependsOn("pluginManager")
+    public UpdateManager updateManager(PluginConfigurationProperties pluginConfigurationProperties){
+        UpdateManager um = new UpdateManager(springPluginManager,
+                Paths.get(pluginConfigurationProperties.getPluginRepository()));
+        List<UpdateRepository> pluginRepositories=um.getRepositories();
+        return um;
+    }
 
 
     public PluginConfiguration(){

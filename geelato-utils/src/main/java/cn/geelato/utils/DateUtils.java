@@ -189,4 +189,17 @@ public class DateUtils {
         }
         return calendar.getTime();
     }
+
+    public static Date parse(String time, String parse) {
+        Date date = null;
+        if (StringUtils.isNotBlank(time)) {
+            try {
+                SimpleDateFormat parseSDF = buildSimpleDateFormat(parse, null, null);
+                date = parseSDF.parse(time);
+            } catch (ParseException e) {
+                date = null;
+            }
+        }
+        return date;
+    }
 }

@@ -60,7 +60,7 @@ public class UploadController extends BaseController {
                                 String root, Boolean isRename,
                                 String objectId, String formIds,
                                 String genre, String batchNo,
-                                Date invalidTime, Integer validDuration,
+                                String invalidTime, Integer validDuration,
                                 Boolean isThumbnail, Boolean onlyThumb, String dimension, String thumbScale,
                                 String appId, String tenantCode) throws IOException {
         if (file == null || file.isEmpty()) {
@@ -69,14 +69,16 @@ public class UploadController extends BaseController {
         // 参数校验和赋值
         appId = Strings.isBlank(appId) ? getAppId() : appId;
         tenantCode = Strings.isBlank(tenantCode) ? SessionCtx.getCurrentTenantCode() : tenantCode;
+        isRename = isRename == null ? true : isRename;
         // 生成文件路径
         String path = UploadService.getSavePath(root, tableType, file.getOriginalFilename(), isRename, appId, tenantCode);
         // 处理有效期参数，如果设置了有效时长则计算失效时间
+        Date invalidDate = DateUtils.parse(invalidTime, DateUtils.DATETIME);
         if (validDuration != null && validDuration.intValue() > 0) {
-            invalidTime = DateUtils.calculateTime(validDuration.toString(), TimeUnitEnum.SECOND.name());
+            invalidDate = DateUtils.calculateTime(validDuration.toString(), TimeUnitEnum.SECOND.name());
         }
         // 构建文件参数对象
-        FileParam fileParam = FileParamUtils.by(serviceType, tableType, objectId, formIds, genre, invalidTime, batchNo, appId, tenantCode, isThumbnail, onlyThumb, dimension, thumbScale);
+        FileParam fileParam = FileParamUtils.by(serviceType, tableType, objectId, formIds, genre, invalidDate, batchNo, appId, tenantCode, isThumbnail, onlyThumb, dimension, thumbScale);
         // 上传文件并获取附件信息
         Attachment attachment = fileHandler.upload(file, path, fileParam);
         if (attachment == null) {

@@ -9,6 +9,7 @@ import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.excel.entity.ExportColumn;
+import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.service.ExportExcelService;
 import cn.geelato.web.platform.m.file.entity.Attach;
@@ -84,6 +85,11 @@ public class ExportExcelController extends BaseController {
     @RequestMapping(value = "/{dataType}/{templateId}", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult exportWps(@PathVariable String dataType, @PathVariable String templateId, String fileName, String markText, String markKey, boolean readonly, boolean isDownload, boolean isPdf) {
         try {
+            // 根据模板ID获取对应的文件信息，如果没有找到则使用传入的templateId作为文件名
+            Map<String, String> templateMap = ExportTemplate.indexMap(templateId);
+            templateId = templateMap.get("id");
+            String index = templateMap.get("index");
+            // 数据解析，根据dataType的值选择不同的数据解析方式
             String jsonText = GqlUtil.resolveGql(this.request);
             List<Map> valueMapList = new ArrayList<>();
             Map valueMap = new HashMap();
@@ -95,7 +101,7 @@ public class ExportExcelController extends BaseController {
             } else {
                 throw new RuntimeException("Parsing this data type is not supported!");
             }
-            ApiResult result = exportExcelService.exportWps(templateId, fileName, valueMapList, valueMap, markText, markKey, readonly);
+            ApiResult result = exportExcelService.exportWps(templateId, index, fileName, valueMapList, valueMap, markText, markKey, readonly);
             return downloadOrPdf(result, isDownload, isPdf);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

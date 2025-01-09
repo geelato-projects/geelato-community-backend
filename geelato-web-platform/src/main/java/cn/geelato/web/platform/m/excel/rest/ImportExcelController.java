@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * @author diabl
@@ -62,7 +63,12 @@ public class ImportExcelController extends BaseController {
     @RequestMapping(value = "/attach/{importType}/{templateId}/{attachId}", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult importAttach(@PathVariable String importType, @PathVariable String templateId, @PathVariable String attachId) {
         try {
-            return importExcelService.importExcel(this.request, this.response, importType, templateId, attachId);
+            // 根据模板ID获取对应的文件信息，如果没有找到则使用传入的templateId作为文件名
+            Map<String, String> templateMap = ExportTemplate.indexMap(templateId);
+            templateId = templateMap.get("id");
+            String index = templateMap.get("index");
+            // 调用importExcel方法执行导入操作
+            return importExcelService.importExcel(this.request, this.response, importType, templateId,index, attachId);
         } catch (Exception ex) {
             log.error(ex.getMessage());
             return ApiResult.fail(ex.getMessage());
@@ -82,7 +88,12 @@ public class ImportExcelController extends BaseController {
     @RequestMapping(value = "/file/{importType}/{templateId}", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult importFile(@PathVariable String importType, @PathVariable String templateId) {
         try {
-            return importExcelService.importExcel(this.request, this.response, importType, templateId, null);
+            // 根据模板ID获取对应的文件信息，如果没有找到则使用传入的templateId作为文件名
+            Map<String, String> templateMap = ExportTemplate.indexMap(templateId);
+            templateId = templateMap.get("id");
+            String index = templateMap.get("index");
+            // 调用importExcel方法执行导入操作
+            return importExcelService.importExcel(this.request, this.response, importType, templateId,index, null);
         } catch (Exception ex) {
             log.error(ex.getMessage());
             return ApiResult.fail(ex.getMessage());

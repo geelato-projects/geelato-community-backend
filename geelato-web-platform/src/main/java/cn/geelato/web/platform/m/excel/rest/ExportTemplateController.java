@@ -132,7 +132,7 @@ public class ExportTemplateController extends BaseController {
             for (int i = 1; i <= 9; i++) {
                 try {
                     Field field = ExportTemplate.class.getDeclaredField("template" + (i == 1 ? "" : i));
-                    if (field == null) {
+                    if (field != null) {
                         field.setAccessible(true);
                         Object value = field.get(exportTemplate);
                         if (value != null) {
@@ -148,5 +148,14 @@ public class ExportTemplateController extends BaseController {
             }
         }
         return ApiResult.success(result);
+    }
+
+    @RequestMapping(value = "/base64/{id}/{index}", method = RequestMethod.GET)
+    public ApiResult indexTemplate(@PathVariable(required = true) String id, @PathVariable(required = true) String index) {
+        ExportTemplate exportTemplate = exportTemplateService.getModel(ExportTemplate.class, id);
+        if (exportTemplate != null) {
+            return ApiResult.success(exportTemplate.indexTemplate(index));
+        }
+        return ApiResult.fail("未找到模板");
     }
 }

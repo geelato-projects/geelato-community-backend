@@ -8,6 +8,7 @@ import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.graal.ApplicationContextProvider;
 import cn.geelato.web.platform.graal.GraalUtils;
 import cn.geelato.web.platform.handler.file.FileHandler;
+import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.service.ExportExcelService;
 import cn.geelato.web.platform.m.file.entity.Attach;
 import cn.geelato.web.platform.m.file.entity.Attachment;
@@ -58,6 +59,10 @@ public class FileService {
             return null;
         }
         try {
+            // 根据模板ID获取对应的文件信息，如果没有找到则使用传入的templateId作为文件名
+            Map<String, String> templateMap = ExportTemplate.indexMap(templateId);
+            templateId = templateMap.get("id");
+            String index = templateMap.get("index");
             // 业务数据
             List<Map> valueMapList = new ArrayList<>();
             Map valueMap = new HashMap();
@@ -70,7 +75,7 @@ public class FileService {
             String markKey = options.get("markKey") == null ? "" : String.valueOf(options.get("markKey"));
             boolean readonly = options.get("readonly") != null && Boolean.parseBoolean(String.valueOf(options.get("readonly")));
             // 导出
-            ApiResult result = exportExcelService.exportWps(templateId, fileName, valueMapList, valueMap, markText, markKey, readonly);
+            ApiResult result = exportExcelService.exportWps(templateId, index, fileName, valueMapList, valueMap, markText, markKey, readonly);
             if (result.isSuccess()) {
                 return ((Attach) result.getData()).getId();
             }
@@ -93,13 +98,13 @@ public class FileService {
      * @return 保存的图片的附件ID
      * @throws IOException 如果在保存文件或生成缩略图时发生I/O异常
      */
-    public String saveBase64(String base64String, String fileName, String suffix, String serviceType, String tableType, String batchNo, Boolean isThumbnail,Boolean onlyThumb, String dimension) throws IOException {
+    public String saveBase64(String base64String, String fileName, String suffix, String serviceType, String tableType, String batchNo, Boolean isThumbnail, Boolean onlyThumb, String dimension) throws IOException {
         if (Strings.isBlank(base64String) || Strings.isBlank(fileName) || Strings.isBlank(suffix)) {
             throw new RuntimeException("saveBase64：base64String or fileName or suffix can not be empty");
         }
         fileName = FileUtils.getFileName(fileName) + "." + suffix;
         String tenantCode = GraalUtils.getCurrentTenantCode();
-        FileParam fileParam = FileParamUtils.byBase64AndThumbnail(serviceType, tableType, "Api,Base64", batchNo, tenantCode, isThumbnail,onlyThumb, dimension);
+        FileParam fileParam = FileParamUtils.byBase64AndThumbnail(serviceType, tableType, "Api,Base64", batchNo, tenantCode, isThumbnail, onlyThumb, dimension);
         Attachment attachment = fileHandler.upload(base64String, fileName, fileParam);
         if (attachment == null) {
             throw new RuntimeException("saveBase64：upload file error");

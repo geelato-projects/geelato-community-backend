@@ -88,7 +88,7 @@ public class ImportExcelService {
     @Autowired
     private ExcelCommonUtils excelCommonUtils;
 
-    public ApiResult importExcel(HttpServletRequest request, HttpServletResponse response, String importType, String templateId, String attachId) {
+    public ApiResult importExcel(HttpServletRequest request, HttpServletResponse response, String importType, String templateId,String index, String attachId) {
         System.gc();
         String currentUUID = String.valueOf(UIDGenerator.generate());
         try {

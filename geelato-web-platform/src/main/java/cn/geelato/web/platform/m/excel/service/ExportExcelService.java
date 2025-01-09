@@ -82,7 +82,7 @@ public class ExportExcelService {
      * @param readonly     是否只读，指定导出的文件是否应为只读
      * @return 返回导出文件的ApiResult对象，包含文件信息或错误信息
      */
-    public ApiResult exportWps(String templateId, String fileName, List<Map> valueMapList, Map valueMap, String markText, String markKey, boolean readonly) {
+    public ApiResult exportWps(String templateId, String index, String fileName, List<Map> valueMapList, Map valueMap, String markText, String markKey, boolean readonly) {
         try {
             // 水印
             WordWaterMarkMeta markMeta = setWaterMark(markText, markKey);
@@ -90,7 +90,7 @@ public class ExportExcelService {
             ExportTemplate exportTemplate = exportTemplateService.getModel(ExportTemplate.class, templateId);
             Assert.notNull(exportTemplate, "导出模板不存在");
             // 模板
-            Base64Helper templateAttach = getTemplate(exportTemplate.getTemplate());
+            Base64Helper templateAttach = getTemplate(exportTemplate.indexTemplate(index));
             Assert.notNull(templateAttach, "导出模板文件不存在");
             // 模板源数据
             Map<String, PlaceholderMeta> metaMap = null;

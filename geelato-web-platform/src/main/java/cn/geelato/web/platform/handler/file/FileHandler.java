@@ -90,9 +90,7 @@ public class FileHandler extends BaseHandler {
         try {
             return uploadCloudAndThumb(tempFile, file.getOriginalFilename(), param);
         } finally {
-            if (tempFile != null) {
-                tempFile.delete();
-            }
+            tempFile.delete();
         }
     }
 
@@ -176,11 +174,11 @@ public class FileHandler extends BaseHandler {
         List<ThumbnailResolution> thumbnailResolutions = new ArrayList<>();
         // 根据原始图片的尺寸和缩略图比例，计算需要生成的缩略图的分辨率列表
         List<Resolution> thumbResolutions = ThumbnailUtils.resolution(file, dimension, thumbScale);
-        if (thumbResolutions != null && !thumbResolutions.isEmpty()) {
+        if (!thumbResolutions.isEmpty()) {
             for (Resolution resolution : thumbResolutions) {
                 File thumbFile = FileUtils.createTempFile(fileExt);
                 ThumbnailUtils.thumbnail(file, thumbFile, resolution);
-                if (thumbFile == null || !thumbFile.exists()) {
+                if (!thumbFile.exists()) {
                     throw new RuntimeException("thumbnail save failed");
                 }
                 thumbnailResolutions.add(new ThumbnailResolution(resolution, thumbFile));
@@ -267,7 +265,9 @@ public class FileHandler extends BaseHandler {
                 }
             }
         } else {
-            return FileUtils.pathToFile(attachment.getPath());
+            if (attachment != null) {
+                return FileUtils.pathToFile(attachment.getPath());
+            }
         }
         return null;
     }
@@ -286,7 +286,10 @@ public class FileHandler extends BaseHandler {
                 return ossResult.getOssFile().getFileMeta().getFileInputStream();
             }
         } else {
-            File file = FileUtils.pathToFile(attachment.getPath());
+            File file = null;
+            if (attachment != null) {
+                file = FileUtils.pathToFile(attachment.getPath());
+            }
             if (file != null) {
                 return new FileInputStream(file);
             }
@@ -315,14 +318,14 @@ public class FileHandler extends BaseHandler {
         // 查询参数
         Map<String, Object> queryParams = new HashMap<>();
         List<String> ids = StringUtils.toListDr(attachmentIds);
-        if (ids != null && !ids.isEmpty()) {
+        if (!ids.isEmpty()) {
             queryParams.put("ids", String.join(",", ids));
         }
         List<String> nos = StringUtils.toListDr(batchNos);
-        if (nos != null && !nos.isEmpty()) {
+        if (!nos.isEmpty()) {
             queryParams.put("batchNo", String.join(",", nos));
         }
-        if (queryParams == null || queryParams.isEmpty()) {
+        if (queryParams.isEmpty()) {
             throw new IllegalArgumentException("Attachment ids and batch nos is blank");
         }
         // 获取附件信息
@@ -349,7 +352,7 @@ public class FileHandler extends BaseHandler {
         // 仅保留存在的文件
         attachmentList = attachmentList.stream().filter(attachment -> fileMap.containsKey(attachment.getId())).collect(Collectors.toList());
         // 分组
-        int amount = maxNumber != null && maxNumber > 0 ? maxNumber.intValue() : COMPRESS_MAX_AMOUNT;
+        int amount = maxNumber != null && maxNumber > 0 ? maxNumber : COMPRESS_MAX_AMOUNT;
         List<List<Attachment>> lists = splitList(attachmentList, COMPRESS_MAX_SIZE, Math.min(COMPRESS_MAX_AMOUNT, amount));
         // 压缩
         for (int i = 0; i < lists.size(); i += 1) {

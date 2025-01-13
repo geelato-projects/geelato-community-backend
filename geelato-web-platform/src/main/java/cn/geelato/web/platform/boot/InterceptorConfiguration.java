@@ -24,7 +24,8 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/swagger-ui/index.html")
                 .excludePathPatterns("/v3/**")
                 .excludePathPatterns("/api/config")
-                .excludePathPatterns("/api/resources/**");
+                .excludePathPatterns("/api/resources/**")
+                .excludePathPatterns("/api/sys/config/getValue/**");
         registry.addInterceptor(new DataSourceInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**");
     }

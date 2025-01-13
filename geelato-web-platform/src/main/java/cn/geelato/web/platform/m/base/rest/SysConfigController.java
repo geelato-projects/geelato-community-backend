@@ -14,9 +14,9 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
+import cn.geelato.web.platform.m.file.entity.Attachment;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -151,6 +151,7 @@ public class SysConfigController extends BaseController {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("configKey", key);
+            params.put("enableStatus", ColumnDefault.ENABLE_STATUS_VALUE);
             List<SysConfig> list = sysConfigService.queryModel(CLAZZ, params);
             if (list != null && list.size() > 0) {
                 return ApiResult.success(list.get(0).getConfigValue());

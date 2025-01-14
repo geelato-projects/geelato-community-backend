@@ -20,7 +20,7 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/iam/**")
                 .excludePathPatterns("/api/user/forgetValid")
                 .excludePathPatterns("/api/user/forget")
-                .excludePathPatterns("/api/code/generate")
+                .excludePathPatterns("/api/code/generate/**")
                 .excludePathPatterns("/swagger-ui/index.html")
                 .excludePathPatterns("/v3/**")
                 .excludePathPatterns("/api/config")

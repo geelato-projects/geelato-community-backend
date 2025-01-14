@@ -28,12 +28,12 @@ public class AuthCodeController extends BaseController {
         this.authCodeService = authCodeService;
     }
 
-    @RequestMapping(value = "/generateByUser", method = RequestMethod.POST)
-    public ApiResult<NullResult> generateByUser(@RequestBody Map<String, Object> params) {
+    @RequestMapping(value = "/generate/user", method = RequestMethod.POST)
+    public ApiResult<NullResult> generateUser(@RequestBody Map<String, Object> params) {
         try {
             AuthCodeParams form = new AuthCodeParams();
             BeanUtils.populate(form, params);
-            if (!authCodeService.generateByUser(form)) {
+            if (!authCodeService.generateUser(form)) {
                 throw new RuntimeException("验证码生成失败");
             }
             return ApiResult.successNoResult();
@@ -43,12 +43,12 @@ public class AuthCodeController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/generate", method = RequestMethod.POST)
-    public ApiResult<NullResult> generate(@RequestBody Map<String, Object> params) {
+    @RequestMapping(value = "/generate/auth", method = RequestMethod.POST)
+    public ApiResult<NullResult> generateAuth(@RequestBody Map<String, Object> params) {
         try {
             AuthCodeParams form = new AuthCodeParams();
             BeanUtils.populate(form, params);
-            if (!authCodeService.generate(form)) {
+            if (!authCodeService.generateAuth(form)) {
                 throw new RuntimeException("验证码生成失败");
             }
             return ApiResult.successNoResult();

@@ -28,6 +28,21 @@ public class AuthCodeController extends BaseController {
         this.authCodeService = authCodeService;
     }
 
+    @RequestMapping(value = "/generateByUser", method = RequestMethod.POST)
+    public ApiResult<NullResult> generateByUser(@RequestBody Map<String, Object> params) {
+        try {
+            AuthCodeParams form = new AuthCodeParams();
+            BeanUtils.populate(form, params);
+            if (!authCodeService.generateByUser(form)) {
+                throw new RuntimeException("验证码生成失败");
+            }
+            return ApiResult.successNoResult();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
     @RequestMapping(value = "/generate", method = RequestMethod.POST)
     public ApiResult<NullResult> generate(@RequestBody Map<String, Object> params) {
         try {

@@ -72,7 +72,7 @@ public class AuthCodeService {
      * @throws NoSuchFieldException   如果在访问用户对象属性时找不到对应的字段，则抛出该异常
      * @throws IllegalAccessException 如果在访问用户对象属性时没有访问权限，则抛出该异常
      */
-    public boolean generate(AuthCodeParams form) throws NoSuchFieldException, IllegalAccessException {
+    public boolean generateByUser(AuthCodeParams form) throws NoSuchFieldException, IllegalAccessException {
         String redisKey = form.getRedisKey();
         if (Strings.isBlank(redisKey)) {
             return false;
@@ -91,6 +91,35 @@ public class AuthCodeService {
                 labelField.setAccessible(true);
                 form.setValidBox((String) labelField.get(user));
             }
+        }
+        // 验证方式不能为空
+        if (Strings.isBlank(form.getValidBox())) {
+            return false;
+        }
+        // 验证码
+        String authCode = AuthCodeService.generateCode();
+        form.setAuthCode(authCode);
+        logger.info("authCode：" + authCode);
+        // 加密
+        String saltCode = form.getRedisValue(authCode);
+        if (Strings.isBlank(saltCode)) {
+            return false;
+        }
+        // 发送信息
+        boolean sendAuthCode = action(form);
+        if (!sendAuthCode) {
+            return false;
+        }
+        // 存入缓存中
+        redisTemplate.opsForValue().set(redisKey, saltCode, CODE_EXPIRATION_TIME, TimeUnit.MINUTES);
+
+        return true;
+    }
+
+    public boolean generate(AuthCodeParams form) throws NoSuchFieldException, IllegalAccessException {
+        String redisKey = form.getRedisKey();
+        if (Strings.isBlank(redisKey)) {
+            return false;
         }
         // 验证方式不能为空
         if (Strings.isBlank(form.getValidBox())) {

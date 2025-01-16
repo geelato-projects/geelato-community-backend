@@ -60,7 +60,7 @@ public class FileHandler extends BaseHandler {
         if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(param.getServiceType())) {
             return uploadCloud(base64String, name, param);
         } else {
-            String path = UploadService.getSavePath(null, param.getServiceType(), param.getTenantCode(), param.getAppId(), name, false);
+            String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, param.getSourceType(), param.getTenantCode(), param.getAppId(), name, false);
             return uploadLocal(base64String, name, path, param);
         }
     }

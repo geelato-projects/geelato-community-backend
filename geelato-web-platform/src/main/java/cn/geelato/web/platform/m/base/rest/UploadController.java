@@ -5,6 +5,7 @@ import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.FileUtils;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.enums.TimeUnitEnum;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
@@ -177,14 +178,10 @@ public class UploadController extends BaseController {
     }
 
     @RequestMapping(value = "/model/{entityName}/{id}", method = RequestMethod.POST)
-    public ApiResult uploadModel(@PathVariable("entityName") String entityName, @PathVariable("id") String id, String fileName) {
-        if (Strings.isBlank(entityName)) {
-            return ApiResult.fail("Entity Name Is Null");
-        }
-        if (Strings.isBlank(id)) {
-            return ApiResult.fail("Entity ID Is Null");
-        }
-        if (Strings.isBlank(fileName)) {
+    public ApiResult uploadModel(@PathVariable(value = "entityName", required = true) String entityName,
+                                 @PathVariable(value = "id", required = true) String id, String fileName) {
+        List<String> fileNames = StringUtils.toListDr(fileName);
+        if (fileNames.isEmpty()) {
             return ApiResult.fail("File Name Is Null");
         }
         try {
@@ -202,18 +199,10 @@ public class UploadController extends BaseController {
                     columnEntry.setValue("");
                 }
             }
-            /*String configName = null;
-            String tenantCode = columnMap.get("tenantCode") == null ? null : String.valueOf(columnMap.get("tenantCode"));
-            if (Strings.isBlank(tenantCode)) {
-                return result.error().setMsg("TenantCode Is Null");
+            for (String name : fileNames) {
+                uploadJson(JSON.toJSONString(columnMap), name, "");
             }
-            String appId = columnMap.get("appId") == null ? null : String.valueOf(columnMap.get("appId"));
-            if (Strings.isBlank(appId)) {
-                configName = String.format("%s_%s%s", tenantCode, id, ROOT_CONFIG_SUFFIX);
-            } else {
-                configName = String.format("%s_%s_%s%s", tenantCode, appId, id, ROOT_CONFIG_SUFFIX);
-            }*/
-            return uploadJson(JSON.toJSONString(columnMap), fileName, "");
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

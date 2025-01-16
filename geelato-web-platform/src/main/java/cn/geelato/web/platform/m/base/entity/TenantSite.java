@@ -31,7 +31,7 @@ public class TenantSite extends BaseEntity {
     private String logoIcon;
 
     @Title(title = "特点、亮点")
-    @Col(name = "features",dataType = "JSON")
+    @Col(name = "features", dataType = "JSON")
     private String features;
 
     @Title(title = "企业的logo，一般带文字的版本，区别于标志图标。")
@@ -52,6 +52,10 @@ public class TenantSite extends BaseEntity {
 
     @Title(title = "用于指定该站点配置信息绑定的域名，格式如www.xxx.com")
     private String domain;
+
+    @Title(title = "单点登录域名，格式如www.xxx.com", description = "与微信开发平台应用回调的域名一致")
+    @Col(name = "sso_domain")
+    private String ssoDomain;
 
     @Title(title = "用于指定该站点配置信息绑定的域名的端口号，格式如8080")
     private String port;

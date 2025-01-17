@@ -254,6 +254,7 @@ SELECT
     p3.mobile_phone as userMobilePhone,
     p3.job_number as userJobNumber,
     p3.cooperating_org_id as userCooperatingOrgId,
+    p3.union_id as userUnionId,
     p3.enable_status as userEnableStatus,
     p3.description as userDescription
 FROM platform_role_r_user p1
@@ -320,6 +321,7 @@ SELECT
     p1.org_id as orgId,
     p1.user_id as userId,
     p1.default_org as defaultOrg,
+    p1.post,
     p1.update_at as updateAt,
     p1.updater,
     p1.updater_name as updaterName,
@@ -349,6 +351,7 @@ SELECT
     p3.mobile_phone as userMobilePhone,
     p3.job_number as userJobNumber,
     p3.cooperating_org_id as userCooperatingOrgId,
+    p3.union_id as userUnionId,
     p3.enable_status as userEnableStatus,
     p3.description as userDescription
 FROM platform_org_r_user p1

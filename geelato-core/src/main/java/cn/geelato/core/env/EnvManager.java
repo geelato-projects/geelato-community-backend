@@ -101,7 +101,7 @@ public class EnvManager  extends AbstractManager {
     }
     public User InitCurrentUser(String loginName) {
         String sql = "select id as userId,org_id as defaultOrgId,login_name as loginName," +
-                "name as userName,bu_id as buId,dept_id as deptId," +
+                "name as userName,bu_id as buId,dept_id as deptId,union_id as unionId,"+
                 " cooperating_org_id as cooperatingOrgId from platform_user  where login_name =?";
         User dbUser = EnvDao.getJdbcTemplate().queryForObject(sql,new BeanPropertyRowMapper<User>(User.class),new Object[]{loginName});
         dbUser.setMenus(StructUserMenu(dbUser.getUserId()));

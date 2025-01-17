@@ -11,6 +11,7 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.OrgUserMap;
 import cn.geelato.web.platform.m.security.service.OrgUserMapService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -84,6 +85,20 @@ public class OrgUserMapController extends BaseController {
     public ApiResult get(@PathVariable(required = true) String id) {
         try {
             return ApiResult.success(orgUserMapService.getModel(CLAZZ, id));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
+    public ApiResult createOrUpdate(@RequestBody OrgUserMap form) {
+        try {
+            if (Strings.isNotBlank(form.getId())) {
+                return ApiResult.success(orgUserMapService.updateModel(form));
+            } else {
+                return ApiResult.success(orgUserMapService.createModel(form));
+            }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

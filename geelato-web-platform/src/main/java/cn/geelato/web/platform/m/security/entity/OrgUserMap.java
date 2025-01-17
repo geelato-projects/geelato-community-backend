@@ -38,4 +38,6 @@ public class OrgUserMap extends BaseEntity {
     @Title(title = "1-默认组织 0-兼职")
     @Col(name = "default_org")
     private int defaultOrg;
+    @Title(title = "职务")
+    private String post;
 }

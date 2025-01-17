@@ -79,6 +79,10 @@ public class User extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "启用状态", description = "1表示启用、0表示未启用")
     @Col(name = "enable_status", nullable = false, dataType = "tinyint", numericPrecision = 1)
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
+    @Title(title = "微信用户统一标识")
+    @Col(name = "union_id")
+    private String unionId;
+
 
     @Title(title = "明文密码", description = "不持久化到数据库，也不显示在Restful接口的属性.")
     @Transient

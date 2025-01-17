@@ -34,6 +34,7 @@ public class LoginResult {
     private String tenantCode;
     private String cooperatingOrgId;
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
+    private String unionId;
 
     private String token;
     private String homePath;
@@ -69,7 +70,7 @@ public class LoginResult {
         loginResult.setCooperatingOrgId(user.getCooperatingOrgId());
         loginResult.setEnableStatus(user.getEnableStatus());
         loginResult.setCompanyId(user.getBuId());
-
+        loginResult.setUnionId(user.getUnionId());
         return loginResult;
     }
 }

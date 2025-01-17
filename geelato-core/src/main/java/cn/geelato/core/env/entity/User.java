@@ -1,6 +1,5 @@
 package cn.geelato.core.env.entity;
 
-import cn.geelato.core.meta.model.entity.EntitySortable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,8 +15,10 @@ public class User {
     private String loginName;
     private String defaultOrgId;
     private String defaultOrgName;
+    private String deptId;
     private String buId;
     private String cooperatingOrgId;
+    private String unionId;
     private List<UserOrg> orgs;
     private List<UserRole> roles;
 
@@ -28,17 +29,17 @@ public class User {
     private List<Permission> elementPermissions;
 
     public Permission getDataPermissionByEntity(String entity) {
-        //根据weight权重排序，取第一条
+        // 根据weight权重排序，取第一条
         List<Permission> entityPermission = this.dataPermissions.stream().filter(x -> x.getEntity().equals(entity)).toList();
-        List<Permission> maxRoleWeightPermissionList=null;
-        Permission rtnPermission=null;
+        List<Permission> maxRoleWeightPermissionList = null;
+        Permission rtnPermission = null;
         Optional<Permission> maxRoleWeightPermission = entityPermission.stream().max(Comparator.comparing(Permission::getRoleWeight));
-        if(maxRoleWeightPermission.isPresent()){
-           int maxRoleWeight=maxRoleWeightPermission.get().getRoleWeight();
-           maxRoleWeightPermissionList=entityPermission.stream().filter(x->x.getRoleWeight()==maxRoleWeight).toList();
+        if (maxRoleWeightPermission.isPresent()) {
+            int maxRoleWeight = maxRoleWeightPermission.get().getRoleWeight();
+            maxRoleWeightPermissionList = entityPermission.stream().filter(x -> x.getRoleWeight() == maxRoleWeight).toList();
         }
-        if(maxRoleWeightPermissionList!=null){
-            rtnPermission= maxRoleWeightPermissionList.stream().max(Comparator.comparing(Permission::getWeight)).orElse(null);
+        if (maxRoleWeightPermissionList != null) {
+            rtnPermission = maxRoleWeightPermissionList.stream().max(Comparator.comparing(Permission::getWeight)).orElse(null);
         }
         return rtnPermission;
     }

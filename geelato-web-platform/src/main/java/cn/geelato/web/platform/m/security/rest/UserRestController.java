@@ -273,15 +273,6 @@ public class UserRestController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/wechat/{id}", method = RequestMethod.POST)
-    public ApiResult bindWeChat(@PathVariable(required = true) String id, @RequestBody String unionId) {
-        User user = userService.getModel(CLAZZ, id);
-        Assert.notNull(user, ApiErrorMsg.IS_NULL);
-        user.setUnionId(Strings.isNotBlank(unionId) ? unionId : null);
-        userService.updateModel(user);
-        return ApiResult.successNoResult();
-    }
-
     @RequestMapping(value = "/resetPush/{id}", method = RequestMethod.POST)
     public ApiResult resetPush(@PathVariable(required = true) String id, String type) {
         try {

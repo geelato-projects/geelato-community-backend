@@ -14,6 +14,7 @@ import cn.geelato.web.platform.m.security.entity.Role;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import cn.geelato.web.platform.m.security.service.OrgService;
+import cn.geelato.web.platform.utils.EncryptUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.util.Strings;
@@ -92,7 +93,7 @@ public class SystemRestController extends BaseController {
         User user = this.getUserByToken();
         String plainPassword = RandomStringUtils.randomAlphanumeric(passwordLength > 32 ? 32 : passwordLength);
         user.setPlainPassword(plainPassword);
-        accountService.encryptPassword(user);
+        EncryptUtil.encryptPassword(user);
         dao.save(user);
         return ApiResult.success(plainPassword);
     }

@@ -16,10 +16,10 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.Org;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.entity.UserStockMap;
-import cn.geelato.web.platform.m.security.service.AccountService;
 import cn.geelato.web.platform.m.security.service.OrgService;
 import cn.geelato.web.platform.m.security.service.UserService;
 import cn.geelato.web.platform.m.security.service.UserStockMapService;
+import cn.geelato.web.platform.utils.EncryptUtil;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -50,14 +50,12 @@ public class UserRestController extends BaseController {
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
-    protected AccountService accountService;
     private final UserService userService;
     private final OrgService orgService;
     private final UserStockMapService userStockMapService;
 
     @Autowired
-    public UserRestController(AccountService accountService, UserService userService, OrgService orgService, UserStockMapService userStockMapService) {
-        this.accountService = accountService;
+    public UserRestController(UserService userService, OrgService orgService, UserStockMapService userStockMapService) {
         this.userService = userService;
         this.orgService = orgService;
         this.userStockMapService = userStockMapService;
@@ -188,7 +186,7 @@ public class UserRestController extends BaseController {
                 }
             } else {
                 form.setPlainPassword(UUIDUtils.generatePassword(DEFAULT_PASSWORD_DIGIT));
-                accountService.encryptPassword(form);
+                EncryptUtil.encryptPassword(form);
                 uMap = userService.createModel(form);
                 uMap.setPlainPassword(form.getPlainPassword());
             }
@@ -222,7 +220,7 @@ public class UserRestController extends BaseController {
             setUserOrg(form);
             // 组织ID为空方可插入
             form.setPlainPassword(UUIDUtils.generatePassword(DEFAULT_PASSWORD_DIGIT));
-            accountService.encryptPassword(form);
+            EncryptUtil.encryptPassword(form);
             // 创建用户
             uMap = userService.createModel(form);
             uMap.setPlainPassword(form.getPlainPassword());
@@ -264,7 +262,7 @@ public class UserRestController extends BaseController {
             User user = userService.getModel(CLAZZ, id);
             Assert.notNull(user, ApiErrorMsg.IS_NULL);
             user.setPlainPassword(UUIDUtils.generatePassword(DEFAULT_PASSWORD_DIGIT));
-            accountService.encryptPassword(user);
+            EncryptUtil.encryptPassword(user);
             userService.updateModel(user);
             return ApiResult.success(user.getPlainPassword());
         } catch (Exception e) {
@@ -279,7 +277,7 @@ public class UserRestController extends BaseController {
             User user = userService.getModel(CLAZZ, id);
             Assert.notNull(user, ApiErrorMsg.IS_NULL);
             user.setPlainPassword(UUIDUtils.generatePassword(DEFAULT_PASSWORD_DIGIT));
-            accountService.encryptPassword(user);
+            EncryptUtil.encryptPassword(user);
             ApiResult result = userService.sendMessage(user, type);
             if (result.isError()) {
                 return result;

@@ -11,6 +11,7 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import cn.geelato.web.platform.m.security.service.*;
+import cn.geelato.web.platform.utils.EncryptUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -32,13 +33,11 @@ import java.util.Map;
 @ApiRestController("/user")
 @Slf4j
 public class JWTAuthRestController extends BaseController {
-    protected AccountService accountService;
     protected AuthCodeService authCodeService;
     protected OrgService orgService;
 
     @Autowired
-    public JWTAuthRestController(AccountService accountService, AuthCodeService authCodeService, OrgService orgService) {
-        this.accountService = accountService;
+    public JWTAuthRestController(AuthCodeService authCodeService, OrgService orgService) {
         this.authCodeService = authCodeService;
         this.orgService = orgService;
     }
@@ -76,7 +75,7 @@ public class JWTAuthRestController extends BaseController {
     }
 
     private Boolean CheckPsd(User loginUser, LoginParams loginParams) {
-        return loginUser.getPassword().equals(accountService.encryptPassword(loginParams.getPassword(), loginUser.getSalt()));
+        return loginUser.getPassword().equals(EncryptUtil.encryptPassword(loginParams.getPassword(), loginUser.getSalt()));
     }
 
     private ArrayList<LoginRoleInfo> getRoles(String id) {
@@ -233,7 +232,7 @@ public class JWTAuthRestController extends BaseController {
             User user = this.getUserByToken();
             String plainPassword = RandomStringUtils.randomAlphanumeric(passwordLength > 32 ? 32 : passwordLength);
             user.setPlainPassword(plainPassword);
-            accountService.encryptPassword(user);
+            EncryptUtil.encryptPassword(user);
             dao.save(user);
             return ApiResult.success(plainPassword);
         } catch (Exception e) {
@@ -291,7 +290,7 @@ public class JWTAuthRestController extends BaseController {
             User user = dao.queryForObject(User.class, form.getUserId());
             Assert.notNull(user, ApiErrorMsg.IS_NULL);
             user.setPlainPassword(form.getPassword());
-            accountService.encryptPassword(user);
+            EncryptUtil.encryptPassword(user);
             dao.save(user);
             return ApiResult.successNoResult();
         } catch (Exception e) {
@@ -315,7 +314,7 @@ public class JWTAuthRestController extends BaseController {
             // 验证方式：密码、手机、邮箱
             if (ValidTypeEnum.PASSWORD.getValue().equals(form.getValidType())) {
                 if (Strings.isNotBlank(user.getPassword()) && Strings.isNotBlank(user.getSalt())) {
-                    String pwd = accountService.encryptPassword(form.getAuthCode(), user.getSalt());
+                    String pwd = EncryptUtil.encryptPassword(form.getAuthCode(), user.getSalt());
                     if (user.getPassword().equals(pwd)) {
                         return ApiResult.successNoResult();
                     }
@@ -355,7 +354,7 @@ public class JWTAuthRestController extends BaseController {
             // 账号绑定
             if (ValidTypeEnum.PASSWORD.getValue().equals(form.getValidType())) {
                 user.setPlainPassword(form.getValidBox());
-                accountService.encryptPassword(user);
+                EncryptUtil.encryptPassword(user);
                 dao.save(user);
                 return ApiResult.successNoResult();
             } else if (ValidTypeEnum.MOBILE.getValue().equals(form.getValidType())) {

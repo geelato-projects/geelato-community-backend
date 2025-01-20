@@ -18,7 +18,10 @@
  */
 package cn.geelato.web.platform.m.security.service;
 
+import cn.geelato.core.orm.Dao;
+import cn.geelato.utils.Encodes;
 import cn.geelato.web.platform.m.security.entity.User;
+import cn.geelato.web.platform.utils.EncryptUtil;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.apache.shiro.authc.*;
@@ -28,8 +31,6 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.ByteSource;
-import cn.geelato.core.orm.Dao;
-import cn.geelato.utils.Encodes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -47,13 +48,14 @@ public class ShiroDbRealm extends AuthorizingRealm {
     @Autowired
     @Qualifier("primaryDao")
     protected Dao dao;
-    private final static String SECURITY_USER_PERMISSION_STRING_LIST="security_user_permission_string_list";
-    private final static String SECURITY_USER_ROLE_CODE_LIST="security_user_role_code_list";
+    private final static String SECURITY_USER_PERMISSION_STRING_LIST = "security_user_permission_string_list";
+    private final static String SECURITY_USER_ROLE_CODE_LIST = "security_user_role_code_list";
+
     /**
      * 认证回调函数,登录时调用.
      */
     @Override
-        protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authToken) throws AuthenticationException {
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authToken) throws AuthenticationException {
         UsernamePasswordToken token = (UsernamePasswordToken) authToken;
         User user = dao.queryForObject(User.class, "loginName", token.getUsername());
         if (user != null) {
@@ -90,8 +92,8 @@ public class ShiroDbRealm extends AuthorizingRealm {
      */
     @PostConstruct
     public void initCredentialsMatcher() {
-        HashedCredentialsMatcher matcher = new HashedCredentialsMatcher(AccountService.HASH_ALGORITHM);
-        matcher.setHashIterations(AccountService.HASH_ITERATIONS);
+        HashedCredentialsMatcher matcher = new HashedCredentialsMatcher(EncryptUtil.HASH_ALGORITHM);
+        matcher.setHashIterations(EncryptUtil.HASH_ITERATIONS);
         setCredentialsMatcher(matcher);
     }
 

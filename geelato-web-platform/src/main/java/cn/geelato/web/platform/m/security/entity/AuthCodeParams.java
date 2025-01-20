@@ -1,10 +1,8 @@
 package cn.geelato.web.platform.m.security.entity;
 
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.utils.Digests;
-import cn.geelato.utils.Encodes;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
-import cn.geelato.web.platform.m.security.service.AccountService;
+import cn.geelato.web.platform.utils.EncryptUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
@@ -50,23 +48,7 @@ public class AuthCodeParams {
      * @return 返回缓存的value值
      */
     public String getRedisValue() {
-        return getRedisValue(this.authCode);
-    }
-
-    /**
-     * 设置并获取缓存中的值
-     * <p>
-     * 根据提供的授权码，生成对应的缓存值并返回。
-     *
-     * @param authCode 授权码，用于生成缓存值
-     * @return 返回生成的缓存值，如果授权码为空，则返回null
-     */
-    public String getRedisValue(String authCode) {
-        if (Strings.isNotBlank(authCode)) {
-            return Encodes.encodeHex(Digests.sha1(authCode.getBytes(), this.userId.getBytes(), AccountService.HASH_ITERATIONS));
-        }
-
-        return null;
+        return EncryptUtil.encryptAuthCode(this.authCode, this.userId);
     }
 
     /**

@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS $.tableName (
   @/if
   @for i in $.uniqueList
     @if $.hasDelStatus
-  UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`,`del_status`) USING BTREE
+  UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`, `del_status`, `delete_at`) USING BTREE
     @/if
     @if !$.hasDelStatus
       UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`) USING BTREE
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS $.tableName (
   @/for
   @for i in $.checkList
     CONSTRAINT `$.checkList[i].code` CHECK ($.checkList[i].checkClause)
-    @if i<$.uniqueList.length-1
+    @if i<$.checkList.length-1
      ,
     @/if
   @/for
@@ -130,7 +130,7 @@ UPDATE platform_dev_table_check SET synced = 1 WHERE del_status = 0 AND table_na
 
 @for i in $.uniqueList
     @if $.hasDelStatus
-ALTER TABLE $.tableName ADD UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`, `del_status`) USING BTREE;
+ALTER TABLE $.tableName ADD UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`, `del_status`, `delete_at`) USING BTREE;
     @/if
     @if !$.hasDelStatus
 ALTER TABLE $.tableName ADD UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`) USING BTREE;

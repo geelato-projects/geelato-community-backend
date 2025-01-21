@@ -172,6 +172,7 @@ public class DbGenerateDao {
         ArrayList<JSONObject> delForeignList = new ArrayList<>();
         // 是否有删除字段
         boolean hasDelStatus = false;
+        boolean hasDelAt = false;
         // 排序
         for (FieldMeta fm : em.getFieldMetas()) {
             if (fm.getColumn().getEnableStatus() == EnableStatusEnum.DISABLED.getCode()) {
@@ -180,6 +181,9 @@ public class DbGenerateDao {
             // 存在删除字段，用于逻辑删除后，唯一约束问题。
             if ("del_status".equals(fm.getColumn().getName())) {
                 hasDelStatus = true;
+            }
+            if ("delete_at".equals(fm.getColumn().getName())) {
+                hasDelAt = true;
             }
             try {
                 JSONObject jsonColumn = JSONObject.parseObject(JSONObject.toJSONString(fm.getColumn()));
@@ -209,6 +213,7 @@ public class DbGenerateDao {
                 }
             }
         }
+        hasDelStatus = hasDelStatus && hasDelAt;
         // 表检查 - 需要删除的
         List<SchemaCheck> schemaCheckList = metaManager.queryTableChecks(em.getTableSchema(), em.getTableName(), em.getTableChecks());
         ArrayList<JSONObject> delCheckList = new ArrayList<>();

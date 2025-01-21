@@ -140,6 +140,19 @@ public class UserRestController extends BaseController {
         }
     }
 
+    @RequestMapping(value = "/queryOrgUserByUserId", method = RequestMethod.POST)
+    public ApiResult queryOrgUserByUserId(@RequestBody Map<String, Object> params) {
+        try {
+            if (params == null || params.isEmpty()) {
+                throw new RuntimeException("Params is null");
+            }
+            return ApiResult.success(userService.queryOrgUserByUserId(params));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
     @RequestMapping(value = "/queryByParams", method = RequestMethod.POST)
     public ApiResult query(@RequestBody Map<String, Object> params) {
         try {

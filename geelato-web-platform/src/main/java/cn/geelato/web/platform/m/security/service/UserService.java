@@ -109,6 +109,17 @@ public class UserService extends BaseSortableService {
         }
     }
 
+    public List<OrgUserMap> queryOrgUserByUserId(Map<String, Object> params) {
+        List<OrgUserMap> list = new ArrayList<>();
+        String userId = params.get("userId") != null ? String.valueOf(params.get("userId")) : null;
+        if (Strings.isNotBlank(userId)) {
+            FilterGroup filter = new FilterGroup();
+            filter.addFilter("userId", FilterGroup.Operator.in, userId);
+            list = orgUserMapService.queryModel(OrgUserMap.class, filter);
+        }
+        return list;
+    }
+
 
     public ApiPagedResult pageQueryModelOf(FilterGroup filter, PageQueryRequest request, String appId, String tenantCode) {
         ApiPagedResult result = new ApiPagedResult();
@@ -124,6 +135,7 @@ public class UserService extends BaseSortableService {
         result.setDataSize(pageQueryList != null ? pageQueryList.size() : 0);
         result.setData(new DataItems(pageQueryList, result.getTotal()));
         List<String> userIds = new ArrayList<>();
+        List<String> orgIds = new ArrayList<>();
         if (pageQueryList != null && pageQueryList.size() > 0) {
             for (User model : pageQueryList) {
                 model.setSalt(null);
@@ -132,9 +144,24 @@ public class UserService extends BaseSortableService {
                 if (!userIds.contains(model.getId())) {
                     userIds.add(model.getId());
                 }
+                if (!orgIds.contains(model.getOrgId())) {
+                    orgIds.add(model.getOrgId());
+                }
             }
         } else {
             return result;
+        }
+        // 组织用户查询
+        List<OrgUserMap> orgUserMaps = orgUserMapService.queryModelByIds(String.join(",", orgIds), String.join(",", userIds));
+        if (orgUserMaps != null && orgUserMaps.size() > 0) {
+            for (User model : pageQueryList) {
+                for (OrgUserMap map : orgUserMaps) {
+                    if (model.getId().equals(map.getUserId()) && model.getOrgId().equals(map.getOrgId())) {
+                        model.setOrgUserPost(map.getPost());
+                        break;
+                    }
+                }
+            }
         }
         // 角色查询
         Map<String, Object> params = new HashMap<>();

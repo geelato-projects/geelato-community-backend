@@ -89,6 +89,8 @@ public class User extends BaseSortableEntity implements EntityEnableAble {
     private String plainPassword;
     @Transient
     private boolean stocked;
+    @Transient
+    private String orgUserPost;
 
     public User() {
     }

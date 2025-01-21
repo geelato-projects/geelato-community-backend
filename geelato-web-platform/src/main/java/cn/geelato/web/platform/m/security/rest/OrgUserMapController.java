@@ -35,6 +35,7 @@ public class OrgUserMapController extends BaseController {
 
     static {
         OPERATORMAP.put("contains", Arrays.asList("userName", "orgName"));
+        OPERATORMAP.put("consists", Arrays.asList("userId", "orgId"));
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 

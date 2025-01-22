@@ -23,6 +23,10 @@ public class JWTInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {
+        String upgradeHeader = request.getHeader("Upgrade");
+        if("websocket".equalsIgnoreCase(upgradeHeader)){
+            return true;
+        }
         // 如果不是映射到方法直接通过
         if (!(handler instanceof HandlerMethod handlerMethod)) {
             return true;

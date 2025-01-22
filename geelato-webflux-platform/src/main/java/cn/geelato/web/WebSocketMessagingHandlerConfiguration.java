@@ -1,5 +1,6 @@
 package cn.geelato.web;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,21 +14,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-public class WebSocketMessagingHandlerConfiguration {
+public class WebSocketMessagingHandlerConfiguration{
 
     @Bean
-    public HandlerMapping webSocketMessagingHandlerMapping(MessagingManager messagingManager) {
-        WebSocketMessagingHandler messagingHandler=new WebSocketMessagingHandler(
-                messagingManager
-        );
-
-        final Map<String, WebSocketHandler> map = new HashMap<>(1);
-        map.put("/messaging/**", messagingHandler);
-
-        final SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
-        mapping.setOrder(Ordered.HIGHEST_PRECEDENCE);
-        mapping.setUrlMap(map);
-        return mapping;
+    public HandlerMapping webSocketMessagingHandlerMapping() {
+        return new WebSocketMappingHandlerMapping();
     }
 
     @Bean

@@ -22,7 +22,7 @@ import java.util.*;
 @GraalService(name = "fn", built = "true")
 public class FnService {
 
-    private RuleService ruleService;
+    private final RuleService ruleService;
 
     public FnService() {
         GraalUtils.getCurrentTenantCode();

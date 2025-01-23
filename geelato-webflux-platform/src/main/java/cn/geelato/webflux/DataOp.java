@@ -1,4 +1,4 @@
-package cn.geelato.web;
+package cn.geelato.webflux;
 
 import reactor.core.publisher.Flux;
 

@@ -1,4 +1,4 @@
-package cn.geelato.web;
+package cn.geelato.webflux;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

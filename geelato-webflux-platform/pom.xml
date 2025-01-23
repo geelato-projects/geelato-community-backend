@@ -33,25 +33,4 @@
 
 
     </dependencies>
-
-    <!--该工程打包成普通的jar，以便发布到仓库共其它应用模块使用，不采用spring-boot-maven-plugin打成fat jar
-        若需要演示该platform平台模块的功能，可以新建一个模块，引用该jar进行演示。
-    -->
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>

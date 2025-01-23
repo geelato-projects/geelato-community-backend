@@ -1,7 +1,8 @@
-package cn.geelato.web;
+package cn.geelato.webflux;
 
 import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
@@ -11,8 +12,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
-import static cn.geelato.web.DataOp.result;
-import static cn.geelato.web.DataOp.source;
+import static cn.geelato.webflux.DataOp.result;
+import static cn.geelato.webflux.DataOp.source;
 
 @Component
 @WebSocketMapping("/messaging/example")
@@ -27,6 +28,7 @@ public class WebSocketMessagingHandler implements WebSocketHandler {
 
     @Override
     @Nonnull
+    @RequestMapping
     public Mono<Void> handle(@Nonnull WebSocketSession session) {
         session.receive().subscribe(System.out::println);
         return session.send(initData(session));

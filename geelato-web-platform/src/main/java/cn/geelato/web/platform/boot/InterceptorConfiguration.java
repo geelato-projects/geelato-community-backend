@@ -25,8 +25,9 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/v3/**")
                 .excludePathPatterns("/api/config")
                 .excludePathPatterns("/api/resources/**")
-                .excludePathPatterns("/api/sys/config/getValue/**");
-        registry.addInterceptor(new DataSourceInterceptor()).addPathPatterns("/**");
-        registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**");
+                .excludePathPatterns("/api/sys/config/getValue/**")
+                .excludePathPatterns("/messaging/**");
+        registry.addInterceptor(new DataSourceInterceptor()).addPathPatterns("/**").excludePathPatterns("/messaging/**");
+        registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**").excludePathPatterns("/messaging/**");
     }
 }

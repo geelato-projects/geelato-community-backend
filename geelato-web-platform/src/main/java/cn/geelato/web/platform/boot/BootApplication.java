@@ -18,6 +18,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 
 @ComponentScan(basePackages = {"cn.geelato"})
@@ -33,15 +34,7 @@ public class BootApplication implements CommandLineRunner {
     @Autowired
     protected DbGenerateDao dbGenerateDao;
 
-    protected boolean isWinOS;
     protected boolean isIgnoreInitData = false;
-
-    private void assertOS() {
-        Properties prop = System.getProperties();
-        String os = prop.getProperty("os.name");
-        log.info("[operate system]{}", os);
-        isWinOS = os.toLowerCase().startsWith("win");
-    }
 
     /**
      * @param args 每一个参数
@@ -51,7 +44,6 @@ public class BootApplication implements CommandLineRunner {
         log.info("[start args]：{}", StringUtils.join(args, ","));
         log.info("[configuration file]：{}", applicationContext.getEnvironment().getProperty("geelato.env"));
         log.info("[start application]...start");
-        assertOS();
         parseStartArgs(args);
         resolveSqlScript(args);
         resolveGraalContext();

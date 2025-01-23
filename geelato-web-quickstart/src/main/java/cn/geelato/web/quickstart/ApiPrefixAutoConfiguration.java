@@ -14,7 +14,5 @@ public class ApiPrefixAutoConfiguration implements WebMvcConfigurer {
         configurer.addPathPrefix("/api", c ->
                 c.isAnnotationPresent(ApiRestController.class)
                         || c.isAnnotationPresent(ApiRuntimeRestController.class));
-        configurer.addPathPrefix("/ws", c ->
-                c.isAnnotationPresent(WebSocketMapping.class));
     }
 }

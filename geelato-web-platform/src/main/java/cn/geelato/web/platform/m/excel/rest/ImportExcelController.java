@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * @author diabl
@@ -61,14 +60,10 @@ public class ImportExcelController extends BaseController {
      * @return 返回操作结果，包括成功或失败的信息
      */
     @RequestMapping(value = "/attach/{importType}/{templateId}/{attachId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult importAttach(@PathVariable String importType, @PathVariable String templateId, @PathVariable String attachId) {
+    public ApiResult importAttach(@PathVariable String importType, @PathVariable String templateId, @PathVariable String attachId, String index) {
         try {
-            // 根据模板ID获取对应的文件信息，如果没有找到则使用传入的templateId作为文件名
-            Map<String, String> templateMap = ExportTemplate.indexMap(templateId);
-            templateId = templateMap.get("id");
-            String index = templateMap.get("index");
             // 调用importExcel方法执行导入操作
-            return importExcelService.importExcel(this.request, this.response, importType, templateId,index, attachId);
+            return importExcelService.importExcel(this.request, this.response, importType, templateId, index, attachId);
         } catch (Exception ex) {
             log.error(ex.getMessage());
             return ApiResult.fail(ex.getMessage());
@@ -86,14 +81,10 @@ public class ImportExcelController extends BaseController {
      * @throws IOException 如果在文件处理过程中发生I/O异常，将抛出此异常
      */
     @RequestMapping(value = "/file/{importType}/{templateId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult importFile(@PathVariable String importType, @PathVariable String templateId) {
+    public ApiResult importFile(@PathVariable String importType, @PathVariable String templateId, String index) {
         try {
-            // 根据模板ID获取对应的文件信息，如果没有找到则使用传入的templateId作为文件名
-            Map<String, String> templateMap = ExportTemplate.indexMap(templateId);
-            templateId = templateMap.get("id");
-            String index = templateMap.get("index");
             // 调用importExcel方法执行导入操作
-            return importExcelService.importExcel(this.request, this.response, importType, templateId,index, null);
+            return importExcelService.importExcel(this.request, this.response, importType, templateId, index, null);
         } catch (Exception ex) {
             log.error(ex.getMessage());
             return ApiResult.fail(ex.getMessage());

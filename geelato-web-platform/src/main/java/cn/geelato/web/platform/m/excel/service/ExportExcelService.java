@@ -50,9 +50,9 @@ import java.util.regex.Pattern;
 @Component
 public class ExportExcelService {
     private static final Pattern pattern = Pattern.compile("^[a-zA-Z0-9_\\-]+\\.[a-zA-Z0-9]{1,5}$");
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
     private final Logger logger = LoggerFactory.getLogger(ExportExcelService.class);
     private final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
-    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
     @Autowired
     private ExportTemplateService exportTemplateService;
     @Autowired
@@ -90,7 +90,7 @@ public class ExportExcelService {
             ExportTemplate exportTemplate = exportTemplateService.getModel(ExportTemplate.class, templateId);
             Assert.notNull(exportTemplate, "导出模板不存在");
             // 模板
-            Base64Helper templateAttach = getTemplate(exportTemplate.indexTemplate(index));
+            Base64Helper templateAttach = getTemplate(exportTemplate.indexTemplateDefault(index));
             Assert.notNull(templateAttach, "导出模板文件不存在");
             // 模板源数据
             Map<String, PlaceholderMeta> metaMap = null;

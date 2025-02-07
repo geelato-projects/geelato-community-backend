@@ -6,12 +6,9 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
+import cn.geelato.utils.StringUtils;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.logging.log4j.util.Strings;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author diabl
@@ -74,33 +71,6 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
     private String template9;
 
     /**
-     * 根据模板ID生成一个包含模板ID和索引号的映射
-     *
-     * @param templateId 模板ID，可能包含逗号分隔的模板ID和索引号
-     * @return 包含模板ID和索引号的映射
-     */
-    public static Map<String, String> indexMap(String templateId) {
-        Map<String, String> result = new HashMap<>();
-        result.put("id", templateId);
-        result.put("index", "1");
-        if (templateId.indexOf(",") != -1) {
-            try {
-                String split[] = templateId.split(",");
-                if (split.length == 2 && Strings.isNotBlank(split[0]) && Strings.isNotBlank(split[1])) {
-                    result.put("id", split[0]);
-                    int index = Integer.parseInt(split[1]);
-                    if (index >= 1 && index <= 9) {
-                        result.put("index", split[1]);
-                    }
-                }
-            } catch (Exception e) {
-                result.put("index", "1");
-            }
-        }
-        return result;
-    }
-
-    /**
      * 根据索引获取对应的模板字符串
      *
      * @param index 索引值，范围从1到9
@@ -130,5 +100,10 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
             default:
                 throw new RuntimeException("模板索引超出范围！");
         }
+    }
+
+    public String indexTemplateDefault(String index) {
+        index = StringUtils.isBlank(index) ? "1" : index;
+        return indexTemplate(index);
     }
 }

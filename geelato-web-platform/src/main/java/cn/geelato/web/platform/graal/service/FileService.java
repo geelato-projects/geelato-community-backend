@@ -8,7 +8,6 @@ import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.graal.ApplicationContextProvider;
 import cn.geelato.web.platform.graal.GraalUtils;
 import cn.geelato.web.platform.handler.file.FileHandler;
-import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.service.ExportExcelService;
 import cn.geelato.web.platform.m.file.entity.Attach;
 import cn.geelato.web.platform.m.file.entity.Attachment;
@@ -50,19 +49,16 @@ public class FileService {
      *
      * @param fileName   文件名称
      * @param templateId 文件模板ID
+     * @param index      文件模板索引
      * @param data       导出数据
      * @param options    其他参数
      * @return 返回文件的ID，用于后续下载
      */
-    public String exportExcel(String fileName, String templateId, Object data, Map<String, Object> options) {
+    public String exportExcel(String fileName, String templateId, String index, Object data, Map<String, Object> options) {
         if (Strings.isBlank(fileName) || Strings.isBlank(templateId) || data == null) {
             return null;
         }
         try {
-            // 根据模板ID获取对应的文件信息，如果没有找到则使用传入的templateId作为文件名
-            Map<String, String> templateMap = ExportTemplate.indexMap(templateId);
-            templateId = templateMap.get("id");
-            String index = templateMap.get("index");
             // 业务数据
             List<Map> valueMapList = new ArrayList<>();
             Map valueMap = new HashMap();

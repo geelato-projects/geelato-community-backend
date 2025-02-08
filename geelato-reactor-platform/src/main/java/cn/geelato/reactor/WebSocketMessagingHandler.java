@@ -1,4 +1,4 @@
-package cn.geelato.webflux;
+package cn.geelato.reactor;
 
 import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Component;
@@ -12,8 +12,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
-import static cn.geelato.webflux.DataOp.result;
-import static cn.geelato.webflux.DataOp.source;
+import static cn.geelato.reactor.DataOp.result;
+import static cn.geelato.reactor.DataOp.source;
 
 @Component
 @WebSocketMapping("/messaging/example")

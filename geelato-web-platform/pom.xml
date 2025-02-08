@@ -174,11 +174,11 @@
             <version>1.16.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>dingtalk</artifactId>
-            <version>${dingtalk.sdk.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.aliyun</groupId>-->
+<!--            <artifactId>dingtalk</artifactId>-->
+<!--            <version>${dingtalk.sdk.version}</version>-->
+<!--        </dependency>-->
 
 
         <!-- 阿里云短信测试 -->

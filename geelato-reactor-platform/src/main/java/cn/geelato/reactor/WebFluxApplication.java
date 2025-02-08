@@ -1,4 +1,4 @@
-package cn.geelato.webflux;
+package cn.geelato.reactor;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

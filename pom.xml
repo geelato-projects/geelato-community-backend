@@ -15,7 +15,7 @@
         <module>geelato-utils</module>
         <module>geelato-orm</module>
         <module>geelato-web-platform</module>
-        <module>geelato-webflux-platform</module>
+        <module>geelato-reactor-platform</module>
         <module>geelato-web-quickstart</module>
         <module>geelato-plugin-manager</module>
     </modules>

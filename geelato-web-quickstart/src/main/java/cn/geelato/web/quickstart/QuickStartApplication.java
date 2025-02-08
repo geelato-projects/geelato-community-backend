@@ -7,8 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.web.reactive.config.EnableWebFlux;
-
 @SpringBootApplication
 @EnableConfigurationProperties
 @ComponentScan(basePackages = {"cn.geelato"})

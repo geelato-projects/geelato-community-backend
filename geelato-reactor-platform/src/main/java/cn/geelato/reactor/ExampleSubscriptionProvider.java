@@ -1,4 +1,4 @@
-package cn.geelato.webflux;
+package cn.geelato.reactor;
 
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;

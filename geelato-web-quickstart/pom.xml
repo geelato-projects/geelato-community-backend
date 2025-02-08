@@ -15,11 +15,11 @@
     <dependencies>
         <dependency>
             <groupId>cn.geelato</groupId>
-            <artifactId>geelato-webflux-platform</artifactId>
+            <artifactId>geelato-web-platform</artifactId>
         </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>
-            <artifactId>geelato-web-platform</artifactId>
+            <artifactId>geelato-reactor-platform</artifactId>
         </dependency>
         <dependency>
             <groupId>redis.clients</groupId>
@@ -46,11 +46,11 @@
             <version>${apache.poi.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>dingtalk</artifactId>
-            <version>${dingtalk.sdk.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.aliyun</groupId>-->
+<!--            <artifactId>dingtalk</artifactId>-->
+<!--            <version>${dingtalk.sdk.version}</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.springdoc</groupId>
@@ -72,22 +72,22 @@
             <artifactId>activation</artifactId>
             <version>1.1.1</version>
         </dependency>
-       <dependency>
-           <groupId>cn.geelato</groupId>
-           <artifactId>geelato-schedule-starter</artifactId>
-           <version>${geelato.schedule.version}</version>
-       </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-schedule-starter</artifactId>
+            <version>${geelato.schedule.version}</version>
+        </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>cn.geelato</groupId>-->
-<!--            <artifactId>geelato-auth-starter</artifactId>-->
-<!--            <version>${geelato.auth.version}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>com.github.gavlyukovskiy</groupId>-->
-<!--            <artifactId>p6spy-spring-boot-starter</artifactId>-->
-<!--            <version>1.9.2</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-auth-starter</artifactId>
+            <version>${geelato.auth.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.gavlyukovskiy</groupId>
+            <artifactId>p6spy-spring-boot-starter</artifactId>
+            <version>1.9.2</version>
+        </dependency>
     </dependencies>
 
     <build>

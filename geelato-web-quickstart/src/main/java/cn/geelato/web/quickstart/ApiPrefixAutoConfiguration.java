@@ -2,7 +2,6 @@ package cn.geelato.web.quickstart;
 
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.annotation.ApiRuntimeRestController;
-import cn.geelato.webflux.WebSocketMapping;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;

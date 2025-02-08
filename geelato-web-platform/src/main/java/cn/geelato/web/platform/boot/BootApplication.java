@@ -10,6 +10,7 @@ import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.core.script.db.DbScriptManagerFactory;
 import cn.geelato.core.script.sql.SqlScriptManagerFactory;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.web.platform.Version;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -49,6 +50,7 @@ public class BootApplication implements CommandLineRunner {
         resolveGraalContext();
         initEnvironment();
         log.info("[start application]...finish");
+        log.info("[application version is {}:{}]", Version.current.getEdition(), Version.current.getVersion());
     }
 
     private void resolveGraalContext() {

@@ -19,8 +19,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
 
 @ComponentScan(basePackages = {"cn.geelato"})
 @Slf4j
@@ -69,24 +67,6 @@ public class BootApplication implements CommandLineRunner {
         isIgnoreInitData = false;
     }
 
-
-    public void initMeta() throws IOException {
-        MetaReflex.setApplicationContext(applicationContext);
-        initClassPackageMeta();
-        initDataBaseMeta();
-    }
-
-
-
-    private void initClassPackageMeta() {
-        String[] packageNames = getProperty("geelato.meta.scan-package-names", "cn.geelato").split(",");
-        for (String packageName : packageNames) {
-            MetaManager.singleInstance().scanAndParse(packageName, false);
-        }
-    }
-    private void initDataBaseMeta() {
-        MetaManager.singleInstance().parseDBMeta(dao);
-    }
     private void resolveSqlScript(String... args) throws IOException {
         if (this.getClass().getClassLoader() == null || this.getClass().getClassLoader().getResource("//") == null) {
             initFromFatJar();

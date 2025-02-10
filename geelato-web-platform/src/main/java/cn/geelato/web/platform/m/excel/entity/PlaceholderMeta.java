@@ -71,6 +71,9 @@ public class PlaceholderMeta {
     @Getter
     @Setter
     private String description;
+    @Getter
+    @Setter
+    private String remark;
     // 输入值格式
     @Getter
     @Setter

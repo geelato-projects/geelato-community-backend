@@ -565,6 +565,7 @@ public class ExcelXSSFWriter {
             placeholderMeta.setFormatImport(row.getCell(15).getStringCellValue());
             placeholderMeta.setFormatExport(row.getCell(16).getStringCellValue());
             placeholderMeta.setDescription(row.getCell(17).getStringCellValue());
+            placeholderMeta.setRemark(row.getCell(18).getStringCellValue());
             placeholderMeta.setBarcode(null);
             // 校验占位符元数据
             if (validatePlaceholderMeta(placeholderMeta)) {

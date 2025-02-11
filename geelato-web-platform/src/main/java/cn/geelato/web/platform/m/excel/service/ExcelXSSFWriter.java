@@ -547,25 +547,55 @@ public class ExcelXSSFWriter {
                 break;
             }
             PlaceholderMeta placeholderMeta = new PlaceholderMeta();
-            placeholderMeta.setPlaceholder(row.getCell(0).getStringCellValue());
-            placeholderMeta.setVar(row.getCell(1).getStringCellValue());
-            placeholderMeta.setListVar(row.getCell(2).getStringCellValue());
-            placeholderMeta.setConstValue(row.getCell(3).getStringCellValue());
-            placeholderMeta.setExpression(row.getCell(4).getStringCellValue());
-            placeholderMeta.setValueType(row.getCell(5).getStringCellValue());
-            placeholderMeta.setValueComputeMode(row.getCell(6).getStringCellValue());
+            if (row.getCell(0) != null) {
+                placeholderMeta.setPlaceholder(row.getCell(0).getStringCellValue());
+            }
+            if (row.getCell(1) != null) {
+                placeholderMeta.setVar(row.getCell(1).getStringCellValue());
+            }
+            if (row.getCell(2) != null) {
+                placeholderMeta.setListVar(row.getCell(2).getStringCellValue());
+            }
+            if (row.getCell(3) != null) {
+                placeholderMeta.setConstValue(row.getCell(3).getStringCellValue());
+            }
+            if (row.getCell(4) != null) {
+                placeholderMeta.setExpression(row.getCell(4).getStringCellValue());
+            }
+            if (row.getCell(5) != null) {
+                placeholderMeta.setValueType(row.getCell(5).getStringCellValue());
+            }
+            if (row.getCell(6) != null) {
+                placeholderMeta.setValueComputeMode(row.getCell(6).getStringCellValue());
+            }
             placeholderMeta.setIsList(getBoolean(row.getCell(7)));
             placeholderMeta.setIsMerge(getBoolean(row.getCell(8)));
             placeholderMeta.setIsUnique(getBoolean(row.getCell(9)));
             placeholderMeta.setIsImage(getBoolean(row.getCell(10)));
-            placeholderMeta.setImageWidth(row.getCell(11).getNumericCellValue());
-            placeholderMeta.setImageHeight(row.getCell(12).getNumericCellValue());
-            placeholderMeta.setImageSource(row.getCell(13).getStringCellValue());
-            placeholderMeta.setBarcodeCode(row.getCell(14).getStringCellValue());
-            placeholderMeta.setFormatImport(row.getCell(15).getStringCellValue());
-            placeholderMeta.setFormatExport(row.getCell(16).getStringCellValue());
-            placeholderMeta.setDescription(row.getCell(17).getStringCellValue());
-            placeholderMeta.setRemark(row.getCell(18).getStringCellValue());
+            if (row.getCell(11) != null) {
+                placeholderMeta.setImageWidth(row.getCell(11).getNumericCellValue());
+            }
+            if (row.getCell(12) != null) {
+                placeholderMeta.setImageHeight(row.getCell(12).getNumericCellValue());
+            }
+            if (row.getCell(13) != null) {
+                placeholderMeta.setImageSource(row.getCell(13).getStringCellValue());
+            }
+            if (row.getCell(14) != null) {
+                placeholderMeta.setBarcodeCode(row.getCell(14).getStringCellValue());
+            }
+            if (row.getCell(15) != null) {
+                placeholderMeta.setFormatImport(row.getCell(15).getStringCellValue());
+            }
+            if (row.getCell(16) != null) {
+                placeholderMeta.setFormatExport(row.getCell(16).getStringCellValue());
+            }
+            if (row.getCell(17) != null) {
+                placeholderMeta.setDescription(row.getCell(17).getStringCellValue());
+            }
+            if (row.getCell(18) != null) {
+                placeholderMeta.setRemark(row.getCell(18).getStringCellValue());
+            }
             placeholderMeta.setBarcode(null);
             // 校验占位符元数据
             if (validatePlaceholderMeta(placeholderMeta)) {

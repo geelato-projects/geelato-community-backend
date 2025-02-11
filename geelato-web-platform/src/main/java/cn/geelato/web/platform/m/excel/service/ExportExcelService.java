@@ -24,6 +24,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hwpf.HWPFDocument;
+import org.apache.poi.poifs.crypt.HashAlgorithm;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -122,6 +123,9 @@ public class ExportExcelService {
             File exportFile = new File(directory);
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
+            if (readonly) {
+                exportFile.setReadOnly();
+            }
             // 保存文件信息
             FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "exportFile", exportTemplate.getAppId(), exportTemplate.getTenantCode());
             Attachment attachment = fileHandler.save(exportFile, fileName, directory, fileParam);
@@ -177,6 +181,9 @@ public class ExportExcelService {
             File exportFile = new File(directory);
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
+            if (readonly) {
+                exportFile.setReadOnly();
+            }
             // 保存文件信息
             FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "exportFile", appId, tenantCode);
             Attachment attachment = fileHandler.save(exportFile, exportFileName, directory, fileParam);
@@ -358,6 +365,8 @@ public class ExportExcelService {
         BufferedInputStream bufferedInputStream = null;
         OutputStream outputStream = null;
         Workbook workbook = null;
+        // 只读加密密码
+        String password = SessionCtx.getCurrentTenantCode();
         try {
             // excel文件类型
             String contentType = Files.probeContentType(templateFile.toPath());
@@ -373,6 +382,10 @@ public class ExportExcelService {
                 sheet.setForceFormulaRecalculation(true);
                 // 水印
                 // 只读
+                if (readonly) {
+                    sheet.protectSheet(password);
+                    ((HSSFWorkbook) workbook).writeProtectWorkbook(password, password);
+                }
                 // 写入文件
                 outputStream = new FileOutputStream(exportFile);
                 workbook.write(outputStream);
@@ -388,6 +401,9 @@ public class ExportExcelService {
                 // 水印
                 // 只读
                 if (readonly) {
+                    sheet.protectSheet(password);
+                    ((XSSFWorkbook) workbook).lockStructure();
+                    ((XSSFWorkbook) workbook).lockRevision();
                     ((XSSFWorkbook) workbook).lockWindows();
                 }
                 // 写入文件
@@ -416,7 +432,7 @@ public class ExportExcelService {
                 DocxWaterMarkUtils.setXWPFDocumentWaterMark(document, markMeta);
                 // 只读
                 if (readonly) {
-                    document.enforceReadonlyProtection();
+                    document.enforceReadonlyProtection(password, HashAlgorithm.sha1);
                 }
                 // 写入文件
                 outputStream = new FileOutputStream(exportFile);

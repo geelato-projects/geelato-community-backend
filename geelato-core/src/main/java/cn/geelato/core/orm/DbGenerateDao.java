@@ -46,10 +46,6 @@ public class DbGenerateDao {
     }
 
 
-    public void createAllTables(boolean dropBeforeCreate) {
-        this.createAllTables(dropBeforeCreate, null);
-    }
-
     /**
      * 基于元数据管理，需元数据据管理器已加载、扫描元数据
      * <p>内部调用了sqlId:dropOneTable来删除表，
@@ -145,14 +141,14 @@ public class DbGenerateDao {
 
     private void createOrUpdateOneTable(EntityMeta em) {
         boolean isExistsTable = true;
-        Map existscolumnMap = new HashMap();
+        Map<String,Object> existscolumnMap = new HashMap<>();
         String tableName = Strings.isEmpty(em.getTableName()) ? em.getEntityName() : em.getTableName();
         List<Map<String, Object>> columns = dao.queryForMapList("queryColumnsByTableName", SqlParams.map("tableName", tableName));
         if (columns == null || columns.isEmpty()) {
             isExistsTable = false;
         } else {
             for (Map<String, Object> columnMap : columns) {
-                existscolumnMap.put(columnMap.get("COLUMN_NAME"), columnMap);
+                existscolumnMap.put(columnMap.get("COLUMN_NAME").toString(), columnMap);
             }
         }
         // 通过create table创建的字段
@@ -249,20 +245,20 @@ public class DbGenerateDao {
     private void createOrUpdateOneTable(EntityMeta em, boolean dropBeforeCreate) {
 
         if (dropBeforeCreate) {
-            log.info("  drop entity " + em.getTableName());
+            log.info("  drop entity {}", em.getTableName());
             dao.execute("dropOneTable", SqlParams.map("tableName", em.getTableName()));
         }
-        log.info("  create or update an entity " + em.getTableName());
+        log.info("  create or update an entity {}", em.getTableName());
 
         // 检查表是否存在，或取已存在的列元数据
         boolean isExistsTable = true;
-        Map existsColumnMap = new HashMap();
+        Map<String,Object> existsColumnMap = new HashMap<>();
         List<Map<String, Object>> columns = dao.queryForMapList("queryColumnsByTableName", SqlParams.map("tableName", em.getTableName()));
         if (columns == null || columns.isEmpty()) {
             isExistsTable = false;
         } else {
             for (Map<String, Object> columnMap : columns) {
-                existsColumnMap.put(columnMap.get("COLUMN_NAME"), columnMap);
+                existsColumnMap.put(columnMap.get("COLUMN_NAME").toString(), columnMap);
             }
         }
         // 通过create table创建的字段

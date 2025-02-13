@@ -63,4 +63,16 @@ public class TenantSite extends BaseEntity {
     @Title(title = "启动多语言")
     @Col(name = "enable_mutil_lang")
     private boolean enableMutilLang = false;
+
+    @Title(title = "微信登录")
+    @Col(name = "wechat_info")
+    private String wechatInfo;
+
+    @Title(title = "钉钉登录")
+    @Col(name = "dingding_info")
+    private String dingdingInfo;
+
+    @Title(title = "飞书登录")
+    @Col(name = "feishu_info")
+    private String feishuInfo;
 }

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+@SuppressWarnings("rawtypes")
 public class DynamicDataSource extends AbstractRoutingDataSource {
     @Override
     protected Object determineCurrentLookupKey() {

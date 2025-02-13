@@ -106,13 +106,18 @@ public class AuthCodeService {
         if (ValidTypeEnum.MOBILE.getValue().equals(form.getValidType())) {
             return sendMobile(form.getPrefix(), form.getValidBox(), form.getAuthCode());
         } else if (ValidTypeEnum.MAIL.getValue().equals(form.getValidType())) {
-            return sendEmail(form.getValidBox(), "Geelato Admin AuthCode", form.getAuthCode());
+            return sendEmail(form.getValidBox(), "Geelato 验证码", form.getAuthCode());
         }
         return true;
     }
 
     public boolean sendEmail(String to, String subject, String authCode) {
-        String text = String.format("本次验证码是 %s，请在 %d 分钟内输入验证码进行下一步操作。", authCode, CODE_EXPIRATION_TIME);
+        String text = String.format("<div style=\"font-family: 宋体; sans-serif; color: #333;\">\n" +
+                "  <p><span style=\"font-weight:bold; font-size:18px;\">您的验证码是：<strong style=\"color: #007BFF;\">%s</strong></span><span>，此验证码请在 %d 分钟内使用。</span></p>\n" +
+                "  <p style=\"color: #FF0000;\">请勿将此验证码告知他人。</p>\n" +
+                "  <p>如果您未请求此验证码，请立即联系我们的客服团队。</p>\n" +
+                "  <p>感谢您使用【Geelato】！</p>\n" +
+                "</div>", authCode, CODE_EXPIRATION_TIME);
         return emailService.sendHtmlMail(to, subject, text);
     }
 

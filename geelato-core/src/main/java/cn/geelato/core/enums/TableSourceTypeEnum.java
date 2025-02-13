@@ -10,7 +10,8 @@ import org.apache.logging.log4j.util.Strings;
 public enum TableSourceTypeEnum {
     CREATION("模型创建", "creation"),
     SYSTEM("系统内置", "system"),
-    PLATFORM("平台内置", "platform");
+    PLATFORM("平台内置", "platform"),
+    THIRD("第三方", "third");
 
     private final String label;// 选项内容
     private final String value;// 选项值

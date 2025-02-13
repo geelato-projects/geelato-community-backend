@@ -4,6 +4,7 @@ import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.enums.ColumnSyncedEnum;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
+import cn.geelato.core.enums.TableSourceTypeEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
@@ -130,7 +131,10 @@ public class DevTableController extends BaseController {
                 form.setId(resultMap.getId());
                 // 添加默认权限
                 permissionService.resetDefaultPermission(PermissionTypeEnum.getTablePermissions(), form.getEntityName(), form.getAppId());
-                devTableColumnService.createDefaultColumn(form);
+                // 添加默认字段，第三方数据源不添加默认字段
+                if (!TableSourceTypeEnum.THIRD.getValue().equals(form.getSourceType())) {
+                    devTableColumnService.createDefaultColumn(form);
+                }
                 return ApiResult.success(resultMap);
             }
             if (Strings.isNotEmpty(form.getEntityName())) {

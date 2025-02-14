@@ -79,7 +79,7 @@ public class DataSourceManager extends AbstractManager {
                 break;
             case "sqlserver":
                 dbDriver="com.microsoft.sqlserver.jdbc.SQLServerDriver";
-                jdbcUrl="jdbc:sqlserver://"+serverHost+":"+serverPort+";databaseName="+dbName;
+                jdbcUrl="jdbc:sqlserver://"+serverHost+":"+serverPort+";trustServerCertificate=true;databaseName="+dbName;
                 break;
             default:
                 break;

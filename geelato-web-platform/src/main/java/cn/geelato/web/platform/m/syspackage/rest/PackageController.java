@@ -22,6 +22,7 @@ import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import cn.geelato.web.platform.m.syspackage.PackageConfigurationProperties;
+import cn.geelato.web.platform.m.syspackage.PackageException;
 import cn.geelato.web.platform.m.syspackage.entity.AppMeta;
 import cn.geelato.web.platform.m.syspackage.entity.AppPackage;
 import cn.geelato.web.platform.m.syspackage.entity.AppVersion;
@@ -81,7 +82,7 @@ public class PackageController extends BaseController {
      */
     @RequestMapping(value = {"/packet/{appId}"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
-    public ApiResult packetApp(@NotNull @PathVariable("appId") String appId, String version, String description,
+    public ApiResult<AppVersion> packetApp(@NotNull @PathVariable("appId") String appId, String version, String description,
                                @RequestBody(required = false) Map<String, String> appointMetas) throws IOException {
         Map<String, String> appDataMap = new HashMap<>();
         Map<String, String> appMetaDataMap = appMetaMap(appId, "package");
@@ -140,7 +141,7 @@ public class PackageController extends BaseController {
 
     @RequestMapping(value = {"/packet/merge"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
-    public ApiResult packetMergeApp(String appId, String version, String description,
+    public ApiResult<AppVersion> packetMergeApp(String appId, String version, String description,
                                     @RequestBody(required = false) Map<String, Map<String, String>> appointMetas) throws IOException {
         String[] versionIds = appointMetas.keySet().toArray(new String[0]);
         List<AppPackage> appPackages = getAppointAppPackage(versionIds);
@@ -223,6 +224,7 @@ public class PackageController extends BaseController {
                         appPackageData = ZipUtils.readPackageData(file, ".gdp");
                     }
                 } catch (IOException ex) {
+                    throw new PackageException(ex.getMessage());
                 }
                 AppPackage appPackage = resolveAppPackageData(appPackageData);
                 appPackageList.add(appPackage);
@@ -277,7 +279,7 @@ public class PackageController extends BaseController {
      */
     @RequestMapping(value = {"/uploadPackage/{appId}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
-    public ApiResult uploadPackage(@RequestParam("file") MultipartFile file, @PathVariable("appId") String appId) throws IOException {
+    public ApiResult<AppVersion> uploadPackage(@RequestParam("file") MultipartFile file, @PathVariable("appId") String appId) throws IOException {
         byte[] bytes = file.getBytes();
         String targetPath = packageConfigurationProperties.getUploadPath() + file.getOriginalFilename();
         Files.write(Path.of(targetPath), bytes);
@@ -310,7 +312,7 @@ public class PackageController extends BaseController {
                     appPackageData = ZipUtils.readPackageData(file, ".gdp");
                 }
             } catch (IOException ex) {
-                return ApiResult.fail(ex.getMessage());
+                throw new PackageException(ex.getMessage());
             }
 
             AppPackage appPackage = resolveAppPackageData(appPackageData);
@@ -327,8 +329,7 @@ public class PackageController extends BaseController {
                     return ApiResult.fail(ex.getMessage());
                 }
             } else {
-                log.info("deploy error：无法读取到应用包数据，请检查应用包");
-                return ApiResult.fail("无法读取到应用包数据，请检查应用");
+                throw new PackageException("无法读取到应用包数据，请检查应用包");
             }
         }
         return ApiResult.success(null, "应用部署成功！");
@@ -372,7 +373,7 @@ public class PackageController extends BaseController {
                 continue;
             }
 
-            log.info(String.format("remove sql：%s ", value));
+            log.info("remove sql：{} ", value);
             dao.getJdbcTemplate().execute(value);
         }
         log.info("----------------------delete version end--------------------");
@@ -384,7 +385,7 @@ public class PackageController extends BaseController {
      */
     @RequestMapping(value = {"/packet/progress/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
-    public ApiResult packetProcess(@PathVariable("versionId") String appId) {
+    public ApiResult<?> packetProcess(@PathVariable("versionId") String appId) {
         return null;
     }
 
@@ -394,7 +395,7 @@ public class PackageController extends BaseController {
      */
     @RequestMapping(value = {"/deploy/progress/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
-    public ApiResult deployProcess(@PathVariable("versionId") String appId) {
+    public ApiResult<?> deployProcess(@PathVariable("versionId") String appId) {
         return null;
     }
 
@@ -403,7 +404,7 @@ public class PackageController extends BaseController {
     */
     @RequestMapping(value = {"/queryVersion/{appId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
-    public ApiResult queryVersion(@PathVariable("appId") String appId) {
+    public ApiResult<?> queryVersion(@PathVariable("appId") String appId) {
         return null;
     }
 
@@ -412,7 +413,7 @@ public class PackageController extends BaseController {
     */
     @RequestMapping(value = {"/deleteVersion/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
-    public ApiResult deleteVersion(@PathVariable("versionId") String appId) {
+    public ApiResult<?> deleteVersion(@PathVariable("versionId") String appId) {
         return null;
     }
 
@@ -501,8 +502,8 @@ public class PackageController extends BaseController {
             FileWriter writer = new FileWriter(file);
             writer.write(jsonStr);
             writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ex) {
+            throw new PackageException(ex.getMessage());
         }
         writePackageResourceData(appPackage);
         return compressAppPackage(packageConfigurationProperties.getPath() + tempFolderPath, appVersion, appPackage);
@@ -578,7 +579,7 @@ public class PackageController extends BaseController {
                 BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
                 String pkValue = dao.save(boundSql);
             }
-            log.info(String.format("结束处理元数据：%s", appMeta.getMetaName()));
+            log.info("结束处理元数据：{}", appMeta.getMetaName());
         }
         TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
         log.info("----------------------deploy end--------------------");

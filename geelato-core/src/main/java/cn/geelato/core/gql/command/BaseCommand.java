@@ -20,10 +20,6 @@ public class BaseCommand<E extends BaseCommand> {
      */
     private String cacheKey;
 
-    /**
-     * -- GETTER --
-     *
-     */
     protected BaseCommand<E> parentCommand;
 
     private Boolean execution;
@@ -43,10 +39,6 @@ public class BaseCommand<E extends BaseCommand> {
     protected StringBuilder from = new StringBuilder();
     // 子命令
     protected List<E> commands=new ArrayList<>();;
-
-    /**
-     * @return 获取子命令，若不存在，则创建一个空的命令列表
-     */
 
     public boolean hasCommands() {
         return commands != null && !commands.isEmpty();

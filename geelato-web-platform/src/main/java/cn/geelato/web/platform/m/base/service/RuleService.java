@@ -183,20 +183,6 @@ public class RuleService {
 
         return resultList;
     }
-
-    public ApiPagedResult queryTreeForMapList(String gql, boolean withMeta, String treeId) {
-        QueryCommand command = gqlManager.generateQuerySql(gql);
-        command.getWhere().addFilter("tn.tree_id", treeId);
-        BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
-        List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
-        Long total = dao.queryTotal(boundPageSql);
-        ApiPagedResult result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list.size(), total);
-        if (withMeta) {
-            result.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
-        }
-        return result;
-    }
-
     public ApiMultiPagedResult queryForMultiMapList(String gql, boolean withMeta) {
         Map<String, ApiMultiPagedResult.PageData> dataMap = new HashMap<>();
         List<QueryCommand> commandList = gqlManager.generateMultiQuerySql(gql);

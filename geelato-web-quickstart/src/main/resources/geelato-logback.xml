@@ -13,9 +13,8 @@
     <appender name="logFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>
-                log/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}.log
-            </FileNamePattern>
+            <FileNamePattern>log/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -24,9 +23,8 @@
     <appender name="scheduleLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>
-                log/schedule/%d{yyyy-MM-dd}.log
-            </FileNamePattern>
+            <FileNamePattern>log/schedule/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>

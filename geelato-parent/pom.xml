@@ -196,7 +196,11 @@
                 <artifactId>geelato-schedule-starter</artifactId>
                 <version>${geelato.schedule.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-auth-starter</artifactId>
+                <version>${geelato.auth.version}</version>
+            </dependency>
             <!--enterprise module-->
             <dependency>
                 <groupId>cn.geelato</groupId>

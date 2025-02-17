@@ -18,16 +18,18 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
         registry.addInterceptor(new JWTInterceptor())
                 .addPathPatterns("/**")
                 .excludePathPatterns("/iam/**")
+                .excludePathPatterns("/assets/**")
+                .excludePathPatterns("/error/**")
+                .excludePathPatterns("/v3/**")
                 .excludePathPatterns("/api/user/forgetValid")
                 .excludePathPatterns("/api/user/forget")
                 .excludePathPatterns("/api/code/generate/**")
                 .excludePathPatterns("/swagger-ui/index.html")
-                .excludePathPatterns("/v3/**")
                 .excludePathPatterns("/api/config")
                 .excludePathPatterns("/api/resources/**")
                 .excludePathPatterns("/api/sys/config/getValue/**")
-                .excludePathPatterns("/messaging/**");
-        registry.addInterceptor(new DataSourceInterceptor()).addPathPatterns("/**").excludePathPatterns("/messaging/**");
-        registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**").excludePathPatterns("/messaging/**");
+                ;
+        registry.addInterceptor(new DataSourceInterceptor()).addPathPatterns("/**");
+        registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**");
     }
 }

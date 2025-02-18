@@ -52,6 +52,9 @@ public class OcrPdfMeta extends BaseSortableEntity {
     @Title(title = "浮动识别规则")
     @Col(name = "discern_rule")
     private String discernRule;
+    @Title(title = "是否未知区域")
+    @Col(name = "unknown_area")
+    private String unknownArea;
 
     /**
      * 将OcrPdfMeta对象列表转换为Map集合

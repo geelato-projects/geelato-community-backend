@@ -3,6 +3,8 @@ package cn.geelato.web.platform.m.security.rest;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.WxChatConfiguration;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.UserService;
@@ -15,17 +17,15 @@ import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@RestController(value = "/security/wechat")
+@ApiRestController(value = "/security/wechat")
 @Slf4j
-public class WeChatController {
+public class WeChatController extends BaseController {
     private static final Class<User> CLAZZ = User.class;
-
     private final WxChatConfiguration wxConfiguration;
     private final UserService userService;
 

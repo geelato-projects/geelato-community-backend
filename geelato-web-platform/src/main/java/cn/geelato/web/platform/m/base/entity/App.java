@@ -62,6 +62,12 @@ public class App extends BaseSortableEntity {
     @Title(title = "应用范围")
     @Col(name = "purpose")
     private String purpose;
+    @Title(title = "ide版本")
+    @Col(name = "ide_version")
+    private String ideVersion;
+    @Title(title = "模型字段权限校验级别", description = "strict:严格,loose:宽松")
+    @Col(name = "model_column_pcl")
+    private String modelColumnPcl;
 
     @Transient
     private String roles;

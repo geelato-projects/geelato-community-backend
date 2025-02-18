@@ -58,8 +58,7 @@ public class PackageController extends BaseController {
 
     private final ArrayList<String> incrementMetas = new ArrayList<>();
 
-    private final String[] incrementPlatformMetas = {"platform_dict", "platform_dict_item", "platform_sys_config",
-            "platform_export_template", "platform_encoding", "platform_resources"};
+    private final String[] incrementPlatformMetas = {"platform_dict", "platform_dict_item", "platform_sys_config", "platform_encoding", "platform_resources"};
 
     private final ArrayList<String> incrementBizMetas = new ArrayList<>();
 
@@ -306,8 +305,9 @@ public class PackageController extends BaseController {
                 if (appVersion.getPackagePath().contains(".zgdp")) {
                     appPackageData = ZipUtils.readPackageData(appVersion.getPackagePath(), ".gdp");
                     // 测试用
-//                    appPackageData = ZipUtils.readPackageData("D:\\geelato-project\\app_package_temp\\upload_temp\\ob.zgdp", ".gdp");
+//                    appPackageData = ZipUtils.readPackageData("D:\\ob_v1.1.1.20250218201957.zgdp", ".gdp");
                 } else {
+//                    appPackageData = ZipUtils.readPackageData("D:\\ob_v1.1.1.20250218201957.zgdp", ".gdp");
                     File file = fileHandler.toFile(appVersion.getPackagePath());
                     appPackageData = ZipUtils.readPackageData(file, ".gdp");
                 }
@@ -345,6 +345,7 @@ public class PackageController extends BaseController {
 
     }
 
+    //todo
     private void backupCurrentVersion(String appId) {
         log.info("----------------------backup version start--------------------");
         Map<String, String> appMetaMap = appMetaMap(appId, "remove");

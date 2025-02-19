@@ -69,7 +69,7 @@ public class WeChatController extends BaseController {
         }
         // 判断是否已经绑定过微信
         Map<String, Object> params = new HashMap<>();
-        params.put("union_id", access.getUnionid());
+        params.put("unionId", access.getUnionid());
         List<User> userList = userService.queryModel(CLAZZ, params);
         if (userList != null && userList.size() > 0) {
             return ApiResult.fail("The unionId of weChat has been occupied");

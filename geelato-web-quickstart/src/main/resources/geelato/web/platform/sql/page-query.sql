@@ -256,13 +256,11 @@ SELECT
     p3.cooperating_org_id as userCooperatingOrgId,
     p3.union_id as userUnionId,
     p3.enable_status as userEnableStatus,
-    p3.description as userDescription,
-    p4.post as orgUserPost
+    p3.description as userDescription
 FROM platform_role_r_user p1
 LEFT JOIN platform_role p2 ON p2.id = p1.role_id
 LEFT JOIN platform_user p3 ON p3.id = p1.user_id
-LEFT JOIN platform_org_r_user p4 ON p4.org_id = p3.org_id AND p4.user_id = p3.id
-WHERE 1=1 AND p1.del_status = 0 AND p2.del_status = 0 AND p3.del_status = 0 AND p4.del_status = 0
+WHERE 1=1 AND p1.del_status = 0 AND p2.del_status = 0 AND p3.del_status = 0
 @if $.roleId!=null&&$.roleId!=''
   AND p1.role_id = '$.roleId'
 @/if

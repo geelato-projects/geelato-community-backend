@@ -136,7 +136,7 @@ public class SysConfigController extends BaseController {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("config_key", form.getConfigKey());
-            params.put("app_id", form.getAppId());
+            // params.put("app_id", form.getAppId());
             params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(sysConfigService.validate("platform_sys_config", form.getId(), params));

@@ -30,8 +30,22 @@
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </layout>
     </appender>
+    <appender name="authLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>log/auth/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <maxHistory>10</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </layout>
+    </appender>
     <logger name="cn.geelato.schedule" additivity="false">
         <appender-ref ref="scheduleLogFile"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.auth" additivity="false">
+        <appender-ref ref="authLogFile"/>
         <appender-ref ref="console"/>
     </logger>
 <!--    <logger name="handler.cn.geelato.web.platform.PlatformExceptionHandler" additivity="false">-->

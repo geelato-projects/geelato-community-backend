@@ -1,12 +1,18 @@
 package cn.geelato.web.platform.m.security.entity;
 
+import cn.geelato.core.SessionCtx;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.graal.GraalUtils;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
+import cn.geelato.web.platform.m.settings.entity.Message;
+import cn.geelato.web.platform.m.settings.enums.MessageSendStatus;
 import cn.geelato.web.platform.utils.EncryptUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.util.Assert;
+
+import java.util.Date;
 
 /**
  * @author diabl
@@ -21,6 +27,7 @@ public class AuthCodeParams {
     private String validBox;// 手机、邮箱
     private String authCode; // 验证码
     private String userId;// 用户id，
+    private Message message; // 消息对象
 
     /**
      * 构建并返回Redis缓存的key值
@@ -70,5 +77,24 @@ public class AuthCodeParams {
         ac.setUserId(fp.getUserId());
 
         return ac;
+    }
+
+    public Message buildMessage() {
+        SessionCtx sessionCtx = GraalUtils.getCxt();
+        Message message = new Message();
+        message.setSender(sessionCtx.getUserId());
+        if (ValidTypeEnum.MOBILE.getValue().equals(this.getValidType())) {
+            message.setReceiver(this.getPrefix() + this.getValidBox());
+        } else if (ValidTypeEnum.MAIL.getValue().equals(this.getValidType())) {
+            message.setReceiver(this.getValidBox());
+        }
+        if (Strings.isBlank(message.getReceiver())) {
+            message.setReceiver(this.getUserId());
+        }
+        message.setSendTime(new Date());
+        message.setSendMethod(ValidTypeEnum.getLabel(this.getValidType()));
+        message.setSendType(this.getAction());
+        message.setSendStatus(MessageSendStatus.UNSENT.getValue());
+        return message;
     }
 }

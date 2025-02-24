@@ -6,6 +6,8 @@ import cn.geelato.web.platform.m.security.entity.AuthCodeParams;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.enums.AuthCodeAction;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
+import cn.geelato.web.platform.m.settings.enums.MessageSendStatus;
+import cn.geelato.web.platform.m.settings.service.MessageService;
 import cn.geelato.web.platform.utils.AuthCodeUtil;
 import jakarta.annotation.Resource;
 import org.apache.commons.collections4.map.HashedMap;
@@ -14,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -39,6 +42,9 @@ public class AuthCodeService {
     private EmailService emailService;
     @Autowired
     private AliMobileService aliMobileService;
+    @Lazy
+    @Autowired
+    private MessageService messageService;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
@@ -72,7 +78,7 @@ public class AuthCodeService {
         return generateAuth(form);
     }
 
-    public boolean generateAuth(AuthCodeParams form) throws NoSuchFieldException, IllegalAccessException {
+    public boolean generateAuth(AuthCodeParams form) {
         String redisKey = form.getRedisKey();
         if (Strings.isBlank(redisKey)) {
             return false;
@@ -80,6 +86,12 @@ public class AuthCodeService {
         // 验证方式不能为空
         if (Strings.isBlank(form.getValidBox())) {
             return false;
+        }
+        // 邮件、手机号码
+        if (ValidTypeEnum.MOBILE.getValue().equals(form.getValidType())) {
+            messageService.updateReceiver(form.getMessage(), form.getPrefix() + form.getValidBox());
+        } else if (ValidTypeEnum.MAIL.getValue().equals(form.getValidType())) {
+            messageService.updateReceiver(form.getMessage(), form.getValidBox());
         }
         // 验证码
         String authCode = AuthCodeUtil.sixDigitNumber();
@@ -97,6 +109,8 @@ public class AuthCodeService {
         }
         // 存入缓存中
         redisTemplate.opsForValue().set(redisKey, saltCode, CODE_EXPIRATION_TIME, TimeUnit.MINUTES);
+        // 保存信息
+        messageService.updateContent(form.getMessage(), "Geelato 验证码", form.getAuthCode(), MessageSendStatus.SUCCESS.getValue());
 
         return true;
     }

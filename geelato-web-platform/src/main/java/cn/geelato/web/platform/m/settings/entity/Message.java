@@ -19,6 +19,9 @@ import java.util.Date;
 @Entity(name = "platform_message")
 @Title(title = "消息")
 public class Message extends BaseEntity {
+    @Title(title = "应用ID")
+    @Col(name = "app_id")
+    private String appId;
     @Title(title = "消息标题")
     private String title;
     @Title(title = "消息内容")
@@ -28,9 +31,15 @@ public class Message extends BaseEntity {
     @Title(title = "发送者")
     private String sender;
     @Title(title = "发送时间")
-    @Col(name = "sendTime")
+    @Col(name = "send_time")
     private Date sendTime;
     @Title(title = "发送方式")
-    @Col(name = "sendMethod")
+    @Col(name = "send_method")
     private String sendMethod;
+    @Title(title = "发送类别")
+    @Col(name = "send_type")
+    private String sendType;
+    @Title(title = "发送状态", description = "发送状态，0：未发送、1：发送成功、2：发送失败、3：已读")
+    @Col(name = "send_status")
+    private int sendStatus;
 }

@@ -198,6 +198,22 @@ public class UploadController extends BaseController {
                 if (columnEntry.getValue() == null) {
                     columnEntry.setValue("");
                 }
+                // 微信信息字段特殊处理，只保存save字段中定义的字段
+                if ("wechatInfo".equals(columnEntry.getKey()) && columnEntry.getValue() != null && Strings.isNotBlank(columnEntry.getValue().toString())) {
+                    Map<String, Object> wechatMap = new HashMap<>();
+                    try {
+                        Map<String, Object> infoMap = JSON.parseObject(columnEntry.getValue().toString(), Map.class);
+                        String saveFields = infoMap.get("save") == null ? "" : infoMap.get("save").toString();
+                        for (Map.Entry<String, Object> infoEntry : infoMap.entrySet()) {
+                            if (saveFields.contains(infoEntry.getKey()) && infoEntry.getValue() != null) {
+                                wechatMap.put(infoEntry.getKey(), infoEntry.getValue());
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                    columnEntry.setValue(JSON.toJSONString(wechatMap));
+                }
             }
             for (String name : fileNames) {
                 uploadJson(JSON.toJSONString(columnMap), name, "");

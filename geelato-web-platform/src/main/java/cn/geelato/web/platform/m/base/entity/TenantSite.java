@@ -60,10 +60,6 @@ public class TenantSite extends BaseEntity {
     @Col(name = "enable_mutil_lang")
     private boolean enableMutilLang = false;
 
-    @Title(title = "单点登录域名，格式如www.xxx.com")
-    @Col(name = "sso_domain")
-    private String ssoDomain;
-
     @Title(title = "单点登录地址")
     @Col(name = "sso_url")
     private String ssoUrl;

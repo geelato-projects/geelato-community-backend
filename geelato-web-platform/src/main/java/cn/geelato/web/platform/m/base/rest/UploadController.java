@@ -194,25 +194,15 @@ public class UploadController extends BaseController {
             if (columnMap.isEmpty()) {
                 return ApiResult.fail("Entity Query Is Null");
             }
+            // 微信信息字段特殊处理，不保存unSaveConfig字段中定义的字段
+            List<String> unSaveConfig = new ArrayList<>();
+            if (columnMap.get("unSaveConfig") != null) {
+                unSaveConfig = StringUtils.toListDr(columnMap.get("unSaveConfig").toString());
+            }
+            // 遍历字段，如果为空，则设置为空字符串
             for (Map.Entry<String, Object> columnEntry : columnMap.entrySet()) {
-                if (columnEntry.getValue() == null) {
+                if (columnEntry.getValue() == null || unSaveConfig.contains(columnEntry.getKey())) {
                     columnEntry.setValue("");
-                }
-                // 微信信息字段特殊处理，只保存save字段中定义的字段
-                if ("wechatInfo".equals(columnEntry.getKey()) && columnEntry.getValue() != null && Strings.isNotBlank(columnEntry.getValue().toString())) {
-                    Map<String, Object> wechatMap = new HashMap<>();
-                    try {
-                        Map<String, Object> infoMap = JSON.parseObject(columnEntry.getValue().toString(), Map.class);
-                        String saveFields = infoMap.get("save") == null ? "" : infoMap.get("save").toString();
-                        for (Map.Entry<String, Object> infoEntry : infoMap.entrySet()) {
-                            if (saveFields.contains(infoEntry.getKey()) && infoEntry.getValue() != null) {
-                                wechatMap.put(infoEntry.getKey(), infoEntry.getValue());
-                            }
-                        }
-                    } catch (Exception e) {
-                        log.error(e.getMessage(), e);
-                    }
-                    columnEntry.setValue(JSON.toJSONString(wechatMap));
                 }
             }
             for (String name : fileNames) {

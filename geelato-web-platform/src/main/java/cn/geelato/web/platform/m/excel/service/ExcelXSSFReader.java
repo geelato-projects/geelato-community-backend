@@ -157,10 +157,17 @@ public class ExcelXSSFReader {
                         meta.setRetain("TRUE".equalsIgnoreCase(cell4.getStringCellValue()) || false);
                     }
                 }
-                meta.setOrder((int) row.getCell(5).getNumericCellValue());
+                XSSFCell cell5 = row.getCell(5);
+                if (cell5 != null) {
+                    if (CellType.NUMERIC.equals(cell5.getCellType())) {
+                        meta.setOrder((int) cell5.getNumericCellValue());
+                    } else if (CellType.STRING.equals(cell5.getCellType())) {
+                        meta.setOrder(Integer.parseInt(cell5.getStringCellValue()));
+                    }
+                }
                 typeRuleDataList.add(meta);
             } catch (Exception ex) {
-                throw new FileContentReadFailedException("Business Data Type Rule, Read Failed In (" + i + ").");
+                throw new FileContentReadFailedException("Business Data Type Rule, Read Failed In (" + i + "). " + ex.getMessage());
             }
         }
         Set<Map<Integer, BusinessTypeRuleData>> typeRuleDataSet = new LinkedHashSet<>();

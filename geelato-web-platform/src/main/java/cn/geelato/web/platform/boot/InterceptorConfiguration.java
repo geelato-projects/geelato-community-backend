@@ -17,17 +17,26 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new JWTInterceptor())
                 .addPathPatterns("/**")
+                // 以下为排除鉴权的路径
+                // 登录接口
                 .excludePathPatterns("/iam/**")
+                // 静态资源
                 .excludePathPatterns("/assets/**")
+                // 错误页面
                 .excludePathPatterns("/error/**")
+                // swagger-ui 相关
                 .excludePathPatterns("/v3/**")
+                .excludePathPatterns("/swagger-ui/index.html")
+                // 重置密码接口
                 .excludePathPatterns("/api/user/forgetValid")
                 .excludePathPatterns("/api/user/forget")
                 .excludePathPatterns("/api/code/generate/**")
-                .excludePathPatterns("/swagger-ui/index.html")
-                .excludePathPatterns("/api/config")
-                .excludePathPatterns("/api/resources/**")
-                .excludePathPatterns("/api/sys/config/getValue/**")
+                // 未登录前相关配置文件
+                .excludePathPatterns("/api/resources/json")
+                // 微信回调接口
+                .excludePathPatterns("/wx/callback/hook")
+                // 微信登录接口
+                .excludePathPatterns("/wx/login/**")
                 ;
         registry.addInterceptor(new DataSourceInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**");

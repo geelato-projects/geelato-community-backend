@@ -33,11 +33,15 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/api/code/generate/**")
                 // 未登录前相关配置文件
                 .excludePathPatterns("/api/resources/json")
+                // 加载或下载文件
+                .excludePathPatterns("/api/resources/file")
                 // 微信回调接口
                 .excludePathPatterns("/wx/callback/hook")
                 // 微信登录接口
                 .excludePathPatterns("/wx/login/**")
-                ;
+                // 微信重定向接口
+                .excludePathPatterns("/wx/redirect")
+        ;
         registry.addInterceptor(new DataSourceInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**");
     }

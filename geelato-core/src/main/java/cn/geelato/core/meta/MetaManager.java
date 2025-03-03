@@ -18,9 +18,9 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.schema.SchemaCheck;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.orm.Dao;
+import cn.geelato.core.util.MapUtils;
 import cn.geelato.utils.ClassScanner;
 import cn.geelato.utils.FastJsonUtils;
-import cn.geelato.utils.MapUtils;
 import cn.geelato.utils.StringUtils;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,10 @@ import java.util.stream.Collectors;
 @SuppressWarnings("rawtypes")
 public class MetaManager extends AbstractManager {
 
-    private Dao dao;
+    /**
+     * 实体字段，key:字段标识或名称，columnName,fieldName，value：字段标题title
+     */
+    private static final HashMap<String, String> entityFieldNameTitleMap = new HashMap<>();
     private static MetaManager instance;
     /**
      * 实体类名称和实体类对象的映射关系,key:entityName，value为实体类对象
@@ -48,10 +51,6 @@ public class MetaManager extends AbstractManager {
      */
     private final HashMap<String, EntityMeta> tableNameMetadataMap = new HashMap<>();
     /**
-     * 实体字段，key:字段标识或名称，columnName,fieldName，value：字段标题title
-     */
-    private static final HashMap<String, String> entityFieldNameTitleMap = new HashMap<>();
-    /**
      * 简化实体数据集合，标识，标题，类型
      */
     private final List<EntityLiteMeta> entityLiteMetaList = new ArrayList<>();
@@ -59,15 +58,7 @@ public class MetaManager extends AbstractManager {
      * 实体类
      */
     private final HashMap<String, Class> entityMetaClassMap = new HashMap<>();
-
-    public static MetaManager singleInstance() {
-        lock.lock();
-        if (instance == null) {
-            instance = new MetaManager();
-        }
-        lock.unlock();
-        return instance;
-    }
+    private Dao dao;
 
     private MetaManager() {
         log.info("MetaManager Instancing...");
@@ -87,6 +78,15 @@ public class MetaManager extends AbstractManager {
 //        addCommonFieldMeta("title", "title", "标题");
 //        addCommonFieldMeta("password", "password", "密码");
 //        addCommonFieldMeta("login_name", "loginName", "登录名");
+    }
+
+    public static MetaManager singleInstance() {
+        lock.lock();
+        if (instance == null) {
+            instance = new MetaManager();
+        }
+        lock.unlock();
+        return instance;
     }
 
     /**
@@ -120,17 +120,17 @@ public class MetaManager extends AbstractManager {
         }
         List<Map<String, Object>> tableList = dao.getJdbcTemplate().queryForList(sql);
         List<Map<String, Object>> allColumnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE));
-        List<Map<String, Object>>  allViewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE ));
+        List<Map<String, Object>> allViewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE));
         List<Map<String, Object>> allCheckList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE));
         for (Map<String, Object> map : tableList) {
 //            List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
 //            List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and entity_name='%s'", map.get("entity_name")));
 //            List<Map<String, Object>> checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
-            List<Map<String, Object>> columnList=allColumnList.stream().filter(
+            List<Map<String, Object>> columnList = allColumnList.stream().filter(
                     x -> x.get("table_id").equals(map.get("id"))).collect(Collectors.toList());
-            List<Map<String, Object>> viewList=allViewList.stream().filter(
+            List<Map<String, Object>> viewList = allViewList.stream().filter(
                     x -> x.get("entity_name").equals(map.get("entity_name"))).collect(Collectors.toList());
-            List<Map<String, Object>> checkList=allCheckList.stream().filter(
+            List<Map<String, Object>> checkList = allCheckList.stream().filter(
                     x -> x.get("table_id").equals(map.get("id"))).collect(Collectors.toList());
             parseTableEntity(map, columnList, viewList, checkList, null);
             parseViewEntity(viewList);

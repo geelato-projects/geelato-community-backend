@@ -1,8 +1,5 @@
 package cn.geelato.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -13,38 +10,33 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Base64Utils {
-    private static final Logger logger = LoggerFactory.getLogger(Base64Utils.class);
     private static final String DATA_URI_REGEX = "^data:[\\w+/]+;base64,(.+)$";
     private static final Pattern pattern = Pattern.compile(DATA_URI_REGEX);
 
+
     /**
-     * 将Base64编码的字符串解码为纯文本字符串
+     * 将Base64编码的字符串解码为原始字符串。
      *
-     * @param str 待解码的Base64编码字符串
-     * @return 解码后的纯文本字符串，如果解码失败则返回null
+     * @param str Base64编码的字符串，格式为"data:image/png;base64,<base64 encoded string>"
+     * @return 解码后的原始字符串，如果输入字符串为空或格式不正确，则返回null。
      */
     public static String decode(String str) {
-        String decodedString = null;
-        try {
-            if (StringUtils.isNotBlank(str)) {
-                // 创建一个Base64解码器
-                Base64.Decoder decoder = Base64.getDecoder();
-                // 将Base64编码的字符串解码为字节数组
-                String[] parts = str.split(",");
-                if (parts.length == 2 && StringUtils.isNotBlank(parts[1])) {
+        if (StringUtils.isNotBlank(str)) {
+            // 创建一个Base64解码器
+            Base64.Decoder decoder = Base64.getDecoder();
+            // 将Base64编码的字符串解码为字节数组
+            String[] parts = str.split(",");
+            if (parts.length == 2 && StringUtils.isNotBlank(parts[1])) {
+                try {
                     byte[] decodedBytes = decoder.decode(parts[1]);
                     // 将字节数组转换为字符串（使用UTF-8编码，因为原始字符串是UTF-8编码的）
-                    decodedString = new String(decodedBytes, "UTF-8");
-                } else {
-                    logger.error("decode string part length not equal 2 or content is empty");
+                    return new String(decodedBytes, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    return null;
                 }
-            } else {
-                logger.error("decode string is blank");
             }
-        } catch (UnsupportedEncodingException e) {
-            logger.error("Error decoding Base64 string: {}", e.getMessage());
         }
-        return StringUtils.isNotBlank(decodedString) ? decodedString : null;
+        return null;
     }
 
     /**

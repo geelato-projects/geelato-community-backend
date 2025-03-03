@@ -1,4 +1,4 @@
-package cn.geelato.utils;
+package cn.geelato.web.platform.m.zxing.utils;
 
 import java.awt.*;
 import java.text.Collator;
@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.*;
 
 public class FontUtils {
+    // 用于缓存字体家族列表。
     public static final String redisTemplateKey = "redis_template_font_families";
     private static final char MIN_ZH_CHAR = '\u4E00';
     private static final char MAX_ZH_CHAR = '\u9FFF';
@@ -15,6 +16,11 @@ public class FontUtils {
     private static final int TRADITIONAL_CHINESE_START = 0x4E00; // CJK统一汉字块起始
     private static final int TRADITIONAL_CHINESE_END = 0x9FA5;   // CJK统一汉字块结束
 
+    /**
+     * 获取系统中所有可用的字体族名称列表，并按字典顺序排序。
+     *
+     * @return 一个包含所有可用字体族名称的列表，列表中的名称已按字典顺序排序。
+     */
     public static List<String> getAvailableFontFamilies() {
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Font[] allFonts = env.getAllFonts();
@@ -27,6 +33,14 @@ public class FontUtils {
         return familyFonts.stream().sorted(comparator()).toList();
     }
 
+    /**
+     * 返回一个自定义的比较器，用于对字符串进行排序。
+     * <p>
+     * 这个比较器首先比较两个字符串的首字符，如果首字符是汉字且另一个不是，则汉字字符串排在前面；
+     * 如果两个字符串的首字符都是汉字或都不是汉字，则使用Collator进行正常排序。
+     *
+     * @return 自定义的比较器。
+     */
     private static Comparator<String> comparator() {
         Comparator<String> customComparator = new Comparator<String>() {
             @Override

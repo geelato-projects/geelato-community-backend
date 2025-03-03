@@ -7,12 +7,12 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.utils.FontUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import cn.geelato.web.platform.m.zxing.service.BarcodeService;
 import cn.geelato.web.platform.m.zxing.utils.BarcodeUtils;
+import cn.geelato.web.platform.m.zxing.utils.FontUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -33,13 +33,13 @@ import java.util.concurrent.TimeUnit;
 public class BarcodeController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<Barcode> CLAZZ = Barcode.class;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     static {
         OPERATORMAP.put("contains", Arrays.asList("title", "code", "description"));
         OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
     }
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final BarcodeService barcodeService;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;

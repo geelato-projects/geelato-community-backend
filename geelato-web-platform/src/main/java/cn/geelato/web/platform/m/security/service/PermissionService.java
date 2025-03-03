@@ -106,7 +106,7 @@ public class PermissionService extends BaseService {
         if (Strings.isBlank(model.getCode()) || Strings.isBlank(model.getType()) || Strings.isBlank(model.getObject())) {
             return isDef;
         }
-        if (defaultPermissions != null && defaultPermissions.size() > 0) {
+        if (defaultPermissions != null && !defaultPermissions.isEmpty()) {
             for (Permission permission : defaultPermissions) {
                 if (model.getType().equalsIgnoreCase(permission.getType()) && model.getCode().equals(String.format("%s%s", model.getObject(), permission.getCode()))) {
                     isDef = true;
@@ -195,7 +195,7 @@ public class PermissionService extends BaseService {
         tableFilter.addFilter("tenantCode", getSessionTenantCode());
         List<Permission> tPermissions = queryModel(Permission.class, tableFilter);
         // 修改 object
-        if (tPermissions != null && tPermissions.size() > 0) {
+        if (tPermissions != null && !tPermissions.isEmpty()) {
             for (Permission permission : tPermissions) {
                 // tableName&XX
                 if (permission.getCode().startsWith(sorObject + "&")) {
@@ -213,7 +213,7 @@ public class PermissionService extends BaseService {
         columnFilter.addFilter("tenantCode", getSessionTenantCode());
         List<Permission> cPermissions = queryModel(Permission.class, columnFilter);
         // 修改 object
-        if (cPermissions != null && cPermissions.size() > 0) {
+        if (cPermissions != null && !cPermissions.isEmpty()) {
             for (Permission permission : cPermissions) {
                 // tableName:columnName&XX
                 if (permission.getCode().startsWith(sorObject + ":")) {
@@ -245,7 +245,7 @@ public class PermissionService extends BaseService {
         params.put("tenantCode", getSessionTenantCode());
         List<Permission> permissions = queryModel(Permission.class, params);
         // 修改 object
-        if (permissions != null && permissions.size() > 0) {
+        if (permissions != null && !permissions.isEmpty()) {
             for (Permission permission : permissions) {
                 String object = String.format("%s:%s", tableName, curObject);
                 // tableName:columnName&XX
@@ -299,8 +299,8 @@ public class PermissionService extends BaseService {
         List<Permission> curPermissions = queryModel(Permission.class, tableFilter);
         // 默认权限
         List<Permission> defPermissions = getDefaultTypePermission(types);
-        if (defPermissions != null && defPermissions.size() > 0) {
-            if (curPermissions != null && curPermissions.size() > 0) {
+        if (defPermissions != null && !defPermissions.isEmpty()) {
+            if (curPermissions != null && !curPermissions.isEmpty()) {
                 for (Permission dModel : defPermissions) {
                     boolean isExist = false;
                     for (Permission cModel : curPermissions) {
@@ -347,7 +347,7 @@ public class PermissionService extends BaseService {
             permissionIds.add(permission.getId());
         }
         // 给当前角色添加模型权限
-        if (roleIds.size() > 0 && permissionIds.size() > 0) {
+        if (!roleIds.isEmpty() && !permissionIds.isEmpty()) {
             FilterGroup filterGroup1 = new FilterGroup();
             filterGroup1.addFilter("permissionId", FilterGroup.Operator.in, String.join(",", permissionIds));
             filterGroup1.addFilter("roleId", FilterGroup.Operator.in, String.join(",", roleIds));
@@ -407,14 +407,14 @@ public class PermissionService extends BaseService {
         List<ColumnMeta> columnMetas = queryModel(ColumnMeta.class, colParams);
         // 默认字段
         List<String> columnObjects = new ArrayList<>();
-        if (columnMetas != null && columnMetas.size() > 0) {
+        if (columnMetas != null && !columnMetas.isEmpty()) {
             for (ColumnMeta model : columnMetas) {
                 columnObjects.add(tableName + ":" + model.getName());
             }
         }
         // 当前权限
         List<Permission> permissions = new ArrayList<>();
-        if (columnObjects != null && columnObjects.size() > 0) {
+        if (!columnObjects.isEmpty()) {
             FilterGroup filter = new FilterGroup();
             filter.addFilter("type", type);
             filter.addFilter("object", FilterGroup.Operator.in, Strings.join(columnObjects, ','));
@@ -423,7 +423,7 @@ public class PermissionService extends BaseService {
         }
         // 默认字段
         List<String> permissionIds = new ArrayList<>();
-        if (permissions != null && permissions.size() > 0) {
+        if (permissions != null && !permissions.isEmpty()) {
             for (Permission model : permissions) {
                 permissionIds.add(model.getId());
             }
@@ -431,9 +431,9 @@ public class PermissionService extends BaseService {
         // 默认权限
         List<Permission> defPermissions = getDefaultTypePermission(type);
         // 构建权限
-        if (columnMetas != null && columnMetas.size() > 0) {
+        if (columnMetas != null && !columnMetas.isEmpty()) {
             for (ColumnMeta column : columnMetas) {
-                if (defPermissions != null && defPermissions.size() > 0) {
+                if (defPermissions != null && !defPermissions.isEmpty()) {
                     for (Permission dModel : defPermissions) {
                         Permission permission = new Permission();
                         permission.setName(dModel.getName());
@@ -444,7 +444,7 @@ public class PermissionService extends BaseService {
                         permission.setRule(dModel.getRule());
                         permission.setDescription(dModel.getDescription());
                         boolean isExist = false;
-                        if (permissions != null && permissions.size() > 0) {
+                        if (permissions != null && !permissions.isEmpty()) {
                             for (Permission cModel : permissions) {
                                 if (permission.getCode().equals(cModel.getCode()) && permission.getObject().equals(cModel.getObject())) {
                                     isExist = true;
@@ -464,12 +464,12 @@ public class PermissionService extends BaseService {
             }
         }
         // 重置角色权限
-        if (permissionIds != null && permissionIds.size() > 0) {
+        if (!permissionIds.isEmpty()) {
             FilterGroup filter = new FilterGroup();
             filter.addFilter("permissionId", FilterGroup.Operator.in, Strings.join(permissionIds, ','));
             filter.addFilter("tenantCode", getSessionTenantCode());
             List<RolePermissionMap> rolePermissionMaps = queryModel(RolePermissionMap.class, filter);
-            if (rolePermissionMaps != null && rolePermissionMaps.size() > 0) {
+            if (rolePermissionMaps != null && !rolePermissionMaps.isEmpty()) {
                 for (RolePermissionMap dModel : rolePermissionMaps) {
                     rolePermissionMapService.isDeleteModel(dModel);
                 }

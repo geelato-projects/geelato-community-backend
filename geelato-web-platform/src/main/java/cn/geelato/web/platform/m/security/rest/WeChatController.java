@@ -10,6 +10,7 @@ import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.UserService;
 import cn.geelato.web.platform.m.security.wechat.WeChatAccess;
 import cn.geelato.web.platform.m.security.wechat.WeChatUtil;
+import jakarta.validation.constraints.Null;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,7 @@ public class WeChatController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/signOut/{id}", method = RequestMethod.POST)
-    public ApiResult signOut(@PathVariable(required = true) String id) {
+    public ApiResult<Null> signOut(@PathVariable(required = true) String id) {
         User user = userService.getModel(CLAZZ, id);
         Assert.notNull(user, ApiErrorMsg.IS_NULL);
         user.setUnionId(null);
@@ -71,7 +72,7 @@ public class WeChatController extends BaseController {
         Map<String, Object> params = new HashMap<>();
         params.put("unionId", access.getUnionid());
         List<User> userList = userService.queryModel(CLAZZ, params);
-        if (userList != null && userList.size() > 0) {
+        if (userList != null && !userList.isEmpty()) {
             return ApiResult.fail("The unionId of weChat has been occupied");
         }
         // 绑定微信

@@ -1,5 +1,6 @@
-package cn.geelato.utils;
+package cn.geelato.web.platform.utils;
 
+import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.entity.Resolution;
 import net.coobird.thumbnailator.Thumbnails;
 

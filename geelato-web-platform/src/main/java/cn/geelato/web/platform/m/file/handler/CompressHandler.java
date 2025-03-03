@@ -1,9 +1,8 @@
 package cn.geelato.web.platform.m.file.handler;
 
 import cn.geelato.utils.FileUtils;
-import cn.geelato.utils.ThumbnailUtils;
+import cn.geelato.web.platform.utils.ThumbnailUtils;
 import cn.geelato.utils.entity.Resolution;
-import cn.geelato.web.platform.m.file.entity.Attach;
 import cn.geelato.web.platform.m.file.entity.Compress;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.AttachmentParam;
@@ -16,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

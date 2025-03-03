@@ -2,7 +2,7 @@ package cn.geelato.web.platform.handler.file;
 
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.utils.ThumbnailUtils;
+import cn.geelato.web.platform.utils.ThumbnailUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.utils.entity.FileIS;
 import cn.geelato.utils.entity.Resolution;

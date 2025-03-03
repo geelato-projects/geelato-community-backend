@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.file.handler;
 
 import cn.geelato.utils.FileUtils;
-import cn.geelato.utils.ThumbnailUtils;
+import cn.geelato.web.platform.utils.ThumbnailUtils;
 import cn.geelato.utils.entity.Resolution;
 import cn.geelato.web.platform.m.file.entity.Resources;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;

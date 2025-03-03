@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.file.handler;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.utils.ThumbnailUtils;
+import cn.geelato.web.platform.utils.ThumbnailUtils;
 import cn.geelato.utils.entity.Resolution;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;

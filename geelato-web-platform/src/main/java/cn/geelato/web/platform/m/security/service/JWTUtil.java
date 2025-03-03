@@ -46,15 +46,12 @@ public class JWTUtil {
         JWTCreator.Builder builder = JWT.create();
 
         //payload
-        map.forEach((k, v) -> {
-            builder.withClaim(k, v);
-        });
+        map.forEach(builder::withClaim);
 
         //指定过期时间
         String token = builder.withExpiresAt(instance.getTime())
                 //设置加密方式
                 .sign(Algorithm.HMAC256(SIGN_KEY));
-        //返回tokean
         return confoundPayload(token);
     }
 

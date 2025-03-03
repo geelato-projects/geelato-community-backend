@@ -27,7 +27,7 @@ public class SysConfigService extends BaseService {
      * @throws Exception 如果在加密过程中发生异常，则抛出该异常
      */
     public static void encrypt(SysConfig model) throws Exception {
-        Map<String, String> keys = null;
+        Map keys = null;
         if (Strings.isNotBlank(model.getSm2Key())) {
             try {
                 keys = JSON.parseObject(model.getSm2Key(), Map.class);
@@ -51,7 +51,7 @@ public class SysConfigService extends BaseService {
      * @throws Exception 如果解密过程中发生异常，则抛出该异常
      */
     public static void decrypt(SysConfig model) throws Exception {
-        Map<String, String> keys = null;
+        Map keys = null;
         if (Strings.isNotBlank(model.getSm2Key())) {
             try {
                 keys = JSON.parseObject(model.getSm2Key(), Map.class);

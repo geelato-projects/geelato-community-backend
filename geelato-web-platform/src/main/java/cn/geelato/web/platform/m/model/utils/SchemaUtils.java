@@ -1,4 +1,6 @@
-package cn.geelato.utils;
+package cn.geelato.web.platform.m.model.utils;
+
+import cn.geelato.utils.StringUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
@@ -15,6 +17,14 @@ import java.util.Map;
  */
 public class SchemaUtils implements Serializable {
 
+    /**
+     * 根据提供的类类型和包含数据的列表，构建对应的数据对象列表。
+     *
+     * @param <T>    泛型类型，表示要构建的数据对象的类型。
+     * @param tClass Class对象，表示要构建的数据对象的类型。
+     * @param list   包含数据的列表，列表中的每个元素都是一个Map，Map的键表示数据对象的属性名，值表示对应的属性值。
+     * @return 返回构建好的数据对象列表。
+     */
     public static <T> List<T> buildData(Class<T> tClass, List<Map<String, Object>> list) {
         List<T> lists = new ArrayList<>();
         if (list != null && !list.isEmpty()) {
@@ -25,6 +35,15 @@ public class SchemaUtils implements Serializable {
         return lists;
     }
 
+    /**
+     * 根据提供的类类型和包含数据的Map，构建对应的数据对象。
+     *
+     * @param <T>    泛型类型，表示要构建的数据对象的类型。
+     * @param tClass Class对象，表示要构建的数据对象的类型。
+     * @param map    包含数据的Map，Map的键表示数据对象的属性名，值表示对应的属性值。
+     * @return 返回构建好的数据对象。
+     * @throws RuntimeException 如果在构建数据对象过程中发生异常，则抛出此异常。
+     */
     public static <T> T buildData(Class<T> tClass, Map<String, Object> map) {
         Constructor<?> constructor = null;
         T object = null;

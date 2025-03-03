@@ -12,7 +12,7 @@ import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.util.ClassUtils;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.utils.SchemaUtils;
+import cn.geelato.web.platform.m.model.utils.SchemaUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.arco.entity.SelectOptionData;
 import cn.geelato.web.platform.m.arco.entity.SelectOptionGroup;

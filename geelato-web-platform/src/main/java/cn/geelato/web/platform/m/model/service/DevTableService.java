@@ -9,7 +9,7 @@ import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaTable;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.utils.SchemaUtils;
+import cn.geelato.web.platform.m.model.utils.SchemaUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import org.apache.logging.log4j.util.Strings;

@@ -1,4 +1,4 @@
-package cn.geelato.utils;
+package cn.geelato.web.platform.graal.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,13 +15,6 @@ public class NumbChineseUtils {
     private static final String[] UNIT_LEVE = new String[]{"", "万", "亿"};
 
     private static final String[] AMOUNT_UNIT = new String[]{"角", "分", "厘", "毫"};
-
-    public static void main(String[] args) {
-        System.out.println(byChinese("11112200.09"));
-        System.out.println(byChineseAmount("11112200.09"));
-        System.out.println(byOldChinese("11112200.09"));
-        System.out.println(byOldChineseAmount("11112200.09"));
-    }
 
     public static String byChinese(String num) {
         return byChinese(splitNum(num), false, false);

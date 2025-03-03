@@ -2,10 +2,10 @@ package cn.geelato.web.platform.graal.service;
 
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.core.script.js.JsProvider;
-import cn.geelato.utils.NumbChineseUtils;
+import cn.geelato.web.platform.graal.utils.NumbChineseUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.graal.ApplicationContextProvider;
-import cn.geelato.web.platform.graal.GraalUtils;
+import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.graal.entity.EntityField;
 import cn.geelato.web.platform.graal.entity.EntityGraal;
 import cn.geelato.web.platform.graal.entity.EntityOrder;

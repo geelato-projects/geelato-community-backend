@@ -11,8 +11,6 @@ import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECParameterSpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.security.*;
 import java.util.Base64;
@@ -21,9 +19,7 @@ import java.util.Map;
 /**
  * @author diabl
  */
-public class Sm2Util {
-    private static final Logger logger = LoggerFactory.getLogger(Sm2Util.class);
-
+public class Sm2Utils {
     /*    这行代码是在Java中用于向安全系统添加Bouncy Castle安全提供器的。
         Bouncy Castle是一个流行的开源加密库，它提供了许多密码学算法和安全协议的实现。
         通过调用Security.addProvider并传入BouncyCastleProvider对象，你可以注册Bouncy Castle提供的安全服务和算法到Java的安全框架中。
@@ -31,7 +27,6 @@ public class Sm2Util {
     static {
         Security.addProvider(new BouncyCastleProvider());
     }
-
 
     /**
      * 使用SM2算法加密字符串
@@ -47,11 +42,11 @@ public class Sm2Util {
         PublicKey publicKey = KeyUtils.createPublicKey(keys.get(KeyUtils.PUBLIC_KEY));
         PrivateKey privateKey = KeyUtils.createPrivateKey(keys.get(KeyUtils.PRIVATE_KEY));
         // 使用SM2加密
-        byte[] encrypt = Sm2Util.encrypt(value.getBytes(), publicKey);
+        byte[] encrypt = Sm2Utils.encrypt(value.getBytes(), publicKey);
         // 加密转base64
         String encryptBase64Str = Base64.getEncoder().encodeToString(encrypt);
         // 私钥签名,方便对方收到数据后用公钥验签
-        // byte[] sign = Sm2Util.signByPrivateKey(encryptBase64Str.getBytes(), privateKey);
+        // byte[] sign = Sm2Utils.signByPrivateKey(encryptBase64Str.getBytes(), privateKey);
 
         return encryptBase64Str;
     }
@@ -72,15 +67,15 @@ public class Sm2Util {
         PublicKey publicKey = KeyUtils.createPublicKey(keys.get(KeyUtils.PUBLIC_KEY));
         PrivateKey privateKey = KeyUtils.createPrivateKey(keys.get(KeyUtils.PRIVATE_KEY));
         // 私钥签名,方便对方收到数据后用公钥验签
-        // byte[] sign = Sm2Util.signByPrivateKey(encodeValue.getBytes(), privateKey);
+        // byte[] sign = Sm2Utils.signByPrivateKey(encodeValue.getBytes(), privateKey);
         // 公钥验签，验证通过后再进行数据解密
-       /* boolean b = Sm2Util.verifyByPublicKey(encodeValue.getBytes(), publicKey, sign);
+       /* boolean b = Sm2Utils.verifyByPublicKey(encodeValue.getBytes(), publicKey, sign);
         if (!b) {
             throw new RuntimeException("加密数据验证签名失败！");
         } */
         // 私钥解密
         byte[] decode = Base64.getDecoder().decode(encodeValue);
-        byte[] decrypt = Sm2Util.decrypt(decode, privateKey);
+        byte[] decrypt = Sm2Utils.decrypt(decode, privateKey);
         assert decrypt != null;
         return new String(decrypt);
     }
@@ -103,7 +98,6 @@ public class Sm2Util {
             arrayOfByte2 = localSM2Engine.processBlock(data, 0, data.length);
             return arrayOfByte2;
         } catch (InvalidCipherTextException e) {
-            logger.error("SM2加密失败:{}", e.getMessage(), e);
             return null;
         }
     }
@@ -147,7 +141,6 @@ public class Sm2Util {
         try {
             return localSM2Engine.processBlock(encodeData, 0, encodeData.length);
         } catch (InvalidCipherTextException e) {
-            logger.error("SM2解密失败:{}", e.getMessage(), e);
             return null;
         }
     }

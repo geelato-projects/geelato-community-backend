@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.script.rest;
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.graal.GraalUtils;
+import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.RuleService;

@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.security.entity;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.platform.graal.GraalUtils;
+import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import cn.geelato.web.platform.m.settings.entity.Message;
 import cn.geelato.web.platform.m.settings.enums.MessageSendStatus;

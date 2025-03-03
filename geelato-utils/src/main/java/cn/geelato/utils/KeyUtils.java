@@ -1,8 +1,6 @@
 package cn.geelato.utils;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
@@ -17,7 +15,6 @@ import java.util.Map;
 public class KeyUtils {
     public static final String PUBLIC_KEY = "publicKey";
     public static final String PRIVATE_KEY = "privateKey";
-    private static final Logger logger = LoggerFactory.getLogger(KeyUtils.class);
 
     /**
      * 生成国密SM2公私钥对
@@ -48,15 +45,13 @@ public class KeyUtils {
      * @return 转化后的公钥对象，如果转化失败则返回null
      */
     public static PublicKey createPublicKey(String publicKey) {
-        PublicKey publickey = null;
         try {
             X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey));
             KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
-            publickey = keyFactory.generatePublic(publicKeySpec);
+            return keyFactory.generatePublic(publicKeySpec);
         } catch (Exception e) {
-            logger.error("将Base64转码的公钥串，转化为公钥对象异常：{}", e.getMessage(), e);
+            return null;
         }
-        return publickey;
     }
 
     /**
@@ -66,14 +61,12 @@ public class KeyUtils {
      * @return 转化后的私钥对象，如果转化失败则返回null
      */
     public static PrivateKey createPrivateKey(String privateKey) {
-        PrivateKey publickey = null;
         try {
             PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey));
             KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
-            publickey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
+            return keyFactory.generatePrivate(pkcs8EncodedKeySpec);
         } catch (Exception e) {
-            logger.error("将Base64转码的私钥串，转化为私钥对象异常：{}", e.getMessage(), e);
+            return null;
         }
-        return publickey;
     }
 }

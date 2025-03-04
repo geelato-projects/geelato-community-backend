@@ -6,7 +6,7 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.Base64Utils;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
+import cn.geelato.web.platform.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
@@ -42,7 +42,7 @@ public class JWTAuthRestController extends BaseController {
         this.orgService = orgService;
     }
 
-    @IgnoreJWTVerify
+    @IgnoreVerify
     @RequestMapping(value = "/login", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
     public ApiResult login(@RequestBody LoginParams loginParams) {
         try {

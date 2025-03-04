@@ -6,7 +6,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.interceptor.annotation.IgnoreJWTVerify;
+import cn.geelato.web.platform.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.LoginResult;
 import cn.geelato.web.platform.m.security.entity.Org;
@@ -41,7 +41,7 @@ public class SystemRestController extends BaseController {
     }
 
 
-    @IgnoreJWTVerify
+    @IgnoreVerify
     @RequestMapping(value = "/getRoleListByPage", method = RequestMethod.GET, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
     public ApiPagedResult getAccountList() {
         List mapList = dao.queryForMapList(Role.class);

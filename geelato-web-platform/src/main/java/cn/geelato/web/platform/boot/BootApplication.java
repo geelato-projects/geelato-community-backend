@@ -3,10 +3,7 @@ package cn.geelato.web.platform.boot;
 import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.graal.GraalManager;
-import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.MetaReflex;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.core.script.db.DbScriptManagerFactory;
 import cn.geelato.core.script.sql.SqlScriptManagerFactory;
 import cn.geelato.utils.StringUtils;
@@ -29,9 +26,6 @@ public class BootApplication implements CommandLineRunner {
     @Autowired
     @Qualifier("primaryDao")
     protected Dao dao;
-
-    @Autowired
-    protected DbGenerateDao dbGenerateDao;
 
     protected boolean isIgnoreInitData = false;
 

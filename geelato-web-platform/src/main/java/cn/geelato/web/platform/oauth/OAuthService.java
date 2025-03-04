@@ -14,4 +14,11 @@ public class OAuthService {
         String result=HttpUtils.doGet(url,null);
         return JSON.parseObject(result, OAuthServerTokenResult.class);
     }
+
+    public OAuthServerResult getUserInfo(String baseUrl,String accessToken) throws IOException {
+        String url=String.format( "%s/oauth2/userinfo?access_token=%s",
+                baseUrl,accessToken);
+        String result=HttpUtils.doGet(url,null);
+        return JSON.parseObject(result, OAuthServerResult.class);
+    }
 }

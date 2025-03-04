@@ -5,8 +5,7 @@ import cn.geelato.core.env.entity.User;
 import cn.geelato.web.platform.PlatformContext;
 import cn.geelato.web.platform.Tenant;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreVerify;
-import cn.geelato.web.platform.m.security.service.JWTUtil;
-import com.auth0.jwt.interfaces.DecodedJWT;
+import cn.geelato.web.platform.oauth.OAuthHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.shiro.SecurityUtils;
@@ -16,17 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-/**
- * @author geemeta
- */
-public class JWTInterceptor implements HandlerInterceptor {
+public class OAuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {
-        String upgradeHeader = request.getHeader("Upgrade");
-        if("websocket".equalsIgnoreCase(upgradeHeader)){
-            return true;
-        }
         // 如果不是映射到方法直接通过
         if (!(handler instanceof HandlerMethod handlerMethod)) {
             return true;
@@ -39,25 +31,23 @@ public class JWTInterceptor implements HandlerInterceptor {
         String token = request.getHeader("Authorization");
         // 执行认证
         if (token == null) {
-            throw new Exception("invalid token");
+            throw new Exception("invalid oauth token");
         }
         token = token.replace("Bearer ", "");
         // 获取载荷内容
-        DecodedJWT verify = JWTUtil.verify(token);
-        String loginName = verify.getClaim("loginName").asString();
-        String id = verify.getClaim("id").asString();
-        String passWord = verify.getClaim("passWord").asString();
-
-        // 初始化Core中的当前用户
-        User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);
-        PlatformContext.setCurrentUser(currentUser);
-        PlatformContext.setCurrentTenant(new Tenant("geelato"));
-
-        UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
-        Subject subject = SecurityUtils.getSubject();
-        subject.login(userToken);
-
+        cn.geelato.web.platform.m.security.entity.User user= OAuthHelper.getUserInfo(token);
+        if (user != null) {
+            String loginName  = user.getLoginName();
+            String passWord= user.getPlainPassword();
+            User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);
+            PlatformContext.setCurrentUser(currentUser);
+            PlatformContext.setCurrentTenant(new Tenant(user.getTenantCode()));
+            UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
+            Subject subject = SecurityUtils.getSubject();
+            subject.login(userToken);
+        }else {
+            throw new Exception("oauth get user fail!");
+        }
         return true;
     }
-
 }

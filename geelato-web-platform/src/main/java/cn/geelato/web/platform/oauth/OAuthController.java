@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.io.IOException;
+
 @ApiRestController("/oauth")
 @Slf4j
 public class OAuthController {
@@ -22,7 +24,7 @@ public class OAuthController {
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public ApiResult<LoginResult> login(String code) {
+    public ApiResult<LoginResult> login(String code) throws IOException {
         OAuthServerTokenResult oAuthServerTokenResult=oAuthService.getToken(
                 oAuthConfigurationProperties.getUrl(),
                 oAuthConfigurationProperties.getClientId(),

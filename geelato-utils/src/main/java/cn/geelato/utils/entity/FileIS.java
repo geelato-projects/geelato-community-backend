@@ -25,13 +25,13 @@ public class FileIS {
         this.inputStream = inputStream;
     }
 
-    public static List<FileIS> repeatFileNameToNewFileName(List<FileIS> list) {
+    public static void repeatFileNameToNewFileName(List<FileIS> list) {
         Map<String, Integer> nameMap = new HashMap<>();
         if (list != null && !list.isEmpty()) {
             for (FileIS fileIs : list) {
                 String name = fileIs.getFileName();
                 if (nameMap.containsKey(name)) {
-                    int count = (nameMap.get(name) == null ? 1 : nameMap.get(name).intValue()) + 1;
+                    int count = (nameMap.get(name) == null ? 1 : nameMap.get(name)) + 1;
                     String repeatName = FileUtils.spliceFileName(fileIs.getFileName(), null, " repeat-" + count);
                     if (StringUtils.isNotBlank(repeatName)) {
                         fileIs.setFileName(repeatName);
@@ -44,6 +44,5 @@ public class FileIS {
                 }
             }
         }
-        return list;
     }
 }

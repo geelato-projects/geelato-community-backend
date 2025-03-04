@@ -41,6 +41,8 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/wx/login/**")
                 // 微信重定向接口
                 .excludePathPatterns("/wx/redirect")
+                // oauth2登录接口
+                .excludePathPatterns("/oauth2/doLogin")
         ;
         registry.addInterceptor(new DataSourceInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**");

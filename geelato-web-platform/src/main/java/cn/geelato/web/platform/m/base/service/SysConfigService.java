@@ -4,9 +4,8 @@ import cn.geelato.utils.KeyUtils;
 import cn.geelato.utils.Sm2Utils;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import com.alibaba.fastjson2.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -15,9 +14,8 @@ import java.util.Map;
  * @author diabl
  */
 @Component
+@Slf4j
 public class SysConfigService extends BaseService {
-    private final Logger logger = LoggerFactory.getLogger(SysConfigService.class);
-
     /**
      * 加密方法
      * <p>
@@ -51,7 +49,7 @@ public class SysConfigService extends BaseService {
      * @throws Exception 如果解密过程中发生异常，则抛出该异常
      */
     public static void decrypt(SysConfig model) throws Exception {
-        Map keys = null;
+        Map keys;
         if (Strings.isNotBlank(model.getSm2Key())) {
             try {
                 keys = JSON.parseObject(model.getSm2Key(), Map.class);

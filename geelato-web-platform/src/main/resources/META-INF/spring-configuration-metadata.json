@@ -1,0 +1,19 @@
+{
+  "groups": [
+    {
+      "name": "geelato.wx.url",
+      "type": "java.lang.String",
+      "description": "微信认证服务地址",
+      "sourceType": "cn.geelato.web.platform.m.security.WXConfiguration"
+    }
+  ],
+  "properties": [
+    {
+      "name": "geelato.wx.url",
+      "type": "java.lang.String",
+      "description": "微信认证服务地址",
+      "sourceType": "cn.geelato.web.platform.m.security.WXConfiguration",
+      "defaultValue": "https://api.weixin.qq.com"
+    }
+  ]
+}

@@ -1,11 +1,8 @@
 package cn.geelato.web.platform.oauth;
 
 import cn.geelato.utils.HttpUtils;
-import cn.geelato.web.platform.boot.properties.OAuthConfigurationProperties;
 import cn.geelato.web.platform.m.security.entity.User;
 import com.alibaba.fastjson2.JSON;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 

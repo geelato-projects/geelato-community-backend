@@ -11,6 +11,7 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import cn.geelato.web.platform.m.security.service.*;
+import cn.geelato.web.platform.shiro.ShiroUser;
 import cn.geelato.web.platform.utils.EncryptUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
@@ -389,7 +390,7 @@ public class JWTAuthRestController extends BaseController {
      * @throws Exception 如果在获取用户信息的过程中发生异常，则抛出该异常
      */
     private User getUserByToken() throws Exception {
-        ShiroDbRealm.ShiroUser shiroUser = SecurityHelper.getCurrentUser();
+        ShiroUser shiroUser = SecurityHelper.getCurrentUser();
         User user = null;
         if (shiroUser != null) {
             user = dao.queryForObject(User.class, "loginName", shiroUser.loginName);

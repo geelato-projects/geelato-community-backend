@@ -1,8 +1,11 @@
 package cn.geelato.web.platform.boot;
 
+import cn.geelato.web.platform.boot.properties.OAuthConfigurationProperties;
 import cn.geelato.web.platform.interceptor.CacheInterceptor;
 import cn.geelato.web.platform.interceptor.DataSourceInterceptor;
 import cn.geelato.web.platform.interceptor.JWTInterceptor;
+import cn.geelato.web.platform.interceptor.OAuthInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -13,13 +16,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class InterceptorConfiguration extends BaseConfiguration implements WebMvcConfigurer {
 
+    @Autowired
+    private OAuthConfigurationProperties oAuthConfigurationProperties;
+    private static final String urlPrefix="/api";
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new JWTInterceptor())
+        registry.addInterceptor(new OAuthInterceptor(oAuthConfigurationProperties))
                 .addPathPatterns("/**")
                 // 以下为排除鉴权的路径
                 // 登录接口
-                .excludePathPatterns("/iam/**")
+                .excludePathPatterns(urlPrefix+"/oauth/login")
                 // 静态资源
                 .excludePathPatterns("/assets/**")
                 // 错误页面
@@ -28,13 +34,13 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/v3/**")
                 .excludePathPatterns("/swagger-ui/index.html")
                 // 重置密码接口
-                .excludePathPatterns("/api/user/forgetValid")
-                .excludePathPatterns("/api/user/forget")
-                .excludePathPatterns("/api/code/generate/**")
+                .excludePathPatterns(urlPrefix+"/user/forgetValid")
+                .excludePathPatterns(urlPrefix+"/user/forget")
+                .excludePathPatterns(urlPrefix+"/code/generate/**")
                 // 未登录前相关配置文件
-                .excludePathPatterns("/api/resources/json")
+                .excludePathPatterns(urlPrefix+"/resources/json")
                 // 加载或下载文件
-                .excludePathPatterns("/api/resources/file")
+                .excludePathPatterns(urlPrefix+"/resources/file")
                 // 微信回调接口
                 .excludePathPatterns("/wx/callback/hook")
                 // 微信登录接口

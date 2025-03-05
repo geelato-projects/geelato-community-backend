@@ -27,7 +27,7 @@ public class AccountService {
     @Autowired
     protected RuleService ruleService;
 
-    private CacheChannel cache = J2Cache.getChannel();
+    private final CacheChannel cache = J2Cache.getChannel();
 
 
     public User findUserByLoginName(String loginName) {
@@ -55,25 +55,25 @@ public class AccountService {
         SecurityHelper.getCurrentUser().name = user.getName();
     }
 
-    public Map wrapUser(User user) {
-        HashMap map = new HashMap(3);
+    public Map<String,Object> wrapUser(User user) {
+        HashMap<String,Object> map = new HashMap<>(3);
         map.put("user", user);
-        CacheObject userConfigCacheObject = cache.get("config", user.getId().toString(), null);
-        HashMap userConfig = new HashMap();
+        CacheObject userConfigCacheObject = cache.get("config", user.getId(), null);
+        HashMap<String,Object> userConfig = new HashMap<>();
         if (userConfigCacheObject.getValue() != null) {
             List<Map<String, Object>> list = (List<Map<String, Object>>) userConfigCacheObject.getValue();
             list.forEach((item) -> {
-                userConfig.put(item.get("code"), item);
+                userConfig.put(item.get("code").toString(), item);
             });
         }
         map.put("userConfig", userConfig);
 
         CacheObject commonConfigCacheObject = cache.get("config", user.getId().toString(), null);
-        HashMap commonConfig = new HashMap();
+        HashMap<String,Object> commonConfig = new HashMap<>();
         if (userConfigCacheObject.getValue() != null) {
             List<Map<String, Object>> list = (List<Map<String, Object>>) commonConfigCacheObject.getValue();
             list.forEach((item) -> {
-                commonConfig.put(item.get("code"), item);
+                commonConfig.put(item.get("code").toString(), item);
             });
         }
         map.put("commonConfig", commonConfig);

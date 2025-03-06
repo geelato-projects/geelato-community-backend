@@ -29,22 +29,17 @@ public class OAuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {
-        // 如果不是映射到方法直接通过
         if (!(handler instanceof HandlerMethod handlerMethod)) {
             return true;
         }
-        // 检查是否有IgnoreToken注释，有则跳过认证
         if (handlerMethod.getMethod().isAnnotationPresent(IgnoreVerify.class)) {
             return true;
         }
-        // 从请求头内获取token
         String token = request.getHeader("Authorization");
-        // 执行认证
         if (token == null) {
             throw new Exception("invalid oauth token");
         }
         token = token.replace("Bearer ", "");
-        // 获取载荷内容
         cn.geelato.web.platform.m.security.entity.User user= OAuthHelper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
         if (user != null) {
             String loginName  = user.getLoginName();

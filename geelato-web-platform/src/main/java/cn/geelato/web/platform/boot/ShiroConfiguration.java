@@ -26,13 +26,12 @@ import java.util.Map;
  */
 @Configuration
 @Slf4j
-
 public class ShiroConfiguration extends BaseConfiguration {
 
 
     @Bean
     public ShiroFilterFactoryBean getShiroFilterFactoryBean(
-            @Qualifier("oauth2SecurityManager")DefaultWebSecurityManager securityManager) {
+            @Qualifier("dbSecurityManager")DefaultWebSecurityManager securityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
         Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
@@ -42,7 +41,7 @@ public class ShiroConfiguration extends BaseConfiguration {
 
     @Bean
     public AuthorizationAttributeSourceAdvisor getAuthorizationAttributeSourceAdvisor(
-            @Qualifier("oauth2SecurityManager")DefaultWebSecurityManager securityManager) {
+            @Qualifier("dbSecurityManager")DefaultWebSecurityManager securityManager) {
         AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor = new AuthorizationAttributeSourceAdvisor();
         authorizationAttributeSourceAdvisor.setSecurityManager(securityManager);
         return authorizationAttributeSourceAdvisor;
@@ -54,7 +53,7 @@ public class ShiroConfiguration extends BaseConfiguration {
         return em;
     }
 
-    @Bean(name = "dbRealm")
+    @Bean(name = "dbShiroRealm")
     @ConditionalOnProperty(value = "geelato.application.shiro",havingValue = "db")
     public DbRealm dbRealm(EhCacheManager cacheManager) {
         DbRealm realm = new DbRealm();
@@ -63,16 +62,16 @@ public class ShiroConfiguration extends BaseConfiguration {
     }
     @Bean(name = "oauth2Realm")
     @ConditionalOnProperty(value = "geelato.application.shiro",havingValue = "oauth2")
-    public OAuth2Realm shiroRealm(EhCacheManager cacheManager) {
+    public OAuth2Realm oauth2Realm(EhCacheManager cacheManager) {
         OAuth2Realm realm = new OAuth2Realm();
         realm.setCacheManager(cacheManager);
         return realm;
     }
     @Bean(name = "dbSecurityManager")
     @ConditionalOnProperty(value = "geelato.application.shiro",havingValue = "db")
-    public DefaultWebSecurityManager dbSecurityManager(DbRealm dbRealm) {
+    public DefaultWebSecurityManager dbSecurityManager(DbRealm dbShiroRealm) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
-        defaultWebSecurityManager.setRealm(dbRealm);
+        defaultWebSecurityManager.setRealm(dbShiroRealm);
         defaultWebSecurityManager.setCacheManager(getEhCacheManager());
         ThreadContext.bind(defaultWebSecurityManager);
         return defaultWebSecurityManager;

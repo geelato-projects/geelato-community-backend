@@ -4,8 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.shiro.authc.AuthenticationToken;
 
+@Getter
 public class OAuth2Token implements AuthenticationToken {
-    private String accessToken;
+    private final String accessToken;
     public OAuth2Token(String accessToken) {
         this.accessToken = accessToken;
     }
@@ -19,7 +20,4 @@ public class OAuth2Token implements AuthenticationToken {
         return accessToken;
     }
 
-    public String getAccessToken() {
-        return accessToken;
-    }
 }

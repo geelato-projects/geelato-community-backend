@@ -21,7 +21,8 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     private static final String urlPrefix="/api";
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new OAuthInterceptor(oAuthConfigurationProperties))
+        registry.addInterceptor(new JWTInterceptor())
+        //registry.addInterceptor(new OAuthInterceptor(oAuthConfigurationProperties))
                 .addPathPatterns("/**")
                 // 以下为排除鉴权的路径
                 // 登录接口

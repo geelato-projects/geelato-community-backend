@@ -57,7 +57,8 @@ public class DevTableForeignService extends BaseSortableService {
             paramMap.put("schemaMethod", MetaDaoSql.TABLE_SCHEMA_METHOD);
             paramMap.put("tableName", tableMeta.getEntityName());
             // database_table_index
-            List<Map<String, Object>> foreignList = dao.queryForMapList("queryTableForeignByDataBase", paramMap);
+            switchDbByConnectId(tableMeta.getConnectId());
+            List<Map<String, Object>> foreignList = dynamicDao.queryForMapList("queryTableForeignByDataBase", paramMap);
             List<SchemaForeign> schemaForeigns = SchemaUtils.buildData(SchemaForeign.class, foreignList);
             HashMap<String, SchemaForeign> schemaForeignMap = new HashMap<>();
             if (schemaForeigns != null && schemaForeigns.size() > 0) {

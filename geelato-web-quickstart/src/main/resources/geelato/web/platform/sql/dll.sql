@@ -2,6 +2,12 @@
 * 格式说明：每条语句之间必须用注释“@sql ”进行分割，@sql后跟sqlId
 */
 
+-- 在创建表前删除冲突的表检查
+-- @sql deleteConflictingTableChecks
+@for i in $.delCheckList
+ALTER TABLE $.delCheckList[i].tableName DROP CHECK $.delCheckList[i].constraintName;
+@/for
+
 -- 创建表
 -- @sql createOneTable
 CREATE TABLE IF NOT EXISTS $.tableName (
@@ -55,28 +61,18 @@ CREATE TABLE IF NOT EXISTS $.tableName (
     @/if
   @/for
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '$.tableTitle';
+
+-- 更改元数据
+-- @sql upgradeDbMetaAfterCreate
 UPDATE platform_dev_table SET table_name = '$.tableName', synced = 1 WHERE entity_name = '$.tableName';
 UPDATE platform_dev_column SET synced = 1 WHERE del_status = 0 AND table_name = '$.tableName';
 UPDATE platform_dev_table_check SET synced = 1 WHERE del_status = 0 AND table_name = '$.tableName';
--- @for i in $.uniqueList
---   alter table $.tableName add unique key(`$.uniqueList[i].name`);
--- @/for
--- @if $.primaryKey!='' && $.primaryKey!=null
---   ALTER TABLE $.tableName ADD PRIMARY KEY ($.primaryKey);
--- @/if
-
--- 删除表检查
--- @sql deleteTableChecks
-@for i in $.delCheckList
-    ALTER TABLE $.delCheckList[i].tableName DROP CHECK $.delCheckList[i].constraintName;
-@/for
 
 -- 更新表
 -- @sql upgradeOneTable
 @if $.tableTitle!='' && $.tableTitle!=null
   ALTER TABLE $.tableName COMMENT = '$.tableTitle';
 @/if
-
 @for i in $.addList
   alter table $.tableName add $.addList[i].name $.addList[i].type
   @if !$.addList[i].nullable
@@ -98,7 +94,27 @@ UPDATE platform_dev_table_check SET synced = 1 WHERE del_status = 0 AND table_na
   @/if
   ;
 @/for
-
+@for i in $.changeList
+alter table $.tableName CHANGE `$.changeList[i].befColName` `$.changeList[i].name` $.changeList[i].type
+    @if !$.changeList[i].nullable
+    not null
+    @/if
+    @if $.changeList[i].defaultValue!='' && $.changeList[i].defaultValue!=null
+    @if $.changeList[i].dataType=='BIT'
+    DEFAULT $.changeList[i].defaultValue
+    @/if
+    @if $.changeList[i].dataType!='BIT'
+    DEFAULT '$.changeList[i].defaultValue'
+    @/if
+    @/if
+    @if $.changeList[i].autoIncrement
+    AUTO_INCREMENT
+    @/if
+    @if $.changeList[i].comment!='' && $.changeList[i].comment!=null
+    COMMENT '$.changeList[i].comment'
+    @/if
+;
+@/for
 @for i in $.modifyList
   alter table $.tableName modify `$.modifyList[i].name` $.modifyList[i].type
   @if !$.modifyList[i].nullable
@@ -142,6 +158,9 @@ ALTER TABLE $.tableName ADD UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i]
 @for i in $.checkList
   ALTER TABLE $.checkList[i].tableName ADD CONSTRAINT `$.checkList[i].code` CHECK ($.checkList[i].checkClause);
 @/for
+
+-- 更改元数据
+-- @sql upgradeDbMetaAfterUpdate
 UPDATE platform_dev_table SET synced = 1 WHERE entity_name = '$.tableName';
 UPDATE platform_dev_column SET synced = 1 WHERE del_status = 0 AND table_name = '$.tableName';
 UPDATE platform_dev_table_check SET synced = 1 WHERE del_status = 0 AND table_name = '$.tableName';
@@ -220,7 +239,7 @@ DROP TABLE IF EXISTS $.tableName;
 
 -- 查看列信息
 -- @sql queryColumnsByTableName
-SELECT * FROM information_schema.`COLUMNS` WHERE TABLE_SCHEMA='geelato' and TABLE_NAME='$.tableName';
+SELECT * FROM information_schema.`COLUMNS` WHERE TABLE_SCHEMA='$.tableSchema' and TABLE_NAME='$.tableName';
 
 -- 从数据库字典中同步表信息到平台的元数据表中
 -- @sql syncTableSchemaToConfig

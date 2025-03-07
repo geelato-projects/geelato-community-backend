@@ -9,6 +9,7 @@ import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.DataItems;
+import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import org.apache.logging.log4j.util.Strings;
@@ -31,6 +32,9 @@ public class BaseService {
     @Autowired
     @Qualifier("primaryDao")
     public Dao dao;
+    @Autowired
+    @Qualifier("dynamicDao")
+    public Dao dynamicDao;
 
     public FilterGroup filterGroup = new FilterGroup().addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(DeleteStatusEnum.NO.getCode()));
 
@@ -415,5 +419,12 @@ public class BaseService {
         }
 
         return result;
+    }
+
+    public void switchDbByConnectId(String connectId) {
+        if (Strings.isBlank(connectId)) {
+            throw new IllegalArgumentException("数据连接不能为空");
+        }
+        DynamicDatasourceHolder.setDataSourceKey(connectId);
     }
 }

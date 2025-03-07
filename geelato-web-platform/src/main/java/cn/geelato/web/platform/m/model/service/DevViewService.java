@@ -4,8 +4,8 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.enums.*;
 import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.util.ClassUtils;
 import cn.geelato.lang.constants.ApiErrorMsg;
@@ -13,9 +13,8 @@ import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -27,10 +26,10 @@ import java.util.*;
  * @description: 表单视图服务类
  */
 @Component
+@Slf4j
 public class DevViewService extends BaseSortableService {
     private static final String DELETE_COMMENT_PREFIX = "已删除；";
     private static final String UPDATE_COMMENT_PREFIX = "已变更；";
-    private static final Logger logger = LoggerFactory.getLogger(DevViewService.class);
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
 
     public List<TableView> getTableView(String connectId, String entityName) {
@@ -45,11 +44,11 @@ public class DevViewService extends BaseSortableService {
 
     /**
      * 仅创建或更新默认视图
-     *
+     * <p>
      * 根据传入的表格元数据对象（tableMeta）和视图参数（viewParams），创建或更新指定表格的默认视图。
      *
-     * @param tableMeta   表格元数据对象，包含表格的基本信息
-     * @param viewParams  视图参数，包含视图的列和构造SQL
+     * @param tableMeta  表格元数据对象，包含表格的基本信息
+     * @param viewParams 视图参数，包含视图的列和构造SQL
      */
     public void createOrUpdateDefaultTableView(TableMeta tableMeta, Map<String, Object> viewParams) {
         Assert.notNull(tableMeta, ApiErrorMsg.IS_NULL);
@@ -145,21 +144,29 @@ public class DevViewService extends BaseSortableService {
         sqlParams.put("deleteAt", sdf.format(new Date()));
         sqlParams.put("enableStatus", EnableStatusEnum.DISABLED.getCode());
         sqlParams.put("remark", "delete table. \n");
-        // 数据库视图
+        // 数据库视图，切换数据库
+        switchDbByConnectId(model.getConnectId());
+        boolean isView = false;
+        String newSql = "";
         try {
-            Map<String, Object> viewMap = dao.getJdbcTemplate().queryForMap(String.format(MetaDaoSql.SQL_SHOW_CREATE_VIEW, model.getViewName()));
+            Map<String, Object> viewMap = dynamicDao.getJdbcTemplate().queryForMap(String.format(MetaDaoSql.SQL_SHOW_CREATE_VIEW, model.getViewName()));
             if (viewMap != null && !viewMap.isEmpty()) {
                 String createView = viewMap.get("Create View") != null ? String.valueOf(viewMap.get("Create View")) : "";
-                sqlParams.put("isView", true);
+                isView = true;
+                newSql = createView.replace(String.format("SQL SECURITY DEFINER VIEW `%s` AS", model.getViewName()), String.format("SQL SECURITY DEFINER VIEW `%s` AS", newViewName));
                 // SQL SECURITY DEFINER VIEW `` AS
-                sqlParams.put("newSql", createView.replace(String.format("SQL SECURITY DEFINER VIEW `%s` AS", model.getViewName()),
-                        String.format("SQL SECURITY DEFINER VIEW `%s` AS", newViewName)));
             }
         } catch (Exception ex) {
-            logger.info(String.format("%s 视图不存在。", model.getViewName()));
+            log.info(String.format("%s 视图不存在。", model.getViewName()));
         }
         // 修正字段、外键、视图
-        dao.execute("metaResetOrDeleteView", sqlParams);
+        if (isView && Strings.isNotBlank(newSql)) {
+            sqlParams.put("isView", isView);
+            sqlParams.put("newSql", newSql);
+            dynamicDao.execute("mysql_metaResetOrDeleteView", sqlParams);
+        }
+        // 删除关联的应用信息和权限信息
+        dao.execute("mysql_metaResetOrDeleteViewRelation", sqlParams);
         // 删除，信息变更
         model.setViewName(newViewName);
         model.setDescription(newDescription);
@@ -171,15 +178,4 @@ public class DevViewService extends BaseSortableService {
         model.setSeqNo(ColumnDefault.SEQ_NO_DELETE);
         dao.save(model);
     }
-
-    private List<Map<String, Object>> queryInformationSchemaViews(String viewName) {
-        List<Map<String, Object>> tableList = new ArrayList<>();
-        if (Strings.isNotBlank(viewName)) {
-            String tableSql = String.format(MetaDaoSql.INFORMATION_SCHEMA_VIEWS, MetaDaoSql.TABLE_SCHEMA_METHOD, " AND TABLE_NAME='" + viewName + "'");
-            logger.info(tableSql);
-            tableList = dao.getJdbcTemplate().queryForList(tableSql);
-        }
-        return tableList;
-    }
-
 }

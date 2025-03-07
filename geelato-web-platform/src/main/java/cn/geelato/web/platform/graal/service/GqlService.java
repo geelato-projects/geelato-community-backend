@@ -7,6 +7,7 @@ import cn.geelato.core.script.sql.SqlScriptParser;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.m.base.entity.DictItem;
 import cn.geelato.web.platform.m.base.service.RuleService;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.script.ScriptException;
@@ -22,11 +23,16 @@ public class GqlService extends RuleService {
     private static final String EXECUTE_SQL_KEY = "execute_sql_key";
 
     public GqlService() {
-        setDao(initDefaultDao());
+        setDao(initDefaultDao(null));
     }
 
-    private Dao initDefaultDao() {
-        DataSource ds = (DataSource) DataSourceManager.singleInstance().getDynamicDataSourceMap().get("primary");
+    private Dao initDefaultDao(String connectId) {
+        DataSource ds = null;
+        if (Strings.isNotBlank(connectId)) {
+            ds = (DataSource) DataSourceManager.singleInstance().getLazyDataSource(connectId);
+        } else {
+            ds = (DataSource) DataSourceManager.singleInstance().getDynamicDataSourceMap().get("primary");
+        }
         JdbcTemplate jdbcTemplate = new JdbcTemplate();
         jdbcTemplate.setDataSource(ds);
         return new Dao(jdbcTemplate);
@@ -35,14 +41,15 @@ public class GqlService extends RuleService {
     /**
      * 执行与给定SQL键关联的SQL语句，并返回执行结果。
      *
-     * @param sqlKey SQL键，用于标识要执行的SQL语句
-     * @param params SQL语句中所需的参数，以键值对的形式提供
+     * @param sqlKey    SQL键，用于标识要执行的SQL语句
+     * @param connectId 连接ID，用于标识要使用的数据库连接
+     * @param params    SQL语句中所需的参数，以键值对的形式提供
      * @return SQL语句的执行结果
      * @throws ScriptException       如果在执行SQL语句时发生脚本异常，则抛出此异常
      * @throws NoSuchMethodException 如果在尝试执行SQL语句时找不到对应的方法，则抛出此异常
      */
-    public Object executeSqlKey(String sqlKey, Map<String, Object> params) throws ScriptException, NoSuchMethodException {
-        return this.initDefaultDao().executeKey(sqlKey, params);
+    public Object executeSqlKey(String sqlKey, String connectId, Map<String, Object> params) throws ScriptException, NoSuchMethodException {
+        return this.initDefaultDao(connectId).executeKey(sqlKey, params);
     }
 
     /**
@@ -58,7 +65,7 @@ public class GqlService extends RuleService {
             Map<String, Object> params = new HashMap<>();
             params.put("dictId", dictId);
             params.put("enableStatus", 1);
-            List<DictItem> list = this.initDefaultDao().queryList(DictItem.class, params, "seqNo asc");
+            List<DictItem> list = this.initDefaultDao(null).queryList(DictItem.class, params, "seqNo asc");
             return ApiResult.success(list);
         } catch (Exception e) {
             return ApiResult.fail(e.getMessage());

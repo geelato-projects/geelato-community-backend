@@ -1,19 +1,23 @@
 package cn.geelato.web.platform.graal.service;
 
 import cn.geelato.core.graal.GraalService;
+import cn.geelato.core.meta.MetaManager;
+import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.script.js.JsProvider;
-import cn.geelato.web.platform.graal.utils.NumbChineseUtils;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
 import cn.geelato.web.platform.graal.ApplicationContextProvider;
-import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.graal.entity.EntityField;
 import cn.geelato.web.platform.graal.entity.EntityGraal;
 import cn.geelato.web.platform.graal.entity.EntityOrder;
 import cn.geelato.web.platform.graal.entity.EntityParams;
+import cn.geelato.web.platform.graal.utils.GraalUtils;
+import cn.geelato.web.platform.graal.utils.NumbChineseUtils;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.service.UserService;
 import com.alibaba.fastjson2.JSON;
+import org.apache.logging.log4j.util.Strings;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -102,6 +106,8 @@ public class FnService {
         }
         sb.deleteCharAt(sb.length() - 1);
         sb.append("}}");
+        // 切换数据源，根据实体名称获取对应的数据源
+        switchDataSource(entitySaver.getEntity());
         return ruleService.save("0", sb.toString());
     }
 
@@ -162,6 +168,19 @@ public class FnService {
         }
         entity.deleteCharAt(entity.length() - 1);
         entity.append("}}");
+        // 切换数据链接，执行查询
+        switchDataSource(entityReader.getEntity());
         return ruleService.queryForMapList(entity.toString(), true);
+    }
+
+    private void switchDataSource(String entityName) {
+        if (Strings.isBlank(entityName)) {
+            throw new RuntimeException("entityName is empty");
+        }
+        EntityMeta entityMeta = MetaManager.singleInstance().getByEntityName(entityName);
+        if (entityMeta == null) {
+            throw new RuntimeException("The model does not exist in memory");
+        }
+        DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
     }
 }

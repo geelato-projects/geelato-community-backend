@@ -1,5 +1,7 @@
 package cn.geelato.web.platform.m.model.service;
 
+import cn.geelato.core.constants.MetaDaoSql;
+import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.TableCheck;
@@ -11,7 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -62,5 +67,22 @@ public class DevTableCheckService extends BaseService {
             form.setColumnId(null);
             form.setColumnName(null);
         }
+    }
+
+    public boolean validate(TableCheck form) {
+        Map<String, String> params = new HashMap<>();
+        params.put("code", form.getCode());
+        params.put("table_schema", form.getTableSchema());
+        params.put("type", form.getType());
+        params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+        params.put("tenant_code", form.getTenantCode());
+        boolean isEmpty = validate("platform_dev_table_check", form.getId(), params);
+        if (!isEmpty) {
+            return false;
+        }
+        switchDbByConnectId(form.getConnectId());
+        List<Map<String, Object>> mapList = dynamicDao.getJdbcTemplate().queryForList(
+                String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME + " AND TABLE_NAME != '%s';", form.getTableSchema(), form.getType().toUpperCase(Locale.ENGLISH), form.getCode(), form.getTableName()));
+        return mapList.isEmpty();
     }
 }

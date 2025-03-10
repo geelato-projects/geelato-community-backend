@@ -22,6 +22,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author geemeta
  */
 @Configuration
+//todo：servlet interceptor, does not work under spring webflux，wait refactor
 public class InterceptorConfiguration extends BaseConfiguration implements WebMvcConfigurer {
     @Autowired
     private OAuthConfigurationProperties oAuthConfigurationProperties;

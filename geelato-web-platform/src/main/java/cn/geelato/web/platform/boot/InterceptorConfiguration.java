@@ -5,8 +5,16 @@ import cn.geelato.web.platform.interceptor.CacheInterceptor;
 import cn.geelato.web.platform.interceptor.DataSourceInterceptor;
 import cn.geelato.web.platform.interceptor.JWTInterceptor;
 import cn.geelato.web.platform.interceptor.OAuthInterceptor;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -15,14 +23,19 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class InterceptorConfiguration extends BaseConfiguration implements WebMvcConfigurer {
-
     @Autowired
     private OAuthConfigurationProperties oAuthConfigurationProperties;
+
     private static final String urlPrefix="/api";
     @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new JWTInterceptor())
-        //registry.addInterceptor(new OAuthInterceptor(oAuthConfigurationProperties))
+    public void addInterceptors(@NotNull InterceptorRegistry registry) {
+        HandlerInterceptor handlerInterceptor;
+        if (getProperty("geelato.application.shiro","db").equals("oauth2")) {
+            handlerInterceptor = new OAuthInterceptor(oAuthConfigurationProperties);
+        } else {
+            handlerInterceptor = new JWTInterceptor();
+        }
+        registry.addInterceptor(handlerInterceptor)
                 .addPathPatterns("/**")
                 // 以下为排除鉴权的路径
                 // 登录接口

@@ -38,10 +38,6 @@ public class MetaConfiguration extends BaseConfiguration{
         metaManager.parseDBMeta(dao);
     }
 
-//    public String getProperty(String key, String defaultValue) {
-//        String value = applicationContext.getEnvironment().getProperty(key);
-//        return value == null ? defaultValue : value;
-//    }
 
     @Override
     public void setApplicationContext(@NotNull ApplicationContext context) throws BeansException {

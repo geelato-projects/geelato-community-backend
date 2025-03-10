@@ -4,8 +4,11 @@ package cn.geelato.web.platform.boot;
 import cn.geelato.web.platform.shiro.DbRealm;
 import cn.geelato.web.platform.shiro.OAuth2Realm;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.authc.pam.AtLeastOneSuccessfulStrategy;
+import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
@@ -13,12 +16,15 @@ import org.apache.shiro.util.ThreadContext;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,10 +34,8 @@ import java.util.Map;
 @Slf4j
 public class ShiroConfiguration extends BaseConfiguration {
 
-
     @Bean
-    public ShiroFilterFactoryBean getShiroFilterFactoryBean(
-            @Qualifier("dbSecurityManager")DefaultWebSecurityManager securityManager) {
+    public ShiroFilterFactoryBean getShiroFilterFactoryBean(DefaultWebSecurityManager securityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
         Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
@@ -41,7 +45,7 @@ public class ShiroConfiguration extends BaseConfiguration {
 
     @Bean
     public AuthorizationAttributeSourceAdvisor getAuthorizationAttributeSourceAdvisor(
-            @Qualifier("dbSecurityManager")DefaultWebSecurityManager securityManager) {
+            DefaultWebSecurityManager securityManager) {
         AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor = new AuthorizationAttributeSourceAdvisor();
         authorizationAttributeSourceAdvisor.setSecurityManager(securityManager);
         return authorizationAttributeSourceAdvisor;
@@ -51,40 +55,6 @@ public class ShiroConfiguration extends BaseConfiguration {
         EhCacheManager em = new EhCacheManager();
         em.setCacheManagerConfigFile("classpath:ehcache/ehcache-shiro.xml");
         return em;
-    }
-
-    @Bean(name = "dbShiroRealm")
-    @ConditionalOnProperty(value = "geelato.application.shiro",havingValue = "db")
-    public DbRealm dbRealm(EhCacheManager cacheManager) {
-        DbRealm realm = new DbRealm();
-        realm.setCacheManager(cacheManager);
-        return realm;
-    }
-    @Bean(name = "oauth2Realm")
-    @ConditionalOnProperty(value = "geelato.application.shiro",havingValue = "oauth2")
-    public OAuth2Realm oauth2Realm(EhCacheManager cacheManager) {
-        OAuth2Realm realm = new OAuth2Realm();
-        realm.setCacheManager(cacheManager);
-        return realm;
-    }
-    @Bean(name = "dbSecurityManager")
-    @ConditionalOnProperty(value = "geelato.application.shiro",havingValue = "db")
-    public DefaultWebSecurityManager dbSecurityManager(DbRealm dbShiroRealm) {
-        DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
-        defaultWebSecurityManager.setRealm(dbShiroRealm);
-        defaultWebSecurityManager.setCacheManager(getEhCacheManager());
-        ThreadContext.bind(defaultWebSecurityManager);
-        return defaultWebSecurityManager;
-    }
-
-    @Bean(name = "oauth2SecurityManager")
-    @ConditionalOnProperty(value = "geelato.application.shiro",havingValue = "oauth2")
-    public DefaultWebSecurityManager oauth2SecurityManager(OAuth2Realm oauth2Realm) {
-        DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
-        defaultWebSecurityManager.setRealm(oauth2Realm);
-        defaultWebSecurityManager.setCacheManager(getEhCacheManager());
-        ThreadContext.bind(defaultWebSecurityManager);
-        return defaultWebSecurityManager;
     }
 
     @Bean(name = "lifecycleBeanPostProcessor")
@@ -103,6 +73,18 @@ public class ShiroConfiguration extends BaseConfiguration {
 
 
 
+    @Bean(name = "defaultSecurityManager")
+    public DefaultWebSecurityManager defaultSecurityManager() {
+        DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
+        if(getProperty("geelato.application.shiro","db").equals("oauth2")){
+            defaultWebSecurityManager.setRealm(new OAuth2Realm());
+        }else{
+            defaultWebSecurityManager.setRealm(new DbRealm());
+        }
+        defaultWebSecurityManager.setCacheManager(getEhCacheManager());
+        ThreadContext.bind(defaultWebSecurityManager);
+        return defaultWebSecurityManager;
+    }
 
 
 

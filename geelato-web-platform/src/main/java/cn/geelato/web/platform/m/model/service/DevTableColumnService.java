@@ -4,19 +4,19 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.enums.*;
 import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.column.ColumnSelectType;
+import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaColumn;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.util.ClassUtils;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.web.platform.m.model.utils.SchemaUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.arco.entity.SelectOptionData;
 import cn.geelato.web.platform.m.arco.entity.SelectOptionGroup;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
+import cn.geelato.web.platform.m.model.utils.SchemaUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import org.apache.logging.log4j.util.Strings;
@@ -43,7 +43,7 @@ public class DevTableColumnService extends BaseSortableService {
 
     /**
      * 自动生成对应字段
-     *
+     * <p>
      * 对于实体数据中的org和user字段，自动生成对应的id和name字段。
      *
      * @param model 实体数据对象，包含字段的元数据
@@ -83,7 +83,7 @@ public class DevTableColumnService extends BaseSortableService {
 
     /**
      * 生成默认字段
-     *
+     * <p>
      * 为数据库表生成默认的字段。
      *
      * @param tableMeta 表格元数据对象，包含表格的基本信息
@@ -121,7 +121,7 @@ public class DevTableColumnService extends BaseSortableService {
 
     /**
      * 获取默认视图
-     *
+     * <p>
      * 根据实体名称生成默认的视图SQL语句，并返回包含视图字段和视图构造SQL的参数映射。
      *
      * @param entityName 实体名称
@@ -173,15 +173,16 @@ public class DevTableColumnService extends BaseSortableService {
 
     /**
      * 依据表格情况，从数据库中更新至 dev_column 中
-     *
+     * <p>
      * 根据传入的表格元数据对象，从数据库中查询对应的列信息，并根据是否需要删除所有现有列来更新dev_column表。
      *
      * @param tableMeta 表格元数据对象，包含表格的ID和实体名称等信息
      * @param deleteAll 是否删除所有现有列
      * @throws InvocationTargetException 如果在反射调用过程中发生异常，将抛出该异常
-     * @throws IllegalAccessException  如果在反射调用过程中访问受限，将抛出该异常
+     * @throws IllegalAccessException    如果在反射调用过程中访问受限，将抛出该异常
      */
     public void resetTableColumnByDataBase(TableMeta tableMeta, boolean deleteAll) throws InvocationTargetException, IllegalAccessException {
+        switchDbByConnectId(tableMeta.getConnectId());
         Map<String, Object> queryParams = new HashMap<>();
         queryParams.put("tableId", tableMeta.getId());
         queryParams.put("tableName", tableMeta.getEntityName());
@@ -205,7 +206,7 @@ public class DevTableColumnService extends BaseSortableService {
             // database_table_index
             String indexSql = String.format(MetaDaoSql.SQL_INDEXES_NO_PRIMARY, tableMeta.getEntityName());
             logger.info(indexSql);
-            List<Map<String, Object>> indexList = dao.getJdbcTemplate().queryForList(indexSql);
+            List<Map<String, Object>> indexList = dynamicDao.getJdbcTemplate().queryForList(indexSql);
             List<SchemaIndex> schemaIndices = SchemaUtils.buildData(SchemaIndex.class, indexList);
             List<String> uniques = new ArrayList<>();
             if (schemaIndices != null && schemaIndices.size() > 0) {
@@ -219,7 +220,7 @@ public class DevTableColumnService extends BaseSortableService {
             // database_table_column
             String columnSql = String.format(MetaDaoSql.INFORMATION_SCHEMA_COLUMNS, MetaDaoSql.TABLE_SCHEMA_METHOD, " AND TABLE_NAME='" + tableMeta.getEntityName() + "'");
             logger.info(columnSql);
-            List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(columnSql);
+            List<Map<String, Object>> columnList = dynamicDao.getJdbcTemplate().queryForList(columnSql);
             List<SchemaColumn> schemaColumns = SchemaUtils.buildData(SchemaColumn.class, columnList);
             HashMap<String, SchemaColumn> schemaColumnMap = new HashMap<>();
             if (schemaColumns != null && schemaColumns.size() > 0) {
@@ -236,7 +237,7 @@ public class DevTableColumnService extends BaseSortableService {
 
     /**
      * 比较dev_column和数据库中字段，进行创建、更新、删除操作
-     *
+     * <p>
      * 该方法用于比较传入的dev_column映射（metaMap）和数据库中的字段映射（schemaMap），并根据比较结果对字段进行相应的创建、更新或删除操作。
      *
      * @param tableMeta 表元数据对象，包含表的基本信息
@@ -272,14 +273,15 @@ public class DevTableColumnService extends BaseSortableService {
 
     /**
      * 逻辑删除
-     *
+     * <p>
      * 对指定的列元数据进行逻辑删除操作，包括修改列名、注释、描述等信息，并更新列的状态。
      *
      * @param model 列元数据对象，包含列的详细信息
      * @throws InvocationTargetException 如果在反射调用过程中发生异常，将抛出该异常
-     * @throws IllegalAccessException  如果在反射调用过程中访问受限，将抛出该异常
+     * @throws IllegalAccessException    如果在反射调用过程中访问受限，将抛出该异常
      */
     public void isDeleteModel(ColumnMeta model) throws InvocationTargetException, IllegalAccessException {
+        TableMeta tableMeta = getModel(TableMeta.class, model.getTableId());
         // 重命名
         String newColumnName = String.format("%s_d%s", model.getName(), System.currentTimeMillis());
         String newTitle = DELETE_COMMENT_PREFIX + model.getTitle();
@@ -310,22 +312,22 @@ public class DevTableColumnService extends BaseSortableService {
         String filterSql = String.format(" AND TABLE_NAME='%s' AND COLUMN_NAME='%s' ", model.getTableName(), model.getName());
         String columnSql = String.format(MetaDaoSql.INFORMATION_SCHEMA_COLUMNS, MetaDaoSql.TABLE_SCHEMA_METHOD, filterSql);
         logger.info(columnSql);
-        List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(columnSql);
-        if (columnList == null || columnList.isEmpty()) {
-            sqlParams.put("isColumn", false);
-        } else {
-            sqlParams.put("isColumn", true);
-        }
+        switchDbByConnectId(tableMeta.getConnectId());
+        List<Map<String, Object>> columnList = dynamicDao.getJdbcTemplate().queryForList(columnSql);
+        boolean isColumn = columnList != null && !columnList.isEmpty();
+        sqlParams.put("isColumn", isColumn);
         // 修正：外键
-        dao.execute("metaDeleteColumn", sqlParams);
-
+        if (isColumn) {
+            dynamicDao.execute("mysql_metaDeleteColumn", sqlParams);
+        }
+        dao.execute("mysql_metaDeleteColumnRelation", sqlParams);
         model.setName(newColumnName);
         dao.save(model);
     }
 
     /**
      * 分组选择 select
-     *
+     * <p>
      * 根据提供的选择类型列表，生成分组的选择选项。
      *
      * @param selectTypes 选择类型列表，包含每个选择类型的信息
@@ -348,7 +350,7 @@ public class DevTableColumnService extends BaseSortableService {
 
     /**
      * 选择项数据获取
-     *
+     * <p>
      * 根据传入的选择类型列表，获取对应的选择项数据列表。
      *
      * @param selectTypes 选择类型列表
@@ -368,7 +370,7 @@ public class DevTableColumnService extends BaseSortableService {
 
     /**
      * 解析 ColumnSelectType 列表
-     *
+     * <p>
      * 将传入的 ColumnSelectType 列表解析为按组分类的选择项数据映射。
      *
      * @param selectTypes ColumnSelectType 列表，包含每个选择项的类型信息
@@ -402,16 +404,17 @@ public class DevTableColumnService extends BaseSortableService {
 
     /**
      * 更新表格字段
-     *
+     * <p>
      * 根据传入的表单字段（form）和模型字段（model），对表格字段进行更新操作。
      *
      * @param form  表单字段对象，包含表单字段的当前信息
      * @param model 模型字段对象，包含模型字段的新信息
      * @return 返回更新后的表单字段对象
      * @throws InvocationTargetException 如果在反射调用过程中发生异常，将抛出该异常
-     * @throws IllegalAccessException  如果在反射调用过程中访问受限，将抛出该异常
+     * @throws IllegalAccessException    如果在反射调用过程中访问受限，将抛出该异常
      */
     public ColumnMeta upgradeTable(ColumnMeta form, ColumnMeta model) throws InvocationTargetException, IllegalAccessException {
+        TableMeta tableMeta = getModel(TableMeta.class, model.getTableId());
         // 字段标识，是否变更
         if (model.getName().equals(form.getName())) {
             form.setSynced(ColumnSyncedEnum.FALSE.getValue());
@@ -443,14 +446,18 @@ public class DevTableColumnService extends BaseSortableService {
         String filterSql = String.format(" AND TABLE_NAME='%s' AND COLUMN_NAME='%s' ", model.getTableName(), model.getName());
         String columnSql = String.format(MetaDaoSql.INFORMATION_SCHEMA_COLUMNS, MetaDaoSql.TABLE_SCHEMA_METHOD, filterSql);
         logger.info(columnSql);
-        List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(columnSql);
-        if (columnList == null || columnList.isEmpty()) {
-            changeParams.put("isColumn", false);
-        } else {
+        switchDbByConnectId(tableMeta.getConnectId());
+        List<Map<String, Object>> columnList = dynamicDao.getJdbcTemplate().queryForList(columnSql);
+        boolean isColumn = false;
+        if (columnList != null && !columnList.isEmpty()) {
             form.setComment(Strings.isNotBlank(form.getComment()) ? form.getComment() : form.getTitle());
-            changeParams.put("isColumn", true);
+            isColumn = true;
         }
-        dao.execute("metaResetColumn", changeParams);
+        changeParams.put("isColumn", isColumn);
+        if (isColumn) {
+            dynamicDao.execute("mysql_metaResetColumn", changeParams);
+        }
+        dao.execute("mysql_metaResetColumnRelation", changeParams);
         // dao.save(model);
 
         return form;
@@ -458,14 +465,14 @@ public class DevTableColumnService extends BaseSortableService {
 
     /**
      * 获取 SQL 参数
-     *
+     * <p>
      * 根据提供的列元数据对象和前缀，生成包含列元数据信息的 SQL 参数映射。
      *
-     * @param model   列元数据对象，包含列的详细信息
-     * @param prefix  参数名前缀
+     * @param model  列元数据对象，包含列的详细信息
+     * @param prefix 参数名前缀
      * @return 返回包含列元数据信息的 SQL 参数映射
      * @throws InvocationTargetException 如果在反射调用过程中发生异常，将抛出该异常
-     * @throws IllegalAccessException  如果在反射调用过程中访问受限，将抛出该异常
+     * @throws IllegalAccessException    如果在反射调用过程中访问受限，将抛出该异常
      */
     public Map<String, Object> getSqlParams(ColumnMeta model, String prefix) throws InvocationTargetException, IllegalAccessException {
         Map<String, Object> maps = JSONObject.parseObject(JSONObject.toJSONString(model));

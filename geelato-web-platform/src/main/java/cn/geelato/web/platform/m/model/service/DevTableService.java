@@ -3,15 +3,16 @@ package cn.geelato.web.platform.m.model.service;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.enums.*;
+import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaTable;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.web.platform.m.model.utils.SchemaUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
+import cn.geelato.web.platform.m.model.utils.SchemaUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,7 @@ public class DevTableService extends BaseSortableService {
     @Lazy
     @Autowired
     private DevTableForeignService devTableForeignService;
+    private final MetaManager metaManager = MetaManager.singleInstance();
 
     /**
      * 设置TableMeta对象后的处理
@@ -90,7 +92,7 @@ public class DevTableService extends BaseSortableService {
      */
     public void resetTableByDataBase(TableMeta tableMeta) throws ParseException, InvocationTargetException, IllegalAccessException {
         // database_table
-        List<Map<String, Object>> tableList = queryInformationSchemaTables(tableMeta.getEntityName());
+        List<Map<String, Object>> tableList = queryInformationSchemaTables(tableMeta.getConnectId(), tableMeta.getEntityName());
         List<SchemaTable> schemaTables = SchemaUtils.buildData(SchemaTable.class, tableList);
         // handle
         if (schemaTables != null && schemaTables.size() > 0) {
@@ -130,16 +132,7 @@ public class DevTableService extends BaseSortableService {
             form.setTableName(null);
             return form;
         }
-        // 数据库是否存在表
         Map<String, Object> sqlParams = new HashMap<>();
-        List<Map<String, Object>> tableList = queryInformationSchemaTables(model.getEntityName());
-        if (tableList == null || tableList.isEmpty()) {
-            form.setTableName(null);
-            sqlParams.put("isTable", false);
-        } else {
-            sqlParams.put("isTable", true);
-            form.setTableName(form.getEntityName());
-        }
         // 修正当前表
         // form.setDescription(String.format("update %s from %s[%s]。\n", sdf.format(new Date()), model.getTitle(), model.getEntityName()) + form.getDescription());
         // 备份原来的表
@@ -163,7 +156,16 @@ public class DevTableService extends BaseSortableService {
         sqlParams.put("deleteAt", "");
         sqlParams.put("enableStatus", EnableStatusEnum.ENABLED.getCode());
         sqlParams.put("remark", "");
-        dao.execute("metaResetOrDeleteTable", sqlParams);
+        // 数据库是否存在表, 切换数据库
+        List<Map<String, Object>> tableList = queryInformationSchemaTables(model.getConnectId(), model.getEntityName());
+        boolean isExistTable = tableList != null && !tableList.isEmpty();
+        form.setTableName(isExistTable ? form.getEntityName() : null);
+        sqlParams.put("isTable", isExistTable);
+        // 切换数据库，更新库表信息
+        if (isExistTable) {
+            dynamicDao.execute("mysql_metaResetOrDeleteTableColumn", sqlParams);
+        }
+        dao.execute("mysql_metaResetOrDeleteTable", sqlParams);
 
         form.setSynced(ColumnSyncedEnum.TRUE.getValue());
         return form;
@@ -192,9 +194,11 @@ public class DevTableService extends BaseSortableService {
         sqlParams.put("deleteAt", sdf.format(new Date()));
         sqlParams.put("enableStatus", EnableStatusEnum.DISABLED.getCode());
         sqlParams.put("remark", "delete table. \n");
+        boolean isExistTable = false;
         if (TableTypeEnum.TABLE.getCode().equals(model.getTableType())) {
-            List<Map<String, Object>> tableList = queryInformationSchemaTables(model.getEntityName());
+            List<Map<String, Object>> tableList = queryInformationSchemaTables(model.getConnectId(), model.getEntityName());
             if (tableList != null && !tableList.isEmpty()) {
+                isExistTable = true;
                 sqlParams.put("isTable", true);
                 model.setTableName(newTableName);
             } else {
@@ -204,7 +208,10 @@ public class DevTableService extends BaseSortableService {
             model.setTableName(null);
         }
         // 修正字段、外键、视图
-        dao.execute("metaResetOrDeleteTable", sqlParams);
+        if (isExistTable) {
+            dynamicDao.execute("mysql_metaResetOrDeleteTableColumn", sqlParams);
+        }
+        dao.execute("mysql_metaResetOrDeleteTable", sqlParams);
         // 删除，信息变更
         model.setDescription(newDescription);
         model.setTableComment(newComment);
@@ -228,12 +235,13 @@ public class DevTableService extends BaseSortableService {
      * @param tableName 表名称，用于指定要查询的数据库表
      * @return 返回包含表信息的列表，每个元素为一个Map对象，包含表的详细信息
      */
-    private List<Map<String, Object>> queryInformationSchemaTables(String tableName) {
+    private List<Map<String, Object>> queryInformationSchemaTables(String connectId, String tableName) {
         List<Map<String, Object>> tableList = new ArrayList<>();
         if (Strings.isNotBlank(tableName)) {
             String tableSql = String.format(MetaDaoSql.INFORMATION_SCHEMA_TABLES, MetaDaoSql.TABLE_SCHEMA_METHOD, " AND TABLE_NAME='" + tableName + "'");
             logger.info(tableSql);
-            tableList = dao.getJdbcTemplate().queryForList(tableSql);
+            switchDbByConnectId(connectId);
+            tableList = dynamicDao.getJdbcTemplate().queryForList(tableSql);
         }
         return tableList;
     }
@@ -299,4 +307,5 @@ public class DevTableService extends BaseSortableService {
 
         return form;
     }
+
 }

@@ -19,7 +19,10 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -59,7 +62,7 @@ public class MetaController extends BaseController {
     @RequestMapping(value = {"/batchSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<?> batchSave() throws DaoException {
         String gql = getGql("batchSave");
-        return ApiMetaResult.success(ruleService.batchSave(gql,true));
+        return ApiMetaResult.success(ruleService.batchSave(gql, true));
     }
 
     @RequestMapping(value = {"/multiSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
@@ -70,13 +73,13 @@ public class MetaController extends BaseController {
 
     @RequestMapping(value = {"/delete/{biz}/{id}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<Integer> delete(@PathVariable("biz") String biz, @PathVariable("id") String id) {
-        return ApiResult.success(ruleService.delete(biz,id));
+        return ApiResult.success(ruleService.delete(biz, id));
     }
 
     @RequestMapping(value = {"/delete2/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public  ApiResult<Integer> delete(@PathVariable("biz") String biz) {
+    public ApiResult<Integer> delete(@PathVariable("biz") String biz) {
         String gql = getGql("delete");
-        return ApiResult.success(ruleService.deleteByGql(biz,gql));
+        return ApiResult.success(ruleService.deleteByGql(biz, gql));
     }
 
     /**
@@ -139,7 +142,7 @@ public class MetaController extends BaseController {
      */
     @RequestMapping(value = {"/uniqueness"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> uniqueness() {
-        String gql = getGql(null);
+        String gql = getGql("query");
         if (Strings.isNotBlank(gql)) {
             JSONObject jo = JSON.parseObject(gql);
             String key = jo.keySet().iterator().next();

@@ -1,7 +1,5 @@
 package cn.geelato.web.platform.m.model.rest;
 
-import cn.geelato.core.constants.MetaDaoSql;
-import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
@@ -24,7 +22,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @ApiRestController("/model/table/check")
 @Slf4j
@@ -126,19 +127,7 @@ public class DevTableCheckController extends BaseController {
                 throw new RuntimeException("表名或类型不能为空");
             }
             // 查询是否存在同名同类型同连接的数据检查
-            Map<String, String> params = new HashMap<>();
-            params.put("code", form.getCode());
-            params.put("table_schema", form.getTableSchema());
-            params.put("type", form.getType());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
-            params.put("tenant_code", form.getTenantCode());
-            boolean isEmpty = devTableCheckService.validate("platform_dev_table_check", form.getId(), params);
-            if (!isEmpty) {
-                return ApiResult.success(false);
-            }
-            List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(
-                    String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME+" AND TABLE_NAME != '%s';", form.getTableSchema(), form.getType().toUpperCase(Locale.ENGLISH), form.getCode(),form.getTableName()));
-            return ApiResult.success(mapList.isEmpty());
+            return ApiResult.success(devTableCheckService.validate(form));
         } catch (Exception e) {
             log.error(e.getMessage());
             return ApiResult.fail(e.getMessage());

@@ -3,10 +3,7 @@ package cn.geelato.core.meta.model.column;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DataTypeRadiusEnum;
 import cn.geelato.core.enums.MysqlDataTypeEnum;
-import cn.geelato.core.meta.annotation.Col;
-import cn.geelato.core.meta.annotation.DictDataSrc;
-import cn.geelato.core.meta.annotation.Entity;
-import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.core.meta.annotation.*;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import lombok.Getter;
@@ -208,6 +205,11 @@ public class ColumnMeta extends BaseSortableEntity implements EntityEnableAble, 
     public boolean isAbstractColumn() {
         return StringUtils.hasText(abstractColumnExpressions);
     }
+
+    @Getter
+    @Title(title = "标记修改前字段", description = "columnName")
+    @Transient
+    private String befColName;
 
 
     @Override

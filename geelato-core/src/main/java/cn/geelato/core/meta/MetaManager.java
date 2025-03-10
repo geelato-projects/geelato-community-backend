@@ -12,16 +12,12 @@ import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.column.ColumnSelectType;
 import cn.geelato.core.meta.model.entity.EntityLiteMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
-import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import cn.geelato.core.meta.schema.SchemaCheck;
-import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.util.MapUtils;
 import cn.geelato.utils.ClassScanner;
 import cn.geelato.utils.FastJsonUtils;
-import cn.geelato.utils.StringUtils;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -184,47 +180,6 @@ public class MetaManager extends AbstractManager {
             removeOne(entityName);
             parseTableEntity(map, columnList, viewList, checkList, null);
         }
-    }
-
-    /**
-     * 查询指定表的索引信息
-     *
-     * @param tableName 表名
-     * @return 包含索引信息的列表
-     */
-    public List<SchemaIndex> queryIndexes(String tableName) {
-        List<SchemaIndex> indexList = new ArrayList<>();
-        if (Strings.isEmpty(tableName)) {
-            return indexList;
-        }
-        List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_INDEXES_NO_PRIMARY, tableName));
-        indexList = SchemaIndex.buildData(mapList);
-        return indexList;
-    }
-
-    /**
-     * 查询指定表模式的检查约束
-     *
-     * @param tableSchema 表模式
-     * @param tableName   表名
-     * @param checkList   表检查约束列表
-     * @return 包含表检查约束的列表
-     */
-    public List<SchemaCheck> queryTableChecks(String tableSchema, String tableName, Collection<TableCheck> checkList) {
-        List<SchemaCheck> indexList = new ArrayList<>();
-        if (Strings.isBlank(tableSchema)) {
-            return indexList;
-        }
-        if (Strings.isNotBlank(tableName)) {
-            List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_TABLE, tableSchema, "CHECK", tableName));
-            indexList.addAll(SchemaCheck.buildData(mapList));
-        }
-        if (checkList != null && !checkList.isEmpty()) {
-            List<String> checkNames = checkList.stream().map(TableCheck::getCode).collect(Collectors.toList());
-            List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME, tableSchema, "CHECK", StringUtils.join(checkNames, ",")));
-            indexList.addAll(SchemaCheck.buildData(mapList));
-        }
-        return indexList;
     }
 
     /**
@@ -481,6 +436,11 @@ public class MetaManager extends AbstractManager {
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
+        } else if (entityMetadataMap.containsKey(entityName)) {
+            EntityMeta entityMeta = entityMetadataMap.get(entityName);
+            if (entityMeta != null && entityMeta.getTableMeta() != null && Strings.isBlank(entityMeta.getTableMeta().getConnectId())) {
+                entityMeta.setTableMeta(MetaReflex.getTableMeta(map));
+            }
         }
     }
 

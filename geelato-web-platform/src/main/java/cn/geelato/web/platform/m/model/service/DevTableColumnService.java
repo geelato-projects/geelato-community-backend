@@ -413,8 +413,7 @@ public class DevTableColumnService extends BaseSortableService {
      * @throws InvocationTargetException 如果在反射调用过程中发生异常，将抛出该异常
      * @throws IllegalAccessException    如果在反射调用过程中访问受限，将抛出该异常
      */
-    public ColumnMeta upgradeTable(ColumnMeta form, ColumnMeta model) throws InvocationTargetException, IllegalAccessException {
-        TableMeta tableMeta = getModel(TableMeta.class, model.getTableId());
+    public ColumnMeta upgradeTable(TableMeta tableMeta, ColumnMeta form, ColumnMeta model) throws InvocationTargetException, IllegalAccessException {
         // 字段标识，是否变更
         if (model.getName().equals(form.getName())) {
             form.setSynced(ColumnSyncedEnum.FALSE.getValue());

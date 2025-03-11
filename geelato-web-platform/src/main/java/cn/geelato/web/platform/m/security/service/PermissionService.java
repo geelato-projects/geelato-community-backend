@@ -3,6 +3,7 @@ package cn.geelato.web.platform.m.security.service;
 import cn.geelato.core.constants.ResourcesFiles;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.utils.FastJsonUtils;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.base.service.BaseService;
@@ -186,11 +187,12 @@ public class PermissionService extends BaseService {
      * @param curObject 当前的对象名称
      * @param sorObject 旧的对象名称
      */
-    public void tablePermissionChangeObject(String curObject, String sorObject) {
+    public void tablePermissionChangeObject(String curObject, String sorObject, String parentObject) {
         List<Permission> permissions = new ArrayList<>();
         // 表格权限
         FilterGroup tableFilter = new FilterGroup();
         tableFilter.addFilter("type", FilterGroup.Operator.in, PermissionTypeEnum.getTablePermissions());
+        tableFilter.addFilter("parentObject", parentObject);
         tableFilter.addFilter("object", sorObject);
         tableFilter.addFilter("tenantCode", getSessionTenantCode());
         List<Permission> tPermissions = queryModel(Permission.class, tableFilter);
@@ -209,6 +211,7 @@ public class PermissionService extends BaseService {
         // 字段权限
         FilterGroup columnFilter = new FilterGroup();
         columnFilter.addFilter("type", PermissionTypeEnum.COLUMN.getValue());
+        columnFilter.addFilter("parentObject", parentObject);
         columnFilter.addFilter("object", FilterGroup.Operator.startWith, String.format("%s:", sorObject));
         columnFilter.addFilter("tenantCode", getSessionTenantCode());
         List<Permission> cPermissions = queryModel(Permission.class, columnFilter);
@@ -237,10 +240,11 @@ public class PermissionService extends BaseService {
      * @param curObject 新字段名称
      * @param sorObject 旧字段名称
      */
-    public void columnPermissionChangeObject(String tableName, String curObject, String sorObject) {
+    public void columnPermissionChangeObject(String connectId, String tableName, String curObject, String sorObject) {
         // 字段权限
         Map<String, Object> params = new HashMap<>();
         params.put("type", PermissionTypeEnum.COLUMN.getValue());
+        params.put("parentObject", connectId);
         params.put("object", String.format("%s:%s", tableName, sorObject));
         params.put("tenantCode", getSessionTenantCode());
         List<Permission> permissions = queryModel(Permission.class, params);
@@ -269,13 +273,13 @@ public class PermissionService extends BaseService {
      * @param appId  应用ID，用于标识需要重置权限的应用
      * @throws RuntimeException 如果传入的权限类型不合法，则抛出异常
      */
-    public void resetDefaultPermission(String type, String object, String appId) {
+    public void resetDefaultPermission(String type, String object, String parentObject, String appId) {
         if (PermissionTypeEnum.MODEL.getValue().equals(type) ||
                 PermissionTypeEnum.DATA.getValue().equalsIgnoreCase(type) ||
                 PermissionTypeEnum.getTablePermissions().equalsIgnoreCase(type)) {
-            resetTableDefaultPermission(type, object, appId);
+            resetTableDefaultPermission(type, object, parentObject, appId);
         } else if (PermissionTypeEnum.COLUMN.getValue().equals(type)) {
-            resetColumnDefaultPermission(type, object, appId);
+            resetColumnDefaultPermission(type, object, parentObject, appId);
         } else {
             throw new RuntimeException("[type] non-being");
         }
@@ -290,10 +294,11 @@ public class PermissionService extends BaseService {
      * @param object 对象名称
      * @param appId  应用ID
      */
-    public void resetTableDefaultPermission(String types, String object, String appId) {
+    public void resetTableDefaultPermission(String types, String object, String parentObject, String appId) {
         // 当前权限
         FilterGroup tableFilter = new FilterGroup();
         tableFilter.addFilter("type", FilterGroup.Operator.in, types);
+        tableFilter.addFilter("parentObject", parentObject);
         tableFilter.addFilter("object", object);
         tableFilter.addFilter("tenantCode", getSessionTenantCode());
         List<Permission> curPermissions = queryModel(Permission.class, tableFilter);
@@ -315,19 +320,19 @@ public class PermissionService extends BaseService {
                         }
                     }
                     if (!isExist) {
-                        createDefaultPermission(object, dModel);
+                        createDefaultPermission(parentObject, object, dModel);
                     }
                 }
             } else {
                 for (Permission dModel : defPermissions) {
                     dModel.setAppId(appId);
-                    createDefaultPermission(object, dModel);
+                    createDefaultPermission(parentObject, object, dModel);
                 }
             }
         }
     }
 
-    public void resetTableDefaultPermissionByRole(String types, String object, String appId) {
+    public void resetTableDefaultPermissionByRole(String types, String parentObject, String object, String appId) {
         // 当前权限
         Map<String, Object> params = new HashMap<>();
         params.put("appId", appId);
@@ -339,6 +344,7 @@ public class PermissionService extends BaseService {
         // 当前权限
         FilterGroup tableFilter = new FilterGroup();
         tableFilter.addFilter("type", FilterGroup.Operator.in, types);
+        tableFilter.addFilter("parentObject", parentObject);
         tableFilter.addFilter("object", object);
         tableFilter.addFilter("tenantCode", getSessionTenantCode());
         List<Permission> permissionList = queryModel(Permission.class, tableFilter);
@@ -380,8 +386,9 @@ public class PermissionService extends BaseService {
      * @param object 权限对象，如表名、模型名等
      * @param dModel 默认权限模型，包含权限的编码等信息
      */
-    private void createDefaultPermission(String object, Permission dModel) {
+    private void createDefaultPermission(String parentObject, String object, Permission dModel) {
         String defaultCode = dModel.getCode();
+        dModel.setParentObject(parentObject);
         dModel.setObject(object);
         dModel.setCode(String.format("%s%s", object, defaultCode));
         Permission permission = createModel(dModel);
@@ -399,10 +406,20 @@ public class PermissionService extends BaseService {
      * @param tableName 模型名称，即需要重置权限的表名
      * @param appId     应用ID，用于标识需要重置权限的应用
      */
-    public void resetColumnDefaultPermission(String type, String tableName, String appId) {
+    public void resetColumnDefaultPermission(String type, String tableName, String parentObject, String appId) {
+        // 表
+        Map<String, Object> tabParams = new HashMap<>();
+        tabParams.put("connectId", parentObject);
+        tabParams.put("entityName", tableName);
+        tabParams.put("tenantCode", getSessionTenantCode());
+        List<TableMeta> tableMetas = queryModel(TableMeta.class, tabParams);
+        if (tableMetas == null || tableMetas.isEmpty()) {
+            throw new RuntimeException("表不存在");
+        }
+        TableMeta tableMeta = tableMetas.get(0);
         // 表头
         Map<String, Object> colParams = new HashMap<>();
-        colParams.put("tableName", tableName);
+        colParams.put("tableId", tableMeta.getId());
         colParams.put("tenantCode", getSessionTenantCode());
         List<ColumnMeta> columnMetas = queryModel(ColumnMeta.class, colParams);
         // 默认字段
@@ -417,6 +434,7 @@ public class PermissionService extends BaseService {
         if (!columnObjects.isEmpty()) {
             FilterGroup filter = new FilterGroup();
             filter.addFilter("type", type);
+            filter.addFilter("parentObject", tableMeta.getConnectId());
             filter.addFilter("object", FilterGroup.Operator.in, Strings.join(columnObjects, ','));
             filter.addFilter("tenantCode", getSessionTenantCode());
             permissions = queryModel(Permission.class, filter);
@@ -440,6 +458,7 @@ public class PermissionService extends BaseService {
                         permission.setAppId(appId);
                         permission.setCode(String.format("%s:%s%s", column.getTableName(), column.getName(), dModel.getCode()));
                         permission.setType(type);
+                        permission.setParentObject(tableMeta.getConnectId());
                         permission.setObject(String.format("%s:%s", column.getTableName(), column.getName()));
                         permission.setRule(dModel.getRule());
                         permission.setDescription(dModel.getDescription());

@@ -25,7 +25,12 @@ public class Permission extends BaseEntity {
     private String name;
     private String code;
     private String type;
+
+    @Title(title = "对象")
     private String object;
+    @Title(title = "父对象")
+    @Col(name = "parent_object")
+    private String parentObject;
 
     @Title(title = "规则")
     @Col(name = "rule", charMaxlength = 1024)

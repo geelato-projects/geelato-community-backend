@@ -113,9 +113,9 @@ public class DevTableController extends BaseController {
                     resultMap = devTableService.updateModel(form);
                     if (!model.getEntityName().equals(form.getEntityName())) {
                         // 修正权限
-                        permissionService.tablePermissionChangeObject(form.getEntityName(), model.getEntityName());
+                        permissionService.tablePermissionChangeObject(form.getEntityName(), model.getEntityName(), model.getConnectId());
                         // 添加默认权限
-                        permissionService.resetTableDefaultPermission(PermissionTypeEnum.getTablePermissions(), form.getEntityName(), form.getAppId());
+                        permissionService.resetTableDefaultPermission(PermissionTypeEnum.getTablePermissions(), form.getEntityName(), form.getConnectId(), form.getAppId());
                     }
                     // 刷新默认视图
                     List<TableView> tableViewList = devViewService.getTableView(form.getConnectId(), form.getEntityName());
@@ -130,7 +130,7 @@ public class DevTableController extends BaseController {
                 resultMap = devTableService.createModel(form);
                 form.setId(resultMap.getId());
                 // 添加默认权限
-                permissionService.resetDefaultPermission(PermissionTypeEnum.getTablePermissions(), form.getEntityName(), form.getAppId());
+                permissionService.resetDefaultPermission(PermissionTypeEnum.getTablePermissions(), form.getEntityName(), form.getConnectId(), form.getAppId());
                 // 添加默认字段，第三方数据源不添加默认字段
                 if (!TableSourceTypeEnum.THIRD.getValue().equals(form.getSourceType())) {
                     devTableColumnService.createDefaultColumn(form);
@@ -163,7 +163,7 @@ public class DevTableController extends BaseController {
             }
             TableMeta form = devTableService.copyTable(tableId, title, entityName, connectId, tableComment, appId, tenantCode);
             // 添加默认权限
-            permissionService.resetDefaultPermission(PermissionTypeEnum.getTablePermissions(), form.getEntityName(), form.getAppId());
+            permissionService.resetDefaultPermission(PermissionTypeEnum.getTablePermissions(), form.getEntityName(), form.getConnectId(), form.getAppId());
             if (Strings.isNotEmpty(form.getEntityName())) {
                 // 刷新默认视图
                 // devViewService.createOrUpdateDefaultTableView(form, devTableColumnService.getDefaultViewSql(form.getEntityName()));

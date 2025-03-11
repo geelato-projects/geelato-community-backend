@@ -45,9 +45,6 @@ public class DataSourceManager extends AbstractManager {
         List<Map<String,Object>> dbConenctList=dao.getJdbcTemplate().queryForList("SELECT * FROM platform_dev_db_connect");
         for (Map<String,Object> dbConnectMap:dbConenctList){
             String connectId=dbConnectMap.get("id").toString();
-//            DataSource dataSource=buildDataSource(dbConnectMap);
-//            dataSourceMap.put(connectId,dataSource);
-//            dynamicDataSourceMap.put(connectId,dataSource);
             lazyDynamicDataSourceMap.put(connectId,dbConnectMap);
         }
     }
@@ -55,6 +52,11 @@ public class DataSourceManager extends AbstractManager {
         return dynamicDataSourceMap;
     }
     public DataSource getDataSource(String connectId){
+        if(dataSourceMap.get(connectId)==null){
+            Object lazyDataSource=DataSourceManager.singleInstance().getLazyDataSource(connectId);
+            DataSource dataSource=buildDataSource((Map) lazyDataSource);
+            dataSourceMap.put(connectId,dataSource);
+        }
         return dataSourceMap.get(connectId);
     }
 

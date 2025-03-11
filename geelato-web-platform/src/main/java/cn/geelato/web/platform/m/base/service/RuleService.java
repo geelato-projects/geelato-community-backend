@@ -4,6 +4,7 @@ import cn.geelato.core.Fn;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.biz.rules.common.EntityValidateRule;
+import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.gql.GqlManager;
 import cn.geelato.core.gql.command.BaseCommand;
 import cn.geelato.core.gql.command.DeleteCommand;
@@ -23,6 +24,7 @@ import cn.geelato.core.sql.SqlManager;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
 import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
@@ -36,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionStatus;
@@ -254,10 +257,17 @@ public class RuleService {
      * 不执行业务规则检查
      */
     public String recursiveSave(SaveCommand command, DataSourceTransactionManager dataSourceTransactionManager, TransactionStatus transactionStatus) throws DaoException {
-        DynamicDatasourceHolder.setDataSourceKey(metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId());
+
         BoundSql boundSql = sqlManager.generateSaveSql(command);
         String rtnValue = null;
         try {
+            //todo : wait to refactor by aspect
+            String connectId=metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
+            if(!StringUtils.isEmpty(connectId)) {
+                JdbcTemplate jdbcTemplate=new JdbcTemplate();
+                jdbcTemplate.setDataSource(DataSourceManager.singleInstance().getDataSource(connectId));
+                dao.setJdbcTemplate(jdbcTemplate);
+            }
             rtnValue = dao.save(boundSql);
             // 增加一个默认清实体缓存的操作
             String cacheKey = command.getEntityName() + "_" + rtnValue;

@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.oauth;
+package cn.geelato.web.platform.oauth2;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.annotation.ApiRestController;
@@ -15,26 +15,26 @@ import java.io.IOException;
 
 @ApiRestController("/oauth")
 @Slf4j
-public class OAuthController {
+public class OAuth2Controller {
 
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
-    private final OAuthService oAuthService;
+    private final OAuth2Service oAuthService;
     @Autowired
-    private OAuthController(OAuthConfigurationProperties oAuthConfigurationProperties,OAuthService oAuthService) {
+    private OAuth2Controller(OAuthConfigurationProperties oAuthConfigurationProperties, OAuth2Service oAuthService) {
         this.oAuthConfigurationProperties = oAuthConfigurationProperties;
         this.oAuthService = oAuthService;
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public ApiResult<LoginResult> login(String code) throws IOException {
-        OAuthServerTokenResult oAuthServerTokenResult=oAuthService.getToken(
+        OAuth2ServerTokenResult oAuthServerTokenResult=oAuthService.getToken(
                 oAuthConfigurationProperties.getUrl(),
                 oAuthConfigurationProperties.getClientId(),
                 oAuthConfigurationProperties.getClientSecret(),
                 code
         );
         if(oAuthServerTokenResult.getCode().equals("200")){
-            OAuthServerResult userInfoResult=oAuthService.getUserInfo(
+            OAuth2ServerResult userInfoResult=oAuthService.getUserInfo(
                     oAuthConfigurationProperties.getUrl(),
                     oAuthServerTokenResult.getAccess_token()
            );

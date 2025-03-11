@@ -23,6 +23,7 @@ import cn.geelato.core.sql.SqlManager;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
 import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
 import org.apache.commons.collections.map.HashedMap;
@@ -47,11 +48,6 @@ import java.util.*;
 @Component
 public class RuleService {
 
-    /**
-     * -- SETTER --
-     *
-     * @param dao 设置dao，如primaryDao
-     */
     @Setter
     @Autowired
     @Qualifier("dynamicDao")
@@ -201,14 +197,6 @@ public class RuleService {
         return dao.queryForOneColumnList(boundSql, elementType);
     }
 
-    /**
-     * 保存操作
-     * <p>在保存之前，依据业务代码，从配置的业务规则库中读取规则，对command中的数据进行预处理，如更改相应的参数数据。</p>
-     *
-     * @param biz 业务代码
-     * @param gql geelato query language
-     * @return 第一个saveCommand执行的返回主健值（saveCommand内可能有子saveCommand）
-     */
     public String save(String biz, String gql) throws DaoException {
         SaveCommand command = gqlManager.generateSaveSql(gql, getSessionCtx());
         Facts facts = new Facts();
@@ -231,14 +219,6 @@ public class RuleService {
             DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager(dao.getJdbcTemplate().getDataSource());
             TransactionStatus transactionStatus = TransactionHelper.beginTransaction(dataSourceTransactionManager);
             for (SaveCommand saveCommand : commandList) {
-//                BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
-//                String pkValue = dao.save(boundSql);
-//                if(pkValue.equals("saveFail")){
-//                    TransactionHelper.rollbackTransaction(dataSourceTransactionManager,transactionStatus);
-//                    break;
-//                }else{
-//                    returnPks.add(pkValue);
-//                }
                 String pkValue = recursiveBatchSave(saveCommand, dataSourceTransactionManager, transactionStatus);
                 if ("saveFail".equals(pkValue)) {
                     TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
@@ -274,6 +254,7 @@ public class RuleService {
      * 不执行业务规则检查
      */
     public String recursiveSave(SaveCommand command, DataSourceTransactionManager dataSourceTransactionManager, TransactionStatus transactionStatus) throws DaoException {
+        DynamicDatasourceHolder.setDataSourceKey(metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId());
         BoundSql boundSql = sqlManager.generateSaveSql(command);
         String rtnValue = null;
         try {

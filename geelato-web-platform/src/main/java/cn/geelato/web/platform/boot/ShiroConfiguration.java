@@ -72,14 +72,27 @@ public class ShiroConfiguration extends BaseConfiguration {
     }
 
 
-
+    @Bean(name = "dbShiroRealm")
+    public DbRealm dbRealm(EhCacheManager cacheManager) {
+        DbRealm realm = new DbRealm();
+        realm.setCacheManager(cacheManager);
+        return realm;
+    }
+    @Bean(name = "oauth2Realm")
+    public OAuth2Realm oauth2Realm(EhCacheManager cacheManager) {
+        OAuth2Realm realm = new OAuth2Realm();
+        realm.setCacheManager(cacheManager);
+        return realm;
+    }
     @Bean(name = "defaultSecurityManager")
-    public DefaultWebSecurityManager defaultSecurityManager() {
+    public DefaultWebSecurityManager defaultSecurityManager(
+            @Qualifier("oauth2Realm") OAuth2Realm oAuth2Realm,
+            @Qualifier("dbShiroRealm") DbRealm dbRealm) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
         if(getProperty("geelato.application.shiro","db").equals("oauth2")){
-            defaultWebSecurityManager.setRealm(new OAuth2Realm());
+            defaultWebSecurityManager.setRealm(oAuth2Realm);
         }else{
-            defaultWebSecurityManager.setRealm(new DbRealm());
+            defaultWebSecurityManager.setRealm(dbRealm);
         }
         defaultWebSecurityManager.setCacheManager(getEhCacheManager());
         ThreadContext.bind(defaultWebSecurityManager);

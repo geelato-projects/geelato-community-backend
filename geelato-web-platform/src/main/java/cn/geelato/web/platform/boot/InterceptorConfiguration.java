@@ -4,15 +4,9 @@ import cn.geelato.web.platform.boot.properties.OAuthConfigurationProperties;
 import cn.geelato.web.platform.interceptor.CacheInterceptor;
 import cn.geelato.web.platform.interceptor.DataSourceInterceptor;
 import cn.geelato.web.platform.interceptor.JWTInterceptor;
-import cn.geelato.web.platform.interceptor.OAuthInterceptor;
+import cn.geelato.web.platform.interceptor.OAuth2Interceptor;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -32,7 +26,7 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     public void addInterceptors(@NotNull InterceptorRegistry registry) {
         HandlerInterceptor handlerInterceptor;
         if (getProperty("geelato.application.shiro","db").equals("oauth2")) {
-            handlerInterceptor = new OAuthInterceptor(oAuthConfigurationProperties);
+            handlerInterceptor = new OAuth2Interceptor(oAuthConfigurationProperties);
         } else {
             handlerInterceptor = new JWTInterceptor();
         }
@@ -64,6 +58,7 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/wx/redirect")
                 // oauth2登录接口
                 .excludePathPatterns("/oauth2/doLogin")
+                .excludePathPatterns("/oauth2/authorize")
         ;
         registry.addInterceptor(new DataSourceInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**");

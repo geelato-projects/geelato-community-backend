@@ -1,11 +1,11 @@
-package cn.geelato.web.platform.oauth;
+package cn.geelato.web.platform.oauth2;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class OAuthServerTokenResult extends OAuthServerResult{
+public class OAuth2ServerTokenResult extends OAuth2ServerResult {
     private String token_type;
     private String access_token;
     private String refresh_token;

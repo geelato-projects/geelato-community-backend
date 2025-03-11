@@ -1,17 +1,15 @@
 package cn.geelato.web.platform.shiro;
 
 import cn.geelato.core.orm.Dao;
-import cn.geelato.utils.Encodes;
 import cn.geelato.web.platform.boot.properties.OAuthConfigurationProperties;
 import cn.geelato.web.platform.m.security.entity.User;
-import cn.geelato.web.platform.oauth.OAuthHelper;
+import cn.geelato.web.platform.oauth2.OAuth2Helper;
 import lombok.SneakyThrows;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -66,6 +64,6 @@ public class OAuth2Realm extends AuthorizingRealm {
     }
 
     private User getUserInfo(String accessToken) throws IOException {
-        return OAuthHelper.getUserInfo(oAuthConfigurationProperties.getUrl(),accessToken);
+        return OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(),accessToken);
     }
 }

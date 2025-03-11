@@ -146,7 +146,19 @@ public class PermissionController extends BaseController {
     @RequestMapping(value = "/default/{type}/{object}", method = RequestMethod.POST)
     public ApiResult<NullResult> defaultTablePermission(@PathVariable(required = true) String type, @PathVariable(required = true) String object, String parentObject, String appId) {
         try {
-            permissionService.resetDefaultPermission(type, object,parentObject, appId);
+            permissionService.resetDefaultPermission(type, object, parentObject, appId);
+            return ApiResult.successNoResult();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/shift", method = RequestMethod.POST)
+    public ApiResult<Boolean> shift(@RequestBody Map<String, Object> params) {
+        try {
+            String ids = params.get("ids") == null ? "" : params.get("ids").toString();
+            permissionService.shiftPermission(ids);
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);

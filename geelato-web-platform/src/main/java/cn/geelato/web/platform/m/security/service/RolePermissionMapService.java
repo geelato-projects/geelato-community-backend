@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author diabl
@@ -172,10 +173,16 @@ public class RolePermissionMapService extends BaseService {
                     viewPermissions.add(model);
                 }
             } else {
-                customPermissions.add(model);
+                viewPermissions.add(model);
             }
         }
-        viewPermissionMap.put("data", permissionSort(viewPermissions, PermissionService.PERMISSION_DATA_ORDER));
+        if (viewPermissions.size() > 4) {
+            viewPermissionMap.put("data", viewPermissions.stream()
+                    .sorted(Comparator.comparing(Permission::getSeqNo).reversed()) // 从大到小排序
+                    .collect(Collectors.toList()));
+        } else {
+            viewPermissionMap.put("data", permissionSort(viewPermissions, PermissionService.PERMISSION_DATA_ORDER));
+        }
         editPermissionMap.put("data", permissionSort(editPermissions, PermissionService.PERMISSION_MODEL_CLASSIFY));
 
         return permissionMapSet;

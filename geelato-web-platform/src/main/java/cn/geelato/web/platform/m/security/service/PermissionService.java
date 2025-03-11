@@ -5,8 +5,9 @@ import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.utils.FastJsonUtils;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
-import cn.geelato.web.platform.m.base.service.BaseService;
+import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import cn.geelato.web.platform.m.security.entity.Permission;
 import cn.geelato.web.platform.m.security.entity.Role;
 import cn.geelato.web.platform.m.security.entity.RolePermissionMap;
@@ -23,7 +24,7 @@ import java.util.*;
  * @author diabl
  */
 @Component
-public class PermissionService extends BaseService {
+public class PermissionService extends BaseSortableService {
     public static final String PERMISSION_DATA_JSON = ResourcesFiles.PERMISSION_DATA_DEFAULT_JSON;
     public static final String PERMISSION_MODEL_JSON = ResourcesFiles.PERMISSION_MODEL_DEFAULT_JSON;
     public static final String PERMISSION_COLUMN_JSON = ResourcesFiles.PERMISSION_COLUMN_DEFAULT_JSON;
@@ -313,6 +314,8 @@ public class PermissionService extends BaseService {
                             cModel.setName(dModel.getName());
                             cModel.setRule(dModel.getRule());
                             cModel.setAppId(appId);
+                            cModel.setParentObject(parentObject);
+                            cModel.setSeqNo(dModel.getSeqNo());
                             cModel.setDescription(dModel.getDescription());
                             updateModel(cModel);
                             isExist = true;
@@ -491,6 +494,29 @@ public class PermissionService extends BaseService {
             if (rolePermissionMaps != null && !rolePermissionMaps.isEmpty()) {
                 for (RolePermissionMap dModel : rolePermissionMaps) {
                     rolePermissionMapService.isDeleteModel(dModel);
+                }
+            }
+        }
+    }
+
+    public void shiftPermission(String ids) {
+        List<String> idList = StringUtils.toListDr(ids);
+        if (idList == null || idList.isEmpty()) {
+            throw new RuntimeException("无可移动的权限");
+        }
+        FilterGroup filter = new FilterGroup();
+        filter.addFilter("id", FilterGroup.Operator.in, String.join(",", idList));
+        List<Permission> permissions = queryModel(Permission.class, filter);
+        if (permissions == null || permissions.isEmpty()) {
+            throw new RuntimeException("无可移动的权限");
+        }
+        int sqlNo = idList.size() - 1;
+        for (String id : idList) {
+            for (Permission permission : permissions) {
+                if (permission.getId().equals(id)) {
+                    permission.setSeqNo(sqlNo--);
+                    updateModel(permission);
+                    break;
                 }
             }
         }

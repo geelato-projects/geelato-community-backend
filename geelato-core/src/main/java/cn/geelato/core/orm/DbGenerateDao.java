@@ -520,12 +520,9 @@ public class DbGenerateDao {
         }
         // 查询数据库连接信息
         ConnectMeta connectMeta = primaryDao.queryForObject(ConnectMeta.class, connectId);
-        if (connectMeta == null) {
-            return false;
-        }
         // 使用 try-with-resources 确保资源被正确关闭
         try (Connection conn = ConnectUtils.getConnection(connectMeta)) {
-            if (conn == null) {
+            if (conn == null || !conn.isValid(ConnectUtils.CONNECT_TIMEOUT)) {
                 return false;
             }
             // 设置连接为只读模式，确保不会对数据库数据造成影响

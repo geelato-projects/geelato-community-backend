@@ -1,10 +1,9 @@
 package cn.geelato.core.util;
 
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.enums.Dialects;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
-import org.springframework.util.Assert;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -13,57 +12,70 @@ import java.sql.SQLException;
 /**
  * @author diabl
  */
+@Slf4j
 public class ConnectUtils {
-    private static final String MYSQL_DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String MYSQL_URL = "jdbc:mysql://%s:%s/%s?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true";
-    private static final int MYSQL_CONNECT_TIMEOUT = 10;
-
-    private static Boolean mysqlConnectionTest(String ip, String port, String name, String user, String password) throws SQLException {
-        Boolean isConnected = false;
-        if (Strings.isBlank(ip) || Strings.isBlank(name) || Strings.isBlank(port)) {
-            return false;
-        }
-        if (Strings.isBlank(user) || Strings.isBlank(password)) {
-            return false;
-        }
-        String url = String.format(ConnectUtils.MYSQL_URL, ip, port, name);
-        Connection connection = null;
-        try {
-            Class.forName(ConnectUtils.MYSQL_DRIVER);
-            connection = DriverManager.getConnection(url, user, password);
-            isConnected = connection != null && connection.isValid(ConnectUtils.MYSQL_CONNECT_TIMEOUT);
-        } catch (ClassNotFoundException | SQLException e) {
-            isConnected = false;
-        } finally {
-            if (connection != null) {
-                connection.close();
-            }
-        }
-
-        return isConnected;
-    }
-
-    public static boolean connectionTest(ConnectMeta meta) throws SQLException {
-        Assert.notNull(meta, ApiErrorMsg.IS_NULL);
-        if (Strings.isNotBlank(meta.getDbType())) {
-            if (Dialects.MYSQL.name().equalsIgnoreCase(meta.getDbType())) {
-                return ConnectUtils.mysqlConnectionTest(meta.getDbHostnameIp(), Integer.toString(meta.getDbPort()), meta.getDbName(), meta.getDbUserName(), meta.getDbPassword());
-            }
-        }
-
-        return false;
-    }
+    public static final String MYSQL_URL = "jdbc:mysql://%s:%s/%s?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true";
+    public static final String SQLSERVER_URL = "jdbc:sqlserver://%s:%s;databaseName=%s";
+    public static final String ORACLE_URL = "jdbc:oracle:thin:@%s:%s:%s";
+    public static final String POSTGRESQL_URL = "jdbc:postgresql://%s:%s/%s";
+    public static final int CONNECT_TIMEOUT = 10;
 
     public static Connection getConnection(ConnectMeta meta) throws SQLException {
-        Assert.notNull(meta, ApiErrorMsg.IS_NULL);
-        if (Strings.isNotBlank(meta.getDbType())) {
-            if (Dialects.MYSQL.name().equalsIgnoreCase(meta.getDbType())) {
-                String url = String.format(ConnectUtils.MYSQL_URL, meta.getDbHostnameIp(), Integer.toString(meta.getDbPort()), meta.getDbName());
-                return DriverManager.getConnection(url, meta.getDbUserName(), meta.getDbPassword());
-            }
+        if (meta == null) {
+            log.warn("Get connection failed: connectMeta is null");
+            return null;
         }
-
-        return null;
+        Dialects dialects = Dialects.lookUp(meta.getDbType());
+        if (dialects == null) {
+            log.error("Get connection failed: database type not find in dialects");
+            return null;
+        }
+        String jdbcUrl = ConnectUtils.getJdbcUrl(dialects.getUrlFormat(), meta.getDbHostnameIp(), meta.getDbPort(), meta.getDbName());
+        return ConnectUtils.getConnection(jdbcUrl, meta.getDbUserName(), meta.getDbPassword());
     }
 
+    public static boolean connectionTest(ConnectMeta meta) {
+        if (meta == null) {
+            log.error("Connection test failed: connectMeta is null");
+            return false;
+        }
+        Dialects dialects = Dialects.lookUp(meta.getDbType());
+        if (dialects == null) {
+            log.error("Connection test failed: database type not find in dialects");
+            return false;
+        }
+        String jdbcUrl = ConnectUtils.getJdbcUrl(dialects.getUrlFormat(), meta.getDbHostnameIp(), meta.getDbPort(), meta.getDbName());
+        return ConnectUtils.connectionTest(jdbcUrl, meta.getDbUserName(), meta.getDbPassword());
+    }
+
+    private static Boolean connectionTest(String jdbcUrl, String userName, String password) {
+        // 使用 try-with-resources 自动管理连接
+        try (Connection connection = ConnectUtils.getConnection(jdbcUrl, userName, password)) {
+            // 检查连接是否有效
+            return connection != null && connection.isValid(ConnectUtils.CONNECT_TIMEOUT);
+        } catch (SQLException e) {
+            log.error("Connection test failed: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    private static Connection getConnection(String jdbcUrl, String userName, String password) throws SQLException {
+        // 参数校验
+        if (StringUtils.isAllBlank(jdbcUrl, userName, password)) {
+            log.warn("Connection test failed: invalid parameters");
+            return null;
+        }
+        // 构建连接 URL
+        return DriverManager.getConnection(jdbcUrl, userName, password);
+    }
+
+    private static String getJdbcUrl(String urlFormat, String host, int port, String databaseName) {
+        // 参数校验
+        if (StringUtils.isAllBlank(urlFormat, host, Integer.toString(port), databaseName)) {
+            log.warn("Connection test failed: invalid parameters");
+            return null;
+        }
+        // 构建连接 URL
+        return String.format(urlFormat, host, port, databaseName);
+    }
 }

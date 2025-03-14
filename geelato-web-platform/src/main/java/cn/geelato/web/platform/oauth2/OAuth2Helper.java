@@ -19,16 +19,4 @@ public class OAuth2Helper {
             return null;
         }
     }
-
-    public static User getUserInfo(String accessToken) throws IOException {
-        String url=String.format( "%s/oauth2/userinfo?access_token=%s",
-                "https://www.geelato.cn",accessToken);
-        String result= HttpUtils.doGet(url,null);
-        OAuth2ServerResult oAuthServerResult= JSON.parseObject(result, OAuth2ServerResult.class);
-        if(oAuthServerResult.getCode().equals("200")){
-            return JSON.parseObject(oAuthServerResult.getData(), User.class);
-        }else{
-            return null;
-        }
-    }
 }

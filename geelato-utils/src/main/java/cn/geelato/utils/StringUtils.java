@@ -1,9 +1,6 @@
 package cn.geelato.utils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -232,7 +229,7 @@ public class StringUtils extends org.springframework.util.StringUtils {
      * @return 转换后的字符串列表，如果输入字符串为空或分割后没有有效项，则返回空列表
      */
     public static List<String> toList(String arrayString, String split, boolean deRepetition) {
-        List<String> list = new ArrayList<>();
+        List<String> list = new LinkedList<>();
         split = split == null ? "," : split;
         if (arrayString != null) {
             String[] arr = arrayString.split(split);

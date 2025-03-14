@@ -3,10 +3,12 @@ package cn.geelato.web.platform.m.security.service;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
+import cn.geelato.web.platform.m.model.service.DevTableService;
 import cn.geelato.web.platform.m.security.entity.Permission;
 import cn.geelato.web.platform.m.security.entity.Role;
 import cn.geelato.web.platform.m.security.entity.RolePermissionMap;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author diabl
@@ -29,6 +32,8 @@ public class RolePermissionMapService extends BaseService {
     private RoleService roleService;
     @Autowired
     private PermissionService permissionService;
+    @Autowired
+    private DevTableService devTableService;
     @Autowired
     private DevTableColumnService devTableColumnService;
 
@@ -168,10 +173,16 @@ public class RolePermissionMapService extends BaseService {
                     viewPermissions.add(model);
                 }
             } else {
-                customPermissions.add(model);
+                viewPermissions.add(model);
             }
         }
-        viewPermissionMap.put("data", permissionSort(viewPermissions, PermissionService.PERMISSION_DATA_ORDER));
+        if (viewPermissions.size() > 4) {
+            viewPermissionMap.put("data", viewPermissions.stream()
+                    .sorted(Comparator.comparing(Permission::getSeqNo).reversed()) // 从大到小排序
+                    .collect(Collectors.toList()));
+        } else {
+            viewPermissionMap.put("data", permissionSort(viewPermissions, PermissionService.PERMISSION_DATA_ORDER));
+        }
         editPermissionMap.put("data", permissionSort(editPermissions, PermissionService.PERMISSION_MODEL_CLASSIFY));
 
         return permissionMapSet;
@@ -213,13 +224,14 @@ public class RolePermissionMapService extends BaseService {
      * @param tenantCode 租户代码，用于标识需要查询权限的租户
      * @return 返回包含表格权限信息的Map对象，包含权限信息、角色信息和表格数据
      */
-    public Map<String, JSONArray> queryTablePermissions(String type, String object, String appId, String tenantCode) {
+    public Map<String, JSONArray> queryTablePermissions(String type, String object, String appId, String tenantCode, String parentObject) {
         tenantCode = Strings.isNotBlank(tenantCode) ? tenantCode : getSessionTenantCode();
         Map<String, JSONArray> tablePermissionMap = new HashMap<>();
         // 表头，表格权限
         FilterGroup tableFilter = new FilterGroup();
         tableFilter.addFilter("type", FilterGroup.Operator.in, type);
         tableFilter.addFilter("object", object);
+        tableFilter.addFilter("parentObject", parentObject);
         tableFilter.addFilter("tenantCode", tenantCode);
         List<Permission> permissions = permissionService.queryModel(Permission.class, tableFilter);
         // 默认权限
@@ -305,7 +317,7 @@ public class RolePermissionMapService extends BaseService {
      * @param tenantCode 租户代码，用于标识需要查询权限的租户
      * @return 返回包含列权限信息的Map对象，包含列信息、角色信息和表格数据
      */
-    public Map<String, JSONArray> queryColumnPermissions(String type, String tableName, String appId, String tenantCode) {
+    public Map<String, JSONArray> queryColumnPermissions(String type, String connectId, String tableName, String appId, String tenantCode) {
         tenantCode = Strings.isNotBlank(tenantCode) ? tenantCode : getSessionTenantCode();
         Map<String, JSONArray> tablePermissionMap = new HashMap<>();
         // 默认字段
@@ -315,9 +327,17 @@ public class RolePermissionMapService extends BaseService {
             defaultColumnNames.add(meta.getName());
         }
         // 表头
+        FilterGroup tabFilter = new FilterGroup();
+        tabFilter.addFilter("connectId", connectId);
+        tabFilter.addFilter("entityName", tableName);
+        tabFilter.addFilter("tenantCode", tenantCode);
+        List<TableMeta> tableMetas = devTableService.queryModel(TableMeta.class, tabFilter);
+        if (tableMetas == null || tableMetas.isEmpty()) {
+            throw new RuntimeException("表不存在");
+        }
+        TableMeta tableMeta = tableMetas.get(0);
         FilterGroup colFilter = new FilterGroup();
-        colFilter.addFilter("tableName", tableName);
-        colFilter.addFilter("tenantCode", tenantCode);
+        colFilter.addFilter("tableId", tableMeta.getId());
         colFilter.addFilter("name", FilterGroup.Operator.notin, Strings.join(defaultColumnNames, ','));
         List<ColumnMeta> columnMetas = devTableColumnService.queryModel(ColumnMeta.class, colFilter);
         // 模型字段
@@ -335,6 +355,7 @@ public class RolePermissionMapService extends BaseService {
         if (columnObjects != null && columnObjects.size() > 0) {
             FilterGroup filter = new FilterGroup();
             filter.addFilter("type", type);
+            filter.addFilter("parentObject", connectId);
             filter.addFilter("object", FilterGroup.Operator.in, Strings.join(columnObjects, ','));
             filter.addFilter("tenantCode", tenantCode);
             permissions = permissionService.queryModel(Permission.class, filter);
@@ -481,6 +502,8 @@ public class RolePermissionMapService extends BaseService {
         // 模型字段；
         ColumnMeta column = getModel(ColumnMeta.class, columnId);
         Assert.notNull(column, ApiErrorMsg.IS_NULL);
+        // 模型
+        TableMeta table = getModel(TableMeta.class, column.getTableId());
         // 角色
         Role role = getModel(Role.class, roleId);
         Assert.notNull(role, ApiErrorMsg.IS_NULL);
@@ -490,6 +513,7 @@ public class RolePermissionMapService extends BaseService {
         List<Permission> permissionList = new ArrayList<>();
         FilterGroup filter = new FilterGroup();
         filter.addFilter("type", PermissionTypeEnum.COLUMN.getValue());
+        filter.addFilter("parentObject", table.getConnectId());
         filter.addFilter("object", String.format("%s:%s", column.getTableName(), column.getName()));
         filter.addFilter("tenantCode", getSessionTenantCode());
         List<Permission> permissions = queryModel(Permission.class, filter);
@@ -510,6 +534,7 @@ public class RolePermissionMapService extends BaseService {
                 permission.setCode(String.format("%s:%s%s", column.getTableName(), column.getName(), dModel.getCode()));
                 permission.setType(PermissionTypeEnum.COLUMN.getValue());
                 permission.setObject(String.format("%s:%s", column.getTableName(), column.getName()));
+                permission.setParentObject(table.getConnectId());
                 permission.setRule(dModel.getRule());
                 permission.setDescription(dModel.getDescription());
                 boolean isExist = false;

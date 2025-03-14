@@ -95,22 +95,22 @@ public class DevTableColumnController extends BaseController {
         try {
             form.afterSet();
             ColumnMeta resultMap = new ColumnMeta();
+            TableMeta tableMeta = devTableColumnService.getModel(TableMeta.class, form.getTableId());
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
                 // 存在，方可更新
                 ColumnMeta meta = devTableColumnService.getModel(CLAZZ, form.getId());
                 Assert.notNull(meta, ApiErrorMsg.IS_NULL);
-                form = devTableColumnService.upgradeTable(form, meta);
+                form = devTableColumnService.upgradeTable(tableMeta, form, meta);
                 resultMap = devTableColumnService.updateModel(form);
                 if (!meta.getName().equalsIgnoreCase(form.getName())) {
-                    permissionService.columnPermissionChangeObject(form.getTableName(), form.getName(), meta.getName());
-                    permissionService.resetDefaultPermission(PermissionTypeEnum.COLUMN.getValue(), form.getTableName(), form.getAppId());
+                    permissionService.columnPermissionChangeObject(tableMeta.getConnectId(), form.getTableName(), form.getName(), meta.getName());
+                    permissionService.resetDefaultPermission(PermissionTypeEnum.COLUMN.getValue(), form.getTableName(), tableMeta.getConnectId(), form.getAppId());
                 }
             } else {
                 form.setSynced(ColumnSyncedEnum.FALSE.getValue());
                 resultMap = devTableColumnService.createModel(form);
-                permissionService.resetDefaultPermission(PermissionTypeEnum.COLUMN.getValue(), form.getTableName(), form.getAppId());
-
+                permissionService.resetDefaultPermission(PermissionTypeEnum.COLUMN.getValue(), form.getTableName(), tableMeta.getConnectId(), form.getAppId());
             }
             // 选择类型为 组织、用户时
             devTableColumnService.automaticGeneration(form);

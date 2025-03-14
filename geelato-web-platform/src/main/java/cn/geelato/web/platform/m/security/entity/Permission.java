@@ -5,7 +5,7 @@ import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
-import cn.geelato.core.meta.model.entity.BaseEntity;
+import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.utils.Base64Utils;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +16,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @Entity(name = "platform_permission")
-public class Permission extends BaseEntity {
+public class Permission extends BaseSortableEntity {
 
     @Title(title = "应用Id")
     @Col(name = "app_id")
@@ -25,7 +25,12 @@ public class Permission extends BaseEntity {
     private String name;
     private String code;
     private String type;
+
+    @Title(title = "对象")
     private String object;
+    @Title(title = "父对象")
+    @Col(name = "parent_object")
+    private String parentObject;
 
     @Title(title = "规则")
     @Col(name = "rule", charMaxlength = 1024)

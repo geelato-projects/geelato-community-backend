@@ -117,9 +117,11 @@ public class RolePermissionMapController extends BaseController {
     }
 
     @RequestMapping(value = "/queryTable/{type}/{object}", method = RequestMethod.GET)
-    public ApiResult queryTablePermissions(@PathVariable(required = true) String type, @PathVariable(required = true) String object, String appId, String tenantCode) {
+    public ApiResult queryTablePermissions(@PathVariable(required = true) String type,
+                                           @PathVariable(required = true) String object,
+                                           String appId, String tenantCode, String parentObject) {
         try {
-            return ApiResult.success(rolePermissionMapService.queryTablePermissions(type, object, appId, tenantCode));
+            return ApiResult.success(rolePermissionMapService.queryTablePermissions(type, object, appId, tenantCode, parentObject));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
@@ -127,9 +129,11 @@ public class RolePermissionMapController extends BaseController {
     }
 
     @RequestMapping(value = "/queryColumn/{type}/{object}", method = RequestMethod.GET)
-    public ApiResult queryColumnPermissions(@PathVariable(required = true) String type, @PathVariable(required = true) String object, String appId, String tenantCode) {
+    public ApiResult queryColumnPermissions(@PathVariable(required = true) String type,
+                                            @PathVariable(required = true) String object,
+                                            String appId, String tenantCode, String parentObject) {
         try {
-            return ApiResult.success(rolePermissionMapService.queryColumnPermissions(type, object, appId, tenantCode));
+            return ApiResult.success(rolePermissionMapService.queryColumnPermissions(type, parentObject, object, appId, tenantCode));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

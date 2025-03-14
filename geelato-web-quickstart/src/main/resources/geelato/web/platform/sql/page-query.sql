@@ -103,6 +103,7 @@ SELECT
     p3.code as permissionCode,
     p3.type as permissionType,
     p3.object as permissionObject,
+    p3.parent_object as permissionParentObject,
     p3.rule as permissionRule,
     p3.description as permissionDescription
 FROM platform_role_r_permission p1

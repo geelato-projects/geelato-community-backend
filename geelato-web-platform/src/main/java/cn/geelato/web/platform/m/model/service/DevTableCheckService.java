@@ -1,11 +1,13 @@
 package cn.geelato.web.platform.m.model.service;
 
-import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableMeta;
+import cn.geelato.core.meta.schema.SchemaCheck;
+import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import lombok.extern.slf4j.Slf4j;
@@ -15,13 +17,15 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 public class DevTableCheckService extends BaseService {
+    @Lazy
+    @Autowired
+    protected DbGenerateDao dbGenerateDao;
     @Lazy
     @Autowired
     private DevTableService devTableService;
@@ -70,6 +74,10 @@ public class DevTableCheckService extends BaseService {
     }
 
     public boolean validate(TableCheck form) {
+        ConnectMeta connectMeta = getModel(ConnectMeta.class, form.getConnectId());
+        if (connectMeta == null) {
+            return false;
+        }
         Map<String, String> params = new HashMap<>();
         params.put("code", form.getCode());
         params.put("table_schema", form.getTableSchema());
@@ -80,9 +88,8 @@ public class DevTableCheckService extends BaseService {
         if (!isEmpty) {
             return false;
         }
-        switchDbByConnectId(form.getConnectId());
-        List<Map<String, Object>> mapList = dynamicDao.getJdbcTemplate().queryForList(
-                String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME + " AND TABLE_NAME != '%s';", form.getTableSchema(), form.getType().toUpperCase(Locale.ENGLISH), form.getCode(), form.getTableName()));
-        return mapList.isEmpty();
+        switchDbByConnectId(connectMeta.getId());
+        List<SchemaCheck> list = dbGenerateDao.dbQueryChecksByTableName(connectMeta.getDbType(), form.getTableName(), form.getCode());
+        return list.isEmpty();
     }
 }

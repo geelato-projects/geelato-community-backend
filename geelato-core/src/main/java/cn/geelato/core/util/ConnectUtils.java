@@ -15,12 +15,12 @@ import java.sql.SQLException;
 @Slf4j
 public class ConnectUtils {
     public static final String MYSQL_URL = "jdbc:mysql://%s:%s/%s?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true";
-    public static final String SQLSERVER_URL = "jdbc:sqlserver://%s:%s;databaseName=%s";
+    public static final String SQLSERVER_URL = "jdbc:sqlserver://%s:%s;trustServerCertificate=true;databaseName=%s";
     public static final String ORACLE_URL = "jdbc:oracle:thin:@%s:%s:%s";
     public static final String POSTGRESQL_URL = "jdbc:postgresql://%s:%s/%s";
     public static final int CONNECT_TIMEOUT = 10;
 
-    public static Connection getConnection(ConnectMeta meta) throws SQLException {
+    public static Connection getConnection(ConnectMeta meta) throws SQLException, ClassNotFoundException {
         if (meta == null) {
             log.warn("Get connection failed: connectMeta is null");
             return null;
@@ -31,10 +31,20 @@ public class ConnectUtils {
             return null;
         }
         String jdbcUrl = ConnectUtils.getJdbcUrl(dialects.getUrlFormat(), meta.getDbHostnameIp(), meta.getDbPort(), meta.getDbName());
+        Class.forName(dialects.getDriver());
         return ConnectUtils.getConnection(jdbcUrl, meta.getDbUserName(), meta.getDbPassword());
     }
 
-    public static boolean connectionTest(ConnectMeta meta) {
+    public static String jdbcUrl(String dbType, String host, int port, String databaseName) {
+        Dialects dialects = Dialects.lookUp(dbType);
+        if (dialects == null) {
+            log.error("Connection test failed: database type not find in dialects");
+            return "";
+        }
+        return ConnectUtils.getJdbcUrl(dialects.getUrlFormat(), host, port, databaseName);
+    }
+
+    public static boolean connectionTest(ConnectMeta meta) throws ClassNotFoundException {
         if (meta == null) {
             log.error("Connection test failed: connectMeta is null");
             return false;
@@ -45,6 +55,7 @@ public class ConnectUtils {
             return false;
         }
         String jdbcUrl = ConnectUtils.getJdbcUrl(dialects.getUrlFormat(), meta.getDbHostnameIp(), meta.getDbPort(), meta.getDbName());
+        Class.forName(dialects.getDriver());
         return ConnectUtils.connectionTest(jdbcUrl, meta.getDbUserName(), meta.getDbPassword());
     }
 

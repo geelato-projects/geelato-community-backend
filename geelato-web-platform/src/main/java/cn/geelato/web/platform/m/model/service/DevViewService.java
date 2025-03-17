@@ -1,12 +1,13 @@
 package cn.geelato.web.platform.m.model.service;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.enums.*;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
+import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.core.util.ClassUtils;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
@@ -15,6 +16,8 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -31,6 +34,9 @@ public class DevViewService extends BaseSortableService {
     private static final String DELETE_COMMENT_PREFIX = "已删除；";
     private static final String UPDATE_COMMENT_PREFIX = "已变更；";
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
+    @Lazy
+    @Autowired
+    protected DbGenerateDao dbGenerateDao;
 
     public List<TableView> getTableView(String connectId, String entityName) {
         Map<String, Object> params = new HashMap<>();
@@ -132,6 +138,11 @@ public class DevViewService extends BaseSortableService {
     }
 
     public void isDeleteModel(TableView model) {
+        // 链接
+        ConnectMeta connectMeta = getModel(ConnectMeta.class, model.getConnectId());
+        if (connectMeta == null) {
+            throw new RuntimeException(String.format("连接[%s]不存在", model.getConnectId()));
+        }
         String newViewName = String.format("%s_d%s", model.getViewName(), System.currentTimeMillis());
         String newTitle = DELETE_COMMENT_PREFIX + model.getTitle();
         String newDescription = String.format("delete %s %s[%s]=>[%s]。\n", sdf.format(new Date()), model.getTitle(), model.getViewName(), newViewName) + model.getDescription();
@@ -139,34 +150,20 @@ public class DevViewService extends BaseSortableService {
         sqlParams.put("viewId", model.getId());
         sqlParams.put("viewName", model.getViewName());
         sqlParams.put("newViewName", newViewName);// 新
-        sqlParams.put("newDescription", newDescription);
+        sqlParams.put("viewSql", model.getViewConstruct());
+        sqlParams.put("enableStatus", EnableStatusEnum.DISABLED.getCode());
         sqlParams.put("delStatus", DeleteStatusEnum.IS.getCode());
         sqlParams.put("deleteAt", sdf.format(new Date()));
-        sqlParams.put("enableStatus", EnableStatusEnum.DISABLED.getCode());
-        sqlParams.put("remark", "delete table. \n");
+        sqlParams.put("connectId", connectMeta.getId());
         // 数据库视图，切换数据库
-        switchDbByConnectId(model.getConnectId());
-        boolean isView = false;
-        String newSql = "";
-        try {
-            Map<String, Object> viewMap = dynamicDao.getJdbcTemplate().queryForMap(String.format(MetaDaoSql.SQL_SHOW_CREATE_VIEW, model.getViewName()));
-            if (viewMap != null && !viewMap.isEmpty()) {
-                String createView = viewMap.get("Create View") != null ? String.valueOf(viewMap.get("Create View")) : "";
-                isView = true;
-                newSql = createView.replace(String.format("SQL SECURITY DEFINER VIEW `%s` AS", model.getViewName()), String.format("SQL SECURITY DEFINER VIEW `%s` AS", newViewName));
-                // SQL SECURITY DEFINER VIEW `` AS
-            }
-        } catch (Exception ex) {
-            log.info(String.format("%s 视图不存在。", model.getViewName()));
-        }
+        switchDbByConnectId(connectMeta.getId());
+        String dbSql = dbGenerateDao.dbQueryViewsByName(connectMeta.getDbType(), model.getViewName());
         // 修正字段、外键、视图
-        if (isView && Strings.isNotBlank(newSql)) {
-            sqlParams.put("isView", isView);
-            sqlParams.put("newSql", newSql);
-            dynamicDao.execute("mysql_metaResetOrDeleteView", sqlParams);
+        if (Strings.isNotBlank(dbSql)) {
+            dynamicDao.execute(connectMeta.getDbType() + "_replaceView", sqlParams);
         }
         // 删除关联的应用信息和权限信息
-        dao.execute("mysql_metaResetOrDeleteViewRelation", sqlParams);
+        dao.execute("upgradeMetaAfterDelView", sqlParams);
         // 删除，信息变更
         model.setViewName(newViewName);
         model.setDescription(newDescription);

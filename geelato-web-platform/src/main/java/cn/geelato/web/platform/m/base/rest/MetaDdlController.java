@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.sql.SQLException;
 import java.util.Map;
 
 /**
@@ -23,7 +22,7 @@ import java.util.Map;
 @ApiRestController(value = "/meta/ddl")
 @Slf4j
 public class MetaDdlController extends BaseController {
-    private MetaDdlService metaDdlService;
+    private final MetaDdlService metaDdlService;
 
     @Autowired
     public MetaDdlController(MetaDdlService metaDdlService) {
@@ -67,7 +66,7 @@ public class MetaDdlController extends BaseController {
 
     @RequestMapping(value = {"/viewOne/{id}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult createOrUpdateViewById(@PathVariable("id") String id) {
-        return metaDdlService.createOrUpdateViewById(dao, id);
+        return metaDdlService.createOrUpdateViewById(id);
     }
 
     /**
@@ -79,7 +78,7 @@ public class MetaDdlController extends BaseController {
      */
     @RequestMapping(value = {"/view/{view}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult createOrUpdateViewByEntity(@PathVariable("view") String view, @RequestBody Map<String, String> params) {
-        return metaDdlService.createOrUpdateViewByEntity(dao, view, params);
+        return metaDdlService.createOrUpdateViewByEntity(view, params);
     }
 
     /**
@@ -93,7 +92,7 @@ public class MetaDdlController extends BaseController {
     @RequestMapping(value = {"/view/valid/{connectId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<Boolean> validateView(@PathVariable("connectId") String connectId, @RequestBody Map<String, String> params) {
         try {
-            boolean isValid = metaDdlService.validateViewSql(dao, connectId, params.get("sql"));
+            boolean isValid = metaDdlService.validateViewSql(connectId, params.get("sql"));
             return ApiMetaResult.success(isValid);
         } catch (Exception e) {
             log.error(e.getMessage());

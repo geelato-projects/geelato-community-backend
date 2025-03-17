@@ -9,6 +9,7 @@ import cn.geelato.core.meta.model.column.ColumnSelectType;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaColumn;
 import cn.geelato.core.meta.schema.SchemaIndex;
+import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.core.util.ClassUtils;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
@@ -19,9 +20,10 @@ import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import cn.geelato.web.platform.m.model.utils.SchemaUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -33,13 +35,16 @@ import java.util.*;
  * @author diabl
  */
 @Component
+@Slf4j
 public class DevTableColumnService extends BaseSortableService {
     private static final String DELETE_COMMENT_PREFIX = "已删除；";
     private static final String DELETE_DESCRIPTION_PREFIX = "Already removed; ";
     private static final String UPDATE_COMMENT_PREFIX = "已变更；";
     private static final String UPDATE_DESCRIPTION_PREFIX = "Already updated; ";
-    private static final Logger logger = LoggerFactory.getLogger(DevTableColumnService.class);
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
+    @Lazy
+    @Autowired
+    protected DbGenerateDao dbGenerateDao;
 
     /**
      * 自动生成对应字段
@@ -109,8 +114,8 @@ public class DevTableColumnService extends BaseSortableService {
                     meta.setTenantCode(tableMeta.getTenantCode());
                     meta.setTableId(tableMeta.getId());
                     meta.setTableName(tableMeta.getEntityName());
-                    meta.setTableCatalog(null);
-                    meta.setTableSchema(null);
+                    meta.setTableCatalog("def");
+                    meta.setTableSchema(tableMeta.getTableSchema());
                     meta.setSynced(ColumnSyncedEnum.FALSE.getValue());
                     meta.setEncrypted(ColumnEncryptedEnum.FALSE.getValue());
                     createModel(meta);
@@ -204,10 +209,7 @@ public class DevTableColumnService extends BaseSortableService {
         }
         if (!deleteAll) {
             // database_table_index
-            String indexSql = String.format(MetaDaoSql.SQL_INDEXES_NO_PRIMARY, tableMeta.getEntityName());
-            logger.info(indexSql);
-            List<Map<String, Object>> indexList = dynamicDao.getJdbcTemplate().queryForList(indexSql);
-            List<SchemaIndex> schemaIndices = SchemaUtils.buildData(SchemaIndex.class, indexList);
+            List<SchemaIndex> schemaIndices = dbGenerateDao.dbQueryUniqueIndexesByTableName(tableMeta.getDbType(), tableMeta.getEntityName());
             List<String> uniques = new ArrayList<>();
             if (schemaIndices != null && schemaIndices.size() > 0) {
                 for (SchemaIndex index : schemaIndices) {
@@ -218,9 +220,7 @@ public class DevTableColumnService extends BaseSortableService {
                 }
             }
             // database_table_column
-            String columnSql = String.format(MetaDaoSql.INFORMATION_SCHEMA_COLUMNS, MetaDaoSql.TABLE_SCHEMA_METHOD, " AND TABLE_NAME='" + tableMeta.getEntityName() + "'");
-            logger.info(columnSql);
-            List<Map<String, Object>> columnList = dynamicDao.getJdbcTemplate().queryForList(columnSql);
+            List<Map<String, Object>> columnList = dbGenerateDao.dbQueryColumnList(tableMeta.getDbType(), tableMeta.getEntityName(), null);
             List<SchemaColumn> schemaColumns = SchemaUtils.buildData(SchemaColumn.class, columnList);
             HashMap<String, SchemaColumn> schemaColumnMap = new HashMap<>();
             if (schemaColumns != null && schemaColumns.size() > 0) {
@@ -260,7 +260,7 @@ public class DevTableColumnService extends BaseSortableService {
             SchemaColumn schema = schemaMap.get(key);
             ColumnMeta meta = schema.convertIntoMeta(metaMap.get(key));
             meta.setTableId(tableMeta.getId());
-            meta.setTableName(tableMeta.getTableName());
+            meta.setTableName(tableMeta.dbTableName());
             if (!metaMap.containsKey(key)) {
                 meta.setName(schema.getColumnName().toLowerCase(Locale.ENGLISH));
                 meta.setFieldName(StringUtils.toCamelCase(meta.getName()));
@@ -282,6 +282,7 @@ public class DevTableColumnService extends BaseSortableService {
      */
     public void isDeleteModel(ColumnMeta model) throws InvocationTargetException, IllegalAccessException {
         TableMeta tableMeta = getModel(TableMeta.class, model.getTableId());
+        switchDbByConnectId(tableMeta.getConnectId());
         // 重命名
         String newColumnName = String.format("%s_d%s", model.getName(), System.currentTimeMillis());
         String newTitle = DELETE_COMMENT_PREFIX + model.getTitle();
@@ -308,19 +309,15 @@ public class DevTableColumnService extends BaseSortableService {
         sqlParams.put("newName", newColumnName);
         sqlParams.putAll(getSqlParams(model, ""));
         sqlParams.put("deleteAt", sdf.format(new Date()));
+        sqlParams.put("connectId", tableMeta.getConnectId());
         // 数据库表中是否有该字段
-        String filterSql = String.format(" AND TABLE_NAME='%s' AND COLUMN_NAME='%s' ", model.getTableName(), model.getName());
-        String columnSql = String.format(MetaDaoSql.INFORMATION_SCHEMA_COLUMNS, MetaDaoSql.TABLE_SCHEMA_METHOD, filterSql);
-        logger.info(columnSql);
-        switchDbByConnectId(tableMeta.getConnectId());
-        List<Map<String, Object>> columnList = dynamicDao.getJdbcTemplate().queryForList(columnSql);
+        List<Map<String, Object>> columnList = dbGenerateDao.dbQueryColumnList(tableMeta.getDbType(), model.getTableName(), model.getName());
         boolean isColumn = columnList != null && !columnList.isEmpty();
-        sqlParams.put("isColumn", isColumn);
         // 修正：外键
         if (isColumn) {
-            dynamicDao.execute("mysql_metaDeleteColumn", sqlParams);
+            dynamicDao.execute(tableMeta.getDbType() + "_renameColumn", sqlParams);
         }
-        dao.execute("mysql_metaDeleteColumnRelation", sqlParams);
+        dao.execute("upgradeMetaAfterDelColumn", sqlParams);
         model.setName(newColumnName);
         dao.save(model);
     }
@@ -414,12 +411,14 @@ public class DevTableColumnService extends BaseSortableService {
      * @throws IllegalAccessException    如果在反射调用过程中访问受限，将抛出该异常
      */
     public ColumnMeta upgradeTable(TableMeta tableMeta, ColumnMeta form, ColumnMeta model) throws InvocationTargetException, IllegalAccessException {
+        switchDbByConnectId(tableMeta.getConnectId());
         // 字段标识，是否变更
         if (model.getName().equals(form.getName())) {
             form.setSynced(ColumnSyncedEnum.FALSE.getValue());
             return form;
         }
         form.setSynced(ColumnSyncedEnum.TRUE.getValue());
+        form.setComment(Strings.isNotBlank(form.getComment()) ? form.getComment() : form.getTitle());
         // 复制字段
         model.setId(null);
         model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
@@ -437,27 +436,17 @@ public class DevTableColumnService extends BaseSortableService {
         model.afterSet();
         // 数据库表直接修改
         Map<String, Object> changeParams = new HashMap<>();
-        changeParams.putAll(getSqlParams(model, "model"));
-        changeParams.putAll(getSqlParams(form, "form"));
-        // 不进行字段复制
-        changeParams.put("isCopy", false);
+        changeParams.putAll(getSqlParams(form, ""));
+        changeParams.put("name", model.getName());
+        changeParams.put("newName", form.getName());
+        changeParams.put("connectId", tableMeta.getConnectId());
         // 数据库表中是否有该字段
-        String filterSql = String.format(" AND TABLE_NAME='%s' AND COLUMN_NAME='%s' ", model.getTableName(), model.getName());
-        String columnSql = String.format(MetaDaoSql.INFORMATION_SCHEMA_COLUMNS, MetaDaoSql.TABLE_SCHEMA_METHOD, filterSql);
-        logger.info(columnSql);
-        switchDbByConnectId(tableMeta.getConnectId());
-        List<Map<String, Object>> columnList = dynamicDao.getJdbcTemplate().queryForList(columnSql);
-        boolean isColumn = false;
-        if (columnList != null && !columnList.isEmpty()) {
-            form.setComment(Strings.isNotBlank(form.getComment()) ? form.getComment() : form.getTitle());
-            isColumn = true;
-        }
-        changeParams.put("isColumn", isColumn);
+        List<Map<String, Object>> columnList = dbGenerateDao.dbQueryColumnList(tableMeta.getDbType(), model.getTableName(), model.getName());
+        boolean isColumn = columnList != null && !columnList.isEmpty();
         if (isColumn) {
-            dynamicDao.execute("mysql_metaResetColumn", changeParams);
+            dynamicDao.execute(tableMeta.getDbType() + "_renameColumn", changeParams);
         }
-        dao.execute("mysql_metaResetColumnRelation", changeParams);
-        // dao.save(model);
+        dao.execute("upgradeMetaAfterUpdateColumn", changeParams);
 
         return form;
     }

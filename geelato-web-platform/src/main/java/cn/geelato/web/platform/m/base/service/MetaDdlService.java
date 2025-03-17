@@ -6,6 +6,7 @@ import cn.geelato.core.enums.TableSourceTypeEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
+import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableMeta;
@@ -16,7 +17,9 @@ import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.lang.api.ApiMetaResult;
+import cn.geelato.utils.SqlParams;
 import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
+import cn.geelato.web.platform.m.model.service.DevDbConnectService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import cn.geelato.web.platform.m.model.service.DevTableService;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +34,13 @@ import java.util.*;
 @Component
 @Slf4j
 public class MetaDdlService {
+    private final MetaManager metaManager = MetaManager.singleInstance();
     @Lazy
     @Autowired
     protected DbGenerateDao dbGenerateDao;
+    @Lazy
+    @Autowired
+    private DevDbConnectService devDbConnectService;
     @Lazy
     @Autowired
     private DevTableService devTableService;
@@ -43,7 +50,6 @@ public class MetaDdlService {
     @Lazy
     @Autowired
     private ViewService viewService;
-    private final MetaManager metaManager = MetaManager.singleInstance();
 
     public void createOrUpdateTableByEntityName(Dao primaryDao, String entityName, boolean dropBeforeCreate) {
         // 元数据
@@ -73,25 +79,29 @@ public class MetaDdlService {
 
     public void createOrUpdateTableByEntityMeta(Dao primaryDao, EntityMeta entityMeta) {
         TableMeta tableMeta = entityMeta.getTableMeta();
-        String tableName = Strings.isEmpty(tableMeta.getTableName()) ? tableMeta.getEntityName() : tableMeta.getTableName();
+        // 表字段
         List<ColumnMeta> columnMetas = getColumnMetasByFieldMetas(entityMeta.getFieldMetas());
+        // 表检查
         Collection<TableCheck> tableChecks = entityMeta.getTableChecks();
         // 与元数据对比，判断字段名称是否一修改了。
         // setBeforeFieldName(tableMeta, columnMetas);
         // 切换数据库
         // switchDbByConnectId(tableMeta.getConnectId());
-        // 判断表是否存在,表所属数据库
-        Map<String, Object> dbColumnMap = dbGenerateDao.getDbTableColumns(tableMeta.getTableSchema(), tableName);
-        // 表约束
-        List<SchemaCheck> schemaCheckList = dbGenerateDao.queryTableChecks(tableMeta.getTableSchema(), tableName, tableChecks);
+        // 判断表是否存在
+        List<Map<String, Object>> tableMapList = dbGenerateDao.dbQueryAllTables(tableMeta.getDbType(), tableMeta.dbTableName());
+        boolean isExistsTable = tableMapList != null && !tableMapList.isEmpty();
+        // 表字段
+        Map<String, Object> schemaColumnMap = dbGenerateDao.dbQueryColumnMapByTableName(tableMeta.getDbType(), tableMeta.dbTableName());
         // 表唯一约束
-        List<SchemaIndex> schemaIndexList = dbGenerateDao.queryIndexes(tableName);
+        List<SchemaIndex> schemaIndexList = dbGenerateDao.dbQueryUniqueIndexesByTableName(tableMeta.getDbType(), tableMeta.dbTableName());
+        // 表检查
+        List<SchemaCheck> schemaCheckList = new ArrayList<>();
+        schemaCheckList.addAll(dbGenerateDao.dbQueryChecksByTableName(tableMeta.getDbType(), tableMeta.dbTableName(), null));
+        schemaCheckList.addAll(dbGenerateDao.dbQueryChecksByConstraintName(tableMeta.getDbType(), tableChecks));
         // 比较
-        Map<String, Object> map = dbGenerateDao.compareFields(tableMeta, columnMetas, tableChecks, dbColumnMap, schemaCheckList, schemaIndexList);
-        // 是否存在表
-        boolean isExistsTable = dbColumnMap != null && !dbColumnMap.isEmpty();
+        Map<String, Object> map = dbGenerateDao.compareFields(isExistsTable, tableMeta, columnMetas, tableChecks, schemaColumnMap, schemaCheckList, schemaIndexList);
         // 执行操作
-        dbGenerateDao.createOrUpdateTable(primaryDao, isExistsTable, map);
+        dbGenerateDao.createOrUpdateTable(primaryDao, isExistsTable, tableMeta.getDbType(), map);
     }
 
     private List<ColumnMeta> getColumnMetasByFieldMetas(Collection<FieldMeta> fieldMetas) {
@@ -113,12 +123,8 @@ public class MetaDdlService {
         if (fieldMetas == null || fieldMetas.isEmpty()) {
             return fieldMetas;
         }
-        String tableName = Strings.isEmpty(tableMeta.getTableName()) ? tableMeta.getEntityName() : tableMeta.getTableName();
         // 查询元数据，旧的数据
-        Map<String, Object> columnMap = new LinkedHashMap<>();
-        columnMap.put("tableName", tableName);
-        columnMap.put("tableId", tableMeta.getId());
-        List<ColumnMeta> columnMetas = devTableColumnService.queryModel(ColumnMeta.class, columnMap);
+        List<ColumnMeta> columnMetas = devTableColumnService.queryModel(ColumnMeta.class, SqlParams.map("tableId", tableMeta.getId()));
         if (columnMetas == null || columnMetas.isEmpty()) {
             return fieldMetas;
         }
@@ -211,9 +217,10 @@ public class MetaDdlService {
         try {
             FilterGroup filterGroup = new FilterGroup();
             filterGroup.addFilter("tenantCode", tenantCode);
+            filterGroup.addFilter("appId", appId);
+            List<ConnectMeta> connectMetas = devDbConnectService.queryModel(ConnectMeta.class, filterGroup);
             List<TableMeta> tableMetas = devTableService.queryModel(TableMeta.class, filterGroup);
             filterGroup.addFilter("enableStatus", String.valueOf(EnableStatusEnum.ENABLED.getCode()));
-            filterGroup.addFilter("appId", appId);
             List<TableView> viewMetas = viewService.queryModel(TableView.class, filterGroup);
             if (viewMetas == null || viewMetas.isEmpty()) {
                 return ApiMetaResult.successNoResult();
@@ -230,7 +237,12 @@ public class MetaDdlService {
             String currentConnect = "";
             for (int i = 0; i < viewMetas.size(); i++) {
                 TableView viewMeta = viewMetas.get(i);
-                Optional<TableMeta> tableMetaResult = tableMetas.stream().filter(t -> t.getEntityName().equalsIgnoreCase(viewMeta.getEntityName())).findFirst();
+                Optional<ConnectMeta> connectMetaResult = connectMetas.stream().filter(c -> c.getId().equals(viewMeta.getConnectId())).findFirst();
+                if (connectMetaResult.isEmpty()) {
+                    tableResult.put(viewMeta.getViewName(), "不存在可以关联的数据库链接");
+                    continue;
+                }
+                Optional<TableMeta> tableMetaResult = tableMetas.stream().filter(t -> t.getEntityName().equals(viewMeta.getEntityName()) && t.getConnectId().equals(viewMeta.getConnectId())).findFirst();
                 if (tableMetaResult.isEmpty()) {
                     tableResult.put(viewMeta.getViewName(), "不存在可以关联的数据库表");
                     continue;
@@ -238,14 +250,14 @@ public class MetaDdlService {
                 // 验证视图
                 handleValidateView(viewMeta, tableMetaResult.get());
                 // 验证sql
-                handleValidateViewSql(primaryDao, viewMeta.getConnectId(), viewMeta.getViewConstruct());
+                handleValidateViewSql(connectMetaResult.get(), viewMeta.getViewConstruct());
                 // 切换数据
                 if (!currentConnect.equals(viewMeta.getConnectId())) {
                     switchDbByConnectId(viewMeta.getConnectId());
                     currentConnect = viewMeta.getConnectId();
                 }
                 // 创建或更新视图
-                dbGenerateDao.createOrUpdateView(viewMeta.getViewName(), viewMeta.getViewConstruct());
+                dbGenerateDao.createOrUpdateView(connectMetaResult.get().getDbType(), viewMeta.getViewName(), viewMeta.getViewConstruct());
                 tableResult.put(viewMeta.getViewName(), true);
             }
             return ApiMetaResult.success(tableResult);
@@ -264,7 +276,7 @@ public class MetaDdlService {
         }
     }
 
-    public ApiMetaResult createOrUpdateViewById(Dao primaryDao, String viewId) {
+    public ApiMetaResult createOrUpdateViewById(String viewId) {
         if (Strings.isBlank(viewId)) {
             throw new RuntimeException("视图ID不能为空");
         }
@@ -275,20 +287,23 @@ public class MetaDdlService {
             Assert.notNull(viewMeta, "视图信息查询失败");
             // 视图所属模型信息
             Map<String, Object> tableParams = new HashMap<>();
+            tableParams.put("connectId", viewMeta.getConnectId());
             tableParams.put("entityName", viewMeta.getEntityName());
             List<TableMeta> tableMetas = devTableService.queryModel(TableMeta.class, tableParams);
             if (tableMetas == null || tableMetas.isEmpty()) {
                 throw new RuntimeException("不存在可以关联的数据库表");
             }
             TableMeta tableMeta = tableMetas.get(0);
+            // 数据链接
+            ConnectMeta connectMeta = devDbConnectService.getModel(ConnectMeta.class, viewMeta.getConnectId());
             // 验证视图
             handleValidateView(viewMeta, tableMeta);
             // 验证sql
-            handleValidateViewSql(primaryDao, viewMeta.getConnectId(), viewMeta.getViewConstruct());
+            handleValidateViewSql(connectMeta, viewMeta.getViewConstruct());
             // 切换数据库
             switchDbByConnectId(viewMeta.getConnectId());
             // 创建或更新视图
-            dbGenerateDao.createOrUpdateView(viewMeta.getViewName(), viewMeta.getViewConstruct());
+            dbGenerateDao.createOrUpdateView(connectMeta.getDbType(), viewMeta.getViewName(), viewMeta.getViewConstruct());
             entityName = viewMeta.getViewName();
             return ApiMetaResult.successNoResult();
         } catch (Exception ex) {
@@ -301,16 +316,17 @@ public class MetaDdlService {
         }
     }
 
-    public ApiMetaResult createOrUpdateViewByEntity(Dao primaryDao, String entityName, Map<String, String> params) {
+    public ApiMetaResult createOrUpdateViewByEntity(String entityName, Map<String, String> params) {
         try {
             String connectId = params.get("connectId");
             String sql = params.get("sql");
+            ConnectMeta meta = devDbConnectService.getModel(ConnectMeta.class, connectId);
             // 验证sql
-            handleValidateViewSql(primaryDao, connectId, sql);
+            handleValidateViewSql(meta, sql);
             // 切换数据库
             switchDbByConnectId(connectId);
             // 创建或更新视图
-            dbGenerateDao.createOrUpdateView(entityName, sql);
+            dbGenerateDao.createOrUpdateView(meta.getDbType(), entityName, sql);
             return ApiMetaResult.successNoResult();
         } catch (Exception ex) {
             log.error(ex.getMessage());
@@ -338,11 +354,11 @@ public class MetaDdlService {
         }
     }
 
-    private void handleValidateViewSql(Dao primaryDao, String connectId, String sql) {
+    private void handleValidateViewSql(ConnectMeta meta, String sql) {
         // 验证视图语句
         boolean isValid = false;
         try {
-            isValid = validateViewSql(primaryDao, connectId, sql);
+            isValid = dbGenerateDao.validateViewSql(meta, sql);
         } catch (Exception ex) {
             log.error(ex.getMessage());
             isValid = false;
@@ -352,8 +368,9 @@ public class MetaDdlService {
         }
     }
 
-    public boolean validateViewSql(Dao primaryDao, String connectId, String sql) {
-        return dbGenerateDao.validateViewSql(primaryDao, connectId, sql);
+    public boolean validateViewSql(String connectId, String sql) {
+        ConnectMeta meta = devDbConnectService.getModel(ConnectMeta.class, connectId);
+        return dbGenerateDao.validateViewSql(meta, sql);
     }
 
     public void refreshRedis(Dao primaryDao, Map<String, String> params) {

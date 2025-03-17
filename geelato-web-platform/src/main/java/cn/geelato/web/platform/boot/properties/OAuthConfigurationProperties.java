@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-@ConfigurationProperties(prefix = "geelato.oauth")
+@ConfigurationProperties(prefix = "geelato.oauth2")
 public class OAuthConfigurationProperties {
     private String url;
     private String clientId;

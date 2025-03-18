@@ -62,7 +62,7 @@ public class DownloadController extends BaseController {
             }
             File file = new File(String.format("%s/%s", UploadService.ROOT_CONFIG_DIRECTORY, fileName));
             if (!file.exists()) {
-                return ApiResult.fail("File (.config) does not exist");
+                return ApiResult.fail("该站点信息还未配置");
             }
             StringBuilder contentBuilder = new StringBuilder();
             bufferedReader = Files.newBufferedReader(Paths.get(file.getAbsolutePath()), StandardCharsets.UTF_8);

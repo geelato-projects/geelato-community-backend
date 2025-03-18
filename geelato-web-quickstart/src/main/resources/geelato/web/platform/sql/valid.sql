@@ -1,3 +1,5 @@
+-- 数据验证工作，mysql|oracle|sqlserver|postgresql都可以使用
+
 -- @sql platform_validate
 select * from $.tableName where 1=1
 @if $.id!=null&&$.id!=''

@@ -5,10 +5,6 @@ package cn.geelato.core.constants;
  */
 public class MetaDaoSql {
     /**
-     * 当前数据库的名称
-     */
-    public static final String TABLE_SCHEMA_METHOD = "DATABASE()";
-    /**
      * 查询 platform_dev_db_connect
      */
     public static final String SQL_CONNECT_LIST = String.format("select * from platform_dev_db_connect where del_status =%d", ColumnDefault.DEL_STATUS_VALUE);
@@ -33,6 +29,10 @@ public class MetaDaoSql {
      */
     public static final String SQL_CHECK_LIST_BY_TABLE = String.format("select * from platform_dev_table_check where del_status=%d", ColumnDefault.DEL_STATUS_VALUE);
     /**
+     * 默认视图格式
+     */
+    public static final String SQL_TABLE_DEFAULT_VIEW = "SELECT %s FROM %s";
+    /**
      * 查询 所有表信息
      */
     public static final String INFORMATION_SCHEMA_TABLES = "SELECT * FROM information_schema.tables WHERE 1 = 1 AND TABLE_SCHEMA = %s AND TABLE_TYPE = 'BASE TABLE' %s ORDER BY TABLE_NAME ASC;";
@@ -48,7 +48,6 @@ public class MetaDaoSql {
      */
     public static final String SQL_FOREIGN_KEY = "SELECT i.TABLE_NAME, i.CONSTRAINT_TYPE, i.CONSTRAINT_NAME, k.REFERENCED_TABLE_NAME, k.REFERENCED_COLUMN_NAME FROM information_schema.TABLE_CONSTRAINTS i LEFT JOIN information_schema.KEY_COLUMN_USAGE k ON i.CONSTRAINT_NAME = k.CONSTRAINT_NAME WHERE i.CONSTRAINT_TYPE = 'FOREIGN KEY' AND i.TABLE_SCHEMA = DATABASE() AND i.TABLE_NAME = '%s';";
 
-    public static final String SQL_TABLE_DEFAULT_VIEW = "SELECT %s FROM %s";
 
     /**
      * 数据库表，修改表信息

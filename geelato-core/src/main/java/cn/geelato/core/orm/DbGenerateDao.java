@@ -1,23 +1,20 @@
 package cn.geelato.core.orm;
 
-import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.enums.Dialects;
 import cn.geelato.core.enums.EnableStatusEnum;
-import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
-import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableCheck;
-import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
-import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.schema.SchemaCheck;
+import cn.geelato.core.meta.schema.SchemaForeign;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.util.ConnectUtils;
 import cn.geelato.utils.SqlParams;
-import cn.geelato.utils.StringUtils;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,179 +32,26 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class DbGenerateDao {
-
-    private static HashMap<String, Integer> defaultColumnLengthMap;
-
     @Autowired
     @Qualifier("dynamicDao")
     private Dao dao;
 
-    private final MetaManager metaManager = MetaManager.singleInstance();
-
     public DbGenerateDao() {
-    }
-
-
-    /**
-     * 基于元数据管理，需元数据据管理器已加载、扫描元数据
-     * <p>内部调用了sqlId:dropOneTable来删除表，
-     * 内部调用了sqlId:createOneTable来创建表</p>
-     * 创建完表之后，将元数据信息保存到数据库中
-     *
-     * @param dropBeforeCreate 存在表时，是否删除
-     */
-    public void createAllTables(boolean dropBeforeCreate, List<String> ignoreEntityNameList) {
-        Collection<EntityMeta> entityMetas = metaManager.getAll();
-        if (entityMetas == null) {
-            log.warn("实体元数据为空，可能还未解析元数据，请解析之后，再执行该方法(createAllTables)");
-            return;
-        }
-        for (EntityMeta em : entityMetas) {
-            boolean isIgnore = false;
-            if (ignoreEntityNameList != null) {
-                for (String ignoreEntityName : ignoreEntityNameList) {
-                    if (em.getEntityName().contains(ignoreEntityName)) {
-                        isIgnore = true;
-                        break;
-                    }
-                }
-            }
-            if (!isIgnore) {
-                createOrUpdateOneTable(em, dropBeforeCreate);
-            } else {
-                log.info("ignore createTable for entity: {}.", em.getEntityName());
-            }
-        }
-        ConnectMeta connectMeta = new ConnectMeta();
-        connectMeta.setDbName("geelato");
-        connectMeta.setDbConnectName("geelato-local");
-        connectMeta.setDbHostnameIp("127.0.0.1");
-        connectMeta.setDbUserName("sa");
-        connectMeta.setDbPort(3306);
-        connectMeta.setDbSchema("geelato");
-        connectMeta.setDbType("Mysql");
-        connectMeta.setEnableStatus(1);
-        connectMeta.setDbPassword("123456");
-        Map connectMetaMap = this.dao.save(connectMeta);
-
-        // 保存所有的数据表元数据
-        this.saveJavaMetaToDb(connectMetaMap.get("id").toString(), entityMetas);
-    }
-
-    /**
-     * 将元数据信息保存到服务端数据库。
-     * <p>
-     * 该方法通常用于开发环境的初始化阶段，在创建完数据库表之后执行。
-     * 它遍历传入的实体元数据集合，对每个实体元数据进行处理，包括设置连接ID、链接状态、启用状态等，
-     * 并将这些信息保存到服务端数据库中。同时，它还会处理字段元数据和表外键关系，并将它们也保存到数据库中。
-     *
-     * @param id          连接ID，用于标识数据库连接
-     * @param entityMetas 实体元数据集合，包含需要保存的实体元数据
-     */
-    private void saveJavaMetaToDb(String id, Collection<EntityMeta> entityMetas) {
-        for (EntityMeta em : entityMetas) {
-            TableMeta tm = em.getTableMeta();
-            tm.setConnectId(id);
-            tm.setLinked(1);
-            tm.setEnableStatus(1);
-            Map table = dao.save(tm);
-            for (FieldMeta fm : em.getFieldMetas()) {
-                ColumnMeta cm = fm.getColumn();
-                cm.setTableId(table.get("id").toString());
-                cm.setLinked(1);
-                dao.save(cm);
-            }
-            // 保存外键关系
-            for (TableForeign ft : em.getTableForeigns()) {
-                ft.setEnableStatus(1);
-                dao.save(ft);
-            }
-        }
-    }
-
-    private void createOrUpdateOneTable(EntityMeta em, boolean dropBeforeCreate) {
-
-        if (dropBeforeCreate) {
-            log.info("  drop entity {}", em.getTableName());
-            dao.execute("dropOneTable", SqlParams.map("tableName", em.getTableName()));
-        }
-        log.info("  create or update an entity {}", em.getTableName());
-
-        // 检查表是否存在，或取已存在的列元数据
-        boolean isExistsTable = true;
-        Map<String, Object> existsColumnMap = new HashMap<>();
-        List<Map<String, Object>> columns = dao.queryForMapList("queryColumnsByTableName", SqlParams.map("tableName", em.getTableName()));
-        if (columns == null || columns.isEmpty()) {
-            isExistsTable = false;
-        } else {
-            for (Map<String, Object> columnMap : columns) {
-                existsColumnMap.put(columnMap.get("COLUMN_NAME").toString(), columnMap);
-            }
-        }
-        // 通过create table创建的字段
-        ArrayList<JSONObject> createList = new ArrayList<>();
-        // 通过alert table创建的字段
-        ArrayList<JSONObject> addList = new ArrayList<>();
-        // 通过alert table修改的字段
-        ArrayList<JSONObject> modifyList = new ArrayList<>();
-        // 通过alert table删除的字段
-        ArrayList<JSONObject> deleteList = new ArrayList<>();
-        ArrayList<JSONObject> uniqueList = new ArrayList<>();
-
-        for (FieldMeta fm : em.getFieldMetas()) {
-            try {
-                if (defaultColumnLengthMap.containsKey(fm.getColumnName())) {
-                    int len = defaultColumnLengthMap.get(fm.getColumnName());
-
-                    fm.getColumn().setCharMaxLength(len);
-                    fm.getColumn().setNumericPrecision(len);
-                    fm.getColumn().afterSet();
-                }
-
-                JSONObject jsonColumn = JSONObject.parseObject(JSONObject.toJSONString(fm.getColumn()));
-
-                if (existsColumnMap.containsKey(fm.getColumnName())) {
-                    modifyList.add(jsonColumn);
-                } else {
-                    addList.add(jsonColumn);
-                }
-                createList.add(jsonColumn);
-                if (fm.getColumn().isUniqued()) {
-                    uniqueList.add(jsonColumn);
-                }
-            } catch (Exception e) {
-                if (e.getMessage().contains("Duplicate column name")) {
-                    log.info("column " + fm.getColumnName() + " is exists，ignore.");
-                } else {
-                    throw e;
-                }
-            }
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("tableName", em.getTableName());
-        map.put("createList", createList);
-        map.put("addList", addList);
-        map.put("modifyList", modifyList);
-        map.put("deleteList", deleteList);
-        map.put("uniqueList", uniqueList);
-        map.put("foreignList", em.getTableForeigns());
-        map.put("existsTable", isExistsTable);
-
-        dao.execute("createOrUpdateOneTable", map);
     }
 
     /**
      * 比较字段,并更新数据库
      *
+     * @param isExistsTable   表是否存在
      * @param tableMeta       表元数据
      * @param columnMetas     字段
      * @param tableChecks     表检查
-     * @param dbColumnMap     库表字段
+     * @param schemaColumnMap 库表字段
      * @param schemaCheckList 库表检查
      * @param schemaIndexList 库表约束
      */
-    public Map<String, Object> compareFields(TableMeta tableMeta, List<ColumnMeta> columnMetas, Collection<TableCheck> tableChecks,
-                                             Map<String, Object> dbColumnMap, List<SchemaCheck> schemaCheckList, List<SchemaIndex> schemaIndexList) {
+    public Map<String, Object> compareFields(boolean isExistsTable, TableMeta tableMeta, List<ColumnMeta> columnMetas, Collection<TableCheck> tableChecks,
+                                             Map<String, Object> schemaColumnMap, List<SchemaCheck> schemaCheckList, List<SchemaIndex> schemaIndexList) {
         // 通过create table创建的字段
         ArrayList<JSONObject> createList = new ArrayList<>();
         // 通过alert table创建的字段
@@ -223,59 +67,59 @@ public class DbGenerateDao {
         // 数据表中 外键
         ArrayList<JSONObject> foreignList = new ArrayList<>();
         ArrayList<JSONObject> delForeignList = new ArrayList<>();
-        // 是否存在表
-        boolean isExistsTable = dbColumnMap != null && !dbColumnMap.isEmpty();
         // 是否有删除字段
         boolean hasDelStatus = false;
         boolean hasDelAt = false;
         // 遍历实体元数据中的字段元数据
-        for (ColumnMeta meta : columnMetas) {
-            // 跳过禁用的字段
-            if (meta.getEnableStatus() == EnableStatusEnum.DISABLED.getCode()) {
-                continue;
-            }
-            // 同时存在删除状态、删除时间字段时，添加如唯一约束中
-            if ("del_status".equals(meta.getName())) {
-                hasDelStatus = true;
-            }
-            if ("delete_at".equals(meta.getName())) {
-                hasDelAt = true;
-            }
-            try {
-                JSONObject jsonColumn = JSONObject.parseObject(JSONObject.toJSONString(meta));
-                if (isExistsTable) {
-                    // 更新时，修改字段
-                    if (dbColumnMap.containsKey(meta.getName()) || (Strings.isNotBlank(meta.getBefColName()) && dbColumnMap.containsKey(meta.getBefColName()))) {
-                        if (dbColumnMap.containsKey(meta.getName())) {
-                            modifyList.add(jsonColumn);
-                        } else if (Strings.isNotBlank(meta.getBefColName()) && dbColumnMap.containsKey(meta.getBefColName())) {
-                            changeList.add(jsonColumn);
+        if (columnMetas != null && !columnMetas.isEmpty()) {
+            for (ColumnMeta meta : columnMetas) {
+                // 跳过禁用的字段
+                if (meta.getEnableStatus() == EnableStatusEnum.DISABLED.getCode()) {
+                    continue;
+                }
+                // 同时存在删除状态、删除时间字段时，添加如唯一约束中
+                if ("del_status".equals(meta.getName())) {
+                    hasDelStatus = true;
+                }
+                if ("delete_at".equals(meta.getName())) {
+                    hasDelAt = true;
+                }
+                try {
+                    JSONObject jsonColumn = JSONObject.parseObject(JSONObject.toJSONString(meta));
+                    if (isExistsTable) {
+                        // 更新时，修改字段
+                        if (schemaColumnMap != null && schemaColumnMap.containsKey(meta.getName()) || (Strings.isNotBlank(meta.getBefColName()) && schemaColumnMap.containsKey(meta.getBefColName()))) {
+                            if (schemaColumnMap.containsKey(meta.getName())) {
+                                modifyList.add(jsonColumn);
+                            } else if (Strings.isNotBlank(meta.getBefColName()) && schemaColumnMap.containsKey(meta.getBefColName())) {
+                                changeList.add(jsonColumn);
+                            }
+                        } else {
+                            // 更新时，需要添加的
+                            if (meta.getDelStatus() == DeleteStatusEnum.NO.getCode()) {
+                                addList.add(jsonColumn);
+                            }
+                        }
+                        // primary key
+                        if (meta.isKey() && Strings.isNotEmpty(meta.getName())) {
+                            primaryList.add(meta.getName());
+                        }
+                        // unique index
+                        if (meta.isUniqued() && !meta.isKey()) {
+                            uniqueList.add(jsonColumn);
                         }
                     } else {
-                        // 更新时，需要添加的
+                        // 表不存在时，创建字段排除删除字段
                         if (meta.getDelStatus() == DeleteStatusEnum.NO.getCode()) {
-                            addList.add(jsonColumn);
+                            createList.add(jsonColumn);
                         }
                     }
-                    // primary key
-                    if (meta.isKey() && Strings.isNotEmpty(meta.getName())) {
-                        primaryList.add(meta.getName());
+                } catch (Exception e) {
+                    if (e.getMessage().contains("Duplicate column name")) {
+                        log.info("column " + meta.getName() + " is exists，ignore.");
+                    } else {
+                        throw e;
                     }
-                    // unique index
-                    if (meta.isUniqued() && !meta.isKey()) {
-                        uniqueList.add(jsonColumn);
-                    }
-                } else {
-                    // 表不存在时，创建字段排除删除字段
-                    if (meta.getDelStatus() == DeleteStatusEnum.NO.getCode()) {
-                        createList.add(jsonColumn);
-                    }
-                }
-            } catch (Exception e) {
-                if (e.getMessage().contains("Duplicate column name")) {
-                    log.info("column " + meta.getName() + " is exists，ignore.");
-                } else {
-                    throw e;
                 }
             }
         }
@@ -283,25 +127,35 @@ public class DbGenerateDao {
         hasDelStatus = hasDelStatus && hasDelAt;
         // 表检查 - 需要删除的
         ArrayList<JSONObject> delCheckList = new ArrayList<>();
-        for (SchemaCheck tc : schemaCheckList) {
-            delCheckList.add(JSONObject.parseObject(JSONObject.toJSONString(tc)));
+        List<String> delCheckCodes = new ArrayList<>();
+        if (schemaCheckList != null && !schemaCheckList.isEmpty()) {
+            for (SchemaCheck tc : schemaCheckList) {
+                if (!delCheckCodes.contains(tc.getConstraintName())) {
+                    delCheckList.add(JSONObject.parseObject(JSONObject.toJSONString(tc)));
+                    delCheckCodes.add(tc.getConstraintName());
+                }
+            }
         }
         // 表检查 - 需要添加的
         ArrayList<JSONObject> checkList = new ArrayList<>();
-        for (TableCheck tc : tableChecks) {
-            if (tc.getEnableStatus() == EnableStatusEnum.DISABLED.getCode()) {
-                continue;
+        if (tableChecks != null && !tableChecks.isEmpty()) {
+            for (TableCheck tc : tableChecks) {
+                if (tc.getEnableStatus() == EnableStatusEnum.DISABLED.getCode()) {
+                    continue;
+                }
+                checkList.add(JSONObject.parseObject(JSONObject.toJSONString(tc)));
             }
-            checkList.add(JSONObject.parseObject(JSONObject.toJSONString(tc)));
         }
         if (isExistsTable) {
             // 唯一约束索引
             List<String> keyNames = new ArrayList<>();
-            for (SchemaIndex meta : schemaIndexList) {
-                JSONObject jsonColumn = JSONObject.parseObject(JSONObject.toJSONString(meta));
-                if (!keyNames.contains(meta.getKeyName())) {
-                    keyNames.add(meta.getKeyName());
-                    indexList.add(jsonColumn);
+            if (schemaIndexList != null && !schemaIndexList.isEmpty()) {
+                for (SchemaIndex meta : schemaIndexList) {
+                    JSONObject jsonColumn = JSONObject.parseObject(JSONObject.toJSONString(meta));
+                    if (!keyNames.contains(meta.getKeyName())) {
+                        keyNames.add(meta.getKeyName());
+                        indexList.add(jsonColumn);
+                    }
                 }
             }
         }
@@ -328,6 +182,7 @@ public class DbGenerateDao {
         ArrayList<JSONObject> uniqueColumnList = getUniqueColumn(createColumnList);
         String primaryKey = getPrimaryColumn(createColumnList);
         // 表单信息
+        map.put("tableId", tableMeta.getId());
         map.put("tableName", tableMeta.getEntityName());
         map.put("tableTitle", tableMeta.getTitle());
         map.put("tableSchema", tableMeta.getTableSchema());
@@ -354,6 +209,29 @@ public class DbGenerateDao {
         return map;
     }
 
+    private ArrayList<JSONObject> getUniqueColumn(List<JSONObject> jsonObjectList) {
+        ArrayList<JSONObject> defaultColumnList = new ArrayList<>();
+        for (JSONObject jsonObject : jsonObjectList) {
+            if (jsonObject.getBoolean("key")) {
+                continue;
+            }
+            if (jsonObject.getBoolean("uniqued")) {
+                defaultColumnList.add(jsonObject);
+            }
+        }
+        return defaultColumnList;
+    }
+
+    private String getPrimaryColumn(List<JSONObject> jsonObjectList) {
+        Set<String> columnNames = new HashSet<>();
+        for (JSONObject jsonObject : jsonObjectList) {
+            if (jsonObject.getBoolean("key") && Strings.isNotEmpty(jsonObject.getString("name"))) {
+                columnNames.add(jsonObject.getString("name"));
+            }
+        }
+        return String.join(",", columnNames);
+    }
+
     /**
      * 更新数据库表。
      * 根据提供的表元数据、新增字段列表、修改字段列表、索引列表、唯一约束列表、主键名称以及是否存在删除状态标志，
@@ -375,7 +253,8 @@ public class DbGenerateDao {
                                              List<JSONObject> delCheckList, List<JSONObject> checkList, boolean hasDelStatus) {
         Map<String, Object> map = new HashMap<>();
         // 表单信息
-        map.put("tableName", tableMeta.getTableName());
+        map.put("tableId", tableMeta.getId());
+        map.put("tableName", tableMeta.dbTableName());
         map.put("tableTitle", tableMeta.getTitle());
         map.put("tableSchema", tableMeta.getTableSchema());
         // 表字段 - 新增
@@ -408,124 +287,122 @@ public class DbGenerateDao {
     /**
      * 创建或更新数据库表。执行sql操作
      *
-     * @param defaultDao    默认dao
+     * @param primaryDao    默认dao
      * @param isExistsTable 是否存在表
+     * @param dbType        数据库类型
      * @param map           参数
      */
-    public void createOrUpdateTable(Dao defaultDao, boolean isExistsTable, Map<String, Object> map) {
+    public void createOrUpdateTable(Dao primaryDao, boolean isExistsTable, String dbType, Map<String, Object> map) {
         if (!isExistsTable) {
-            // 删除冲突检查
-            dao.execute("deleteConflictingTableChecks", map);
             // 创建表
-            dao.execute("createOneTable", map);
+            dao.execute(dbType + "_createTable", map);
             // 更新数据库元数据
-            defaultDao.execute("upgradeDbMetaAfterCreate", map);
+            primaryDao.execute("upgradeMetaAfterCreateTable", map);
         } else {
             // 更新表
-            dao.execute("upgradeOneTable", map);
+            dao.execute(dbType + "_upgradeTable", map);
             // 更新数据库元数据
-            defaultDao.execute("upgradeDbMetaAfterUpdate", map);
+            primaryDao.execute("upgradeMetaAfterUpdateTable", map);
         }
     }
 
-    /**
-     * 查询指定表模式的检查约束
-     *
-     * @param tableSchema 表模式
-     * @param tableName   表名
-     * @param checkList   表检查约束列表
-     * @return 包含表检查约束的列表
-     */
-    public List<SchemaCheck> queryTableChecks(String tableSchema, String tableName, Collection<TableCheck> checkList) {
-        List<SchemaCheck> indexList = new ArrayList<>();
-        if (Strings.isBlank(tableSchema)) {
-            return indexList;
+
+    public List<Map<String, Object>> dbQueryAllTables(String dbType, String tableName) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        if (StringUtils.isNoneBlank(dbType, tableName)) {
+            list = dao.queryForMapList(dbType + "_queryAllTables", SqlParams.map("condition", " AND TABLE_NAME='" + tableName + "'"));
         }
-        if (Strings.isNotBlank(tableName)) {
-            List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_TABLE, tableSchema, "CHECK", tableName));
-            indexList.addAll(SchemaCheck.buildData(mapList));
-        }
-        if (checkList != null && !checkList.isEmpty()) {
-            List<String> checkNames = checkList.stream().map(TableCheck::getCode).collect(Collectors.toList());
-            List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_QUERY_TABLE_CONSTRAINTS_BY_NAME, tableSchema, "CHECK", StringUtils.join(checkNames, ",")));
-            indexList.addAll(SchemaCheck.buildData(mapList));
-        }
-        return indexList;
+        return list;
     }
 
-    /**
-     * 查询指定表的索引信息
-     *
-     * @param tableName 表名
-     * @return 包含索引信息的列表
-     */
-    public List<SchemaIndex> queryIndexes(String tableName) {
-        List<SchemaIndex> indexList = new ArrayList<>();
-        if (Strings.isEmpty(tableName)) {
-            return indexList;
-        }
-        List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_INDEXES_NO_PRIMARY, tableName));
-        indexList = SchemaIndex.buildData(mapList);
-        return indexList;
-    }
-
-    public Map<String, Object> getDbTableColumns(String tableSchema, String tableName) {
-        Map<String, Object> dbColumnMap = new HashMap<>();
-        List<Map<String, Object>> dbColumns = dao.queryForMapList("queryColumnsByTableName", SqlParams.map("tableSchema", tableSchema, "tableName", tableName));
-        if (dbColumns != null && !dbColumns.isEmpty()) {
-            for (Map<String, Object> dbCol : dbColumns) {
-                dbColumnMap.put(dbCol.get("COLUMN_NAME").toString(), dbCol);
+    public Map<String, Object> dbQueryColumnMapByTableName(String dbType, String tableName) {
+        Map<String, Object> map = new HashMap<>();
+        List<Map<String, Object>> list = dbQueryColumnList(dbType, tableName, null);
+        if (list != null && !list.isEmpty()) {
+            for (Map<String, Object> dbCol : list) {
+                map.put(dbCol.get("COLUMN_NAME").toString(), dbCol);
             }
         }
-        return dbColumnMap;
+        return map;
     }
 
-    private ArrayList<JSONObject> getUniqueColumn(List<JSONObject> jsonObjectList) {
-        ArrayList<JSONObject> defaultColumnList = new ArrayList<>();
-        for (JSONObject jsonObject : jsonObjectList) {
-            if (jsonObject.getBoolean("key")) {
-                continue;
-            }
-            if (jsonObject.getBoolean("uniqued")) {
-                defaultColumnList.add(jsonObject);
+    public List<Map<String, Object>> dbQueryColumnList(String dbType, String tableName, String columnName) {
+        List<Map<String, Object>> list = new LinkedList<>();
+        if (StringUtils.isNoneBlank(dbType, tableName)) {
+            list = dao.queryForMapList(dbType + "_queryColumnsByTableName", SqlParams.map("tableName", tableName, "columnName", columnName));
+        }
+        return list;
+    }
+
+    public List<SchemaIndex> dbQueryUniqueIndexesByTableName(String dbType, String tableName) {
+        List<SchemaIndex> list = new ArrayList<>();
+        if (StringUtils.isNoneBlank(dbType, tableName)) {
+            try {
+                List<Map<String, Object>> mapList = dao.queryForMapList(dbType + "_queryUniqueIndexesByTableName", SqlParams.map("tableName", tableName));
+                list.addAll(SchemaIndex.buildData(mapList));
+            } catch (Exception e) {
+                log.error("查询唯一索引失败", e);
             }
         }
-        return defaultColumnList;
+        return list;
     }
 
-    private String getPrimaryColumn(List<JSONObject> jsonObjectList) {
-        Set<String> columnNames = new HashSet<>();
-        for (JSONObject jsonObject : jsonObjectList) {
-            if (jsonObject.getBoolean("key") && Strings.isNotEmpty(jsonObject.getString("name"))) {
-                columnNames.add(jsonObject.getString("name"));
+    public List<SchemaCheck> dbQueryChecksByTableName(String dbType, String tableName, String constraintName) {
+        List<SchemaCheck> list = new ArrayList<>();
+        if (StringUtils.isNoneBlank(dbType)) {
+            List<Map<String, Object>> mapList = dao.queryForMapList(dbType + "_queryChecksByTableName", SqlParams.map("tableName", tableName, "constraintName", constraintName));
+            list.addAll(SchemaCheck.buildData(mapList));
+        }
+        return list;
+    }
+
+    public List<SchemaCheck> dbQueryChecksByConstraintName(String dbType, Collection<TableCheck> tableChecks) {
+        List<SchemaCheck> list = new ArrayList<>();
+        if (Strings.isNotBlank(dbType) && tableChecks != null && !tableChecks.isEmpty()) {
+            List<String> checkNames = tableChecks.stream().map(TableCheck::getCode).collect(Collectors.toList());
+            list = dbQueryChecksByTableName(dbType, null, String.join(",", checkNames));
+        }
+        return list;
+    }
+
+    public List<SchemaForeign> dbQueryForeignsByTableName(String dbType, String tableName) {
+        List<SchemaForeign> list = new ArrayList<>();
+        if (StringUtils.isNoneBlank(dbType, tableName)) {
+            List<Map<String, Object>> mapList = dao.queryForMapList(dbType + "_queryForeignsByTableName", SqlParams.map("tableName", tableName));
+            list.addAll(SchemaForeign.buildTableForeignKeys(mapList));
+        }
+        return list;
+    }
+
+    public String dbQueryViewsByName(String dbType, String viewName) {
+        if (StringUtils.isNoneBlank(dbType, viewName)) {
+            try {
+                Map<String, Object> result = dao.queryForMap(dbType + "_queryViewsByName", SqlParams.map("viewName", viewName));
+                return Dialects.dbViewSql(dbType, result);
+            } catch (Exception e) {
+                log.error("查询视图失败", e);
             }
         }
-        return String.join(",", columnNames);
+        return "";
     }
 
-
-    public void createOrUpdateView(String view, String sql) {
-        if (Strings.isBlank(view) || Strings.isBlank(sql)) {
-            return;
+    public void createOrUpdateView(String dbType, String viewName, String viewSql) {
+        if (StringUtils.isAnyBlank(dbType, viewName, viewSql)) {
+            throw new IllegalArgumentException("参数（库类型，视图名称，视图语句）不能为空");
         }
         Map<String, Object> map = new HashMap<>();
-        map.put("viewName", view);
-        map.put("viewSql", sql);
-        dao.execute("createOneView", map);
+        map.put("viewName", viewName);
+        map.put("viewSql", viewSql);
+        dao.execute(dbType + "_createOrReplaceView", map);
     }
 
-    public boolean validateViewSql(Dao primaryDao, String connectId, String sql) {
-        if (Strings.isBlank(connectId) || Strings.isBlank(sql)) {
-            return false;
-        }
-        // 查询数据库连接信息
-        ConnectMeta connectMeta = primaryDao.queryForObject(ConnectMeta.class, connectId);
-        if (connectMeta == null) {
+    public boolean validateViewSql(ConnectMeta meta, String sql) {
+        if (Strings.isBlank(sql)) {
             return false;
         }
         // 使用 try-with-resources 确保资源被正确关闭
-        try (Connection conn = ConnectUtils.getConnection(connectMeta)) {
-            if (conn == null) {
+        try (Connection conn = ConnectUtils.getConnection(meta)) {
+            if (conn == null || !conn.isValid(ConnectUtils.CONNECT_TIMEOUT)) {
                 return false;
             }
             // 设置连接为只读模式，确保不会对数据库数据造成影响
@@ -541,7 +418,7 @@ public class DbGenerateDao {
                 // SQL 语句无效
                 return false;
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             // 连接或执行过程中出现异常
             return false;
         }

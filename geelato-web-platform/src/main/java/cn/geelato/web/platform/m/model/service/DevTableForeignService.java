@@ -1,16 +1,15 @@
 package cn.geelato.web.platform.m.model.service;
 
-import org.apache.logging.log4j.util.Strings;
-import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaForeign;
-import cn.geelato.web.platform.m.model.utils.SchemaUtils;
-import cn.geelato.web.platform.m.base.rest.MetaDdlController;
+import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -21,12 +20,15 @@ import java.util.Map;
  * @author diabl
  */
 @Component
+@Slf4j
 public class DevTableForeignService extends BaseSortableService {
-    private static final Logger logger = LoggerFactory.getLogger(MetaDdlController.class);
+    @Lazy
+    @Autowired
+    protected DbGenerateDao dbGenerateDao;
 
     /**
      * 依据表格情况，从数据库中更新至 dev_column 中
-     *
+     * <p>
      * 根据表格元数据对象，从数据库中查询外键信息，并根据是否需要删除所有现有外键来更新dev_column表中外键的记录。
      *
      * @param tableMeta 表格元数据对象，包含表格的基本信息
@@ -53,13 +55,9 @@ public class DevTableForeignService extends BaseSortableService {
             }
         }
         if (!deleteAll) {
-            Map<String, Object> paramMap = new HashMap<>();
-            paramMap.put("schemaMethod", MetaDaoSql.TABLE_SCHEMA_METHOD);
-            paramMap.put("tableName", tableMeta.getEntityName());
             // database_table_index
             switchDbByConnectId(tableMeta.getConnectId());
-            List<Map<String, Object>> foreignList = dynamicDao.queryForMapList("queryTableForeignByDataBase", paramMap);
-            List<SchemaForeign> schemaForeigns = SchemaUtils.buildData(SchemaForeign.class, foreignList);
+            List<SchemaForeign> schemaForeigns = dbGenerateDao.dbQueryForeignsByTableName(tableMeta.getDbType(), tableMeta.getEntityName());
             HashMap<String, SchemaForeign> schemaForeignMap = new HashMap<>();
             if (schemaForeigns != null && schemaForeigns.size() > 0) {
                 for (SchemaForeign schema : schemaForeigns) {
@@ -74,7 +72,7 @@ public class DevTableForeignService extends BaseSortableService {
 
     /**
      * 比较 dev_column 和 数据库中外键 创建、更新、删除
-     *
+     * <p>
      * 根据传入的 dev_column 外键映射（metaMap）和数据库外键映射（schemaMap），对数据库中的外键记录进行相应的创建、更新或删除操作。
      *
      * @param tableMeta 表元数据对象，包含表的基本信息

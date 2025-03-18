@@ -101,4 +101,8 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         this.acrossApp = map.get("across_app") == null ? false : Boolean.parseBoolean(map.get("across_app").toString());
         this.acrossWorkflow = map.get("across_workflow") == null ? false : Boolean.parseBoolean(map.get("across_workflow").toString());
     }
+
+    public String dbTableName() {
+        return StringUtils.isBlank(this.getTableName()) ? this.getEntityName() : this.getTableName();
+    }
 }

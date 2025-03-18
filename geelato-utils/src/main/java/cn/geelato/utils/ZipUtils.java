@@ -1,11 +1,17 @@
 package cn.geelato.utils;
 
 import cn.geelato.utils.entity.FileIS;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -134,7 +140,7 @@ public class ZipUtils {
                 String suffix = entryName.substring(entryName.lastIndexOf("."));
                 if (fileSuffix.equals(suffix)) {
                     inputStream = zipFile.getInputStream(entry);
-                    reader = new InputStreamReader(inputStream, "UTF-8");
+                    reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
                     bufferedReader = new BufferedReader(reader);
                     String line = "";
                     while ((line = bufferedReader.readLine()) != null) {
@@ -173,7 +179,7 @@ public class ZipUtils {
                 String suffix = entryName.substring(entryName.lastIndexOf("."));
                 if (fileSuffix.equals(suffix)) {
                     inputStream = zipFile.getInputStream(entry);
-                    reader = new InputStreamReader(inputStream, "UTF-8");
+                    reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
                     bufferedReader = new BufferedReader(reader);
                     String line = "";
                     while ((line = bufferedReader.readLine()) != null) {
@@ -196,5 +202,54 @@ public class ZipUtils {
         }
 
         return packageData;
+    }
+
+    /**
+     * 从压缩文件中解析指定字段
+     *
+     * @param file       压缩文件
+     * @param fileSuffix 内部文件后缀（如 ".gdp"）
+     * @param fields     需要提取的字段名数组
+     * @return 包含提取字段的 Map
+     * @throws IOException 如果读取或解析失败
+     */
+    public static Map<String, String> parseGdpFromZip(File file, String fileSuffix, String... fields) throws IOException {
+        Map<String, String> result = new HashMap<>();
+        try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(file))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                if (entry.getName().endsWith(fileSuffix)) {
+                    // 将 ZipInputStream 的内容读取到字节数组中
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[1024];
+                    int len;
+                    while ((len = zipInputStream.read(buffer)) > 0) {
+                        byteArrayOutputStream.write(buffer, 0, len);
+                    }
+                    byte[] jsonData = byteArrayOutputStream.toByteArray();
+                    // 使用 JsonParser 解析字节数组
+                    JsonFactory jsonFactory = new JsonFactory();
+                    try (JsonParser jsonParser = jsonFactory.createParser(jsonData)) {
+                        while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                            String fieldName = jsonParser.getCurrentName();
+                            if (fieldName != null) {
+                                jsonParser.nextToken(); // Move to the value
+                                for (String field : fields) {
+                                    if (fieldName.equals(field)) {
+                                        result.put(field, jsonParser.getValueAsString());
+                                        break;
+                                    }
+                                }
+                                jsonParser.skipChildren(); // Skip unwanted fields
+                            }
+                        }
+                    }
+                } else {
+                    zipInputStream.closeEntry();
+                }
+            }
+        }
+
+        return result;
     }
 }

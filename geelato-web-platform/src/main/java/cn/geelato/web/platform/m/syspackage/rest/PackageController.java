@@ -95,6 +95,7 @@ public class PackageController extends BaseController {
             List<Map<String, Object>> metaData = dao.getJdbcTemplate().queryForList(value);
             if ("platform_app".equals(key) && !metaData.isEmpty()) {
                 appPackage.setAppCode(metaData.get(0).get("code").toString());
+                appPackage.setAppName(metaData.get(0).get("name").toString());
                 appPackage.setSourceAppId(appId);
             } else {
                 if (appointMetas != null) {

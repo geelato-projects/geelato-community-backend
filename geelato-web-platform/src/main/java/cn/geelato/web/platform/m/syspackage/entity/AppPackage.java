@@ -16,6 +16,7 @@ public class AppPackage {
     private String targetAppId;
     private String version;
     private String appCode;
+    private String appName;
     private List<AppMeta> appMetaList;
     private List<AppResource> appResourceList;
 }

@@ -187,8 +187,7 @@ public class AppController extends BaseController {
     @RequestMapping(value = "/upload/{fileId}", method = RequestMethod.POST)
     public ApiResult<?> upload(@PathVariable(required = true) String fileId) throws IOException {
         try {
-            appService.updateAppVersion(fileId);
-            return ApiResult.successNoResult();
+            return ApiResult.success(appService.updateAppVersion(fileId));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

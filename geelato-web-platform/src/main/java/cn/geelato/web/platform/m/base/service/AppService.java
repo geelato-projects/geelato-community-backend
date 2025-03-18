@@ -149,7 +149,8 @@ public class AppService extends BaseSortableService {
      * @param packagePath 版本文件ID
      * @throws IOException 抛出IO异常
      */
-    public void updateAppVersion(String packagePath) throws IOException {
+    public App updateAppVersion(String packagePath) throws IOException {
+        App app = new App();
         File file = fileHandler.toFile(packagePath);
         if (file != null && file.exists()) {
             String[] fields = {"sourceAppId", "version", "appCode", "appName"};
@@ -158,16 +159,17 @@ public class AppService extends BaseSortableService {
                 // 解析包数据
                 AppPackage appPackage = JSONObject.parseObject(JSON.toJSONString(packageData), AppPackage.class);
                 // 上传应用
-                App app = uploadApp(appPackage.getSourceAppId(), appPackage.getAppName(), appPackage.getAppCode());
+                app = uploadApp(appPackage.getSourceAppId(), appPackage.getAppName(), appPackage.getAppCode());
                 // 上传版本
                 String version = appPackage.getVersion() + UUIDUtils.generateNumberAndChars(4);
-                appVersionService.createByUploadApp(packagePath, version, app.getId());
+                appVersionService.createByUploadApp(packagePath, version, appPackage.getSourceAppId());
             } else {
                 throw new RuntimeException("*.gdp file read failed");
             }
         } else {
             throw new RuntimeException("The file does not exist");
         }
+        return app;
     }
 
     private App uploadApp(String appId, String appName, String appCode) {

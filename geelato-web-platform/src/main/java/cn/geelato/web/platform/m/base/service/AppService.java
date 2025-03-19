@@ -1,15 +1,25 @@
 package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.utils.UUIDUtils;
+import cn.geelato.utils.ZipUtils;
+import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.security.entity.RoleAppMap;
 import cn.geelato.web.platform.m.security.service.RoleAppMapService;
+import cn.geelato.web.platform.m.syspackage.entity.AppPackage;
+import cn.geelato.web.platform.m.syspackage.service.AppVersionService;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +32,12 @@ public class AppService extends BaseSortableService {
     @Lazy
     @Autowired
     private RoleAppMapService roleAppMapService;
+    @Lazy
+    @Autowired
+    private AppVersionService appVersionService;
+    @Lazy
+    @Autowired
+    private FileHandler fileHandler;
 
     /**
      * 逻辑删除方法
@@ -124,6 +140,65 @@ public class AppService extends BaseSortableService {
             }
         }
 
+        return app;
+    }
+
+    /**
+     * 更新应用版本
+     *
+     * @param packagePath 版本文件ID
+     * @throws IOException 抛出IO异常
+     */
+    public App updateAppVersion(String packagePath) throws IOException {
+        App app = new App();
+        File file = fileHandler.toFile(packagePath);
+        if (file != null && file.exists()) {
+            String[] fields = {"sourceAppId", "version", "appCode", "appName"};
+            Map<String, String> packageData = ZipUtils.parseGdpFromZip(file, ".gdp", fields);
+            if (packageData != null && !packageData.isEmpty()) {
+                // 解析包数据
+                AppPackage appPackage = JSONObject.parseObject(JSON.toJSONString(packageData), AppPackage.class);
+                // 上传应用
+                app = uploadApp(appPackage.getSourceAppId(), appPackage.getAppName(), appPackage.getAppCode());
+                // 上传版本
+                String version = appPackage.getVersion() + UUIDUtils.generateNumberAndChars(4);
+                appVersionService.createByUploadApp(packagePath, version, appPackage.getSourceAppId());
+            } else {
+                throw new RuntimeException("*.gdp file read failed");
+            }
+        } else {
+            throw new RuntimeException("The file does not exist");
+        }
+        return app;
+    }
+
+    private App uploadApp(String appId, String appName, String appCode) {
+        if (StringUtils.isAnyBlank(appId, appName, appCode)) {
+            throw new RuntimeException("The appId, appName, appCode cannot be empty");
+        }
+        List<Integer> appList = dao.getJdbcTemplate().queryForList("SELECT del_status FROM platform_app WHERE id=?", Integer.class, appId);
+        if (appList != null && appList.size() > 0) {
+            for (Integer delStatus : appList) {
+                if (delStatus == 1) {
+                    dao.getJdbcTemplate().update("UPDATE platform_app SET id=? WHERE id=?", String.format("%s%s", appId, UUIDUtils.generateRandom(4)), appId);
+                } else {
+                    throw new RuntimeException("The app already exist");
+                }
+            }
+        }
+        // 创建应用
+        App app = new App();
+        app.setName(appName);
+        app.setCode(appCode);
+        app.setTenantCode(getSessionTenantCode());
+        app.setIcon("gl-appstore");
+        app.setType("normal");
+        app.setPurpose("inside");
+        app.setModelColumnPcl("loose");
+        app = this.createModel(app);
+        // 更新id
+        dao.getJdbcTemplate().update("UPDATE platform_app SET id=? WHERE id=?", appId, app.getId());
+        app.setId(appId);
         return app;
     }
 }

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -40,6 +41,7 @@ public class AppController extends BaseController {
     }
 
     private final AppService appService;
+
 
     @Autowired
     public AppController(AppService appService) {
@@ -176,6 +178,16 @@ public class AppController extends BaseController {
             Map<String, Object> params = this.getQueryParameters();
             List<Map<String, Object>> queryList = dao.queryForMapList("platform_role_r_permission_by_app_page", params);
             return ApiResult.success(queryList);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/upload/{fileId}", method = RequestMethod.POST)
+    public ApiResult<?> upload(@PathVariable(required = true) String fileId) throws IOException {
+        try {
+            return ApiResult.success(appService.updateAppVersion(fileId));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

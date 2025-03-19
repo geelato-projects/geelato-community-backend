@@ -3,13 +3,12 @@ package cn.geelato.web.platform.filter;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
 
 @SuppressWarnings("ALL")
-public class HttpServletFilter implements Filter {
+public class CacheHttpServletFilter implements Filter {
     private final String __CACHE_TAG__="cache";
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {

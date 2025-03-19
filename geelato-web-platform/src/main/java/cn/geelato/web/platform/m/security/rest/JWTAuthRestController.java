@@ -50,7 +50,7 @@ public class JWTAuthRestController extends BaseController {
             // 用户登录校验
             User loginUser = dao.queryForObject(User.class, "loginName", loginParams.getUsername());
             Boolean checkPsdRst = CheckPsd(loginUser, loginParams);
-            if (loginUser != null && checkPsdRst) {
+            if (checkPsdRst) {
                 String userId = loginUser.getId();
 
                 Map<String, String> payload = new HashMap<>(3);

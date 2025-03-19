@@ -116,7 +116,6 @@ public class MetaReflex {
         tableMeta.setId(id);
         tableMeta.setDelStatus(delStatus);
         tableMeta.setTitle(title);
-
         return tableMeta;
     }
 
@@ -490,6 +489,7 @@ public class MetaReflex {
                     String viewColumn = v_map.get("view_column") == null ? null : v_map.get("view_column").toString();
                     String viewType = v_map.get("view_type") == null ? null : v_map.get("view_type").toString();
                     String entityName = v_map.get("entity_name") == null ? null : v_map.get("entity_name").toString();
+                    String connectId=v_map.get("connect_id") == null ? null : v_map.get("connect_id").toString();
                     if (Strings.isNotBlank(viewName) && !map.containsKey(viewName)) {
                         ViewMeta vm = new ViewMeta(viewName, viewType, viewConstruct, viewColumn, entityName);
                         map.put(viewName, vm);

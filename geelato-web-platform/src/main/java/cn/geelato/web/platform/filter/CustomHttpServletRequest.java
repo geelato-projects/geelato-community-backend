@@ -54,7 +54,7 @@ public class CustomHttpServletRequest extends HttpServletRequestWrapper {
     @Override
     public ServletInputStream getInputStream() throws IOException {
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
-        ServletInputStream servletInputStream = new ServletInputStream() {
+        return new ServletInputStream() {
             @Override
             public boolean isFinished() {
                 return false;
@@ -71,7 +71,6 @@ public class CustomHttpServletRequest extends HttpServletRequestWrapper {
                 return byteArrayInputStream.read();
             }
         };
-        return servletInputStream;
 
     }
 

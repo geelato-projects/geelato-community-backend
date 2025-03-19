@@ -20,6 +20,7 @@ import cn.geelato.utils.ClassScanner;
 import cn.geelato.utils.FastJsonUtils;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 
 import java.io.IOException;
@@ -119,12 +120,22 @@ public class MetaManager extends AbstractManager {
         List<Map<String, Object>> allViewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE));
         List<Map<String, Object>> allCheckList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE));
         for (Map<String, Object> map : tableList) {
+            String tableId = map.get("id") == null ? "" : map.get("id").toString();
+            String entityName = map.get("entity_name") == null ? "" : map.get("entity_name").toString();
+            String connectId = map.get("connect_id") == null ? "" : map.get("connect_id").toString();
+            if (StringUtils.isAnyBlank(tableId, entityName, connectId)) {
+                continue;
+            }
             List<Map<String, Object>> columnList = allColumnList.stream().filter(
-                    x -> x.get("table_id").equals(map.get("id"))).collect(Collectors.toList());
+                    x -> x.get("table_id") != null && x.get("table_id").toString().equals(tableId)
+            ).collect(Collectors.toList());
             List<Map<String, Object>> viewList = allViewList.stream().filter(
-                    x -> x.get("entity_name").equals(map.get("entity_name"))).collect(Collectors.toList());
+                    x -> x.get("entity_name") != null && x.get("entity_name").toString().equals(entityName)
+                            && x.get("connect_id") != null && x.get("connect_id").toString().equals(connectId)
+            ).collect(Collectors.toList());
             List<Map<String, Object>> checkList = allCheckList.stream().filter(
-                    x -> x.get("table_id").equals(map.get("id"))).collect(Collectors.toList());
+                    x -> x.get("table_id") != null && x.get("table_id").toString().equals(tableId)
+            ).collect(Collectors.toList());
             parseTableEntity(map, columnList, viewList, checkList, null);
             parseViewEntity(viewList);
         }
@@ -172,7 +183,7 @@ public class MetaManager extends AbstractManager {
         List<Map<String, Object>> tableList = dao.getJdbcTemplate().queryForList(tableListSql);
         for (Map<String, Object> map : tableList) {
             List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
-            List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and entity_name='%s'", map.get("entity_name")));
+            List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and entity_name='%s' and connect_id='%s'", map.get("entity_name"), map.get("connect_id")));
             List<Map<String, Object>> checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
             removeOne(entityName);
             parseTableEntity(map, columnList, viewList, checkList, null);
@@ -405,7 +416,7 @@ public class MetaManager extends AbstractManager {
     }
 
     public void parseOneOther(EntityMeta entityMeta) {
-        List checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_name='%s'", entityMeta.getTableName()));
+        List checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", entityMeta.getTableMeta().getId()));
         if (checkList != null && !checkList.isEmpty()) {
             entityMeta.setTableChecks(MetaReflex.getTableCheckMetas(checkList));
         }

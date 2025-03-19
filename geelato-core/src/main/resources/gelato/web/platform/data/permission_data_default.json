@@ -29,6 +29,6 @@
     "name": "看自己",
     "description": "查看创建人为自己的数据",
     "code": "&myself",
-    "seqNo": 1
+    "seqNo": 0
   }
 ]

@@ -11,14 +11,14 @@ public class FilterConfiguration {
     @Bean
     public FilterRegistrationBean filterRegistration() {
         FilterRegistrationBean registration = new FilterRegistrationBean();
-        registration.setFilter(httpServletFilter());
+        registration.setFilter(cacheHttpServletFilter());
         registration.addUrlPatterns("/*");
-        registration.setName("httpServletFilter");
+        registration.setName("cacheHttpServletFilter");
         return registration;
     }
 
-    @Bean(name = "httpServletFilter")
-    public Filter httpServletFilter() {
-        return new HttpServletFilter();
+    @Bean(name = "cacheHttpServletFilter")
+    public Filter cacheHttpServletFilter() {
+        return new CacheHttpServletFilter();
     }
 }

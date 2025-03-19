@@ -83,7 +83,7 @@
     "mysql": "varchar",
     "disabled": false,
     "fixed": false,
-    "extent": 19,
+    "extent": 32,
     "seqNo": 109
   },
   {
@@ -92,7 +92,7 @@
     "value": "org",
     "mysql": "varchar",
     "disabled": false,
-    "extent": 19,
+    "extent": 32,
     "seqNo": 110
   },
   {
@@ -110,7 +110,7 @@
     "value": "user",
     "mysql": "varchar",
     "disabled": false,
-    "extent": 19,
+    "extent": 32,
     "seqNo": 112
   },
   {
@@ -128,7 +128,7 @@
     "value": "upload",
     "mysql": "varchar",
     "disabled": false,
-    "extent": 19,
+    "extent": 32,
     "seqNo": 114
   },
   {

@@ -110,7 +110,7 @@ public class MetaReflex {
      */
     public static TableMeta getTableMeta(Map map) {
         TableMeta tableMeta = new TableMeta(map);
-        Integer delStatus = map.get("del_status") == null ? null : Integer.parseInt(map.get("del_status").toString());
+        int delStatus = map.get("del_status") == null ? 0 : Integer.parseInt(map.get("del_status").toString());
         String id = map.get("id") == null ? null : map.get("id").toString();
         String title = StringUtils.hasText(tableMeta.getTitle()) ? tableMeta.getTitle() : (cn.geelato.utils.StringUtils.isEmpty(tableMeta.getTableName()) ? tableMeta.getEntityName() : tableMeta.getTableName());
         tableMeta.setId(id);
@@ -321,52 +321,50 @@ public class MetaReflex {
                             Title cn = field.getAnnotation(Title.class);
                             String title = cn != null ? (Strings.isEmpty(cn.title()) ? fieldName : cn.title()) : fieldName;
                             String description = cn != null ? cn.description() : "";
-                            FieldMeta cfm = null;
+                            FieldMeta cfm;
                             if (column != null && column.name() != null) {
                                 cfm = new FieldMeta(column.name(), fieldName, title);
 
-                                if (column != null) {
-                                    cfm.getColumn().setNullable(column.nullable());
-                                    cfm.getColumn().setUniqued(column.unique());
-                                    cfm.getColumn().setName(column.name());
-                                    cfm.getColumn().setNumericPrecision(column.numericPrecision());
-                                    cfm.getColumn().setNumericScale(column.numericScale());
-                                    cfm.getColumn().setRefColumn(column.isRefColumn());
-                                    cfm.getColumn().setRefLocalCol(column.refLocalCol());
-                                    cfm.getColumn().setRefColName(column.refColName());
-                                    cfm.getColumn().setRefTables(column.refTables());
-                                    cfm.getColumn().setCharMaxLength(column.charMaxlength() > 0 ?
-                                            column.charMaxlength() : MapUtils.getLong(dataTypeDefaultMaxLengthMap, column.dataType(), 64L));
-                                    cfm.getColumn().setDataType(column.dataType());
-                                    try {
-                                        field.setAccessible(true);
-                                        Object defaultValue = field.get(bean);
-                                        if (defaultValue != null) {
-                                            if (defaultValue instanceof Boolean) {
-                                                cfm.getColumn().setDefaultValue(Boolean.parseBoolean(defaultValue.toString()) ? "1" : "0");
-                                            } else {
-                                                cfm.getColumn().setDefaultValue(String.valueOf(field.get(bean)));
-                                            }
+                                cfm.getColumn().setNullable(column.nullable());
+                                cfm.getColumn().setUniqued(column.unique());
+                                cfm.getColumn().setName(column.name());
+                                cfm.getColumn().setNumericPrecision(column.numericPrecision());
+                                cfm.getColumn().setNumericScale(column.numericScale());
+                                cfm.getColumn().setRefColumn(column.isRefColumn());
+                                cfm.getColumn().setRefLocalCol(column.refLocalCol());
+                                cfm.getColumn().setRefColName(column.refColName());
+                                cfm.getColumn().setRefTables(column.refTables());
+                                cfm.getColumn().setCharMaxLength(column.charMaxlength() > 0 ?
+                                        column.charMaxlength() : MapUtils.getLong(dataTypeDefaultMaxLengthMap, column.dataType(), 64L));
+                                cfm.getColumn().setDataType(column.dataType());
+                                try {
+                                    field.setAccessible(true);
+                                    Object defaultValue = field.get(bean);
+                                    if (defaultValue != null) {
+                                        if (defaultValue instanceof Boolean) {
+                                            cfm.getColumn().setDefaultValue(Boolean.parseBoolean(defaultValue.toString()) ? "1" : "0");
+                                        } else {
+                                            cfm.getColumn().setDefaultValue(String.valueOf(field.get(bean)));
                                         }
-                                    } catch (IllegalAccessException e) {
-                                        log.error("获取默认值失败:{}>{}", clazz.getName(), fieldName, e);
                                     }
+                                } catch (IllegalAccessException e) {
+                                    log.error("获取默认值失败:{}>{}", clazz.getName(), fieldName, e);
+                                }
 
-                                    // 解析外键
-                                    if (tableForeigns != null) {
-                                        ForeignKey foreignKey = field.getAnnotation(ForeignKey.class);
-                                        if (foreignKey != null) {
-                                            TableForeign tableForeign = new TableForeign();
-                                            tableForeign.setMainTable(getEntityName(clazz));
-                                            tableForeign.setMainTableCol(column.name());
-                                            tableForeign.setForeignTable(getEntityName(foreignKey.fTable()));
-                                            if (foreignKey.fCol().isEmpty()) {
-                                                tableForeign.setForeignTableCol(getId(clazz).getColumnName());
-                                            } else {
-                                                tableForeign.setForeignTableCol(foreignKey.fCol());
-                                            }
-                                            tableForeigns.add(tableForeign);
+                                // 解析外键
+                                if (tableForeigns != null) {
+                                    ForeignKey foreignKey = field.getAnnotation(ForeignKey.class);
+                                    if (foreignKey != null) {
+                                        TableForeign tableForeign = new TableForeign();
+                                        tableForeign.setMainTable(getEntityName(clazz));
+                                        tableForeign.setMainTableCol(column.name());
+                                        tableForeign.setForeignTable(getEntityName(foreignKey.fTable()));
+                                        if (foreignKey.fCol().isEmpty()) {
+                                            tableForeign.setForeignTableCol(getId(clazz).getColumnName());
+                                        } else {
+                                            tableForeign.setForeignTableCol(foreignKey.fCol());
                                         }
+                                        tableForeigns.add(tableForeign);
                                     }
                                 }
                                 cfm.getColumn().setDescription(description);
@@ -489,7 +487,6 @@ public class MetaReflex {
                     String viewColumn = v_map.get("view_column") == null ? null : v_map.get("view_column").toString();
                     String viewType = v_map.get("view_type") == null ? null : v_map.get("view_type").toString();
                     String entityName = v_map.get("entity_name") == null ? null : v_map.get("entity_name").toString();
-                    String connectId=v_map.get("connect_id") == null ? null : v_map.get("connect_id").toString();
                     if (Strings.isNotBlank(viewName) && !map.containsKey(viewName)) {
                         ViewMeta vm = new ViewMeta(viewName, viewType, viewConstruct, viewColumn, entityName);
                         map.put(viewName, vm);
@@ -607,7 +604,7 @@ public class MetaReflex {
         if (foreignList != null && !foreignList.isEmpty()) {
             for (Map f_map : foreignList) {
                 try {
-                    Integer delStatus = f_map.get("del_status") == null ? null : Integer.parseInt(f_map.get("del_status").toString());
+                    int delStatus = f_map.get("del_status") == null ? 0 : Integer.parseInt(f_map.get("del_status").toString());
                     String id = f_map.get("id") == null ? null : f_map.get("id").toString();
                     TableForeign foreign = new TableForeign(f_map);
                     foreign.setId(id);
@@ -627,7 +624,7 @@ public class MetaReflex {
         if (checkList != null && !checkList.isEmpty()) {
             for (Map f_map : checkList) {
                 try {
-                    Integer delStatus = f_map.get("del_status") == null ? null : Integer.parseInt(f_map.get("del_status").toString());
+                    int delStatus = f_map.get("del_status") == null ? 0 : Integer.parseInt(f_map.get("del_status").toString());
                     String id = f_map.get("id") == null ? null : f_map.get("id").toString();
                     TableCheck ck = new TableCheck(f_map);
                     ck.setId(id);
@@ -673,7 +670,6 @@ public class MetaReflex {
                         }
                     }
                 } catch (RuntimeException e) {
-                    log.error("解析{}失败！method:{}", clazz.getName(), method.getName());
                     throw e;
                 }
             }

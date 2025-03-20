@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.security;
+package cn.geelato.web.platform.m.security.wechat;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

@@ -19,6 +19,7 @@ public class User {
     private String buId;
     private String cooperatingOrgId;
     private String unionId;
+    private String tenantCode;
     private List<UserOrg> orgs;
     private List<UserRole> roles;
 

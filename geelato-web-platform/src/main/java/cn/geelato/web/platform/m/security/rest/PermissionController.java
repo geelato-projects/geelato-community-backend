@@ -2,6 +2,7 @@ package cn.geelato.web.platform.m.security.rest;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.env.entity.User;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
@@ -89,7 +90,7 @@ public class PermissionController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult get(@PathVariable(required = true) String id) {
+    public ApiResult get(@PathVariable() String id) {
         try {
             Permission model = permissionService.getModel(CLAZZ, id);
             model.setPerDefault(permissionService.isDefault(model));
@@ -101,7 +102,7 @@ public class PermissionController extends BaseController {
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    public ApiResult createOrUpdate(@RequestBody Permission form) {
+    public ApiResult<?> createOrUpdate(@RequestBody Permission form) {
         try {
             form.afterSet();
             // ID为空方可插入
@@ -164,5 +165,20 @@ public class PermissionController extends BaseController {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
+    }
+    @RequestMapping(value = "/getEffective", method = RequestMethod.GET)
+    public ApiResult<?> getEffective(String userId, String entity) {
+        List<cn.geelato.core.env.entity.Permission> entityPermission = EnvManager.singleInstance().getUserPermission(userId,entity);
+        List<cn.geelato.core.env.entity.Permission> maxWeightPermissionList = null;
+        cn.geelato.core.env.entity.Permission rtnPermission = null;
+        Optional<cn.geelato.core.env.entity.Permission> maxWeightPermission = entityPermission.stream().max(Comparator.comparing(cn.geelato.core.env.entity.Permission::getWeight));
+        if (maxWeightPermission.isPresent()) {
+            int maxWeight = maxWeightPermission.get().getWeight();
+            maxWeightPermissionList = entityPermission.stream().filter(x -> x.getWeight() == maxWeight).toList();
+        }
+        if (maxWeightPermissionList != null) {
+            rtnPermission=maxWeightPermissionList.get(0);
+        }
+        return ApiResult.success(rtnPermission);
     }
 }

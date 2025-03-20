@@ -99,20 +99,27 @@ public class EnvManager  extends AbstractManager {
     public Map<String ,SysConfig> getAllConfig(){
         return sysConfigMap;
     }
+
+    public List<Permission> getUserPermission(String userId,String entity){
+        List<Permission> permissionList= structDataPermission(userId);
+        return permissionList.stream().filter(x -> x.getEntity().equals(entity)).toList();
+    }
     public User InitCurrentUser(String loginName) {
         String sql = "select id as userId,org_id as defaultOrgId,login_name as loginName," +
                 "name as userName,bu_id as buId,dept_id as deptId,union_id as unionId,"+
-                " cooperating_org_id as cooperatingOrgId from platform_user  where login_name =?";
-        User dbUser = EnvDao.getJdbcTemplate().queryForObject(sql,new BeanPropertyRowMapper<User>(User.class),new Object[]{loginName});
-        dbUser.setMenus(StructUserMenu(dbUser.getUserId()));
-        dbUser.setDataPermissions(StructDataPermission(dbUser.getUserId()));
-        dbUser.setElementPermissions(StructElementPermission(dbUser.getUserId()));
-        SessionCtx.setCurrentUser(dbUser);
-        SessionCtx.setCurrentTenant("geelato");
+                " cooperating_org_id as cooperatingOrgId,tenant_code as tenantCode from platform_user  where login_name =?";
+        User dbUser = EnvDao.getJdbcTemplate().queryForObject(sql, new BeanPropertyRowMapper<>(User.class), loginName);
+        if (dbUser != null) {
+            dbUser.setMenus(structUserMenu(dbUser.getUserId()));
+            dbUser.setDataPermissions(structDataPermission(dbUser.getUserId()));
+            dbUser.setElementPermissions(structElementPermission(dbUser.getUserId()));
+            SessionCtx.setCurrentUser(dbUser);
+            SessionCtx.setCurrentTenant(dbUser.getTenantCode());
+        }
         return dbUser;
     }
 
-    private List<Permission> StructDataPermission(String userId) {
+    private List<Permission> structDataPermission(String userId) {
         String sql = "select t2.`object`  as entity,t2.rule as rule,t2.seq_no as weight, t3.weight as role_weight from platform_role_r_permission t1 \n" +
                 "left join platform_permission t2 on t1.permission_id =t2.id \n" +
                 "left join platform_role t3 on t1.role_id =t3.id \n" +
@@ -123,12 +130,15 @@ public class EnvManager  extends AbstractManager {
                 new BeanPropertyRowMapper<>(Permission.class), userId);
     }
 
-    private List<Permission> StructElementPermission(String userId) {
+
+    private List<Permission> structElementPermission(String userId) {
+        //todo
         return new ArrayList<>();
     }
 
 
-    private List<UserMenu> StructUserMenu(String userId) {
+    private List<UserMenu> structUserMenu(String userId) {
+        //todo
         List<UserMenu> userMenuList=new ArrayList<>();
 
         UserMenu um1=new UserMenu();

@@ -62,8 +62,6 @@ public class JWTAuthRestController extends BaseController {
                 LoginResult loginResult = LoginResult.formatLoginResult(loginUser);
                 loginResult.setToken(token);
                 loginResult.setHomePath("");
-                loginResult.setRoles(getRoles(userId));
-                // 用户所属公司
                 setCompany(loginResult);
                 return ApiResult.success(loginResult, "认证成功!");
             } else {
@@ -77,12 +75,6 @@ public class JWTAuthRestController extends BaseController {
 
     private Boolean CheckPsd(User loginUser, LoginParams loginParams) {
         return loginUser.getPassword().equals(EncryptUtil.encryptPassword(loginParams.getPassword(), loginUser.getSalt()));
-    }
-
-    private ArrayList<LoginRoleInfo> getRoles(String id) {
-        ArrayList<LoginRoleInfo> roles = new ArrayList<>();
-        roles.add(new LoginRoleInfo("Super Admin", "super"));
-        return roles;
     }
 
 

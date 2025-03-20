@@ -31,15 +31,15 @@ public class User {
     public Permission getDataPermissionByEntity(String entity) {
         // 根据weight权重排序，取第一条
         List<Permission> entityPermission = this.dataPermissions.stream().filter(x -> x.getEntity().equals(entity)).toList();
-        List<Permission> maxRoleWeightPermissionList = null;
+        List<Permission> maxWeightPermissionList = null;
         Permission rtnPermission = null;
-        Optional<Permission> maxRoleWeightPermission = entityPermission.stream().max(Comparator.comparing(Permission::getRoleWeight));
-        if (maxRoleWeightPermission.isPresent()) {
-            int maxRoleWeight = maxRoleWeightPermission.get().getRoleWeight();
-            maxRoleWeightPermissionList = entityPermission.stream().filter(x -> x.getRoleWeight() == maxRoleWeight).toList();
+        Optional<Permission> maxWeightPermission = entityPermission.stream().max(Comparator.comparing(Permission::getWeight));
+        if (maxWeightPermission.isPresent()) {
+            int maxWeight = maxWeightPermission.get().getWeight();
+            maxWeightPermissionList = entityPermission.stream().filter(x -> x.getWeight() == maxWeight).toList();
         }
-        if (maxRoleWeightPermissionList != null) {
-            rtnPermission = maxRoleWeightPermissionList.stream().max(Comparator.comparing(Permission::getWeight)).orElse(null);
+        if (maxWeightPermissionList != null) {
+            rtnPermission=maxWeightPermissionList.get(0);
         }
         return rtnPermission;
     }

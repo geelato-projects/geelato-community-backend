@@ -99,7 +99,7 @@ public class Dao extends SqlKeyDao {
     public Long queryTotal(BoundPageSql boundPageSql) {
         BoundSql boundSql = boundPageSql.getBoundSql();
         Object[] sqlParams = boundSql.getParams();
-        Long total = 0L;
+        Long total;
         try {
             total = jdbcTemplate.queryForObject(boundPageSql.getCountSql(), sqlParams, Long.class);
         } catch (DataAccessException exception) {
@@ -361,7 +361,7 @@ public class Dao extends SqlKeyDao {
         }
         BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, orderBy);
         log.info(boundSql.toString());
-        return jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<T>(), boundSql.getParams());
+        return jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<>(), boundSql.getParams());
     }
 
     /**

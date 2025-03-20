@@ -238,13 +238,13 @@ public class MetaManager extends AbstractManager {
         }
     }
 
-    public Map<String, Object> newDefaultEntity(String entityName) {
-        return newDefaultEntity(getByEntityName(entityName));
+    public Map<String, Object> newDefaultEntityMap(String entityName) {
+        return newDefaultEntityMap(getByEntityName(entityName));
     }
 
 
-    public Map<String, Object> newDefaultEntity(Class clazz) {
-        return newDefaultEntity(get(clazz));
+    public Map<String, Object> newDefaultEntityMap(Class clazz) {
+        return newDefaultEntityMap(get(clazz));
     }
 
     /**
@@ -253,7 +253,7 @@ public class MetaManager extends AbstractManager {
      * @param em 实体元数据
      * @return 返回填充后的map
      */
-    public Map<String, Object> newDefaultEntity(EntityMeta em) {
+    public Map<String, Object> newDefaultEntityMap(EntityMeta em) {
         HashMap<String, Object> map = new HashMap<>(em.getFieldMetas().size());
         for (FieldMeta fm : em.getFieldMetas()) {
             ColumnMeta cm = fm.getColumn();

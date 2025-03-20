@@ -162,21 +162,21 @@ public class JsonTextSaveParser extends JsonTextParser {
         } else {
             // insert
             command.setCommandType(CommandType.Insert);
-            Map<String, Object> entity = metaManager.newDefaultEntity(commandName);
+            Map<String, Object> entityMap = metaManager.newDefaultEntityMap(commandName);
             if (params.containsKey("forceId")) {
-                entity.put(PK, params.get("forceId"));
+                entityMap.put(PK, params.get("forceId"));
                 params.remove("forceId");
             } else {
-                entity.put(PK, UIDGenerator.generate());
+                entityMap.put(PK, UIDGenerator.generate());
                 params.remove(PK);
             }
-            entity.putAll(params);
-            putInsertDefaultField(entity, sessionCtx);
-            String[] insertFields = new String[entity.size()];
-            entity.keySet().toArray(insertFields);
+            entityMap.putAll(params);
+            putInsertDefaultField(entityMap, sessionCtx);
+            String[] insertFields = new String[entityMap.size()];
+            entityMap.keySet().toArray(insertFields);
             command.setFields(insertFields);
-            command.setValueMap(entity);
-            command.setPK(entity.get(PK).toString());
+            command.setValueMap(entityMap);
+            command.setPK(entityMap.get(PK).toString());
         }
         return command;
     }

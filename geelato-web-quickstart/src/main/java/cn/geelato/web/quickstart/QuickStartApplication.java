@@ -9,7 +9,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication
 @EnableConfigurationProperties
-@ComponentScan(basePackages = {"cn.geelato"})
+@ComponentScan(basePackages = {"cn.geelato","cn.geelato.auth"})
 @EnableCaching
 @Slf4j
 public class QuickStartApplication extends BootApplication {

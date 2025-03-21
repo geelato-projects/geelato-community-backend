@@ -17,10 +17,10 @@
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-web-platform</artifactId>
         </dependency>
-        <dependency>
-            <groupId>cn.geelato</groupId>
-            <artifactId>geelato-reactor-platform</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>cn.geelato</groupId>-->
+<!--            <artifactId>geelato-reactor-platform</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
@@ -73,20 +73,6 @@
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-auth-server</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-web</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-thymeleaf</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.gavlyukovskiy</groupId>

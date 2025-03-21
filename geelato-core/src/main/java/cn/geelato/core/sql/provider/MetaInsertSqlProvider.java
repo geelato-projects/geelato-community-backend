@@ -22,7 +22,6 @@ public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
 
         Object[] objects = new Object[command.getValueMap().size()];
         int i = 0;
-        // 值部分
         for (Map.Entry<String, Object> entry : command.getValueMap().entrySet()) {
             objects[i] = entry.getValue();
             i++;
@@ -37,7 +36,6 @@ public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
         EntityMeta em = getEntityMeta(command);
         int[] types = new int[command.getValueMap().size()];
         int i = 0;
-        // 值部分
         for (Map.Entry<String, Object> entry : command.getValueMap().entrySet()) {
             types[i] = TypeConverter.toSqlType(em.getFieldMeta(entry.getKey()).getColumn().getDataType());
             i++;
@@ -73,10 +71,7 @@ public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
     }
 
     protected void buildFields(StringBuilder sb, EntityMeta md, String[] fields) {
-        // 重命名查询的结果列表为实体字段名
         for (String fieldName : fields) {
-            // 插入字段可以为关键字、保留字
-//            tryAppendKeywords(sb, md.getColumnName(fieldName));
             sb.append(md.getColumnName(fieldName));
             sb.append(",");
         }

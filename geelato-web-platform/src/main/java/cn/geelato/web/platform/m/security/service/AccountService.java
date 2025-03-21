@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -23,6 +24,8 @@ import java.util.Map;
  */
 @Component
 public class AccountService {
+    @Autowired
+    @Qualifier("primaryDao")
     private Dao dao;
     @Autowired
     protected RuleService ruleService;
@@ -34,25 +37,12 @@ public class AccountService {
         return dao.queryForObject(User.class, "loginName", loginName);
     }
 
-    public void setDao(Dao dao) {
-        this.dao = dao;
-    }
-
     public void registerUser(User user) {
         EncryptUtil.encryptPassword(user);
         if (StringUtils.isBlank(user.getName())) {
             user.setName(user.getLoginName());
         }
         dao.save(user);
-
-        // 注册之后自动登录
-        UsernamePasswordToken token = new UsernamePasswordToken();
-        token.setUsername(user.getLoginName());
-        token.setPassword(user.getPlainPassword().toCharArray());
-        SecurityUtils.getSubject().login(token);
-
-        // 更新Shiro中当前用户的用户名.
-        SecurityHelper.getCurrentUser().name = user.getName();
     }
 
     public Map<String,Object> wrapUser(User user) {

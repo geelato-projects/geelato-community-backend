@@ -104,7 +104,7 @@ public class EmailService {
         filterGroup.addFilter("configKey", FilterGroup.Operator.in, String.join(",", configKeys));
         List<SysConfig> sysConfigs = dao.queryList(SysConfig.class, filterGroup, null);
         // 填充
-        if (sysConfigs != null && sysConfigs.size() > 0) {
+        if (sysConfigs != null && !sysConfigs.isEmpty()) {
             for (SysConfig config : sysConfigs) {
                 if (config == null || Strings.isBlank(config.getConfigKey())) {
                     continue;

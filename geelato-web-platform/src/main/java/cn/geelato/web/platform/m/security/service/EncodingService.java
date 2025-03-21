@@ -50,7 +50,7 @@ public class EncodingService extends BaseService {
         String redisItemKey = ENCODING_ITEM_PREFIX + encoding.getId();
         List<Object> redisItemKeys = redisTemplate.opsForList().range(ENCODING_LIST_PREFIX, 0, -1);
         // 清理
-        if (redisItemKeys.contains(redisItemKey)) {
+        if (redisItemKeys != null && redisItemKeys.contains(redisItemKey)) {
             redisTemplate.delete(redisItemKey);
             redisTemplate.opsForList().remove(ENCODING_LIST_PREFIX, 1, redisItemKey);
         }
@@ -90,7 +90,7 @@ public class EncodingService extends BaseService {
     private void redisTemplateEncodingItem(Encoding encoding) {
         String redisItemKey = ENCODING_ITEM_PREFIX + encoding.getId();
         List<Object> serials = querySerialsByEncodingLog(encoding);
-        logger.info(redisItemKey + " 流水号：" + JSON.toJSONString(serials));
+        logger.info("{} 流水号：{}", redisItemKey, JSON.toJSONString(serials));
         redisTemplateListRightPush(redisItemKey, serials);
         redisTemplate.expire(redisItemKey, DateUtils.timeInterval(encoding.getDateType()), TimeUnit.SECONDS);
     }
@@ -112,9 +112,11 @@ public class EncodingService extends BaseService {
                 encoding.afterSet();
                 String redisItemKey = ENCODING_ITEM_PREFIX + encoding.getId();
                 redisTemplateEncodingItem(encoding);
-                redisItemKeys.add(redisItemKey);
+                if (redisItemKeys != null) {
+                    redisItemKeys.add(redisItemKey);
+                }
             }
-            if (!redisItemKeys.isEmpty()) {
+            if (redisItemKeys != null && !redisItemKeys.isEmpty()) {
                 logger.info("编码模板：" + JSON.toJSONString(redisItemKeys));
                 redisTemplateListRightPush(ENCODING_LIST_PREFIX, redisItemKeys);
                 redisTemplate.expire(ENCODING_LIST_PREFIX, 1, TimeUnit.DAYS);
@@ -191,14 +193,14 @@ public class EncodingService extends BaseService {
                     examples.add(item.getConstantValue());
                 }
             } else if (EncodingItemTypeEnum.ARGUMENT.getValue().equals(item.getItemType())) {
-                if (Strings.isNotBlank(item.getConstantValue()) && argument != null) {
+                if (Strings.isNotBlank(item.getConstantValue())) {
                     Object value = argument.get(item.getConstantValue());
                     if (value != null) {
                         examples.add(String.valueOf(value));
                     }
                 }
             } else if (EncodingItemTypeEnum.VARIABLE.getValue().equals(item.getItemType())) {
-                if (Strings.isNotBlank(item.getConstantValue()) && variableParams != null) {
+                if (Strings.isNotBlank(item.getConstantValue())) {
                     Object value = variableParams.get(item.getConstantValue());
                     if (value != null && Strings.isNotBlank(String.valueOf(value))) {
                         examples.add(String.valueOf(value));
@@ -227,7 +229,7 @@ public class EncodingService extends BaseService {
         }
         String separator = Strings.isNotBlank(form.getSeparators()) ? form.getSeparators() : "";
         encodingLog.setExample(String.join(separator, examples));
-        logger.info(redisItemKey + " 记录：" + JSON.toJSONString(encodingLog));
+        logger.info("{} 记录：{}", redisItemKey, JSON.toJSONString(encodingLog));
         if (Strings.isBlank(encodingLog.getId()) && Strings.isBlank(encodingLog.getTenantCode())) {
             encodingLog.setTenantCode(getSessionTenantCode());
         }
@@ -320,7 +322,7 @@ public class EncodingService extends BaseService {
         long radius = Long.parseLong(UUIDUtils.generateFixation(serialDigit, range.length() - 1));
         for (int i = 0; i < radius; i++) {
             serial = UUIDUtils.generate(serialDigit, range);
-            if (Strings.isNotBlank(serial) && !redisSerials.contains(serial)) {
+            if (redisSerials != null && Strings.isNotBlank(serial) && !redisSerials.contains(serial)) {
                 break;
             }
             serial = null;
@@ -383,12 +385,7 @@ public class EncodingService extends BaseService {
             // 去重、去空
             list = formatList(list);
             // 排序
-            list.sort(new Comparator<Object>() {
-                @Override
-                public int compare(Object o1, Object o2) {
-                    return Long.parseLong(String.valueOf(o1)) > Long.parseLong(String.valueOf(o2)) ? 1 : 0;
-                }
-            });
+            list.sort((o1, o2) -> Long.parseLong(String.valueOf(o1)) > Long.parseLong(String.valueOf(o2)) ? 1 : 0);
         }
 
         return list;
@@ -411,19 +408,19 @@ public class EncodingService extends BaseService {
             if (EncodingItemTypeEnum.VARIABLE.getValue().equals(item.getItemType())) {
                 if (Strings.isNotBlank(item.getConstantValue())) {
                     String[] keys = item.getConstantValue().split("\\.");
-                    if (keys != null && keys.length == 2 && Strings.isNotBlank(keys[0]) && Strings.isNotBlank(keys[1])) {
+                    if (keys.length == 2 && Strings.isNotBlank(keys[0]) && Strings.isNotBlank(keys[1])) {
                         variableKeys.add(keys[0]);
                         variableValues.add(keys[1]);
                     }
                 }
             }
         }
-        if (variableKeys.size() > 0 && variableValues.size() > 0) {
+        if (!variableKeys.isEmpty() && !variableValues.isEmpty()) {
             if (variableKeys.contains("tenant")) {
                 String tenantCode = SessionCtx.getCurrentTenantCode();
                 if (Strings.isNotBlank(tenantCode)) {
                     List<Map<String, Object>> mapList = dao.getJdbcTemplate().queryForList("SELECT * FROM platform_tenant WHERE 1=1 AND del_status = 0 AND code = ?", new Object[]{tenantCode});
-                    if (mapList != null && mapList.size() > 0) {
+                    if (!mapList.isEmpty()) {
                         resultMap.put("tenant.id", mapList.get(0).get("id"));
                         resultMap.put("tenant.code", mapList.get(0).get("code"));
                         resultMap.put("tenant.name", mapList.get(0).get("company_name"));

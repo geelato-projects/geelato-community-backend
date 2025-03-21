@@ -59,22 +59,8 @@ public class MetaManager extends AbstractManager {
 
     private MetaManager() {
         log.info("MetaManager Instancing...");
-        // 解析内置的类
-
         parseOne(ColumnMeta.class);
         parseOne(TableMeta.class);
-//        // 内置默认的公共字段, todo : 似乎无用
-//        addCommonFieldMeta("name", "name", "名称");
-//        addCommonFieldMeta("type", "type", "类型");
-//        addCommonFieldMeta("creator", "creator", "创建者");
-//        addCommonFieldMeta("updater", "updater", "更新者");
-//        addCommonFieldMeta("create_at", "createAt", "创建日期");
-//        addCommonFieldMeta("update_at", "updateAt", "更新日期");
-//        addCommonFieldMeta("description", "description", "描述", 1024);
-//        addCommonFieldMeta("id", "id", "序号");
-//        addCommonFieldMeta("title", "title", "标题");
-//        addCommonFieldMeta("password", "password", "密码");
-//        addCommonFieldMeta("login_name", "loginName", "登录名");
     }
 
     public static MetaManager singleInstance() {
@@ -252,13 +238,13 @@ public class MetaManager extends AbstractManager {
         }
     }
 
-    public Map<String, Object> newDefaultEntity(String entityName) {
-        return newDefaultEntity(getByEntityName(entityName));
+    public Map<String, Object> newDefaultEntityMap(String entityName) {
+        return newDefaultEntityMap(getByEntityName(entityName));
     }
 
 
-    public Map<String, Object> newDefaultEntity(Class clazz) {
-        return newDefaultEntity(get(clazz));
+    public Map<String, Object> newDefaultEntityMap(Class clazz) {
+        return newDefaultEntityMap(get(clazz));
     }
 
     /**
@@ -267,7 +253,7 @@ public class MetaManager extends AbstractManager {
      * @param em 实体元数据
      * @return 返回填充后的map
      */
-    public Map<String, Object> newDefaultEntity(EntityMeta em) {
+    public Map<String, Object> newDefaultEntityMap(EntityMeta em) {
         HashMap<String, Object> map = new HashMap<>(em.getFieldMetas().size());
         for (FieldMeta fm : em.getFieldMetas()) {
             ColumnMeta cm = fm.getColumn();

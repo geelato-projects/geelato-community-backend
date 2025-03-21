@@ -198,7 +198,7 @@
             </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
-                <artifactId>geelato-auth-starter</artifactId>
+                <artifactId>geelato-auth-server</artifactId>
                 <version>${geelato.auth.version}</version>
             </dependency>
             <!--enterprise module-->

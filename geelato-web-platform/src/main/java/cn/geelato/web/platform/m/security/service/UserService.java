@@ -133,10 +133,10 @@ public class UserService extends BaseSortableService {
         result.setSize(request.getPageSize());
         result.setTotal(queryList != null ? queryList.size() : 0);
         result.setDataSize(pageQueryList != null ? pageQueryList.size() : 0);
-        result.setData(new DataItems(pageQueryList, result.getTotal()));
+        result.setData(new DataItems<>(pageQueryList, result.getTotal()));
         List<String> userIds = new ArrayList<>();
         List<String> orgIds = new ArrayList<>();
-        if (pageQueryList != null && pageQueryList.size() > 0) {
+        if (pageQueryList != null && !pageQueryList.isEmpty()) {
             for (User model : pageQueryList) {
                 model.setSalt(null);
                 model.setPassword(null);
@@ -153,7 +153,7 @@ public class UserService extends BaseSortableService {
         }
         // 组织用户查询
         List<OrgUserMap> orgUserMaps = orgUserMapService.queryModelByIds(String.join(",", orgIds), String.join(",", userIds));
-        if (orgUserMaps != null && orgUserMaps.size() > 0) {
+        if (orgUserMaps != null && !orgUserMaps.isEmpty()) {
             for (User model : pageQueryList) {
                 for (OrgUserMap map : orgUserMaps) {
                     if (model.getId().equals(map.getUserId()) && model.getOrgId().equals(map.getOrgId())) {
@@ -170,7 +170,7 @@ public class UserService extends BaseSortableService {
         List<Role> queryRoles = roleService.queryRoles(params);
         resultMap.put("role", queryRoles);
         List<String> roleIds = new ArrayList<>();
-        if (pageQueryList != null && pageQueryList.size() > 0) {
+        if (!pageQueryList.isEmpty()) {
             for (Role model : queryRoles) {
                 if (!roleIds.contains(model.getId())) {
                     roleIds.add(model.getId());
@@ -186,7 +186,7 @@ public class UserService extends BaseSortableService {
             Map<String, Object> tableParams = JSON.parseObject(JSON.toJSONString(user), Map.class);
             for (Role role : queryRoles) {
                 tableParams.put(role.getId(), false);
-                if (roleUserMaps != null && roleUserMaps.size() > 0) {
+                if (roleUserMaps != null && !roleUserMaps.isEmpty()) {
                     for (RoleUserMap map : roleUserMaps) {
                         if (role.getId().equals(map.getRoleId()) && user.getId().equals(map.getUserId())) {
                             tableParams.put(role.getId(), true);
@@ -199,7 +199,7 @@ public class UserService extends BaseSortableService {
         }
         resultMap.put("table", tableList);
 
-        result.setData(new DataItems(resultMap, result.getTotal()));
+        result.setData(new DataItems<>(resultMap, result.getTotal()));
         return result;
     }
 
@@ -214,7 +214,7 @@ public class UserService extends BaseSortableService {
 
     public ApiResult sendMessage(User user, String type) {
         List<String> types = getSendType(type);
-        if (types == null || types.size() == 0) {
+        if (types == null || types.isEmpty()) {
             return ApiResult.fail("请选择发送方式，短信或邮件！");
         }
         if (types.contains("phone")) {
@@ -248,7 +248,7 @@ public class UserService extends BaseSortableService {
             phoneNumbers = mobilePrefix + phoneNumbers;
         }
         if (!CHINESE_PATTERN.matcher(name).matches()) {
-            logger.error("短信${name}仅支持中文。" + name);
+            logger.error("短信${name}仅支持中文。{}", name);
             return false;
         }
         try {
@@ -266,9 +266,9 @@ public class UserService extends BaseSortableService {
         List<String> list = new ArrayList<>();
         if (Strings.isNotBlank(type)) {
             String[] typeStr = type.split(",");
-            for (int i = 0; i < typeStr.length; i++) {
-                if ("phone".equalsIgnoreCase(typeStr[i]) || "email".equalsIgnoreCase(typeStr[i])) {
-                    list.add(typeStr[i].toLowerCase(Locale.ENGLISH));
+            for (String s : typeStr) {
+                if ("phone".equalsIgnoreCase(s) || "email".equalsIgnoreCase(s)) {
+                    list.add(s.toLowerCase(Locale.ENGLISH));
                 }
             }
         }

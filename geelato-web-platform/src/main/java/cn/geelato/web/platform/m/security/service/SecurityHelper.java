@@ -15,9 +15,6 @@ public class SecurityHelper {
         return (ShiroUser) SecurityUtils.getSubject().getPrincipal();
     }
 
-    /**
-     * 取出Shiro中的当前用户LoginName.
-     */
     public static String getCurrentUserName() {
         ShiroUser user = getCurrentUser();
         return user == null ? null : user.loginName;
@@ -36,12 +33,4 @@ public class SecurityHelper {
         return SecurityUtils.getSubject().isPermitted(permission);
     }
 
-    public static boolean isAuthenticatedForCurrentUser() {
-        Subject currentUser = SecurityUtils.getSubject();
-        if (currentUser == null) {
-            return false;
-        } else {
-            return currentUser.isAuthenticated();
-        }
-    }
 }

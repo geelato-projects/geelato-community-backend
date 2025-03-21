@@ -80,7 +80,6 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         boundSql.setSql(buildOneSql(command));
         boundSql.setParams(buildParams(command));
         boundSql.setTypes(buildTypes(command));
-        // 解析子级的command
         if (command.getCommands() != null) {
             command.getCommands().forEach(item -> {
                 BoundSql subBoundSql = generate((E)item);
@@ -394,8 +393,6 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         return em;
     }
 
-
-    // 表别名
     public String buildTableAlias(String tableName) {
         if (tableName != null && !this.tableAlias.containsKey(tableName)) {
             this.tableAlias.put(tableName, "t" + this.tableAlias.size());

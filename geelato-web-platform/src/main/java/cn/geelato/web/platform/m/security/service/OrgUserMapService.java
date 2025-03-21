@@ -55,12 +55,12 @@ public class OrgUserMapService extends BaseService {
     public List<OrgUserMap> insertModels(OrgUserMap model) {
         // 角色存在，
         List<Org> orgs = orgService.getModelsById(Org.class, model.getOrgId());
-        if (orgs == null || orgs.size() == 0) {
+        if (orgs == null || orgs.isEmpty()) {
             throw new RuntimeException(ApiErrorMsg.IS_NULL);
         }
         // 用户信息，
         List<User> users = userService.getModelsById(User.class, model.getUserId());
-        if (users == null || users.size() == 0) {
+        if (users == null || users.isEmpty()) {
             throw new RuntimeException(ApiErrorMsg.IS_NULL);
         }
         // 角色用户信息，
@@ -70,7 +70,7 @@ public class OrgUserMapService extends BaseService {
         for (Org org : orgs) {
             for (User user : users) {
                 boolean isExist = false;
-                if (maps != null && maps.size() > 0) {
+                if (maps != null && !maps.isEmpty()) {
                     for (OrgUserMap map : maps) {
                         if (org.getId().equals(map.getOrgId()) && user.getId().equals(map.getUserId())) {
                             isExist = true;

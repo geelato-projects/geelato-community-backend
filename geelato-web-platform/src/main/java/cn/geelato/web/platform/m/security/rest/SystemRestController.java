@@ -31,12 +31,10 @@ import java.util.List;
 @ApiRestController(value = "/sys")
 @Slf4j
 public class SystemRestController extends BaseController {
-    private final AccountService accountService;
     private final OrgService orgService;
 
     @Autowired
     public SystemRestController(AccountService accountService, OrgService orgService) {
-        this.accountService = accountService;
         this.orgService = orgService;
     }
 

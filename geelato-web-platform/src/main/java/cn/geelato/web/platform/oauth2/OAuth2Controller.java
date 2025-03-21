@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
 
-@ApiRestController("/oauth2")
+@ApiRestController("/oauth3")
 @Slf4j
 public class OAuth2Controller {
 

@@ -45,13 +45,6 @@
             <artifactId>poi</artifactId>
             <version>${apache.poi.version}</version>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>com.aliyun</groupId>-->
-<!--            <artifactId>dingtalk</artifactId>-->
-<!--            <version>${dingtalk.sdk.version}</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -80,10 +73,6 @@
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-auth-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>cn.geelato</groupId>
-            <artifactId>geelato-auth-server</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.gavlyukovskiy</groupId>

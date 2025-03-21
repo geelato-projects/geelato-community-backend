@@ -198,6 +198,11 @@
             </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
+                <artifactId>geelato-auth-server</artifactId>
+                <version>${geelato.auth.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
                 <artifactId>geelato-auth-starter</artifactId>
                 <version>${geelato.auth.version}</version>
             </dependency>

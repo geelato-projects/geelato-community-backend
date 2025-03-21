@@ -82,6 +82,8 @@ public class UploadController extends BaseController {
         FileParam fileParam = FileParamUtils.by(serviceType, tableType, objectId, formIds, genre, invalidDate, batchNo, appId, tenantCode, isThumbnail, onlyThumb, dimension, thumbScale);
         // 上传文件并获取附件信息
         Attachment attachment = fileHandler.upload(file, path, fileParam);
+        attachment.setSource(tableType);
+        attachment.setStorageType(serviceType);
         if (attachment == null) {
             return ApiResult.fail("Upload failed");
         }

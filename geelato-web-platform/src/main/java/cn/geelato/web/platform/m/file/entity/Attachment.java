@@ -57,6 +57,8 @@ public class Attachment extends BaseEntity {
 
     @Transient
     private String source;
+    @Transient
+    private String storageType;
 
     public Attachment() {
     }

@@ -88,6 +88,14 @@ public class CompressHandler extends AttachmentHandler<Compress> {
     }
 
     /**
+     * 更新附件信息
+     */
+    @Override
+    public Compress update(Compress attachment) {
+        return compressService.updateModel(attachment);
+    }
+
+    /**
      * 上传文件并保存到磁盘和数据库，同时可选生成缩略图
      *
      * @param file 要上传的文件

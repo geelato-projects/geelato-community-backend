@@ -59,6 +59,14 @@ public class BaseHandler {
         return accessoryHandler.getAttachments(params);
     }
 
+    public long countAttachments(Map<String, Object> params) {
+        return accessoryHandler.countAttachments(params);
+    }
+
+    public Attachment updateAttachment(Attachment attachment) {
+        return accessoryHandler.updateAttachment(attachment);
+    }
+
     /**
      * 删除附件
      *

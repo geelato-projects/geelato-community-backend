@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.m.file.handler;
 
 import cn.geelato.utils.FileUtils;
-import cn.geelato.web.platform.utils.ThumbnailUtils;
 import cn.geelato.utils.entity.Resolution;
 import cn.geelato.web.platform.m.file.entity.Resources;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
@@ -9,6 +8,7 @@ import cn.geelato.web.platform.m.file.param.AttachmentParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailResolution;
 import cn.geelato.web.platform.m.file.service.ResourcesService;
+import cn.geelato.web.platform.utils.ThumbnailUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -85,6 +85,14 @@ public class ResourcesHandler extends AttachmentHandler<Resources> {
         Resources model = new Resources(file);
         model.setName(name);
         return build(model, path, param);
+    }
+
+    /**
+     * 更新附件信息
+     */
+    @Override
+    public Resources update(Resources attachment) {
+        return resourcesService.updateModel(attachment);
     }
 
     /**

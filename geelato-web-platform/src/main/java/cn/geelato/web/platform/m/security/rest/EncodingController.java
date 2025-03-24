@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * @author diabl
  */
-@ApiRestController("encoding")
+@ApiRestController("/encoding")
 @Slf4j
 public class EncodingController extends BaseController {
     private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();

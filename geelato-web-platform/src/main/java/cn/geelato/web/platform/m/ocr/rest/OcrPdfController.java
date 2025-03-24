@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@ApiRestController("ocr/pdf")
+@ApiRestController("/ocr/pdf")
 @Slf4j
 public class OcrPdfController extends BaseController {
     private static final Class<OcrPdf> CLAZZ = OcrPdf.class;

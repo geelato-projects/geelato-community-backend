@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.Map;
 
-@ApiRestController("ocr/pdf/meta")
+@ApiRestController("/ocr/pdf/meta")
 @Slf4j
 public class OcrPdfMetaController extends BaseController {
     private static final Class<OcrPdfMeta> CLAZZ = OcrPdfMeta.class;

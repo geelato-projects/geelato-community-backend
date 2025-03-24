@@ -1,6 +1,6 @@
 [
   {
-    "charMaxLength": "19",
+    "charMaxLength": "32",
     "comment": "所属应用",
     "dataType": "VARCHAR",
     "datetimePrecision": 0,
@@ -27,7 +27,7 @@
     "selectType": "ENTITY",
     "seqNo": "1",
     "title": "所属应用",
-    "type": "VARCHAR(19)",
+    "type": "VARCHAR(32)",
     "typeExtra": "3385218948177366184",
     "uniqued": false
   },

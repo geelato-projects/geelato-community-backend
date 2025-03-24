@@ -65,6 +65,21 @@ public class AccessoryHandler {
         return (T) getAttachHandler(param.getSourceType()).save(file, name, path, param.toAttachmentParam());
     }
 
+    public Attachment updateAttachment(Attachment attachment) {
+        if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
+            return attachHandler.update(model);
+        } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
+            return compressHandler.update(model);
+        } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
+            return resourcesHandler.update(model);
+        }
+        return null;
+    }
+
+
     /**
      * 根据附件ID和是否为缩略图获取附件信息
      *
@@ -84,6 +99,10 @@ public class AccessoryHandler {
      */
     public List<Attachment> getAttachments(Map<String, Object> params) {
         return getAttachHandler(AttachHandler.ATTACHMENT_SOURCE).list(params);
+    }
+
+    public long countAttachments(Map<String, Object> params) {
+        return getAttachHandler(AttachHandler.ATTACHMENT_SOURCE).count(params);
     }
 
     public List<Attachment> getAttachments(String attachmentIds) {

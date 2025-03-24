@@ -3,13 +3,13 @@ package cn.geelato.web.platform.m.file.handler;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.utils.ThumbnailUtils;
 import cn.geelato.utils.entity.Resolution;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.param.AttachmentParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailResolution;
+import cn.geelato.web.platform.utils.ThumbnailUtils;
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +63,11 @@ public abstract class AttachmentHandler<E extends Attachment> {
         attachment.setPath(path);
         return param.toAttachment(attachment);
     }
+
+    /**
+     * 更新附件信息
+     */
+    public abstract E update(E attachment);
 
     /**
      * 上传文件并保存到磁盘和数据库，同时可选生成缩略图
@@ -182,6 +187,16 @@ public abstract class AttachmentHandler<E extends Attachment> {
             }
         }
         return new ArrayList<>();
+    }
+
+    public long count(Map<String, Object> params) {
+        if (params != null && !params.isEmpty()) {
+            Map<String, Object> map = dao.queryForMap("platform_attachment_by_count", params);
+            if (map != null && !map.isEmpty()) {
+                return map.get("total") == null ? 0 : Long.parseLong(map.get("total").toString());
+            }
+        }
+        return 0;
     }
 
 

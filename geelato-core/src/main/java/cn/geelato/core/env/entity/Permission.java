@@ -10,15 +10,16 @@ import lombok.Setter;
 public class Permission {
 
     private String entity;
-    private String  rule;
+    private String name;
+    private String rule;
     private Integer weight;
     private Integer roleWeight;
 
-    public String getRuleReplaceVariable(){
-       return  this.rule.replace("#currentUser.userId#", String.format("'%s'", SessionCtx.getCurrentUser().getUserId()))
-               .replace("#currentUser.deptId#",String.format("'%s'", SessionCtx.getCurrentUser().getDefaultOrgId()))
-               .replace("#currentUser.buId#",String.format("'%s'", SessionCtx.getCurrentUser().getBuId()))
-               .replace("#currentUser.cooperatingOrgId#",String.format("'%s'", SessionCtx.getCurrentUser().getCooperatingOrgId()));
+    public String getRuleReplaceVariable() {
+        return this.rule.replace("#currentUser.userId#", String.format("'%s'", SessionCtx.getCurrentUser().getUserId()))
+                .replace("#currentUser.deptId#", String.format("'%s'", SessionCtx.getCurrentUser().getDefaultOrgId()))
+                .replace("#currentUser.buId#", String.format("'%s'", SessionCtx.getCurrentUser().getBuId()))
+                .replace("#currentUser.cooperatingOrgId#", String.format("'%s'", SessionCtx.getCurrentUser().getCooperatingOrgId()));
     }
 
 }

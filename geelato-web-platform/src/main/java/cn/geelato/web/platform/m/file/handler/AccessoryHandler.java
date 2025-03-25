@@ -69,7 +69,7 @@ public class AccessoryHandler {
         if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
             Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
             return attachHandler.update(model);
-        } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+        } else if (CompressHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
             Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
             return compressHandler.update(model);
         } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {

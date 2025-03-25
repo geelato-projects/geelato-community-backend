@@ -6,15 +6,18 @@ import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.utils.DateUtils;
+import cn.geelato.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.lang.Nullable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -75,5 +78,17 @@ public class Attachment extends BaseEntity {
         this.name = file.getName();
         this.type = Files.probeContentType(file.toPath());
         this.size = file.length();
+    }
+
+    public void handleGenre(@Nullable Object... args) {
+        List<String> genres = StringUtils.toListDr(this.genre);
+        if (args != null && args.length > 0) {
+            for (Object arg : args) {
+                if (StringUtils.isNotBlank(arg.toString())) {
+                    genres.add(arg.toString());
+                }
+            }
+        }
+        this.genre = genres.size() > 0 ? StringUtils.join(genres, ",") : null;
     }
 }

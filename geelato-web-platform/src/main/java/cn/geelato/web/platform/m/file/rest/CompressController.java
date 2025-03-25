@@ -4,6 +4,7 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
+import cn.geelato.utils.SqlParams;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.enums.TimeUnitEnum;
 import cn.geelato.web.platform.annotation.ApiRestController;
@@ -19,6 +20,7 @@ import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -47,6 +49,67 @@ public class CompressController extends BaseController {
     public ApiResult byBatchNos(@RequestBody Map<String, Object> params) throws IOException {
         CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
         return build(compBody);
+    }
+
+    @RequestMapping(value = "/by/{type}/{column}", method = RequestMethod.POST)
+    public ApiResult downloadFiles(@PathVariable(required = true) String type, @PathVariable(required = true) String column, @RequestBody Map<String, Object> params) throws Exception {
+        List<String> attachmentIds = new ArrayList<>();
+        // 参数
+        String ids = Objects.toString(params.get("attachmentIds"), "");
+        // 批次号
+        String batchNoStr = "";
+        if ("batchNo".equalsIgnoreCase(column)) {
+            List<Attachment> attachments = fileHandler.getAttachments(SqlParams.map("ids", ids));
+            if (attachments != null && !attachments.isEmpty()) {
+                List<String> batchNos = attachments.stream().map(Attachment::getBatchNo).collect(Collectors.toList());
+                batchNos = listStream(batchNos);
+                if (batchNos == null || batchNos.isEmpty()) {
+                    throw new RuntimeException("附件批次号不存在!");
+                }
+                batchNoStr = String.join(",", batchNos);
+            }
+        }
+        //
+        if ("pack".equalsIgnoreCase(type)) {
+            CompressRequestBody compBody = new CompressRequestBody();
+            compBody.setFileName(String.valueOf(System.currentTimeMillis()));
+            if ("batchNo".equalsIgnoreCase(column)) {
+                compBody.setBatchNos(batchNoStr);
+            } else if ("id".equalsIgnoreCase(column)) {
+                compBody.setAttachmentIds(ids);
+            }
+            String batchNo = String.valueOf(System.currentTimeMillis());
+            FileParam fileParam = FileParamUtils.byBuildCompress(compBody.getServiceType(), compBody.getGenre(), compBody.getInvalidTime(), batchNo, getAppId(), getTenantCode());
+            List<Attachment> attachments = fileHandler.compress(compBody.getAttachmentIds(), compBody.getBatchNos(), compBody.getFileName(), compBody.getAmount(), fileParam);
+            if (attachments == null || attachments.isEmpty()) {
+                throw new RuntimeException("压缩失败!");
+            }
+            attachmentIds = attachments.stream().map(Attachment::getId).collect(Collectors.toList());
+        } else if ("simple".equalsIgnoreCase(type)) {
+            if ("batchNo".equalsIgnoreCase(column)) {
+                List<Attachment> attachments = fileHandler.getAttachments(SqlParams.map("batchNo", batchNoStr));
+                if (attachments != null && !attachments.isEmpty()) {
+                    attachmentIds = attachments.stream().map(Attachment::getId).collect(Collectors.toList());
+                }
+            } else if ("id".equalsIgnoreCase(column)) {
+                attachmentIds = StringUtils.toListDr(ids);
+            }
+        }
+        if (attachmentIds != null && !attachmentIds.isEmpty()) {
+            attachmentIds = listStream(attachmentIds);
+        } else {
+            throw new RuntimeException("附件不存在!");
+        }
+        return ApiResult.success(attachmentIds);
+    }
+
+    private List<String> listStream(List<String> list) {
+        return list == null ? new ArrayList<>() : list.stream()
+                .filter(s -> s != null) // 去null
+                .map(String::trim)      // 去除字符串两端的空白
+                .filter(s -> !s.isBlank()) // 去空字符串
+                .distinct()             // 去重
+                .collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/by/thumb", method = RequestMethod.POST)

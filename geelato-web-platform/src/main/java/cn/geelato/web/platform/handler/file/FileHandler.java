@@ -2,7 +2,6 @@ package cn.geelato.web.platform.handler.file;
 
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.utils.ThumbnailUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.utils.entity.FileIS;
 import cn.geelato.utils.entity.Resolution;
@@ -17,6 +16,7 @@ import cn.geelato.web.platform.m.file.handler.AccessoryHandler;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailResolution;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
+import cn.geelato.web.platform.utils.ThumbnailUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
@@ -71,6 +71,18 @@ public class FileHandler extends BaseHandler {
             if (ossResult.getOssFile() != null) {
                 param.setObjectId(ossResult.getOssFile().getObjectId());
                 return accessoryHandler.save(file, name, ossResult.getOssFile().getObjectName(), param);
+            }
+        }
+        return null;
+    }
+
+    public Attachment uploadCloudFromLocal(Attachment localSource) throws IOException {
+        OSSResult ossResult = fileHelper.putFile(localSource.getName(), FileUtils.openInputStream(new File(localSource.getPath())));
+        if (ossResult.getSuccess() == null || ossResult.getSuccess()) {
+            if (ossResult.getOssFile() != null) {
+                localSource.setObjectId(ossResult.getOssFile().getObjectId());
+                localSource.setPath(ossResult.getOssFile().getObjectName());
+                return localSource;
             }
         }
         return null;

@@ -4,10 +4,14 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
+import cn.geelato.utils.SqlParams;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.AttachmentServiceEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -18,7 +22,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -54,6 +63,102 @@ public class AttachController extends BaseController {
         BeanUtils.populate(attachment, requestMap);
         fileHandler.updateAttachment(attachment);
         return ApiResult.success(attachment);
+    }
+
+    @RequestMapping(value = "/valid", method = RequestMethod.POST)
+    public ApiResult validate(@RequestBody Map<String, Object> requestMap) {
+        String attachmentIds = Objects.toString(requestMap.get("attachmentIds"), "");
+        List<String> ids = StringUtils.toListDr(attachmentIds);
+        if (ids == null || ids.isEmpty()) {
+            return ApiResult.fail("附件ID不能为空!");
+        }
+        Map<String, Boolean> result = new HashMap<>();
+        // 查询附件信息
+        List<Attachment> attachments = fileHandler.getAttachments(SqlParams.map("ids", String.join(",", ids)));
+        if (attachments == null || attachments.isEmpty()) {
+            return ApiResult.fail("附件不存在!");
+        }
+        // 对比
+        for (String id : ids) {
+            boolean isExist = false;
+            for (Attachment attachment : attachments) {
+                if (id.equals(attachment.getId())) {
+                    try {
+                        File file = fileHandler.toFile(attachment);
+                        isExist = file != null && file.exists();
+                        if (!AttachmentServiceEnum.OSS_LOCAL.getValue().equalsIgnoreCase(attachment.getStorageType())) {
+                            if (isExist) {
+                                file.delete();
+                            }
+                        }
+                    } catch (Exception ex) {
+                        isExist = false;
+                    }
+                }
+            }
+            result.put(id, isExist);
+        }
+
+        return ApiResult.success(result);
+    }
+
+    @RequestMapping(value = "/storage/{type}", method = RequestMethod.POST)
+    public ApiResult updateStorageType(@PathVariable(required = true) String type, @RequestBody Map<String, Object> requestMap) {
+        String attachmentIds = Objects.toString(requestMap.get("attachmentIds"), "");
+        List<String> ids = StringUtils.toListDr(attachmentIds);
+        if (ids == null || ids.isEmpty()) {
+            return ApiResult.fail("附件ID不能为空!");
+        }
+        // 查询附件信息
+        List<Attachment> attachments = fileHandler.getAttachments(SqlParams.map("ids", String.join(",", ids)));
+        if (attachments == null || attachments.isEmpty()) {
+            return ApiResult.fail("附件不存在!");
+        }
+        Map<String, Object> result = new HashMap<>();
+        for (Attachment attachment : attachments) {
+            File file = fileHandler.toFile(attachment);
+            if (file == null || !file.exists()) {
+                result.put(attachment.getId(), "文件不存在");
+                continue;
+            }
+            if (AttachmentServiceEnum.OSS_LOCAL.getValue().equalsIgnoreCase(type)) {
+                // 阿里云OSS => 本地存储
+                if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(attachment.getStorageType())) {
+                    String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, attachment.getSource(), attachment.getTenantCode(), attachment.getAppId(), attachment.getName(), true);
+                    try {
+                        Files.copy(file.toPath(), Paths.get(path).normalize(), StandardCopyOption.REPLACE_EXISTING);
+                        attachment.setObjectId(null);
+                        attachment.setPath(path);
+                        attachment.handleGenre("UpdateStorage");
+                        fileHandler.updateAttachment(attachment);
+                        file.delete();
+                    } catch (IOException e) {
+                        result.put(attachment.getId(), "文件本地化失败");
+                    }
+                } else {
+                    result.put(attachment.getId(), "存储方式未变化");
+                }
+            } else if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(type)) {
+                // 本地存储 => 阿里云OSS
+                if (AttachmentServiceEnum.OSS_LOCAL.getValue().equalsIgnoreCase(attachment.getStorageType())) {
+                    try {
+                        Attachment target = fileHandler.uploadCloudFromLocal(attachment);
+                        if (target != null) {
+                            target.handleGenre("UpdateStorage");
+                            fileHandler.updateAttachment(target);
+                            file.delete();
+                        } else {
+                            result.put(attachment.getId(), "文件上传云失败");
+                        }
+                    } catch (IOException e) {
+                        result.put(attachment.getId(), "文件上传云失败");
+                    }
+                } else {
+                    result.put(attachment.getId(), "存储方式未变化");
+                }
+            }
+        }
+        return ApiResult.success(result);
     }
 
     @RequestMapping(value = "/list", method = RequestMethod.POST)

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 /**
  * @author geelato
  */
-@ApiRestController("/cache/")
+@ApiRestController("/cache")
 @Slf4j
 public class CacheController extends BaseController {
 
@@ -25,7 +25,7 @@ public class CacheController extends BaseController {
      * 清除缓存
      * keys: 多个key以英文逗号分隔, 不能为空值
      */
-    @RequestMapping(value = {"remove/{keys}"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @RequestMapping(value = {"/remove/{keys}"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> remove(@PathVariable("keys") String keys) {
         if (Strings.isEmpty(keys)) {
             return ApiResult.fail("Keys is empty");

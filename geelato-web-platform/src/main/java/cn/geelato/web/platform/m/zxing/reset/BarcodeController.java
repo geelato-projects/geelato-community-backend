@@ -50,7 +50,7 @@ public class BarcodeController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult pageQuery() {
+    public ApiPagedResult<?> pageQuery() {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
@@ -74,7 +74,7 @@ public class BarcodeController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult get(@PathVariable(required = true) String id) {
+    public ApiResult<?> get(@PathVariable(required = true) String id) {
         try {
             return ApiResult.success(barcodeService.getModel(CLAZZ, id));
         } catch (Exception e) {
@@ -100,7 +100,7 @@ public class BarcodeController extends BaseController {
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
+    public ApiResult<NullResult> isDelete(@PathVariable String id) {
         try {
             Barcode model = barcodeService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
@@ -128,7 +128,7 @@ public class BarcodeController extends BaseController {
     }
 
     @RequestMapping(value = "/generate/{type}/{id}/{text}", method = RequestMethod.GET)
-    public ApiResult generate(@PathVariable(required = true) String type, @PathVariable(required = true) String id, @PathVariable(required = true) String text) {
+    public ApiResult<?> generate(@PathVariable(required = true) String type, @PathVariable(required = true) String id, @PathVariable(required = true) String text) {
         try {
             Barcode barcode = barcodeService.getModel(CLAZZ, id);
             Assert.notNull(barcode, ApiErrorMsg.IS_NULL);
@@ -141,7 +141,7 @@ public class BarcodeController extends BaseController {
     }
 
     @RequestMapping(value = "/generate/{type}/{text}", method = RequestMethod.POST)
-    public ApiResult generate(@PathVariable(required = true) String type, @PathVariable(required = true) String text, @RequestBody Barcode form) {
+    public ApiResult<?> generate(@PathVariable String type, @PathVariable String text, @RequestBody Barcode form) {
         try {
             form.afterSet();
             Object obj = generateByType(type, text, form);
@@ -165,10 +165,10 @@ public class BarcodeController extends BaseController {
     }
 
     @RequestMapping(value = "/getFonts", method = RequestMethod.GET)
-    public ApiResult getFonts() {
+    public ApiResult<?> getFonts() {
         try {
-            List<String> fonts = new ArrayList<>();
-            if (redisTemplate.hasKey(FontUtils.redisTemplateKey)) {
+            List<String> fonts;
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(FontUtils.redisTemplateKey))) {
                 Object jsonObject = redisTemplate.opsForValue().get(FontUtils.redisTemplateKey);
                 fonts = jsonObject != null ? objectMapper.readValue(String.valueOf(jsonObject), List.class) : new ArrayList<>();
             } else {

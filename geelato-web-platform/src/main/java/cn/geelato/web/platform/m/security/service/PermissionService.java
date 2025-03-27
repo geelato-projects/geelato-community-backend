@@ -490,7 +490,7 @@ public class PermissionService extends BaseSortableService {
             FilterGroup filter = new FilterGroup();
             filter.addFilter("permissionId", FilterGroup.Operator.in, Strings.join(permissionIds, ','));
             filter.addFilter("tenantCode", getSessionTenantCode());
-            List<RolePermissionMap> rolePermissionMaps = queryModel(RolePermissionMap.class, filter);
+            List<RolePermissionMap> rolePermissionMaps = rolePermissionMapService.queryModel(RolePermissionMap.class, filter);
             if (rolePermissionMaps != null && !rolePermissionMaps.isEmpty()) {
                 for (RolePermissionMap dModel : rolePermissionMaps) {
                     rolePermissionMapService.isDeleteModel(dModel);

@@ -6,7 +6,6 @@ import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,8 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Getter
 @Setter
@@ -81,14 +79,39 @@ public class Attachment extends BaseEntity {
     }
 
     public void handleGenre(@Nullable Object... args) {
-        List<String> genres = StringUtils.toListDr(this.genre);
-        if (args != null && args.length > 0) {
-            for (Object arg : args) {
-                if (StringUtils.isNotBlank(arg.toString())) {
-                    genres.add(arg.toString());
-                }
-            }
+        // 1. 初始化去重集合（保持顺序）
+        Set<String> genres = handleGenre(this.genre);
+        // 3. 处理传入参数
+        if (args != null) {
+            Arrays.stream(args)
+                    .filter(Objects::nonNull)
+                    .map(Object::toString)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .forEach(genres::add);
         }
-        this.genre = genres.size() > 0 ? StringUtils.join(genres, ",") : null;
+        // 4. 设置结果
+        this.genre = handleGenre(genres);
+    }
+
+    public void handleGenre() {
+        // 1. 初始化去重集合（保持顺序）
+        Set<String> genres = handleGenre(this.genre);
+        // 2. 设置结果
+        this.genre = handleGenre(genres);
+    }
+
+    private Set<String> handleGenre(String genre) {
+        // 1. 初始化去重集合（保持顺序）
+        Set<String> genres = new LinkedHashSet<>();
+        // 2. 处理现有genre
+        if (genre != null && !genre.trim().isEmpty()) {
+            Collections.addAll(genres, genre.split("\\s*,\\s*"));
+        }
+        return genres;
+    }
+
+    private String handleGenre(Set<String> genres) {
+        return genres.isEmpty() ? null : String.join(",", genres);
     }
 }

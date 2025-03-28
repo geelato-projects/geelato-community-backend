@@ -66,6 +66,7 @@ public class AccessoryHandler {
     }
 
     public Attachment updateAttachment(Attachment attachment) {
+        attachment.handleGenre();
         if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
             Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
             return attachHandler.update(model);

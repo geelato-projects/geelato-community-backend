@@ -55,6 +55,7 @@ public class AttachmentParam {
         attachment.setBatchNo(this.getBatchNo());
         attachment.setAppId(this.getAppId());
         attachment.setTenantCode(this.getTenantCode());
+        attachment.handleGenre();
         return attachment;
     }
 }

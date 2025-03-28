@@ -7,13 +7,12 @@ import cn.geelato.web.platform.m.excel.entity.ExportColumn;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.RowMeta;
 import cn.geelato.web.platform.m.excel.enums.ExcelAlignmentEnum;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -21,8 +20,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Component
+@Slf4j
 public class ExcelXSSFWriter {
-    private final Logger logger = LoggerFactory.getLogger(ExcelXSSFWriter.class);
 
     /**
      * 按多组值写入一个sheet

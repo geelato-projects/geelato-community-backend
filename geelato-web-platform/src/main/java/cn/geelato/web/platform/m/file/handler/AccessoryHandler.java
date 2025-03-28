@@ -140,7 +140,7 @@ public class AccessoryHandler {
                     if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
                         Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
                         attachHandler.delete(model);
-                    } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+                    } else if (CompressHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
                         Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
                         compressHandler.delete(model);
                     } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
@@ -152,7 +152,7 @@ public class AccessoryHandler {
                     if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
                         Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
                         attachHandler.isDelete(model);
-                    } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+                    } else if (CompressHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
                         Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
                         compressHandler.isDelete(model);
                     } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {

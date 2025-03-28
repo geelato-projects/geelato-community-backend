@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author diabl
@@ -223,5 +224,43 @@ public class AttachController extends BaseController {
     public ApiResult<NullResult> remove(@PathVariable(required = true) String id, Boolean isRemoved) {
         fileHandler.delete(id, isRemoved);
         return ApiResult.successNoResult();
+    }
+
+    @RequestMapping(value = "/remove/{type}", method = RequestMethod.POST)
+    public ApiResult<NullResult> batchRemove(@PathVariable(required = true) String type, Boolean isRemoved, @RequestBody Map<String, Object> requestMap) {
+        // 附件id集合处理
+        List<String> attachmentIds = listStream(StringUtils.toListDr(Objects.toString(requestMap.get("attachmentIds"), "")));
+        if (attachmentIds == null || attachmentIds.isEmpty()) {
+            return ApiResult.fail("附件ID不能为空!");
+        }
+        // 按批次号查询附件
+        if ("batchNo".equalsIgnoreCase(type)) {
+            // 按主键集合获取附件
+            List<Attachment> byIds = fileHandler.getAttachments(SqlParams.map("ids", String.join(",", attachmentIds)));
+            if (byIds != null && !byIds.isEmpty()) {
+                // 获取批次号集合
+                List<String> batchNos = listStream(byIds.stream().map(Attachment::getBatchNo).collect(Collectors.toList()));
+                if (batchNos == null || batchNos.isEmpty()) {
+                    throw new RuntimeException("附件批次号不存在!");
+                }
+                List<Attachment> byBatchNos = fileHandler.getAttachments(SqlParams.map("batchNo", String.join(",", batchNos)));
+                if (byBatchNos != null && !byBatchNos.isEmpty()) {
+                    attachmentIds = listStream(byBatchNos.stream().map(Attachment::getId).collect(Collectors.toList()));
+                }
+            }
+        }
+        for (String id : attachmentIds) {
+            fileHandler.delete(id, isRemoved);
+        }
+        return ApiResult.successNoResult();
+    }
+
+    private List<String> listStream(List<String> list) {
+        return list == null ? new ArrayList<>() : list.stream()
+                .filter(s -> s != null) // 去null
+                .map(String::trim)      // 去除字符串两端的空白
+                .filter(s -> !s.isBlank()) // 去空字符串
+                .distinct()             // 去重
+                .collect(Collectors.toList());
     }
 }

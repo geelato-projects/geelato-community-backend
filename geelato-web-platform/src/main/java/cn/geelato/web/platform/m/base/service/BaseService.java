@@ -5,6 +5,7 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.api.ApiPagedResult;
@@ -12,6 +13,7 @@ import cn.geelato.lang.api.DataItems;
 import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
  * @author diabl
  */
 @Service
+@Slf4j
 public class BaseService {
     public static final String COMPARE_RESULT_ADD = "add";
     public static final String COMPARE_RESULT_UPDATE = "update";
@@ -238,7 +241,9 @@ public class BaseService {
      * @param id     要删除数据的实体ID
      */
     public void deleteModel(Class entity, String id) {
-        dao.delete(entity, "id", id);
+        String deleteSql = String.format("DELETE FROM %s WHERE id = ?", getEntityName(entity));
+        log.info(deleteSql);
+        dao.getJdbcTemplate().update(deleteSql, id);
     }
 
     /**
@@ -426,5 +431,20 @@ public class BaseService {
             throw new IllegalArgumentException("数据连接不能为空");
         }
         DynamicDatasourceHolder.setDataSourceKey(connectId);
+    }
+
+    /**
+     * 获取对象所属实体名称（表名）
+     *
+     * @param entity 对象
+     * @return 实体名称
+     */
+    public <T> String getEntityName(Class<T> entity) {
+        Entity entityAnnotation = entity.getAnnotation(Entity.class);
+        if (entityAnnotation != null) {
+            // 如果name属性是默认值(空字符串)，则返回类名
+            return entityAnnotation.name().isEmpty() ? entity.getSimpleName() : entityAnnotation.name();
+        }
+        return null;
     }
 }

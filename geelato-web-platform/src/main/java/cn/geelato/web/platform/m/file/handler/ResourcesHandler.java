@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 @Component
 public class ResourcesHandler extends AttachmentHandler<Resources> {
     public static final String SQL_UPDATE_PID = "update platform_resources set pid = ? where id = ?";
+    public static final String SQL_UPDATE_ID = "update platform_resources set id = ? where id = ?";
+    public static final String SQL_UPDATE_ID_DEL = "update platform_resources set id = ?, del_status = 1, delete_at = now() where id = ?";
     public static final String ATTACHMENT_SOURCE = AttachmentSourceEnum.PLATFORM_RESOURCES.getValue();
     private final ResourcesService resourcesService;
 
@@ -161,6 +163,14 @@ public class ResourcesHandler extends AttachmentHandler<Resources> {
         updateChildThumbnail(SQL_UPDATE_PID, parentId, updateIds);
     }
 
+    @Override
+    public void updateId(String sourceId, String targetId, boolean isDelete) {
+        if (isDelete) {
+            updateId(SQL_UPDATE_ID_DEL, sourceId, targetId);
+        } else {
+            updateId(SQL_UPDATE_ID, sourceId, targetId);
+        }
+    }
 
     /**
      * 逻辑删除文件

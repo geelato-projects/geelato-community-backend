@@ -67,6 +67,10 @@ public class BaseHandler {
         return accessoryHandler.updateAttachment(attachment);
     }
 
+    public void updateId(String tableType, String sourceId, String targetId, boolean isDelete) {
+        accessoryHandler.updateId(tableType, sourceId, targetId, isDelete);
+    }
+
     /**
      * 删除附件
      *

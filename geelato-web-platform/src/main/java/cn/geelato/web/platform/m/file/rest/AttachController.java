@@ -6,6 +6,7 @@ import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.utils.SqlParams;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
@@ -63,6 +64,28 @@ public class AttachController extends BaseController {
         BeanUtils.populate(attachment, requestMap);
         fileHandler.updateAttachment(attachment);
         return ApiResult.success(attachment);
+    }
+
+    @RequestMapping(value = "/replace/{sourceId}/{targetId}", method = RequestMethod.POST)
+    public ApiResult replace(@PathVariable(required = true) String sourceId, @PathVariable(required = true) String targetId, @RequestBody Map<String, Object> requestMap) throws InvocationTargetException, IllegalAccessException {
+        Attachment source = fileHandler.getAttachment(sourceId);
+        if (source == null) {
+            return ApiResult.fail("源附件不存在!");
+        }
+        Attachment target = fileHandler.getAttachment(targetId);
+        if (target == null) {
+            return ApiResult.fail("目标附件不存在!");
+        }
+        // 更新目标附件信息
+        BeanUtils.populate(target, requestMap);
+        target.setPid(source.getPid());
+        target.handleGenre("Replace");
+        fileHandler.updateAttachment(target);
+        // 删除源附件
+        fileHandler.updateId(source.getSource(), sourceId, String.valueOf(UIDGenerator.generate()), true);
+        fileHandler.updateId(target.getSource(), targetId, sourceId, false);
+        target.setId(sourceId);
+        return ApiResult.success(target);
     }
 
     @RequestMapping(value = "/valid", method = RequestMethod.POST)

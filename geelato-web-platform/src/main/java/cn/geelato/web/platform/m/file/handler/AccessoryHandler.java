@@ -79,6 +79,16 @@ public class AccessoryHandler {
         return null;
     }
 
+    public void updateId(String tableType, String sourceId, String targetId, boolean isDelete) {
+        if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(tableType)) {
+            attachHandler.updateId(sourceId, targetId, isDelete);
+        } else if (CompressHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(tableType)) {
+            compressHandler.updateId(sourceId, targetId, isDelete);
+        } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(tableType)) {
+            resourcesHandler.updateId(sourceId, targetId, isDelete);
+        }
+    }
+
 
     /**
      * 根据附件ID和是否为缩略图获取附件信息

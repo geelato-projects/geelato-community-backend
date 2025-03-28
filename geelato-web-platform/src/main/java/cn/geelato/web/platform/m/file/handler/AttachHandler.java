@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 @Component
 public class AttachHandler extends AttachmentHandler<Attach> {
     public static final String SQL_UPDATE_PID = "update platform_attach set pid = ? where id = ?";
+    public static final String SQL_UPDATE_ID = "update platform_attach set id = ? where id = ?";
+    public static final String SQL_UPDATE_ID_DEL = "update platform_attach set id = ?, del_status = 1, delete_at = now() where id = ?";
     public static final String ATTACHMENT_SOURCE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
     private final AttachService attachService;
 
@@ -162,6 +164,15 @@ public class AttachHandler extends AttachmentHandler<Attach> {
     @Override
     public void updateChildThumbnail(String parentId, List<String> updateIds) {
         updateChildThumbnail(SQL_UPDATE_PID, parentId, updateIds);
+    }
+
+    @Override
+    public void updateId(String sourceId, String targetId, boolean isDelete) {
+        if (isDelete) {
+            updateId(SQL_UPDATE_ID_DEL, sourceId, targetId);
+        } else {
+            updateId(SQL_UPDATE_ID, sourceId, targetId);
+        }
     }
 
     /**

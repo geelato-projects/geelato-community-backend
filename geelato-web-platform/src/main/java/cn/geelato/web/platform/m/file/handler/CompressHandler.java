@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.m.file.handler;
 
 import cn.geelato.utils.FileUtils;
-import cn.geelato.web.platform.utils.ThumbnailUtils;
 import cn.geelato.utils.entity.Resolution;
 import cn.geelato.web.platform.m.file.entity.Compress;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
@@ -9,6 +8,7 @@ import cn.geelato.web.platform.m.file.param.AttachmentParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailResolution;
 import cn.geelato.web.platform.m.file.service.CompressService;
+import cn.geelato.web.platform.utils.ThumbnailUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 @Component
 public class CompressHandler extends AttachmentHandler<Compress> {
     public static final String SQL_UPDATE_PID = "update platform_compress set pid = ? where id = ?";
+    public static final String SQL_UPDATE_ID = "update platform_compress set id = ? where id = ?";
+    public static final String SQL_UPDATE_ID_DEL = "update platform_compress set id = ?, del_status = 1, delete_at = now() where id = ?";
     public static final String ATTACHMENT_SOURCE = AttachmentSourceEnum.PLATFORM_COMPRESS.getValue();
     private final CompressService compressService;
 
@@ -159,6 +161,15 @@ public class CompressHandler extends AttachmentHandler<Compress> {
     @Override
     public void updateChildThumbnail(String parentId, List<String> updateIds) {
         updateChildThumbnail(SQL_UPDATE_PID, parentId, updateIds);
+    }
+
+    @Override
+    public void updateId(String sourceId, String targetId, boolean isDelete) {
+        if (isDelete) {
+            updateId(SQL_UPDATE_ID_DEL, sourceId, targetId);
+        } else {
+            updateId(SQL_UPDATE_ID, sourceId, targetId);
+        }
     }
 
     /**

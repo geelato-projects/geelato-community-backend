@@ -114,6 +114,21 @@ public abstract class AttachmentHandler<E extends Attachment> {
         }
     }
 
+    /**
+     * 更新附件ID
+     *
+     * @param updateIdSql 更新ID的SQL
+     * @param sourceId    源id
+     * @param targetId    替换id
+     */
+    public void updateId(String updateIdSql, String sourceId, String targetId) {
+        if (StringUtils.isNotBlank(sourceId) && StringUtils.isNotBlank(targetId)) {
+            dao.getJdbcTemplate().update(updateIdSql, targetId, sourceId);
+        }
+    }
+
+    public abstract void updateId(String sourceId, String targetId, boolean isDelete);
+
     public E getParentThumbnail(Map<Integer, E> thumbMap) {
         if (!thumbMap.isEmpty()) {
             Optional<Integer> optional = thumbMap.keySet().stream().sorted(Comparator.reverseOrder()).findFirst();

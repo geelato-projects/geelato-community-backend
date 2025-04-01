@@ -221,6 +221,10 @@ public class BaseController extends ParameterOperator implements InitializingBea
                 String operator = keyMap.get("operator");
                 // value 不为空，“”也算空
                 if (entry.getValue() == null || Strings.isBlank(entry.getValue().toString())) {
+                    // nil为null
+                    if (FilterGroup.Operator.nil.getText().equals(operator)) {
+                        filterGroup.addFilter(key, FilterGroup.Operator.nil, "1");
+                    }
                     continue;
                 }
                 if (Strings.isNotBlank(operator)) {

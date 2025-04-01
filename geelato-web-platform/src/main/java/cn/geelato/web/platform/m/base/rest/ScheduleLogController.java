@@ -19,22 +19,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @ApiRestController("/schedule/log")
 @Slf4j
 public class ScheduleLogController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<ScheduleLog> CLAZZ = ScheduleLog.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("scheduleName", "scheduleCode", "result"));
-        OPERATORMAP.put("intervals", Arrays.asList("startAt", "finishAt", "createAt", "updateAt"));
-    }
-
     private final ScheduleLogService scheduleLogService;
 
     @Autowired
@@ -42,11 +33,12 @@ public class ScheduleLogController extends BaseController {
         this.scheduleLogService = scheduleLogService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return scheduleLogService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

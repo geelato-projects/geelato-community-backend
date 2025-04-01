@@ -18,9 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,14 +26,7 @@ import java.util.Map;
 @ApiRestController(value = "/security/role/user")
 @Slf4j
 public class RoleUserMapController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<RoleUserMap> CLAZZ = RoleUserMap.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("roleName", "userName"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final RoleUserMapService roleUserMapService;
 
     @Autowired
@@ -44,11 +34,12 @@ public class RoleUserMapController extends BaseController {
         this.roleUserMapService = roleUserMapService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return roleUserMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

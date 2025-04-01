@@ -17,7 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author diabl
@@ -25,14 +27,7 @@ import java.util.*;
 @ApiRestController("/encoding")
 @Slf4j
 public class EncodingController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<Encoding> CLAZZ = Encoding.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("id", "title", "description"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final EncodingService encodingService;
 
     @Autowired
@@ -40,11 +35,12 @@ public class EncodingController extends BaseController {
         this.encodingService = encodingService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return encodingService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

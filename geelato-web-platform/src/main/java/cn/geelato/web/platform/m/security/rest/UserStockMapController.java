@@ -18,12 +18,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 @ApiRestController(value = "/security/user/stock")
 @Slf4j
 public class UserStockMapController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<UserStockMap> CLAZZ = UserStockMap.class;
 
     private UserStockMapService userStockMapService;
@@ -33,11 +35,12 @@ public class UserStockMapController extends BaseController {
         this.userStockMapService = userStockMapService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             ApiPagedResult result = userStockMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
             return result;
         } catch (Exception e) {

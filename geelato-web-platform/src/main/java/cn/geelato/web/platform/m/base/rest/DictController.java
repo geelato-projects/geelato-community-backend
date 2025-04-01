@@ -28,14 +28,7 @@ import java.util.*;
 @ApiRestController("/dict")
 @Slf4j
 public class DictController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<Dict> CLAZZ = Dict.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("dictCode", "dictName", "dictRemark"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final DictService dictService;
 
     @Autowired
@@ -43,11 +36,12 @@ public class DictController extends BaseController {
         this.dictService = dictService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return dictService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

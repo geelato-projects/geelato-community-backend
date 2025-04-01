@@ -20,7 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author diabl
@@ -28,14 +29,7 @@ import java.util.*;
 @ApiRestController(value = "/security/org")
 @Slf4j
 public class OrgRestController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<Org> CLAZZ = Org.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("name", "code", "description"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final OrgService orgService;
 
     @Autowired
@@ -43,11 +37,12 @@ public class OrgRestController extends BaseController {
         this.orgService = orgService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return orgService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

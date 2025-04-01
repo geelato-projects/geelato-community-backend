@@ -31,14 +31,7 @@ import java.util.*;
 @ApiRestController(value = "/security/permission")
 @Slf4j
 public class PermissionController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<Permission> CLAZZ = Permission.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("name", "code", "object", "rule", "description"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final PermissionService permissionService;
 
     @Autowired
@@ -46,11 +39,12 @@ public class PermissionController extends BaseController {
         this.permissionService = permissionService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return permissionService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -166,9 +160,10 @@ public class PermissionController extends BaseController {
             return ApiResult.fail(e.getMessage());
         }
     }
+
     @RequestMapping(value = "/getEffective", method = RequestMethod.GET)
     public ApiResult<?> getEffective(String userId, String entity) {
-        List<cn.geelato.core.env.entity.Permission> entityPermission = EnvManager.singleInstance().getUserPermission(userId,entity);
+        List<cn.geelato.core.env.entity.Permission> entityPermission = EnvManager.singleInstance().getUserPermission(userId, entity);
         List<cn.geelato.core.env.entity.Permission> maxWeightPermissionList = null;
         cn.geelato.core.env.entity.Permission rtnPermission = null;
         Optional<cn.geelato.core.env.entity.Permission> maxWeightPermission = entityPermission.stream().max(Comparator.comparing(cn.geelato.core.env.entity.Permission::getWeight));
@@ -177,7 +172,7 @@ public class PermissionController extends BaseController {
             maxWeightPermissionList = entityPermission.stream().filter(x -> x.getWeight() == maxWeight).toList();
         }
         if (maxWeightPermissionList != null) {
-            rtnPermission=maxWeightPermissionList.get(0);
+            rtnPermission = maxWeightPermissionList.get(0);
         }
         return ApiResult.success(rtnPermission);
     }

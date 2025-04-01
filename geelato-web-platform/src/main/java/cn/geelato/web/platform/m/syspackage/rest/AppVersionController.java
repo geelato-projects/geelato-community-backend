@@ -16,7 +16,6 @@ import cn.geelato.web.platform.m.syspackage.entity.AppPackage;
 import cn.geelato.web.platform.m.syspackage.entity.AppVersion;
 import cn.geelato.web.platform.m.syspackage.service.AppVersionService;
 import com.alibaba.fastjson2.JSONObject;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +26,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author diabl
@@ -35,25 +35,22 @@ import java.util.*;
 @ApiRestController("/app/version")
 @Slf4j
 public class AppVersionController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<AppVersion> CLAZZ = AppVersion.class;
-    private static final String DEFAULT_ORDER_BY = "create_at DESC";
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("version", "description"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
+    private final AppVersionService appVersionService;
+    private final FileHandler fileHandler;
 
     @Autowired
-    private AppVersionService appVersionService;
-    @Resource
-    private FileHandler fileHandler;
+    public AppVersionController(AppVersionService appVersionService, FileHandler fileHandler) {
+        this.appVersionService = appVersionService;
+        this.fileHandler = fileHandler;
+    }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(DEFAULT_ORDER_BY);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return appVersionService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

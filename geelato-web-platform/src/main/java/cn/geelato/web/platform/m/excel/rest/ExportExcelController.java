@@ -33,14 +33,7 @@ import java.util.*;
 @ApiRestController("/export/file")
 @Slf4j
 public class ExportExcelController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<Attach> CLAZZ = Attach.class;
-
-    static {
-        OPERATORMAP.put("contains", List.of("name"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final AttachService attachService;
     private final ExportExcelService exportExcelService;
     private final DownloadService downloadService;
@@ -54,11 +47,12 @@ public class ExportExcelController extends BaseController {
         this.fileHandler = fileHandler;
     }
 
-    @RequestMapping(value = "/list", method = RequestMethod.GET)
+    @RequestMapping(value = "/list", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return attachService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

@@ -32,7 +32,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -41,16 +44,7 @@ import java.util.stream.Collectors;
 @ApiRestController("/model/table")
 @Slf4j
 public class DevTableController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<TableMeta> CLAZZ = TableMeta.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("title", "tableName", "entityName", "description"));
-        OPERATORMAP.put("consists", List.of("connectId"));
-        OPERATORMAP.put("isNulls", List.of("appId"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final DevTableService devTableService;
     private final DevTableColumnService devTableColumnService;
@@ -65,11 +59,12 @@ public class DevTableController extends BaseController {
         this.permissionService = permissionService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return devTableService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

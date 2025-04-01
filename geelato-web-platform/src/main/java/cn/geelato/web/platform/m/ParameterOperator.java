@@ -102,25 +102,36 @@ public class ParameterOperator extends RequestOperator {
     @Deprecated
     protected PageQueryRequest getPageQueryParameters(Map<String, Object> requestBodyMap) {
         PageQueryRequest queryRequest = new PageQueryRequest();
-        Object current = requestBodyMap.get("current");
-        queryRequest.setPageNum(current == null || Strings.isBlank(current.toString()) ? 1 : Integer.parseInt(current.toString()));
-        Object pageSize = requestBodyMap.get("pageSize");
-        queryRequest.setPageSize(pageSize == null || Strings.isBlank(pageSize.toString()) ? 10 : Integer.parseInt(pageSize.toString()));
-        String orderBy = requestBodyMap.get("order") == null ? "" : requestBodyMap.get("order").toString();
-        orderBy = orderBy.replaceAll("\\|", " ");
-        queryRequest.setOrderBy(orderBy);
-
+        if (requestBodyMap != null) {
+            Object current = requestBodyMap.get("current");
+            queryRequest.setPageNum(current == null || Strings.isBlank(current.toString()) ? 1 : Integer.parseInt(current.toString()));
+            Object pageSize = requestBodyMap.get("pageSize");
+            queryRequest.setPageSize(pageSize == null || Strings.isBlank(pageSize.toString()) ? 10 : Integer.parseInt(pageSize.toString()));
+            String orderBy = requestBodyMap.get("order") == null ? "" : requestBodyMap.get("order").toString();
+            orderBy = orderBy.replaceAll("\\|", " ");
+            queryRequest.setOrderBy(orderBy);
+        }
         return queryRequest;
+    }
+
+    protected PageQueryRequest getPageQueryParameters(Map<String, Object> requestBodyMap, String defaultOrder) {
+        PageQueryRequest pageQueryRequest = getPageQueryParameters(requestBodyMap);
+        if (Strings.isNotBlank(pageQueryRequest.getOrderBy())) {
+            pageQueryRequest.setOrderBy(defaultOrder);
+        }
+        return pageQueryRequest;
     }
 
     @Deprecated
     protected Map<String, Object> getQueryParameters(Class elementType, Map<String, Object> requestBodyMap, boolean isOperation) {
         Map<String, Object> queryParamsMap = new LinkedHashMap<>();
-        for (Map.Entry<String, Object> entry : requestBodyMap.entrySet()) {
-            Set<String> fieldNames = getClassFieldNames(elementType);
-            String key = getParameterMapKey(entry.getKey(), isOperation);
-            if (fieldNames.contains(key)) {
-                queryParamsMap.put(entry.getKey(), entry.getValue());
+        if (requestBodyMap != null) {
+            for (Map.Entry<String, Object> entry : requestBodyMap.entrySet()) {
+                Set<String> fieldNames = getClassFieldNames(elementType);
+                String key = getParameterMapKey(entry.getKey(), isOperation);
+                if (fieldNames.contains(key)) {
+                    queryParamsMap.put(entry.getKey(), entry.getValue());
+                }
             }
         }
         return queryParamsMap;

@@ -49,7 +49,7 @@ public class FileHandler extends BaseHandler {
      * @throws IOException 如果在上传过程中发生I/O错误，则抛出IOException
      */
     public Attachment upload(MultipartFile file, String path, FileParam param) throws IOException {
-        if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(param.getServiceType())) {
+        if (AttachmentServiceEnum.ALIYUN.getValue().equalsIgnoreCase(param.getServiceType())) {
             return uploadCloud(file, param);
         } else {
             return uploadLocal(file, path, param);
@@ -57,7 +57,7 @@ public class FileHandler extends BaseHandler {
     }
 
     public Attachment upload(String base64String, String name, FileParam param) throws IOException {
-        if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(param.getServiceType())) {
+        if (AttachmentServiceEnum.ALIYUN.getValue().equalsIgnoreCase(param.getServiceType())) {
             return uploadCloud(base64String, name, param);
         } else {
             String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, param.getSourceType(), param.getTenantCode(), param.getAppId(), name, false);
@@ -378,7 +378,7 @@ public class FileHandler extends BaseHandler {
             ZipUtils.compressFiles(fileISs, zpiFilePath);
             // 上传至Oss，保存附件信息
             FileParam zipFileParam = FileParamUtils.bySaveCompress(param.getServiceType(), param.getSourceType(), String.join(",", fileIds), param.getGenre(), param.getInvalidTime(), param.getBatchNo(), param.getTenantCode(), param.getAppId());
-            if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(param.getServiceType())) {
+            if (AttachmentServiceEnum.ALIYUN.getValue().equalsIgnoreCase(param.getServiceType())) {
                 attachments.add(uploadCloud(new File(zpiFilePath), zipFileName, zipFileParam));
             } else {
                 attachments.add(save(new File(zpiFilePath), zipFileName, zpiFilePath, zipFileParam));

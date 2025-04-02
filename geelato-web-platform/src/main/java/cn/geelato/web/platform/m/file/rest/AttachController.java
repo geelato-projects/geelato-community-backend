@@ -111,7 +111,7 @@ public class AttachController extends BaseController {
                     try {
                         File file = fileHandler.toFile(attachment);
                         isExist = file != null && file.exists();
-                        if (!AttachmentServiceEnum.OSS_LOCAL.getValue().equalsIgnoreCase(attachment.getStorageType())) {
+                        if (!AttachmentServiceEnum.LOCAL.getValue().equalsIgnoreCase(attachment.getStorageType())) {
                             if (isExist) {
                                 file.delete();
                             }
@@ -146,9 +146,9 @@ public class AttachController extends BaseController {
                 result.put(attachment.getId(), "文件不存在");
                 continue;
             }
-            if (AttachmentServiceEnum.OSS_LOCAL.getValue().equalsIgnoreCase(type)) {
+            if (AttachmentServiceEnum.LOCAL.getValue().equalsIgnoreCase(type)) {
                 // 阿里云OSS => 本地存储
-                if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(attachment.getStorageType())) {
+                if (AttachmentServiceEnum.ALIYUN.getValue().equalsIgnoreCase(attachment.getStorageType())) {
                     String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, attachment.getSource(), attachment.getTenantCode(), attachment.getAppId(), attachment.getName(), true);
                     try {
                         Files.copy(file.toPath(), Paths.get(path).normalize(), StandardCopyOption.REPLACE_EXISTING);
@@ -163,9 +163,9 @@ public class AttachController extends BaseController {
                 } else {
                     result.put(attachment.getId(), "存储方式未变化");
                 }
-            } else if (AttachmentServiceEnum.OSS_ALI.getValue().equalsIgnoreCase(type)) {
+            } else if (AttachmentServiceEnum.ALIYUN.getValue().equalsIgnoreCase(type)) {
                 // 本地存储 => 阿里云OSS
-                if (AttachmentServiceEnum.OSS_LOCAL.getValue().equalsIgnoreCase(attachment.getStorageType())) {
+                if (AttachmentServiceEnum.LOCAL.getValue().equalsIgnoreCase(attachment.getStorageType())) {
                     try {
                         Attachment target = fileHandler.uploadCloudFromLocal(attachment);
                         if (target != null) {

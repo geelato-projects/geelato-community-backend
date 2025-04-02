@@ -190,24 +190,6 @@ public enum RuleTypeEnum {
     }
 
     /**
-     * 获取选择项列表
-     *
-     * @return 包含所有规则类型的选择项列表
-     */
-    public static List<SelectOptionData> getSelectOptions() {
-        List<SelectOptionData> options = new ArrayList<>();
-        for (RuleTypeEnum rule : RuleTypeEnum.values()) {
-            SelectOptionData option = new SelectOptionData();
-            option.setLabel(rule.getLabel());
-            option.setValue(rule.name());
-            option.setOther(rule.getDescription());
-            option.setDisabled(rule.isDisabled());
-            options.add(option);
-        }
-        return options;
-    }
-
-    /**
      * 根据值获取标签
      * 根据给定的枚举值，获取对应的标签
      *

@@ -17,6 +17,7 @@ import java.util.Map;
 public class BaseDao {
     protected final SqlScriptManager sqlScriptManager = SqlScriptManagerFactory.get("sql");
     protected final DbScriptManager dbScriptManager= DbScriptManagerFactory.get("db");
+
     protected JdbcTemplate jdbcTemplate;
 
     protected final MetaManager metaManager = MetaManager.singleInstance();

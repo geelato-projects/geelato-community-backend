@@ -14,6 +14,7 @@ import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.WordWaterMarkMeta;
 import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
@@ -127,7 +128,7 @@ public class ExportExcelService {
                 exportFile.setReadOnly();
             }
             // 保存文件信息
-            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "exportFile", exportTemplate.getAppId(), exportTemplate.getTenantCode());
+            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, FileGenreEnum.exportFile.name(), exportTemplate.getAppId(), exportTemplate.getTenantCode());
             Attachment attachment = fileHandler.save(exportFile, fileName, directory, fileParam);
             return ApiResult.success(attachment);
         } catch (Exception e) {
@@ -185,7 +186,7 @@ public class ExportExcelService {
                 exportFile.setReadOnly();
             }
             // 保存文件信息
-            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "exportFile", appId, tenantCode);
+            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, FileGenreEnum.exportFile.name(), appId, tenantCode);
             Attachment attachment = fileHandler.save(exportFile, exportFileName, directory, fileParam);
             return ApiResult.success(attachment);
         } catch (Exception e) {
@@ -491,7 +492,7 @@ public class ExportExcelService {
             outputStream.flush();
             workbook.close();
             // 保存附件
-            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "exportTemplate", appId, tenantCode);
+            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, FileGenreEnum.exportTemplate.name(), appId, tenantCode);
             Attachment attachment = fileHandler.save(new File(exportPath), fileName, exportPath, fileParam);
             // 数据转换
             info = Base64Helper.fromAttachment(attachment);

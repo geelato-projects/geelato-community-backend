@@ -12,6 +12,7 @@ import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentServiceEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
@@ -80,7 +81,7 @@ public class AttachController extends BaseController {
         // 更新目标附件信息
         BeanUtils.populate(target, requestMap);
         target.setPid(source.getPid());
-        target.handleGenre("Replace");
+        target.handleGenre(FileGenreEnum.Replace.name());
         fileHandler.updateAttachment(target);
         // 删除源附件
         fileHandler.updateId(source.getSource(), sourceId, String.valueOf(UIDGenerator.generate()), true);
@@ -153,7 +154,7 @@ public class AttachController extends BaseController {
                         Files.copy(file.toPath(), Paths.get(path).normalize(), StandardCopyOption.REPLACE_EXISTING);
                         attachment.setObjectId(null);
                         attachment.setPath(path);
-                        attachment.handleGenre("UpdateStorage");
+                        attachment.handleGenre(FileGenreEnum.UpdateStorage.name());
                         fileHandler.updateAttachment(attachment);
                         file.delete();
                     } catch (IOException e) {
@@ -168,7 +169,7 @@ public class AttachController extends BaseController {
                     try {
                         Attachment target = fileHandler.uploadCloudFromLocal(attachment);
                         if (target != null) {
-                            target.handleGenre("UpdateStorage");
+                            target.handleGenre(FileGenreEnum.UpdateStorage.name());
                             fileHandler.updateAttachment(target);
                             file.delete();
                         } else {

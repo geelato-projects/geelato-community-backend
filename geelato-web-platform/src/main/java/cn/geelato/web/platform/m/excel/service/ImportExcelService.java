@@ -18,6 +18,7 @@ import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
 import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
@@ -60,7 +61,6 @@ import java.util.stream.Collectors;
 @Component
 public class ImportExcelService {
     private static final String REQUEST_FILE_PART = "file";
-    private static final String IMPORT_ERROR_FILE_GENRE = "importErrorFile";
     private static final String REDIS_UNIQUE_KEY = "uniques";
     private static final double IMPORT_PAGE_SIZE = 100.0;
     private static final int ROW_ACCESS_WINDOW_SIZE = 50;
@@ -829,7 +829,7 @@ public class ImportExcelService {
                 throw new FileTypeNotSupportedException("Business Data, Excel Type: " + contentType);
             }
             // 保存文件信息
-            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, IMPORT_ERROR_FILE_GENRE, exportTemplate.getAppId(), exportTemplate.getTenantCode());
+            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, FileGenreEnum.importErrorFile.name(), exportTemplate.getAppId(), exportTemplate.getTenantCode());
             attachment = fileHandler.save(errorFile, errorFileName, directory, fileParam);
             // 可下载
             /*responseOut = response.getOutputStream();

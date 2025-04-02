@@ -5,6 +5,7 @@ import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.OfficeUtils;
 import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.handler.AccessoryHandler;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
@@ -282,7 +283,7 @@ public class BaseHandler {
         if (file == null) {
             throw new RuntimeException("toPdfAndSave: PDF File does not exist");
         }
-        FileParam fileParam = FileParamUtils.byLocal(tableType, "TOPDF", appId, tenantCode);
+        FileParam fileParam = FileParamUtils.byLocal(tableType, FileGenreEnum.TOPDF.name(), appId, tenantCode);
         return accessoryHandler.save(file, name, file.getPath(), fileParam);
     }
 

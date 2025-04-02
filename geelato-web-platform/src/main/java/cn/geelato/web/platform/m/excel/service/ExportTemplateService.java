@@ -10,6 +10,7 @@ import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
 import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
@@ -430,7 +431,7 @@ public class ExportTemplateService extends BaseService {
      */
     public Attachment saveAttach(ExportTemplate meta, String excelPath, String fileName) throws IOException {
         File excelFile = new File(excelPath);
-        FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "fileTemplate", meta.getAppId(), meta.getTenantCode());
+        FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, FileGenreEnum.fileTemplate.name(), meta.getAppId(), meta.getTenantCode());
         return fileHandler.save(excelFile, fileName, excelPath, fileParam);
     }
 

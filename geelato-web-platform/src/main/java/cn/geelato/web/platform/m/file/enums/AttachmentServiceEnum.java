@@ -6,7 +6,7 @@ import lombok.Getter;
 public enum AttachmentServiceEnum {
 
     OSS_LOCAL("本地存储", "local"),
-    OSS_ALI("阿里云OSS", "aliyun");
+    OSS_ALI("阿里云存储", "aliyun");
 
     private final String label;// 选项内容
     private final String value;// 选项值

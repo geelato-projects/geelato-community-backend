@@ -13,6 +13,7 @@ import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
@@ -99,8 +100,8 @@ public class OCRController extends BaseController {
         String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, null, fileName, true);
         File targetFile = new File(directory);
         ocrService.clearContent(annotationPositionMetaList, fileInstance, targetFile);
-        String genre = StringUtils.splice(",", attachment.getGenre(), "clearPdf");
-        FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, genre, attachment.getAppId(), attachment.getTenantCode());
+        attachment.handleGenre(FileGenreEnum.clearPdf.name());
+        FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, attachment.getGenre(), attachment.getAppId(), attachment.getTenantCode());
         Attachment targetAttach = fileHandler.save(targetFile, fileName, directory, fileParam);
         return ApiResult.success(targetAttach.getId());
     }

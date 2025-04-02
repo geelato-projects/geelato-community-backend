@@ -54,7 +54,7 @@ public class PackageController extends BaseController {
     private DataSourceTransactionManager dataSourceTransactionManager;
     private TransactionStatus transactionStatus;
     private final String defaultPackageName = "geelatoApp";
-    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.ATTACH.getValue();
 
     private final ArrayList<String> incrementMetas = new ArrayList<>();
 

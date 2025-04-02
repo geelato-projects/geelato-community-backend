@@ -100,7 +100,7 @@ public class UploadService {
         String rootPath = subPath;
         AttachmentSourceEnum sourceEnum = AttachmentSourceEnum.getEnum(tableType);
         if (sourceEnum == null) {
-            sourceEnum = AttachmentSourceEnum.PLATFORM_ATTACH;
+            sourceEnum = AttachmentSourceEnum.ATTACH;
         }
         rootPath = String.format("%s/%s", subPath, sourceEnum.getValue());
 

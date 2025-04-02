@@ -8,9 +8,9 @@ import org.apache.logging.log4j.util.Strings;
  */
 @Getter
 public enum AttachmentSourceEnum {
-    PLATFORM_ATTACH("附属文件", "attach"),
-    PLATFORM_COMPRESS("压缩文件", "compress"),
-    PLATFORM_RESOURCES("资源文件", "resources");
+    ATTACH("附属文件", "attach"),
+    COMPRESS("压缩文件", "compress"),
+    RESOURCES("资源文件", "resources");
 
     private final String label;// 选项内容
     private final String value;// 选项值

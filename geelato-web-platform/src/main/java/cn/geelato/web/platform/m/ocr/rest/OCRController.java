@@ -42,7 +42,7 @@ import java.util.Map;
 @ApiRestController(value = "/ocr")
 @Slf4j
 public class OCRController extends BaseController {
-    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.ATTACH.getValue();
     private final OcrPdfService ocrPdfService;
     private final OcrService oService;
     private final FileHandler fileHandler;

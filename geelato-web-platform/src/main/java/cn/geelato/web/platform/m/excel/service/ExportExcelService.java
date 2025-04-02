@@ -52,7 +52,7 @@ import java.util.regex.Pattern;
 @Component
 public class ExportExcelService {
     private static final Pattern pattern = Pattern.compile("^[a-zA-Z0-9_\\-]+\\.[a-zA-Z0-9]{1,5}$");
-    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.ATTACH.getValue();
     private final Logger logger = LoggerFactory.getLogger(ExportExcelService.class);
     private final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
     @Autowired

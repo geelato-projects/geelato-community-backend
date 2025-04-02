@@ -25,7 +25,7 @@ public class ResourcesHandler extends AttachmentHandler<Resources> {
     public static final String SQL_UPDATE_PID = "update platform_resources set pid = ? where id = ?";
     public static final String SQL_UPDATE_ID = "update platform_resources set id = ? where id = ?";
     public static final String SQL_UPDATE_ID_DEL = "update platform_resources set id = ?, del_status = 1, delete_at = now() where id = ?";
-    public static final String ATTACHMENT_SOURCE = AttachmentSourceEnum.PLATFORM_RESOURCES.getValue();
+    public static final String ATTACHMENT_SOURCE = AttachmentSourceEnum.RESOURCES.getValue();
     private final ResourcesService resourcesService;
 
     @Autowired

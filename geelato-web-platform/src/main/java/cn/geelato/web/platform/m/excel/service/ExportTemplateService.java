@@ -38,7 +38,7 @@ public class ExportTemplateService extends BaseService {
     public static final String[] IMPORT_META_TYPE_HEADER = {"列名", "类型", "格式", "多值分隔符", "多值场景", "清洗规则", "备注"};
     public static final String[] IMPORT_META_META_HEADER = {"表格", "字段名称", "取值计算方式", "常量取值", "变量取值", "表达式取值", "数据字典取值", "模型取值", "备注"};
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
-    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_RESOURCES.getValue();
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.RESOURCES.getValue();
     @Lazy
     @Autowired
     private FileHandler fileHandler;

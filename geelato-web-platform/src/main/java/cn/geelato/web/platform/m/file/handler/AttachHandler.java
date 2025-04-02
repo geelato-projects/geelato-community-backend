@@ -26,7 +26,7 @@ public class AttachHandler extends AttachmentHandler<Attach> {
     public static final String SQL_UPDATE_PID = "update platform_attach set pid = ? where id = ?";
     public static final String SQL_UPDATE_ID = "update platform_attach set id = ? where id = ?";
     public static final String SQL_UPDATE_ID_DEL = "update platform_attach set id = ?, del_status = 1, delete_at = now() where id = ?";
-    public static final String ATTACHMENT_SOURCE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
+    public static final String ATTACHMENT_SOURCE = AttachmentSourceEnum.ATTACH.getValue();
     private final AttachService attachService;
 
     @Autowired

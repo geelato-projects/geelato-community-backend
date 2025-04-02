@@ -64,7 +64,7 @@ public class ImportExcelService {
     private static final String REDIS_UNIQUE_KEY = "uniques";
     private static final double IMPORT_PAGE_SIZE = 100.0;
     private static final int ROW_ACCESS_WINDOW_SIZE = 50;
-    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.PLATFORM_ATTACH.getValue();
+    private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.ATTACH.getValue();
     private final Logger logger = LoggerFactory.getLogger(ImportExcelService.class);
     private final MetaManager metaManager = MetaManager.singleInstance();
 

@@ -156,7 +156,7 @@ public class ExportExcelController extends BaseController {
             if (result.isSuccess() && result.getData() != null) {
                 if (isPdf) {
                     Attachment attachment = (Attachment) result.getData();
-                    result = ApiResult.success(fileHandler.toPdf(AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), attachment));
+                    result = ApiResult.success(fileHandler.toPdf(AttachmentSourceEnum.ATTACH.getValue(), attachment));
                 }
                 if (isDownload) {
                     Attachment attachment = (Attachment) result.getData();

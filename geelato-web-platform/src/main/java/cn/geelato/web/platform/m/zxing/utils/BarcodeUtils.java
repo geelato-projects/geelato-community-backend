@@ -116,7 +116,7 @@ public class BarcodeUtils {
         // 图片格式
         String pictureSuffix = BarcodePictureFormatEnum.getEnum(barcode.getPictureFormat());
         String pictureName = String.format("%s.%s", getFileName(barcode), pictureSuffix);
-        String picturePath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), barcode.getTenantCode(), barcode.getAppId(), pictureName, true);
+        String picturePath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.ATTACH.getValue(), barcode.getTenantCode(), barcode.getAppId(), pictureName, true);
         // log.info(String.format("%s, %s", pictureName, picturePath));
         // 字体
         Font font = null;

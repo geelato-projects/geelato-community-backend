@@ -42,7 +42,7 @@ public class QrcodeUtils {
         // 图片格式
         String pictureSuffix = BarcodePictureFormatEnum.getEnum(qrcode.getPictureFormat());
         String pictureName = String.format("%s.%s", getFileName(qrcode), pictureSuffix);
-        String picturePath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.PLATFORM_ATTACH.getValue(), qrcode.getTenantCode(), qrcode.getAppId(), pictureName, true);
+        String picturePath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.ATTACH.getValue(), qrcode.getTenantCode(), qrcode.getAppId(), pictureName, true);
         log.info(String.format("%s, %s", pictureName, picturePath));
         // 计算画布高度, 条码高度 + 条码上下边距
         int qrcodeHeight = qrcode.getHeight() + 2 * qrcode.getCodePadding();

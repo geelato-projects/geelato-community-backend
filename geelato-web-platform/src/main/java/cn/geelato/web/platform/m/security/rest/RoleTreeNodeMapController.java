@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author diabl
@@ -27,14 +29,7 @@ import java.util.*;
 @ApiRestController(value = "/security/role/tree")
 @Slf4j
 public class RoleTreeNodeMapController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<RoleTreeNodeMap> CLAZZ = RoleTreeNodeMap.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("treeNodeText", "title", "roleName"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final RoleTreeNodeMapService roleTreeNodeMapService;
 
     @Autowired
@@ -42,11 +37,12 @@ public class RoleTreeNodeMapController extends BaseController {
         this.roleTreeNodeMapService = roleTreeNodeMapService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return roleTreeNodeMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

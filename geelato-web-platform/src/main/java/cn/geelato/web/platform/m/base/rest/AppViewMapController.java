@@ -30,14 +30,7 @@ import java.util.Map;
 @ApiRestController("/app/view")
 @Slf4j
 public class AppViewMapController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<AppViewMap> CLAZZ = AppViewMap.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("appName", "tableName", "viewName"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final AppViewMapService appViewMapService;
 
     @Autowired
@@ -45,11 +38,12 @@ public class AppViewMapController extends BaseController {
         this.appViewMapService = appViewMapService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return appViewMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

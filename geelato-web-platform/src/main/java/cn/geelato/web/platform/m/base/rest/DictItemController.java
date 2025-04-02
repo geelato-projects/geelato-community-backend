@@ -36,15 +36,7 @@ public class DictItemController extends BaseController {
     private static final String DICT_CODE = "dictCode";
     private static final String DICT_ID = "dictId";
     private static final String ROOT_PARENT_ID = "";
-
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<DictItem> CLAZZ = DictItem.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("itemCode", "itemName", "itemRemark"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final DictService dictService;
     private final DictItemService dictItemService;
 
@@ -54,11 +46,12 @@ public class DictItemController extends BaseController {
         this.dictItemService = dictItemService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return dictItemService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

@@ -26,7 +26,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author diabl
@@ -34,15 +37,8 @@ import java.util.*;
 @ApiRestController("/sys/config")
 @Slf4j
 public class SysConfigController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<SysConfig> CLAZZ = SysConfig.class;
     private static final String CONFIG_TYPE_UPLOAD = "UPLOAD";
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("configKey", "configValue", "keyType", "remark"));
-        OPERATORMAP.put("isNulls", List.of("appId"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
 
     private final SysConfigService sysConfigService;
     private final FileHandler fileHandler;
@@ -53,11 +49,12 @@ public class SysConfigController extends BaseController {
         this.fileHandler = fileHandler;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             ApiPagedResult result = sysConfigService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
             DataItems<List<SysConfig>> dataItems = (DataItems<List<SysConfig>>) result.getData();
             setConfigAssist(dataItems.getItems());

@@ -100,7 +100,7 @@ public class FileService {
         }
         fileName = FileUtils.getFileName(fileName) + "." + suffix;
         String tenantCode = GraalUtils.getCurrentTenantCode();
-        FileParam fileParam = FileParamUtils.byBase64AndThumbnail(serviceType, tableType, "Api,Base64", batchNo, tenantCode, isThumbnail, onlyThumb, dimension);
+        FileParam fileParam = FileParamUtils.byBase64AndThumbnail(serviceType, tableType, "ApiBase64", batchNo, tenantCode, isThumbnail, onlyThumb, dimension);
         Attachment attachment = fileHandler.upload(base64String, fileName, fileParam);
         if (attachment == null) {
             throw new RuntimeException("saveBase64：upload file error");

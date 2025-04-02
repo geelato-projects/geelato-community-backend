@@ -25,7 +25,7 @@ public class CompressHandler extends AttachmentHandler<Compress> {
     public static final String SQL_UPDATE_PID = "update platform_compress set pid = ? where id = ?";
     public static final String SQL_UPDATE_ID = "update platform_compress set id = ? where id = ?";
     public static final String SQL_UPDATE_ID_DEL = "update platform_compress set id = ?, del_status = 1, delete_at = now() where id = ?";
-    public static final String ATTACHMENT_SOURCE = AttachmentSourceEnum.PLATFORM_COMPRESS.getValue();
+    public static final String ATTACHMENT_SOURCE = AttachmentSourceEnum.COMPRESS.getValue();
     private final CompressService compressService;
 
     @Autowired

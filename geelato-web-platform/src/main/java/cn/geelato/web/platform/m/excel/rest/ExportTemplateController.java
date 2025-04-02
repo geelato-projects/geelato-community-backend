@@ -22,9 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,14 +31,7 @@ import java.util.Map;
 @ApiRestController("/export/template")
 @Slf4j
 public class ExportTemplateController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<ExportTemplate> CLAZZ = ExportTemplate.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("title", "fileCode"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final ExportTemplateService exportTemplateService;
 
     @Autowired

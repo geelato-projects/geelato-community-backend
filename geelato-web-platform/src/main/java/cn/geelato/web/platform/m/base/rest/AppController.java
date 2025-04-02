@@ -23,7 +23,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author diabl
@@ -31,15 +33,8 @@ import java.util.*;
 @ApiRestController("/app")
 @Slf4j
 public class AppController extends BaseController {
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<App> CLAZZ = App.class;
     private static final String DEFAULT_ORDER_BY = "seq_no ASC,update_at DESC";
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("name", "code", "description"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final AppService appService;
 
 
@@ -48,11 +43,12 @@ public class AppController extends BaseController {
         this.appService = appService;
     }
 
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(DEFAULT_ORDER_BY);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody, DEFAULT_ORDER_BY);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return appService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

@@ -40,16 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserRestController extends BaseController {
     private static final int DEFAULT_PASSWORD_DIGIT = 8;
-    private static final Map<String, List<String>> OPERATORMAP = new LinkedHashMap<>();
     private static final Class<User> CLAZZ = User.class;
-
-    static {
-        OPERATORMAP.put("contains", Arrays.asList("name", "loginName", "orgName", "description"));
-        OPERATORMAP.put("consists", List.of("orgId"));
-        OPERATORMAP.put("excludes", Arrays.asList("stocked", "stockSearch"));
-        OPERATORMAP.put("intervals", Arrays.asList("createAt", "updateAt"));
-    }
-
     private final UserService userService;
     private final OrgService orgService;
     private final UserStockMapService userStockMapService;
@@ -61,12 +52,12 @@ public class UserRestController extends BaseController {
         this.userStockMapService = userStockMapService;
     }
 
-
-    @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             ApiPagedResult result = userService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
             DataItems<List<User>> dataItems = (DataItems<List<User>>) result.getData();
             // 清理不需要展示的数据
@@ -80,12 +71,13 @@ public class UserRestController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/pageQueryStock", method = RequestMethod.GET)
+    @RequestMapping(value = "/pageQueryStock", method = RequestMethod.POST)
     public ApiPagedResult pageQueryStock(boolean stocked, boolean stockSearch) {
         try {
             // 搜索条件
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             // 获取当前用户常用联系人
             if (stockSearch) {
                 Map<String, Object> params = new HashMap<>();
@@ -115,11 +107,14 @@ public class UserRestController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/pageQueryOf", method = RequestMethod.GET)
-    public ApiPagedResult pageQueryOf(String appId, String tenantCode) {
+    @RequestMapping(value = "/pageQueryOf", method = RequestMethod.POST)
+    public ApiPagedResult pageQueryOf() {
         try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, OPERATORMAP);
+            Map<String, Object> requestBody = this.getRequestBody();
+            String appId = Objects.toString(requestBody.get("appId"), "");
+            String tenantCode = Objects.toString(requestBody.get("tenantCode"), "");
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
             return userService.pageQueryModelOf(filterGroup, pageQueryRequest, appId, tenantCode);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

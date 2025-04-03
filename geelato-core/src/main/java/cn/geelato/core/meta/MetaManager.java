@@ -256,7 +256,7 @@ public class MetaManager extends AbstractManager {
         HashMap<String, Object> map = new HashMap<>(em.getFieldMetas().size());
         for (FieldMeta fm : em.getFieldMetas()) {
             ColumnMeta cm = fm.getColumnMeta();
-            if (cm.getEnableStatus() == ColumnDefault.ENABLE_STATUS_VALUE && cm.getDelStatus() == DeleteStatusEnum.NO.getCode()) {
+            if (cm.getEnableStatus() == ColumnDefault.ENABLE_STATUS_VALUE && cm.getDelStatus() == ColumnDefault.DEL_STATUS_VALUE) {
                 if (boolean.class.equals(fm.getFieldType()) || Boolean.class.equals(fm.getFieldType())) {
                     map.put(fm.getFieldName(), Strings.isNotBlank(cm.getDefaultValue()) ? Integer.parseInt(cm.getDefaultValue()) : null);
                 } else {

@@ -1057,7 +1057,7 @@ public class ExcelCommonUtils {
         Map<String, ColumnMeta> uniqueColumns = new HashMap<>();
         if (fieldMetas != null && !fieldMetas.isEmpty()) {
             for (FieldMeta fieldMeta : fieldMetas) {
-                ColumnMeta meta = fieldMeta.getColumn();
+                ColumnMeta meta = fieldMeta.getColumnMeta();
                 if (meta != null && Strings.isNotBlank(meta.getFieldName()) && meta.getEnableStatus() == ColumnDefault.ENABLE_STATUS_VALUE && meta.getDelStatus() == ColumnDefault.DEL_STATUS_VALUE) {
                     if (!uniqueColumns.containsKey(meta.getFieldName()) && !columnNames.contains(meta.getName()) && !meta.isNullable()) {
                         uniqueColumns.put(meta.getFieldName(), meta);
@@ -1073,7 +1073,7 @@ public class ExcelCommonUtils {
         Map<String, ColumnMeta> uniqueColumns = new HashMap<>();
         if (fieldMetas != null && !fieldMetas.isEmpty()) {
             for (FieldMeta fieldMeta : fieldMetas) {
-                ColumnMeta meta = fieldMeta.getColumn();
+                ColumnMeta meta = fieldMeta.getColumnMeta();
                 if (meta != null && Strings.isNotBlank(meta.getFieldName()) && meta.getEnableStatus() == ColumnDefault.ENABLE_STATUS_VALUE && meta.getDelStatus() == ColumnDefault.DEL_STATUS_VALUE) {
                     if (!uniqueColumns.containsKey(meta.getFieldName()) && !columnNames.contains(meta.getName()) && meta.isUniqued()) {
                         uniqueColumns.put(meta.getFieldName(), meta);

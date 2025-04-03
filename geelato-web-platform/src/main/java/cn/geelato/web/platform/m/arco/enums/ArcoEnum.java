@@ -61,7 +61,7 @@ public enum ArcoEnum {
     VALID_TYPE_ENUM("ValidTypeEnum", ValidTypeEnum.class),
     ROLE_TYPE_ENUM("RoleTypeEnum", RoleTypeEnum.class),
     ORG_TYPE_ENUM("OrgTypeEnum", OrgTypeEnum.class),
-    IS_DEFAULT_ORG_ENUM("IsDefaultOrgEnum", IsDefaultOrgEnum.class),// Integer
+    IS_DEFAULT_ORG_ENUM("IsDefaultOrgEnum", IsDefaultOrgEnum.class, Integer.class),// Integer
     ENCODING_SERIAL_TYPE_ENUM("EncodingSerialTypeEnum", EncodingSerialTypeEnum.class),
     ENCODING_ITEM_TYPE_ENUM("EncodingItemTypeEnum", EncodingItemTypeEnum.class),
     AUTH_CODE_ACTION("AuthCodeAction", AuthCodeAction.class),
@@ -83,43 +83,66 @@ public enum ArcoEnum {
     TABLE_SOURCE_TYPE_ENUM("TableSourceTypeEnum", TableSourceTypeEnum.class),
     TABLE_TYPE_ENUM("TableTypeEnum", TableTypeEnum.class),
     TABLE_FOREIGN_ACTION("TableForeignAction", TableForeignAction.class),
-    LINKED_ENUM("LinkedEnum", LinkedEnum.class),// Integer
-    ENABLE_STATUS_ENUM("EnableStatusEnum", EnableStatusEnum.class),// Integer
+    LINKED_ENUM("LinkedEnum", LinkedEnum.class, Integer.class),// Integer
+    ENABLE_STATUS_ENUM("EnableStatusEnum", EnableStatusEnum.class, Integer.class),// Integer
     DIALECTS("Dialects", Dialects.class),
-    DELETE_STATUS_ENUM("DeleteStatusEnum", DeleteStatusEnum.class),// Integer
-    COLUMN_SYNCED_ENUM("ColumnSyncedEnum", ColumnSyncedEnum.class),// Boolean
-    COLUMN_ENCRYPTED_ENUM("ColumnEncryptedEnum", ColumnEncryptedEnum.class),// Boolean
+    DELETE_STATUS_ENUM("DeleteStatusEnum", DeleteStatusEnum.class, Integer.class),// Integer
+    COLUMN_SYNCED_ENUM("ColumnSyncedEnum", ColumnSyncedEnum.class, Boolean.class),// Boolean
+    COLUMN_ENCRYPTED_ENUM("ColumnEncryptedEnum", ColumnEncryptedEnum.class, Boolean.class),// Boolean
     // Utils相关枚举
-    TIME_UNIT_ENUM("TimeUnitEnum", TimeUnitEnum.class),// Integer
+    TIME_UNIT_ENUM("TimeUnitEnum", TimeUnitEnum.class, Integer.class),// Integer
     LOCALE_ENUM("LocaleEnum", LocaleEnum.class);
 
     private final String code;
     private final Class<?> clazz;
+    private final Class<?> valueClass;
 
     ArcoEnum(String code, Class<?> clazz) {
         this.code = code;
         this.clazz = clazz;
+        this.valueClass = String.class;
     }
 
-    public static Class<?> getClassByCode(String code) {
+    ArcoEnum(String code, Class<?> clazz, Class<?> valueClass) {
+        this.code = code;
+        this.clazz = clazz;
+        this.valueClass = valueClass;
+    }
+
+    public static ArcoEnum getEnum(String code) {
         for (ArcoEnum arcoEnum : ArcoEnum.values()) {
             if (arcoEnum.getCode().equalsIgnoreCase(code)) {
-                return arcoEnum.getClazz();
+                return arcoEnum;
             }
         }
         return null;
     }
 
-    public static List<SelectOptionData> getSelectOptions(Class<?> enumClass) {
+    public static List<SelectOptionData> getSelectOptions(String code) {
         List<SelectOptionData> options = new ArrayList<>();
-        if (!enumClass.isEnum()) {
+        // 获取枚举类
+        ArcoEnum arcoEnum = ArcoEnum.getEnum(code);
+        if (arcoEnum == null) {
             return options;
         }
-        Object[] enumConstants = enumClass.getEnumConstants();
+        // 枚举类
+        Class<?> clazz = arcoEnum.getClazz();
+        if (clazz == null || !Enum.class.isAssignableFrom(clazz) || !clazz.isEnum()) {
+            return options;
+        }
+        Object[] enumConstants = clazz.getEnumConstants();
         for (Object enumConstant : enumConstants) {
             SelectOptionData option = new SelectOptionData();
             // 设置value (优先尝试getValue()或value字段，否则使用name())
-            option.setValue(getEnumValue(enumConstant));
+            if (arcoEnum.getValueClass() == Integer.class) {
+                option.setValue(getEnumIntegerValue(enumConstant));
+            } else if (arcoEnum.getValueClass() == String.class) {
+                option.setValue(getEnumStringValue(enumConstant));
+            } else if (arcoEnum.getValueClass() == Boolean.class) {
+                option.setValue(getEnumBooleanValue(enumConstant));
+            } else {
+                option.setValue(null);
+            }
             // 设置label (优先尝试getLabel()或label字段，否则使用name())
             option.setLabel(getEnumLabel(enumConstant));
             // 设置label (优先尝试getLabel()或label字段，否则使用name())
@@ -133,12 +156,28 @@ public enum ArcoEnum {
         return options;
     }
 
-    private static String getEnumValue(Object enumConstant) {
+    private static String getEnumStringValue(Object enumConstant) {
         return getEnumAttribute(enumConstant,
                 new String[]{"value"},
                 new String[]{"getValue"},
                 ((Enum<?>) enumConstant).name(),
                 String.class);
+    }
+
+    private static Integer getEnumIntegerValue(Object enumConstant) {
+        return getEnumAttribute(enumConstant,
+                new String[]{"value"},
+                new String[]{"getValue"},
+                null,
+                Integer.class);
+    }
+
+    private static Boolean getEnumBooleanValue(Object enumConstant) {
+        return getEnumAttribute(enumConstant,
+                new String[]{"value"},
+                new String[]{"getValue"},
+                null,
+                Boolean.class);
     }
 
     private static String getEnumLabel(Object enumConstant) {
@@ -188,7 +227,6 @@ public enum ArcoEnum {
                     return returnType.cast(value);
                 }
             } catch (Exception ignored) {
-                // 忽略单个字段查找失败
             }
         }
         // 其次查找方法
@@ -200,7 +238,6 @@ public enum ArcoEnum {
                     return returnType.cast(value);
                 }
             } catch (Exception ignored) {
-                // 忽略单个方法查找失败
             }
         }
         return defaultValue;

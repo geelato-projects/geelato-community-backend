@@ -20,11 +20,7 @@ public class ArcoController extends BaseController {
      * @return 包含选择项数据的ApiResult对象，如果找不到对应的枚举类，则返回空的ApiResult对象
      */
     @RequestMapping(value = "/sod/{code}", method = RequestMethod.GET)
-    public ApiResult<?> getSelectOptionData(@PathVariable(required = true) String code) {
-        Class<?> clazz = ArcoEnum.getClassByCode(code);
-        if (clazz != null && Enum.class.isAssignableFrom(clazz)) {
-            return ApiResult.success(ArcoEnum.getSelectOptions(clazz));
-        }
-        return ApiResult.successNoResult();
+    public ApiResult<?> getSelectOptionData(@PathVariable() String code) {
+        return ApiResult.success(ArcoEnum.getSelectOptions(code));
     }
 }

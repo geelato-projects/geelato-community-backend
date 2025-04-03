@@ -90,7 +90,7 @@ public class DevTableForeignController extends BaseController {
         try {
             TableForeign model = devTableForeignService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
-            model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+            model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             devTableForeignService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {

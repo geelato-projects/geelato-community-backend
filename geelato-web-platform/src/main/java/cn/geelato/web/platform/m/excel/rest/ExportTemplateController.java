@@ -95,7 +95,7 @@ public class ExportTemplateController extends BaseController {
         try {
             ExportTemplate model = exportTemplateService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
-            model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+            model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             exportTemplateService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {

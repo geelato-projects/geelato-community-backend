@@ -19,19 +19,19 @@ public enum Dialects {
     ELASTICSEARCH("es", "", null),
     MONGODB("mongo", "", null);
 
-    private final String type;
+    private final String value;
     private final String driver;
     private final String urlFormat;
 
-    Dialects(String type, String driver, String urlFormat) {
-        this.type = type;
+    Dialects(String value, String driver, String urlFormat) {
+        this.value = value;
         this.driver = driver;
         this.urlFormat = urlFormat;
     }
 
     public static Dialects lookUp(String value) {
         for (Dialects dialects : Dialects.values()) {
-            if (dialects.getType().equalsIgnoreCase(value)) {
+            if (dialects.getValue().equalsIgnoreCase(value)) {
                 return dialects;
             }
         }
@@ -43,14 +43,14 @@ public enum Dialects {
             return "";
         }
         Dialects dialects = lookUp(value);
-        String dbType = dialects != null ? dialects.getType() : "";
-        if (Dialects.MYSQL.getType().equalsIgnoreCase(dbType)) {
+        String dbType = dialects != null ? dialects.getValue() : "";
+        if (Dialects.MYSQL.getValue().equalsIgnoreCase(dbType)) {
             return result.get("Create View") != null ? String.valueOf(result.get("Create View")) : "";
-        } else if (Dialects.SQLSERVER.getType().equalsIgnoreCase(dbType)) {
+        } else if (Dialects.SQLSERVER.getValue().equalsIgnoreCase(dbType)) {
             return result.get("definition") != null ? String.valueOf(result.get("definition")) : "";
-        } else if (Dialects.ORACLE.getType().equalsIgnoreCase(dbType)) {
+        } else if (Dialects.ORACLE.getValue().equalsIgnoreCase(dbType)) {
             return result.get("TEXT") != null ? String.valueOf(result.get("TEXT")) : "";
-        } else if (Dialects.POSTGRESQL.getType().equalsIgnoreCase(dbType)) {
+        } else if (Dialects.POSTGRESQL.getValue().equalsIgnoreCase(dbType)) {
             return result.get("definition") != null ? String.valueOf(result.get("definition")) : "";
         }
         return "";

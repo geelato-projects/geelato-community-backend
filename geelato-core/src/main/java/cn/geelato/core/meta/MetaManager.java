@@ -1,11 +1,10 @@
 package cn.geelato.core.meta;
 
 import cn.geelato.core.AbstractManager;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.constants.ResourcesFiles;
 import cn.geelato.core.enums.DataTypeRadiusEnum;
-import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.enums.MysqlToJavaEnum;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.model.column.ColumnMeta;
@@ -257,7 +256,7 @@ public class MetaManager extends AbstractManager {
         HashMap<String, Object> map = new HashMap<>(em.getFieldMetas().size());
         for (FieldMeta fm : em.getFieldMetas()) {
             ColumnMeta cm = fm.getColumn();
-            if (cm.getEnableStatus() == EnableStatusEnum.ENABLED.getCode() && cm.getDelStatus() == DeleteStatusEnum.NO.getCode()) {
+            if (cm.getEnableStatus() == ColumnDefault.ENABLE_STATUS_VALUE && cm.getDelStatus() == ColumnDefault.DEL_STATUS_VALUE) {
                 if (boolean.class.equals(fm.getFieldType()) || Boolean.class.equals(fm.getFieldType())) {
                     map.put(fm.getFieldName(), Strings.isNotBlank(cm.getDefaultValue()) ? Integer.parseInt(cm.getDefaultValue()) : null);
                 } else {

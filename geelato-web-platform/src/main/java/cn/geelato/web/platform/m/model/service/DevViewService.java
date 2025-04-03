@@ -151,8 +151,8 @@ public class DevViewService extends BaseSortableService {
         sqlParams.put("viewName", model.getViewName());
         sqlParams.put("newViewName", newViewName);// 新
         sqlParams.put("viewSql", model.getViewConstruct());
-        sqlParams.put("enableStatus", EnableStatusEnum.DISABLED.getCode());
-        sqlParams.put("delStatus", DeleteStatusEnum.IS.getCode());
+        sqlParams.put("enableStatus", EnableStatusEnum.DISABLED.getValue());
+        sqlParams.put("delStatus", DeleteStatusEnum.IS.getValue());
         sqlParams.put("deleteAt", sdf.format(new Date()));
         sqlParams.put("connectId", connectMeta.getId());
         // 数据库视图，切换数据库
@@ -169,8 +169,8 @@ public class DevViewService extends BaseSortableService {
         model.setDescription(newDescription);
         model.setTitle(newTitle);
         // 删除，标记变更
-        model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
-        model.setDelStatus(DeleteStatusEnum.IS.getCode());
+        model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
+        model.setDelStatus(DeleteStatusEnum.IS.getValue());
         model.setDeleteAt(new Date());
         model.setSeqNo(ColumnDefault.SEQ_NO_DELETE);
         dao.save(model);

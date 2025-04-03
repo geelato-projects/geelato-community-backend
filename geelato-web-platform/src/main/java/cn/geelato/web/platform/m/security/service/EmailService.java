@@ -1,8 +1,6 @@
 package cn.geelato.web.platform.m.security.service;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
@@ -99,8 +97,8 @@ public class EmailService {
         configKeys.add(password);
         // 查询配置值
         FilterGroup filterGroup = new FilterGroup();
-        filterGroup.addFilter(ColumnDefault.ENABLE_STATUS_FIELD, String.valueOf(EnableStatusEnum.ENABLED.getCode()));
-        filterGroup.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(DeleteStatusEnum.NO.getCode()));
+        filterGroup.addFilter(ColumnDefault.ENABLE_STATUS_FIELD, String.valueOf(ColumnDefault.ENABLE_STATUS_VALUE));
+        filterGroup.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
         filterGroup.addFilter("configKey", FilterGroup.Operator.in, String.join(",", configKeys));
         List<SysConfig> sysConfigs = dao.queryList(SysConfig.class, filterGroup, null);
         // 填充

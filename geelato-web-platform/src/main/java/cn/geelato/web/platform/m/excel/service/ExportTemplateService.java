@@ -476,8 +476,8 @@ public class ExportTemplateService extends BaseService {
         BeanUtils.copyProperties(newExTe, meta);
         newExTe.setId(null);
         newExTe.setDeleteAt(new Date());
-        newExTe.setDelStatus(DeleteStatusEnum.IS.getCode());
-        newExTe.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+        newExTe.setDelStatus(DeleteStatusEnum.IS.getValue());
+        newExTe.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
         dao.save(newExTe);
         // 更新
         if (template != null) {

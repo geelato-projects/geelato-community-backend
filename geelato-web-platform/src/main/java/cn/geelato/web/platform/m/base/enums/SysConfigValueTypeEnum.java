@@ -1,6 +1,5 @@
 package cn.geelato.web.platform.m.base.enums;
 
-import cn.geelato.utils.StringUtils;
 import lombok.Getter;
 
 /**
@@ -24,16 +23,4 @@ public enum SysConfigValueTypeEnum {
         this.label = label;
         this.value = value;
     }
-
-    public static String getLabel(String value) {
-        if (StringUtils.isNotBlank(value)) {
-            for (SysConfigValueTypeEnum enums : SysConfigValueTypeEnum.values()) {
-                if (enums.getValue().equals(value)) {
-                    return enums.getLabel();
-                }
-            }
-        }
-        return null;
-    }
-
 }

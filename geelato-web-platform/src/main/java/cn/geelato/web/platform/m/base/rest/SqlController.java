@@ -2,7 +2,6 @@ package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.script.db.DbScriptManager;
@@ -121,7 +120,7 @@ public class SqlController extends BaseController {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("key_name", form.getKeyName());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
             boolean isValid = sqlService.validate("platform_sql", form.getId(), params);

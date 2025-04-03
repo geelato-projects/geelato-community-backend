@@ -8,14 +8,14 @@ import lombok.Getter;
 
 @Getter
 public enum IsDefaultOrgEnum {
-    IS(1, "是"), NO(0, "否");
+    IS("是", 1),
+    NO("否", 0);
 
-    private final int code;
-    private final String name;
+    private final String label;
+    private final int value;
 
-    IsDefaultOrgEnum(int code, String name) {
-        this.code = code;
-        this.name = name;
+    IsDefaultOrgEnum(String label, int value) {
+        this.label = label;
+        this.value = value;
     }
-
 }

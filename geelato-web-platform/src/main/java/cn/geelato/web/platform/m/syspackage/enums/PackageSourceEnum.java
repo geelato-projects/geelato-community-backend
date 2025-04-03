@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.m.syspackage.enums;
 
 import lombok.Getter;
-import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
@@ -19,16 +18,5 @@ public enum PackageSourceEnum {
     PackageSourceEnum(String label, String value) {
         this.label = label;
         this.value = value;
-    }
-
-    public static String getLabel(String value) {
-        if (Strings.isNotBlank(value)) {
-            for (PackageSourceEnum enums : PackageSourceEnum.values()) {
-                if (enums.getValue().equals(value)) {
-                    return enums.getLabel();
-                }
-            }
-        }
-        return null;
     }
 }

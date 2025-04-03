@@ -57,7 +57,7 @@ public class UserService extends BaseSortableService {
      */
     public void isDeleteModel(User model) {
         // 用户删除
-        model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+        model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
         super.isDeleteModel(model);
         // 清理 组织用户表
         Map<String, Object> params = new HashMap<>();
@@ -65,7 +65,7 @@ public class UserService extends BaseSortableService {
         List<OrgUserMap> oList = orgUserMapService.queryModel(OrgUserMap.class, params);
         if (oList != null) {
             for (OrgUserMap oModel : oList) {
-                oModel.setDefaultOrg(IsDefaultOrgEnum.NO.getCode());
+                oModel.setDefaultOrg(IsDefaultOrgEnum.NO.getValue());
                 orgUserMapService.isDeleteOrgUserMap(oModel);
             }
         }
@@ -87,12 +87,12 @@ public class UserService extends BaseSortableService {
             for (OrgUserMap oModel : oList) {
                 if (oModel.getOrgId() != null && oModel.getOrgId().equals(model.getOrgId())) {
                     isExit = true;
-                    if (IsDefaultOrgEnum.IS.getCode() != oModel.getDefaultOrg()) {
-                        oModel.setDefaultOrg(IsDefaultOrgEnum.IS.getCode());
+                    if (IsDefaultOrgEnum.IS.getValue() != oModel.getDefaultOrg()) {
+                        oModel.setDefaultOrg(IsDefaultOrgEnum.IS.getValue());
                         orgUserMapService.updateModel(oModel);
                     }
-                } else if (IsDefaultOrgEnum.IS.getCode() == oModel.getDefaultOrg()) {
-                    oModel.setDefaultOrg(IsDefaultOrgEnum.NO.getCode());
+                } else if (IsDefaultOrgEnum.IS.getValue() == oModel.getDefaultOrg()) {
+                    oModel.setDefaultOrg(IsDefaultOrgEnum.NO.getValue());
                     orgUserMapService.updateModel(oModel);
                 }
             }
@@ -104,7 +104,7 @@ public class UserService extends BaseSortableService {
             oModel.setUserName(model.getName());
             oModel.setOrgId(orgId);
             oModel.setOrgName(model.getOrgName());
-            oModel.setDefaultOrg(IsDefaultOrgEnum.IS.getCode());
+            oModel.setDefaultOrg(IsDefaultOrgEnum.IS.getValue());
             orgUserMapService.createModel(oModel);
         }
     }

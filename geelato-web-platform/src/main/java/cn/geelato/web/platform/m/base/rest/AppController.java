@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.env.entity.User;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
@@ -139,7 +139,7 @@ public class AppController extends BaseController {
             if ("code".equalsIgnoreCase(type)) {
                 Map<String, String> params = new HashMap<>();
                 params.put("code", form.getCode());
-                params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+                params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
                 params.put("tenant_code", form.getTenantCode());
                 return ApiResult.success(appService.validate("platform_app", form.getId(), params));
             } else if ("id".equalsIgnoreCase(type) && Strings.isNotBlank(form.getId())) {

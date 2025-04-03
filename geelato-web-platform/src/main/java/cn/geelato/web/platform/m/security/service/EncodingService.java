@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.security.service;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.enums.EnableStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UUIDUtils;
@@ -106,7 +106,7 @@ public class EncodingService extends BaseService {
         List<Object> redisItemKeys = redisTemplate.opsForList().range(ENCODING_LIST_PREFIX, 0, -1);
         if (redisItemKeys == null || redisItemKeys.isEmpty()) {
             Map<String, Object> params = new HashMap<>();
-            params.put("enableStatus", EnableStatusEnum.ENABLED.getCode());
+            params.put("enableStatus", ColumnDefault.ENABLE_STATUS_VALUE);
             List<Encoding> encodingList = queryModel(Encoding.class, params);
             for (Encoding encoding : encodingList) {
                 encoding.afterSet();
@@ -140,7 +140,7 @@ public class EncodingService extends BaseService {
         Map<String, Object> logParams = new HashMap<>();
         logParams.put("encodingId", encoding.getId());
         logParams.put("template", encoding.getFormatExample());
-        logParams.put("enableStatus", EnableStatusEnum.ENABLED.getCode());
+        logParams.put("enableStatus", ColumnDefault.ENABLE_STATUS_VALUE);
         if (Strings.isNotBlank(encoding.getDateType())) {
             logParams.put("exampleDate", new SimpleDateFormat(encoding.getDateType()).format(new Date()));
         }
@@ -180,7 +180,7 @@ public class EncodingService extends BaseService {
         // 记录
         EncodingLog encodingLog = new EncodingLog();
         encodingLog.setEncodingId(form.getId());
-        encodingLog.setEnableStatus(EnableStatusEnum.ENABLED.getCode());
+        encodingLog.setEnableStatus(ColumnDefault.ENABLE_STATUS_VALUE);
         encodingLog.setTemplate(form.getFormatExample());
         // 系统变量
         Map<String, Object> variableParams = getVariable(itemList, argument.get("appId") == null ? null : String.valueOf(argument.get("appId")));

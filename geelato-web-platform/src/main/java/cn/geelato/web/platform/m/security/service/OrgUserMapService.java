@@ -84,7 +84,7 @@ public class OrgUserMapService extends BaseService {
                     map.setOrgName(org.getName());
                     map.setUserId(user.getId());
                     map.setUserName(user.getName());
-                    map.setDefaultOrg(org.getId().equals(user.getOrgId()) ? IsDefaultOrgEnum.IS.getCode() : IsDefaultOrgEnum.NO.getCode());
+                    map.setDefaultOrg(org.getId().equals(user.getOrgId()) ? IsDefaultOrgEnum.IS.getValue() : IsDefaultOrgEnum.NO.getValue());
                     map = this.createModel(map);
                     list.add(map);
                 }
@@ -126,7 +126,7 @@ public class OrgUserMapService extends BaseService {
      * @param model 要执行删除操作的OrgUserMap对象
      */
     public void isDeleteOrgUserMap(OrgUserMap model) {
-        model.setDefaultOrg(IsDefaultOrgEnum.NO.getCode());
+        model.setDefaultOrg(IsDefaultOrgEnum.NO.getValue());
         super.isDeleteModel(model);
     }
 }

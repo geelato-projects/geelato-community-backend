@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.security.rest;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.env.entity.User;
 import cn.geelato.core.gql.filter.FilterGroup;
@@ -129,7 +129,7 @@ public class PermissionController extends BaseController {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("code", form.getCode());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(permissionService.validate("platform_permission", form.getId(), params));
         } catch (Exception e) {

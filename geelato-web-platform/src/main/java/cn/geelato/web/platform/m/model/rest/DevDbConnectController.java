@@ -95,7 +95,7 @@ public class DevDbConnectController extends BaseController {
         try {
             ConnectMeta model = devDbConnectService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
-            model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+            model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             devDbConnectService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {

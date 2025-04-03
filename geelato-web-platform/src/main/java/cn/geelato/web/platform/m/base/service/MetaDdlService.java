@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.enums.EnableStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.TableSourceTypeEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
@@ -149,7 +149,7 @@ public class MetaDdlService {
                 FilterGroup filterGroup = new FilterGroup();
                 filterGroup.addFilter("appId", appId);
                 filterGroup.addFilter("tenantCode", tenantCode);
-                filterGroup.addFilter("enableStatus", String.valueOf(EnableStatusEnum.ENABLED.getCode()));
+                filterGroup.addFilter("enableStatus", String.valueOf(ColumnDefault.ENABLE_STATUS_VALUE));
                 List<TableMeta> tableMetas = devTableService.queryModel(TableMeta.class, filterGroup);
                 if (tableMetas == null || tableMetas.isEmpty()) {
                     return ApiMetaResult.successNoResult();
@@ -220,7 +220,7 @@ public class MetaDdlService {
             filterGroup.addFilter("appId", appId);
             List<ConnectMeta> connectMetas = devDbConnectService.queryModel(ConnectMeta.class, filterGroup);
             List<TableMeta> tableMetas = devTableService.queryModel(TableMeta.class, filterGroup);
-            filterGroup.addFilter("enableStatus", String.valueOf(EnableStatusEnum.ENABLED.getCode()));
+            filterGroup.addFilter("enableStatus", String.valueOf(ColumnDefault.ENABLE_STATUS_VALUE));
             List<TableView> viewMetas = viewService.queryModel(TableView.class, filterGroup);
             if (viewMetas == null || viewMetas.isEmpty()) {
                 return ApiMetaResult.successNoResult();

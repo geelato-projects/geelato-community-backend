@@ -449,7 +449,7 @@ public class ExcelXSSFWriter {
             for (ExportColumn column : headerExportColumns) {
                 if (column.getLevel() == i) {
                     // align
-                    headerStyle.setAlignment(ExcelAlignmentEnum.getLabel(column.getAlign()));
+                    headerStyle.setAlignment(ExcelAlignmentEnum.getHorizontalAlignment(column.getAlign()));
                     // title
                     XSSFCell cell = ExcelXSSFUtils.setCell(row, column.getFirstCol(), headerStyle, column.getTitle());
                     // description
@@ -474,7 +474,7 @@ public class ExcelXSSFWriter {
             // 插入替换树 ${}
             ExportColumn column = bottomExportColumns.get(i);
             // align
-            style.setAlignment(ExcelAlignmentEnum.getLabel(column.getAlign()));
+            style.setAlignment(ExcelAlignmentEnum.getHorizontalAlignment(column.getAlign()));
             // title
             String cellValue = String.format("${%s}", column.getTitle());
             ExcelXSSFUtils.setCell(row, column.getFirstCol(), style, cellValue);

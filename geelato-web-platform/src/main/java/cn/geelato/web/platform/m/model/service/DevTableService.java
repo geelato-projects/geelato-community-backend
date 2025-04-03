@@ -112,7 +112,7 @@ public class DevTableService extends BaseSortableService {
             devTableColumnService.resetTableColumnByDataBase(tableMeta, false);
             devTableForeignService.resetTableForeignByDataBase(tableMeta, false);
         } else {
-            tableMeta.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+            tableMeta.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             isDeleteModel(tableMeta);
             devTableColumnService.resetTableColumnByDataBase(tableMeta, true);
             devTableForeignService.resetTableForeignByDataBase(tableMeta, false);
@@ -135,7 +135,7 @@ public class DevTableService extends BaseSortableService {
             return form;
         }
         // 数据库表方可
-        if (!TableTypeEnum.TABLE.getCode().equals(model.getTableType())) {
+        if (!TableTypeEnum.TABLE.getValue().equals(model.getTableType())) {
             form.setTableName(null);
             return form;
         }
@@ -150,8 +150,8 @@ public class DevTableService extends BaseSortableService {
         model.setDescription(String.format("update %s %s[%s]=>%s[%s]。\n", sdf.format(new Date()), model.getTitle(), model.getEntityName(), form.getTitle(), form.getEntityName()) + model.getDescription());
         model.setTableComment(UPDATE_COMMENT_PREFIX + model.getTableComment());
         model.setTitle(UPDATE_COMMENT_PREFIX + model.getTitle());
-        model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
-        model.setDelStatus(DeleteStatusEnum.IS.getCode());
+        model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
+        model.setDelStatus(DeleteStatusEnum.IS.getValue());
         model.setDeleteAt(new Date());
         model.setSeqNo(ColumnDefault.SEQ_NO_DELETE);
         // dao.save(model);
@@ -198,12 +198,12 @@ public class DevTableService extends BaseSortableService {
         sqlParams.put("newEntityName", newTableName);// 新
         sqlParams.put("entityName", model.getEntityName());// 旧
         sqlParams.put("newComment", newComment);
-        sqlParams.put("delStatus", DeleteStatusEnum.IS.getCode());
+        sqlParams.put("delStatus", DeleteStatusEnum.IS.getValue());
         sqlParams.put("deleteAt", sdf.format(new Date()));
-        sqlParams.put("enableStatus", EnableStatusEnum.DISABLED.getCode());
+        sqlParams.put("enableStatus", EnableStatusEnum.DISABLED.getValue());
         sqlParams.put("remark", "delete table. \n");
         boolean isExistTable = false;
-        if (TableTypeEnum.TABLE.getCode().equals(model.getTableType())) {
+        if (TableTypeEnum.TABLE.getValue().equals(model.getTableType())) {
             List<Map<String, Object>> tableList = dbGenerateDao.dbQueryAllTables(model.getDbType(), model.dbTableName());
             if (tableList != null && !tableList.isEmpty()) {
                 isExistTable = true;
@@ -227,8 +227,8 @@ public class DevTableService extends BaseSortableService {
         // 删除，表名变更
         model.setEntityName(newTableName);
         // 删除，标记变更
-        model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
-        model.setDelStatus(DeleteStatusEnum.IS.getCode());
+        model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
+        model.setDelStatus(DeleteStatusEnum.IS.getValue());
         model.setDeleteAt(new Date());
         model.setSeqNo(ColumnDefault.SEQ_NO_DELETE);
         dao.save(model);

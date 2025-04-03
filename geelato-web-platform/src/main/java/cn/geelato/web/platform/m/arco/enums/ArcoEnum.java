@@ -55,13 +55,13 @@ public enum ArcoEnum {
     META_TYPE_ENUM("MetaTypeEnum", MetaTypeEnum.class),
     DICT_DISPOSE_ENUM("DictDisposeEnum", DictDisposeEnum.class),
     // 脚本相关枚举
-    SCRIPT_RESPONSE_PARAM_TYPE_ENUM("ScriptResponseParamTypeEnum", ResponseParamTypeEnum.class),
+    SCRIPT_RESPONSE_PARAM_TYPE_ENUM("ScriptResponseParamTypeEnum", cn.geelato.web.platform.m.script.enums.ResponseParamTypeEnum.class),
     ALTERNATE_TYPE_ENUM("AlternateTypeEnum", AlternateTypeEnum.class),
     // 安全相关枚举
-    ROLE_TYPE_ENUM("RoleTypeEnum", RoleTypeEnum.class),
     VALID_TYPE_ENUM("ValidTypeEnum", ValidTypeEnum.class),
+    ROLE_TYPE_ENUM("RoleTypeEnum", RoleTypeEnum.class),
     ORG_TYPE_ENUM("OrgTypeEnum", OrgTypeEnum.class),
-    IS_DEFAULT_ORG_ENUM("IsDefaultOrgEnum", IsDefaultOrgEnum.class),
+    IS_DEFAULT_ORG_ENUM("IsDefaultOrgEnum", IsDefaultOrgEnum.class),// Integer
     ENCODING_SERIAL_TYPE_ENUM("EncodingSerialTypeEnum", EncodingSerialTypeEnum.class),
     ENCODING_ITEM_TYPE_ENUM("EncodingItemTypeEnum", EncodingItemTypeEnum.class),
     AUTH_CODE_ACTION("AuthCodeAction", AuthCodeAction.class),
@@ -83,14 +83,14 @@ public enum ArcoEnum {
     TABLE_SOURCE_TYPE_ENUM("TableSourceTypeEnum", TableSourceTypeEnum.class),
     TABLE_TYPE_ENUM("TableTypeEnum", TableTypeEnum.class),
     TABLE_FOREIGN_ACTION("TableForeignAction", TableForeignAction.class),
-    LINKED_ENUM("LinkedEnum", LinkedEnum.class),
-    ENABLE_STATUS_ENUM("EnableStatusEnum", EnableStatusEnum.class),
+    LINKED_ENUM("LinkedEnum", LinkedEnum.class),// Integer
+    ENABLE_STATUS_ENUM("EnableStatusEnum", EnableStatusEnum.class),// Integer
     DIALECTS("Dialects", Dialects.class),
-    DELETE_STATUS_ENUM("DeleteStatusEnum", DeleteStatusEnum.class),
-    COLUMN_SYNCED_ENUM("ColumnSyncedEnum", ColumnSyncedEnum.class),
-    COLUMN_ENCRYPTED_ENUM("ColumnEncryptedEnum", ColumnEncryptedEnum.class),
+    DELETE_STATUS_ENUM("DeleteStatusEnum", DeleteStatusEnum.class),// Integer
+    COLUMN_SYNCED_ENUM("ColumnSyncedEnum", ColumnSyncedEnum.class),// Boolean
+    COLUMN_ENCRYPTED_ENUM("ColumnEncryptedEnum", ColumnEncryptedEnum.class),// Boolean
     // Utils相关枚举
-    TIME_UNIT_ENUM("TimeUnitEnum", TimeUnitEnum.class),
+    TIME_UNIT_ENUM("TimeUnitEnum", TimeUnitEnum.class),// Integer
     LOCALE_ENUM("LocaleEnum", LocaleEnum.class);
 
     private final String code;

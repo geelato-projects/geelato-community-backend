@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.gql.filter.FilterGroup;
@@ -119,7 +118,7 @@ public class SysConfigController extends BaseController {
         try {
             SysConfig model = sysConfigService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
-            model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+            model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             sysConfigService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
@@ -134,7 +133,7 @@ public class SysConfigController extends BaseController {
             Map<String, String> params = new HashMap<>();
             params.put("config_key", form.getConfigKey());
             // params.put("app_id", form.getAppId());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(sysConfigService.validate("platform_sys_config", form.getId(), params));
         } catch (Exception e) {

@@ -2,7 +2,6 @@ package cn.geelato.web.platform.m.ocr.service;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.ds.DataSourceManager;
-import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
@@ -80,12 +79,12 @@ public class OcrUtils {
     private static List<DictItem> queryDictItemsByDictCode(String dictCode) {
         FilterGroup filter1 = new FilterGroup();
         filter1.addFilter("dictCode", FilterGroup.Operator.in, dictCode);
-        filter1.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(DeleteStatusEnum.NO.getCode()));
+        filter1.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
         List<Dict> dicts = dao.queryList(Dict.class, filter1, "update_at DESC");
         if (dicts != null && !dicts.isEmpty()) {
             FilterGroup filter2 = new FilterGroup();
             filter2.addFilter("dictId", FilterGroup.Operator.in, dicts.get(0).getId());
-            filter2.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(DeleteStatusEnum.NO.getCode()));
+            filter2.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             return dao.queryList(DictItem.class, filter2, null);
         }
         return null;

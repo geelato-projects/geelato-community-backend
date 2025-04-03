@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
@@ -20,7 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author diabl
@@ -105,7 +106,7 @@ public class DictController extends BaseController {
             Map<String, String> lowers = new HashMap<>();
             lowers.put("dict_code", form.getDictCode());
             Map<String, String> params = new HashMap<>();
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(dictService.validate("platform_dict", form.getId(), params, lowers));

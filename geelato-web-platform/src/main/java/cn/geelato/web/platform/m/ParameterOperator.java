@@ -99,7 +99,6 @@ public class ParameterOperator extends RequestOperator {
         return requestBodyMap;
     }
 
-    @Deprecated
     protected PageQueryRequest getPageQueryParameters(Map<String, Object> requestBodyMap) {
         PageQueryRequest queryRequest = new PageQueryRequest();
         if (requestBodyMap != null) {

@@ -29,7 +29,7 @@ public class DictService extends BaseSortableService {
      * @param model 要进行逻辑删除的字典模型对象
      */
     public void isDeleteModel(Dict model) {
-        model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+        model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
         super.isDeleteModel(model);
         // 清理 字典项
         Map<String, Object> params = new HashMap<>();

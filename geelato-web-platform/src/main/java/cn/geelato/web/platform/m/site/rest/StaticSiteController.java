@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.site.rest;
 
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
@@ -90,7 +90,7 @@ public class StaticSiteController extends BaseController {
         try {
             StaticSite model = staticSiteService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
-            model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+            model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             staticSiteService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
@@ -104,7 +104,7 @@ public class StaticSiteController extends BaseController {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("code", form.getCode());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(staticSiteService.validate("platform_static_site", form.getId(), params));

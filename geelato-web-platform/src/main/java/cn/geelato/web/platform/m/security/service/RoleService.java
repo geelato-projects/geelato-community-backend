@@ -74,7 +74,7 @@ public class RoleService extends BaseSortableService {
      */
     public void isDeleteModel(Role model) {
         // 组织删除
-        model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+        model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
         super.isDeleteModel(model);
         // 角色APP关系表
         Map<String, Object> params = new HashMap<>();

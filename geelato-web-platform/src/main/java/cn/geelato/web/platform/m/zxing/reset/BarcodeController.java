@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.zxing.reset;
 
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
@@ -114,7 +114,7 @@ public class BarcodeController extends BaseController {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("code", form.getCode());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             // params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(barcodeService.validate("platform_barcode", form.getId(), params));

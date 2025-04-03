@@ -1,6 +1,6 @@
 package cn.geelato.core.meta.schema;
 
-import cn.geelato.core.enums.EnableStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import lombok.Getter;
 import lombok.Setter;
@@ -64,7 +64,7 @@ public class SchemaForeign implements Serializable {
         meta.setForeignTableCol(this.referencedColumnName);
         meta.setDeleteAction(this.deleteRule);
         meta.setUpdateAction(this.updateRule);
-        meta.setEnableStatus(EnableStatusEnum.ENABLED.getCode());
+        meta.setEnableStatus(ColumnDefault.ENABLE_STATUS_VALUE);
         meta.setSeqNo(1);
 
         return meta;

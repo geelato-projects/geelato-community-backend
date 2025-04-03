@@ -1,6 +1,6 @@
 package cn.geelato.core.orm;
 
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.Dialects;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.meta.model.column.ColumnMeta;
@@ -74,7 +74,7 @@ public class DbGenerateDao {
         if (columnMetas != null && !columnMetas.isEmpty()) {
             for (ColumnMeta meta : columnMetas) {
                 // 跳过禁用的字段
-                if (meta.getEnableStatus() == EnableStatusEnum.DISABLED.getCode()) {
+                if (meta.getEnableStatus() == EnableStatusEnum.DISABLED.getValue()) {
                     continue;
                 }
                 // 同时存在删除状态、删除时间字段时，添加如唯一约束中
@@ -96,7 +96,7 @@ public class DbGenerateDao {
                             }
                         } else {
                             // 更新时，需要添加的
-                            if (meta.getDelStatus() == DeleteStatusEnum.NO.getCode()) {
+                            if (meta.getDelStatus() == ColumnDefault.DEL_STATUS_VALUE) {
                                 addList.add(jsonColumn);
                             }
                         }
@@ -110,7 +110,7 @@ public class DbGenerateDao {
                         }
                     } else {
                         // 表不存在时，创建字段排除删除字段
-                        if (meta.getDelStatus() == DeleteStatusEnum.NO.getCode()) {
+                        if (meta.getDelStatus() == ColumnDefault.DEL_STATUS_VALUE) {
                             createList.add(jsonColumn);
                         }
                     }
@@ -140,7 +140,7 @@ public class DbGenerateDao {
         ArrayList<JSONObject> checkList = new ArrayList<>();
         if (tableChecks != null && !tableChecks.isEmpty()) {
             for (TableCheck tc : tableChecks) {
-                if (tc.getEnableStatus() == EnableStatusEnum.DISABLED.getCode()) {
+                if (tc.getEnableStatus() == EnableStatusEnum.DISABLED.getValue()) {
                     continue;
                 }
                 checkList.add(JSONObject.parseObject(JSONObject.toJSONString(tc)));

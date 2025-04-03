@@ -98,7 +98,7 @@ public class DevTableColumnService extends BaseSortableService {
         if (Strings.isBlank(tableMeta.getId()) || Strings.isBlank(tableMeta.getEntityName())) {
             throw new RuntimeException(ApiErrorMsg.ID_IS_NULL);
         }
-        if (TableTypeEnum.TABLE.getCode().equals(tableMeta.getTableType())) {
+        if (TableTypeEnum.TABLE.getValue().equals(tableMeta.getTableType())) {
             List<ColumnMeta> metaList = MetaManager.singleInstance().getDefaultColumn();
             if (metaList != null && !metaList.isEmpty()) {
                 // 排序
@@ -198,7 +198,7 @@ public class DevTableColumnService extends BaseSortableService {
         if (columnMetas != null && columnMetas.size() > 0) {
             for (ColumnMeta meta : columnMetas) {
                 if (deleteAll) {
-                    meta.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+                    meta.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
                     isDeleteModel(meta);
                     continue;
                 }
@@ -251,7 +251,7 @@ public class DevTableColumnService extends BaseSortableService {
         for (String key : metaMap.keySet()) {
             if (!schemaMap.containsKey(key)) {
                 ColumnMeta meta = metaMap.get(key);
-                meta.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+                meta.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
                 isDeleteModel(meta);
             }
         }
@@ -290,8 +290,8 @@ public class DevTableColumnService extends BaseSortableService {
         // delete 2023-06-25 13:14:15 用户[user]=>[user_2023...]。
         String newDescription = String.format("delete %s %s[%s]=>[%s]。\n", sdf.format(new Date()), model.getTitle(), model.getName(), newColumnName) + model.getDescription();
         // 常用
-        model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
-        model.setDelStatus(DeleteStatusEnum.IS.getCode());
+        model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
+        model.setDelStatus(DeleteStatusEnum.IS.getValue());
         model.setDeleteAt(new Date());
         model.setSeqNo(ColumnDefault.SEQ_NO_DELETE);
         // 标记
@@ -421,8 +421,8 @@ public class DevTableColumnService extends BaseSortableService {
         form.setComment(Strings.isNotBlank(form.getComment()) ? form.getComment() : form.getTitle());
         // 复制字段
         model.setId(null);
-        model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
-        model.setDelStatus(DeleteStatusEnum.IS.getCode());
+        model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
+        model.setDelStatus(DeleteStatusEnum.IS.getValue());
         model.setDeleteAt(new Date());
         model.setSeqNo(ColumnDefault.SEQ_NO_DELETE);
         // 标记

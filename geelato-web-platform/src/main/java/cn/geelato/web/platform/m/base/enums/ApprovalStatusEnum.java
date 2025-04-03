@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.m.base.enums;
 
 import lombok.Getter;
-import org.apache.logging.log4j.util.Strings;
 
 @Getter
 public enum ApprovalStatusEnum {
@@ -16,16 +15,5 @@ public enum ApprovalStatusEnum {
     ApprovalStatusEnum(String label, String value) {
         this.label = label;
         this.value = value;
-    }
-
-    public static String getLabel(String value) {
-        if (Strings.isNotBlank(value)) {
-            for (ApprovalStatusEnum enums : ApprovalStatusEnum.values()) {
-                if (enums.getValue().equals(value)) {
-                    return enums.getLabel();
-                }
-            }
-        }
-        return null;
     }
 }

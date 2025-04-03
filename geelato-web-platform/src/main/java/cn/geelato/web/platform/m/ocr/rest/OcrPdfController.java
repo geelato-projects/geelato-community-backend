@@ -96,7 +96,7 @@ public class OcrPdfController extends BaseController {
         try {
             OcrPdf model = ocrPdfService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
-            model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+            model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             ocrPdfService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {

@@ -2,7 +2,6 @@ package cn.geelato.web.platform.m.excel.service;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DeleteStatusEnum;
-import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
@@ -47,7 +46,7 @@ public class ExcelCommonUtils {
     private static final int GGL_QUERY_TOTAL = 10000;
     private static final String REDIS_UNIQUE_KEY = "uniques";
     private static final Logger logger = LoggerFactory.getLogger(ExcelCommonUtils.class);
-    private final FilterGroup filterGroup = new FilterGroup().addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(DeleteStatusEnum.NO.getCode()));
+    private final FilterGroup filterGroup = new FilterGroup().addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
     private final MetaManager metaManager = MetaManager.singleInstance();
     @Autowired
     @Qualifier("primaryDao")
@@ -1046,7 +1045,7 @@ public class ExcelCommonUtils {
         if (fieldMetas != null && fieldMetas.size() > 0) {
             for (FieldMeta fieldMeta : fieldMetas) {
                 ColumnMeta meta = fieldMeta.getColumn();
-                if (meta != null && Strings.isNotBlank(meta.getFieldName()) && meta.getEnableStatus() == EnableStatusEnum.ENABLED.getCode() && meta.getDelStatus() == DeleteStatusEnum.NO.getCode()) {
+                if (meta != null && Strings.isNotBlank(meta.getFieldName()) && meta.getEnableStatus() == ColumnDefault.ENABLE_STATUS_VALUE && meta.getDelStatus() == ColumnDefault.DEL_STATUS_VALUE) {
                     if (!uniqueColumns.containsKey(meta.getFieldName()) && !columnNames.contains(meta.getName()) && !meta.isNullable()) {
                         uniqueColumns.put(meta.getFieldName(), meta);
                     }
@@ -1062,7 +1061,7 @@ public class ExcelCommonUtils {
         if (fieldMetas != null && fieldMetas.size() > 0) {
             for (FieldMeta fieldMeta : fieldMetas) {
                 ColumnMeta meta = fieldMeta.getColumn();
-                if (meta != null && Strings.isNotBlank(meta.getFieldName()) && meta.getEnableStatus() == EnableStatusEnum.ENABLED.getCode() && meta.getDelStatus() == DeleteStatusEnum.NO.getCode()) {
+                if (meta != null && Strings.isNotBlank(meta.getFieldName()) && meta.getEnableStatus() == ColumnDefault.ENABLE_STATUS_VALUE && meta.getDelStatus() == ColumnDefault.DEL_STATUS_VALUE) {
                     if (!uniqueColumns.containsKey(meta.getFieldName()) && !columnNames.contains(meta.getName()) && meta.isUniqued()) {
                         uniqueColumns.put(meta.getFieldName(), meta);
                     }

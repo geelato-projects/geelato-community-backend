@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.model.rest;
 
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.ColumnSyncedEnum;
-import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
@@ -237,7 +237,7 @@ public class DevTableColumnController extends BaseController {
             Map<String, String> params = new HashMap<>();
             params.put("column_name", form.getName());
             params.put("table_id", form.getTableId());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(devTableColumnService.validate("platform_dev_column", form.getId(), params));

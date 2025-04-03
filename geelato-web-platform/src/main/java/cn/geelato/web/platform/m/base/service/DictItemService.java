@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.m.base.entity.DictItem;
@@ -49,7 +49,7 @@ public class DictItemService extends BaseSortableService {
                     }
                 }
                 if (!isExist) {
-                    mItem.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+                    mItem.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
                     isDeleteModel(mItem);
                 }
             }
@@ -60,7 +60,7 @@ public class DictItemService extends BaseSortableService {
                 DictItem item = forms.get(i);
                 item.setSeqNo(i + 1);
                 item.setDictId(Strings.isBlank(item.getDictId()) ? dictId : item.getDictId());
-                item.setDelStatus(DeleteStatusEnum.NO.getCode());
+                item.setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
                 if (Strings.isBlank(item.getId()) && Strings.isBlank(item.getTenantCode())) {
                     item.setTenantCode(getSessionTenantCode());
                 }
@@ -78,10 +78,10 @@ public class DictItemService extends BaseSortableService {
      * @return 返回更新后的数据映射
      */
     public Map updateModel(DictItem model) {
-        model.setDelStatus(DeleteStatusEnum.NO.getCode());
+        model.setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
         Map<String, Object> map = dao.save(model);
 
-        if (EnableStatusEnum.DISABLED.getCode() == model.getEnableStatus()) {
+        if (EnableStatusEnum.DISABLED.getValue() == model.getEnableStatus()) {
             Map<String, Object> params = new HashMap<>();
             params.put("dictId", model.getDictId());
             List<DictItem> list = queryModel(DictItem.class, params);
@@ -89,7 +89,7 @@ public class DictItemService extends BaseSortableService {
                 List<DictItem> childs = childIteration(list, model.getId());
                 if (childs != null && !childs.isEmpty()) {
                     for (DictItem item : childs) {
-                        item.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+                        item.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
                         super.isDeleteModel(item);
                     }
                 }
@@ -116,7 +116,7 @@ public class DictItemService extends BaseSortableService {
             childs.addAll(childIteration(list, model.getId()));
             if (childs != null && !childs.isEmpty()) {
                 for (DictItem item : childs) {
-                    item.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+                    item.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
                     super.isDeleteModel(item);
                 }
             }
@@ -131,7 +131,7 @@ public class DictItemService extends BaseSortableService {
      * @param model 要进行逻辑删除的字典项模型对象
      */
     public void isDeleteDictItem(DictItem model) {
-        model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+        model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
         super.isDeleteModel(model);
     }
 

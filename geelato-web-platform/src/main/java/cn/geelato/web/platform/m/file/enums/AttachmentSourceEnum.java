@@ -20,17 +20,6 @@ public enum AttachmentSourceEnum {
         this.value = value;
     }
 
-    public static String getLabel(String value) {
-        if (Strings.isNotBlank(value)) {
-            for (AttachmentSourceEnum enums : AttachmentSourceEnum.values()) {
-                if (enums.getValue().equals(value)) {
-                    return enums.getLabel();
-                }
-            }
-        }
-        return null;
-    }
-
     /**
      * 根据给定的值获取对应的枚举类。
      *

@@ -1,8 +1,8 @@
 package cn.geelato.web.platform.m.model.rest;
 
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.constants.MediaTypes;
 import cn.geelato.core.enums.ColumnSyncedEnum;
-import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.enums.TableSourceTypeEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
@@ -295,7 +295,7 @@ public class DevTableController extends BaseController {
                 TableMeta model = devTableService.getModel(CLAZZ, tableId);
                 Assert.notNull(model, ApiErrorMsg.IS_NULL);
                 // 禁用的不同步
-                if (EnableStatusEnum.DISABLED.getCode() == model.getEnableStatus()) {
+                if (EnableStatusEnum.DISABLED.getValue() == model.getEnableStatus()) {
                     throw new RuntimeException("Table is disabled, can not be reset");
                 }
                 devTableService.resetTableByDataBase(model);
@@ -316,7 +316,7 @@ public class DevTableController extends BaseController {
             lowers.put("entity_name", form.getEntityName());
             Map<String, String> params = new HashMap<>();
             params.put("connect_id", form.getConnectId());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(devTableService.validate("platform_dev_table", form.getId(), params, lowers));

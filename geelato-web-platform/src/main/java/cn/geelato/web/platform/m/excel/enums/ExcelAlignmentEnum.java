@@ -9,26 +9,28 @@ import org.apache.poi.ss.usermodel.HorizontalAlignment;
  */
 @Getter
 public enum ExcelAlignmentEnum {
-    LEFT(HorizontalAlignment.LEFT, "left"),
-    CENTER(HorizontalAlignment.CENTER, "center"),
-    RIGHT(HorizontalAlignment.RIGHT, "right");
+    LEFT("居左", "left", HorizontalAlignment.LEFT),
+    CENTER("居中", "center", HorizontalAlignment.CENTER),
+    RIGHT("居右", "right", HorizontalAlignment.RIGHT);
 
-    private final HorizontalAlignment label;// 选项内容
+    private final String label;// 选项内容
     private final String value;// 选项值
+    private final HorizontalAlignment horizontalAlignment;
 
-    ExcelAlignmentEnum(HorizontalAlignment label, String value) {
+    ExcelAlignmentEnum(String label, String value, HorizontalAlignment horizontalAlignment) {
         this.label = label;
         this.value = value;
+        this.horizontalAlignment = horizontalAlignment;
     }
 
-    public static HorizontalAlignment getLabel(String value) {
+    public static HorizontalAlignment getHorizontalAlignment(String value) {
         if (Strings.isNotBlank(value)) {
             for (ExcelAlignmentEnum enums : ExcelAlignmentEnum.values()) {
                 if (enums.getValue().equalsIgnoreCase(value)) {
-                    return enums.getLabel();
+                    return enums.getHorizontalAlignment();
                 }
             }
         }
-        return ExcelAlignmentEnum.CENTER.getLabel();
+        return ExcelAlignmentEnum.CENTER.getHorizontalAlignment();
     }
 }

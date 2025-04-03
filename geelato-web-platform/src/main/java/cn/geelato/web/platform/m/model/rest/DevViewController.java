@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.model.rest;
 
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
@@ -108,7 +108,7 @@ public class DevViewController extends BaseController {
         try {
             TableView model = devViewService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
-            model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+            model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             devViewService.isDeleteModel(model);
             // 刷新实体缓存
             if (Strings.isNotEmpty(model.getViewName())) {
@@ -127,7 +127,7 @@ public class DevViewController extends BaseController {
             Map<String, String> params = new HashMap<>();
             params.put("view_name", form.getViewName().toLowerCase(Locale.ENGLISH));
             params.put("connect_id", form.getConnectId());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(devViewService.validate("platform_dev_view", form.getId(), params));

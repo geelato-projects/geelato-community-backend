@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.model.service;
 
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
@@ -82,7 +82,7 @@ public class DevTableCheckService extends BaseService {
         params.put("code", form.getCode());
         params.put("table_schema", form.getTableSchema());
         params.put("type", form.getType());
-        params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+        params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
         params.put("tenant_code", form.getTenantCode());
         boolean isEmpty = validate("platform_dev_table_check", form.getId(), params);
         if (!isEmpty) {

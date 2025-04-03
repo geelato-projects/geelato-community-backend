@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
@@ -112,7 +111,7 @@ public class DictItemController extends BaseController {
         try {
             DictItem model = dictItemService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
-            model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+            model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             dictItemService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
@@ -170,7 +169,7 @@ public class DictItemController extends BaseController {
             lowers.put("item_code", form.getItemCode());
             Map<String, String> params = new HashMap<>();
             params.put("dict_id", form.getDictId());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(dictService.validate("platform_dict_item", form.getId(), params, lowers));
         } catch (Exception e) {

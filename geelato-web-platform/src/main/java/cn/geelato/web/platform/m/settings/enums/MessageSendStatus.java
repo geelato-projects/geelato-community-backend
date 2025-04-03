@@ -18,15 +18,4 @@ public enum MessageSendStatus {
         this.label = label;
         this.value = value;
     }
-
-    public static String getLabel(String value) {
-        if (Strings.isNotBlank(value)) {
-            for (EncodingItemTypeEnum enums : EncodingItemTypeEnum.values()) {
-                if (enums.getValue().equals(value)) {
-                    return enums.getLabel();
-                }
-            }
-        }
-        return null;
-    }
 }

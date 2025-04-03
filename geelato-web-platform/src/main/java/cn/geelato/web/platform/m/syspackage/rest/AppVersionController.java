@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.syspackage.rest;
 
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
@@ -135,7 +135,7 @@ public class AppVersionController extends BaseController {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("version", form.getVersion());
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(appVersionService.validate("platform_app_version", form.getId(), params));

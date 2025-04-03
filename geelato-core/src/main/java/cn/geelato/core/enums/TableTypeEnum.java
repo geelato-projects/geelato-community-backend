@@ -11,11 +11,11 @@ public enum TableTypeEnum {
     ENTITY("entity", "模型实体"),
     VIEW("view", "视图");
 
-    private final String code;
-    private final String name;
+    private final String value;
+    private final String label;
 
-    TableTypeEnum(String code, String name) {
-        this.code = code;
-        this.name = name;
+    TableTypeEnum(String value, String label) {
+        this.value = value;
+        this.label = label;
     }
 }

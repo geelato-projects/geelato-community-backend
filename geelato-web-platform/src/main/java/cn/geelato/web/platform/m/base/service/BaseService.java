@@ -39,7 +39,7 @@ public class BaseService {
     @Qualifier("dynamicDao")
     public Dao dynamicDao;
 
-    public FilterGroup filterGroup = new FilterGroup().addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(DeleteStatusEnum.NO.getCode()));
+    public FilterGroup filterGroup = new FilterGroup().addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
 
     /**
      * 分页查询
@@ -188,7 +188,7 @@ public class BaseService {
      * @return 返回创建后的实体数据对象
      */
     public <T extends BaseEntity> T createModel(T model) {
-        model.setDelStatus(DeleteStatusEnum.NO.getCode());
+        model.setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
         model.setDeleteAt(null);
         if (Strings.isBlank(model.getTenantCode())) {
             model.setTenantCode(getSessionTenantCode());
@@ -208,7 +208,7 @@ public class BaseService {
      * @return 更新后的实体数据对象
      */
     public <T extends BaseEntity> T updateModel(T model) {
-        model.setDelStatus(DeleteStatusEnum.NO.getCode());
+        model.setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
         model.setDeleteAt(null);
         if (Strings.isBlank(model.getTenantCode())) {
             model.setTenantCode(getSessionTenantCode());
@@ -227,7 +227,7 @@ public class BaseService {
      * @param <T>   模型对象的类型，必须继承自BaseEntity
      */
     public <T extends BaseEntity> void isDeleteModel(T model) {
-        model.setDelStatus(DeleteStatusEnum.IS.getCode());
+        model.setDelStatus(DeleteStatusEnum.IS.getValue());
         model.setDeleteAt(new Date());
         dao.save(model);
     }

@@ -45,7 +45,7 @@ public class DevTableForeignService extends BaseSortableService {
         if (tableForeigns != null && tableForeigns.size() > 0) {
             for (TableForeign meta : tableForeigns) {
                 if (deleteAll) {
-                    meta.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+                    meta.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
                     isDeleteModel(meta);
                     continue;
                 }

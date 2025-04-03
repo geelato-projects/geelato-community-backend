@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.enums;
 
 import lombok.Getter;
-import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
@@ -19,17 +18,6 @@ public enum PermissionTypeEnum {
     PermissionTypeEnum(String label, String value) {
         this.label = label;
         this.value = value;
-    }
-
-    public static String getLabel(String value) {
-        if (Strings.isNotBlank(value)) {
-            for (PermissionTypeEnum enums : PermissionTypeEnum.values()) {
-                if (enums.getValue().equals(value)) {
-                    return enums.getLabel();
-                }
-            }
-        }
-        return null;
     }
 
     /**

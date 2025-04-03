@@ -1,6 +1,5 @@
 package cn.geelato.web.platform.enums;
 
-import cn.geelato.utils.StringUtils;
 import lombok.Getter;
 
 /**
@@ -18,16 +17,4 @@ public enum RestfulConfigType {
         this.label = label;
         this.value = value;
     }
-
-    public static String getLabel(String value) {
-        if (StringUtils.isNotBlank(value)) {
-            for (RestfulConfigType enums : RestfulConfigType.values()) {
-                if (enums.getValue().equals(value)) {
-                    return enums.getLabel();
-                }
-            }
-        }
-        return null;
-    }
-
 }

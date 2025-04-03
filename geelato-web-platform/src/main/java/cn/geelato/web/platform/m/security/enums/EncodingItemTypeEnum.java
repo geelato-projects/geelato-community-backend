@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.m.security.enums;
 
 import lombok.Getter;
-import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
@@ -21,16 +20,4 @@ public enum EncodingItemTypeEnum {
         this.label = label;
         this.value = value;
     }
-
-    public static String getLabel(String value) {
-        if (Strings.isNotBlank(value)) {
-            for (EncodingItemTypeEnum enums : EncodingItemTypeEnum.values()) {
-                if (enums.getValue().equals(value)) {
-                    return enums.getLabel();
-                }
-            }
-        }
-        return null;
-    }
-
 }

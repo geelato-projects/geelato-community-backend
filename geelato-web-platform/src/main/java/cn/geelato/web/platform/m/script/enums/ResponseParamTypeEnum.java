@@ -21,15 +21,4 @@ public enum ResponseParamTypeEnum {
         this.label = label;
         this.value = value;
     }
-
-    public static String getLabel(String value) {
-        if (Strings.isNotBlank(value)) {
-            for (ResponseParamTypeEnum enums : ResponseParamTypeEnum.values()) {
-                if (enums.getValue().equals(value)) {
-                    return enums.getLabel();
-                }
-            }
-        }
-        return null;
-    }
 }

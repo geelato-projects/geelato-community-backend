@@ -92,7 +92,7 @@ public class EncodingController extends BaseController {
         try {
             Encoding model = encodingService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
-            model.setEnableStatus(EnableStatusEnum.DISABLED.getCode());
+            model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             encodingService.isDeleteModel(model);
             encodingService.redisTemplateEncodingDelete(model);
             return ApiResult.successNoResult();

@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.security.rest;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
@@ -343,7 +343,7 @@ public class UserRestController extends BaseController {
             } else {
                 return ApiResult.success(true);
             }
-            params.put("del_status", String.valueOf(DeleteStatusEnum.NO.getCode()));
+            params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("tenant_code", form.getTenantCode());
             return ApiResult.success(userService.validate("platform_user", form.getId(), params));
         } catch (Exception e) {

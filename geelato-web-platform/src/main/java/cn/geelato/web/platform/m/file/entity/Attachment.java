@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.file.entity;
 
-import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.annotation.Transient;
@@ -65,14 +65,14 @@ public class Attachment extends BaseEntity {
     }
 
     public Attachment(MultipartFile file) {
-        setDelStatus(DeleteStatusEnum.NO.getCode());
+        setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
         this.name = file.getOriginalFilename();
         this.type = file.getContentType();
         this.size = file.getSize();
     }
 
     public Attachment(File file) throws IOException {
-        setDelStatus(DeleteStatusEnum.NO.getCode());
+        setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
         this.name = file.getName();
         this.type = Files.probeContentType(file.toPath());
         this.size = file.length();

@@ -2,7 +2,7 @@ package cn.geelato.web.platform.exception.file;
 
 /**
  * @author diabl
- * @description: 12.4 文件大小超出限制异常
+ * 12.4 文件大小超出限制异常
  */
 public class FileSizeExceedLimitException extends FileException {
     private static final String MESSAGE = "12.4 File Size Exceed Limit Exception";

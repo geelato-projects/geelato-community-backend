@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 /**
  * @author diabl
- * @description: docx文档，水印工具类
+ * docx文档，水印工具类
  */
 public class DocxWaterMarkUtils {
 

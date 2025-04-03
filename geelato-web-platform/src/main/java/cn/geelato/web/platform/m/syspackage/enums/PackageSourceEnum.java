@@ -4,7 +4,7 @@ import lombok.Getter;
 
 /**
  * @author diabl
- * @description: 应用版本来源
+ * 应用版本来源
  */
 @Getter
 public enum PackageSourceEnum {

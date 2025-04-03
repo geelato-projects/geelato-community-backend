@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  * @author diabl
- * @description: 编码
+ * 编码
  */
 @Getter
 @Setter

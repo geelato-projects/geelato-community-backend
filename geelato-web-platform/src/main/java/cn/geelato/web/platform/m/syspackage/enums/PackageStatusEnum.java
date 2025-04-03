@@ -4,7 +4,7 @@ import lombok.Getter;
 
 /**
  * @author diabl
- * @description: 应用版本状态
+ * 应用版本状态
  */
 @Getter
 public enum PackageStatusEnum {

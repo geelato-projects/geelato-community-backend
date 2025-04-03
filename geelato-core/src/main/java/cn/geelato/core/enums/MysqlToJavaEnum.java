@@ -12,7 +12,7 @@ import java.util.Set;
 
 /**
  * @author diabl
- * @description: Mysql数据类型对应的Java对象
+ * Mysql数据类型对应的Java对象
  */
 @Getter
 public enum MysqlToJavaEnum {

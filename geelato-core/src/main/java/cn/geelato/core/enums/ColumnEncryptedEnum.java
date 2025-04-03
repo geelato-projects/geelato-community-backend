@@ -4,7 +4,7 @@ import lombok.Getter;
 
 /**
  * @author diabl
- * @description: 字段是否需要加密
+ * 字段是否需要加密
  */
 @Getter
 public enum ColumnEncryptedEnum {

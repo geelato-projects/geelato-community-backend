@@ -8,7 +8,7 @@ import java.util.Locale;
 
 /**
  * @author diabl
- * @description: 数据库，数据类型
+ * 数据库，数据类型
  */
 public enum MysqlDataTypeEnum {
     // 字符串类型

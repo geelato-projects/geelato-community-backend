@@ -2,7 +2,7 @@ package cn.geelato.web.platform.exception.file;
 
 /**
  * @author diabl
- * @description: 12.8 文件内容读取失败异常
+ * 12.8 文件内容读取失败异常
  */
 public class FileContentReadFailedException extends FileException {
     private static final String MESSAGE = "12.8 File Content Read Failed Exception";

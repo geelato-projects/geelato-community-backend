@@ -12,7 +12,7 @@ import java.util.Map;
 
 /**
  * @author diabl
- * @description: SELECT * FROM information_schema.tables
+ * SELECT * FROM information_schema.tables
  */
 @Getter
 @Setter

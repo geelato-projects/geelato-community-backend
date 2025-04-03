@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @author diabl
- * @description: Arco Design Tree
+ * Arco Design Tree
  */
 @Setter
 @Getter

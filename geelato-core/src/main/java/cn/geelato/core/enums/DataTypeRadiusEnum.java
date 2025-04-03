@@ -6,7 +6,7 @@ import org.apache.logging.log4j.util.Strings;
 
 /**
  * @author diabl
- * @description: 数据类型范围
+ * 数据类型范围
  */
 @Getter
 public enum DataTypeRadiusEnum {

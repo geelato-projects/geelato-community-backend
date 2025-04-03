@@ -4,7 +4,7 @@ import lombok.Getter;
 
 /**
  * @author diabl
- * @description: 模型字段是否同步
+ * 模型字段是否同步
  */
 @Getter
 public enum ColumnSyncedEnum {

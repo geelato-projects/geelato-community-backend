@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * @author diabl
- * @description: 数据库表的索引信息
+ * 数据库表的索引信息
  * SHOW INDEX FROM `table_name`;
  */
 @Getter

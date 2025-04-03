@@ -4,7 +4,7 @@ import lombok.Getter;
 
 /**
  * @author diabl
- * @description: 表格视图，类型枚举
+ * 表格视图，类型枚举
  */
 @Getter
 public enum ViewTypeEnum {

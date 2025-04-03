@@ -16,7 +16,7 @@ import java.util.Date;
 
 /**
  * @author diabl
- * @description: 验证码
+ * 验证码
  */
 @Getter
 @Setter

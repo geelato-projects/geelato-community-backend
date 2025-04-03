@@ -4,7 +4,7 @@ import lombok.Getter;
 
 /**
  * @author diabl
- * @description: table、table_column 是否连接
+ * table、table_column 是否连接
  */
 @Getter
 public enum LinkedEnum {

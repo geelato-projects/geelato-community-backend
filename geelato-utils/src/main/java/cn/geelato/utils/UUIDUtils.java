@@ -2,7 +2,7 @@ package cn.geelato.utils;
 
 /**
  * @author diabl
- * @description: 随机字符
+ * 随机字符
  */
 public class UUIDUtils {
     public static final String CHARS_NUMBER = "0123456789";

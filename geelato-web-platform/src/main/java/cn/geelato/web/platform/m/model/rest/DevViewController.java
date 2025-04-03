@@ -28,7 +28,7 @@ import java.util.Map;
 
 /**
  * @author diabl
- * @description: 视图操作类
+ * 视图操作类
  */
 @ApiRestController("/model/view")
 @Slf4j

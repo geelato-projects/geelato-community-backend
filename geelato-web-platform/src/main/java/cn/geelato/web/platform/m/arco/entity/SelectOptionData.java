@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @author diabl
- * @description: Arco Design select
+ * Arco Design select
  */
 @Setter
 @Getter

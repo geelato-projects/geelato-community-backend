@@ -5,7 +5,7 @@ import lombok.Setter;
 
 /**
  * @author diabl
- * @description: 找回密码
+ * 找回密码
  */
 @Getter
 @Setter

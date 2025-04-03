@@ -5,7 +5,7 @@ import lombok.Setter;
 
 /**
  * @author diabl
- * @description: 数据库类型范围
+ * 数据库类型范围
  */
 @Getter
 @Setter

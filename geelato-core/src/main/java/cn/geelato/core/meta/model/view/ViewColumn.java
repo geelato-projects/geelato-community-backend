@@ -6,7 +6,7 @@ import lombok.Setter;
 
 /**
  * @author diabl
- * @description: 视图字段
+ * 视图字段
  */
 @Getter
 @Setter

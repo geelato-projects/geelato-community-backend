@@ -5,7 +5,7 @@ import lombok.Setter;
 
 /**
  * @author diabl
- * @description: 字段可供选择的数据类型
+ * 字段可供选择的数据类型
  */
 @Getter
 @Setter

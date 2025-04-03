@@ -12,7 +12,7 @@ import java.util.Locale;
 
 /**
  * @author diabl
- * @description: 数据库中字段信息
+ * 数据库中字段信息
  * SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE 1 = 1 AND TABLE_SCHEMA = '' AND TABLE_NAME = '';
  */
 @Getter

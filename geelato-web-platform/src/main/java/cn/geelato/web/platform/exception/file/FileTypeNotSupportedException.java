@@ -2,7 +2,7 @@ package cn.geelato.web.platform.exception.file;
 
 /**
  * @author diabl
- * @description: 12.3 文件类型不支持异常
+ * 12.3 文件类型不支持异常
  */
 public class FileTypeNotSupportedException extends FileException {
     private static final String MESSAGE = "12.3 File Type Not Support Exception";

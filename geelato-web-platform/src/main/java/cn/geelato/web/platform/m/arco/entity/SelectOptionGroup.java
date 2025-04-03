@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @author diabl
- * @description: Arco Design select group
+ * Arco Design select group
  */
 public class SelectOptionGroup implements Serializable {
     private boolean isGroup = true;// 是否为选项组

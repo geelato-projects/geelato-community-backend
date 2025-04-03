@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * @author diabl
- * @description: Schema Util
+ * Schema Util
  */
 public class SchemaUtils implements Serializable {
 

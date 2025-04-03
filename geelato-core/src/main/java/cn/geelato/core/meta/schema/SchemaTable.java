@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @author diabl
- * @description: 数据库中表单信息
+ * 数据库中表单信息
  * SELECT * FROM information_schema.tables WHERE 1 = 1 AND TABLE_SCHEMA = '' AND TABLE_TYPE = 'BASE TABLE';
  */
 @Getter

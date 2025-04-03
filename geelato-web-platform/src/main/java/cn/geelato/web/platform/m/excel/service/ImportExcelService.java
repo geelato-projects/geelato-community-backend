@@ -180,9 +180,9 @@ public class ImportExcelService {
                         if (businessData != null) {
                             try {
                                 // 获取值
-                                value = getValue(currentUUID, fieldMeta.getColumn(), meta, businessData, valueMap);
+                                value = getValue(currentUUID, fieldMeta.getColumnMeta(), meta, businessData, valueMap);
                                 // 验证值
-                                Set<String> errorMsg = validateValue(currentUUID, fieldMeta.getColumn(), businessData, value, columnNames);
+                                Set<String> errorMsg = validateValue(currentUUID, fieldMeta.getColumnMeta(), businessData, value, columnNames);
                                 businessData.addAllErrorMsgs(errorMsg);
                             } catch (Exception ex) {
                                 businessData.addErrorMsg(ex.getMessage());

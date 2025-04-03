@@ -51,7 +51,7 @@ public class MetaDeleteSqlProvider extends MetaBaseSqlProvider<DeleteCommand> {
         command.getValueMap().forEach((key, value) -> {
             if (!em.isIgnoreUpdateField(key)) {
                 // 1、先加值部分
-                typeList.add(TypeConverter.toSqlType(em.getFieldMeta(key).getColumn().getDataType()));
+                typeList.add(TypeConverter.toSqlType(em.getFieldMeta(key).getColumnMeta().getDataType()));
             }
         });
 

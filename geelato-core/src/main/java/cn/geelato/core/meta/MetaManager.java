@@ -256,7 +256,7 @@ public class MetaManager extends AbstractManager {
     public Map<String, Object> newDefaultEntityMap(EntityMeta em) {
         HashMap<String, Object> map = new HashMap<>(em.getFieldMetas().size());
         for (FieldMeta fm : em.getFieldMetas()) {
-            ColumnMeta cm = fm.getColumn();
+            ColumnMeta cm = fm.getColumnMeta();
             if (cm.getEnableStatus() == EnableStatusEnum.ENABLED.getCode() && cm.getDelStatus() == DeleteStatusEnum.NO.getCode()) {
                 if (boolean.class.equals(fm.getFieldType()) || Boolean.class.equals(fm.getFieldType())) {
                     map.put(fm.getFieldName(), Strings.isNotBlank(cm.getDefaultValue()) ? Integer.parseInt(cm.getDefaultValue()) : null);
@@ -359,16 +359,16 @@ public class MetaManager extends AbstractManager {
 
             FieldMeta fm = entityMapping.getFieldMetaByColumn(COLUMN_NAME);
             if (fm != null) {
-                fm.getColumn().setCharMaxLength(Integer.parseInt(CHARACTER_MAXIMUM_LENGTH));
-                fm.getColumn().setNullable(!"NO".equalsIgnoreCase(IS_NULLABLE));
-                fm.getColumn().setExtra(EXTRA);
-                fm.getColumn().setNumericPrecision(Integer.parseInt(NUMERIC_PRECISION));
-                fm.getColumn().setNumericScale(Integer.parseInt(NUMERIC_SCALE));
-                fm.getColumn().setComment(COLUMN_COMMENT);
-                if (Strings.isEmpty(fm.getColumn().getTitle())) {
-                    fm.getColumn().setTitle(COLUMN_COMMENT);
+                fm.getColumnMeta().setCharMaxLength(Integer.parseInt(CHARACTER_MAXIMUM_LENGTH));
+                fm.getColumnMeta().setNullable(!"NO".equalsIgnoreCase(IS_NULLABLE));
+                fm.getColumnMeta().setExtra(EXTRA);
+                fm.getColumnMeta().setNumericPrecision(Integer.parseInt(NUMERIC_PRECISION));
+                fm.getColumnMeta().setNumericScale(Integer.parseInt(NUMERIC_SCALE));
+                fm.getColumnMeta().setComment(COLUMN_COMMENT);
+                if (Strings.isEmpty(fm.getColumnMeta().getTitle())) {
+                    fm.getColumnMeta().setTitle(COLUMN_COMMENT);
                 }
-                fm.getColumn().setOrdinalPosition(Integer.parseInt(ORDINAL_POSITION));
+                fm.getColumnMeta().setOrdinalPosition(Integer.parseInt(ORDINAL_POSITION));
             }
         }
     }

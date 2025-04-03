@@ -129,7 +129,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         } else if (filter.getOperator().equals(FilterGroup.Operator.nil) || filter.getOperator().equals(FilterGroup.Operator.bt)) {
             // not do anything
         } else {
-            if (!"JSON".equals(getEntityMeta(command).getFieldMeta(filter.getField()).getColumn().getDataType())) {
+            if (!"JSON".equals(getEntityMeta(command).getFieldMeta(filter.getField()).getColumnMeta().getDataType())) {
                 list.add(filter.getValue());
             }
         }
@@ -164,7 +164,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         int i = 0;
         for (FilterGroup.Filter filter : command.getWhere().getFilters()) {
             if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
-                types[i] = TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumn().getDataType());
+                types[i] = TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumnMeta().getDataType());
                 i++;
             }
         }
@@ -297,7 +297,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                     || operator == FilterGroup.Operator.lte
                     || operator == FilterGroup.Operator.gt
                     || operator == FilterGroup.Operator.gte) {
-                if ("JSON".equals(fm.getColumn().getDataType())) {
+                if ("JSON".equals(fm.getColumnMeta().getDataType())) {
                     sb.append(String.format(" JSON_CONTAINS( %s->'$','%s') >0", fm.getColumnName(), "\"" + filter.getValue() + "\""));
                 } else {
                     tryAppendKeywords(em, sb, fm);
@@ -339,7 +339,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                 String endTime = ja.get(1).toString();
                 sb.append(String.format("  between '%s' and '%s' ", startTime, endTime));
             }else if (operator==FilterGroup.Operator.fis){
-                if ("JSON".equals(fm.getColumn().getDataType())) {
+                if ("JSON".equals(fm.getColumnMeta().getDataType())) {
                     String[] parts;
                     if (Pattern.matches("^\\[(\".+\")(,(\".+\"))*]$", filter.getValue())) {
                         JSONArray jsonArray= JSONArray.parse(filter.getValue());

@@ -134,7 +134,7 @@ public class MetaReflex {
         em.setTableForeigns(tableForeigns);
         if (em.getFieldMetas() != null) {
             for (FieldMeta fm : em.getFieldMetas()) {
-                fm.getColumn().setTableName(em.getTableMeta().getTableName());
+                fm.getColumnMeta().setTableName(em.getTableMeta().getTableName());
             }
         }
         em.setDictDataSourceMap(getDictDataSourceMap(clazz));
@@ -152,7 +152,7 @@ public class MetaReflex {
         em.setFieldMetas(map.values());
         if (em.getFieldMetas() != null) {
             for (FieldMeta fm : em.getFieldMetas()) {
-                fm.getColumn().setTableName(em.getTableMeta().getTableName());
+                fm.getColumnMeta().setTableName(em.getTableMeta().getTableName());
             }
         }
         em.setId(getPrimaryKey(map));
@@ -325,26 +325,26 @@ public class MetaReflex {
                             if (column != null && column.name() != null) {
                                 cfm = new FieldMeta(column.name(), fieldName, title);
 
-                                cfm.getColumn().setNullable(column.nullable());
-                                cfm.getColumn().setUniqued(column.unique());
-                                cfm.getColumn().setName(column.name());
-                                cfm.getColumn().setNumericPrecision(column.numericPrecision());
-                                cfm.getColumn().setNumericScale(column.numericScale());
-                                cfm.getColumn().setRefColumn(column.isRefColumn());
-                                cfm.getColumn().setRefLocalCol(column.refLocalCol());
-                                cfm.getColumn().setRefColName(column.refColName());
-                                cfm.getColumn().setRefTables(column.refTables());
-                                cfm.getColumn().setCharMaxLength(column.charMaxlength() > 0 ?
+                                cfm.getColumnMeta().setNullable(column.nullable());
+                                cfm.getColumnMeta().setUniqued(column.unique());
+                                cfm.getColumnMeta().setName(column.name());
+                                cfm.getColumnMeta().setNumericPrecision(column.numericPrecision());
+                                cfm.getColumnMeta().setNumericScale(column.numericScale());
+                                cfm.getColumnMeta().setRefColumn(column.isRefColumn());
+                                cfm.getColumnMeta().setRefLocalCol(column.refLocalCol());
+                                cfm.getColumnMeta().setRefColName(column.refColName());
+                                cfm.getColumnMeta().setRefTables(column.refTables());
+                                cfm.getColumnMeta().setCharMaxLength(column.charMaxlength() > 0 ?
                                         column.charMaxlength() : MapUtils.getLong(dataTypeDefaultMaxLengthMap, column.dataType(), 64L));
-                                cfm.getColumn().setDataType(column.dataType());
+                                cfm.getColumnMeta().setDataType(column.dataType());
                                 try {
                                     field.setAccessible(true);
                                     Object defaultValue = field.get(bean);
                                     if (defaultValue != null) {
                                         if (defaultValue instanceof Boolean) {
-                                            cfm.getColumn().setDefaultValue(Boolean.parseBoolean(defaultValue.toString()) ? "1" : "0");
+                                            cfm.getColumnMeta().setDefaultValue(Boolean.parseBoolean(defaultValue.toString()) ? "1" : "0");
                                         } else {
-                                            cfm.getColumn().setDefaultValue(String.valueOf(field.get(bean)));
+                                            cfm.getColumnMeta().setDefaultValue(String.valueOf(field.get(bean)));
                                         }
                                     }
                                 } catch (IllegalAccessException e) {
@@ -367,12 +367,12 @@ public class MetaReflex {
                                         tableForeigns.add(tableForeign);
                                     }
                                 }
-                                cfm.getColumn().setDescription(description);
+                                cfm.getColumnMeta().setDescription(description);
                                 cfm.setFieldType(field.getType());
-                                if (Strings.isEmpty(cfm.getColumn().getDataType())) {
-                                    cfm.getColumn().setDataType(TypeConverter.toSqlTypeString(field.getType()));
+                                if (Strings.isEmpty(cfm.getColumnMeta().getDataType())) {
+                                    cfm.getColumnMeta().setDataType(TypeConverter.toSqlTypeString(field.getType()));
                                 }
-                                cfm.getColumn().afterSet();
+                                cfm.getColumnMeta().afterSet();
                                 map.put(fieldName, cfm);
                             }
                         } else {
@@ -414,25 +414,25 @@ public class MetaReflex {
                                 cfm = new FieldMeta(fieldName, fieldName, title);
                             }
                             if (column != null) {
-                                cfm.getColumn().setNullable(column.nullable());
-                                cfm.getColumn().setUniqued(column.unique());
-                                cfm.getColumn().setName(column.name());
-                                cfm.getColumn().setNumericPrecision(column.numericPrecision());
-                                cfm.getColumn().setNumericScale(column.numericScale());
-                                cfm.getColumn().setRefColumn(column.isRefColumn());
-                                cfm.getColumn().setRefLocalCol(column.refLocalCol());
-                                cfm.getColumn().setRefColName(column.refColName());
-                                cfm.getColumn().setRefTables(column.refTables());
-                                cfm.getColumn().setCharMaxLength(column.charMaxlength() > 0 ?
+                                cfm.getColumnMeta().setNullable(column.nullable());
+                                cfm.getColumnMeta().setUniqued(column.unique());
+                                cfm.getColumnMeta().setName(column.name());
+                                cfm.getColumnMeta().setNumericPrecision(column.numericPrecision());
+                                cfm.getColumnMeta().setNumericScale(column.numericScale());
+                                cfm.getColumnMeta().setRefColumn(column.isRefColumn());
+                                cfm.getColumnMeta().setRefLocalCol(column.refLocalCol());
+                                cfm.getColumnMeta().setRefColName(column.refColName());
+                                cfm.getColumnMeta().setRefTables(column.refTables());
+                                cfm.getColumnMeta().setCharMaxLength(column.charMaxlength() > 0 ?
                                         column.charMaxlength() : MapUtils.getLong(dataTypeDefaultMaxLengthMap, column.dataType(), 64L));
-                                cfm.getColumn().setDataType(column.dataType());
+                                cfm.getColumnMeta().setDataType(column.dataType());
                                 try {
                                     Object defaultValue = method.invoke(bean);
                                     if (defaultValue != null) {
                                         if (defaultValue instanceof Boolean) {
-                                            cfm.getColumn().setDefaultValue(Boolean.parseBoolean(defaultValue.toString()) ? "1" : "0");
+                                            cfm.getColumnMeta().setDefaultValue(Boolean.parseBoolean(defaultValue.toString()) ? "1" : "0");
                                         } else {
-                                            cfm.getColumn().setDefaultValue(String.valueOf(method.invoke(bean)));
+                                            cfm.getColumnMeta().setDefaultValue(String.valueOf(method.invoke(bean)));
                                         }
                                     }
                                 } catch (IllegalAccessException | InvocationTargetException e) {
@@ -456,12 +456,12 @@ public class MetaReflex {
                                     }
                                 }
                             }
-                            cfm.getColumn().setDescription(description);
+                            cfm.getColumnMeta().setDescription(description);
                             cfm.setFieldType(method.getReturnType());
-                            if (Strings.isEmpty(cfm.getColumn().getDataType())) {
-                                cfm.getColumn().setDataType(TypeConverter.toSqlTypeString(method.getReturnType()));
+                            if (Strings.isEmpty(cfm.getColumnMeta().getDataType())) {
+                                cfm.getColumnMeta().setDataType(TypeConverter.toSqlTypeString(method.getReturnType()));
                             }
-                            cfm.getColumn().afterSet();
+                            cfm.getColumnMeta().afterSet();
                             map.put(fieldName, cfm);
                         } else {
                             transientProp.add(fieldName);
@@ -507,69 +507,71 @@ public class MetaReflex {
             String fieldName = c_map.get("field_name") == null ? null : c_map.get("field_name").toString();
             String title = c_map.get("title") == null ? null : c_map.get("title").toString();
             String columnName = c_map.get("column_name") == null ? null : c_map.get("column_name").toString();
-            String selectType = c_map.get("select_type") == null ? null : c_map.get("select_type").toString().toUpperCase(Locale.ENGLISH);
-            String typeExtra = c_map.get("type_extra") == null ? null : c_map.get("type_extra").toString();
-            String extraValue = c_map.get("extra_value") == null ? null : c_map.get("extra_value").toString();
-            String extraMap = c_map.get("extra_map") == null ? null : c_map.get("extra_map").toString();
-            String dataType = c_map.get("data_type") == null ? null : c_map.get("data_type").toString().toUpperCase(Locale.ENGLISH);
-            String defaultValue = c_map.get("column_default") == null ? null : c_map.get("column_default").toString();
-            String comment = c_map.get("column_comment") == null ? null : c_map.get("column_comment").toString();
-            Boolean enableStatus = c_map.get("enable_status") == null ? null : Boolean.parseBoolean(c_map.get("enable_status").toString());
+
             if (Strings.isNotBlank(fieldName) && !map.containsKey(fieldName)) {
+                String selectType = c_map.get("select_type") == null ? null : c_map.get("select_type").toString().toUpperCase(Locale.ENGLISH);
+                String typeExtra = c_map.get("type_extra") == null ? null : c_map.get("type_extra").toString();
+                String extraValue = c_map.get("extra_value") == null ? null : c_map.get("extra_value").toString();
+                String extraMap = c_map.get("extra_map") == null ? null : c_map.get("extra_map").toString();
+                String dataType = c_map.get("data_type") == null ? null : c_map.get("data_type").toString().toUpperCase(Locale.ENGLISH);
+                String defaultValue = c_map.get("column_default") == null ? null : c_map.get("column_default").toString();
+                String comment = c_map.get("column_comment") == null ? null : c_map.get("column_comment").toString();
+                Boolean enableStatus = c_map.get("enable_status") == null ? null : Boolean.parseBoolean(c_map.get("enable_status").toString());
+
                 FieldMeta cfm = new FieldMeta(columnName, fieldName, title);
-                cfm.getColumn().setFieldName(fieldName);
-                cfm.getColumn().setUniqued(c_map.get("is_unique") != null && Boolean.parseBoolean(c_map.get("is_unique").toString()));
-                cfm.getColumn().setNullable(c_map.get("is_nullable") == null || Boolean.parseBoolean(c_map.get("is_nullable").toString()));
-                cfm.getColumn().setDefaultValue(Strings.isNotBlank(defaultValue) ? defaultValue : null);
-                cfm.getColumn().setDescription(c_map.get("description") == null ? null : c_map.get("description").toString());
-                cfm.getColumn().setType(c_map.get("column_type") == null ? null : c_map.get("column_type").toString());
-                cfm.getColumn().setTitle(title);
+                cfm.getColumnMeta().setFieldName(fieldName);
+                cfm.getColumnMeta().setUniqued(c_map.get("is_unique") != null && Boolean.parseBoolean(c_map.get("is_unique").toString()));
+                cfm.getColumnMeta().setNullable(c_map.get("is_nullable") == null || Boolean.parseBoolean(c_map.get("is_nullable").toString()));
+                cfm.getColumnMeta().setDefaultValue(Strings.isNotBlank(defaultValue) ? defaultValue : null);
+                cfm.getColumnMeta().setDescription(c_map.get("description") == null ? null : c_map.get("description").toString());
+                cfm.getColumnMeta().setType(c_map.get("column_type") == null ? null : c_map.get("column_type").toString());
+                cfm.getColumnMeta().setTitle(title);
                 if (c_map.get("character_maxinum_length") != null) {
-                    cfm.getColumn().setCharMaxLength(Long.parseLong(c_map.get("character_maxinum_length").toString()));
+                    cfm.getColumnMeta().setCharMaxLength(Long.parseLong(c_map.get("character_maxinum_length").toString()));
                 }
                 if (c_map.get("datetime_precision") != null) {
-                    cfm.getColumn().setDatetimePrecision(Integer.parseInt(c_map.get("datetime_precision").toString()));
+                    cfm.getColumnMeta().setDatetimePrecision(Integer.parseInt(c_map.get("datetime_precision").toString()));
                 }
-                cfm.getColumn().setId(c_map.get("id") == null ? null : c_map.get("id").toString());
-                cfm.getColumn().setKey(c_map.get("column_key") != null && Boolean.parseBoolean(c_map.get("column_key").toString()));
+                cfm.getColumnMeta().setId(c_map.get("id") == null ? null : c_map.get("id").toString());
+                cfm.getColumnMeta().setKey(c_map.get("column_key") != null && Boolean.parseBoolean(c_map.get("column_key").toString()));
                 if (c_map.get("linked") != null) {
-                    cfm.getColumn().setLinked(Integer.parseInt(c_map.get("linked").toString()));
+                    cfm.getColumnMeta().setLinked(Integer.parseInt(c_map.get("linked").toString()));
                 }
                 if (c_map.get("numeric_precision") != null) {
-                    cfm.getColumn().setNumericPrecision(Integer.parseInt(c_map.get("numeric_precision").toString()));
+                    cfm.getColumnMeta().setNumericPrecision(Integer.parseInt(c_map.get("numeric_precision").toString()));
                 }
-                cfm.getColumn().setNumericSigned(c_map.get("numeric_signed") != null && Boolean.parseBoolean(c_map.get("numeric_signed").toString()));
-                cfm.getColumn().setAutoIncrement(c_map.get("auto_increment") != null && Boolean.parseBoolean(c_map.get("auto_increment").toString()));
-                cfm.getColumn().setDataType(dataType);
-                cfm.getColumn().setSelectType(selectType);
-                cfm.getColumn().setTypeExtra(typeExtra);
-                cfm.getColumn().setExtraValue(extraValue);
-                cfm.getColumn().setExtraMap(extraMap);
+                cfm.getColumnMeta().setNumericSigned(c_map.get("numeric_signed") != null && Boolean.parseBoolean(c_map.get("numeric_signed").toString()));
+                cfm.getColumnMeta().setAutoIncrement(c_map.get("auto_increment") != null && Boolean.parseBoolean(c_map.get("auto_increment").toString()));
+                cfm.getColumnMeta().setDataType(dataType);
+                cfm.getColumnMeta().setSelectType(selectType);
+                cfm.getColumnMeta().setTypeExtra(typeExtra);
+                cfm.getColumnMeta().setExtraValue(extraValue);
+                cfm.getColumnMeta().setExtraMap(extraMap);
                 if (c_map.get("ordinal_position") != null) {
-                    cfm.getColumn().setOrdinalPosition(Integer.parseInt(c_map.get("ordinal_position").toString()));
+                    cfm.getColumnMeta().setOrdinalPosition(Integer.parseInt(c_map.get("ordinal_position").toString()));
                 }
-                cfm.getColumn().setName(columnName);
-                cfm.getColumn().setTableId(c_map.get("table_id") == null ? null : c_map.get("table_id").toString());
-                cfm.getColumn().setTableName(c_map.get("table_name") == null ? null : c_map.get("table_name").toString());
-                cfm.getColumn().setComment(Strings.isNotBlank(comment) ? comment : title);
+                cfm.getColumnMeta().setName(columnName);
+                cfm.getColumnMeta().setTableId(c_map.get("table_id") == null ? null : c_map.get("table_id").toString());
+                cfm.getColumnMeta().setTableName(c_map.get("table_name") == null ? null : c_map.get("table_name").toString());
+                cfm.getColumnMeta().setComment(Strings.isNotBlank(comment) ? comment : title);
                 if (c_map.get("numeric_scale") != null) {
-                    cfm.getColumn().setNumericScale(Integer.parseInt(c_map.get("numeric_scale").toString()));
+                    cfm.getColumnMeta().setNumericScale(Integer.parseInt(c_map.get("numeric_scale").toString()));
                 }
                 if (c_map.get("del_status") != null) {
-                    cfm.getColumn().setDelStatus(Integer.parseInt(c_map.get("del_status").toString()));
+                    cfm.getColumnMeta().setDelStatus(Integer.parseInt(c_map.get("del_status").toString()));
                 }
-                cfm.getColumn().setEnableStatus(Boolean.TRUE.equals(enableStatus) ? 1 : 0);
-                cfm.getColumn().setAutoName(c_map.get("auto_name") == null ? null : c_map.get("auto_name").toString());
-                cfm.getColumn().setAutoAdd(c_map.get("auto_add") != null && Boolean.parseBoolean(c_map.get("auto_add").toString()));
-                cfm.getColumn().setSynced(c_map.get("synced") != null && Boolean.parseBoolean(c_map.get("synced").toString()));
-                cfm.getColumn().setDrawed(c_map.get("drawed") != null && Boolean.parseBoolean(c_map.get("drawed").toString()));
-                cfm.getColumn().setEncrypted(c_map.get("encrypted") != null && Boolean.parseBoolean(c_map.get("encrypted").toString()));
-                cfm.getColumn().setMarker(c_map.get("marker") == null ? null : c_map.get("marker").toString());
-                cfm.getColumn().setTenantCode(c_map.get("tenant_code") == null ? null : c_map.get("tenant_code").toString());
-                cfm.getColumn().setAppId(c_map.get("app_id") == null ? null : c_map.get("app_id").toString());
+                cfm.getColumnMeta().setEnableStatus(Boolean.TRUE.equals(enableStatus) ? 1 : 0);
+                cfm.getColumnMeta().setAutoName(c_map.get("auto_name") == null ? null : c_map.get("auto_name").toString());
+                cfm.getColumnMeta().setAutoAdd(c_map.get("auto_add") != null && Boolean.parseBoolean(c_map.get("auto_add").toString()));
+                cfm.getColumnMeta().setSynced(c_map.get("synced") != null && Boolean.parseBoolean(c_map.get("synced").toString()));
+                cfm.getColumnMeta().setDrawed(c_map.get("drawed") != null && Boolean.parseBoolean(c_map.get("drawed").toString()));
+                cfm.getColumnMeta().setEncrypted(c_map.get("encrypted") != null && Boolean.parseBoolean(c_map.get("encrypted").toString()));
+                cfm.getColumnMeta().setMarker(c_map.get("marker") == null ? null : c_map.get("marker").toString());
+                cfm.getColumnMeta().setTenantCode(c_map.get("tenant_code") == null ? null : c_map.get("tenant_code").toString());
+                cfm.getColumnMeta().setAppId(c_map.get("app_id") == null ? null : c_map.get("app_id").toString());
 
                 if (MysqlDataTypeEnum.getTexts().contains(dataType)) {
-                    cfm.getColumn().setDefaultValue(null);
+                    cfm.getColumnMeta().setDefaultValue(null);
                 }
                 cfm.setFieldType(MysqlToJavaEnum.getJava(dataType));
                 map.put(fieldName, cfm);
@@ -586,7 +588,7 @@ public class MetaReflex {
         FieldMeta fieldMeta = null;
         if (columnMap != null && !columnMap.isEmpty()) {
             for (Map.Entry<String, FieldMeta> map : columnMap.entrySet()) {
-                if (map.getValue().getColumn().isKey()) {
+                if (map.getValue().getColumnMeta().isKey()) {
                     fieldMeta = map.getValue();
                     break;
                 }

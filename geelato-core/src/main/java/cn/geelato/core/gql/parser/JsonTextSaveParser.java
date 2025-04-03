@@ -143,7 +143,7 @@ public class JsonTextSaveParser extends JsonTextParser {
         });
         Assert.isTrue(validator.isSuccess(), validator.getMessage());
 
-        String[] fields = new String[params.keySet().size()];
+        String[] fields = new String[params.size()];
         params.keySet().toArray(fields);
         String PK = validator.getPK();
         if (validator.hasPK(fields) && StringUtils.hasText(jo.getString(PK)) && !StringUtils.hasText(jo.getString("forceId"))) {
@@ -154,7 +154,7 @@ public class JsonTextSaveParser extends JsonTextParser {
             command.setCommandType(CommandType.Update);
             params.remove(PK);
             putUpdateDefaultField(params, sessionCtx);
-            String[] updateFields = new String[params.keySet().size()];
+            String[] updateFields = new String[params.size()];
             params.keySet().toArray(updateFields);
             command.setFields(updateFields);
             command.setValueMap(params);
@@ -177,6 +177,11 @@ public class JsonTextSaveParser extends JsonTextParser {
             command.setFields(insertFields);
             command.setValueMap(entityMap);
             command.setPK(entityMap.get(PK).toString());
+        }
+        boolean sm4=true;
+        if(sm4){
+            for (Map.Entry<String, Object> entry : command.getValueMap().entrySet()) {
+            }
         }
         return command;
     }

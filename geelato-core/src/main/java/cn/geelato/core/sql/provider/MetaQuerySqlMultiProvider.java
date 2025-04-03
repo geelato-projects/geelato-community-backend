@@ -148,7 +148,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
         // 重命名查询的结果列表为实体字段名
         for (String fieldName : fields) {
             FieldMeta fm = md.getFieldMeta(fieldName);
-            ColumnMeta cm = fm.getColumn();
+            ColumnMeta cm = fm.getColumnMeta();
             // 外表字段
             if (Strings.isNotEmpty(cm.getRefColName())) {
                 if (!cm.getIsRefColumn()) {
@@ -174,7 +174,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
                     sb.append(" ");
                     tryAppendKeywords(sb, alias.get(fieldName).toString());
                 } else {
-                    if (!fm.getColumn().getIsRefColumn() && fm.isEquals()) {
+                    if (!fm.getColumnMeta().getIsRefColumn() && fm.isEquals()) {
                         tryAppendKeywords(md, sb, fm);
                     } else {
                         tryAppendKeywords(md, sb, fm);
@@ -192,7 +192,7 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
      * 构建多表关联查询
      */
     private void buildForeignJoinSql(QueryCommand command, EntityMeta md, FieldMeta fm) {
-        String[] fTables = fm.getColumn().getRefTables().split(",");
+        String[] fTables = fm.getColumnMeta().getRefTables().split(",");
         for (int i = 0, len = fTables.length; i < len; i++) {
             String lastTable = i > 0 ? fTables[i - 1] : md.getTableName();
             EntityMeta fEm = super.metaManager.get(fTables[i]);
@@ -273,8 +273,8 @@ public class MetaQuerySqlMultiProvider extends MetaBaseSqlProvider<QueryCommand>
     @Override
     protected void tryAppendKeywords(EntityMeta md, StringBuilder sb, FieldMeta fm) {
         String field = fm.getColumnName();
-        if (fm.getColumn().getIsRefColumn()) {
-            String fCol = fm.getColumn().getRefColName();
+        if (fm.getColumnMeta().getIsRefColumn()) {
+            String fCol = fm.getColumnMeta().getRefColName();
             String[] items = fCol.split("\\.");
             if (items.length == 2) {
                 sb.append(super.buildTableAlias(items[0])).append(".");

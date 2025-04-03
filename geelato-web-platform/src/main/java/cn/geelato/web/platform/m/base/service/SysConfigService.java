@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.utils.KeyUtils;
-import cn.geelato.utils.Sm2Utils;
+import cn.geelato.utils.SM2Utils;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ public class SysConfigService extends BaseService {
         } else {
             keys = KeyUtils.generateSmKey();
         }
-        String encodeValue = Sm2Utils.encrypt(model.getConfigValue(), keys);
+        String encodeValue = SM2Utils.encrypt(model.getConfigValue(), keys);
         model.setConfigValue(encodeValue);
         model.setSm2Key(JSON.toJSONString(keys));
     }
@@ -53,7 +53,7 @@ public class SysConfigService extends BaseService {
         if (Strings.isNotBlank(model.getSm2Key())) {
             try {
                 keys = JSON.parseObject(model.getSm2Key(), Map.class);
-                String encodeValue = Sm2Utils.decrypt(model.getConfigValue(), keys);
+                String encodeValue = SM2Utils.decrypt(model.getConfigValue(), keys);
                 model.setConfigValue(encodeValue);
             } catch (Exception ex) {
                 throw new RuntimeException("密钥解析失败！");

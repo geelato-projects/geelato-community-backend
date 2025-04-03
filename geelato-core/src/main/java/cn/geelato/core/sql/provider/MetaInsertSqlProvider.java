@@ -37,7 +37,7 @@ public class MetaInsertSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
         int[] types = new int[command.getValueMap().size()];
         int i = 0;
         for (Map.Entry<String, Object> entry : command.getValueMap().entrySet()) {
-            types[i] = TypeConverter.toSqlType(em.getFieldMeta(entry.getKey()).getColumn().getDataType());
+            types[i] = TypeConverter.toSqlType(em.getFieldMeta(entry.getKey()).getColumnMeta().getDataType());
             i++;
         }
         return types;

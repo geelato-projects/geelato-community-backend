@@ -3,6 +3,7 @@ package cn.geelato.web.platform.m.base.service;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.entity.AppSqlMap;
 import cn.geelato.web.platform.m.base.entity.CustomSql;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +15,8 @@ import org.springframework.stereotype.Component;
  * @author diabl
  */
 @Component
+@Slf4j
 public class AppSqlMapService extends BaseService {
-    private final Logger logger = LoggerFactory.getLogger(AppSqlMapService.class);
-
     @Lazy
     @Autowired
     private AppService appService;

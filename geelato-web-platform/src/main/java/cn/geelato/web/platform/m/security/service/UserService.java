@@ -13,10 +13,9 @@ import cn.geelato.web.platform.m.security.entity.RoleUserMap;
 import cn.geelato.web.platform.m.security.entity.User;
 import cn.geelato.web.platform.m.security.enums.IsDefaultOrgEnum;
 import com.alibaba.fastjson2.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -28,10 +27,10 @@ import java.util.regex.Pattern;
  * @author diabl
  */
 @Component
+@Slf4j
 public class UserService extends BaseSortableService {
     private static final String CONFIG_KEY_TEMPLATE_CODE = "mobileTemplateResetPwd";
     private static final Pattern CHINESE_PATTERN = Pattern.compile("^[\\u4e00-\\u9fa5]+$");
-    private final Logger logger = LoggerFactory.getLogger(UserService.class);
     @Lazy
     @Autowired
     private OrgUserMapService orgUserMapService;
@@ -248,7 +247,7 @@ public class UserService extends BaseSortableService {
             phoneNumbers = mobilePrefix + phoneNumbers;
         }
         if (!CHINESE_PATTERN.matcher(name).matches()) {
-            logger.error("短信${name}仅支持中文。{}", name);
+            log.error("短信${name}仅支持中文。{}", name);
             return false;
         }
         try {
@@ -257,7 +256,7 @@ public class UserService extends BaseSortableService {
             params.put("password", password);
             return aliMobileService.sendMobile(CONFIG_KEY_TEMPLATE_CODE, phoneNumbers, params);
         } catch (Exception e) {
-            logger.error("发送短信时发生异常", e);
+            log.error("发送短信时发生异常", e);
         }
         return false;
     }

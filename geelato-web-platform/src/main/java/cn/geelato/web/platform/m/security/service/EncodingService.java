@@ -12,9 +12,8 @@ import cn.geelato.web.platform.m.security.enums.EncodingItemTypeEnum;
 import cn.geelato.web.platform.m.security.enums.EncodingSerialTypeEnum;
 import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -28,11 +27,11 @@ import java.util.concurrent.TimeUnit;
  * @author diabl
  */
 @Component
+@Slf4j
 public class EncodingService extends BaseService {
     private static final String ENCODING_LOCK_PREFIX = "ENCODING_LOCK";
     private static final String ENCODING_LIST_PREFIX = "ENCODING_LIST";
     private static final String ENCODING_ITEM_PREFIX = "ENCODING_ITEM_";
-    private final Logger logger = LoggerFactory.getLogger(EncodingService.class);
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
     @Autowired
@@ -90,7 +89,7 @@ public class EncodingService extends BaseService {
     private void redisTemplateEncodingItem(Encoding encoding) {
         String redisItemKey = ENCODING_ITEM_PREFIX + encoding.getId();
         List<Object> serials = querySerialsByEncodingLog(encoding);
-        logger.info("{} 流水号：{}", redisItemKey, JSON.toJSONString(serials));
+        log.info("{} 流水号：{}", redisItemKey, JSON.toJSONString(serials));
         redisTemplateListRightPush(redisItemKey, serials);
         redisTemplate.expire(redisItemKey, DateUtils.timeInterval(encoding.getDateType()), TimeUnit.SECONDS);
     }
@@ -117,7 +116,7 @@ public class EncodingService extends BaseService {
                 }
             }
             if (redisItemKeys != null && !redisItemKeys.isEmpty()) {
-                logger.info("编码模板：" + JSON.toJSONString(redisItemKeys));
+                log.info("编码模板：" + JSON.toJSONString(redisItemKeys));
                 redisTemplateListRightPush(ENCODING_LIST_PREFIX, redisItemKeys);
                 redisTemplate.expire(ENCODING_LIST_PREFIX, 1, TimeUnit.DAYS);
             }
@@ -144,7 +143,7 @@ public class EncodingService extends BaseService {
         if (Strings.isNotBlank(encoding.getDateType())) {
             logParams.put("exampleDate", new SimpleDateFormat(encoding.getDateType()).format(new Date()));
         }
-        logger.info("logParams：" + JSON.toJSONString(logParams));
+        log.info("logParams：" + JSON.toJSONString(logParams));
         List<EncodingLog> encodingLogList = queryModel(EncodingLog.class, logParams);
         if (encodingLogList != null && !encodingLogList.isEmpty()) {
             for (EncodingLog log : encodingLogList) {
@@ -222,14 +221,14 @@ public class EncodingService extends BaseService {
                         examples.add(date);
                         encodingLog.setExampleDate(date);
                     } catch (Exception ex) {
-                        logger.error("日期解析失败", ex);
+                        log.error("日期解析失败", ex);
                     }
                 }
             }
         }
         String separator = Strings.isNotBlank(form.getSeparators()) ? form.getSeparators() : "";
         encodingLog.setExample(String.join(separator, examples));
-        logger.info("{} 记录：{}", redisItemKey, JSON.toJSONString(encodingLog));
+        log.info("{} 记录：{}", redisItemKey, JSON.toJSONString(encodingLog));
         if (Strings.isBlank(encodingLog.getId()) && Strings.isBlank(encodingLog.getTenantCode())) {
             encodingLog.setTenantCode(getSessionTenantCode());
         }
@@ -277,7 +276,7 @@ public class EncodingService extends BaseService {
                 Thread.sleep(100);
                 serial = getSerialByRedisLock(redisItemKey, item);
             } catch (InterruptedException e) {
-                logger.error("redisLockError", e);
+                log.error("redisLockError", e);
             }
         }
 

@@ -16,9 +16,8 @@ import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.excel.entity.*;
 import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -36,6 +35,7 @@ import java.util.stream.Collectors;
  * @author diabl
  */
 @Component
+@Slf4j
 public class ExcelCommonUtils {
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(DateUtils.DATE);
     public static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat(DateUtils.DATETIME);
@@ -44,7 +44,6 @@ public class ExcelCommonUtils {
     private static final int REDIS_TIME_OUT = 60;
     private static final int GGL_QUERY_TOTAL = 10000;
     private static final String REDIS_UNIQUE_KEY = "uniques";
-    private static final Logger logger = LoggerFactory.getLogger(ExcelCommonUtils.class);
     private final FilterGroup filterGroup = new FilterGroup().addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
     private final MetaManager metaManager = MetaManager.singleInstance();
     @Autowired
@@ -427,7 +426,7 @@ public class ExcelCommonUtils {
                                     }
                                 }
                             } catch (Exception ex) {
-                                logger.error(ex.getMessage(), ex);
+                                log.error(ex.getMessage(), ex);
                             }
                         }
                     }
@@ -864,7 +863,7 @@ public class ExcelCommonUtils {
                 }
             }
         } catch (Exception ex) {
-            logger.info(ex.getMessage(), ex);
+            log.info(ex.getMessage(), ex);
         }
 
         return primaryKeys;
@@ -1019,7 +1018,7 @@ public class ExcelCommonUtils {
                 }
             }
         } catch (Exception ex) {
-            logger.info(ex.getMessage(), ex);
+            log.info(ex.getMessage(), ex);
         }
 
         return primaryKeys;
@@ -1108,7 +1107,7 @@ public class ExcelCommonUtils {
                 redisTemplate.opsForValue().set(key, redisValue, REDIS_TIME_OUT, TimeUnit.MINUTES);
             }
         } catch (Exception ex) {
-            logger.info(ex.getMessage(), ex);
+            log.info(ex.getMessage(), ex);
         }
 
         return uniqueKeys;
@@ -1245,7 +1244,7 @@ public class ExcelCommonUtils {
                                     }
                                 }
                             } catch (Exception ex) {
-                                logger.error(ex.getMessage(), ex);
+                                log.error(ex.getMessage(), ex);
                             }
                         } else {
                             businessData.addErrorMsg("Rule resolution failure。[" + ruleData.getType() + "] Rule is empty！");

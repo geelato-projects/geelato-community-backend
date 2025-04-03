@@ -25,16 +25,14 @@ import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
 import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.HashedMap;
 import org.jeasy.rules.api.Facts;
 import org.jeasy.rules.api.Rules;
 import org.jeasy.rules.api.RulesEngine;
 import org.jeasy.rules.core.DefaultRulesEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
@@ -49,8 +47,8 @@ import java.util.*;
  * @author geelato
  */
 @Component
+@Slf4j
 public class RuleService {
-
     @Setter
     @Autowired
     @Qualifier("dynamicDao")
@@ -64,8 +62,6 @@ public class RuleService {
     private final static String VARS_CTX = "$ctx";
     // $fn.now.
     private final static String VARS_FN = "$fn";
-
-    private static final Logger logger = LoggerFactory.getLogger(RuleService.class);
 
     /**
      * <p>注意: 在使用之前，需先设置dao
@@ -182,6 +178,7 @@ public class RuleService {
 
         return resultList;
     }
+
     public ApiMultiPagedResult queryForMultiMapList(String gql, boolean withMeta) {
         Map<String, ApiMultiPagedResult.PageData> dataMap = new HashMap<>();
         List<QueryCommand> commandList = gqlManager.generateMultiQuerySql(gql);
@@ -261,10 +258,10 @@ public class RuleService {
         BoundSql boundSql = sqlManager.generateSaveSql(command);
         String rtnValue = null;
         try {
-            //todo : wait to refactor by aspect
-            String connectId=metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
-            if(!StringUtils.isEmpty(connectId)) {
-                JdbcTemplate jdbcTemplate=new JdbcTemplate();
+            // todo : wait to refactor by aspect
+            String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
+            if (!StringUtils.isEmpty(connectId)) {
+                JdbcTemplate jdbcTemplate = new JdbcTemplate();
                 jdbcTemplate.setDataSource(DataSourceManager.singleInstance().getDataSource(connectId));
                 dao.setJdbcTemplate(jdbcTemplate);
             }
@@ -299,11 +296,11 @@ public class RuleService {
 
         if (command.getParentCommand() == null && command.getExecution()) {
             TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
-            logger.info("transactionCommit");
+            log.info("transactionCommit");
         } else if (!command.getExecution() && !"transactionRollback".equals(rtnValue)) {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
             rtnValue = "transactionRollback";
-            logger.info("transactionRollback");
+            log.info("transactionRollback");
         }
 
         return rtnValue;
@@ -393,7 +390,7 @@ public class RuleService {
                 } else if ("id".equals(valueExpTrim)) {
                     return currentCommand.getPK();
                 }
-                logger.error("dao exception:通过表达式变量：" + valueExp + "获取不到值。");
+                log.error("dao exception:通过表达式变量：" + valueExp + "获取不到值。");
                 // throw new DaoException("dao exception:通过表达式变量：" + valueExp + "获取不到值。");
                 return null;
             }

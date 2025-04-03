@@ -16,8 +16,6 @@ import java.util.Map;
  */
 @Component
 public class MetaQueryTreeSqlProvider extends MetaBaseSqlProvider<QueryTreeCommand> {
-    private static final Logger logger = LoggerFactory.getLogger(MetaQueryTreeSqlProvider.class);
-
     @Override
     protected Object[] buildParams(QueryTreeCommand command) {
         return buildWhereParams(command);

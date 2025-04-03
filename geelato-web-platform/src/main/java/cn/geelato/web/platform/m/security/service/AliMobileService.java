@@ -7,6 +7,7 @@ import cn.geelato.web.platform.m.base.entity.SysConfig;
 import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.security.entity.AliMobile;
 import com.alibaba.fastjson2.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,8 +24,8 @@ import java.util.Map;
  * @author diabl
  */
 @Component
+@Slf4j
 public class AliMobileService {
-    private final Logger logger = LoggerFactory.getLogger(AliMobileService.class);
     // private static final String SIGN_NAME = "深圳海桥物流";// 阿里云短信测试
     // private static final String TEMPLATE_CODE = "SMS_465430460";// SMS_154950909
     private static final int SEND_SMS_RESPONSE_STATUS_CODE = 200;
@@ -110,7 +111,7 @@ public class AliMobileService {
         com.aliyun.teaconsole.Client.log(com.aliyun.teautil.Common.toJSONString(resp));
         if (resp.getStatusCode() == SEND_SMS_RESPONSE_STATUS_CODE) {
             if (Strings.isNotBlank(resp.getBody().getCode()) && SEND_SMS_RESPONSE_BODY_CODE.equals(resp.getBody().getCode().toUpperCase(Locale.ENGLISH))) {
-                logger.info("短信发送成功！" + phoneNumbers);
+                log.info("短信发送成功！" + phoneNumbers);
                 return true;
             }
         }

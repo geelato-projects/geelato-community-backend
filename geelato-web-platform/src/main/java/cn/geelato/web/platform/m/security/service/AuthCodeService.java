@@ -10,10 +10,9 @@ import cn.geelato.web.platform.m.settings.enums.MessageSendStatus;
 import cn.geelato.web.platform.m.settings.service.MessageService;
 import cn.geelato.web.platform.utils.AuthCodeUtil;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -31,10 +30,10 @@ import java.util.concurrent.TimeUnit;
  * @author diabl
  */
 @Component
+@Slf4j
 public class AuthCodeService {
     private static final int CODE_EXPIRATION_TIME = 5;
     private static final String CONFIG_KEY_TEMPLATE_CODE = "mobileTemplateAutoCode";
-    private final Logger logger = LoggerFactory.getLogger(AuthCodeService.class);
     @Autowired
     @Qualifier("primaryDao")
     public Dao dao;
@@ -96,7 +95,7 @@ public class AuthCodeService {
         // 验证码
         String authCode = AuthCodeUtil.sixDigitNumber();
         form.setAuthCode(authCode);
-        logger.info("authCode：" + authCode);
+        log.info("authCode：" + authCode);
         // 加密
         String saltCode = form.getRedisValue();
         if (Strings.isBlank(saltCode)) {
@@ -145,7 +144,7 @@ public class AuthCodeService {
             params.put("code", authCode);
             return aliMobileService.sendMobile(CONFIG_KEY_TEMPLATE_CODE, phoneNumbers, params);
         } catch (Exception e) {
-            logger.error("发送短信时发生异常", e);
+            log.error("发送短信时发生异常", e);
         }
         return false;
     }
@@ -167,7 +166,7 @@ public class AuthCodeService {
         String saltCode = form.getRedisValue();
         // 获取缓存
         String redisCode = (String) redisTemplate.opsForValue().get(redisKey);
-        logger.info("redisKey-redisCode: " + redisKey + "[" + redisCode + "]");
+        log.info("redisKey-redisCode: " + redisKey + "[" + redisCode + "]");
         return saltCode.equals(redisCode);
     }
 

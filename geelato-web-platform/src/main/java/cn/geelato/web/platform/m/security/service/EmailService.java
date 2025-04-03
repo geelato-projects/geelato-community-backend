@@ -8,6 +8,7 @@ import cn.geelato.web.platform.m.base.service.SysConfigService;
 import cn.geelato.web.platform.m.security.entity.AliEmail;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +27,8 @@ import java.util.Properties;
  * 发送邮件服务类
  */
 @Component
+@Slf4j
 public class EmailService {
-    private final Logger logger = LoggerFactory.getLogger(EmailService.class);
     private static final String CONFIG_KEY_EMAIL_PORT = "emailPort";
     private static final String CONFIG_KEY_EMAIL_HOST = "emailHost";
     private static final String CONFIG_KEY_EMAIL_USERNAME = "emailUserName";
@@ -59,10 +60,10 @@ public class EmailService {
             message.setSubject(subject);
             messageHelper.setText(content, true);
             javaMailSender.send(message);
-            logger.info("邮件发送成功！");
+            log.info("邮件发送成功！");
             return true;
         } catch (Exception e) {
-            logger.error("发送邮件时发生异常！", e);
+            log.error("发送邮件时发生异常！", e);
         }
         return false;
     }

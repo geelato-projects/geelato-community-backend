@@ -175,10 +175,9 @@ public class ColumnMeta extends BaseSortableEntity implements EntityEnableAble, 
     @Col(name = "synced")
     private boolean synced = false;
 
-
+    @Getter
     @Title(title = "是否加密")
     @Col(name = "encrypted")
-    @Getter
     private boolean encrypted;
 
     @Getter

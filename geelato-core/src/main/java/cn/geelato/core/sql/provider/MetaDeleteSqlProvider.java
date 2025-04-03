@@ -46,7 +46,7 @@ public class MetaDeleteSqlProvider extends MetaBaseSqlProvider<DeleteCommand> {
         // 条件部分
         int[] whereTypes = buildWhereTypes(command);
 
-        ArrayList<Integer> typeList = new ArrayList();
+        ArrayList<Integer> typeList = new ArrayList<>();
         // 值部分
         command.getValueMap().forEach((key, value) -> {
             if (!em.isIgnoreUpdateField(key)) {

@@ -1,5 +1,6 @@
 package cn.geelato.utils;
 
+import lombok.SneakyThrows;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.Cipher;
@@ -19,7 +20,8 @@ public class SM4Utils {
     private static final String ALGORITHM_NAME = "SM4";
     private static final String ALGORITHM_MODE = "SM4/ECB/PKCS5Padding";
 
-    public static String encrypt(String data, String keyStr) throws Exception {
+    @SneakyThrows
+    public static String encrypt(String data, String keyStr) {
         byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
         byte[] key = keyStr.getBytes(StandardCharsets.UTF_8);
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, ALGORITHM_NAME);
@@ -29,7 +31,8 @@ public class SM4Utils {
         return Base64.getEncoder().encodeToString(encryptedBytes);
     }
 
-    public static String decrypt(String encryptedData, String keyStr) throws Exception {
+    @SneakyThrows
+    public static String decrypt(String encryptedData, String keyStr) {
         byte[] encryptedBytes = Base64.getDecoder().decode(encryptedData);
         byte[] key = keyStr.getBytes(StandardCharsets.UTF_8);
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, ALGORITHM_NAME);

@@ -42,6 +42,7 @@ public class FieldMeta implements Serializable {
     }
 
 
+
     /**
      * 判断列名和字段名是否一致。
      * 如果列名（columnName）或字段名（fieldName）为空，则返回false；

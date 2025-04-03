@@ -113,7 +113,7 @@ public class ExcelXSSFUtils {
      * @param index 要设置宽度的列的索引
      */
     public static void setColumnWidth(XSSFSheet sheet, String value, int index) {
-        int width = value.length() <= 3 ? 3 : (value.length() >= 72 ? 72 : value.length());
+        int width = value.length() <= 3 ? 3 : (Math.min(value.length(), 72));
         // 根据文本长度估算列宽（这里是一个简单的估算，可能需要调整）
         int estimatedWidth = (int) (value.length() * 3.5 * 256); // 假设每个字符大约需要1.5个字符宽度的空间
         sheet.setColumnWidth(index, estimatedWidth); // 设置第一列的列宽
@@ -162,7 +162,7 @@ public class ExcelXSSFUtils {
         anchor.setRow1(cell.getRowIndex());
         anchor.setCol2(cell.getColumnIndex() + 5);
         anchor.setRow2(cell.getRowIndex() + 5);
-        Drawing drawing = sheet.createDrawingPatriarch();
+        Drawing<XSSFShape> drawing = sheet.createDrawingPatriarch();
         XSSFComment comment = (XSSFComment) drawing.createCellComment(anchor);
         comment.setString(new XSSFRichTextString(mark));
         cell.setCellComment(comment);

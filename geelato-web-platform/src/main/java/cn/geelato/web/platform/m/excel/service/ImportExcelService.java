@@ -18,8 +18,8 @@ import cn.geelato.web.platform.m.base.service.RuleService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
 import cn.geelato.web.platform.m.file.entity.Attachment;
-import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import com.alibaba.fastjson2.JSON;
@@ -27,6 +27,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
@@ -41,8 +42,6 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -59,13 +58,13 @@ import java.util.stream.Collectors;
  * @author diabl
  */
 @Component
+@Slf4j
 public class ImportExcelService {
     private static final String REQUEST_FILE_PART = "file";
     private static final String REDIS_UNIQUE_KEY = "uniques";
     private static final double IMPORT_PAGE_SIZE = 100.0;
     private static final int ROW_ACCESS_WINDOW_SIZE = 50;
     private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.ATTACH.getValue();
-    private final Logger logger = LoggerFactory.getLogger(ImportExcelService.class);
     private final MetaManager metaManager = MetaManager.singleInstance();
 
     private final SimpleDateFormat sdf_dv = new SimpleDateFormat(DateUtils.DATEVARIETY);
@@ -88,7 +87,7 @@ public class ImportExcelService {
     @Autowired
     private ExcelCommonUtils excelCommonUtils;
 
-    public ApiResult importExcel(HttpServletRequest request, HttpServletResponse response, String importType, String templateId, String index, String attachId) {
+    public ApiResult<?> importExcel(HttpServletRequest request, HttpServletResponse response, String importType, String templateId, String index, String attachId) {
         System.gc();
         String currentUUID = String.valueOf(UIDGenerator.generate());
         try {
@@ -97,7 +96,7 @@ public class ImportExcelService {
             Map<String, List<BusinessMeta>> businessMetaListMap = new HashMap<>();// 元数据
             Map<String, BusinessTypeData> businessTypeDataMap = new HashMap<>();// 数据类型
             Set<Map<Integer, BusinessTypeRuleData>> businessTypeRuleDataSet = new LinkedHashSet<>();// 清洗规则
-            List<Map<String, BusinessData>> businessDataMapList = new ArrayList<>();// 业务数据
+            List<Map<String, BusinessData>> businessDataMapList;// 业务数据
             // 事务模板查询
             ExportTemplate exportTemplate = exportTemplateService.getModel(ExportTemplate.class, templateId);
             ExcelCommonUtils.notNull(exportTemplate, new FileNotFoundException("ExportTemplate Data Not Found"));
@@ -183,7 +182,7 @@ public class ImportExcelService {
                                 value = getValue(currentUUID, fieldMeta.getColumn(), meta, businessData, valueMap);
                                 // 验证值
                                 Set<String> errorMsg = validateValue(currentUUID, fieldMeta.getColumn(), businessData, value, columnNames);
-                                businessData.addAllErrorMsgs(errorMsg);
+                                businessData.addAllErrorMsg(errorMsg);
                             } catch (Exception ex) {
                                 businessData.addErrorMsg(ex.getMessage());
                             }
@@ -206,13 +205,13 @@ public class ImportExcelService {
             // 释放缓存
             redisTemplate.delete(cacheKeys);
             // 业务数据校验
-            if (!validBusinessData(businessDataMapList) || repeatedData.size() > 0) {
+            if (!validBusinessData(businessDataMapList) || !repeatedData.isEmpty()) {
                 Attachment errorAttach = writeBusinessData(exportTemplate, businessFile, request, response, businessDataMapList, repeatedData, 0);
                 return ApiResult.fail(errorAttach).exception(new FileContentValidFailedException("For more information, see the error file."));
             }
             // 插入数据 "@biz": "myBizCode",
             long insertStart = System.currentTimeMillis();
-            List<String> returnPks = new ArrayList<>();
+            List<String> returnPks;
             if (!tableData.isEmpty()) {
                 Map<String, Object> insertMap = new HashMap<>();
                 insertMap.put("@biz", "myBizCode");
@@ -251,24 +250,24 @@ public class ImportExcelService {
         List<String> businessDataNames = new ArrayList<>();
         // 业务数据类型
         List<String> businessTypeDataNames = new ArrayList<>();
-        if (businessDataMapList != null && businessDataMapList.size() > 0) {
+        if (businessDataMapList != null && !businessDataMapList.isEmpty()) {
             for (Map.Entry<String, BusinessData> businessDataEntry : businessDataMapList.get(0).entrySet()) {
                 businessDataNames.add(businessDataEntry.getKey());
             }
         }
-        if (businessTypeDataMap != null && businessTypeDataMap.size() > 0) {
+        if (businessTypeDataMap != null && !businessTypeDataMap.isEmpty()) {
             for (Map.Entry<String, BusinessTypeData> businessTypeDataEntry : businessTypeDataMap.entrySet()) {
                 businessTypeDataNames.add(businessTypeDataEntry.getKey());
             }
         }
         // 表头应该包含所有业务数据类型
-        if (!businessDataNames.containsAll(businessTypeDataNames)) {
+        if (!new HashSet<>(businessDataNames).containsAll(businessTypeDataNames)) {
             throw new FileException(String.format("business data table header deficiency：[%s]", listSubtraction(businessTypeDataNames, businessDataNames)));
         }
-        if (!businessTypeDataNames.containsAll(businessDataNames)) {
+        if (!new HashSet<>(businessTypeDataNames).containsAll(businessDataNames)) {
             throw new FileException(String.format("business type data name deficiency：[%s]", listSubtraction(businessDataNames, businessTypeDataNames)));
         }
-        if (businessMetaListMap != null && businessMetaListMap.size() > 0) {
+        if (businessMetaListMap != null && !businessMetaListMap.isEmpty()) {
             for (Map.Entry<String, List<BusinessMeta>> businessMetaEntry : businessMetaListMap.entrySet()) {
                 List<String> nullableColumnNames = new ArrayList<>();
                 List<String> metaColumnNames = new ArrayList<>();
@@ -279,12 +278,12 @@ public class ImportExcelService {
                 // 必填项
                 Map<String, ColumnMeta> nullableColumns = excelCommonUtils.getNullableColumns(entityMeta.getFieldMetas(), columnNames);
 
-                if (nullableColumns != null && nullableColumns.size() > 0) {
+                if (nullableColumns != null && !nullableColumns.isEmpty()) {
                     for (Map.Entry<String, ColumnMeta> columnMetaEntry : nullableColumns.entrySet()) {
                         nullableColumnNames.add(columnMetaEntry.getKey());
                     }
                 }
-                if (businessMetaEntry.getValue() != null && businessMetaEntry.getValue().size() > 0) {
+                if (businessMetaEntry.getValue() != null && !businessMetaEntry.getValue().isEmpty()) {
                     for (BusinessMeta businessMeta : businessMetaEntry.getValue()) {
                         if (Strings.isNotBlank(businessMeta.getColumnName())) {
                             metaColumnNames.add(businessMeta.getColumnName());
@@ -295,11 +294,11 @@ public class ImportExcelService {
                     }
                 }
                 // 元数据必须包含 必填项
-                if (!metaColumnNames.containsAll(nullableColumnNames)) {
+                if (!new HashSet<>(metaColumnNames).containsAll(nullableColumnNames)) {
                     throw new FileException(String.format("business meta required fields are missing：[%s]", listSubtraction(nullableColumnNames, metaColumnNames)));
                 }
                 // 数据类型必须包含 用到的所有变量
-                if (!businessTypeDataNames.containsAll(metaVariableValues)) {
+                if (!new HashSet<>(businessTypeDataNames).containsAll(metaVariableValues)) {
                     throw new FileException(String.format("business meta variable values are missing：[%s]", listSubtraction(metaVariableValues, businessTypeDataNames)));
                 }
             }
@@ -330,9 +329,9 @@ public class ImportExcelService {
         BusinessTypeData typeData = businessData.getBusinessTypeData();
 
         if (MysqlDataTypeEnum.getBooleans().contains(columnMeta.getDataType())) {
-
+            log.info("暂未处理");
         } else if (MysqlDataTypeEnum.getTinyBooleans().contains(columnMeta.getDataType()) && Arrays.asList(new String[]{"BIT", "SWITCH"}).contains(columnMeta.getSelectType())) {
-
+            log.info("暂未处理");
         } else if (MysqlDataTypeEnum.getStrings().contains(columnMeta.getDataType())) {
             if (value != null && String.valueOf(value).length() > columnMeta.getCharMaxLength()) {
                 errorMsg.add(String.format("当前长度：%s；已超出字段最大长度：%s。", String.valueOf(value).length(), columnMeta.getCharMaxLength()));
@@ -342,8 +341,9 @@ public class ImportExcelService {
                 errorMsg.add(String.format("当前长度：%s；已超出字段数值位数限制：%s。", String.valueOf(value).length(), (columnMeta.getNumericPrecision() + columnMeta.getNumericScale())));
             }
         } else if (MysqlDataTypeEnum.getDates().contains(columnMeta.getDataType())) {
-
+            log.info("暂未处理");
         } else {
+            log.info("暂未处理");
             // errorMsg.add(String.format("业务数据格式：%s；而数据库存储格式为：%s。", typeData.getType(), columnMeta.getDataType()));
         }
         if (value == null && !columnMeta.isNullable() && !columnNames.contains(columnMeta.getName())) {
@@ -351,7 +351,7 @@ public class ImportExcelService {
         }
         if (value != null && columnMeta.isUniqued() && !columnNames.contains(columnMeta.getName())) {
             Map<String, Set<Object>> redisValues = (Map<String, Set<Object>>) redisTemplate.opsForValue().get(String.format("%s:%s:%s", currentUUID, columnMeta.getTableName(), REDIS_UNIQUE_KEY));
-            if (redisValues != null && redisValues.size() > 0) {
+            if (redisValues != null && !redisValues.isEmpty()) {
                 Set<Object> values = redisValues.get(columnMeta.getFieldName());
                 if (values != null && values.contains(value)) {
                     errorMsg.add(String.format("唯一约束，数据库已存在相同值[%s]。", value));
@@ -373,7 +373,7 @@ public class ImportExcelService {
      */
     private Map<ColumnMeta, Map<Object, Long>> validateValue(Map<String, ColumnMeta> uniqueColumns, List<Map<String, Object>> columnData) {
         Map<ColumnMeta, Map<Object, Long>> repeateData = new HashMap<>();
-        if (uniqueColumns != null && uniqueColumns.size() > 0 && columnData.size() > 0) {
+        if (uniqueColumns != null && !uniqueColumns.isEmpty() && !columnData.isEmpty()) {
             for (Map.Entry<String, ColumnMeta> metaEntry : uniqueColumns.entrySet()) {
                 List<Object> values = new ArrayList<>();
                 for (Map<String, Object> columnMap : columnData) {
@@ -382,10 +382,10 @@ public class ImportExcelService {
                         values.add(value);
                     }
                 }
-                if (values.size() > 0) {
+                if (!values.isEmpty()) {
                     Map<Object, Long> countMap = values.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
                     countMap = countMap.entrySet().stream().filter(entry -> entry.getValue() > 1).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                    if (countMap != null && countMap.size() > 0) {
+                    if (!countMap.isEmpty()) {
                         List<Map.Entry<Object, Long>> list = new ArrayList<>(countMap.entrySet());
                         list.sort(Map.Entry.<Object, Long>comparingByValue().reversed());
                         Map<Object, Long> sortedMap = new LinkedHashMap<>();
@@ -424,16 +424,16 @@ public class ImportExcelService {
         } else if (meta.isEvaluationTypePrimaryKey()) {
             if (businessData.getValue() != null) {
                 Map<String, Object> redisValues = (Map<String, Object>) redisTemplate.opsForValue().get(String.format("%s:%s", currentUUID, meta.getPrimaryValue()));
-                if (redisValues != null && redisValues.size() > 0) {
+                if (redisValues != null && !redisValues.isEmpty()) {
                     value = redisValues.get(String.valueOf(businessData.getValue()));
                 }
             }
         } else if (meta.isEvaluationTypeCheckBox()) {
             if (businessData.getValue() != null) {
                 Map<String, String> redisValues = (Map<String, String>) redisTemplate.opsForValue().get(String.format("%s:%s", currentUUID, meta.getDictCode()));
-                if (redisValues != null && redisValues.size() > 0) {
+                if (redisValues != null && !redisValues.isEmpty()) {
                     String[] oValues = String.valueOf(businessData.getValue()).split(",");
-                    if (oValues != null && oValues.length > 0) {
+                    if (oValues.length > 0) {
                         Set<String> nValues = new LinkedHashSet<>();
                         for (String oValue : oValues) {
                             String nValue = redisValues.get(oValue);
@@ -448,7 +448,7 @@ public class ImportExcelService {
         } else if (meta.isEvaluationTypeDictionary()) {
             if (businessData.getValue() != null) {
                 Map<String, String> redisValues = (Map<String, String>) redisTemplate.opsForValue().get(String.format("%s:%s", currentUUID, meta.getDictCode()));
-                if (redisValues != null && redisValues.size() > 0) {
+                if (redisValues != null && !redisValues.isEmpty()) {
                     value = redisValues.get(String.valueOf(businessData.getValue()));
                 }
             }
@@ -483,7 +483,7 @@ public class ImportExcelService {
      * @throws IOException 如果在文件读取或处理过程中发生I/O异常，将抛出此异常
      */
     private Map<String, List<BusinessMeta>> getBusinessMeta(File file, int sheetIndex) throws IOException {
-        Map<String, List<BusinessMeta>> businessMetaListMap = new HashMap<>();
+        Map<String, List<BusinessMeta>> businessMetaListMap;
         FileInputStream fileInputStream = null;
         BufferedInputStream bufferedInputStream = null;
         Workbook workbook = null;
@@ -538,7 +538,7 @@ public class ImportExcelService {
      * @throws IOException 如果在文件读取或解析过程中发生I/O异常，将抛出该异常
      */
     private Map<String, BusinessTypeData> getBusinessTypeData(File file, int sheetIndex) throws IOException {
-        Map<String, BusinessTypeData> businessTypeDataMap = new HashMap<>();
+        Map<String, BusinessTypeData> businessTypeDataMap;
         FileInputStream fileInputStream = null;
         BufferedInputStream bufferedInputStream = null;
         Workbook workbook = null;
@@ -593,7 +593,7 @@ public class ImportExcelService {
      * @throws IOException 如果在文件读取或处理过程中发生I/O异常，将抛出该异常
      */
     private Set<Map<Integer, BusinessTypeRuleData>> getBusinessTypeRuleData(File file, int sheetIndex) throws IOException {
-        Set<Map<Integer, BusinessTypeRuleData>> typeRuleDataSet = new LinkedHashSet<>();
+        Set<Map<Integer, BusinessTypeRuleData>> typeRuleDataSet;
         FileInputStream fileInputStream = null;
         BufferedInputStream bufferedInputStream = null;
         Workbook workbook = null;
@@ -650,13 +650,13 @@ public class ImportExcelService {
      * @throws IOException 如果在文件读取或解析过程中发生I/O异常，将抛出该异常
      */
     private List<Map<String, BusinessData>> getBusinessData(Attachment businessFile, HttpServletRequest request, Map<String, BusinessTypeData> businessTypeDataMap, int sheetIndex) throws IOException {
-        List<Map<String, BusinessData>> businessDataMapList = new ArrayList<>();
+        List<Map<String, BusinessData>> businessDataMapList;
         InputStream inputStream = null;
         FileInputStream fileInputStream = null;
         BufferedInputStream bufferedInputStream = null;
         Workbook workbook = null;
         try {
-            String contentType = null;
+            String contentType;
             if (businessFile != null) {
                 File file = fileHandler.toFile(businessFile);
                 contentType = Files.probeContentType(file.toPath());
@@ -751,19 +751,19 @@ public class ImportExcelService {
      * @throws IOException 如果在文件读写或处理过程中发生I/O异常，将抛出该异常
      */
     private Attachment writeBusinessData(ExportTemplate exportTemplate, Attachment businessFile, HttpServletRequest request, HttpServletResponse response, List<Map<String, BusinessData>> businessDataMapList, Map<ColumnMeta, Map<Object, Long>> repeatedData, int sheetIndex) throws IOException {
-        Attachment attachment = new Attachment();
+        Attachment attachment;
 
         InputStream inputStream = null;
         FileInputStream fileInputStream = null;
         BufferedInputStream bufferedInputStream = null;
         OutputStream outputStream = null;
-        OutputStream responseOut = null;
-        FileInputStream responseIn = null;
+        // OutputStream responseOut = null;
+        // FileInputStream responseIn = null;
         Workbook workbook = null;
         SXSSFWorkbook sWorkbook = null;
         try {
-            String contentType = null;
-            String fileName = null;
+            String contentType;
+            String fileName;
             if (businessFile != null) {
                 File file = fileHandler.toFile(businessFile);
                 contentType = Files.probeContentType(file.toPath());
@@ -816,7 +816,7 @@ public class ImportExcelService {
                 excelXSSFReader.writeRepeatedData((XSSFWorkbook) workbook, repeatedData);
                 // 大数据导入
                 int maxRow = sheet.getLastRowNum();
-                sWorkbook = new SXSSFWorkbook((XSSFWorkbook) workbook, maxRow > ROW_ACCESS_WINDOW_SIZE ? ROW_ACCESS_WINDOW_SIZE : maxRow);
+                sWorkbook = new SXSSFWorkbook((XSSFWorkbook) workbook, Math.min(maxRow, ROW_ACCESS_WINDOW_SIZE));
                 // 写入文件
                 outputStream = new BufferedOutputStream(new FileOutputStream(errorFile));
                 sWorkbook.write(outputStream);
@@ -858,12 +858,12 @@ public class ImportExcelService {
             if (fileInputStream != null) {
                 fileInputStream.close();
             }
-            if (responseOut != null) {
+            /*if (responseOut != null) {
                 responseOut.close();
             }
             if (responseIn != null) {
                 responseIn.close();
-            }
+            }*/
             if (sWorkbook != null) {
                 sWorkbook.close();
                 sWorkbook.dispose();
@@ -892,7 +892,7 @@ public class ImportExcelService {
                 try {
                     file = Base64Helper.toTempFile(template);
                 } catch (Exception ex) {
-                    logger.info(ex.getMessage(), ex);
+                    log.info(ex.getMessage(), ex);
                 }
             } else {
                 file = fileHandler.toFile(template);
@@ -952,12 +952,7 @@ public class ImportExcelService {
         try {
             List<BusinessTypeRuleData> dataList = JSON.parseArray(jsonText, BusinessTypeRuleData.class);
             if (dataList != null && !dataList.isEmpty()) {
-                dataList.sort(new Comparator<BusinessTypeRuleData>() {
-                    @Override
-                    public int compare(BusinessTypeRuleData o1, BusinessTypeRuleData o2) {
-                        return o1.getOrder() - o2.getOrder();
-                    }
-                });
+                dataList.sort(Comparator.comparingInt(BusinessTypeRuleData::getOrder));
                 for (int i = 0; i < dataList.size(); i++) {
                     Map<Integer, BusinessTypeRuleData> ruleDataMap = new HashMap<>();
                     ruleDataMap.put(i + 1, dataList.get(i));

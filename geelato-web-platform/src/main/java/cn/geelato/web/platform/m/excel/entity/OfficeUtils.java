@@ -7,6 +7,7 @@ import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hwpf.HWPFDocument;
@@ -31,12 +32,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
  * @author diabl
  */
+@Slf4j
 public class OfficeUtils {
 
     private static final String CHINA_FONT_RESOURCE = "geelato/fonts/simfang.ttf";
@@ -64,7 +65,7 @@ public class OfficeUtils {
                     pageSize = new Rectangle(width * 72f / 25.4f, height * 72f / 25.4f);
                 } else if (Strings.isNotBlank(printType)) {
                     Map<String, Rectangle> rectangleMap = getRectangle();
-                    if (rectangleMap != null && !rectangleMap.isEmpty()) {
+                    if (!rectangleMap.isEmpty()) {
                         for (Map.Entry<String, Rectangle> entry : rectangleMap.entrySet()) {
                             if (entry.getKey().equalsIgnoreCase(printType)) {
                                 pageSize = entry.getValue();
@@ -92,8 +93,7 @@ public class OfficeUtils {
                     field.setAccessible(true); // 允许访问私有字段
                     Object value = field.get(null); // static字段的实例为null
                     pageSizeMap.put(field.getName(), (Rectangle) value);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                } catch (IllegalAccessException ignored) {
                 }
             }
         }
@@ -122,15 +122,11 @@ public class OfficeUtils {
         java.util.List<XWPFParagraph> plist = doc.getParagraphs();
         pdfWriter.open();
         pdfDocument.open();
-        for (int i = 0; i < plist.size(); i++) {
-            XWPFParagraph pa = plist.get(i);
+        for (XWPFParagraph pa : plist) {
             java.util.List<XWPFRun> runs = pa.getRuns();
-            for (int j = 0; j < runs.size(); j++) {
-                XWPFRun run = runs.get(j);
+            for (XWPFRun run : runs) {
                 java.util.List<XWPFPicture> piclist = run.getEmbeddedPictures();
-                Iterator<XWPFPicture> iterator = piclist.iterator();
-                while (iterator.hasNext()) {
-                    XWPFPicture pic = iterator.next();
+                for (XWPFPicture pic : piclist) {
                     XWPFPictureData picdata = pic.getPictureData();
                     byte[] bytepic = picdata.getData();
                     Image imag = Image.getInstance(bytepic);
@@ -210,12 +206,7 @@ public class OfficeUtils {
         FileInputStream fis = new FileInputStream(inputPath);
         HWPFDocument wordDocument = new HWPFDocument(fis);
         WordToHtmlConverter wordToHtmlConverter = new WordToHtmlConverter(DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        wordToHtmlConverter.setPicturesManager(new PicturesManager() {
-            @Override
-            public String savePicture(byte[] content, PictureType pictureType, String suggestedName, float widthInches, float heightInches) {
-                return null;
-            }
-        });
+        wordToHtmlConverter.setPicturesManager((content, pictureType, suggestedName, widthInches, heightInches) -> null);
         wordToHtmlConverter.processDocument(wordDocument);
         org.w3c.dom.Document htmlDocument = wordToHtmlConverter.getDocument();
         DOMSource domSource = new DOMSource(htmlDocument);
@@ -228,11 +219,8 @@ public class OfficeUtils {
         serializer.setOutputProperty(OutputKeys.INDENT, "yes");
         serializer.setOutputProperty(OutputKeys.METHOD, "html");
         serializer.transform(domSource, streamResult);
-        String content = null;
-        if (baos != null) {
-            content = baos.toString(StandardCharsets.UTF_8);
-            baos.close();
-        }
+        String content = baos.toString(StandardCharsets.UTF_8);
+        baos.close();
 
         return content;
     }
@@ -295,8 +283,7 @@ public class OfficeUtils {
                     // BaseFont bf = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.EMBEDDED);
                     font = new Font(bf, size, style, baseColor);
                     font.setColor(baseColor);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (Exception ignored) {
                 }
                 return font;
             }

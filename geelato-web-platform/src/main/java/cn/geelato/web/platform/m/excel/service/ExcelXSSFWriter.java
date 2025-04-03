@@ -44,7 +44,7 @@ public class ExcelXSSFWriter {
                 break;
             }
             RowMeta rowMeta = parseTemplateRow(row, placeholderMetaMap);
-            int newRowCount = 0;
+            int newRowCount;
             if (rowMeta.isMultiGroupRow()) {
                 int listIndex = 0;
                 for (Map vm : valueMapList) {
@@ -132,11 +132,7 @@ public class ExcelXSSFWriter {
                     }
                     if (meta.isIsList()) {
                         if (!StringUtils.isEmpty(meta.getListVar())) {
-                            List<CellMeta> cellMetaList = listCellMetaMap.get(meta.getListVar());
-                            if (cellMetaList == null) {
-                                cellMetaList = new ArrayList<CellMeta>();
-                                listCellMetaMap.put(meta.getListVar(), cellMetaList);
-                            }
+                            List<CellMeta> cellMetaList = listCellMetaMap.computeIfAbsent(meta.getListVar(), k -> new ArrayList<>());
                             CellMeta cellMeta = new CellMeta();
                             cellMeta.setIndex(cellIndex);
                             cellMeta.setPlaceholderMeta(meta);
@@ -273,14 +269,14 @@ public class ExcelXSSFWriter {
             if (cellMeta.getPlaceholderMeta().isIsMerge()) {
                 // 获取数据相同的行
                 List<List<Integer>> integerSet = ExcelCommonUtils.getIntegerSet(cellMeta, valueMap, valueList);
-                if (integerSet.size() > 0) {
+                if (!integerSet.isEmpty()) {
                     // 集合交集
                     List<List<Integer>> ranges = integerSet;
                     if (mergeScope != null) {
                         ranges = ExcelCommonUtils.listRetain(integerSet, mergeScope);
                     }
                     // 合并单元格
-                    if (ranges != null && ranges.size() > 0) {
+                    if (!ranges.isEmpty()) {
                         for (List<Integer> range : ranges) {
                             Collections.sort(range);
                             CellRangeAddress region = new CellRangeAddress(rowIndex + range.get(0), rowIndex + range.get(range.size() - 1), cellMeta.getIndex(), cellMeta.getIndex());
@@ -298,7 +294,7 @@ public class ExcelXSSFWriter {
             return null;
         }
         CellType cellType = cell.getCellType();
-        String cellValue = cellType.equals(cellType) ? cell.getStringCellValue() : "";
+        String cellValue = cell.getStringCellValue();
         return placeholderMetaMap.get(cellValue);
     }
 
@@ -316,7 +312,7 @@ public class ExcelXSSFWriter {
                 Object v = listValueMap.get(meta.getVar());
                 setCellValueByValueType(cell, meta, v);
             } else {
-                if (meta.getVar() != null && meta.getVar().trim().length() > 0) {
+                if (meta.getVar() != null && !meta.getVar().trim().isEmpty()) {
                     Object v = valueMap.get(meta.getVar());
                     setCellValueByValueType(cell, meta, v);
                 }
@@ -334,7 +330,7 @@ public class ExcelXSSFWriter {
             if (Strings.isBlank(in) || Strings.isBlank(out)) {
                 return value.toString();
             }
-            Date date = null;
+            Date date;
             String valueStr = value.toString();
             if (NumberUtils.isNumber(valueStr) && "timestamp".equalsIgnoreCase(in)) {
                 if (valueStr.length() != 10 && valueStr.length() != 13) {
@@ -353,7 +349,7 @@ public class ExcelXSSFWriter {
     private void setCellValueByValueType(XSSFCell cell, PlaceholderMeta meta, Object value) {
         if (value != null) {
             if (meta.isValueTypeNumber()) {
-                if (value.toString().indexOf(".") == -1) {
+                if (!value.toString().contains(".")) {
                     cell.setCellValue(Long.parseLong(value.toString()));
                 } else {
                     cell.setCellValue(new BigDecimal(value.toString()).doubleValue());
@@ -361,6 +357,7 @@ public class ExcelXSSFWriter {
             } else if (meta.isValueTypeDate()) {
                 cell.setCellValue(formatDate(value, meta.getFormatImport(), meta.getFormatExport()));
             } else if (meta.isValueTypeDateTime()) {
+                log.info("无处理");
             } else {
                 cell.setCellValue(value.toString());
             }
@@ -384,7 +381,7 @@ public class ExcelXSSFWriter {
      * @return 返回新创建的XSSFRow对象
      */
     private XSSFRow createRow(XSSFSheet sheet, int rowIndex) {
-        XSSFRow row = null;
+        XSSFRow row;
         if (sheet.getRow(rowIndex) != null) {
             int lastRowNo = sheet.getLastRowNum();
             sheet.shiftRows(rowIndex, lastRowNo, 1);
@@ -393,7 +390,7 @@ public class ExcelXSSFWriter {
         return row;
     }
 
-    public XSSFRow createRowWithPreRowStyle(XSSFSheet sheet, Integer rowIndex) {
+    public void createRowWithPreRowStyle(XSSFSheet sheet, Integer rowIndex) {
         XSSFRow preRow = sheet.getRow(rowIndex - 1);
         XSSFRow newRow = createRow(sheet, rowIndex);
         newRow.setHeight(preRow.getHeight());
@@ -403,7 +400,6 @@ public class ExcelXSSFWriter {
             XSSFCell newCell = newRow.createCell(cellIndex);
             newCell.setCellStyle(templateCell.getCellStyle());
         }
-        return newRow;
     }
 
     /**
@@ -417,7 +413,7 @@ public class ExcelXSSFWriter {
      */
     public void generateTemplateFile(XSSFWorkbook workbook, String sheetName, List<ExportColumn> exportColumns) {
         XSSFSheet sheet = workbook.createSheet(sheetName);
-        int profundity = 1;// 计算最大深度
+        int profundity;// 计算最大深度
         List<ExportColumn> bottomExportColumns = new LinkedList<>();// 最底层数据
         List<ExportColumn> headerExportColumns = new LinkedList<>();// 所有表头数据，平铺
         // 计算，树节点的层级、子节点
@@ -538,7 +534,7 @@ public class ExcelXSSFWriter {
      */
     public Map<String, PlaceholderMeta> readPlaceholderMeta(XSSFSheet sheet) {
         int lastRowIndex = sheet.getLastRowNum();
-        Map<String, PlaceholderMeta> map = new HashMap<String, PlaceholderMeta>(lastRowIndex);
+        Map<String, PlaceholderMeta> map = new HashMap<>(lastRowIndex);
         // 跳过第一行，标题行
         for (int i = 1; i <= lastRowIndex; i++) {
             XSSFRow row = sheet.getRow(i);

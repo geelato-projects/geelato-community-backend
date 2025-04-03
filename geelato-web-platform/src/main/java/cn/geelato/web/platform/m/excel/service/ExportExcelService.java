@@ -14,13 +14,14 @@ import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.entity.PlaceholderMeta;
 import cn.geelato.web.platform.m.excel.entity.WordWaterMarkMeta;
 import cn.geelato.web.platform.m.file.entity.Attachment;
-import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import cn.geelato.web.platform.m.zxing.service.BarcodeService;
 import com.alibaba.fastjson2.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -31,8 +32,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -50,10 +49,10 @@ import java.util.regex.Pattern;
  * @author diabl
  */
 @Component
+@Slf4j
 public class ExportExcelService {
     private static final Pattern pattern = Pattern.compile("^[a-zA-Z0-9_\\-]+\\.[a-zA-Z0-9]{1,5}$");
     private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.ATTACH.getValue();
-    private final Logger logger = LoggerFactory.getLogger(ExportExcelService.class);
     private final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
     @Autowired
     private ExportTemplateService exportTemplateService;
@@ -84,7 +83,7 @@ public class ExportExcelService {
      * @param readonly     是否只读，指定导出的文件是否应为只读
      * @return 返回导出文件的ApiResult对象，包含文件信息或错误信息
      */
-    public ApiResult exportWps(String templateId, String index, String fileName, List<Map> valueMapList, Map valueMap, String markText, String markKey, boolean readonly) {
+    public ApiResult<?> exportWps(String templateId, String index, String fileName, List<Map> valueMapList, Map valueMap, String markText, String markKey, boolean readonly) {
         try {
             // 水印
             WordWaterMarkMeta markMeta = setWaterMark(markText, markKey);
@@ -152,9 +151,8 @@ public class ExportExcelService {
      * @param markKey          水印关键字（可选）
      * @param readonly         是否只读
      * @return ApiResult对象，包含操作结果和返回数据
-     * @throws Exception 如果在导出过程中发生异常，将抛出该异常
      */
-    public ApiResult exportExcelByColumnMeta(String appId, String fileName, List<Map> valueMapList, Map valueMap, List<ExportColumn> exportColumns, List<PlaceholderMeta> placeholderMetas, String markText, String markKey, boolean readonly) {
+    public ApiResult<?> exportExcelByColumnMeta(String appId, String fileName, List<Map> valueMapList, Map valueMap, List<ExportColumn> exportColumns, List<PlaceholderMeta> placeholderMetas, String markText, String markKey, boolean readonly) {
         try {
             String tenantCode = SessionCtx.getCurrentTenantCode();
             // 水印
@@ -229,7 +227,7 @@ public class ExportExcelService {
             Map<String, Object> params = new HashMap<>();
             params.put("configKey", markKey);
             List<SysConfig> list = sysConfigService.queryModel(SysConfig.class, params);
-            if (list != null && list.size() > 0 && list.get(0) != null) {
+            if (list != null && !list.isEmpty() && list.get(0) != null) {
                 SysConfig config = list.get(0);
                 try {
                     if (config.isEncrypted()) {
@@ -262,7 +260,7 @@ public class ExportExcelService {
      * @throws IOException 如果在读取文件或关闭资源时发生I/O错误
      */
     private Map<String, PlaceholderMeta> getPlaceholderMeta(File file) throws IOException {
-        Map<String, PlaceholderMeta> metaMap = new HashMap<>();
+        Map<String, PlaceholderMeta> metaMap;
         Workbook workbook = null;
         FileInputStream fileInputStream = null;
         BufferedInputStream bufferedInputStream = null;
@@ -315,7 +313,7 @@ public class ExportExcelService {
      * @return 返回包含占位符元数据的映射，键为占位符名称，值为对应的PlaceholderMeta对象；如果解析失败，则返回null
      */
     private Map<String, PlaceholderMeta> getPlaceholderMeta(String jsonText) {
-        Map<String, PlaceholderMeta> metaMap = new HashMap<>();
+        Map<String, PlaceholderMeta> metaMap;
         try {
             List<PlaceholderMeta> metas = JSON.parseArray(jsonText, PlaceholderMeta.class);
             metaMap = getPlaceholderMeta(metas);
@@ -422,7 +420,6 @@ public class ExportExcelService {
                 document.write(outputStream);
                 outputStream.flush();
                 document.close();
-                document = null;
                 fileSystem.close();
             } else if (MediaTypes.APPLICATION_WORD_DOCX.equals(contentType)) {
                 XWPFDocument document = new XWPFDocument(bufferedInputStream);
@@ -440,7 +437,6 @@ public class ExportExcelService {
                 document.write(outputStream);
                 outputStream.flush();
                 document.close();
-                document = null;
             } else {
                 throw new RuntimeException("暂不支持导出该格式文件！");
             }
@@ -476,10 +472,9 @@ public class ExportExcelService {
      * @throws IOException 如果在文件操作过程中出现I/O异常
      */
     private Base64Helper getTemplate(String tenantCode, String appId, String fileName, List<ExportColumn> exportColumns) throws IOException {
-        Base64Helper info = null;
+        Base64Helper info;
         OutputStream outputStream = null;
         XSSFWorkbook workbook = null;
-        FileInputStream fileInputStream = null;
         try {
             // 创建文件
             String exportPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, tenantCode, appId, fileName, true);
@@ -499,9 +494,6 @@ public class ExportExcelService {
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         } finally {
-            if (fileInputStream != null) {
-                fileInputStream.close();
-            }
             if (outputStream != null) {
                 outputStream.close();
             }
@@ -531,7 +523,7 @@ public class ExportExcelService {
                     info = Base64Helper.fromString(template);
                     info.setFile(info.toTempFile());
                 } catch (Exception ex) {
-                    logger.info(ex.getMessage(), ex);
+                    log.info(ex.getMessage(), ex);
                 }
             } else {
                 info = fileHandler.toBase64Helper(template);

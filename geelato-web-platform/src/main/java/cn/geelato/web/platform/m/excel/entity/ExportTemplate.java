@@ -12,7 +12,7 @@ import lombok.Setter;
 
 /**
  * @author diabl
- * @description: 导出文件模板
+ * 导出文件模板
  */
 @Getter
 @Setter
@@ -78,28 +78,18 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
      * @throws RuntimeException 如果索引超出范围，则抛出异常
      */
     public String indexTemplate(String index) {
-        switch (index) {
-            case "1":
-                return this.template;
-            case "2":
-                return this.template2;
-            case "3":
-                return this.template3;
-            case "4":
-                return this.template4;
-            case "5":
-                return this.template5;
-            case "6":
-                return this.template6;
-            case "7":
-                return this.template7;
-            case "8":
-                return this.template8;
-            case "9":
-                return this.template9;
-            default:
-                throw new RuntimeException("模板索引超出范围！");
-        }
+        return switch (index) {
+            case "1" -> this.template;
+            case "2" -> this.template2;
+            case "3" -> this.template3;
+            case "4" -> this.template4;
+            case "5" -> this.template5;
+            case "6" -> this.template6;
+            case "7" -> this.template7;
+            case "8" -> this.template8;
+            case "9" -> this.template9;
+            default -> throw new RuntimeException("模板索引超出范围！");
+        };
     }
 
     public String indexTemplateDefault(String index) {

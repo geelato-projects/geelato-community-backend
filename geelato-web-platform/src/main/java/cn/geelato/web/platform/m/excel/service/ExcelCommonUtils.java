@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.m.excel.service;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.enums.DeleteStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
@@ -83,7 +82,7 @@ public class ExcelCommonUtils {
     public static Object stringToNumber(String value) {
         Object cellValue = null;
         if (Strings.isNotBlank(value) && value.matches("-?\\d+(\\.\\d+)?")) {
-            if (value.indexOf(".") == -1) {
+            if (!value.contains(".")) {
                 cellValue = Long.parseLong(value);
             } else {
                 cellValue = new BigDecimal(value).doubleValue();
@@ -110,7 +109,7 @@ public class ExcelCommonUtils {
                 uniqueNum += 1;
                 // 获取数据相同的行
                 List<List<Integer>> integerSet = getIntegerSet(cellMeta, valueMap, valueList);
-                if (integerSet != null && integerSet.size() > 0) {
+                if (!integerSet.isEmpty()) {
                     limitSetMap.add(integerSet);
                 }
             }
@@ -135,7 +134,7 @@ public class ExcelCommonUtils {
         for (List<Integer> list0 : integerSet0) {
             for (List<Integer> list1 : integerSet1) {
                 List<Integer> intersection = list0.stream().filter(list1::contains).collect(Collectors.toList());
-                if (intersection != null && intersection.size() > 0) {
+                if (!intersection.isEmpty()) {
                     result.add(intersection);
                 }
             }
@@ -147,12 +146,12 @@ public class ExcelCommonUtils {
     /**
      * 获取数据相同的行
      * <p>
-     * 根据给定的单元格元数据、值映射和值列表，找出值相同的行并返回它们的索引集合。
+     * 根据给定的单元格元数据、值映射和值列表，找出值相同地行并返回它们的索引集合。
      *
      * @param cellMeta  单元格元数据对象，包含关于如何解析单元格值的信息
      * @param valueMap  值映射，用于解析单元格值时的上下文数据
      * @param valueList 包含单元格值的列表，每个元素都是一个包含单元格值的映射
-     * @return 返回一个列表，每个元素都是一个整数列表，表示值相同的行的索引集合
+     * @return 返回一个列表，每个元素都是一个整数列表，表示值相同地行的索引集合
      */
     public static List<List<Integer>> getIntegerSet(CellMeta cellMeta, Map valueMap, List<Map> valueList) {
         List<List<Integer>> integerSet = new LinkedList<>();
@@ -200,7 +199,7 @@ public class ExcelCommonUtils {
                 Object v = listValueMap.get(meta.getVar());
                 value = getCellValueByValueType(meta, v);
             } else {
-                if (meta.getVar() != null && meta.getVar().trim().length() > 0) {
+                if (meta.getVar() != null && !meta.getVar().trim().isEmpty()) {
                     Object v = valueMap.get(meta.getVar());
                     value = getCellValueByValueType(meta, v);
                 }
@@ -226,7 +225,7 @@ public class ExcelCommonUtils {
     private static Object getCellValueByValueType(PlaceholderMeta meta, Object value) {
         if (value != null) {
             if (meta.isValueTypeNumber()) {
-                if (value.toString().indexOf(".") == -1) {
+                if (!value.toString().contains(".")) {
                     return Long.parseLong(value.toString());
                 } else {
                     return new BigDecimal(value.toString()).doubleValue();
@@ -259,7 +258,7 @@ public class ExcelCommonUtils {
      */
     public static List<Integer[]> findScopes(Set<Integer> numbers) {
         List<Integer[]> list = new ArrayList<>();
-        if (numbers != null && numbers.size() > 0) {
+        if (numbers != null && !numbers.isEmpty()) {
             List<List<Integer>> ranges = findRanges(new LinkedList<>(numbers));
             // 取范围
             for (List<Integer> range : ranges) {
@@ -314,6 +313,30 @@ public class ExcelCommonUtils {
         return ranges;
     }
 
+    public static void bottomLayerOfTree(List<ExportColumn> columns, List<ExportColumn> target) {
+        for (ExportColumn exportColumn : columns) {
+            if (exportColumn.getChildren() != null && !exportColumn.getChildren().isEmpty()) {
+                bottomLayerOfTree(exportColumn.getChildren(), target);
+            } else {
+                target.add(exportColumn);
+            }
+        }
+    }
+
+    public static void cellRangeAddress(int startCol, int startRow, List<ExportColumn> columns, List<ExportColumn> target) {
+        for (int i = 0; i < columns.size(); i++) {
+            ExportColumn column = columns.get(i);
+            column.setFirstRow(startRow);
+            column.setLastRow(column.getFirstRow() + column.getDepth() - 1);
+            column.setFirstCol(i > 0 ? (columns.get(i - 1).getLastCol() + 1) : startCol);
+            column.setLastCol(column.getFirstCol() + column.getBreadth() - 1);
+            if (column.getChildren() != null && !column.getChildren().isEmpty()) {
+                cellRangeAddress(column.getFirstCol(), column.getLastRow() + 1, column.getChildren(), target);
+            }
+            target.add(column);
+        }
+    }
+
     /**
      * 获取表格默认字段
      * <p>
@@ -324,7 +347,7 @@ public class ExcelCommonUtils {
     public List<String> getDefaultColumns() {
         List<String> columnNames = new ArrayList<>();
         List<ColumnMeta> columnMetaList = metaManager.getDefaultColumn();
-        if (columnMetaList != null && columnMetaList.size() > 0) {
+        if (columnMetaList != null && !columnMetaList.isEmpty()) {
             for (ColumnMeta columnMeta : columnMetaList) {
                 if (!columnNames.contains(columnMeta.getName())) {
                     columnNames.add(columnMeta.getName());
@@ -347,16 +370,9 @@ public class ExcelCommonUtils {
         Set<BusinessTypeRuleData> typeRuleDataSet = new LinkedHashSet<>();
         if (Strings.isNotBlank(rules)) {
             List<BusinessTypeRuleData> typeRuleDataList = com.alibaba.fastjson.JSON.parseArray(rules, BusinessTypeRuleData.class);
-            if (typeRuleDataList != null && typeRuleDataList.size() > 0) {
-                typeRuleDataList.sort(new Comparator<BusinessTypeRuleData>() {
-                    @Override
-                    public int compare(BusinessTypeRuleData o1, BusinessTypeRuleData o2) {
-                        return o1.getOrder() - o2.getOrder();
-                    }
-                });
-                for (BusinessTypeRuleData ruleData : typeRuleDataList) {
-                    typeRuleDataSet.add(ruleData);
-                }
+            if (typeRuleDataList != null && !typeRuleDataList.isEmpty()) {
+                typeRuleDataList.sort(Comparator.comparingInt(BusinessTypeRuleData::getOrder));
+                typeRuleDataSet.addAll(typeRuleDataList);
             }
         }
 
@@ -374,7 +390,7 @@ public class ExcelCommonUtils {
     public List<Map<String, BusinessData>> handleBusinessDataMultiScene(List<Map<String, BusinessData>> businessDataMapList) {
         List<Map<String, BusinessData>> handleDataMapList = new ArrayList<>();
         Set<Map<String, Object>> multiLoggers = new LinkedHashSet<>();
-        if (businessDataMapList != null && businessDataMapList.size() > 0) {
+        if (businessDataMapList != null && !businessDataMapList.isEmpty()) {
             for (Map<String, BusinessData> businessDataMap : businessDataMapList) {
                 // 分类
                 Map<String, BusinessData> singleData = new HashMap<>();
@@ -396,7 +412,7 @@ public class ExcelCommonUtils {
                                 multiLogger.put("cellValue", businessData.getValue());
                                 multiLogger.put("formatValue", multiValue);
                                 multiLoggers.add(multiLogger);
-                                if (multiValue != null && multiValue.length > 0) {
+                                if (multiValue.length > 0) {
                                     for (int i = 0; i < multiValue.length; i++) {
                                         multiValue[i] = Strings.isNotBlank(multiValue[i]) ? multiValue[i].trim() : "";
                                     }
@@ -407,7 +423,7 @@ public class ExcelCommonUtils {
                                     } else if (typeData.isSceneTypeSym()) {
                                         isMulti = true;
                                         symData.put(businessDataEntry.getKey(), businessData);
-                                        maxLength = maxLength > multiValue.length ? maxLength : multiValue.length;
+                                        maxLength = Math.max(maxLength, multiValue.length);
                                     }
                                 }
                             } catch (Exception ex) {
@@ -435,7 +451,7 @@ public class ExcelCommonUtils {
                             data.setValue(multiValue[i < multiValue.length ? i : multiValue.length - 1]);
                             data.setPrimevalValue(data.getValue());
                             data.setBusinessTypeData(businessData.getBusinessTypeData());
-                            data.addAllErrorMsgs(businessData.getErrorMsg());
+                            data.addAllErrorMsg(businessData.getErrorMsg());
                             symMap.put(businessDataEntry.getKey(), data);
                         }
                         symMapList.add(symMap);
@@ -461,8 +477,8 @@ public class ExcelCommonUtils {
      */
     private List<Map<String, BusinessData>> mergeBusinessData(Map<String, BusinessData> singleData, List<Map<String, BusinessData>> multiMapList, List<Map<String, BusinessData>> symMapList) {
         List<Map<String, BusinessData>> mergeData = new ArrayList<>();
-        if (multiMapList != null && multiMapList.size() > 0) {
-            if (symMapList != null && symMapList.size() > 0) {
+        if (multiMapList != null && !multiMapList.isEmpty()) {
+            if (symMapList != null && !symMapList.isEmpty()) {
                 for (Map<String, BusinessData> multiMap : multiMapList) {
                     for (Map<String, BusinessData> symMap : symMapList) {
                         Map<String, BusinessData> map = new HashMap<>();
@@ -479,7 +495,7 @@ public class ExcelCommonUtils {
                 }
             }
         } else {
-            if (symMapList != null && symMapList.size() > 0) {
+            if (symMapList != null && !symMapList.isEmpty()) {
                 for (Map<String, BusinessData> map : symMapList) {
                     map.putAll(singleData);
                     mergeData.add(map);
@@ -524,7 +540,7 @@ public class ExcelCommonUtils {
                 data.setTransitionValues(businessData.getTransitionValue());
                 data.setTransitionValue(data.getValue());
                 data.setBusinessTypeData(businessData.getBusinessTypeData());
-                data.addAllErrorMsgs(businessData.getErrorMsg());
+                data.addAllErrorMsg(businessData.getErrorMsg());
                 map.put(key, data);
             }
             mapList.add(map);
@@ -580,7 +596,7 @@ public class ExcelCommonUtils {
      * @return 返回处理后的业务数据列表，每个元素是一个包含业务数据键值对的映射
      */
     public List<Map<String, BusinessData>> handleBusinessDataRule(String currentUUID, List<Map<String, BusinessData>> businessDataMapList, boolean priorityMulti) {
-        if (businessDataMapList != null && businessDataMapList.size() > 0) {
+        if (businessDataMapList != null && !businessDataMapList.isEmpty()) {
             // 设置缓存
             List<String> cacheKeys = setCache(currentUUID, businessDataMapList, priorityMulti);
             // 数据处理
@@ -598,7 +614,7 @@ public class ExcelCommonUtils {
                     }
                     BusinessTypeData typeData = businessData.getBusinessTypeData();
                     Set<BusinessTypeRuleData> typeRuleDataSet = typeData.getTypeRuleData();
-                    if (typeRuleDataSet != null && typeRuleDataSet.size() > 0) {
+                    if (typeRuleDataSet != null && !typeRuleDataSet.isEmpty()) {
                         for (BusinessTypeRuleData ruleData : typeRuleDataSet) {
                             // 执行优先多值 + 优先多值的规则
                             if (priorityMulti != ruleData.isPriority()) {
@@ -634,9 +650,9 @@ public class ExcelCommonUtils {
                                 } else if (ruleData.isRuleTypeCheckBox()) {
                                     if (Strings.isNotBlank(ruleData.getRule())) {
                                         Map<String, String> redisValues = (Map<String, String>) redisTemplate.opsForValue().get(String.format("%s:%s", currentUUID, ruleData.getRule()));
-                                        if (redisValues != null && redisValues.size() > 0) {
+                                        if (redisValues != null && !redisValues.isEmpty()) {
                                             String[] oValues = oldValue.split(",");
-                                            if (oValues != null && oValues.length > 0) {
+                                            if (oValues.length > 0) {
                                                 Set<String> nValues = new LinkedHashSet<>();
                                                 for (String oValue : oValues) {
                                                     String nValue = redisValues.get(oValue);
@@ -653,7 +669,7 @@ public class ExcelCommonUtils {
                                 } else if (ruleData.isRuleTypeDictionary()) {
                                     if (Strings.isNotBlank(ruleData.getRule())) {
                                         Map<String, String> redisValues = (Map<String, String>) redisTemplate.opsForValue().get(String.format("%s:%s", currentUUID, ruleData.getRule()));
-                                        if (redisValues != null && redisValues.size() > 0) {
+                                        if (redisValues != null && !redisValues.isEmpty()) {
                                             newValue = redisValues.get(oldValue);
                                         }
                                     } else {
@@ -662,9 +678,9 @@ public class ExcelCommonUtils {
                                 } else if (ruleData.isRuleTypeQueryGoal()) {
                                     String tableName = ruleData.getQueryRuleTable();
                                     List<String> columnNames = ruleData.getQueryRuleColumn();
-                                    if (Strings.isNotBlank(tableName) && columnNames != null && columnNames.size() > 0 && Strings.isNotBlank(ruleData.getGoal())) {
+                                    if (Strings.isNotBlank(tableName) && columnNames != null && !columnNames.isEmpty() && Strings.isNotBlank(ruleData.getGoal())) {
                                         Map<String, Object> redisValues = (Map<String, Object>) redisTemplate.opsForValue().get(String.format("%s:%s,%s", currentUUID, ruleData.getRule(), ruleData.getGoal()));
-                                        if (redisValues != null && redisValues.size() > 0) {
+                                        if (redisValues != null && !redisValues.isEmpty()) {
                                             newValue = redisValues.get(oldValue);
                                         }
                                         if (newValue == null) {
@@ -676,9 +692,9 @@ public class ExcelCommonUtils {
                                 } else if (ruleData.isRuleTypeQueryRule()) {
                                     String tableName = ruleData.getQueryRuleTable();
                                     List<String> columnNames = ruleData.getQueryRuleColumn();
-                                    if (Strings.isNotBlank(tableName) && columnNames != null && columnNames.size() > 0 && Strings.isNotBlank(ruleData.getGoal())) {
+                                    if (Strings.isNotBlank(tableName) && columnNames != null && !columnNames.isEmpty() && Strings.isNotBlank(ruleData.getGoal())) {
                                         Map<String, Object> redisValues = (Map<String, Object>) redisTemplate.opsForValue().get(String.format("%s:%s", currentUUID, ruleData.getRule()));
-                                        if (redisValues != null && redisValues.size() > 0) {
+                                        if (redisValues != null && !redisValues.isEmpty()) {
                                             newValue = redisValues.get(oldValue);
                                         }
                                         if (newValue == null) {
@@ -706,19 +722,18 @@ public class ExcelCommonUtils {
     }
 
     private List<String> setCache(String currentUUID, List<Map<String, BusinessData>> businessDataMapList, boolean priorityMulti) {
-        List<String> cacheList = new ArrayList<>();
         // 类型
         Map<String, BusinessTypeRuleData> ruleDataDict = new HashMap<>();
         Map<String, BusinessTypeRuleData> ruleDataGoal = new HashMap<>();
         Map<String, BusinessTypeRuleData> ruleDataRule = new HashMap<>();
         // 数据解析
-        if (businessDataMapList != null && businessDataMapList.size() > 0) {
+        if (businessDataMapList != null && !businessDataMapList.isEmpty()) {
             for (Map<String, BusinessData> businessDataMap : businessDataMapList) {
                 for (Map.Entry<String, BusinessData> businessDataEntry : businessDataMap.entrySet()) {
                     BusinessData businessData = businessDataEntry.getValue();
                     BusinessTypeData typeData = businessData.getBusinessTypeData();
                     Set<BusinessTypeRuleData> typeRuleDataSet = typeData.getTypeRuleData();
-                    if (typeRuleDataSet != null && typeRuleDataSet.size() > 0) {
+                    if (typeRuleDataSet != null && !typeRuleDataSet.isEmpty()) {
                         for (BusinessTypeRuleData ruleData : typeRuleDataSet) {
                             // 执行优先多值 + 优先多值的规则
                             if (priorityMulti != ruleData.isPriority()) {
@@ -734,7 +749,7 @@ public class ExcelCommonUtils {
                             } else if (ruleData.isRuleTypeQueryGoal()) {
                                 String tableName = ruleData.getQueryRuleTable();
                                 List<String> columnNames = ruleData.getQueryRuleColumn();
-                                if (Strings.isNotBlank(ruleData.getGoal()) && Strings.isNotBlank(tableName) && columnNames != null && columnNames.size() > 0) {
+                                if (Strings.isNotBlank(ruleData.getGoal()) && Strings.isNotBlank(tableName) && columnNames != null && !columnNames.isEmpty()) {
                                     String key = String.format("%s:%s,%s", currentUUID, ruleData.getRule(), ruleData.getGoal());
                                     if (!ruleDataGoal.containsKey(key)) {
                                         ruleDataGoal.put(key, ruleData);
@@ -743,7 +758,7 @@ public class ExcelCommonUtils {
                             } else if (ruleData.isRuleTypeQueryRule()) {
                                 String tableName = ruleData.getQueryRuleTable();
                                 List<String> columnNames = ruleData.getQueryRuleColumn();
-                                if (Strings.isNotBlank(ruleData.getGoal()) && Strings.isNotBlank(tableName) && columnNames != null && columnNames.size() > 0) {
+                                if (Strings.isNotBlank(ruleData.getGoal()) && Strings.isNotBlank(tableName) && columnNames != null && !columnNames.isEmpty()) {
                                     String key = String.format("%s:%s", currentUUID, ruleData.getRule());
                                     if (!ruleDataRule.containsKey(key)) {
                                         ruleDataRule.put(key, ruleData);
@@ -757,7 +772,7 @@ public class ExcelCommonUtils {
         }
         // 字典查询
         List<String> dictKeys = setDictRuleRedis(currentUUID, ruleDataDict);
-        cacheList.addAll(dictKeys);
+        List<String> cacheList = new ArrayList<>(dictKeys);
         // 目标字段查询
         List<String> goalRedis = setQueryRuleRedis(ruleDataGoal);
         cacheList.addAll(goalRedis);
@@ -779,20 +794,20 @@ public class ExcelCommonUtils {
      */
     private List<String> setDictRuleRedis(String currentUUID, Map<String, BusinessTypeRuleData> ruleDataMap) {
         List<String> dictKeys = new ArrayList<>();
-        if (ruleDataMap != null && ruleDataMap.size() > 0) {
+        if (ruleDataMap != null && !ruleDataMap.isEmpty()) {
             // 所有字典编码
             List<String> dictCodes = new ArrayList<>();
             for (Map.Entry<String, BusinessTypeRuleData> ruleDataEntry : ruleDataMap.entrySet()) {
                 dictCodes.add(ruleDataEntry.getValue().getRule());
             }
 
-            List<Dict> dictList = new ArrayList<>();
-            List<DictItem> dictItemList = new ArrayList<>();
+            List<Dict> dictList;
+            List<DictItem> dictItemList;
             // 查询
             FilterGroup filter = new FilterGroup();
             filter.addFilter("dictCode", FilterGroup.Operator.in, String.join(",", dictCodes));
             dictList = dao.queryList(Dict.class, filter, null);
-            if (dictList != null && dictList.size() > 0) {
+            if (dictList != null && !dictList.isEmpty()) {
                 List<String> dictIds = new ArrayList<>();
                 for (Dict dict : dictList) {
                     dictIds.add(dict.getId());
@@ -804,7 +819,7 @@ public class ExcelCommonUtils {
                 for (Dict dict : dictList) {
                     String dictKey = String.format("%s:%s", currentUUID, dict.getDictCode());
                     Map<String, String> dictItems = new HashMap<>();
-                    if (dictItemList != null && dictItemList.size() > 0) {
+                    if (dictItemList != null && !dictItemList.isEmpty()) {
                         for (DictItem dictItem : dictItemList) {
                             if (dict.getId().equalsIgnoreCase(dictItem.getDictId())) {
                                 dictItems.put(dictItem.getItemName(), dictItem.getItemCode());
@@ -832,7 +847,7 @@ public class ExcelCommonUtils {
         List<String> primaryKeys = new ArrayList<>();
         String gglFormat = "{\"%s\": {\"@fs\": \"%s\"}}";
         try {
-            if (ruleDataMap != null && ruleDataMap.size() > 0) {
+            if (ruleDataMap != null && !ruleDataMap.isEmpty()) {
                 for (Map.Entry<String, BusinessTypeRuleData> ruleDataEntry : ruleDataMap.entrySet()) {
                     String key = ruleDataEntry.getKey();
                     BusinessTypeRuleData ruleData = ruleDataEntry.getValue();
@@ -841,7 +856,7 @@ public class ExcelCommonUtils {
                         columnNames.add(ruleData.getGoal());
                         columnNames.addAll(ruleData.getQueryRuleColumn());
                         String ggl = String.format(gglFormat, ruleData.getQueryRuleTable(), String.join(",", columnNames));
-                        ApiPagedResult page = ruleService.queryForMapList(ggl, false);
+                        ApiPagedResult<List<Map<String, Object>>> page = ruleService.queryForMapList(ggl, false);
                         Map<String, Object> redisValue = pagedResultToMap(page, ruleData.getGoal(), ruleData.getQueryRuleColumn());
                         redisTemplate.opsForValue().set(key, redisValue, REDIS_TIME_OUT, TimeUnit.MINUTES);
                         primaryKeys.add(key);
@@ -866,12 +881,11 @@ public class ExcelCommonUtils {
      * @return 返回缓存的键列表，用于后续可能的缓存清理操作
      */
     public List<String> setCache(String currentUUID, Map<String, List<BusinessMeta>> tableMeta, List<Map<String, BusinessData>> data) {
-        List<String> cacheList = new ArrayList<>();
         // 元数据
         Map<String, ConditionMeta> dictMetas = new HashMap<>();
         Map<String, ConditionMeta> primaryMetas = new HashMap<>();
         for (Map.Entry<String, List<BusinessMeta>> metaMap : tableMeta.entrySet()) {
-            if (metaMap.getValue() != null && metaMap.getValue().size() > 0) {
+            if (metaMap.getValue() != null && !metaMap.getValue().isEmpty()) {
                 for (BusinessMeta meta : metaMap.getValue()) {
                     ConditionMeta conditionMeta = null;
                     if ((meta.isEvaluationTypeDictionary() || meta.isEvaluationTypeCheckBox()) && Strings.isNotBlank(meta.getDictCode())) {
@@ -912,7 +926,7 @@ public class ExcelCommonUtils {
         dao.setDefaultFilter(true, filterGroup);
         // 数据字典
         List<String> dictKeys = setDictRedis(currentUUID, dictMetas);
-        cacheList.addAll(dictKeys);
+        List<String> cacheList = new ArrayList<>(dictKeys);
         // 主键
         List<String> primaryKeys = setPrimaryRedis(primaryMetas);
         cacheList.addAll(primaryKeys);
@@ -931,23 +945,23 @@ public class ExcelCommonUtils {
      */
     private List<String> setDictRedis(String currentUUID, Map<String, ConditionMeta> dictMetas) {
         List<String> dictKeys = new ArrayList<>();
-        if (dictMetas != null && dictMetas.size() > 0) {
+        if (dictMetas != null && !dictMetas.isEmpty()) {
             Set<String> dictCodes = new LinkedHashSet<>();
-            Set<String> dictItemNames = new LinkedHashSet<>();
+            // Set<String> dictItemNames = new LinkedHashSet<>();
             for (Map.Entry<String, ConditionMeta> metaEntry : dictMetas.entrySet()) {
                 if (metaEntry.getValue() != null) {
                     dictCodes.add(metaEntry.getValue().getDictCode());
-                    dictItemNames.addAll(metaEntry.getValue().getValues());
+                    // dictItemNames.addAll(metaEntry.getValue().getValues());
                 }
             }
 
-            List<Dict> dictList = new ArrayList<>();
-            List<DictItem> dictItemList = new ArrayList<>();
+            List<Dict> dictList;
+            List<DictItem> dictItemList;
             // 查询
             FilterGroup filter = new FilterGroup();
             filter.addFilter("dictCode", FilterGroup.Operator.in, String.join(",", dictCodes));
             dictList = dao.queryList(Dict.class, filter, null);
-            if (dictList != null && dictList.size() > 0) {
+            if (dictList != null && !dictList.isEmpty()) {
                 List<String> dictIds = new ArrayList<>();
                 for (Dict dict : dictList) {
                     dictIds.add(dict.getId());
@@ -960,7 +974,7 @@ public class ExcelCommonUtils {
                 for (Dict dict : dictList) {
                     String dictKey = String.format("%s:%s", currentUUID, dict.getDictCode());
                     Map<String, String> dictItems = new HashMap<>();
-                    if (dictItemList != null && dictItemList.size() > 0) {
+                    if (dictItemList != null && !dictItemList.isEmpty()) {
                         for (DictItem dictItem : dictItemList) {
                             if (dict.getId().equalsIgnoreCase(dictItem.getDictId())) {
                                 dictItems.put(dictItem.getItemName(), dictItem.getItemCode());
@@ -988,7 +1002,7 @@ public class ExcelCommonUtils {
         List<String> primaryKeys = new ArrayList<>();
         String gglFormat = "{\"%s\": {\"@fs\": \"%s\"}}";
         try {
-            if (primaryMetas != null && primaryMetas.size() > 0) {
+            if (primaryMetas != null && !primaryMetas.isEmpty()) {
                 for (Map.Entry<String, ConditionMeta> metaEntry : primaryMetas.entrySet()) {
                     String key = metaEntry.getKey();
                     ConditionMeta meta = metaEntry.getValue();
@@ -997,7 +1011,7 @@ public class ExcelCommonUtils {
                         columnNames.add(meta.getGoalName());
                         columnNames.addAll(meta.getColumnNames());
                         String ggl = String.format(gglFormat, meta.getTableName(), String.join(",", columnNames));
-                        ApiPagedResult page = ruleService.queryForMapList(ggl, false);
+                        ApiPagedResult<List<Map<String, Object>>> page = ruleService.queryForMapList(ggl, false);
                         Map<String, Object> redisValue = pagedResultToMap(page, meta.getGoalName(), meta.getColumnNames());
                         redisTemplate.opsForValue().set(key, redisValue, REDIS_TIME_OUT, TimeUnit.MINUTES);
                         primaryKeys.add(key);
@@ -1021,7 +1035,7 @@ public class ExcelCommonUtils {
      * @param columnNames 查询字段名称列表，用于构建映射的键
      * @return 返回转换后的映射，键为查询字段的值，值为目标字段的值
      */
-    private Map<String, Object> pagedResultToMap(ApiPagedResult page, String goalName, List<String> columnNames) {
+    private Map<String, Object> pagedResultToMap(ApiPagedResult<?> page, String goalName, List<String> columnNames) {
         Map<String, Object> redisMap = new HashMap<>();
         if (page != null && page.getData() != null && page.getTotal() > 0) {
             List<Map<String, Object>> mapList = (List<Map<String, Object>>) page.getData();
@@ -1042,7 +1056,7 @@ public class ExcelCommonUtils {
 
     public Map<String, ColumnMeta> getNullableColumns(Collection<FieldMeta> fieldMetas, List<String> columnNames) {
         Map<String, ColumnMeta> uniqueColumns = new HashMap<>();
-        if (fieldMetas != null && fieldMetas.size() > 0) {
+        if (fieldMetas != null && !fieldMetas.isEmpty()) {
             for (FieldMeta fieldMeta : fieldMetas) {
                 ColumnMeta meta = fieldMeta.getColumn();
                 if (meta != null && Strings.isNotBlank(meta.getFieldName()) && meta.getEnableStatus() == ColumnDefault.ENABLE_STATUS_VALUE && meta.getDelStatus() == ColumnDefault.DEL_STATUS_VALUE) {
@@ -1058,7 +1072,7 @@ public class ExcelCommonUtils {
 
     public Map<String, ColumnMeta> getUniqueColumns(Collection<FieldMeta> fieldMetas, List<String> columnNames) {
         Map<String, ColumnMeta> uniqueColumns = new HashMap<>();
-        if (fieldMetas != null && fieldMetas.size() > 0) {
+        if (fieldMetas != null && !fieldMetas.isEmpty()) {
             for (FieldMeta fieldMeta : fieldMetas) {
                 ColumnMeta meta = fieldMeta.getColumn();
                 if (meta != null && Strings.isNotBlank(meta.getFieldName()) && meta.getEnableStatus() == ColumnDefault.ENABLE_STATUS_VALUE && meta.getDelStatus() == ColumnDefault.DEL_STATUS_VALUE) {
@@ -1087,9 +1101,9 @@ public class ExcelCommonUtils {
         String gglFormat = "{\"%s\": {\"@fs\": \"%s\"}}";
         String key = String.format("%s:%s:%s", currentUUID, tableName, REDIS_UNIQUE_KEY);
         try {
-            if (Strings.isNotBlank(tableName) && uniqueColumns.size() > 0) {
+            if (Strings.isNotBlank(tableName) && !uniqueColumns.isEmpty()) {
                 String ggl = String.format(gglFormat, tableName, String.join(",", uniqueColumns));
-                ApiPagedResult page = ruleService.queryForMapList(ggl, false);
+                ApiPagedResult<List<Map<String, Object>>> page = ruleService.queryForMapList(ggl, false);
                 Map<String, Set<Object>> redisValue = pageResultToMap(page, uniqueColumns);
                 redisTemplate.opsForValue().set(key, redisValue, REDIS_TIME_OUT, TimeUnit.MINUTES);
             }
@@ -1100,7 +1114,7 @@ public class ExcelCommonUtils {
         return uniqueKeys;
     }
 
-    private Map<String, Set<Object>> pageResultToMap(ApiPagedResult page, Set<String> uniqueColumns) {
+    private Map<String, Set<Object>> pageResultToMap(ApiPagedResult<?> page, Set<String> uniqueColumns) {
         Map<String, Set<Object>> redisValue = new HashMap<>();
         if (page != null && page.getData() != null && page.getTotal() > 0) {
             List<Map<String, Object>> mapList = (List<Map<String, Object>>) page.getData();
@@ -1130,7 +1144,7 @@ public class ExcelCommonUtils {
      * @return 返回处理后的业务数据列表，每个元素是一个包含业务数据键值对的映射
      */
     public List<Map<String, BusinessData>> handleBusinessDataRules(String currentUUID, List<Map<String, BusinessData>> businessDataMapList, Set<Map<Integer, BusinessTypeRuleData>> businessTypeRuleDataSet) {
-        if (businessDataMapList == null || businessDataMapList.size() == 0 || businessTypeRuleDataSet == null || businessTypeRuleDataSet.size() == 0) {
+        if (businessDataMapList == null || businessDataMapList.isEmpty() || businessTypeRuleDataSet == null || businessTypeRuleDataSet.isEmpty()) {
             return businessDataMapList;
         }
         // 设置缓存
@@ -1155,7 +1169,7 @@ public class ExcelCommonUtils {
     }
 
     private List<Map<String, BusinessData>> handleTypeRules(String currentUUID, List<Map<String, BusinessData>> businessDataMapList, Set<Map<Integer, BusinessTypeRuleData>> businessTypeRuleDataSet, int startIndex) {
-        if (businessDataMapList == null || businessDataMapList.size() == 0) {
+        if (businessDataMapList == null || businessDataMapList.isEmpty()) {
             return new ArrayList<>();
         }
         for (Map<String, BusinessData> businessDataMap : businessDataMapList) {
@@ -1174,7 +1188,7 @@ public class ExcelCommonUtils {
                     if (ruleData != null) {
                         // 需要清洗的列名
                         Set<String> columnNames = ruleData.getColumnNames();
-                        if (columnNames == null || columnNames.size() == 0) {
+                        if (columnNames == null || columnNames.isEmpty()) {
                             continue;
                         }
                         // 清洗规则
@@ -1198,7 +1212,7 @@ public class ExcelCommonUtils {
     }
 
     private List<Map<String, BusinessData>> typeRuleMultiToColumn(Map<String, BusinessData> businessDataMap, Set<String> columnNames, BusinessTypeRuleData ruleData) {
-        List<Map<String, BusinessData>> handleDataMapList = new ArrayList<>();
+        List<Map<String, BusinessData>> handleDataMapList;
         // 分类
         Map<String, BusinessData> singleData = new HashMap<>();
         Map<String, BusinessData> multiData = new LinkedHashMap<>();
@@ -1215,7 +1229,7 @@ public class ExcelCommonUtils {
                         if (Strings.isNotBlank(ruleData.getRule())) {
                             try {
                                 String[] multiValue = String.valueOf(businessData.getValue()).split(ruleData.getRule());
-                                if (multiValue != null && multiValue.length > 0) {
+                                if (multiValue.length > 0) {
                                     for (int i = 0; i < multiValue.length; i++) {
                                         multiValue[i] = Strings.isNotBlank(multiValue[i]) ? multiValue[i].trim() : "";
                                     }
@@ -1226,7 +1240,7 @@ public class ExcelCommonUtils {
                                     } else if (ruleData.isRuleTypeSym()) {
                                         isMulti = true;
                                         symData.put(businessDataEntry.getKey(), businessData);
-                                        maxLength = maxLength > multiValue.length ? maxLength : multiValue.length;
+                                        maxLength = Math.max(maxLength, multiValue.length);
                                         dataValues.add(String.join(",", multiValue));
                                     }
                                 }
@@ -1241,6 +1255,7 @@ public class ExcelCommonUtils {
             }
             if (!isMulti) {
                 BusinessData data = new BusinessData();
+                assert businessData != null;
                 data.setXIndex(businessData.getXIndex());
                 data.setYIndex(businessData.getYIndex());
                 data.setValue(businessData.getValue());
@@ -1278,7 +1293,7 @@ public class ExcelCommonUtils {
                     data.setTransitionValues(businessData.getTransitionValue());
                     data.setTransitionValue(data.getValue());
                     data.setBusinessTypeData(businessData.getBusinessTypeData());
-                    data.addAllErrorMsgs(businessData.getErrorMsg());
+                    data.addAllErrorMsg(businessData.getErrorMsg());
                     symMap.put(businessDataEntry.getKey(), data);
                 }
                 symMapList.add(symMap);
@@ -1326,9 +1341,9 @@ public class ExcelCommonUtils {
             } else if (ruleData.isRuleTypeCheckBox()) {
                 if (Strings.isNotBlank(ruleData.getRule())) {
                     Map<String, String> redisValues = (Map<String, String>) redisTemplate.opsForValue().get(String.format("%s:%s", currentUUID, ruleData.getRule()));
-                    if (Strings.isNotBlank(oldValue) && redisValues != null && redisValues.size() > 0) {
+                    if (Strings.isNotBlank(oldValue) && redisValues != null && !redisValues.isEmpty()) {
                         String[] oValues = oldValue.split(",");
-                        if (oValues != null && oValues.length > 0) {
+                        if (oValues.length > 0) {
                             Set<String> nValues = new LinkedHashSet<>();
                             for (String oValue : oValues) {
                                 String nValue = redisValues.get(oValue);
@@ -1345,7 +1360,7 @@ public class ExcelCommonUtils {
             } else if (ruleData.isRuleTypeDictionary()) {
                 if (Strings.isNotBlank(ruleData.getRule())) {
                     Map<String, String> redisValues = (Map<String, String>) redisTemplate.opsForValue().get(String.format("%s:%s", currentUUID, ruleData.getRule()));
-                    if (Strings.isNotBlank(oldValue) && redisValues != null && redisValues.size() > 0) {
+                    if (Strings.isNotBlank(oldValue) && redisValues != null && !redisValues.isEmpty()) {
                         newValue = redisValues.get(oldValue);
                     }
                 } else {
@@ -1354,9 +1369,9 @@ public class ExcelCommonUtils {
             } else if (ruleData.isRuleTypeQueryGoal()) {
                 String tableName = ruleData.getQueryRuleTable();
                 List<String> colNames = ruleData.getQueryRuleColumn();
-                if (Strings.isNotBlank(tableName) && colNames != null && colNames.size() > 0 && Strings.isNotBlank(ruleData.getGoal())) {
+                if (Strings.isNotBlank(tableName) && colNames != null && !colNames.isEmpty() && Strings.isNotBlank(ruleData.getGoal())) {
                     Map<String, Object> redisValues = (Map<String, Object>) redisTemplate.opsForValue().get(String.format("%s:%s,%s", currentUUID, ruleData.getRule(), ruleData.getGoal()));
-                    if (Strings.isNotBlank(oldValue) && redisValues != null && redisValues.size() > 0) {
+                    if (Strings.isNotBlank(oldValue) && redisValues != null && !redisValues.isEmpty()) {
                         newValue = redisValues.get(oldValue);
                     }
                 } else {
@@ -1365,9 +1380,9 @@ public class ExcelCommonUtils {
             } else if (ruleData.isRuleTypeQueryRule()) {
                 String tableName = ruleData.getQueryRuleTable();
                 List<String> colNames = ruleData.getQueryRuleColumn();
-                if (Strings.isNotBlank(tableName) && colNames != null && colNames.size() > 0 && Strings.isNotBlank(ruleData.getGoal())) {
+                if (Strings.isNotBlank(tableName) && colNames != null && !colNames.isEmpty() && Strings.isNotBlank(ruleData.getGoal())) {
                     Map<String, Object> redisValues = (Map<String, Object>) redisTemplate.opsForValue().get(String.format("%s:%s", currentUUID, ruleData.getRule()));
-                    if (Strings.isNotBlank(oldValue) && redisValues != null && redisValues.size() > 0) {
+                    if (Strings.isNotBlank(oldValue) && redisValues != null && !redisValues.isEmpty()) {
                         newValue = redisValues.get(oldValue);
                     }
                 } else {
@@ -1383,13 +1398,12 @@ public class ExcelCommonUtils {
     }
 
     private List<String> setTypeRuleCache(String currentUUID, Set<Map<Integer, BusinessTypeRuleData>> businessTypeRuleDataSet) {
-        List<String> cacheList = new ArrayList<>();
         // 类型
         Map<String, BusinessTypeRuleData> ruleDataDict = new HashMap<>();
         Map<String, BusinessTypeRuleData> ruleDataGoal = new HashMap<>();
         Map<String, BusinessTypeRuleData> ruleDataRule = new HashMap<>();
         // 数据解析
-        if (businessTypeRuleDataSet != null && businessTypeRuleDataSet.size() > 0) {
+        if (businessTypeRuleDataSet != null && !businessTypeRuleDataSet.isEmpty()) {
             for (Map<Integer, BusinessTypeRuleData> ruleDataMap : businessTypeRuleDataSet) {
                 for (Map.Entry<Integer, BusinessTypeRuleData> ruleDataEntry : ruleDataMap.entrySet()) {
                     BusinessTypeRuleData ruleData = ruleDataEntry.getValue();
@@ -1404,7 +1418,7 @@ public class ExcelCommonUtils {
                         } else if (ruleData.isRuleTypeQueryGoal()) {
                             String tableName = ruleData.getQueryRuleTable();
                             List<String> columnNames = ruleData.getQueryRuleColumn();
-                            if (Strings.isNotBlank(ruleData.getGoal()) && Strings.isNotBlank(tableName) && columnNames != null && columnNames.size() > 0) {
+                            if (Strings.isNotBlank(ruleData.getGoal()) && Strings.isNotBlank(tableName) && columnNames != null && !columnNames.isEmpty()) {
                                 String key = String.format("%s:%s,%s", currentUUID, ruleData.getRule(), ruleData.getGoal());
                                 if (!ruleDataGoal.containsKey(key)) {
                                     ruleDataGoal.put(key, ruleData);
@@ -1413,7 +1427,7 @@ public class ExcelCommonUtils {
                         } else if (ruleData.isRuleTypeQueryRule()) {
                             String tableName = ruleData.getQueryRuleTable();
                             List<String> columnNames = ruleData.getQueryRuleColumn();
-                            if (Strings.isNotBlank(ruleData.getGoal()) && Strings.isNotBlank(tableName) && columnNames != null && columnNames.size() > 0) {
+                            if (Strings.isNotBlank(ruleData.getGoal()) && Strings.isNotBlank(tableName) && columnNames != null && !columnNames.isEmpty()) {
                                 String key = String.format("%s:%s", currentUUID, ruleData.getRule());
                                 if (!ruleDataRule.containsKey(key)) {
                                     ruleDataRule.put(key, ruleData);
@@ -1426,7 +1440,7 @@ public class ExcelCommonUtils {
         }
         // 字典查询
         List<String> dictKeys = setDictRuleRedis(currentUUID, ruleDataDict);
-        cacheList.addAll(dictKeys);
+        List<String> cacheList = new ArrayList<>(dictKeys);
         // 目标字段查询
         List<String> goalRedis = setQueryRuleRedis(ruleDataGoal);
         cacheList.addAll(goalRedis);
@@ -1435,30 +1449,6 @@ public class ExcelCommonUtils {
         cacheList.addAll(ruleRedis);
 
         return cacheList;
-    }
-
-    public static void bottomLayerOfTree(List<ExportColumn> columns, List<ExportColumn> target) {
-        for (ExportColumn exportColumn : columns) {
-            if (exportColumn.getChildren() != null && exportColumn.getChildren().size() > 0) {
-                bottomLayerOfTree(exportColumn.getChildren(), target);
-            } else {
-                target.add(exportColumn);
-            }
-        }
-    }
-
-    public static void cellRangeAddress(int startCol, int startRow, List<ExportColumn> columns, List<ExportColumn> target) {
-        for (int i = 0; i < columns.size(); i++) {
-            ExportColumn column = columns.get(i);
-            column.setFirstRow(startRow);
-            column.setLastRow(column.getFirstRow() + column.getDepth() - 1);
-            column.setFirstCol(i > 0 ? (columns.get(i - 1).getLastCol() + 1) : startCol);
-            column.setLastCol(column.getFirstCol() + column.getBreadth() - 1);
-            if (column.getChildren() != null && column.getChildren().size() > 0) {
-                cellRangeAddress(column.getFirstCol(), column.getLastRow() + 1, column.getChildren(), target);
-            }
-            target.add(column);
-        }
     }
 
 }

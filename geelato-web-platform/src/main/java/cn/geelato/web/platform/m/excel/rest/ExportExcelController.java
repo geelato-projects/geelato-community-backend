@@ -48,7 +48,7 @@ public class ExportExcelController extends BaseController {
     }
 
     @RequestMapping(value = "/list", method = RequestMethod.POST)
-    public ApiPagedResult pageQuery() {
+    public ApiPagedResult<?> pageQuery() {
         try {
             Map<String, Object> requestBody = this.getRequestBody();
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
@@ -73,16 +73,16 @@ public class ExportExcelController extends BaseController {
      * @param isDownload 是否下载文件
      * @param isPdf      是否将文件转换为PDF格式
      * @return ApiResult对象，包含操作结果
-     * @throws Exception 如果在导出或转换文件过程中出现异常，则抛出该异常
      */
     @RequestMapping(value = "/{dataType}/{templateId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult exportWps(@PathVariable String dataType, @PathVariable String templateId, String index, String fileName, String markText, String markKey, boolean readonly, boolean isDownload, boolean isPdf) {
+    public ApiResult<?> exportWps(@PathVariable String dataType, @PathVariable String templateId, String index, String fileName, String markText, String markKey, boolean readonly, boolean isDownload, boolean isPdf) {
         try {
             // 数据解析，根据dataType的值选择不同的数据解析方式
             String jsonText = GqlUtil.resolveGql(this.request);
             List<Map> valueMapList = new ArrayList<>();
             Map valueMap = new HashMap();
             if ("mql".equals(dataType)) {
+                log.info("mql");
             } else if ("data".equals(dataType) && Strings.isNotBlank(jsonText)) {
                 JSONObject jo = JSON.parseObject(jsonText);
                 valueMapList = (List<Map>) jo.get("valueMapList");
@@ -90,7 +90,7 @@ public class ExportExcelController extends BaseController {
             } else {
                 throw new RuntimeException("Parsing this data type is not supported!");
             }
-            ApiResult result = exportExcelService.exportWps(templateId, index, fileName, valueMapList, valueMap, markText, markKey, readonly);
+            ApiResult<?> result = exportExcelService.exportWps(templateId, index, fileName, valueMapList, valueMap, markText, markKey, readonly);
             return downloadOrPdf(result, isDownload, isPdf);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -109,10 +109,9 @@ public class ExportExcelController extends BaseController {
      * @param isDownload 是否下载文件
      * @param isPdf      是否将文件转换为PDF格式
      * @return ApiResult对象，表示操作结果
-     * @throws Exception 如果在导出或转换文件过程中出现异常，则抛出该异常
      */
     @RequestMapping(value = "/column/meta/list", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult exportWps(String appId, String fileName, String markText, String markKey, boolean readonly, boolean isDownload, boolean isPdf) {
+    public ApiResult<?> exportWps(String appId, String fileName, String markText, String markKey, boolean readonly, boolean isDownload, boolean isPdf) {
         try {
             List<Map> valueMapList = new ArrayList<>();
             Map valueMap = new HashMap();
@@ -127,14 +126,14 @@ public class ExportExcelController extends BaseController {
                 columns = jo.getList("column", ExportColumn.class);
                 metas = jo.getList("meta", PlaceholderMeta.class);
             }
-            if (columns == null && columns.size() == 0) {
+            if (columns == null || columns.isEmpty()) {
                 throw new RuntimeException("The table header of the exported template cannot be empty!");
             }
-            if (metas == null && metas.size() == 0) {
+            if (metas == null || metas.isEmpty()) {
                 throw new RuntimeException("The data definition information cannot be empty");
             }
             appId = Strings.isBlank(appId) ? getAppId() : appId;
-            ApiResult result = exportExcelService.exportExcelByColumnMeta(appId, fileName, valueMapList, valueMap, columns, metas, markText, markKey, readonly);
+            ApiResult<?> result = exportExcelService.exportExcelByColumnMeta(appId, fileName, valueMapList, valueMap, columns, metas, markText, markKey, readonly);
             return downloadOrPdf(result, isDownload, isPdf);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -149,9 +148,8 @@ public class ExportExcelController extends BaseController {
      * @param isDownload 是否下载文件
      * @param isPdf      是否将文件转换为PDF格式
      * @return ApiResult对象，包含操作结果
-     * @throws Exception 如果在转换或下载文件过程中出现异常，则抛出该异常
      */
-    private ApiResult downloadOrPdf(ApiResult result, boolean isDownload, boolean isPdf) {
+    private ApiResult<?> downloadOrPdf(ApiResult<?> result, boolean isDownload, boolean isPdf) {
         try {
             if (result.isSuccess() && result.getData() != null) {
                 if (isPdf) {

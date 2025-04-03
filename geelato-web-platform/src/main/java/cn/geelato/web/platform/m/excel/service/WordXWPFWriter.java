@@ -19,15 +19,12 @@ import org.apache.xmlbeans.XmlToken;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTNonVisualDrawingProps;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTPositiveSize2D;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
@@ -75,11 +72,11 @@ public class WordXWPFWriter {
         int picFormat = getPictureFormat(filePath);
         document.addPictureData(new FileInputStream(filePath), picFormat);
         long id = UIDGenerator.generate();
-        long width = (long) Math.floor(Units.toEMU(imageWidth) * 1000 / 35);
-        long height = (long) Math.floor(Units.toEMU(imageHeight) * 1000 / 35);
+        long width = (long) Math.floor((double) (Units.toEMU(imageWidth) * 1000) / 35);
+        long height = (long) Math.floor((double) (Units.toEMU(imageHeight) * 1000) / 35);
         String blipId = document.addPictureData(new FileInputStream(filePath), picFormat);
         String picXml = getPicXml(blipId, width, height);
-        XmlToken xmlToken = null;
+        XmlToken xmlToken;
         try {
             xmlToken = XmlToken.Factory.parse(picXml);
         } catch (XmlException xe) {
@@ -115,8 +112,14 @@ public class WordXWPFWriter {
     }
 
     private static String getPicXml(String blipId, long width, long height) {
-        String picXml = "<a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" + "   <a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" + "      <pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" + "         <pic:nvPicPr>" + "            <pic:cNvPr id=\"" + 0 + "\" name=\"Generated\"/>" + "            <pic:cNvPicPr/>" + "         </pic:nvPicPr>" + "         <pic:blipFill>" + "            <a:blip r:embed=\"" + blipId + "\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>" + "            <a:stretch>" + "               <a:fillRect/>" + "            </a:stretch>" + "         </pic:blipFill>" + "         <pic:spPr>" + "            <a:xfrm>" + "               <a:off x=\"0\" y=\"0\"/>" + "               <a:ext cx=\"" + width + "\" cy=\"" + height + "\"/>" + "            </a:xfrm>" + "            <a:prstGeom prst=\"rect\">" + "               <a:avLst/>" + "            </a:prstGeom>" + "         </pic:spPr>" + "      </pic:pic>" + "   </a:graphicData>" + "</a:graphic>";
-        return picXml;
+        return "<a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" + "   <a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" + "      <pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" + "         <pic:nvPicPr>" + "            <pic:cNvPr id=\"" + 0 + "\" name=\"Generated\"/>" + "            <pic:cNvPicPr/>" + "         </pic:nvPicPr>" + "         <pic:blipFill>" + "            <a:blip r:embed=\"" + blipId + "\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>" + "            <a:stretch>" + "               <a:fillRect/>" + "            </a:stretch>" + "         </pic:blipFill>" + "         <pic:spPr>" + "            <a:xfrm>" + "               <a:off x=\"0\" y=\"0\"/>" + "               <a:ext cx=\"" + width + "\" cy=\"" + height + "\"/>" + "            </a:xfrm>" + "            <a:prstGeom prst=\"rect\">" + "               <a:avLst/>" + "            </a:prstGeom>" + "         </pic:spPr>" + "      </pic:pic>" + "   </a:graphicData>" + "</a:graphic>";
+    }
+
+    public static void clearParagraphContent(XWPFParagraph paragraph) {
+        List<XWPFRun> runs = paragraph.getRuns();
+        for (int i = runs.size() - 1; i >= 0; i--) {
+            paragraph.removeRun(i);
+        }
     }
 
     /**
@@ -145,17 +148,17 @@ public class WordXWPFWriter {
     /**
      * 对列表数据进行解析
      * <p>
-     * 将传入的列表数据（每个元素为一个包含键值对的Map）解析为一个新的映射，其中键为原始映射中的键，值为对应的值列表。
+     * 将传入的列表数据（每个元素为一个包含键值对的Map）解析为一个新地映射，其中键为原始映射中的键，值为对应的值列表。
      *
      * @param valueMapList 包含列表数据的映射列表，每个元素为一个包含键值对的Map
      * @return 返回解析后的映射，其中键为原始映射中的键，值为对应的值列表
      */
     private Map<String, List<Map>> analysisValueMapList(List<Map> valueMapList) {
         Map<String, List<Map>> valueListMap = new LinkedHashMap<>();
-        if (valueMapList != null && valueMapList.size() > 0) {
+        if (valueMapList != null && !valueMapList.isEmpty()) {
             for (int i = 0; i < valueMapList.size(); i++) {
                 Map<String, List<Map>> listMap = valueMapList.get(i);
-                if (listMap != null && listMap.size() > 0) {
+                if (listMap != null && !listMap.isEmpty()) {
                     for (Map.Entry<String, List<Map>> listEntry : listMap.entrySet()) {
                         valueListMap.put(listEntry.getKey(), listEntry.getValue());
                     }
@@ -179,47 +182,47 @@ public class WordXWPFWriter {
         List<WordTableMeta> tableMetas = new ArrayList<>();
         // 表格
         List<XWPFTable> tableList = document.getTables();
-        if (tableList != null && tableList.size() > 0) {
-            for (int i = 0; i < tableList.size(); i++) {
-                if (tableList.get(i) != null) {
+        if (tableList != null && !tableList.isEmpty()) {
+            for (XWPFTable xwpfTable : tableList) {
+                if (xwpfTable != null) {
                     WordTableMeta meta = new WordTableMeta();
-                    meta.setTable(tableList.get(i));
-                    List<XWPFTableRow> rowsList = tableList.get(i).getRows();
-                    if (rowsList != null && rowsList.size() > 0) {
+                    meta.setTable(xwpfTable);
+                    List<XWPFTableRow> rowsList = xwpfTable.getRows();
+                    if (rowsList != null && !rowsList.isEmpty()) {
                         meta.setRowTotal(rowsList.size());
                         for (int r = 0; r < rowsList.size(); r++) {
                             if (rowsList.get(r) != null) {
                                 List<XWPFTableCell> cellList = rowsList.get(r).getTableCells();
-                                if (cellList != null && cellList.size() > 0) {
+                                if (cellList != null && !cellList.isEmpty()) {
                                     meta.setCellTotal(cellList.size());
                                     for (int c = 0; c < cellList.size(); c++) {
                                         if (cellList.get(c) != null) {
                                             List<XWPFParagraph> paragraphList = cellList.get(c).getParagraphs();
-                                            if (paragraphList != null && paragraphList.size() > 0) {
-                                                for (int p = 0; p < paragraphList.size(); p++) {
-                                                    if (paragraphList.get(p) != null) {
+                                            if (paragraphList != null && !paragraphList.isEmpty()) {
+                                                for (XWPFParagraph xwpfParagraph : paragraphList) {
+                                                    if (xwpfParagraph != null) {
                                                         List<String> runList = new ArrayList<>();
-                                                        List<XWPFRun> runs = paragraphList.get(p).getRuns();
+                                                        List<XWPFRun> runs = xwpfParagraph.getRuns();
                                                         if (runs != null) {
-                                                            for (int u = 0; u < runs.size(); u++) {
-                                                                String runText = runs.get(u).getText(0);
+                                                            for (XWPFRun run : runs) {
+                                                                String runText = run.getText(0);
                                                                 runList.add(runText);
                                                                 if (Strings.isNotBlank(runText)) {
                                                                     if (loopHeadPattern.matcher(runText).find()) {
                                                                         meta.setType(WordTableLoopTypeEnum.TABLE.name());
                                                                         meta.setIdentify(getIdentify(loopHeadPattern, runText, new String[]{"{?", "}"}));
                                                                         tableMetas.add(meta);
-                                                                        clearLoopPosition(loopHeadPattern, runs.get(u));
+                                                                        clearLoopPosition(loopHeadPattern, run);
                                                                     } else if (loopRowPattern.matcher(runText).find()) {
                                                                         meta.setType(WordTableLoopTypeEnum.ROW.name());
                                                                         meta.setIdentify(getIdentify(loopRowPattern, runText, new String[]{"{#", "}"}));
                                                                         tableMetas.add(meta);
-                                                                        clearLoopPosition(loopRowPattern, runs.get(u));
+                                                                        clearLoopPosition(loopRowPattern, run);
                                                                     } else if (loopCellPattern.matcher(runText).find()) {
                                                                         meta.setType(WordTableLoopTypeEnum.CELL.name());
                                                                         meta.setIdentify(getIdentify(loopCellPattern, runText, new String[]{"{*", "}"}));
                                                                         tableMetas.add(meta);
-                                                                        clearLoopPosition(loopCellPattern, runs.get(u));
+                                                                        clearLoopPosition(loopCellPattern, run);
                                                                     } else if (paragraphPattern.matcher(runText).find()) {
                                                                         meta.setCellStartPosition(c);
                                                                         meta.setRowStartPosition(r);
@@ -245,10 +248,10 @@ public class WordXWPFWriter {
     }
 
     private void setTableLoop(XWPFDocument document, Map<String, PlaceholderMeta> placeholderMetaMap, List<WordTableMeta> tableMetas) {
-        if (tableMetas != null && tableMetas.size() > 0) {
+        if (tableMetas != null && !tableMetas.isEmpty()) {
             for (WordTableMeta meta : tableMetas) {
                 // 没有数据不循环
-                if (meta.getValueMapList() == null || meta.getValueMapList().size() == 0) {
+                if (meta.getValueMapList() == null || meta.getValueMapList().isEmpty()) {
                     continue;
                 }
                 // 分类型循环
@@ -270,7 +273,7 @@ public class WordXWPFWriter {
         boolean isDeleteEmptyPh = false;
         for (XWPFParagraph paragraph : paragraphs) {
             String pht = paragraph.getText();
-            if (pht != null && pht.indexOf("{TLDEP}") != -1) {
+            if (pht != null && pht.contains("{TLDEP}")) {
                 isDeleteEmptyPh = true;
                 break;
             }
@@ -281,13 +284,6 @@ public class WordXWPFWriter {
                 document.removeBodyElement(document.getPosOfParagraph(paragraph));
             }
             clearParagraphContent(paragraphs.get(0));
-        }
-    }
-
-    public static void clearParagraphContent(XWPFParagraph paragraph) {
-        List<XWPFRun> runs = paragraph.getRuns();
-        for (int i = runs.size() - 1; i >= 0; i--) {
-            paragraph.removeRun(i);
         }
     }
 
@@ -372,14 +368,14 @@ public class WordXWPFWriter {
         int tagIndex = 1;
         // 段落
         List<XWPFParagraph> paragraphList = document.getParagraphs();
-        if (paragraphList != null && paragraphList.size() > 0) {
+        if (paragraphList != null && !paragraphList.isEmpty()) {
             for (int i = 0; i < paragraphList.size(); i++) {
                 if (paragraphList.get(i) != null) {
                     List<XWPFRun> runs = paragraphList.get(i).getRuns();
                     List<String> runList = new ArrayList<>();
                     if (runs != null) {
-                        for (int r = 0; r < runs.size(); r++) {
-                            String runText = runs.get(r).getText(0);
+                        for (XWPFRun run : runs) {
+                            String runText = run.getText(0);
                             runList.add(runText);
                             if (Strings.isNotBlank(runText)) {
                                 if (loopHeadPattern.matcher(runText).find()) {
@@ -389,7 +385,7 @@ public class WordXWPFWriter {
                                     meta.setIdentify(getIdentify(loopHeadPattern, runText, new String[]{"{?", "}"}));
                                     meta.setPosition(i);
                                     tagMetas.add(meta);
-                                    clearLoopPosition(loopHeadPattern, runs.get(r));
+                                    clearLoopPosition(loopHeadPattern, run);
                                 } else if (loopEndPattern.matcher(runText).find()) {
                                     WordTagMeta meta = new WordTagMeta();
                                     meta.setIndex(tagIndex++);
@@ -397,7 +393,7 @@ public class WordXWPFWriter {
                                     meta.setIdentify(getIdentify(loopEndPattern, runText, new String[]{"{/", "}"}));
                                     meta.setPosition(i);
                                     tagMetas.add(meta);
-                                    clearLoopPosition(loopEndPattern, runs.get(r));
+                                    clearLoopPosition(loopEndPattern, run);
                                 }
                             }
                         }
@@ -405,23 +401,17 @@ public class WordXWPFWriter {
                 }
             }
         }
-        List<WordParagraphMeta> paragraphMetas = buildWordParagraphMetas(document, valueListMap, tagMetas);
 
-        return paragraphMetas;
+        return buildWordParagraphMetas(document, valueListMap, tagMetas);
     }
 
     private List<WordParagraphMeta> buildWordParagraphMetas(XWPFDocument document, Map<String, List<Map>> valueListMap, List<WordTagMeta> tagMetas) {
         List<WordParagraphMeta> paragraphMetas = new ArrayList<>();
-        if (tagMetas == null || tagMetas.size() == 0) {
+        if (tagMetas == null || tagMetas.isEmpty()) {
             return paragraphMetas;
         }
         // 排序
-        tagMetas.sort(new Comparator<WordTagMeta>() {
-            @Override
-            public int compare(WordTagMeta o1, WordTagMeta o2) {
-                return o1.getIndex() - o2.getIndex();
-            }
-        });
+        tagMetas.sort(Comparator.comparingInt(WordTagMeta::getIndex));
         // 确定开始结束标签
         Map<Integer, WordTagMeta> tagMetaMap = new LinkedHashMap<>();
         List<WordIndexTagMeta> indexMetas = new ArrayList<>();
@@ -470,12 +460,12 @@ public class WordXWPFWriter {
     }
 
     private void setParagraphLoop(XWPFDocument document, Map<String, PlaceholderMeta> placeholderMetaMap, List<WordParagraphMeta> paragraphMetas) {
-        if (paragraphMetas != null && paragraphMetas.size() > 0) {
+        if (paragraphMetas != null && !paragraphMetas.isEmpty()) {
             for (WordParagraphMeta meta : paragraphMetas) {
-                if (meta.getValueMapList() == null || meta.getValueMapList().size() == 0) {
+                if (meta.getValueMapList() == null || meta.getValueMapList().isEmpty()) {
                     continue;
                 }
-                if (meta.getTemplateParagraphs() == null || meta.getTemplateParagraphs().size() == 0) {
+                if (meta.getTemplateParagraphs() == null || meta.getTemplateParagraphs().isEmpty()) {
                     continue;
                 }
                 setParagraphLoop(document, placeholderMetaMap, meta);
@@ -515,8 +505,7 @@ public class WordXWPFWriter {
         int templateBodySize = bodyElements.size();// 标记模板文件（段落+表格）总个数
         int currentTable = 0;// 当前操作表格对象的索引
         int currentParagraph = 0;// 当前操作段落对象的索引
-        for (int i = 0; i < templateBodySize; i++) {
-            IBodyElement body = bodyElements.get(i);
+        for (IBodyElement body : bodyElements) {
             if (BodyElementType.PARAGRAPH.equals(body.getElementType())) {// 段落、图片
                 XWPFParagraph paragraph = body.getBody().getParagraphArray(currentParagraph);
                 if (paragraph != null) {
@@ -569,8 +558,8 @@ public class WordXWPFWriter {
             List<String> runList = new ArrayList<>();
             List<XWPFRun> runs = paragraph.getRuns();
             if (runs != null) {
-                for (int r = 0; r < runs.size(); r++) {
-                    String runText = runs.get(r).getText(0);
+                for (XWPFRun run : runs) {
+                    String runText = run.getText(0);
                     runList.add(runText);
                     if (Strings.isNotBlank(runText)) {
                         Matcher phm = paragraphPattern.matcher(runText);
@@ -583,7 +572,7 @@ public class WordXWPFWriter {
                                 if (meta.isIsImage()) {
                                     value = getImagePath(meta, value);
                                     if (StringUtils.isNotBlank(value) && new File(value).exists()) {
-                                        CTInline inline = runs.get(r).getCTR().addNewDrawing().addNewInline();
+                                        CTInline inline = run.getCTR().addNewDrawing().addNewInline();
                                         try {
                                             insertPicture(document, value, inline, meta.getImageWidth(), meta.getImageHeight());
                                             document.createParagraph();
@@ -602,7 +591,7 @@ public class WordXWPFWriter {
                                 runText = runText.replace(phm.group(), "");
                             }
                         }
-                        runs.get(r).setText(runText, 0);
+                        run.setText(runText, 0);
                     }
                 }
             }
@@ -628,7 +617,7 @@ public class WordXWPFWriter {
                 }
                 if (StringUtils.isNotBlank(value)) {
                     File tempFile = FileUtils.createTempFile(value, "temp.png");
-                    value = tempFile != null && tempFile.exists() ? tempFile.getAbsolutePath() : null;
+                    value = tempFile.exists() ? tempFile.getAbsolutePath() : null;
                 }
             } else if (meta.isImageSourceRelativePath()) {
                 if (!value.startsWith("/" + UploadService.ROOT_DIRECTORY)) {
@@ -638,22 +627,19 @@ public class WordXWPFWriter {
                 if (!value.startsWith("http")) {
                     value = null;
                 }
-                InputStream inputStream = null;
                 HttpURLConnection httpConn = null;
                 try {
+                    assert value != null;
                     URL url = new URL(value);
                     httpConn = (HttpURLConnection) url.openConnection();
                     int responseCode = httpConn.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         File tempFile = FileUtils.createTempFile(httpConn.getInputStream(), "temp.png");
-                        value = tempFile != null && tempFile.exists() ? tempFile.getAbsolutePath() : null;
+                        value = tempFile.exists() ? tempFile.getAbsolutePath() : null;
                     }
                 } catch (Exception ex) {
                     value = null;
                 } finally {
-                    if (inputStream != null) {
-                        inputStream.close();
-                    }
                     if (httpConn != null) {
                         httpConn.disconnect();
                     }
@@ -666,12 +652,8 @@ public class WordXWPFWriter {
     }
 
     private String getIdentify(Pattern pattern, String runText, String[] replaces) {
-        String text = "";
         Matcher mp = pattern.matcher(runText);
-        while (mp.find()) {
-            text = mp.group();
-            break;
-        }
+        String text = mp.find() ? mp.group() : "";  // 如果没有匹配，返回空字符串
         if (replaces != null) {
             for (String re : replaces) {
                 text = text.replace(re, "");
@@ -690,7 +672,7 @@ public class WordXWPFWriter {
         run.setText(runText, 0);
     }
 
-    private XWPFTable copyTable(XWPFTable newTable, XWPFTable originalTable) {
+    private void copyTable(XWPFTable newTable, XWPFTable originalTable) {
         newTable.getCTTbl().setTblPr(originalTable.getCTTbl().getTblPr());
         newTable.getCTTbl().setTblGrid(originalTable.getCTTbl().getTblGrid());
         // 表格行
@@ -715,10 +697,9 @@ public class WordXWPFWriter {
             }
         }
 
-        return newTable;
     }
 
-    private XWPFTableRow copyTableRow(XWPFTableRow newRow, XWPFTableRow originalRow) {
+    private void copyTableRow(XWPFTableRow newRow, XWPFTableRow originalRow) {
         newRow.getCtRow().setTblPrEx(originalRow.getCtRow().getTblPrEx());
         newRow.getCtRow().setTrPr(originalRow.getCtRow().getTrPr());
         // 新行样式
@@ -748,10 +729,9 @@ public class WordXWPFWriter {
             }
         }
 
-        return newRow;
     }
 
-    private XWPFTableCell copyTableCell(XWPFTableCell newCell, XWPFTableCell originalCell) {
+    private void copyTableCell(XWPFTableCell newCell, XWPFTableCell originalCell) {
         newCell.getCTTc().setTcPr(originalCell.getCTTc().getTcPr());
         // 新列样式
         newCell.setColor(originalCell.getColor());
@@ -780,10 +760,9 @@ public class WordXWPFWriter {
             }
         }
 
-        return newCell;
     }
 
-    private XWPFParagraph copyParagraph(XWPFParagraph newParagraph, XWPFParagraph originalParagraph) {
+    private void copyParagraph(XWPFParagraph newParagraph, XWPFParagraph originalParagraph) {
         newParagraph.getCTP().setPPr(originalParagraph.getCTP().getPPr());
         // 新行样式
         newParagraph.setAlignment(originalParagraph.getAlignment());
@@ -836,10 +815,9 @@ public class WordXWPFWriter {
             }
         }
 
-        return newParagraph;
     }
 
-    private XWPFRun copyRun(XWPFRun newRun, XWPFRun originalRun) {
+    private void copyRun(XWPFRun newRun, XWPFRun originalRun) {
         newRun.getCTR().setRPr(originalRun.getCTR().getRPr());
         // 新行样式
         newRun.setText(originalRun.getText(0));
@@ -868,7 +846,6 @@ public class WordXWPFWriter {
         newRun.setVanish(originalRun.isVanish());
         newRun.setVerticalAlignment(originalRun.getVerticalAlignment() == null ? null : String.valueOf(originalRun.getVerticalAlignment()));
 
-        return newRun;
     }
 
     private XWPFParagraph copyParagraphAndRuns(XWPFParagraph newParagraph, XWPFParagraph originalParagraph) {

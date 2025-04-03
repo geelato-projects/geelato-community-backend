@@ -14,8 +14,8 @@ import java.util.Map;
 @Component
 public class BarcodeService extends BaseService {
 
-    public ApiResult getBarcodeByCode(String code) {
-        ApiResult<Barcode> result = new ApiResult();
+    public ApiResult<Barcode> getBarcodeByCode(String code) {
+        ApiResult<Barcode> result = new ApiResult<>();
         boolean isCode = true;
         if (StringUtils.isNotBlank(code)) {
             try {
@@ -24,8 +24,7 @@ public class BarcodeService extends BaseService {
                     result = ApiResult.success(barcode);
                     isCode = false;
                 }
-            } catch (Exception e) {
-                isCode = true;
+            } catch (Exception ignored) {
             }
             if (isCode) {
                 try {

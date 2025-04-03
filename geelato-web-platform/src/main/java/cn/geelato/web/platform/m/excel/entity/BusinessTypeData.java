@@ -9,10 +9,6 @@ import cn.geelato.web.platform.m.excel.enums.ExcelMultiSceneTypeEnum;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author diabl
- * @description: 导入业务数据，每列数据的类型
- */
 @Getter
 @Setter
 public class BusinessTypeData {

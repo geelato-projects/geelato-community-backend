@@ -10,8 +10,8 @@ import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.entity.*;
 import cn.geelato.web.platform.m.file.entity.Attachment;
-import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import com.alibaba.fastjson2.JSON;
@@ -43,8 +43,8 @@ public class ExportTemplateService extends BaseService {
     @Autowired
     private FileHandler fileHandler;
 
-    public ApiResult generateFile(String id, String fileType) throws IOException {
-        ApiResult result = new ApiResult();
+    public ApiResult<Attachment> generateFile(String id, String fileType) throws IOException {
+        ApiResult<Attachment> result = new ApiResult<>();
         if (Strings.isBlank(id) || Strings.isBlank(fileType)) {
             return ApiResult.fail(ApiErrorMsg.PARAMETER_MISSING);
         }
@@ -65,7 +65,7 @@ public class ExportTemplateService extends BaseService {
         return result;
     }
 
-    private ApiResult generateImportTemplate(ExportTemplate meta) throws IOException {
+    private ApiResult<Attachment> generateImportTemplate(ExportTemplate meta) throws IOException {
         OutputStream outputStream = null;
         XSSFWorkbook workbook = null;
         FileInputStream fileInputStream = null;
@@ -109,7 +109,7 @@ public class ExportTemplateService extends BaseService {
         }
     }
 
-    private ApiResult generateImportMeta(ExportTemplate meta) throws IOException {
+    private ApiResult<Attachment> generateImportMeta(ExportTemplate meta) throws IOException {
         OutputStream outputStream = null;
         XSSFWorkbook workbook = null;
         FileInputStream fileInputStream = null;
@@ -163,7 +163,7 @@ public class ExportTemplateService extends BaseService {
         }
     }
 
-    private ApiResult generateExportMeta(ExportTemplate meta) throws IOException {
+    private ApiResult<Attachment> generateExportMeta(ExportTemplate meta) throws IOException {
         OutputStream outputStream = null;
         XSSFWorkbook workbook = null;
         FileInputStream fileInputStream = null;

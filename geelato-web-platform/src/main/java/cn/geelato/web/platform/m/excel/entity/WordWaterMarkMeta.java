@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 /**
  * @author diabl
- * @description: 水印
+ * 水印
  */
 @Getter
 @Setter
@@ -72,7 +72,7 @@ public class WordWaterMarkMeta {
         if (Strings.isBlank(this.fontColor)) {
             setFontColor(WordWaterMarkMeta.FONT_COLOR);
         }
-        if (this.fontSize == null || this.fontSize.doubleValue() <= 0) {
+        if (this.fontSize == null || this.fontSize <= 0) {
             setFontSize(WordWaterMarkMeta.FONT_SIZE);
         }
     }

@@ -4,6 +4,7 @@ import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.web.platform.exception.file.FileContentIsEmptyException;
 import cn.geelato.web.platform.exception.file.FileContentReadFailedException;
 import cn.geelato.web.platform.m.excel.entity.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.usermodel.CellType;
@@ -13,8 +14,6 @@ import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -28,8 +27,8 @@ import java.util.*;
  * @description: HSSFSheet, xls
  */
 @Component
+@Slf4j
 public class ExcelReader {
-    private final Logger logger = LoggerFactory.getLogger(ExcelReader.class);
     @Lazy
     @Autowired
     private ExcelCommonUtils excelCommonUtils;
@@ -99,7 +98,7 @@ public class ExcelReader {
      */
     public Map<String, BusinessTypeData> readBusinessTypeData(HSSFSheet sheet) {
         int lastRowIndex = sheet.getLastRowNum();
-        Map<String, BusinessTypeData> metaMap = new HashMap<String, BusinessTypeData>(lastRowIndex);
+        Map<String, BusinessTypeData> metaMap = new HashMap<>(lastRowIndex);
         // 跳过第一行，标题行
         for (int i = 1; i <= lastRowIndex; i++) {
             HSSFRow row = sheet.getRow(i);
@@ -154,9 +153,9 @@ public class ExcelReader {
                 HSSFCell cell4 = row.getCell(4);
                 if (cell4 != null) {
                     if (CellType.BOOLEAN.equals(cell4.getCellType())) {
-                        meta.setRetain(cell4.getBooleanCellValue() || false);
+                        meta.setRetain(cell4.getBooleanCellValue());
                     } else if (CellType.STRING.equals(cell4.getCellType())) {
-                        meta.setRetain("TRUE".equalsIgnoreCase(cell4.getStringCellValue()) || false);
+                        meta.setRetain("TRUE".equalsIgnoreCase(cell4.getStringCellValue()));
                     }
                 }
                 HSSFCell cell5 = row.getCell(5);
@@ -173,13 +172,8 @@ public class ExcelReader {
             }
         }
         Set<Map<Integer, BusinessTypeRuleData>> typeRuleDataSet = new LinkedHashSet<>();
-        if (typeRuleDataList != null && typeRuleDataList.size() > 0) {
-            typeRuleDataList.sort(new Comparator<BusinessTypeRuleData>() {
-                @Override
-                public int compare(BusinessTypeRuleData o1, BusinessTypeRuleData o2) {
-                    return o1.getOrder() - o2.getOrder();
-                }
-            });
+        if (!typeRuleDataList.isEmpty()) {
+            typeRuleDataList.sort(Comparator.comparingInt(BusinessTypeRuleData::getOrder));
             for (int i = 0; i < typeRuleDataList.size(); i++) {
                 Map<Integer, BusinessTypeRuleData> ruleDataMap = new HashMap<>();
                 ruleDataMap.put(i + 1, typeRuleDataList.get(i));
@@ -203,7 +197,7 @@ public class ExcelReader {
      */
     public List<Map<String, BusinessData>> readBusinessData(@NotNull HSSFSheet sheet, HSSFFormulaEvaluator evaluator, Map<String, BusinessTypeData> businessTypeDataMap) {
         int lastRowIndex = sheet.getLastRowNum();
-        int lastCellNum = 0;
+        int lastCellNum;
         // 第一行
         List<BusinessColumnMeta> headers = new ArrayList<>();
         HSSFRow firstRow = sheet.getRow(0);
@@ -273,7 +267,7 @@ public class ExcelReader {
                             } else if (CellType.STRING.equals(cell.getCellType()) && Strings.isNotBlank(data.getFormat())) {
                                 cellValue = data.getFormat().equalsIgnoreCase(cell.getStringCellValue());
                             } else if (CellType.NUMERIC.equals(cell.getCellType()) && Strings.isNotBlank(data.getFormat())) {
-                                cellValue = data.getFormat() == cell.getStringCellValue();
+                                cellValue = Objects.equals(data.getFormat(), cell.getStringCellValue());
                             } else if (CellType.NUMERIC.equals(cell.getCellType())) {
                                 cellValue = cell.getNumericCellValue() > 0;
                             } else {
@@ -322,7 +316,7 @@ public class ExcelReader {
                     BusinessData msgData = (mapSet.containsKey(key) && mapSet.get(key) != null) ? mapSet.get(key) : new BusinessData();
                     msgData.setYIndex(businessData.getYIndex());
                     msgData.setXIndex(businessData.getXIndex());
-                    msgData.addAllErrorMsgs(businessData.getErrorMsg());
+                    msgData.addAllErrorMsg(businessData.getErrorMsg());
                     mapSet.put(key, msgData);
                 }
             }
@@ -346,7 +340,7 @@ public class ExcelReader {
                         anchor.setRow1(cell.getRowIndex());
                         anchor.setCol2(cell.getColumnIndex() + 1);
                         anchor.setRow2(cell.getRowIndex() + 1);
-                        Drawing drawing = sheet.createDrawingPatriarch();
+                        Drawing<HSSFShape> drawing = sheet.createDrawingPatriarch();
                         HSSFComment comment = (HSSFComment) drawing.createCellComment(anchor);
                         comment.setString(new XSSFRichTextString(String.join("；\r\n", businessData.getErrorMsg())));
                         cell.setCellComment(comment);
@@ -365,7 +359,7 @@ public class ExcelReader {
      * @param repeatedData 包含重复数据及其数量的映射，键为列元数据对象，值为数据值及其数量的映射
      */
     public void writeRepeatedData(HSSFWorkbook workbook, Map<ColumnMeta, Map<Object, Long>> repeatedData) {
-        if (repeatedData != null && repeatedData.size() > 0) {
+        if (repeatedData != null && !repeatedData.isEmpty()) {
             HSSFSheet sheet = workbook.createSheet("唯一约束，导入数据重复值及数量"); // 创建新的工作表
             int x = 0;
             for (Map.Entry<ColumnMeta, Map<Object, Long>> columnMetaMapEntry : repeatedData.entrySet()) {

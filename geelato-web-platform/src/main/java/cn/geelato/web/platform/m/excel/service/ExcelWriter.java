@@ -46,7 +46,7 @@ public class ExcelWriter {
 
             RowMeta rowMeta = parseTemplateRow(row, placeholderMetaMap);
 
-            int newRowCount = 0;
+            int newRowCount;
             if (rowMeta.isMultiGroupRow()) {
                 int listIndex = 0;
                 for (Map vm : valueMapList) {
@@ -133,11 +133,7 @@ public class ExcelWriter {
                     }
                     if (meta.isIsList()) {
                         if (!StringUtils.isEmpty(meta.getListVar())) {
-                            List<CellMeta> cellMetaList = listCellMetaMap.get(meta.getListVar());
-                            if (cellMetaList == null) {
-                                cellMetaList = new ArrayList<CellMeta>();
-                                listCellMetaMap.put(meta.getListVar(), cellMetaList);
-                            }
+                            List<CellMeta> cellMetaList = listCellMetaMap.computeIfAbsent(meta.getListVar(), k -> new ArrayList<>());
                             CellMeta cellMeta = new CellMeta();
                             cellMeta.setIndex(cellIndex);
                             cellMeta.setPlaceholderMeta(meta);
@@ -298,7 +294,7 @@ public class ExcelWriter {
             return null;
         }
         CellType cellType = cell.getCellType();
-        String cellValue = cellType.equals(cellType) ? cell.getStringCellValue() : "";
+        String cellValue = cell.getStringCellValue();
         return placeholderMetaMap.get(cellValue);
     }
 
@@ -328,7 +324,7 @@ public class ExcelWriter {
             if (Strings.isBlank(in) || Strings.isBlank(out)) {
                 return value.toString();
             }
-            Date date = null;
+            Date date;
             String valueStr = value.toString();
             if (NumberUtils.isNumber(valueStr) && "timestamp".equalsIgnoreCase(in)) {
                 if (valueStr.length() != 10 && valueStr.length() != 13) {
@@ -355,6 +351,7 @@ public class ExcelWriter {
             } else if (meta.isValueTypeDate()) {
                 cell.setCellValue(formatDate(value, meta.getFormatImport(), meta.getFormatExport()));
             } else if (meta.isValueTypeDateTime()) {
+                log.info("无处理");
             } else {
                 cell.setCellValue(value.toString());
             }
@@ -378,7 +375,7 @@ public class ExcelWriter {
      * @return 返回新创建的HSSFRow对象
      */
     private HSSFRow createRow(HSSFSheet sheet, int rowIndex) {
-        HSSFRow row = null;
+        HSSFRow row;
         if (sheet.getRow(rowIndex) != null) {
             int lastRowNo = sheet.getLastRowNum();
             sheet.shiftRows(rowIndex, lastRowNo, 1);
@@ -387,7 +384,7 @@ public class ExcelWriter {
         return row;
     }
 
-    public HSSFRow createRowWithPreRowStyle(HSSFSheet sheet, Integer rowIndex) {
+    public void createRowWithPreRowStyle(HSSFSheet sheet, Integer rowIndex) {
         HSSFRow preRow = sheet.getRow(rowIndex - 1);
         HSSFRow newRow = createRow(sheet, rowIndex);
         newRow.setHeight(preRow.getHeight());
@@ -397,7 +394,6 @@ public class ExcelWriter {
             HSSFCell newCell = newRow.createCell(cellIndex);
             newCell.setCellStyle(templateCell.getCellStyle());
         }
-        return newRow;
     }
 
     /**
@@ -410,7 +406,7 @@ public class ExcelWriter {
      */
     public Map<String, PlaceholderMeta> readPlaceholderMeta(HSSFSheet sheet) {
         int lastRowIndex = sheet.getLastRowNum();
-        Map<String, PlaceholderMeta> map = new HashMap<String, PlaceholderMeta>(lastRowIndex);
+        Map<String, PlaceholderMeta> map = new HashMap<>(lastRowIndex);
         // 跳过第一行，标题行
         for (int i = 1; i <= lastRowIndex; i++) {
             HSSFRow row = sheet.getRow(i);

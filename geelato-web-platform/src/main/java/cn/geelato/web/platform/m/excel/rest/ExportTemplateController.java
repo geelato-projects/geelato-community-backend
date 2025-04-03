@@ -40,7 +40,7 @@ public class ExportTemplateController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.GET)
-    public ApiPagedResult pageQuery() {
+    public ApiPagedResult<?> pageQuery() {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
@@ -52,7 +52,7 @@ public class ExportTemplateController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult query() {
+    public ApiResult<?> query() {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
@@ -64,7 +64,7 @@ public class ExportTemplateController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult get(@PathVariable(required = true) String id) {
+    public ApiResult<?> get(@PathVariable() String id) {
         try {
             return ApiResult.success(exportTemplateService.getModel(CLAZZ, id));
         } catch (Exception e) {
@@ -74,7 +74,7 @@ public class ExportTemplateController extends BaseController {
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    public ApiResult createOrUpdate(@RequestBody ExportTemplate form) {
+    public ApiResult<?> createOrUpdate(@RequestBody ExportTemplate form) {
         try {
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
@@ -91,7 +91,7 @@ public class ExportTemplateController extends BaseController {
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
+    public ApiResult<NullResult> isDelete(@PathVariable() String id) {
         try {
             ExportTemplate model = exportTemplateService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
@@ -105,7 +105,7 @@ public class ExportTemplateController extends BaseController {
     }
 
     @RequestMapping(value = "/generateFile/{id}", method = RequestMethod.POST)
-    public ApiResult generateFile(@PathVariable(required = true) String id, @RequestBody Map<String, Object> params) {
+    public ApiResult<?> generateFile(@PathVariable() String id, @RequestBody Map<String, Object> params) {
         try {
             String fileType = (String) params.get("fileType");
             return exportTemplateService.generateFile(id, fileType);
@@ -116,21 +116,19 @@ public class ExportTemplateController extends BaseController {
     }
 
     @RequestMapping(value = "/index/{id}", method = RequestMethod.GET)
-    public ApiResult indexTemplate(@PathVariable(required = true) String id) {
+    public ApiResult<?> indexTemplate(@PathVariable() String id) {
         Map<Integer, Object> result = new LinkedHashMap<>();
         ExportTemplate exportTemplate = exportTemplateService.getModel(ExportTemplate.class, id);
         if (exportTemplate != null) {
             for (int i = 1; i <= 9; i++) {
                 try {
                     Field field = ExportTemplate.class.getDeclaredField("template" + (i == 1 ? "" : i));
-                    if (field != null) {
-                        field.setAccessible(true);
-                        Object value = field.get(exportTemplate);
-                        if (value != null) {
-                            Base64Helper helper = JSON.parseObject(value.toString(), Base64Helper.class);
-                            if (helper != null && Strings.isNotBlank(helper.getName())) {
-                                result.put(i, helper.getName());
-                            }
+                    field.setAccessible(true);
+                    Object value = field.get(exportTemplate);
+                    if (value != null) {
+                        Base64Helper helper = JSON.parseObject(value.toString(), Base64Helper.class);
+                        if (helper != null && Strings.isNotBlank(helper.getName())) {
+                            result.put(i, helper.getName());
                         }
                     }
                 } catch (NoSuchFieldException | IllegalAccessException e) {
@@ -142,7 +140,7 @@ public class ExportTemplateController extends BaseController {
     }
 
     @RequestMapping(value = "/base64/{id}/{index}", method = RequestMethod.GET)
-    public ApiResult indexTemplate(@PathVariable(required = true) String id, @PathVariable(required = true) String index) {
+    public ApiResult<?> indexTemplate(@PathVariable() String id, @PathVariable() String index) {
         ExportTemplate exportTemplate = exportTemplateService.getModel(ExportTemplate.class, id);
         if (exportTemplate != null) {
             return ApiResult.success(exportTemplate.indexTemplate(index));

@@ -12,11 +12,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.io.IOException;
-
 /**
  * @author diabl
- * @description: 文件导入
+ * 文件导入
  */
 @ApiRestController("/import")
 @Slf4j
@@ -40,7 +38,7 @@ public class ImportExcelController extends BaseController {
      * @return 返回ApiResult对象，包含操作结果和模板数据
      */
     @RequestMapping(value = "/template/{templateId}", method = RequestMethod.GET)
-    public ApiResult getTemplate(@PathVariable String templateId) {
+    public ApiResult<?> getTemplate(@PathVariable String templateId) {
         try {
             return ApiResult.success(exportTemplateService.getModel(ExportTemplate.class, templateId));
         } catch (Exception e) {
@@ -60,7 +58,7 @@ public class ImportExcelController extends BaseController {
      * @return 返回操作结果，包括成功或失败的信息
      */
     @RequestMapping(value = "/attach/{importType}/{templateId}/{attachId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult importAttach(@PathVariable String importType, @PathVariable String templateId, @PathVariable String attachId, String index) {
+    public ApiResult<?> importAttach(@PathVariable String importType, @PathVariable String templateId, @PathVariable String attachId, String index) {
         try {
             // 调用importExcel方法执行导入操作
             return importExcelService.importExcel(this.request, this.response, importType, templateId, index, attachId);
@@ -78,10 +76,9 @@ public class ImportExcelController extends BaseController {
      * @param importType 导入类型，可选值为"part"（部分导入）和"all"（全部导入，遇到错误即中断并回滚）
      * @param templateId 模板文件ID，用于指定导入数据的模板
      * @return 返回一个包含导入结果的ApiResult对象
-     * @throws IOException 如果在文件处理过程中发生I/O异常，将抛出此异常
      */
     @RequestMapping(value = "/file/{importType}/{templateId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult importFile(@PathVariable String importType, @PathVariable String templateId, String index) {
+    public ApiResult<?> importFile(@PathVariable String importType, @PathVariable String templateId, String index) {
         try {
             // 调用importExcel方法执行导入操作
             return importExcelService.importExcel(this.request, this.response, importType, templateId, index, null);

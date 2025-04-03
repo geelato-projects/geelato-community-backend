@@ -9,10 +9,7 @@ import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
-import org.apache.poi.xssf.usermodel.XSSFComment;
-import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -45,7 +42,7 @@ public class ExcelSXSSFWriter {
                     BusinessData msgData = (mapSet.containsKey(key) && mapSet.get(key) != null) ? mapSet.get(key) : new BusinessData();
                     msgData.setYIndex(businessData.getYIndex());
                     msgData.setXIndex(businessData.getXIndex());
-                    msgData.addAllErrorMsgs(businessData.getErrorMsg());
+                    msgData.addAllErrorMsg(businessData.getErrorMsg());
                     mapSet.put(key, msgData);
                 }
             }
@@ -71,7 +68,7 @@ public class ExcelSXSSFWriter {
                     anchor.setRow1(cell.getRowIndex());
                     anchor.setCol2(cell.getColumnIndex() + 10);
                     anchor.setRow2(cell.getRowIndex() + 10);
-                    Drawing drawing = sheet.createDrawingPatriarch();
+                    Drawing<XSSFShape> drawing = sheet.createDrawingPatriarch();
                     XSSFComment comment = (XSSFComment) drawing.createCellComment(anchor);
                     comment.setString(new XSSFRichTextString(String.join("；\r\n", businessData.getErrorMsg())));
                     cell.setCellComment(comment);
@@ -90,7 +87,7 @@ public class ExcelSXSSFWriter {
      * @param repeatedData 包含重复数据及其数量的映射，键为列元数据对象，值为数据值及其数量的映射
      */
     public void writeRepeatedData(SXSSFWorkbook workbook, Map<ColumnMeta, Map<Object, Long>> repeatedData) {
-        if (repeatedData != null && repeatedData.size() > 0) {
+        if (repeatedData != null && !repeatedData.isEmpty()) {
             SXSSFSheet sheet = workbook.createSheet("唯一约束，导入数据重复值及数量"); // 创建新的工作表
             int x = 0;
             for (Map.Entry<ColumnMeta, Map<Object, Long>> columnMetaMapEntry : repeatedData.entrySet()) {

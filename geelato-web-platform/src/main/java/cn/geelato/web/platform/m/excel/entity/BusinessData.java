@@ -6,11 +6,6 @@ import lombok.Setter;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author diabl
- * @description: 业务数据
- */
-
 @Getter
 @Setter
 public class BusinessData {
@@ -55,7 +50,7 @@ public class BusinessData {
         this.errorMsg.add(errorMsg);
     }
 
-    public void addAllErrorMsgs(Set<String> errorMsg) {
+    public void addAllErrorMsg(Set<String> errorMsg) {
         if (this.errorMsg == null) {
             this.errorMsg = new LinkedHashSet<>();
         }
@@ -63,6 +58,6 @@ public class BusinessData {
     }
 
     public boolean isValidate() {
-        return !(this.errorMsg != null && this.errorMsg.size() > 0);
+        return !(this.errorMsg != null && !this.errorMsg.isEmpty());
     }
 }

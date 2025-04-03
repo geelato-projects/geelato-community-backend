@@ -8,10 +8,6 @@ import org.apache.logging.log4j.util.Strings;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author diabl
- * @description: 业务元数据
- */
 @Getter
 @Setter
 public class BusinessMeta {
@@ -109,11 +105,9 @@ public class BusinessMeta {
         String column = getPrimaryKeyColumn();
         if (Strings.isNotBlank(column)) {
             String[] values = column.split(",");
-            if (values != null && values.length > 0) {
-                for (String columnName : values) {
-                    if (!columnNames.contains(columnName)) {
-                        columnNames.add(columnName);
-                    }
+            for (String columnName : values) {
+                if (!columnNames.contains(columnName)) {
+                    columnNames.add(columnName);
                 }
             }
         }
@@ -127,12 +121,12 @@ public class BusinessMeta {
     private String getPrimarySplit(String type) {
         if (Strings.isNotBlank(type) && Strings.isNotBlank(this.primaryValue)) {
             String[] keys = this.primaryValue.split(":");
-            if (keys != null && keys.length == 2 && Strings.isNotBlank(keys[0]) && Strings.isNotBlank(keys[1])) {
+            if (keys.length == 2 && Strings.isNotBlank(keys[0]) && Strings.isNotBlank(keys[1])) {
                 if ("table".equalsIgnoreCase(type)) {
                     return keys[0];
                 } else if ("column".equalsIgnoreCase(type) || "goal".equalsIgnoreCase(type)) {
                     String[] values = keys[1].split("\\|");
-                    if (values != null && values.length == 2 && Strings.isNotBlank(values[0]) && Strings.isNotBlank(values[1])) {
+                    if (values.length == 2 && Strings.isNotBlank(values[0]) && Strings.isNotBlank(values[1])) {
                         if ("goal".equalsIgnoreCase(type)) {
                             return values[0];
                         } else if ("column".equalsIgnoreCase(type)) {

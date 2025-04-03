@@ -10,10 +10,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author diabl
- * @description: 解析规则
- */
 @Getter
 @Setter
 public class BusinessTypeRuleData {

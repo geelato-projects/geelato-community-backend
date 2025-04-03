@@ -15,7 +15,7 @@ public enum ExcelColumnTypeRuleEnum {
     QUERYRULE,// 查询表格(rule)，查询字段与字符串匹配[或]，回写目标字段[属于查询字段](goal)值。
     EXPRESSION,// JavaScript计算公式(rule)。例：$.卸货港?$.卸货港:$.目的港。
     SYM,// 多值分割(rule)，对称关系(goal)。特色规则[AB*CD](值不同但长度一致)、[AB:CN](值不同但长度不一致)。
-    MULTI;// 多值分割(rule)，相乘关系。
+    MULTI// 多值分割(rule)，相乘关系。
 }
 
 

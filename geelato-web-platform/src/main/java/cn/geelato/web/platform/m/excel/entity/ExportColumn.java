@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * @author diabl
- * @description: 导出excel表头
+ * 导出excel表头
  */
 @Getter
 @Setter
@@ -42,7 +42,7 @@ public class ExportColumn {
     public int calculateLevelAndBreadth(int currentLevel) {
         this.level = currentLevel;
         this.breadth = 0;
-        if (this.children != null && this.children.size() > 0) {
+        if (this.children != null && !this.children.isEmpty()) {
             for (ExportColumn child : this.children) {
                 this.breadth += child.calculateLevelAndBreadth(this.level + 1);
             }
@@ -64,7 +64,7 @@ public class ExportColumn {
         // 当前节点的值
         int maxValue = this.level;
         // 遍历子节点，递归调用findMaxValueInTree方法
-        if (this.children != null && this.children.size() > 0) {
+        if (this.children != null && !this.children.isEmpty()) {
             for (ExportColumn child : this.children) {
                 int childMaxValue = child.findMaxValueInTree();
                 // 更新最大值
@@ -87,7 +87,7 @@ public class ExportColumn {
      */
     public int calculateDepth(int maxDepth) {
         int maxChildDepth = 0; // 子节点站的宽度
-        if (this.children != null && this.children.size() > 0) {
+        if (this.children != null && !this.children.isEmpty()) {
             List<Integer> depths = new ArrayList<>();
             for (ExportColumn child : this.children) {
                 depths.add(child.calculateDepth(maxDepth));

@@ -110,7 +110,7 @@ public class MetaDdlService {
             return columnMetas;
         }
         for (FieldMeta fieldMeta : fieldMetas) {
-            ColumnMeta columnMeta = fieldMeta.getColumn();
+            ColumnMeta columnMeta = fieldMeta.getColumnMeta();
             if (columnMeta != null) {
                 columnMetas.add(columnMeta);
             }

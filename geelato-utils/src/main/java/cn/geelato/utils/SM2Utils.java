@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * @author diabl
  */
-public class Sm2Utils {
+public class SM2Utils {
     /*    这行代码是在Java中用于向安全系统添加Bouncy Castle安全提供器的。
         Bouncy Castle是一个流行的开源加密库，它提供了许多密码学算法和安全协议的实现。
         通过调用Security.addProvider并传入BouncyCastleProvider对象，你可以注册Bouncy Castle提供的安全服务和算法到Java的安全框架中。
@@ -42,7 +42,7 @@ public class Sm2Utils {
         PublicKey publicKey = KeyUtils.createPublicKey(keys.get(KeyUtils.PUBLIC_KEY));
         PrivateKey privateKey = KeyUtils.createPrivateKey(keys.get(KeyUtils.PRIVATE_KEY));
         // 使用SM2加密
-        byte[] encrypt = Sm2Utils.encrypt(value.getBytes(), publicKey);
+        byte[] encrypt = SM2Utils.encrypt(value.getBytes(), publicKey);
         // 加密转base64
         String encryptBase64Str = Base64.getEncoder().encodeToString(encrypt);
         // 私钥签名,方便对方收到数据后用公钥验签
@@ -74,7 +74,7 @@ public class Sm2Utils {
         } */
         // 私钥解密
         byte[] decode = Base64.getDecoder().decode(encodeValue);
-        byte[] decrypt = Sm2Utils.decrypt(decode, privateKey);
+        byte[] decrypt = SM2Utils.decrypt(decode, privateKey);
         assert decrypt != null;
         return new String(decrypt);
     }

@@ -195,17 +195,17 @@ public class EntityMeta {
         SimpleFieldMeta meta = new SimpleFieldMeta();
         meta.setName(fm.getFieldName());
         meta.setType(fm.getFieldType().getSimpleName());
-        meta.setTitle(fm.getColumn().getTitle());
-        meta.setComment(fm.getColumn().getComment());
-        meta.setNullable(fm.getColumn().isNullable());
-        meta.setCharMaxLength(fm.getColumn().getCharMaxLength());
-        meta.setPrecision(fm.getColumn().getNumericPrecision());
-        meta.setScale(fm.getColumn().getNumericScale());
-        meta.setDefaultValue(fm.getColumn().getDefaultValue());
-        meta.setSelectType(fm.getColumn().getSelectType());
-        meta.setTypeExtra(fm.getColumn().getTypeExtra());
-        meta.setExtraValue(fm.getColumn().getExtraValue());
-        meta.setExtraMap(fm.getColumn().getExtraMap());
+        meta.setTitle(fm.getColumnMeta().getTitle());
+        meta.setComment(fm.getColumnMeta().getComment());
+        meta.setNullable(fm.getColumnMeta().isNullable());
+        meta.setCharMaxLength(fm.getColumnMeta().getCharMaxLength());
+        meta.setPrecision(fm.getColumnMeta().getNumericPrecision());
+        meta.setScale(fm.getColumnMeta().getNumericScale());
+        meta.setDefaultValue(fm.getColumnMeta().getDefaultValue());
+        meta.setSelectType(fm.getColumnMeta().getSelectType());
+        meta.setTypeExtra(fm.getColumnMeta().getTypeExtra());
+        meta.setExtraValue(fm.getColumnMeta().getExtraValue());
+        meta.setExtraMap(fm.getColumnMeta().getExtraMap());
         return meta;
     }
 

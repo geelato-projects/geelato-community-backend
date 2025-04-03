@@ -1,5 +1,6 @@
 package cn.geelato.core.gql.parser;
 
+import cn.geelato.core.GlobalContext;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.command.CommandType;
 import cn.geelato.core.gql.command.CommandValidator;
@@ -9,10 +10,13 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
+import cn.geelato.core.util.EncryptUtils;
+import cn.geelato.utils.SM4Utils;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -94,6 +98,7 @@ public class JsonTextSaveParser extends JsonTextParser {
     /**
      * 递归解析保存操作命令，里面变更在执行期再解析，不在此解析
      */
+    @SneakyThrows
     private SaveCommand parse(SessionCtx sessionCtx, String commandName, JSONObject jo, CommandValidator validator) {
         Assert.isTrue(validator.validateEntity(commandName), validator.getMessage());
         SaveCommand command = new SaveCommand();
@@ -143,7 +148,7 @@ public class JsonTextSaveParser extends JsonTextParser {
         });
         Assert.isTrue(validator.isSuccess(), validator.getMessage());
 
-        String[] fields = new String[params.keySet().size()];
+        String[] fields = new String[params.size()];
         params.keySet().toArray(fields);
         String PK = validator.getPK();
         if (validator.hasPK(fields) && StringUtils.hasText(jo.getString(PK)) && !StringUtils.hasText(jo.getString("forceId"))) {
@@ -154,7 +159,7 @@ public class JsonTextSaveParser extends JsonTextParser {
             command.setCommandType(CommandType.Update);
             params.remove(PK);
             putUpdateDefaultField(params, sessionCtx);
-            String[] updateFields = new String[params.keySet().size()];
+            String[] updateFields = new String[params.size()];
             params.keySet().toArray(updateFields);
             command.setFields(updateFields);
             command.setValueMap(params);
@@ -177,6 +182,20 @@ public class JsonTextSaveParser extends JsonTextParser {
             command.setFields(insertFields);
             command.setValueMap(entityMap);
             command.setPK(entityMap.get(PK).toString());
+        }
+        if(GlobalContext.getColumnEncrypt()){
+            Map<String, Object> originValueMap = command.getValueMap();
+            command.setOriginValueMap(originValueMap);
+            Map<String, Object> newValueMap = new HashMap<>();
+            for (Map.Entry<String, Object> entry : command.getValueMap().entrySet()) {
+              boolean isEncrypt= entityMeta.getFieldMeta(entry.getKey()).getColumnMeta().isEncrypted();
+              if(isEncrypt){
+                  newValueMap.put(entry.getKey(), EncryptUtils.encrypt(entry.getValue().toString()));
+              }else {
+                  newValueMap.put(entry.getKey(), entry.getValue());
+              }
+            }
+            command.setValueMap(newValueMap);
         }
         return command;
     }

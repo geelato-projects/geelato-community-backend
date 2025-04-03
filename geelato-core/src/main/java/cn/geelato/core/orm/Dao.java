@@ -113,7 +113,7 @@ public class Dao extends SqlKeyDao {
             for (String key : map.keySet()) {
                 FieldMeta fieldMeta = entityMeta.getFieldMeta(key);
                 if (fieldMeta != null) {
-                    String columnType = entityMeta.getFieldMeta(key).getColumn().getDataType();
+                    String columnType = entityMeta.getFieldMeta(key).getColumnMeta().getDataType();
                     if ("JSON".equals(columnType)) {
                         Object value = map.get(key);
                         String str = (value != null) ? value.toString() : "";

@@ -174,10 +174,12 @@ public class ColumnMeta extends BaseSortableEntity implements EntityEnableAble, 
     @Title(title = "是否已同步")
     @Col(name = "synced")
     private boolean synced = false;
+
     @Getter
     @Title(title = "是否加密")
     @Col(name = "encrypted")
-    private boolean encrypted = false;
+    private boolean encrypted;
+
     @Getter
     @Title(title = "特殊标记")
     @Col(name = "marker")
@@ -219,7 +221,7 @@ public class ColumnMeta extends BaseSortableEntity implements EntityEnableAble, 
             dataType = dataType.toUpperCase(Locale.ENGLISH);
             selectType = Strings.isNotBlank(selectType) ? selectType.toUpperCase(Locale.ENGLISH) : dataType;
             DataTypeRadius radius = DataTypeRadiusEnum.getRadius(dataType);
-            String columnType = null;
+            String columnType;
             if (MysqlDataTypeEnum.getBooleans().contains(dataType)) {
                 setCharMaxLength(1L);
                 columnType = dataType + "(" + charMaxLength + ")";

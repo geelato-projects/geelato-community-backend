@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * @author geemeta
@@ -38,9 +39,7 @@ public class MetaUpdateSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
         Object[] whereObjects = buildWhereParams(command);
 
         //2、再加条件部分
-        for (Object object : whereObjects) {
-            objectList.add(object);
-        }
+        Collections.addAll(objectList, whereObjects);
         return objectList.toArray();
     }
 
@@ -56,7 +55,7 @@ public class MetaUpdateSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
         command.getValueMap().forEach((key, value) -> {
             if (!em.isIgnoreUpdateField(key)) {
                 // 1、先加值部分
-                typeList.add(TypeConverter.toSqlType(em.getFieldMeta(key).getColumn().getDataType()));
+                typeList.add(TypeConverter.toSqlType(em.getFieldMeta(key).getColumnMeta().getDataType()));
             }
         });
 

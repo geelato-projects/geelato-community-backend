@@ -256,7 +256,7 @@ public class RuleService {
     public String recursiveSave(SaveCommand command, DataSourceTransactionManager dataSourceTransactionManager, TransactionStatus transactionStatus) throws DaoException {
 
         BoundSql boundSql = sqlManager.generateSaveSql(command);
-        String rtnValue = null;
+        String rtnValue;
         try {
             // todo : wait to refactor by aspect
             String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();

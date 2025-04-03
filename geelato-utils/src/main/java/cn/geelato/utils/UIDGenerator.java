@@ -14,8 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class UIDGenerator {
     private static final int localMachineAppend = Integer.parseInt(ip());
-    private static AtomicInteger atomicInteger = new AtomicInteger(0);
     private static final SnowFlake snowFlake = new SnowFlake(1, 1);
+    private static AtomicInteger atomicInteger = new AtomicInteger(0);
 
     public static long generate() {
         return snowFlake.nextId();

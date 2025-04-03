@@ -17,16 +17,18 @@ public class FastJsonUtils {
      */
     public static String readJsonFile(String filePath) throws IOException {
         // 使用 try-with-resources 自动关闭资源
-        try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(filePath);
-             Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-             BufferedReader bufferedReader = new BufferedReader(reader)) {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            // 逐行读取文件内容
-            while ((line = bufferedReader.readLine()) != null) {
-                sb.append(line);
+        try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(filePath)) {
+            assert inputStream != null;
+            try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+                 BufferedReader bufferedReader = new BufferedReader(reader)) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                // 逐行读取文件内容
+                while ((line = bufferedReader.readLine()) != null) {
+                    sb.append(line);
+                }
+                return sb.toString();
             }
-            return sb.toString();
         }
     }
 }

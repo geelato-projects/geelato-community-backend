@@ -60,9 +60,8 @@ public class Sm2Utils {
      * @param encodeValue 经过Base64编码的加密字符串
      * @param keys        包含公钥和私钥的Map，其中公钥的键为KeyUtils.PUBLIC_KEY，私钥的键为KeyUtils.PRIVATE_KEY
      * @return 解密后的字符串
-     * @throws Exception 如果在解密过程中发生异常，或者启用了签名验证但验证失败，则抛出该异常
      */
-    public static String decrypt(String encodeValue, Map<String, String> keys) throws Exception {
+    public static String decrypt(String encodeValue, Map<String, String> keys) {
         // 公钥、密钥
         PublicKey publicKey = KeyUtils.createPublicKey(keys.get(KeyUtils.PUBLIC_KEY));
         PrivateKey privateKey = KeyUtils.createPrivateKey(keys.get(KeyUtils.PRIVATE_KEY));

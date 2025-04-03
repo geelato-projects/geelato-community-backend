@@ -128,13 +128,13 @@ public class DateUtils {
      * @return 构建好的SimpleDateFormat对象
      */
     private static SimpleDateFormat buildSimpleDateFormat(String format, String timeZone, String locale) throws ParseException {
-        if (format.indexOf(DateUtils.TIME_ZONE_SIGN) > -1 && StringUtils.isBlank(timeZone)) {
+        if (format.contains(DateUtils.TIME_ZONE_SIGN) && StringUtils.isBlank(timeZone)) {
             throw new ParseException("Time zone is not specified", 0);
         }
         // 解析时间字符串为Date对象
         Locale le = LocaleEnum.getDefaultLocale(locale);
         SimpleDateFormat sdf = new SimpleDateFormat(format, le);
-        if (format.indexOf(DateUtils.TIME_ZONE_SIGN) > -1 && StringUtils.isNotBlank(timeZone)) {
+        if (format.contains(DateUtils.TIME_ZONE_SIGN) && StringUtils.isNotBlank(timeZone)) {
             TimeZone tz = TimeZone.getTimeZone(timeZone);
             sdf.setTimeZone(tz);
         }
@@ -196,8 +196,7 @@ public class DateUtils {
             try {
                 SimpleDateFormat parseSDF = buildSimpleDateFormat(parse, null, null);
                 date = parseSDF.parse(time);
-            } catch (ParseException e) {
-                date = null;
+            } catch (ParseException ignored) {
             }
         }
         return date;

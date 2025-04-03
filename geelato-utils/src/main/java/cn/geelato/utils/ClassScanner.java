@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.net.JarURLConnection;
@@ -25,7 +24,7 @@ public class ClassScanner {
     private static final Logger logger = LoggerFactory.getLogger(ClassScanner.class);
 
     public static List<Class<?>> scan(String pkgName, boolean isRecursive, Class<? extends Annotation> annotation) {
-        List<Class<?>> classList = new ArrayList<Class<?>>();
+        List<Class<?>> classList = new ArrayList<>();
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         try {
             // 按文件的形式去查找
@@ -129,12 +128,7 @@ public class ClassScanner {
             return null;
         }
         // 接收 .class 文件 或 类文件夹
-        return new File(pkgPath).listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return (file.isFile() && file.getName().endsWith(".class")) || file.isDirectory();
-            }
-        });
+        return new File(pkgPath).listFiles(file -> (file.isFile() && file.getName().endsWith(".class")) || file.isDirectory());
     }
 
     private static String getClassName(String pkgName, String fileName) {

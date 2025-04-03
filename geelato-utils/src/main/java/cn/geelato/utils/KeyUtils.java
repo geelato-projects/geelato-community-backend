@@ -24,7 +24,7 @@ public class KeyUtils {
      * @throws Exception 如果在生成密钥对的过程中发生异常，则抛出该异常
      */
     public static Map<String, String> generateSmKey() throws Exception {
-        KeyPairGenerator keyPairGenerator = null;
+        KeyPairGenerator keyPairGenerator;
         SecureRandom secureRandom = new SecureRandom();
         ECGenParameterSpec sm2Spec = new ECGenParameterSpec("sm2p256v1");
         keyPairGenerator = KeyPairGenerator.getInstance("EC", new BouncyCastleProvider());

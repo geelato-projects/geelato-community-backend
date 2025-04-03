@@ -3,7 +3,7 @@ package cn.geelato.utils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -27,13 +27,9 @@ public class Base64Utils {
             // 将Base64编码的字符串解码为字节数组
             String[] parts = str.split(",");
             if (parts.length == 2 && StringUtils.isNotBlank(parts[1])) {
-                try {
-                    byte[] decodedBytes = decoder.decode(parts[1]);
-                    // 将字节数组转换为字符串（使用UTF-8编码，因为原始字符串是UTF-8编码的）
-                    return new String(decodedBytes, "UTF-8");
-                } catch (UnsupportedEncodingException e) {
-                    return null;
-                }
+                byte[] decodedBytes = decoder.decode(parts[1]);
+                // 将字节数组转换为字符串（使用UTF-8编码，因为原始字符串是UTF-8编码的）
+                return new String(decodedBytes, StandardCharsets.UTF_8);
             }
         }
         return null;
@@ -48,9 +44,7 @@ public class Base64Utils {
      */
     public static boolean isBase64(String str, String mediaType) {
         if (StringUtils.isNotBlank(str) && StringUtils.isNotBlank(mediaType)) {
-            if (str.toLowerCase(Locale.ENGLISH).startsWith(mediaType.toLowerCase(Locale.ENGLISH))) {
-                return true;
-            }
+            return str.toLowerCase(Locale.ENGLISH).startsWith(mediaType.toLowerCase(Locale.ENGLISH));
         }
         return false;
     }
@@ -64,7 +58,7 @@ public class Base64Utils {
      * @throws IOException 如果在读取文件或编码过程中发生I/O错误
      */
     public static String fromFile(File file, String contentType) throws IOException {
-        String base64String = null;
+        String base64String;
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
             base64String = fromFile(fileInputStream.readAllBytes(), contentType);
         }
@@ -77,7 +71,6 @@ public class Base64Utils {
      * @param fileBytes   要转换的字节数组
      * @param contentType MIME类型，例如"image/png"
      * @return 包含MIME类型和Base64编码字符串的完整字符串，格式为"data:[contentType];base64,[base64String]"
-     * @throws IOException 如果在编码过程中发生I/O错误（实际上，这个方法通常不会抛出此异常）
      */
     public static String fromFile(byte[] fileBytes, String contentType) {
         String base64String = Base64.getEncoder().encodeToString(fileBytes);
@@ -89,9 +82,8 @@ public class Base64Utils {
      *
      * @param base64String 待转换的字符串
      * @return 转换后的Base64编码字符串
-     * @throws IOException 如果在字符串处理过程中发生I/O错误
      */
-    public static String toBase64String(String base64String) throws IOException {
+    public static String toBase64String(String base64String) {
         Matcher matcher = pattern.matcher(base64String);
         if (matcher.matches()) {
             return matcher.group(1);
@@ -104,9 +96,8 @@ public class Base64Utils {
      *
      * @param base64String Base64编码的字符串
      * @return 转换后的字节数组，如果输入字符串为空或只包含空白字符，则返回一个空的字节数组
-     * @throws IOException 如果在解码过程中发生I/O错误
      */
-    public static byte[] toBytes(String base64String) throws IOException {
+    public static byte[] toBytes(String base64String) {
         base64String = toBase64String(base64String);
         if (StringUtils.isNotBlank(base64String)) {
             return Base64.getDecoder().decode(base64String);

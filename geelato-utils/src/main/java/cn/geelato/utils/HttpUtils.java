@@ -2,7 +2,10 @@ package cn.geelato.utils;
 
 import okhttp3.*;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -10,7 +13,7 @@ import java.security.cert.X509Certificate;
 import java.util.Map;
 
 public class HttpUtils {
-    private static final OkHttpClient client =getUnsafeOkHttpClient();
+    private static final OkHttpClient client = getUnsafeOkHttpClient();
 
     public static OkHttpClient getUnsafeOkHttpClient() {
         try {

@@ -7,10 +7,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 @Setter
@@ -80,14 +77,12 @@ public class Resolution {
         // 将分辨率字符串转换为 Resolution 对象，并添加到列表中
         resolutions.forEach(resolution -> {
             String[] split = resolution.split("x");
-            if (split != null && split.length == 2) {
+            if (split.length == 2) {
                 list.add(new Resolution(Integer.parseInt(split[0]), Integer.parseInt(split[1])));
             }
         });
         // 比较两个 Resolution 对象的面积，返回较小的一个
-        Optional<Resolution> optional = list.stream().min((o1, o2) -> {
-            return o1.getAmass() - o2.getAmass();
-        });
+        Optional<Resolution> optional = list.stream().min(Comparator.comparingInt(Resolution::getAmass));
         return optional.orElse(null);
     }
 

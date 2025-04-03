@@ -41,11 +41,7 @@ public class UUIDUtils {
     public static String generateFixation(int extent, int num) {
         extent = extent > 0 ? extent : 4;
         num = num > 0 && num < 10 ? num : 8;
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < extent; i++) {
-            sb.append(num);
-        }
-        return sb.toString();
+        return String.valueOf(num).repeat(extent);
     }
 
     /**

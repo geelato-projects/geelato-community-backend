@@ -16,7 +16,6 @@ public class SqlParams extends SimpleBindings {
 
     /**
      * 构建参数映射
-     *
      * 将输入的参数对（键和值）组合成一个Map对象。参数对需要以键值对的形式依次传入，即参数数量必须为偶数。
      *
      * @param params 参数对，格式为“参数1名,参数1值,参数2名,参数2值,参数3名,参数3值...”

@@ -3,7 +3,16 @@ package cn.geelato.web.platform.m.zxing.enums;
 import java.util.Locale;
 
 public enum BarcodeFontPositionEnum {
-    TOP, BOTTOM;
+    TOP("顶部", "top"),
+    BOTTOM("底部", "bottom");
+
+    private final String label;// 选项内容
+    private final String value;// 选项值
+
+    BarcodeFontPositionEnum(String label, String value) {
+        this.label = label;
+        this.value = value;
+    }
 
     /**
      * 判断传入的字符串是否与枚举值 TOP 的名称相等（不区分大小写）

@@ -4,7 +4,18 @@ import java.awt.*;
 import java.util.Locale;
 
 public enum BarcodeFontStyleEnum {
-    NORMAL, BOLD, ITALIC, BOLD_ITALIC;
+    NORMAL("默认", "normal"),
+    BOLD("加粗", "bold"),
+    ITALIC("斜体", "italic"),
+    BOLD_ITALIC("加粗斜体", "bold_italic");
+
+    private final String label;// 选项内容
+    private final String value;// 选项值
+
+    BarcodeFontStyleEnum(String label, String value) {
+        this.label = label;
+        this.value = value;
+    }
 
     /**
      * 根据字体名称、样式和大小获取字体对象

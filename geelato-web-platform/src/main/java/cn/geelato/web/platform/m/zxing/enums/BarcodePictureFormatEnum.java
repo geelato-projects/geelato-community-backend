@@ -13,7 +13,7 @@ public enum BarcodePictureFormatEnum {
     public final String contentType;
     public final String extension;
 
-    private BarcodePictureFormatEnum(String contentType, String extension) {
+    BarcodePictureFormatEnum(String contentType, String extension) {
         this.contentType = contentType;
         this.extension = extension;
     }

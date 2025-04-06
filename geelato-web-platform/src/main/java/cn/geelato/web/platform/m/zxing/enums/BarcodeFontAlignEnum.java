@@ -3,7 +3,17 @@ package cn.geelato.web.platform.m.zxing.enums;
 import java.util.Locale;
 
 public enum BarcodeFontAlignEnum {
-    LEFT, CENTER, RIGHT;
+    LEFT("居左", "left"),
+    CENTER("居中", "center"),
+    RIGHT("居右", "right");
+
+    private final String label;// 选项内容
+    private final String value;// 选项值
+
+    BarcodeFontAlignEnum(String label, String value) {
+        this.label = label;
+        this.value = value;
+    }
 
     /**
      * 判断传入的字符串是否与枚举值 LEFT 的名称相等（不区分大小写）

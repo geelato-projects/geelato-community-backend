@@ -8,6 +8,7 @@ import cn.geelato.web.platform.enums.RestfulConfigType;
 import cn.geelato.web.platform.m.arco.entity.SelectOptionData;
 import cn.geelato.web.platform.m.base.enums.*;
 import cn.geelato.web.platform.m.excel.enums.*;
+import cn.geelato.web.platform.m.file.enums.AttachmentMimeEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentServiceEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.ocr.enums.DictDisposeEnum;
@@ -40,6 +41,8 @@ public enum ArcoEnum {
     RESPONSE_PARAM_TYPE_ENUM("ResponseParamTypeEnum", ResponseParamTypeEnum.class),
     MODEL_COLUMN_PCL_ENUM("ModelColumnPclEnum", ModelColumnPclEnum.class),
     APPROVAL_STATUS_ENUM("ApprovalStatusEnum", ApprovalStatusEnum.class),
+    APPLICATION_TYPE_ENUM("ApplicationTypeEnum", ApplicationTypeEnum.class),
+    APPLICATION_PURPOSE_ENUM("ApplicationPurposeEnum", ApplicationPurposeEnum.class),
     // Excel相关枚举
     EXCEL_ALIGNMENT_ENUM("ExcelAlignmentEnum", ExcelAlignmentEnum.class),
     EXCEL_MULTI_SCENE_TYPE_ENUM("ExcelMultiSceneTypeEnum", ExcelMultiSceneTypeEnum.class),
@@ -50,6 +53,7 @@ public enum ArcoEnum {
     // 文件相关枚举
     ATTACHMENT_SERVICE_ENUM("AttachmentServiceEnum", AttachmentServiceEnum.class),
     ATTACHMENT_SOURCE_ENUM("AttachmentSourceEnum", AttachmentSourceEnum.class),
+    ATTACHMENT_MIME_ENUM("AttachmentMimeEnum", AttachmentMimeEnum.class),
     // OCR相关枚举
     RULE_TYPE_ENUM("RuleTypeEnum", RuleTypeEnum.class),
     META_TYPE_ENUM("MetaTypeEnum", MetaTypeEnum.class),
@@ -61,6 +65,7 @@ public enum ArcoEnum {
     VALID_TYPE_ENUM("ValidTypeEnum", ValidTypeEnum.class),
     ROLE_TYPE_ENUM("RoleTypeEnum", RoleTypeEnum.class),
     ORG_TYPE_ENUM("OrgTypeEnum", OrgTypeEnum.class),
+    ORG_CATEGORY_ENUM("OrgCategoryEnum", OrgCategoryEnum.class),
     IS_DEFAULT_ORG_ENUM("IsDefaultOrgEnum", IsDefaultOrgEnum.class, Integer.class),// Integer
     ENCODING_SERIAL_TYPE_ENUM("EncodingSerialTypeEnum", EncodingSerialTypeEnum.class),
     ENCODING_ITEM_TYPE_ENUM("EncodingItemTypeEnum", EncodingItemTypeEnum.class),

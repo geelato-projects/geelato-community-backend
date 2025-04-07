@@ -85,10 +85,9 @@ public class Dao extends SqlKeyDao {
         log.info(boundPageSql.getBoundSql().getSql());
         QueryCommand command = (QueryCommand) boundPageSql.getBoundSql().getCommand();
         BoundSql boundSql = boundPageSql.getBoundSql();
-        Object[] sqlParams = boundSql.getParams();
         List<Map<String, Object>> result;
         try {
-            List<Map<String, Object>> list = jdbcTemplate.queryForList(boundSql.getSql(), sqlParams);
+            List<Map<String, Object>> list =queryForMapListInner(boundSql);
             result = convert(list, metaManager.getByEntityName(command.getEntityName()));
         } catch (DataAccessException exception) {
             throw new DaoException("queryForMapList exception :" + exception.getCause().getMessage());
@@ -250,7 +249,7 @@ public class Dao extends SqlKeyDao {
         FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
         BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, null);
         log.info(boundSql.toString());
-        return jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<T>());
+        return jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<>());
     }
 
     /**
@@ -428,8 +427,8 @@ public class Dao extends SqlKeyDao {
         log.info(boundSql.toString());
         List<T> pageQueryList = jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<T>(), boundSql.getParams());
         // 分页结果
-        long total = queryList != null ? queryList.size() : 0;
-        int dataSize = pageQueryList != null ? pageQueryList.size() : 0;
+        long total = queryList.size();
+        int dataSize = pageQueryList.size();
         return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
     }
 
@@ -450,7 +449,6 @@ public class Dao extends SqlKeyDao {
         return filterGroup;
     }
 
-    @MethodLog(type = "queryListByView")
     public List<Map<String, Object>> queryListByView(String entityName, String viewName, int pageNum, int pageSize, Map<String, Object> params) {
         FilterGroup filterGroup = new FilterGroup();
         for (Map.Entry<String, Object> entry : params.entrySet()) {
@@ -513,9 +511,7 @@ public class Dao extends SqlKeyDao {
                 ignoreFieldList.computeIfAbsent(value, k -> new ArrayList<>()).add(key);
             }
         }
-        // 将Map中的List转换为数组
-        Map<IgnoreType, String[]> ignoreFields = ignoreFieldList.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toArray(new String[0])));
 
-        return ignoreFields;
+        return ignoreFieldList.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toArray(new String[0])));
     }
 }

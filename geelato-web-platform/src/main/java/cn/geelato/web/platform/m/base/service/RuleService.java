@@ -154,11 +154,9 @@ public class RuleService {
      * @return 转换后的树形结构列表
      */
     private List<Map> toTree(List<Map> itemList, long parentId, String childrenKey) {
-        List<Map> resultList = new ArrayList();
-        List<Map> toParseList = new ArrayList();
-        Iterator<Map> iterator = itemList.iterator();
-        while (iterator.hasNext()) {
-            Map item = iterator.next();
+        List<Map> resultList = new ArrayList<>();
+        List<Map> toParseList = new ArrayList<>();
+        for (Map item : itemList) {
             long parent = Long.parseLong(item.get("tn_parent").toString());
             if (parentId == parent) {
                 resultList.add(item);
@@ -390,7 +388,7 @@ public class RuleService {
                 } else if ("id".equals(valueExpTrim)) {
                     return currentCommand.getPK();
                 }
-                log.error("dao exception:通过表达式变量：" + valueExp + "获取不到值。");
+                log.error("dao exception:通过表达式变量：{}获取不到值。", valueExp);
                 // throw new DaoException("dao exception:通过表达式变量：" + valueExp + "获取不到值。");
                 return null;
             }

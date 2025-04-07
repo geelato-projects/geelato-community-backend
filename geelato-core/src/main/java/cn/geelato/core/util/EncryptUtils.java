@@ -15,20 +15,16 @@ public class EncryptUtils {
 
     public static String decrypt(String data) {
         String decryptData;
-        String regex = "^([A-Z0-9]+)\\(([A-Z0-9]+)\\)$";
+        String regex = "^([a-zA-Z0-9]+)\\((.*?)\\)$";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(data);
         if (matcher.find()) {
             String algorithm = matcher.group(1);
-            String key = matcher.group(2);
-            switch (algorithm.toLowerCase()) {
-                case "sm4":
-                    decryptData= SM4Utils.decrypt(key, data);
-                    break;
-                default:
-                    decryptData= data;
-                    break;
-            }
+            String encryptData = matcher.group(2);
+            decryptData = switch (algorithm.toLowerCase()) {
+                case "sm4" -> SM4Utils.decrypt(encryptData, sm4key);
+                default -> data;
+            };
         }else {
             decryptData = data;
         }

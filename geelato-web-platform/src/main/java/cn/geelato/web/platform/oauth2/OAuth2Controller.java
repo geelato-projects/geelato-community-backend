@@ -27,25 +27,21 @@ public class OAuth2Controller {
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public ApiResult<LoginResult> login(String code) throws IOException {
-        OAuth2ServerTokenResult oAuthServerTokenResult=oAuthService.getToken(
-                oAuthConfigurationProperties.getUrl(),
-                oAuthConfigurationProperties.getClientId(),
-                oAuthConfigurationProperties.getClientSecret(),
-                code
-        );
-        if(oAuthServerTokenResult.getCode().equals("200")){
-            OAuth2ServerResult userInfoResult=oAuthService.getUserInfo(
+        OAuth2ServerTokenResult oAuthServerTokenResult = oAuthService.getToken(
+                oAuthConfigurationProperties.getUrl(), oAuthConfigurationProperties.getClientId(),
+                oAuthConfigurationProperties.getClientSecret(), code);
+
+        if (oAuthServerTokenResult.getCode().equals("200")) {
+            OAuth2ServerResult userInfoResult = oAuthService.getUserInfo(
                     oAuthConfigurationProperties.getUrl(),
-                    oAuthServerTokenResult.getAccess_token()
-           );
-            if(userInfoResult.getCode().equals("200")){
-                LoginResult loginResult=ConvertToLoginResult(userInfoResult.getData());
+                    oAuthServerTokenResult.getAccess_token());
+            if (userInfoResult.getCode().equals("200")) {
+                LoginResult loginResult = ConvertToLoginResult(userInfoResult.getData());
                 loginResult.setToken(oAuthServerTokenResult.getAccess_token());
                 return ApiResult.success(loginResult);
             }
-
         }
-        return null;
+        return ApiResult.fail(oAuthServerTokenResult.getMsg());
     }
 
     private LoginResult ConvertToLoginResult(String data) {

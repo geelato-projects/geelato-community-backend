@@ -34,7 +34,7 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .addPathPatterns("/**")
                 // 以下为排除鉴权的路径
                 // 登录接口
-                .excludePathPatterns(urlPrefix+"/oauth/login")
+                .excludePathPatterns(urlPrefix+"/oauth2/login")
                 // 静态资源
                 .excludePathPatterns("/assets/**")
                 // 错误页面

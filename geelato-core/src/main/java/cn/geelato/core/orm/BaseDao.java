@@ -9,23 +9,20 @@ import cn.geelato.core.script.sql.SqlScriptManager;
 import cn.geelato.core.script.sql.SqlScriptManagerFactory;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.core.util.EncryptUtils;
-import jakarta.annotation.Resource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class BaseDao {
     protected final SqlScriptManager sqlScriptManager = SqlScriptManagerFactory.get("sql");
-    protected final DbScriptManager dbScriptManager= DbScriptManagerFactory.get("db");
+    protected final DbScriptManager dbScriptManager = DbScriptManagerFactory.get("db");
 
     protected JdbcTemplate jdbcTemplate;
 
@@ -36,7 +33,7 @@ public class BaseDao {
     protected static final Map<String, Object> defaultParams = new HashMap<>();
 
     protected List<Map<String, Object>> queryForMapListInner(BoundSql boundSql) throws DataAccessException {
-        return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(),new DecryptingRowMapper());
+        return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new DecryptingRowMapper());
     }
 }
 
@@ -44,13 +41,14 @@ class DecryptingRowMapper implements RowMapper<Map<String, Object>> {
     @Override
     public Map<String, Object> mapRow(ResultSet rs, int rowNum) throws SQLException {
         Map<String, Object> row = new HashMap<>();
-        int columnCount = rs.getMetaData().getColumnCount();
+        ResultSetMetaData metaData = rs.getMetaData();
+        int columnCount = metaData.getColumnCount();
         for (int i = 1; i <= columnCount; i++) {
-            String columnName = rs.getMetaData().getColumnName(i);
+            String columnName = metaData.getColumnLabel(i);
             Object value = rs.getObject(i);
             if (value instanceof String) {
                 row.put(columnName, EncryptUtils.decrypt(value.toString()));
-            }else{
+            } else {
                 row.put(columnName, value);
             }
         }

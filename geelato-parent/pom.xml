@@ -54,6 +54,7 @@
         <geelato.schedule.version>0.0.1-SNAPSHOT</geelato.schedule.version>
         <geelato.auth.version>0.0.1-SNAPSHOT</geelato.auth.version>
         <geelato.oss.version>0.0.1-SNAPSHOT</geelato.oss.version>
+        <geelato.sc.version>0.0.1-SNAPSHOT</geelato.sc.version>
     </properties>
 
 
@@ -206,6 +207,11 @@
                 <groupId>cn.geelato</groupId>
                 <artifactId>geelato-web-oss</artifactId>
                 <version>${geelato.oss.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-site-collocation</artifactId>
+                <version>${geelato.sc.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

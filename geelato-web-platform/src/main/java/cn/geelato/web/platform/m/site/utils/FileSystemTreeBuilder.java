@@ -18,7 +18,7 @@ public class FileSystemTreeBuilder {
         // 设置根文件夹属性
         FolderUtils.setFolderAttributes(root, rootTree);
         // 使用NIO的walkFileTree构建树结构
-        Files.walkFileTree(root, EnumSet.noneOf(FileVisitOption.class), maxDepth, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(root, EnumSet.noneOf(FileVisitOption.class), maxDepth, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                 if (!dir.equals(root)) { // 跳过根目录，因为已经处理

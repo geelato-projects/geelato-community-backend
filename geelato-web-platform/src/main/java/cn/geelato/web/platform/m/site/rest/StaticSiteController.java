@@ -15,21 +15,21 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.site.entity.FileInfo;
 import cn.geelato.web.platform.m.site.entity.StaticSite;
 import cn.geelato.web.platform.m.site.service.StaticSiteService;
-import cn.geelato.web.platform.m.site.utils.FileSystemTreeBuilder;
 import cn.geelato.web.platform.m.site.utils.FolderUtils;
+import cn.geelato.web.platform.m.site.utils.StaticSiteConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @ApiRestController("/site/statics")
@@ -38,15 +38,17 @@ public class StaticSiteController extends BaseController {
     private static final Class<StaticSite> CLAZZ = StaticSite.class;
     private final StaticSiteService staticSiteService;
     private final FileHandler fileHandler;
+    private final StaticSiteConfiguration staticSiteConfiguration;
 
     @Autowired
-    public StaticSiteController(StaticSiteService staticSiteService, FileHandler fileHandler) {
+    public StaticSiteController(StaticSiteService staticSiteService, FileHandler fileHandler, StaticSiteConfiguration staticSiteConfiguration) {
         this.staticSiteService = staticSiteService;
         this.fileHandler = fileHandler;
+        this.staticSiteConfiguration = staticSiteConfiguration;
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
-    public ApiPagedResult pageQuery() {
+    public ApiPagedResult<?> pageQuery() {
         try {
             Map<String, Object> requestBody = this.getRequestBody();
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
@@ -59,7 +61,7 @@ public class StaticSiteController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult query() {
+    public ApiResult<?> query() {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
@@ -71,7 +73,7 @@ public class StaticSiteController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult get(@PathVariable(required = true) String id) {
+    public ApiResult<?> get(@PathVariable() String id) {
         try {
             return ApiResult.success(staticSiteService.getModel(CLAZZ, id));
         } catch (Exception e) {
@@ -80,20 +82,10 @@ public class StaticSiteController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/tree/{id}", method = RequestMethod.GET)
-    public ApiResult tree(@PathVariable(required = true) String id) {
-        try {
-            FileInfo tree = FileSystemTreeBuilder.buildFileSystemTree("/upload", 5);
-            return ApiResult.success(tree);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
-    }
-
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    public ApiResult createOrUpdate(@RequestBody StaticSite form) {
+    public ApiResult<?> createOrUpdate(@RequestBody StaticSite form) {
         try {
+            form.setBaseFolderPath(staticSiteConfiguration.getFolder());
             if (Strings.isNotBlank(form.getId())) {
                 form = staticSiteService.updateModel(form);
             } else {
@@ -107,11 +99,12 @@ public class StaticSiteController extends BaseController {
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
+    public ApiResult<NullResult> isDelete(@PathVariable() String id) {
         try {
             StaticSite model = staticSiteService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
+            model.setBaseFolderPath(staticSiteConfiguration.getFolder());
             staticSiteService.isDeleteModel(model);
             return ApiResult.successNoResult();
         } catch (Exception e) {
@@ -137,7 +130,7 @@ public class StaticSiteController extends BaseController {
 
 
     @RequestMapping(value = "/treeNode", method = RequestMethod.POST)
-    public ApiResult treeNode(@RequestBody Map<String, Object> requestBody) {
+    public ApiResult<?> treeNode(@RequestBody Map<String, Object> requestBody) {
         try {
             String rootPath = Objects.toString(requestBody.get("path"), "");
             String appId = Objects.toString(requestBody.get("appId"), getAppId());
@@ -147,7 +140,7 @@ public class StaticSiteController extends BaseController {
                     throw new RuntimeException("appId和tenantCode不能为空");
                 }
                 List<StaticSite> staticSiteList = staticSiteService.queryModel(CLAZZ, SqlParams.map("appId", appId, "tenantCode", tenantCode), "updateAt desc");
-                return ApiResult.success(StaticSite.buildTreeNodeDataList(staticSiteList));
+                return ApiResult.success(StaticSite.buildTreeNodeDataList(staticSiteList, staticSiteConfiguration.getFolder()));
             } else {
                 Set<FileInfo> fileInfos = FolderUtils.getRootFolders(rootPath);
                 return ApiResult.success(FileInfo.buildTreeNodeDataList(fileInfos));
@@ -159,7 +152,7 @@ public class StaticSiteController extends BaseController {
     }
 
     @RequestMapping(value = "/queryFile", method = RequestMethod.POST)
-    public ApiResult queryFile(@RequestBody Map<String, Object> requestBody) {
+    public ApiResult<?> queryFile(@RequestBody Map<String, Object> requestBody) {
         try {
             String rootPath = Objects.toString(requestBody.get("path"), "");
             String type = Objects.toString(requestBody.get("type"), "all");
@@ -175,18 +168,8 @@ public class StaticSiteController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/batchPack", method = RequestMethod.POST)
-    public ApiResult batchPack(@RequestBody Map<String, Object> requestBody) {
-        try {
-            return ApiResult.successNoResult();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
-    }
-
     @RequestMapping(value = "/batchDelete", method = RequestMethod.POST)
-    public ApiResult batchDelete(@RequestBody Map<String, Object> requestBody) {
+    public ApiResult<NullResult> batchDelete(@RequestBody Map<String, Object> requestBody) {
         try {
             String path = Objects.toString(requestBody.get("path"), "");
             List<String> delPaths = cn.geelato.utils.StringUtils.toListDr(path);
@@ -206,7 +189,7 @@ public class StaticSiteController extends BaseController {
     @RequestMapping(value = "/download", method = RequestMethod.POST)
     public void download(@RequestBody Map<String, Object> requestBody) throws IOException {
         String path = Objects.toString(requestBody.get("path"), "");
-        boolean isPreview = Objects.isNull(requestBody.get("isPreview")) ? false : Boolean.parseBoolean(requestBody.get("isPreview").toString());
+        boolean isPreview = !Objects.isNull(requestBody.get("isPreview")) && Boolean.parseBoolean(requestBody.get("isPreview").toString());
         if (StringUtils.isBlank(path)) {
             throw new RuntimeException("path不能为空");
         }
@@ -218,22 +201,35 @@ public class StaticSiteController extends BaseController {
     }
 
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
-    public ApiResult upload(@RequestBody Map<String, Object> requestBody) {
+    public ApiResult<NullResult> upload(@RequestParam("file") MultipartFile file, String path, Boolean isCompress, Boolean isByStep, Integer isExist) {
         try {
+            // 2. 验证文件是否存在
+            if (file == null || file.isEmpty()) {
+                throw new RuntimeException("文件不存在");
+            }
+            // 2. 验证根目录是否存在
+            Path rootPath = Paths.get(path).toAbsolutePath().normalize();
+            if (!Files.exists(rootPath)) {
+                throw new RuntimeException("根目录不存在");
+            }
+            staticSiteService.uploadFile(file, rootPath, isCompress, isByStep, isExist);
             return ApiResult.successNoResult();
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
 
     @RequestMapping(value = "/updateName", method = RequestMethod.POST)
-    public ApiResult updateName(@RequestBody Map<String, Object> requestBody) {
+    public ApiResult<NullResult> updateName(@RequestBody Map<String, Object> requestBody) {
         try {
             String path = Objects.toString(requestBody.get("path"), "");
             String name = Objects.toString(requestBody.get("name"), "");
             if (StringUtils.isAnyBlank(path, name)) {
                 throw new RuntimeException("path和name不能为空");
+            }
+            if (FolderUtils.containsIllegalChars(name)) {
+                throw new RuntimeException("文件夹名称不能包含特殊字符");
             }
             FolderUtils.renameFileOrFolder(path, name);
             return ApiResult.successNoResult();
@@ -244,12 +240,15 @@ public class StaticSiteController extends BaseController {
     }
 
     @RequestMapping(value = "/createFolder", method = RequestMethod.POST)
-    public ApiResult createFolder(@RequestBody Map<String, Object> requestBody) {
+    public ApiResult<NullResult> createFolder(@RequestBody Map<String, Object> requestBody) {
         try {
             String path = Objects.toString(requestBody.get("path"), "");
             String name = Objects.toString(requestBody.get("name"), "");
             if (StringUtils.isAnyBlank(path, name)) {
                 throw new RuntimeException("path和name不能为空");
+            }
+            if (FolderUtils.containsIllegalChars(name)) {
+                throw new RuntimeException("文件夹名称不能包含特殊字符");
             }
             FolderUtils.create(path, name);
             return ApiResult.successNoResult();

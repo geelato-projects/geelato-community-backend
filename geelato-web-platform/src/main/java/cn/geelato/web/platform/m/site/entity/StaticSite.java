@@ -3,10 +3,10 @@ package cn.geelato.web.platform.m.site.entity;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.web.platform.m.arco.entity.TreeNodeData;
-import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.site.utils.FolderUtils;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,19 +40,23 @@ public class StaticSite extends BaseEntity implements EntityEnableAble {
     @Col(name = "enable_status")
     private int enableStatus;
 
+    @Transient
+    @Title(title = "根目录")
+    private String baseFolderPath;
 
-    public static Set<TreeNodeData> buildTreeNodeDataList(List<StaticSite> staticSites) throws IOException {
+
+    public static Set<TreeNodeData> buildTreeNodeDataList(List<StaticSite> staticSites, String baseFolderPath) throws IOException {
         Set<TreeNodeData> treeNodeDataList = new LinkedHashSet<>();
         for (StaticSite staticSite : staticSites) {
             TreeNodeData treeNodeData = new TreeNodeData();
-            File file = new File(UploadService.ROOT_SITE_DIRECTORY, staticSite.getId());
-            if (file == null || !file.exists()) {
+            File file = new File(baseFolderPath, staticSite.getId());
+            if (!file.exists()) {
                 continue;
             }
             Path path = Paths.get(file.getAbsolutePath()).normalize().toAbsolutePath();
             treeNodeData.setKey(path.toString());
             treeNodeData.setTitle(String.format("%s(%s)", staticSite.getName(), staticSite.getCode()));
-            treeNodeData.setIsLeaf(!FolderUtils.hasSubFolders(path));
+            treeNodeData.setIsLeaf(FolderUtils.hasNoSubFolders(path));
             treeNodeData.setLevel(1);
             treeNodeData.setData(staticSite);
             treeNodeDataList.add(treeNodeData);

@@ -21,6 +21,8 @@ import java.util.Set;
 
 @Slf4j
 public class FolderUtils {
+    private static final String[] ILLEGAL_CHARS = {"\\", "/", ":", "*", "?", "\"", "<", ">", "|"};
+
     public static void create(String rootPath, String folderName) {
         File uploadDir = new File(rootPath, folderName);
         try {
@@ -192,8 +194,8 @@ public class FolderUtils {
         }
     }
 
-    public static boolean hasSubFolders(Path folder) throws IOException {
-        return Files.list(folder).anyMatch(Files::isDirectory);
+    public static boolean hasNoSubFolders(Path folder) throws IOException {
+        return Files.list(folder).noneMatch(Files::isDirectory);
     }
 
     public static boolean isUnixLike() {
@@ -242,6 +244,15 @@ public class FolderUtils {
         fileInfo.setCanWrite(Files.isWritable(filePath));
         fileInfo.setCanExecute(Files.isExecutable(filePath));
         fileInfo.setFileInfos(new LinkedHashSet<>());
+    }
+
+    public static boolean containsIllegalChars(String filename) {
+        for (String illegalChar : ILLEGAL_CHARS) {
+            if (filename.contains(illegalChar)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String setLastModified(FileTime lastModifiedTime) {

@@ -22,7 +22,6 @@ import java.util.Date;
 @Component
 public class UploadService {
     public static final String ROOT_DIRECTORY = "upload";
-    public static final String ROOT_SITE_DIRECTORY = "/upload/site";
     public static final String ROOT_CONVERT_DIRECTORY = "upload/convert";
     public static final String ROOT_CONFIG_DIRECTORY = "/upload/config";
     public static final String ROOT_AVATAR_DIRECTORY = "upload/avatar";

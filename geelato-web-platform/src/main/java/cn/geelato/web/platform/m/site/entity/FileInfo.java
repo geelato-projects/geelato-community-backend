@@ -47,7 +47,7 @@ public class FileInfo {
             Path path = Paths.get(fileInfo.getPath()).normalize().toAbsolutePath();
             treeNodeData.setKey(path.toString());
             treeNodeData.setTitle(path.getFileName().toString());
-            treeNodeData.setIsLeaf(!FolderUtils.hasSubFolders(path));
+            treeNodeData.setIsLeaf(FolderUtils.hasNoSubFolders(path));
             treeNodeData.setLevel(2);
             treeNodeData.setData(fileInfo);
             treeNodeDataList.add(treeNodeData);
@@ -60,7 +60,7 @@ public class FileInfo {
             // 转换为List以便排序
             List<FileInfo> list = new ArrayList<>(fileInfos);
             // 使用自定义比较器排序
-            Collections.sort(list, new FileInfoComparator());
+            list.sort(new FileInfoComparator());
             // 清空原集合并添加排序后的元素
             fileInfos.clear();
             fileInfos.addAll(list);

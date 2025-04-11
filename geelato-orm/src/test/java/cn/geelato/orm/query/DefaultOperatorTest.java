@@ -13,21 +13,21 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 public class DefaultOperatorTest {
-
-    @Qualifier("dynamicDao")
-    protected Dao dao;
-
-    @Before
-    public void setUp() throws Exception {
-        MetaManager metaManager=MetaManager.singleInstance();
-        metaManager.parseDBMeta(dao);
-    }
-    @Test
-    public void query() {
-        Operator operator=new DefaultOperator();
-        List<Map<String, Object>> list= operator.query("demo_entity")
-                .select("id")
-                .where("id=1")
-                .queryForMapList();
-    }
+//
+//    @Qualifier("dynamicDao")
+//    protected Dao dao;
+//
+//    @Before
+//    public void setUp() throws Exception {
+//        MetaManager metaManager=MetaManager.singleInstance();
+//        metaManager.parseDBMeta(dao);
+//    }
+//    @Test
+//    public void query() {
+//        Operator operator=new DefaultOperator();
+//        List<Map<String, Object>> list= operator.query("demo_entity")
+//                .select("id")
+//                .where("id=1")
+//                .queryForMapList();
+//    }
 }

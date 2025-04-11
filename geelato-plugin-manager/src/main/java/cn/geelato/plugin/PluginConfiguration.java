@@ -26,8 +26,6 @@ public class PluginConfiguration {
         SpringPluginManager spm=new SpringPluginManager(
                 Paths.get(pluginConfigurationProperties.getPluginDirectory())
         );
-        spm.loadPlugins();
-        spm.startPlugins();
         springPluginManager=spm;
         return spm;
     }

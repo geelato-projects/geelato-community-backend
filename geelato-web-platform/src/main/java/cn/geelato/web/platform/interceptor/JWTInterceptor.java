@@ -35,7 +35,7 @@ public class JWTInterceptor implements HandlerInterceptor {
         }
         String token = request.getHeader("Authorization");
         if (token == null) {
-            throw new Exception("invalid token");
+            throw new InvalidTokenException();
         }
         token = token.replace("Bearer ", "");
         DecodedJWT verify = JWTUtil.verify(token);
@@ -43,7 +43,7 @@ public class JWTInterceptor implements HandlerInterceptor {
         String passWord = verify.getClaim("passWord").asString();
         User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);
         PlatformContext.setCurrentUser(currentUser);
-        PlatformContext.setCurrentTenant(new Tenant("geelato"));
+        PlatformContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
 
         UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
         Subject subject = SecurityUtils.getSubject();

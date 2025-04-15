@@ -1,7 +1,6 @@
 package cn.geelato.core.orm;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.aop.annotation.MethodLog;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.command.QueryViewCommand;
 import cn.geelato.core.gql.command.SaveCommand;

@@ -9,13 +9,13 @@ import java.util.regex.Pattern;
 public class EncryptUtils {
     private final static String sm4key = "b76278495b7f4df3";
     public static String encrypt(String data) {
-        String encryptType="SM4";
-        return String.format("%s(%s)",encryptType,SM4Utils.encrypt(data,sm4key));
+        String encryptType="sm4";
+        return String.format("%s:%s",encryptType,SM4Utils.encrypt(data,sm4key));
     }
 
     public static String decrypt(String data) {
         String decryptData;
-        String regex = "^([a-zA-Z0-9]+)\\((.*?)\\)$";
+        String regex = "^([a-zA-Z0-9_]+):(.+)$";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(data);
         if (matcher.find()) {

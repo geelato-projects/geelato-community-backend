@@ -33,7 +33,7 @@ public class OAuth2Interceptor implements HandlerInterceptor {
         }
         String token = request.getHeader("Authorization");
         if (token == null) {
-            throw new Exception("invalid oauth token");
+            throw new InvalidTokenException("InvalidOAuth2TokenException");
         }
         token = token.replace("Bearer ", "");
         cn.geelato.web.platform.m.security.entity.User user= OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
@@ -46,7 +46,7 @@ public class OAuth2Interceptor implements HandlerInterceptor {
             Subject subject = SecurityUtils.getSubject();
             subject.login(oauth2Token);
         }else {
-            throw new Exception("oauth get user fail!");
+            throw new OAuthGetUserFailException();
         }
         return true;
     }

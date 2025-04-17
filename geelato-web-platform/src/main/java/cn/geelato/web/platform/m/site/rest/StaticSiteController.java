@@ -85,11 +85,10 @@ public class StaticSiteController extends BaseController {
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult<?> createOrUpdate(@RequestBody StaticSite form) {
         try {
-            form.setBaseFolderPath(staticSiteConfiguration.getFolder());
             if (Strings.isNotBlank(form.getId())) {
-                form = staticSiteService.updateModel(form);
+                form = staticSiteService.updateModel(form, staticSiteConfiguration.getFolder());
             } else {
-                form = staticSiteService.createModel(form);
+                form = staticSiteService.createModel(form, staticSiteConfiguration.getFolder());
             }
             return ApiResult.success(form);
         } catch (Exception e) {
@@ -104,8 +103,7 @@ public class StaticSiteController extends BaseController {
             StaticSite model = staticSiteService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
-            model.setBaseFolderPath(staticSiteConfiguration.getFolder());
-            staticSiteService.isDeleteModel(model);
+            staticSiteService.isDeleteModel(model, staticSiteConfiguration.getFolder());
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);

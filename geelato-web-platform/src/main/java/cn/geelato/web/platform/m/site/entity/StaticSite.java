@@ -3,7 +3,6 @@ package cn.geelato.web.platform.m.site.entity;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
-import cn.geelato.core.meta.annotation.Transient;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.web.platform.m.arco.entity.TreeNodeData;
@@ -39,11 +38,6 @@ public class StaticSite extends BaseEntity implements EntityEnableAble {
     @Title(title = "状态")
     @Col(name = "enable_status")
     private int enableStatus;
-
-    @Transient
-    @Title(title = "根目录")
-    private String baseFolderPath;
-
 
     public static Set<TreeNodeData> buildTreeNodeDataList(List<StaticSite> staticSites, String baseFolderPath) throws IOException {
         Set<TreeNodeData> treeNodeDataList = new LinkedHashSet<>();

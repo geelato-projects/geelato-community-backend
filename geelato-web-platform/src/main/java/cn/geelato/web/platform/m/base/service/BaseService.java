@@ -31,7 +31,7 @@ public class BaseService {
     public static final String COMPARE_RESULT_ADD = "add";
     public static final String COMPARE_RESULT_UPDATE = "update";
     public static final String COMPARE_RESULT_DELETE = "delete";
-    private static final String DEFAULT_ORDER_BY = "update_at DESC";
+    public static final String DEFAULT_ORDER_BY = "update_at DESC";
     @Autowired
     @Qualifier("primaryDao")
     public Dao dao;

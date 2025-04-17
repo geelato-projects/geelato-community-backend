@@ -82,6 +82,10 @@ public enum ArcoEnum {
     BARCODE_FONT_STYLE_ENUM("BarcodeFontStyleEnum", BarcodeFontStyleEnum.class),
     BARCODE_FONT_POSITION_ENUM("BarcodeFontPositionEnum", BarcodeFontPositionEnum.class),
     BARCODE_FONT_ALIGN_ENUM("BarcodeFontAlignEnum", BarcodeFontAlignEnum.class),
+    // 用户相关枚举
+    USER_SEX_ENUM("UserSexEnum", UserSexEnum.class),
+    USER_TYPE_ENUM("UserTypeEnum", UserTypeEnum.class),
+    USER_SOURCE_ENUM("UserSourceEnum", UserSourceEnum.class),
     // Core相关枚举
     VIEW_TYPE_ENUM("ViewTypeEnum", ViewTypeEnum.class),
     MYSQL_DATA_TYPE_ENUM("MysqlDataTypeEnum", MysqlDataTypeEnum.class),

@@ -3,15 +3,14 @@ package cn.geelato.web.platform.m.security.enums;
 import lombok.Getter;
 
 @Getter
-public enum OrgCategoryEnum {
-    INSIDE("内部", "inside"),
-    OUTSIDE("外部", "outside"),
-    VIRTUAL("虚拟", "virtual");
+public enum UserSexEnum {
+    MALE("男", "1"),
+    FEMALE("女", "0");
 
     private final String label;// 选项内容
     private final String value;// 选项值
 
-    OrgCategoryEnum(String label, String value) {
+    UserSexEnum(String label, String value) {
         this.label = label;
         this.value = value;
     }

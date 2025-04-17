@@ -9,7 +9,7 @@ import cn.geelato.web.platform.m.security.entity.User;
 public class EncryptUtil {
     public static final String HASH_ALGORITHM = "SHA-1";
     public static final int HASH_ITERATIONS = 1024;
-    private static final int SALT_SIZE = 8;
+    public static final int SALT_SIZE = 8;
 
     /**
      * 对用户密码进行加密处理

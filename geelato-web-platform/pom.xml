@@ -224,7 +224,23 @@
                 <artifactId>javax.servlet-api</artifactId>
             </dependency>
 
-
+        <!-- Apache Commons Compress（支持 tar/gzip/bzip2/xz） -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.27.1</version>
+        </dependency>
+        <!-- 支持 .rar/.7z -->
+        <dependency>
+            <groupId>net.sf.sevenzipjbinding</groupId>
+            <artifactId>sevenzipjbinding</artifactId>
+            <version>16.02-2.01</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.sevenzipjbinding</groupId>
+            <artifactId>sevenzipjbinding-all-platforms</artifactId>
+            <version>16.02-2.01</version>
+        </dependency>
     </dependencies>
 
     <!--该工程打包成普通的jar，以便发布到仓库共其它应用模块使用，不采用spring-boot-maven-plugin打成fat jar

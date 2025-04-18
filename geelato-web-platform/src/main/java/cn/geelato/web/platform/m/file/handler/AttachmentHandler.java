@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
 
 @Component
@@ -87,12 +88,12 @@ public abstract class AttachmentHandler<E extends Attachment> {
         List<ThumbnailResolution> thumbnailResolutions = new ArrayList<>();
         // 根据原始图片的尺寸和缩略图比例，计算需要生成的缩略图的分辨率列表
         List<Resolution> thumbResolutions = ThumbnailUtils.resolution(file, dimension, thumbScale);
-        if (thumbResolutions != null && !thumbResolutions.isEmpty()) {
+        if (!thumbResolutions.isEmpty()) {
             for (Resolution resolution : thumbResolutions) {
                 String thumbPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, attachmentSource, tenantCode, appId, fileName, true);
                 File thumbFile = new File(thumbPath);
                 ThumbnailUtils.thumbnail(file, thumbFile, resolution);
-                if (thumbFile == null || !thumbFile.exists()) {
+                if (!thumbFile.exists()) {
                     throw new RuntimeException("thumbnail save failed");
                 }
                 thumbnailResolutions.add(new ThumbnailResolution(resolution, thumbFile, thumbPath));
@@ -235,7 +236,11 @@ public abstract class AttachmentHandler<E extends Attachment> {
         if (StringUtils.isNotBlank(path)) {
             File file = FileUtils.pathToFile(path);
             if (file != null) {
-                return file.delete();
+                try {
+                    return Files.deleteIfExists(file.toPath());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         return true;

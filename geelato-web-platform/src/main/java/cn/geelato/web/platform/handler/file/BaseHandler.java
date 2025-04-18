@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
@@ -158,7 +159,7 @@ public class BaseHandler {
                 download(file, fileName, isPreview, request, response, uuid);
             } finally {
                 if (tempFile != null) {
-                    tempFile.delete();
+                    Files.deleteIfExists(tempFile.toPath());
                 }
             }
         } else {
@@ -245,7 +246,6 @@ public class BaseHandler {
      * @param appId      应用ID
      * @param tenantCode 租户代码
      * @return 转换后的PDF文件，如果转换失败则返回null
-     * @throws Exception 如果转换过程中发生异常，则抛出该异常
      */
     public File toPdf(File sourceFile, String sourceExt, String appId, String tenantCode) {
         if (sourceFile != null && sourceFile.exists() && Strings.isNotBlank(sourceExt)) {

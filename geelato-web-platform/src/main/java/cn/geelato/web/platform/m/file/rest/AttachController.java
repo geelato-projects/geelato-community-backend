@@ -12,8 +12,8 @@ import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
-import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentServiceEnum;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -94,7 +94,7 @@ public class AttachController extends BaseController {
     public ApiResult validate(@RequestBody Map<String, Object> requestMap) {
         String attachmentIds = Objects.toString(requestMap.get("attachmentIds"), "");
         List<String> ids = StringUtils.toListDr(attachmentIds);
-        if (ids == null || ids.isEmpty()) {
+        if (ids.isEmpty()) {
             return ApiResult.fail("附件ID不能为空!");
         }
         Map<String, Boolean> result = new HashMap<>();
@@ -113,7 +113,7 @@ public class AttachController extends BaseController {
                         isExist = file != null && file.exists();
                         if (!AttachmentServiceEnum.LOCAL.getValue().equalsIgnoreCase(attachment.getStorageType())) {
                             if (isExist) {
-                                file.delete();
+                                Files.deleteIfExists(file.toPath());
                             }
                         }
                     } catch (Exception ex) {
@@ -131,7 +131,7 @@ public class AttachController extends BaseController {
     public ApiResult updateStorageType(@PathVariable(required = true) String type, @RequestBody Map<String, Object> requestMap) {
         String attachmentIds = Objects.toString(requestMap.get("attachmentIds"), "");
         List<String> ids = StringUtils.toListDr(attachmentIds);
-        if (ids == null || ids.isEmpty()) {
+        if (ids.isEmpty()) {
             return ApiResult.fail("附件ID不能为空!");
         }
         // 查询附件信息
@@ -156,7 +156,7 @@ public class AttachController extends BaseController {
                         attachment.setPath(path);
                         attachment.handleGenre(FileGenreEnum.UpdateStorage.name());
                         fileHandler.updateAttachment(attachment);
-                        file.delete();
+                        Files.deleteIfExists(file.toPath());
                     } catch (IOException e) {
                         result.put(attachment.getId(), "文件本地化失败");
                     }
@@ -171,7 +171,7 @@ public class AttachController extends BaseController {
                         if (target != null) {
                             target.handleGenre(FileGenreEnum.UpdateStorage.name());
                             fileHandler.updateAttachment(target);
-                            file.delete();
+                            Files.deleteIfExists(file.toPath());
                         } else {
                             result.put(attachment.getId(), "文件上传云失败");
                         }

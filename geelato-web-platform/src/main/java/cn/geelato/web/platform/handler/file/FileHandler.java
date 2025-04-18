@@ -19,16 +19,19 @@ import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import cn.geelato.web.platform.utils.ThumbnailUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class FileHandler extends BaseHandler {
     private static final long COMPRESS_MAX_SIZE = 50 * 1024 * 1024;// 50M 压缩最大容量
     private static final int COMPRESS_MAX_AMOUNT = 1000; // 压缩最大数量
@@ -102,7 +105,7 @@ public class FileHandler extends BaseHandler {
         try {
             return uploadCloudAndThumb(tempFile, file.getOriginalFilename(), param);
         } finally {
-            tempFile.delete();
+            Files.deleteIfExists(tempFile.toPath());
         }
     }
 
@@ -122,7 +125,7 @@ public class FileHandler extends BaseHandler {
             return uploadCloudAndThumb(tempFile, name, param);
         } finally {
             if (tempFile != null) {
-                tempFile.delete();
+                Files.deleteIfExists(tempFile.toPath());
             }
         }
     }
@@ -150,11 +153,12 @@ public class FileHandler extends BaseHandler {
                     fileParam.setGenre(StringUtils.splice(",", param.getGenre(), ThumbnailUtils.THUMBNAIL_GENRE));
                     Attachment target = uploadCloud(tr.getFile(), name, fileParam);
                     targetMap.put(tr.getAmass(), target);
-                    tr.getFile().delete();
+                    Files.deleteIfExists(tr.getFile().toPath());
                 }
             }
             // 如果只需要缩略图，则删除原始文件，否则保存原始文件
             if (!targetMap.isEmpty() && param.isOnlyThumb()) {
+                log.info("上传文件时，删除原始文件：{}", file.getAbsolutePath());
             } else {
                 // 生成缩略图并保存到数据库
                 Resolution resolution = Resolution.get(file);

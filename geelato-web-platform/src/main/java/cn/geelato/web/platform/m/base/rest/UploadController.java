@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.core.SessionCtx;
+import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 
 /**
@@ -56,26 +58,26 @@ public class UploadController extends BaseController {
      * @return ApiResult 对象，包含操作结果和返回数据
      */
     @RequestMapping(value = "/file", method = RequestMethod.POST)
-    public ApiResult uploadFile(@RequestParam("file") MultipartFile file,
-                                String serviceType, String tableType,
-                                String root, Boolean isRename,
-                                String objectId, String formIds,
-                                String genre, String batchNo,
-                                String invalidTime, Integer validDuration,
-                                Boolean isThumbnail, Boolean onlyThumb, String dimension, String thumbScale,
-                                String appId, String tenantCode) throws IOException {
+    public ApiResult<?> uploadFile(@RequestParam("file") MultipartFile file,
+                                   String serviceType, String tableType,
+                                   String root, Boolean isRename,
+                                   String objectId, String formIds,
+                                   String genre, String batchNo,
+                                   String invalidTime, Integer validDuration,
+                                   Boolean isThumbnail, Boolean onlyThumb, String dimension, String thumbScale,
+                                   String appId, String tenantCode) throws IOException {
         if (file == null || file.isEmpty()) {
             return ApiResult.fail("File is empty");
         }
         // 参数校验和赋值
         appId = Strings.isBlank(appId) ? getAppId() : appId;
         tenantCode = Strings.isBlank(tenantCode) ? SessionCtx.getCurrentTenantCode() : tenantCode;
-        isRename = isRename == null ? true : isRename;
+        isRename = isRename == null || isRename;
         // 生成文件路径
         String path = UploadService.getSavePath(root, tableType, file.getOriginalFilename(), isRename, appId, tenantCode);
         // 处理有效期参数，如果设置了有效时长则计算失效时间
         Date invalidDate = DateUtils.parse(invalidTime, DateUtils.DATETIME);
-        if (validDuration != null && validDuration.intValue() > 0) {
+        if (validDuration != null && validDuration > 0) {
             invalidDate = DateUtils.calculateTime(validDuration.toString(), TimeUnitEnum.SECOND.name());
         }
         // 构建文件参数对象
@@ -84,14 +86,11 @@ public class UploadController extends BaseController {
         Attachment attachment = fileHandler.upload(file, path, fileParam);
         attachment.setSource(tableType);
         attachment.setStorageType(serviceType);
-        if (attachment == null) {
-            return ApiResult.fail("Upload failed");
-        }
         return ApiResult.success(attachment);
     }
 
     @RequestMapping(value = "/object", method = RequestMethod.POST)
-    public ApiResult uploadObject(@RequestBody Map<String, Object> params, String fileName, String catalog) throws IOException {
+    public ApiResult<?> uploadObject(@RequestBody Map<String, Object> params, String fileName, String catalog) throws IOException {
         if (params == null || params.isEmpty()) {
             return ApiResult.fail("Params is empty");
         }
@@ -115,7 +114,7 @@ public class UploadController extends BaseController {
             // 文件
             File file = new File(String.format("%s/%s", rootDir, fileName));
             if (file.exists() && !UploadService.fileResetName(file)) {
-                file.delete();
+                Files.deleteIfExists(file.toPath());
             }
             fops = new FileOutputStream(file);
             oops = new ObjectOutputStream(fops);
@@ -135,7 +134,7 @@ public class UploadController extends BaseController {
     }
 
     @RequestMapping(value = "/json", method = RequestMethod.POST)
-    public ApiResult uploadJson(@RequestBody String JsonData, String fileName, String catalog) throws IOException {
+    public ApiResult<?> uploadJson(@RequestBody String JsonData, String fileName, String catalog) throws IOException {
         if (Strings.isBlank(JsonData)) {
             return ApiResult.fail("Json data is empty");
         }
@@ -160,7 +159,7 @@ public class UploadController extends BaseController {
             // 文件
             File file = new File(String.format("%s/%s", rootDir, fileName));
             if (file.exists() && !UploadService.fileResetName(file)) {
-                file.delete();
+                Files.deleteIfExists(file.toPath());
             }
             fileWriter = new FileWriter(file);
             bufferedWriter = new BufferedWriter(fileWriter);
@@ -180,8 +179,8 @@ public class UploadController extends BaseController {
     }
 
     @RequestMapping(value = "/model/{entityName}/{id}", method = RequestMethod.POST)
-    public ApiResult uploadModel(@PathVariable(value = "entityName", required = true) String entityName,
-                                 @PathVariable(value = "id", required = true) String id, String fileName) {
+    public ApiResult<?> uploadModel(@PathVariable(value = "entityName", required = true) String entityName,
+                                    @PathVariable(value = "id", required = true) String id, String fileName) {
         List<String> fileNames = StringUtils.toListDr(fileName);
         if (fileNames.isEmpty()) {
             return ApiResult.fail("File Name Is Null");
@@ -201,14 +200,20 @@ public class UploadController extends BaseController {
             if (columnMap.get("unSaveConfig") != null) {
                 unSaveConfig = StringUtils.toListDr(columnMap.get("unSaveConfig").toString());
             }
-            // 遍历字段，如果为空，则设置为空字符串
+            // 模型默认字段，不添加
+            List<ColumnMeta> metaList = MetaManager.singleInstance().getDefaultColumn();
+            List<String> defaultColumnNames = metaList.stream().map(ColumnMeta::getFieldName).toList();
+            // 遍历字段
+            Map<String, Object> columnMapNew = new HashMap<>();
             for (Map.Entry<String, Object> columnEntry : columnMap.entrySet()) {
-                if (columnEntry.getValue() == null || unSaveConfig.contains(columnEntry.getKey())) {
-                    columnEntry.setValue("");
+                // 不保存的字段，跳过
+                if (unSaveConfig.contains(columnEntry.getKey()) || defaultColumnNames.contains(columnEntry.getKey())) {
+                    continue;
                 }
+                columnMapNew.put(columnEntry.getKey(), columnEntry.getValue() == null ? "" : columnEntry.getValue());
             }
             for (String name : fileNames) {
-                uploadJson(JSON.toJSONString(columnMap), name, "");
+                uploadJson(JSON.toJSONString(columnMapNew), name, "");
             }
             return ApiResult.successNoResult();
         } catch (Exception e) {

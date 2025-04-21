@@ -21,6 +21,7 @@ import javax.sql.DataSource;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
@@ -104,7 +105,7 @@ public class BarcodeUtils {
      * @param barcode 条码配置对象，包含条码的各项参数配置
      * @return 返回生成的条形码图片保存路径
      */
-    public static String generateBarcode(String text, Barcode barcode) {
+    public static String generateBarcode(String text, Barcode barcode) throws IOException {
         // 数据处理
         barcode.afterSet();
         // 画布背景颜色
@@ -116,7 +117,7 @@ public class BarcodeUtils {
         // 图片格式
         String pictureSuffix = BarcodePictureFormatEnum.getEnum(barcode.getPictureFormat());
         String pictureName = String.format("%s.%s", getFileName(barcode), pictureSuffix);
-        String picturePath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.ATTACH.getValue(), barcode.getTenantCode(), barcode.getAppId(), pictureName, true);
+        String picturePath = UploadService.getRootSavePath(AttachmentSourceEnum.ATTACH.getValue(), barcode.getTenantCode(), barcode.getAppId(), pictureName, true);
         // log.info(String.format("%s, %s", pictureName, picturePath));
         // 字体
         Font font = null;
@@ -138,7 +139,9 @@ public class BarcodeUtils {
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
             } finally {
-                virtualGraphics.dispose();
+                if (virtualGraphics != null) {
+                    virtualGraphics.dispose();
+                }
             }
         }
         // 计算画布高度, 条码高度 + 条码上下边距 + 条码与字体之间的距离 + 文字高度
@@ -200,7 +203,9 @@ public class BarcodeUtils {
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         } finally {
-            graphics2D.dispose();
+            if (graphics2D != null) {
+                graphics2D.dispose();
+            }
         }
     }
 
@@ -214,7 +219,7 @@ public class BarcodeUtils {
     }
 
     private static int startXPosition(String alignType, int totalWidth, int borderLeftWidth, int borderRightWidth, int textWidth) {
-        int startX = 0;
+        int startX;
         if (BarcodeFontAlignEnum.isLeft(alignType)) {
             startX = borderLeftWidth;
         } else if (BarcodeFontAlignEnum.isRight(alignType)) {

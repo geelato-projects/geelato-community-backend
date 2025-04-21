@@ -784,7 +784,7 @@ public class ImportExcelService {
             String templateName = fileName.substring(0, fileName.lastIndexOf("."));
             // 错误文件 upload/存放表/租户编码/应用Id
             String errorFileName = String.format("%s：%s%s%s", templateName, "错误提示 ", sdf_dv.format(new Date()), templateExt);
-            String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, exportTemplate.getTenantCode(), exportTemplate.getAppId(), errorFileName, true);
+            String directory = UploadService.getRootSavePath(SAVE_TABLE_TYPE, exportTemplate.getTenantCode(), exportTemplate.getAppId(), errorFileName, true);
             File errorFile = new File(directory);
             // 文件处理
             if (MediaTypes.APPLICATION_EXCEL_XLS.equals(contentType)) {

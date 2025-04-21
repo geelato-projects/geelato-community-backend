@@ -90,7 +90,7 @@ public abstract class AttachmentHandler<E extends Attachment> {
         List<Resolution> thumbResolutions = ThumbnailUtils.resolution(file, dimension, thumbScale);
         if (!thumbResolutions.isEmpty()) {
             for (Resolution resolution : thumbResolutions) {
-                String thumbPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, attachmentSource, tenantCode, appId, fileName, true);
+                String thumbPath = UploadService.getRootSavePath( attachmentSource, tenantCode, appId, fileName, true);
                 File thumbFile = new File(thumbPath);
                 ThumbnailUtils.thumbnail(file, thumbFile, resolution);
                 if (!thumbFile.exists()) {

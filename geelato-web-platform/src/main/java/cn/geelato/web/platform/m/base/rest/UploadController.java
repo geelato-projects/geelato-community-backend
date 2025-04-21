@@ -25,6 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -74,7 +76,12 @@ public class UploadController extends BaseController {
         tenantCode = Strings.isBlank(tenantCode) ? SessionCtx.getCurrentTenantCode() : tenantCode;
         isRename = isRename == null || isRename;
         // 生成文件路径
-        String path = UploadService.getSavePath(root, tableType, file.getOriginalFilename(), isRename, appId, tenantCode);
+        String path;
+        if (Strings.isNotBlank(root)) {
+            path = UploadService.getSaveRootPath(root, file.getOriginalFilename(), isRename);
+        } else {
+            path = UploadService.getRootSavePath(tableType, tenantCode, appId, file.getOriginalFilename(), isRename);
+        }
         // 处理有效期参数，如果设置了有效时长则计算失效时间
         Date invalidDate = DateUtils.parse(invalidTime, DateUtils.DATETIME);
         if (validDuration != null && validDuration > 0) {
@@ -105,14 +112,17 @@ public class UploadController extends BaseController {
             if (Strings.isBlank(ext) || !ext.equalsIgnoreCase(UploadService.ROOT_CONFIG_SUFFIX)) {
                 fileName += UploadService.ROOT_CONFIG_SUFFIX;
             }
-            // 路径
-            String rootDir = UploadService.ROOT_CONFIG_DIRECTORY;
+            // 获取基础配置目录
+            Path rootPath = Paths.get(UploadService.getRootConfigDirectory());
+            // 添加目录路径（如果存在）
             if (Strings.isNotBlank(catalog)) {
-                rootDir = String.format(catalog.startsWith("/") ? "%s%s" : "%s/%s", rootDir, catalog);
+                rootPath = rootPath.resolve(catalog.startsWith("/") ? catalog.substring(1) : catalog);
             }
-            UploadService.fileMkdirs(rootDir);
-            // 文件
-            File file = new File(String.format("%s/%s", rootDir, fileName));
+            // 创建目录（包括所有不存在的父目录）
+            Files.createDirectories(rootPath);
+            // 构建文件
+            File file = rootPath.resolve(fileName).toFile();
+            // 如果文件存在，则重命名文件
             if (file.exists() && !UploadService.fileResetName(file)) {
                 Files.deleteIfExists(file.toPath());
             }
@@ -150,14 +160,17 @@ public class UploadController extends BaseController {
             if (Strings.isBlank(ext) || !ext.equalsIgnoreCase(UploadService.ROOT_CONFIG_SUFFIX)) {
                 fileName += UploadService.ROOT_CONFIG_SUFFIX;
             }
-            // 路径
-            String rootDir = UploadService.ROOT_CONFIG_DIRECTORY;
+            // 获取基础配置目录
+            Path rootPath = Paths.get(UploadService.getRootConfigDirectory());
+            // 添加目录路径（如果存在）
             if (Strings.isNotBlank(catalog)) {
-                rootDir = String.format(catalog.startsWith("/") ? "%s%s" : "%s/%s", rootDir, catalog);
+                rootPath = rootPath.resolve(catalog.startsWith("/") ? catalog.substring(1) : catalog);
             }
-            UploadService.fileMkdirs(rootDir);
-            // 文件
-            File file = new File(String.format("%s/%s", rootDir, fileName));
+            // 创建目录（包括所有不存在的父目录）
+            Files.createDirectories(rootPath);
+            // 构建文件
+            File file = rootPath.resolve(fileName).toFile();
+            // 如果文件存在，则重命名文件
             if (file.exists() && !UploadService.fileResetName(file)) {
                 Files.deleteIfExists(file.toPath());
             }

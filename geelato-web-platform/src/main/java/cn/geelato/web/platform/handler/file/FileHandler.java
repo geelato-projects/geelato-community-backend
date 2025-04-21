@@ -63,7 +63,7 @@ public class FileHandler extends BaseHandler {
         if (AttachmentServiceEnum.ALIYUN.getValue().equalsIgnoreCase(param.getServiceType())) {
             return uploadCloud(base64String, name, param);
         } else {
-            String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, param.getSourceType(), param.getTenantCode(), param.getAppId(), name, false);
+            String path = UploadService.getRootSavePath(param.getSourceType(), param.getTenantCode(), param.getAppId(), name, false);
             return uploadLocal(base64String, name, path, param);
         }
     }
@@ -374,7 +374,7 @@ public class FileHandler extends BaseHandler {
         for (int i = 0; i < lists.size(); i += 1) {
             List<String> fileIds = lists.get(i).stream().map(Attachment::getId).collect(Collectors.toList());
             String zipFileName = String.format("%s%s.zip", fileName, i > 0 ? "（" + i + "）" : "");
-            String zpiFilePath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, param.getSourceType(), param.getTenantCode(), param.getAppId(), zipFileName, true);
+            String zpiFilePath = UploadService.getRootSavePath(param.getSourceType(), param.getTenantCode(), param.getAppId(), zipFileName, true);
             List<FileIS> fileISs = new ArrayList<>();
             for (Attachment attachment : lists.get(i)) {
                 fileISs.add(fileMap.get(attachment.getId()));

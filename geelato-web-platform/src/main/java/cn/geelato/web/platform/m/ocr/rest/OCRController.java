@@ -13,8 +13,8 @@ import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
-import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import cn.geelato.web.platform.m.ocr.entity.*;
@@ -97,7 +97,7 @@ public class OCRController extends BaseController {
         File fileInstance = fileHandler.toFile(attachment);
         OCRService ocrService = pluginBeanProvider.getBean(OCRService.class, PluginInfo.PluginId);
         String fileName = FileUtils.setPdfFileName(attachment.getName());
-        String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, null, fileName, true);
+        String directory = UploadService.getRootSavePath(SAVE_TABLE_TYPE, getTenantCode(), getAppId(), fileName, true);
         File targetFile = new File(directory);
         ocrService.clearContent(annotationPositionMetaList, fileInstance, targetFile);
         attachment.handleGenre(FileGenreEnum.clearPdf.name());
@@ -115,7 +115,7 @@ public class OCRController extends BaseController {
      * @return ApiResult<?> 如果解析成功，则返回包含成功信息的ApiResult对象；如果解析失败，则返回包含错误信息的ApiResult对象
      */
     @RequestMapping(value = "/pdf/resolve", method = RequestMethod.GET)
-    public ApiResult<?> metaResolve(String fileId, String templateId, boolean wholeContent) throws IOException, ParseException {
+    public ApiResult<?> metaResolve(String fileId, String templateId, boolean wholeContent) throws ParseException {
         // 需要处理的文件
         File pdfFile = fileHandler.toFile(fileId);
         if (pdfFile == null || !pdfFile.exists()) {
@@ -184,7 +184,7 @@ public class OCRController extends BaseController {
      * @throws IllegalArgumentException 如果模板为空或格式错误，则抛出此异常
      */
     @RequestMapping(value = "/pdf/analysis", method = RequestMethod.POST)
-    public ApiResult analysis(@RequestBody OcrPdf form) throws IOException {
+    public ApiResult<?> analysis(@RequestBody OcrPdf form) throws IOException {
         if (Strings.isBlank(form.getTemplate())) {
             throw new IllegalArgumentException("pdf template is blank");
         }

@@ -82,7 +82,7 @@ public class PackageController extends BaseController {
     @RequestMapping(value = {"/packet/{appId}"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult<AppVersion> packetApp(@NotNull @PathVariable("appId") String appId, String version, String description,
-                               @RequestBody(required = false) Map<String, String> appointMetas) throws IOException {
+                                           @RequestBody(required = false) Map<String, String> appointMetas) throws IOException {
         Map<String, String> appDataMap = new HashMap<>();
         Map<String, String> appMetaDataMap = appMetaMap(appId, "package");
         Map<String, String> appBizDataMap = appBizDataMap(appId, "package");
@@ -117,7 +117,7 @@ public class PackageController extends BaseController {
         appPackage.setAppMetaList(appMetaList);
         AppVersion av = new AppVersion();
         av.setAppId(appId);
-        String packageVersion = null;
+        String packageVersion;
         if (StringUtils.isEmpty(version)) {
             packageVersion = generateVersionCode(appPackage.getAppCode());
         } else {
@@ -142,7 +142,7 @@ public class PackageController extends BaseController {
     @RequestMapping(value = {"/packet/merge"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult<AppVersion> packetMergeApp(String appId, String version, String description,
-                                    @RequestBody(required = false) Map<String, Map<String, String>> appointMetas) throws IOException {
+                                                @RequestBody(required = false) Map<String, Map<String, String>> appointMetas) throws IOException {
         String[] versionIds = appointMetas.keySet().toArray(new String[0]);
         List<AppPackage> appPackages = getAppointAppPackage(versionIds);
         AppPackage appPackage = mergePackage(appPackages, appointMetas);
@@ -214,7 +214,7 @@ public class PackageController extends BaseController {
         List<AppPackage> appPackageList = new ArrayList<>();
         for (String version : versions) {
             AppVersion appVersion = appVersionService.getAppVersionByVersion(version);
-            String appPackageData = null;
+            String appPackageData;
             if (appVersion != null && !StringUtils.isEmpty(appVersion.getPackagePath())) {
                 try {
                     if (appVersion.getPackagePath().contains(".zgdp")) {
@@ -295,12 +295,12 @@ public class PackageController extends BaseController {
      */
     @RequestMapping(value = {"/deploy/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
-    public ApiResult deployPackage(@PathVariable("versionId") String versionId) throws DaoException {
+    public ApiResult<?> deployPackage(@PathVariable("versionId") String versionId) throws DaoException {
         if ("init_source".equals(packageConfigurationProperties.getEnv())) {
             return ApiResult.fail("本环境无法部署任何应用，请联系管理员！");
         }
         AppVersion appVersion = appVersionService.getModel(AppVersion.class, versionId);
-        String appPackageData = null;
+        String appPackageData;
         if (appVersion != null && !StringUtils.isEmpty(appVersion.getPackagePath())) {
             try {
                 if (appVersion.getPackagePath().contains(".zgdp")) {
@@ -346,7 +346,7 @@ public class PackageController extends BaseController {
 
     }
 
-    //todo
+    // todo
     private void backupCurrentVersion(String appId) {
         log.info("----------------------backup version start--------------------");
         Map<String, String> appMetaMap = appMetaMap(appId, "remove");
@@ -520,7 +520,7 @@ public class PackageController extends BaseController {
         String appPackageName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String appPackageFullName = (Strings.isNotBlank(appVersion.getVersion()) ? appVersion.getVersion() : appPackageName) + packageSuffix;
         String targetZipPath;
-        targetZipPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, SessionCtx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
+        targetZipPath = UploadService.getRootSavePath(SAVE_TABLE_TYPE, getTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
         ZipUtils.compressDirectory(sourcePackageFolder, targetZipPath);
         File file = new File(targetZipPath);
         FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "package", appPackage.getSourceAppId(), appVersion.getTenantCode());

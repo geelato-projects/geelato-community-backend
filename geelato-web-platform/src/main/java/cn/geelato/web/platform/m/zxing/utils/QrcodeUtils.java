@@ -32,7 +32,7 @@ public class QrcodeUtils {
      * @param qrcode 二维码的配置信息，包括大小、边距、背景色、字体色等
      * @return 返回生成的二维码图片的路径
      */
-    public static String generateQrcode(String text, Qrcode qrcode) {
+    public static String generateQrcode(String text, Qrcode qrcode) throws IOException {
         // 数据处理
         qrcode.afterSet();
         // 画布背景颜色
@@ -42,7 +42,7 @@ public class QrcodeUtils {
         // 图片格式
         String pictureSuffix = BarcodePictureFormatEnum.getEnum(qrcode.getPictureFormat());
         String pictureName = String.format("%s.%s", getFileName(qrcode), pictureSuffix);
-        String picturePath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, AttachmentSourceEnum.ATTACH.getValue(), qrcode.getTenantCode(), qrcode.getAppId(), pictureName, true);
+        String picturePath = UploadService.getRootSavePath(AttachmentSourceEnum.ATTACH.getValue(), qrcode.getTenantCode(), qrcode.getAppId(), pictureName, true);
         log.info(String.format("%s, %s", pictureName, picturePath));
         // 计算画布高度, 条码高度 + 条码上下边距
         int qrcodeHeight = qrcode.getHeight() + 2 * qrcode.getCodePadding();
@@ -50,7 +50,7 @@ public class QrcodeUtils {
         int qrcodeWidth = qrcode.getWidth() + 2 * qrcode.getCodePadding();
         log.info(String.format("画布宽高：（%d，%d）", qrcodeWidth, qrcodeHeight));
         // 创建画布
-        Graphics2D graphics2D = null;
+        Graphics2D graphics2D;
         try {
             int imageType = qrcode.getLucency() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
             BufferedImage qrcodeImage = new BufferedImage(qrcodeWidth, qrcodeHeight, imageType);

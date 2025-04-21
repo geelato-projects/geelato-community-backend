@@ -50,17 +50,17 @@ public class DownloadController extends BaseController {
     }
 
     @RequestMapping(value = "/json", method = RequestMethod.GET)
-    public ApiResult downloadJson(String fileName) throws IOException {
+    public ApiResult<?> downloadJson(String fileName) throws IOException {
         if (Strings.isBlank(fileName)) {
             return ApiResult.fail("fileName is null");
         }
         BufferedReader bufferedReader = null;
         try {
             String ext = FileUtils.getFileExtension(fileName);
-            if (Strings.isBlank(ext) || !".config".equalsIgnoreCase(ext)) {
-                fileName += ".config";
+            if (Strings.isBlank(ext) || !UploadService.ROOT_CONFIG_SUFFIX.equalsIgnoreCase(ext)) {
+                fileName += UploadService.ROOT_CONFIG_SUFFIX;
             }
-            File file = new File(String.format("%s/%s", UploadService.ROOT_CONFIG_DIRECTORY, fileName));
+            File file = new File(String.format("%s/%s", UploadService.getRootConfigDirectory(), fileName));
             if (!file.exists()) {
                 return ApiResult.fail("该站点信息还未配置");
             }

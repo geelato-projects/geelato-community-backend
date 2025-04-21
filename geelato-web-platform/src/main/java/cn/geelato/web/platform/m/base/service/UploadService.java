@@ -6,13 +6,21 @@ import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.m.file.entity.Attach;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -20,13 +28,33 @@ import java.util.Date;
  * @author diabl
  */
 @Component
+@Slf4j
 public class UploadService {
-    public static final String ROOT_DIRECTORY = "upload";
-    public static final String ROOT_CONVERT_DIRECTORY = "upload/convert";
-    public static final String ROOT_CONFIG_DIRECTORY = "/upload/config";
-    public static final String ROOT_AVATAR_DIRECTORY = "upload/avatar";
     public static final String ROOT_CONFIG_SUFFIX = ".config";
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATEVARIETY);
+
+    @Getter
+    private static String rootDirectory;
+    @Getter
+    private static String rootConvertDirectory;
+    @Getter
+    private static String rootConfigDirectory;
+
+    @Value("${geelato.upload.root-directory}")
+    private String tempRootDirectory;
+
+    @Value("${geelato.upload.convert-directory}")
+    private String tempRootConvertDirectory;
+
+    @Value("${geelato.upload.config-directory}")
+    private String tempRootConfigDirectory;
+
+    @PostConstruct
+    public void init() {
+        rootDirectory = this.tempRootDirectory;
+        rootConvertDirectory = this.tempRootConvertDirectory;
+        rootConfigDirectory = this.tempRootConfigDirectory;
+    }
 
     /**
      * 返回文件上传的绝对路径
@@ -38,26 +66,25 @@ public class UploadService {
      * @param isRename 是否重命名文件，如果为true，则会对文件名进行重命名处理
      * @return 返回文件上传的绝对路径字符串
      */
-    public static String getSavePath(String subPath, String fileName, boolean isRename) {
-        // 处理子路径
+    public static String getSavePath(String subPath, String fileName, boolean isRename) throws IOException {
+        // 参数校验
+        if (Strings.isBlank(fileName)) {
+            throw new IllegalArgumentException("fileName cannot be blank");
+        }
+        // 构建基础路径
+        Path basePath = Paths.get("/");
+        // 添加子路径（如果存在）
         if (Strings.isNotBlank(subPath)) {
-            subPath += "/";
-        } else {
-            subPath = "";
+            basePath = basePath.resolve(subPath);
         }
-
-        // 处理日期路径
-        String datePath = DateUtils.getAttachDatePath();
-
-        // 处理文件名称
-        if (isRename) {
-            String ext = FileUtils.getFileExtension(fileName);
-            fileName = UIDGenerator.generate() + ext;
-        }
-        // 路径检验
-        UploadService.fileMkdirs("/" + subPath + datePath);
-
-        return "/" + subPath + datePath + fileName;
+        // 添加日期路径
+        Path fullDirPath = basePath.resolve(DateUtils.getAttachDatePath());
+        // 处理文件名
+        String finalFileName = isRename ? UIDGenerator.generate() + FileUtils.getFileExtension(fileName) : fileName;
+        // 创建目录
+        createDirectories(fullDirPath.toString());
+        // 构建最终路径并确保使用Unix风格斜杠
+        return fullDirPath.resolve(finalFileName).toString().replace('\\', '/');
     }
 
     /**
@@ -73,14 +100,20 @@ public class UploadService {
      * @param isRename   是否重命名文件，如果为true，则对文件名进行处理以避免重名
      * @return 返回生成的保存路径字符串
      */
-    public static String getSavePath(String subPath, String tenantCode, String appId, String fileName, boolean isRename) {
-        String rootPath = subPath;
-        tenantCode = Strings.isNotBlank(tenantCode) ? tenantCode : SessionCtx.getCurrentTenantCode();
-        if (Strings.isNotBlank(appId) && Strings.isNotBlank(tenantCode)) {
-            rootPath = String.format("%s/%s/%s", subPath, tenantCode, appId);
+    public static String getSavePath(String subPath, String tenantCode, String appId, String fileName, boolean isRename) throws IOException {
+        // 参数校验
+        if (Strings.isBlank(subPath) || Strings.isBlank(fileName)) {
+            throw new IllegalArgumentException("subPath and fileName cannot be blank");
         }
-
-        return getSavePath(rootPath, fileName, isRename);
+        // 构建基础路径
+        Path basePath = Paths.get(subPath);
+        // 处理租户和应用ID
+        tenantCode = Strings.isNotBlank(tenantCode) ? tenantCode : SessionCtx.getCurrentTenantCode();
+        if (Strings.isNotBlank(tenantCode) && Strings.isNotBlank(appId)) {
+            basePath = basePath.resolve(tenantCode).resolve(appId);
+        }
+        // 调用单参数版本
+        return getSavePath(basePath.toString(), fileName, isRename);
     }
 
     /**
@@ -96,34 +129,37 @@ public class UploadService {
      * @param isRename   是否重命名，如果为true，则文件名可能会根据规则进行重命名
      * @return 返回生成的文件保存路径字符串
      */
-    public static String getSavePath(String subPath, String tableType, String tenantCode, String appId, String fileName, boolean isRename) {
-        String rootPath = subPath;
+    public static String getSavePath(String subPath, String tableType, String tenantCode, String appId, String fileName, boolean isRename) throws IOException {
+        // 参数校验
+        if (Strings.isBlank(subPath) || Strings.isBlank(fileName)) {
+            throw new IllegalArgumentException("subPath and fileName cannot be blank");
+        }
+        // 获取或默认AttachmentSourceEnum
         AttachmentSourceEnum sourceEnum = AttachmentSourceEnum.getEnum(tableType);
         if (sourceEnum == null) {
             sourceEnum = AttachmentSourceEnum.ATTACH;
         }
-        rootPath = String.format("%s/%s", subPath, sourceEnum.getValue());
-
-        return getSavePath(rootPath, tenantCode, appId, fileName, isRename);
+        // 构建路径
+        Path path = Paths.get(subPath).resolve(sourceEnum.getValue());
+        // 调用静默版本
+        return getSavePath(path.toString(), tenantCode, appId, fileName, isRename);
     }
 
     /**
-     * 获取文件保存路径
+     * 获取根保存路径
+     * 该方法用于构造文件的保存路径，基于给定的参数和是否重命名文件的原则
+     * 主要用于在特定的目录结构中找到或创建文件的唯一位置
      *
-     * @param root       根目录路径
-     * @param tableType  表类型
-     * @param name       文件名
-     * @param isRename   是否需要重命名
-     * @param appId      应用ID
-     * @param tenantCode 租户代码
-     * @return 文件保存路径
+     * @param tableType  表类型，用于区分不同类型的上传
+     * @param tenantCode 租户代码，代表文件属于哪个租户，用于隔离不同租户的数据
+     * @param appId      应用ID，标识文件是哪个应用上传的，以便按应用分类存储
+     * @param fileName   文件名，原始文件名，用于在路径中保留文件的原始名称
+     * @param isRename   是否重命名，决定是否对文件进行重命名以避免冲突
+     * @return 返回构造的文件保存路径
+     * @throws IOException 如果由于I/O错误无法获取保存路径
      */
-    public static String getSavePath(String root, String tableType, String name, boolean isRename, String appId, String tenantCode) {
-        if (Strings.isNotBlank(root)) {
-            return UploadService.getSaveRootPath(root, name, isRename);
-        } else {
-            return UploadService.getSavePath(UploadService.ROOT_DIRECTORY, tableType, tenantCode, appId, name, isRename);
-        }
+    public static String getRootSavePath(String tableType, String tenantCode, String appId, String fileName, boolean isRename) throws IOException {
+        return getSavePath(UploadService.getRootDirectory(), tableType, tenantCode, appId, fileName, isRename);
     }
 
     /**
@@ -136,20 +172,21 @@ public class UploadService {
      * @param isRename 是否重命名文件，如果为true，则文件名将被替换为生成的唯一标识符
      * @return 返回文件的完整保存路径
      */
-    public static String getSaveRootPath(String subPath, String fileName, boolean isRename) {
-        // 处理子路径
-        subPath = subPath.startsWith("/") ? subPath : "/" + subPath;
-        subPath = subPath.endsWith("/") ? subPath : "/" + subPath;
-
-        // 处理文件名称
-        if (isRename) {
-            String ext = FileUtils.getFileExtension(fileName);
-            fileName = UIDGenerator.generate() + ext;
+    public static String getSaveRootPath(String subPath, String fileName, boolean isRename) throws IOException {
+        // 参数校验
+        if (Strings.isBlank(subPath) || Strings.isBlank(fileName)) {
+            throw new IllegalArgumentException("subPath and fileName cannot be blank");
         }
-        // 路径检验
-        UploadService.fileMkdirs(subPath);
-
-        return subPath + fileName;
+        // 使用Path处理路径标准化
+        Path basePath = Paths.get(subPath.startsWith("/") ? subPath : "/" + subPath).normalize();
+        // 处理文件名
+        String finalFileName = isRename ? UIDGenerator.generate() + FileUtils.getFileExtension(fileName) : fileName;
+        // 确保路径以斜杠结尾（用于目录）
+        String dirPath = basePath + "/";
+        // 创建目录
+        createDirectories(dirPath);
+        // 拼接最终路径
+        return basePath.resolve(finalFileName).toString();
     }
 
     /**
@@ -159,11 +196,23 @@ public class UploadService {
      *
      * @param path 要创建的路径字符串
      */
-    public static void fileMkdirs(String path) {
+    public static void createDirectories(String path) throws IOException {
         if (Strings.isNotBlank(path)) {
-            File pathFile = new File(path);
-            if (!pathFile.exists()) {
-                pathFile.mkdirs();
+            Path dirPath = Paths.get(path).normalize();
+            try {
+                if (!Files.exists(dirPath)) {
+                    // 原子性创建所有目录
+                    Files.createDirectories(dirPath);
+                    log.debug("Created directory: {}", dirPath);
+                } else if (!Files.isDirectory(dirPath)) {
+                    throw new IOException("Path exists but is not a directory: " + path);
+                }
+            } catch (IOException e) {
+                log.error("Failed to create directory: {}", path, e);
+                throw e;
+            } catch (SecurityException e) {
+                log.error("Permission denied when creating directory: {}", path, e);
+                throw e;
             }
         }
     }
@@ -212,13 +261,9 @@ public class UploadService {
      * @param entity 目标对象的Class类型，用于创建目标对象实例
      * @param <T>    目标对象的类型
      * @return 返回目标对象的实例，如果复制失败则返回null
-     * @throws NoSuchMethodException     如果目标对象的类没有无参数的构造函数，则抛出此异常
-     * @throws InvocationTargetException 如果目标对象的构造函数或初始化代码块在执行时抛出异常，则抛出此异常
-     * @throws InstantiationException    如果目标对象的类表示一个抽象类、接口、数组类、基本类型或void，或者如果无法实例化目标对象，则抛出此异常
-     * @throws IllegalAccessException    如果目标对象的构造函数或初始化代码块不可访问，则抛出此异常
      */
     public static <T> T copyProperties(Attach source, Class<T> entity) {
-        T object = null;
+        T object;
         try {
             // 尝试获取无参数的构造函数
             Constructor<T> constructor = entity.getDeclaredConstructor();

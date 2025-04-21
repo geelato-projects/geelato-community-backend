@@ -414,8 +414,8 @@ public class ExportTemplateService extends BaseService {
      * @param isRename 是否重命名文件
      * @return 返回文件的保存路径
      */
-    private String getSavePath(ExportTemplate meta, String fileName, boolean isRename) {
-        return UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, meta.getTenantCode(), meta.getAppId(), fileName, isRename);
+    private String getSavePath(ExportTemplate meta, String fileName, boolean isRename) throws IOException {
+        return UploadService.getRootSavePath(SAVE_TABLE_TYPE, meta.getTenantCode(), meta.getAppId(), fileName, isRename);
     }
 
     /**

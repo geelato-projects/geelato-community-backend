@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -149,8 +150,8 @@ public class BarcodeController extends BaseController {
         }
     }
 
-    private Object generateByType(String type, String text, Barcode barcode) {
-        Object obj = null;
+    private Object generateByType(String type, String text, Barcode barcode) throws IOException {
+        Object obj;
         if ("attach".equalsIgnoreCase(type)) {
             obj = BarcodeUtils.generateBarcodeToAttach(text, barcode);
         } else if ("base64".equalsIgnoreCase(type)) {

@@ -47,13 +47,13 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult get(@PathVariable(required = true) String id) {
+    public ApiResult<?> get(@PathVariable(required = true) String id) {
         Attachment attachment = fileHandler.getAttachment(id, false);
         return ApiResult.success(attachment);
     }
 
     @RequestMapping(value = "/image/{id}", method = RequestMethod.POST)
-    public ApiResult image(@PathVariable(required = true) String id) {
+    public ApiResult<?> image(@PathVariable(required = true) String id) {
         Map<String, Object> queryParams = new HashMap<>();
         queryParams.put("pids", id);
         List<Attachment> attachmentList = fileHandler.getAttachments(queryParams);
@@ -61,7 +61,7 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.POST)
-    public ApiResult update(@PathVariable(required = true) String id, @RequestBody Map<String, Object> requestMap) throws InvocationTargetException, IllegalAccessException {
+    public ApiResult<?> update(@PathVariable(required = true) String id, @RequestBody Map<String, Object> requestMap) throws InvocationTargetException, IllegalAccessException {
         Attachment attachment = fileHandler.getAttachment(id);
         BeanUtils.populate(attachment, requestMap);
         fileHandler.updateAttachment(attachment);
@@ -69,7 +69,7 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/replace/{sourceId}/{targetId}", method = RequestMethod.POST)
-    public ApiResult replace(@PathVariable(required = true) String sourceId, @PathVariable(required = true) String targetId, @RequestBody Map<String, Object> requestMap) throws InvocationTargetException, IllegalAccessException {
+    public ApiResult<?> replace(@PathVariable(required = true) String sourceId, @PathVariable(required = true) String targetId, @RequestBody Map<String, Object> requestMap) throws InvocationTargetException, IllegalAccessException {
         Attachment source = fileHandler.getAttachment(sourceId);
         if (source == null) {
             return ApiResult.fail("源附件不存在!");
@@ -91,7 +91,7 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/valid", method = RequestMethod.POST)
-    public ApiResult validate(@RequestBody Map<String, Object> requestMap) {
+    public ApiResult<?> validate(@RequestBody Map<String, Object> requestMap) {
         String attachmentIds = Objects.toString(requestMap.get("attachmentIds"), "");
         List<String> ids = StringUtils.toListDr(attachmentIds);
         if (ids.isEmpty()) {
@@ -128,7 +128,7 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/storage/{type}", method = RequestMethod.POST)
-    public ApiResult updateStorageType(@PathVariable(required = true) String type, @RequestBody Map<String, Object> requestMap) {
+    public ApiResult<?> updateStorageType(@PathVariable(required = true) String type, @RequestBody Map<String, Object> requestMap) throws IOException {
         String attachmentIds = Objects.toString(requestMap.get("attachmentIds"), "");
         List<String> ids = StringUtils.toListDr(attachmentIds);
         if (ids.isEmpty()) {
@@ -149,7 +149,7 @@ public class AttachController extends BaseController {
             if (AttachmentServiceEnum.LOCAL.getValue().equalsIgnoreCase(type)) {
                 // 阿里云OSS => 本地存储
                 if (AttachmentServiceEnum.ALIYUN.getValue().equalsIgnoreCase(attachment.getStorageType())) {
-                    String path = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, attachment.getSource(), attachment.getTenantCode(), attachment.getAppId(), attachment.getName(), true);
+                    String path = UploadService.getRootSavePath(attachment.getSource(), attachment.getTenantCode(), attachment.getAppId(), attachment.getName(), true);
                     try {
                         Files.copy(file.toPath(), Paths.get(path).normalize(), StandardCopyOption.REPLACE_EXISTING);
                         attachment.setObjectId(null);
@@ -187,13 +187,13 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/list", method = RequestMethod.POST)
-    public ApiResult list(@RequestBody Map<String, Object> requestMap) {
+    public ApiResult<?> list(@RequestBody Map<String, Object> requestMap) {
         List<Attachment> attachments = fileHandler.getAttachments(requestMap);
         return ApiResult.success(attachments);
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
-    public ApiPagedResult pageQuery(@RequestBody Map<String, Object> requestMap) {
+    public ApiPagedResult<?> pageQuery(@RequestBody Map<String, Object> requestMap) {
         long page = NumberUtils.toLong(Objects.toString(requestMap.get("current"), ""), 1L);
         int size = NumberUtils.toInt(Objects.toString(requestMap.get("pageSize"), ""), 10);
         String orderBy = Objects.toString(requestMap.get("order"), "");
@@ -205,7 +205,7 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/column/{type}", method = RequestMethod.GET)
-    public ApiResult columnType(@PathVariable(required = true) String type) {
+    public ApiResult<?> columnType(@PathVariable(required = true) String type) {
         List<String> typeValues = new ArrayList<>();
         if (List.of("type", "resolution").contains(type)) {
             List<Map<String, Object>> data = dao.queryForMapList("platform_attachment_query_" + type, new HashMap<>());

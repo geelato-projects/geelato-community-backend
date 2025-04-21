@@ -620,7 +620,7 @@ public class WordXWPFWriter {
                     value = tempFile.exists() ? tempFile.getAbsolutePath() : null;
                 }
             } else if (meta.isImageSourceRelativePath()) {
-                if (!value.startsWith("/" + UploadService.ROOT_DIRECTORY)) {
+                if (!value.startsWith(UploadService.getRootDirectory())) {
                     value = null;
                 }
             } else if (meta.isImageSourceNetAddress()) {

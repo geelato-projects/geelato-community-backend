@@ -119,7 +119,7 @@ public class ExportExcelService {
                 fileName = String.format("%s_%s%s", templateName, sdf.format(new Date()), templateExt);
             }
             // 实体文件 upload/存放表/租户编码/应用Id
-            String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, exportTemplate.getTenantCode(), exportTemplate.getAppId(), fileName, true);
+            String directory = UploadService.getRootSavePath(SAVE_TABLE_TYPE, exportTemplate.getTenantCode(), exportTemplate.getAppId(), fileName, true);
             File exportFile = new File(directory);
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
@@ -176,7 +176,7 @@ public class ExportExcelService {
             Assert.notNull(templateAttach, "导出模板创建失败！");
             // 实体文件 upload/存放表/租户编码/应用Id
             String exportFileName = String.format("%s_%s%s", fileName, sdf.format(new Date()), templateExt);
-            String directory = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, tenantCode, appId, exportFileName, true);
+            String directory = UploadService.getRootSavePath(SAVE_TABLE_TYPE, tenantCode, appId, exportFileName, true);
             File exportFile = new File(directory);
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
@@ -477,7 +477,7 @@ public class ExportExcelService {
         XSSFWorkbook workbook = null;
         try {
             // 创建文件
-            String exportPath = UploadService.getSavePath(UploadService.ROOT_DIRECTORY, SAVE_TABLE_TYPE, tenantCode, appId, fileName, true);
+            String exportPath = UploadService.getRootSavePath(SAVE_TABLE_TYPE, tenantCode, appId, fileName, true);
             // 读取文件，
             workbook = new XSSFWorkbook();
             excelXSSFWriter.generateTemplateFile(workbook, "list", exportColumns);

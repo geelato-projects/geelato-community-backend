@@ -251,7 +251,7 @@ public class BaseHandler {
         if (sourceFile != null && sourceFile.exists() && Strings.isNotBlank(sourceExt)) {
             try {
                 // 指定地址
-                String outputPath = UploadService.getSavePath(UploadService.ROOT_CONVERT_DIRECTORY, tenantCode, appId, "word-to-pdf.pdf", true);
+                String outputPath = UploadService.getSavePath(UploadService.getRootConvertDirectory(), tenantCode, appId, "word-to-pdf.pdf", true);
                 // 转为pdf文件
                 OfficeUtils.toPdf(sourceFile.getAbsolutePath(), outputPath, sourceExt);
                 // 返回文件

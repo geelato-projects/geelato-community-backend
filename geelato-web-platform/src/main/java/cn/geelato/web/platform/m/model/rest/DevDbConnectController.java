@@ -39,7 +39,7 @@ public class DevDbConnectController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
-    public ApiPagedResult pageQuery() {
+    public ApiPagedResult<?> pageQuery() {
         try {
             Map<String, Object> requestBody = this.getRequestBody();
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
@@ -52,7 +52,7 @@ public class DevDbConnectController extends BaseController {
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public ApiResult query() {
+    public ApiResult<?> query() {
         try {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
             Map<String, Object> params = this.getQueryParameters(CLAZZ);
@@ -64,7 +64,7 @@ public class DevDbConnectController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult get(@PathVariable(required = true) String id) {
+    public ApiResult<?> get(@PathVariable() String id) {
         try {
             return ApiResult.success(devDbConnectService.getModel(CLAZZ, id));
         } catch (Exception e) {
@@ -74,7 +74,7 @@ public class DevDbConnectController extends BaseController {
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    public ApiResult createOrUpdate(@RequestBody ConnectMeta form) {
+    public ApiResult<?> createOrUpdate(@RequestBody ConnectMeta form) {
         try {
             // 判断是否存在
             devDbConnectService.isExist(form);
@@ -91,7 +91,7 @@ public class DevDbConnectController extends BaseController {
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
+    public ApiResult<NullResult> isDelete(@PathVariable() String id) {
         try {
             ConnectMeta model = devDbConnectService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);

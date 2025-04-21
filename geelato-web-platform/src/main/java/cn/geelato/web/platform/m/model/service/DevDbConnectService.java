@@ -29,13 +29,13 @@ public class DevDbConnectService extends BaseService {
      * @return 如果数据库连接存在，则返回true；否则返回false
      */
     public boolean isExist(ConnectMeta meta) {
-        return this.isExist(meta.getId(), meta.getDbType(), meta.getDbHostnameIp(), meta.getDbPort(), meta.getDbName());
+        return this.isExist(meta.getId(), meta.getDbType(), meta.getDbHostnameIp(), meta.getDbPort(), meta.getDbName(), meta.getAppId(), meta.getTenantCode());
     }
 
     /**
      * 检查数据库连接是否存在
      * <p>
-     * 根据提供的数据库连接信息，检查数据库中是否已存在相同的连接。
+     * 根据提供的数据库连接信息，检查数据库中是否已存在相同地连接。
      *
      * @param id         连接的唯一标识符
      * @param type       数据库类型
@@ -43,14 +43,16 @@ public class DevDbConnectService extends BaseService {
      * @param port       数据库端口号
      * @param name       数据库名称
      * @return 如果数据库中已存在相同的连接，则返回true；否则返回false
-     * @throws RuntimeException 如果数据库中已存在相同的连接，则抛出运行时异常
+     * @throws RuntimeException 如果数据库中已存在相同地连接，则抛出运行时异常
      */
-    public boolean isExist(String id, String type, String hostnameIp, int port, String name) {
+    public boolean isExist(String id, String type, String hostnameIp, int port, String name, String appId, String tenantCode) {
         FilterGroup filter = new FilterGroup();
         filter.addFilter("dbType", type);
         filter.addFilter("dbHostnameIp", hostnameIp);
         filter.addFilter("dbPort", String.valueOf(port));
         filter.addFilter("dbName", name);
+        filter.addFilter("appId", appId);
+        filter.addFilter("tenantCode", tenantCode);
         if (StringUtils.isNotBlank(id)) {
             filter.addFilter("id", FilterGroup.Operator.neq, id);
         }
@@ -79,7 +81,7 @@ public class DevDbConnectService extends BaseService {
         if (connectMetaList != null && !connectMetaList.isEmpty()) {
             for (ConnectMeta connectMeta : connectMetaList) {
                 // 检查数据库连接是否存在
-                this.isExist(null, connectMeta.getDbType(), connectMeta.getDbHostnameIp(), connectMeta.getDbPort(), connectMeta.getDbName());
+                this.isExist(null, connectMeta.getDbType(), connectMeta.getDbHostnameIp(), connectMeta.getDbPort(), connectMeta.getDbName(), appId, connectMeta.getTenantCode());
                 // 创建数据库连接
                 connectMeta.setId(null);
                 connectMeta.setDbUserName(userName);

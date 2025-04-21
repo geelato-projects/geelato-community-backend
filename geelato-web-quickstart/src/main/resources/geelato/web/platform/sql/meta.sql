@@ -17,7 +17,6 @@ UPDATE platform_dev_table_check SET synced = 1 WHERE del_status = 0 AND table_id
 -- 链接模式schema更新后更新关联元数据
 -- @sql upgradeMetaAfterUpdateSchema
 UPDATE platform_dev_table SET table_schema = '$.dbSchema' WHERE connect_id = '$.id';
-UPDATE platform_dev_view SET table_schema = '$.dbSchema' WHERE connect_id = '$.id';
 UPDATE platform_dev_table_check SET table_schema = '$.dbSchema' WHERE connect_id = '$.id';
 UPDATE platform_dev_column p1,platform_dev_table p2 SET p1.table_schema = '$.dbSchema' WHERE p1.table_id = p2.id AND connect_id = '$.id';
 

@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.model.rest;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.web.platform.constants.MediaTypes;
 import cn.geelato.core.enums.ColumnSyncedEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.enums.TableSourceTypeEnum;

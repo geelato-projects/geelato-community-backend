@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.excel.entity;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.env.entity.User;
+import cn.geelato.security.User;
 import cn.geelato.utils.DateUtils;
 import lombok.Getter;
 import lombok.Setter;

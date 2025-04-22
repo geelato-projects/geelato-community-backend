@@ -439,7 +439,7 @@ public class EncodingService extends BaseService {
                 }
             }
             if (variableKeys.contains("user")) {
-                cn.geelato.core.env.entity.User user = SessionCtx.getCurrentUser();
+                cn.geelato.security.User user = SessionCtx.getCurrentUser();
                 if (user != null && Strings.isNotBlank(user.getUserId())) {
                     Map<String, Object> model = dao.queryForMap(User.class, "id", user.getUserId());
                     if (model != null) {

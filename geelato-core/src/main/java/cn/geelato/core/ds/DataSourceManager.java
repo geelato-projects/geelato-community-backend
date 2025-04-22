@@ -1,5 +1,6 @@
 package cn.geelato.core.ds;
 
+import cn.geelato.core.util.EncryptUtils;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import cn.geelato.core.AbstractManager;
@@ -69,7 +70,7 @@ public class DataSourceManager extends AbstractManager {
         String serverHost=dbConnectMap.get("db_hostname_ip").toString();
         String serverPort=dbConnectMap.get("db_port").toString();
         String dbUserName=dbConnectMap.get("db_user_name").toString();
-        String dbPassWord=dbConnectMap.get("db_password").toString();
+        String dbPassWord=EncryptUtils.decrypt(dbConnectMap.get("db_password").toString());
         String dbName=dbConnectMap.get("db_name").toString();
         String dbDriver=null;
         String jdbcUrl=null;

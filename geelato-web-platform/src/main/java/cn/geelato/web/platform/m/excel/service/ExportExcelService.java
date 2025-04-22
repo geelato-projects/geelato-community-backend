@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.excel.service;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.web.platform.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.common.Base64Helper;

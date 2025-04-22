@@ -2,13 +2,13 @@ package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.env.entity.User;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.security.User;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.App;

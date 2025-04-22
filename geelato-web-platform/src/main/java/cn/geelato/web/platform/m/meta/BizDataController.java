@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.meta;
 
 
-import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.web.platform.constants.MediaTypes;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.orm.DaoException;
 import cn.geelato.lang.api.ApiMetaResult;

@@ -21,6 +21,14 @@
       <artifactId>geelato-utils</artifactId>
     </dependency>
     <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-lang</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-security</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jdbc</artifactId>
     </dependency>
@@ -44,12 +52,6 @@
       <artifactId>mssql-jdbc</artifactId>
       <scope>runtime</scope>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-
     <!--轻量级的规则引擎-->
     <dependency>
       <groupId>org.jeasy</groupId>
@@ -97,10 +99,7 @@
       <artifactId>bcprov-jdk15on</artifactId>
       <version>1.70</version>
     </dependency>
-      <dependency>
-          <groupId>cn.geelato</groupId>
-          <artifactId>geelato-lang</artifactId>
-      </dependency>
+
   </dependencies>
 
   <build>

@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.base.rest;
 
-import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.web.platform.constants.MediaTypes;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.ViewManager;

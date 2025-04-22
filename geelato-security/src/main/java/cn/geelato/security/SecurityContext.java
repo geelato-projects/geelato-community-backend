@@ -1,11 +1,10 @@
-package cn.geelato.web.platform;
+package cn.geelato.security;
 
-import cn.geelato.core.env.entity.User;
 
 /**
  * @author diabl
  */
-public class PlatformContext {
+public class SecurityContext {
 
     private static final ThreadLocal<User> threadLocalUser = new ThreadLocal<>();
 

@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.handler;
 
-import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.web.platform.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.exception.CoreException;
 import cn.geelato.lang.exception.UnSupportedVersionException;

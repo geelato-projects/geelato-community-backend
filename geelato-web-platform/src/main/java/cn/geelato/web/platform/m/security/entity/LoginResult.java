@@ -1,6 +1,5 @@
 package cn.geelato.web.platform.m.security.entity;
 
-import cn.geelato.core.constants.ColumnDefault;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,7 +32,7 @@ public class LoginResult {
     private String description;
     private String tenantCode;
     private String cooperatingOrgId;
-    private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
+    private int enableStatus;
     private String unionId;
 
     private String token;

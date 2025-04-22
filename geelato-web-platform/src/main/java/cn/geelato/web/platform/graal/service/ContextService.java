@@ -1,17 +1,17 @@
 package cn.geelato.web.platform.graal.service;
 
-import cn.geelato.web.platform.PlatformContext;
-import cn.geelato.web.platform.Tenant;
-import cn.geelato.core.env.entity.User;
 import cn.geelato.core.graal.GraalService;
+import cn.geelato.security.SecurityContext;
+import cn.geelato.security.Tenant;
+import cn.geelato.security.User;
 
 @GraalService(name = "ctx",built = "true")
 public class ContextService {
     public Tenant getCurrentTenant(){
-        return PlatformContext.getCurrentTenant();
+        return SecurityContext.getCurrentTenant();
     }
 
     public User getCurrentUser(){
-        return PlatformContext.getCurrentUser();
+        return SecurityContext.getCurrentUser();
     }
 }

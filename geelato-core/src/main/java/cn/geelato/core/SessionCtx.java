@@ -1,6 +1,6 @@
 package cn.geelato.core;
 
-import cn.geelato.core.env.entity.User;
+import cn.geelato.security.User;
 
 import java.util.HashMap;
 

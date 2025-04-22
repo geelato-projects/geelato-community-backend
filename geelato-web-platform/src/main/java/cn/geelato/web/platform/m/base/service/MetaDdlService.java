@@ -18,7 +18,7 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.core.orm.DbGenerateDao;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.utils.SqlParams;
-import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
+import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import cn.geelato.web.platform.m.model.service.DevDbConnectService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import cn.geelato.web.platform.m.model.service.DevTableService;

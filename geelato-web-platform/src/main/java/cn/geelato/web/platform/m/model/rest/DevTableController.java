@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.model.rest;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.web.platform.constants.MediaTypes;
+import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.core.enums.ColumnSyncedEnum;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.enums.TableSourceTypeEnum;
@@ -16,7 +16,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;

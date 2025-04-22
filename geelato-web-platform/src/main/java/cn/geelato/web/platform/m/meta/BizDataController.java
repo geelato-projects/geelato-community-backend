@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.meta;
 
 
-import cn.geelato.web.platform.constants.MediaTypes;
+import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.orm.DaoException;
 import cn.geelato.lang.api.ApiMetaResult;
@@ -9,8 +9,8 @@ import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.annotation.ApiRuntimeRestController;
-import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
+import cn.geelato.web.common.annotation.ApiRuntimeRestController;
+import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.utils.GqlResolveException;
 import cn.geelato.web.platform.utils.GqlUtil;

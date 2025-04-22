@@ -1,8 +1,11 @@
 package cn.geelato.web.platform.oauth2;
 
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.boot.properties.OAuthConfigurationProperties;
+import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.interceptor.OAuthConfigurationProperties;
+import cn.geelato.web.common.oauth2.OAuth2ServerResult;
+import cn.geelato.web.common.oauth2.OAuth2ServerTokenResult;
+import cn.geelato.web.common.oauth2.OAuth2Service;
 import cn.geelato.web.platform.m.security.entity.LoginResult;
 import cn.geelato.web.platform.m.security.entity.User;
 import com.alibaba.fastjson.JSON;
@@ -36,16 +39,12 @@ public class OAuth2Controller {
                     oAuthConfigurationProperties.getUrl(),
                     oAuthServerTokenResult.getAccess_token());
             if (userInfoResult.getCode().equals("200")) {
-                LoginResult loginResult = ConvertToLoginResult(userInfoResult.getData());
+                User user = JSON.parseObject(userInfoResult.getData(), User.class);
+                LoginResult loginResult = LoginResult.formatLoginResult(user);
                 loginResult.setToken(oAuthServerTokenResult.getAccess_token());
                 return ApiResult.success(loginResult);
             }
         }
         return ApiResult.fail(oAuthServerTokenResult.getMsg());
-    }
-
-    private LoginResult ConvertToLoginResult(String data) {
-        User user = JSON.parseObject(data, User.class);
-        return LoginResult.formatLoginResult(user);
     }
 }

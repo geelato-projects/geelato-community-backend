@@ -30,6 +30,10 @@
         </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>
+            <artifactId>geelato-web-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
             <artifactId>geelato-plugin-manager</artifactId>
         </dependency>
         <dependency>
@@ -117,17 +121,7 @@
             <artifactId>fst</artifactId>
             <version>${fst-version}</version>
         </dependency>
-        <dependency>
-            <groupId>net.oschina.j2cache</groupId>
-            <artifactId>j2cache-core</artifactId>
-            <version>${j2cache-version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+
         <dependency>
             <groupId>org.ehcache</groupId>
             <artifactId>ehcache</artifactId>

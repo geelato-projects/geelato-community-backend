@@ -13,6 +13,8 @@ public class User {
     private String userId;
     private String userName;
     private String loginName;
+    private String password;
+    private String salt;
     private String defaultOrgId;
     private String defaultOrgName;
     private String deptId;

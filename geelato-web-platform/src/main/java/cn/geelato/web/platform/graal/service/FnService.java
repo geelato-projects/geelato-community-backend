@@ -5,7 +5,7 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
+import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import cn.geelato.web.platform.graal.ApplicationContextProvider;
 import cn.geelato.web.platform.graal.entity.EntityField;
 import cn.geelato.web.platform.graal.entity.EntityGraal;

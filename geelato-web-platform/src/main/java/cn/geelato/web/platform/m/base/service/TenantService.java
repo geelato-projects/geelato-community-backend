@@ -17,11 +17,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Component
 public class TenantService extends BaseService {
-    private static final String defaultLoginName = "admin";
     private static final String defaultUserName = "管理员";
     private static final String defaultRoleName = "平台维护员";
     private static final String defaultRoleCode = "super_admin";
@@ -42,6 +42,9 @@ public class TenantService extends BaseService {
     @Autowired
     private RoleUserMapService roleUserMapService;
 
+    public String getDefaultLoginName() {
+        return "admin" + UUIDUtils.generateNumberAndLowerChars(5).toLowerCase(Locale.ENGLISH);
+    }
 
     public void createTenantSite(String name, String domain, String tenantCode) {
         TenantSite tenantSite = new TenantSite();
@@ -67,12 +70,12 @@ public class TenantService extends BaseService {
         User user = new User();
         byte[] salts = Digests.generateSalt(EncryptUtil.SALT_SIZE);
         user.setName(defaultUserName);
-        user.setLoginName(defaultLoginName);
+        user.setLoginName(getDefaultLoginName());
         user.setOrgId(orgId);
         user.setOrgName(orgName);
         user.setEmail(email);
         user.setSex(UserSexEnum.FEMALE.getValue());
-        user.setType(UserTypeEnum.SYSTEM.getValue());
+        user.setType(UserTypeEnum.ADMINISTRATOR.getValue());
         user.setSource(UserSourceEnum.LOCAL_USER.getValue());
         user.setPassword(Encodes.encodeHex(Digests.sha1(plainPassword.getBytes(), salts, EncryptUtil.HASH_ITERATIONS)));
         user.setSalt(Encodes.encodeHex(salts));
@@ -114,6 +117,10 @@ public class TenantService extends BaseService {
         roleUserMapService.createModel(roleUserMap);
     }
 
+    public Map<String, String> buildResult(String loginName, String plainPassword) {
+        return Map.of("userName", loginName, "password", plainPassword);
+    }
+
     /**
      * 在创建租户后，需要创建以下数据：
      * 1. platform_tenant_site
@@ -123,7 +130,7 @@ public class TenantService extends BaseService {
      * 5. platform_role
      * 6. platform_role_r_user
      */
-    public String afterCreate(Tenant source) {
+    public Map<String, String> afterCreate(Tenant source) {
         if (Strings.isBlank(source.getCompanyName())) {
             throw new RuntimeException("租户名称不能为空");
         }
@@ -143,7 +150,7 @@ public class TenantService extends BaseService {
         // platform_role_r_user
         createRoleUserMap(role.getId(), role.getName(), user.getId(), user.getName(), source.getCode());
 
-        return plainPassword;
+        return buildResult(user.getLoginName(), plainPassword);
     }
 
     /**
@@ -155,7 +162,7 @@ public class TenantService extends BaseService {
      * 5. platform_role
      * 6. platform_role_r_user
      */
-    public String beforeUpdate(Tenant source, Tenant target) {
+    public Map<String, String> beforeUpdate(Tenant source, Tenant target) {
         if (Strings.isBlank(source.getCompanyName()) || Strings.isBlank(source.getCode())) {
             throw new RuntimeException("租户名称，编号不能为空");
         }
@@ -171,16 +178,18 @@ public class TenantService extends BaseService {
             }
         }
         // platform_user
-        Map<String, Object> userParams = Map.of("loginName", "admin", "name", "管理员", "tenantCode", source.getCode());
+        Map<String, Object> userParams = Map.of("type", UserTypeEnum.ADMINISTRATOR.getValue(), "tenantCode", source.getCode());
         List<User> userList = userService.queryModel(User.class, userParams);
         User user;
         String plainPassword = null;
+        String defaultUserName = null;
         if (userList.isEmpty()) {
             // platform_org
             Org org = createOrg(target.getCompanyName(), target.getCode());
             // platform_user
             plainPassword = RandomStringUtils.randomAlphanumeric(EncryptUtil.SALT_SIZE);
             user = createUser(org.getId(), org.getName(), target.getMainEmail(), plainPassword, target.getCode());
+            defaultUserName = user.getLoginName();
             // platform_org_r_user
             createOrgUserMap(org.getId(), org.getName(), user.getId(), user.getName(), target.getCode());
         } else {
@@ -195,6 +204,7 @@ public class TenantService extends BaseService {
             }
             user.setEmail(target.getMainEmail());
             userService.updateModel(user);
+            defaultUserName = user.getLoginName();
         }
         // platform_role
         Map<String, Object> roleParams = Map.of("code", defaultRoleCode, "type", RoleTypeEnum.PLATFORM.getValue(), "tenantCode", target.getCode());
@@ -206,13 +216,14 @@ public class TenantService extends BaseService {
             createRoleUserMap(role.getId(), role.getName(), user.getId(), user.getName(), target.getCode());
         }
 
-        return plainPassword;
+        return buildResult(defaultUserName, plainPassword);
     }
 
-    public String resetPassword(Tenant source) {
+    public Map<String, String> resetPassword(Tenant source) {
         String plainPassword = RandomStringUtils.randomAlphanumeric(EncryptUtil.SALT_SIZE);
+        String defaultUserName = null;
         // platform_user
-        Map<String, Object> userParams = Map.of("loginName", "admin", "name", "管理员", "tenantCode", source.getCode());
+        Map<String, Object> userParams = Map.of("type", UserTypeEnum.ADMINISTRATOR.getValue(), "tenantCode", source.getCode());
         List<User> userList = super.queryModel(User.class, userParams, BaseService.DEFAULT_ORDER_BY);
         if (!userList.isEmpty()) {
             User user = userList.get(0);
@@ -221,11 +232,13 @@ public class TenantService extends BaseService {
             for (int i = 1; i < userList.size(); i++) {
                 userService.isDeleteModel(userList.get(i));
             }
+            defaultUserName = user.getLoginName();
         } else {
             // platform_org
             Org org = createOrg(source.getCompanyName(), source.getCode());
             // platform_user
             User user = createUser(org.getId(), org.getName(), source.getMainEmail(), plainPassword, source.getCode());
+            defaultUserName = user.getLoginName();
             // platform_org_r_user
             createOrgUserMap(org.getId(), org.getName(), user.getId(), user.getName(), source.getCode());
             // platform_role
@@ -233,6 +246,6 @@ public class TenantService extends BaseService {
             // platform_role_r_user
             createRoleUserMap(role.getId(), role.getName(), user.getId(), user.getName(), source.getCode());
         }
-        return plainPassword;
+        return buildResult(defaultUserName, plainPassword);
     }
 }

@@ -1,9 +1,9 @@
 package cn.geelato.web.common.shiro;
 
 import cn.geelato.core.orm.Dao;
-import cn.geelato.security.User;
 import cn.geelato.web.common.interceptor.OAuthConfigurationProperties;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
+import cn.geelato.web.common.security.User;
 import lombok.SneakyThrows;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
@@ -54,7 +54,7 @@ public class OAuth2Realm extends AuthorizingRealm {
         User user = getUserInfo(accessToken);
         if (user != null) {
             return new SimpleAuthenticationInfo(
-                    new ShiroUser(user.getUserId(), user.getLoginName(), user.getUserName()),
+                    new ShiroUser(user.getId(), user.getLoginName(), user.getName()),
                     accessToken,
                     getName()
             );

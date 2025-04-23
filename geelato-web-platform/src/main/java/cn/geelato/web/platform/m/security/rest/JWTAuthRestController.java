@@ -7,6 +7,8 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.Base64Utils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
+import cn.geelato.web.common.security.Org;
+import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;

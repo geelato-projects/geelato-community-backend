@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.security.service;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.m.security.entity.AuthCodeParams;
-import cn.geelato.web.platform.m.security.entity.User;
+import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.m.security.enums.AuthCodeAction;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import cn.geelato.web.platform.m.settings.enums.MessageSendStatus;

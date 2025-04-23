@@ -15,7 +15,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_sql")
+@Entity(name = "platform_sql",catalog = "platform")
 @Title(title = "自定义接口编排")
 public class CustomSql extends BaseEntity {
     @Title(title = "所属应用")

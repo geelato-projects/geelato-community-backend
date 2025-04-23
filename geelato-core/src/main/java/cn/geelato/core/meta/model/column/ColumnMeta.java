@@ -24,7 +24,7 @@ import java.util.Locale;
  */
 @Setter
 @Title(title = "字段信息")
-@Entity(name = "platform_dev_column")
+@Entity(name = "platform_dev_column",catalog = "platform")
 public class ColumnMeta extends BaseSortableEntity implements EntityEnableAble, Serializable {
     @Getter
     @Title(title = "应用Id")

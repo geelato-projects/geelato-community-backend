@@ -186,11 +186,7 @@ public class MetaManager extends AbstractManager {
         if (entityMetadataMap.containsKey(entityName)) {
             return entityMetadataMap.get(entityName);
         } else {
-            Iterator<String> it = entityMetadataMap.keySet().iterator();
             log.warn("Key({}) not found in entityMetadataMap by class", clazz.getName());
-            while (it.hasNext()) {
-                log.warn(it.next());
-            }
             return null;
         }
     }

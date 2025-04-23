@@ -15,7 +15,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_app_r_table")
+@Entity(name = "platform_app_r_table",catalog = "platform")
 @Title(title = "应用模型授权关系表")
 public class AppTableMap extends BaseEntity {
     @Title(title = "应用ID")

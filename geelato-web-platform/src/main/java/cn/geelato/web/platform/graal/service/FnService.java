@@ -14,7 +14,7 @@ import cn.geelato.web.platform.graal.entity.EntityParams;
 import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.graal.utils.NumbChineseUtils;
 import cn.geelato.web.platform.m.base.service.RuleService;
-import cn.geelato.web.platform.m.security.entity.User;
+import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.m.security.service.UserService;
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;

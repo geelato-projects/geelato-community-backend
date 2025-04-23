@@ -4,7 +4,7 @@ package cn.geelato.web.platform.utils;
 import cn.geelato.utils.Digests;
 import cn.geelato.utils.Encodes;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.m.security.entity.User;
+import cn.geelato.web.common.security.User;
 
 public class EncryptUtil {
     public static final int HASH_ITERATIONS = 1024;

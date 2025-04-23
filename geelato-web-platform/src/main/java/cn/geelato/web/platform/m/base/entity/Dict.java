@@ -18,7 +18,7 @@ import java.util.Set;
  */
 @Getter
 @Setter
-@Entity(name = "platform_dict")
+@Entity(name = "platform_dict",catalog = "platform")
 @Title(title = "数据字典")
 public class Dict extends BaseSortableEntity implements EntityEnableAble {
 

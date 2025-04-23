@@ -18,7 +18,7 @@ import org.apache.logging.log4j.util.Strings;
  */
 @Getter
 @Setter
-@Entity(name = "platform_sys_config")
+@Entity(name = "platform_sys_config",catalog = "platform")
 @Title(title = "配置")
 public class SysConfig extends BaseSortableEntity implements EntityEnableAble {
 

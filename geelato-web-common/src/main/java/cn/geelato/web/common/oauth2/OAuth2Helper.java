@@ -1,7 +1,7 @@
 package cn.geelato.web.common.oauth2;
 
-import cn.geelato.security.User;
 import cn.geelato.utils.HttpUtils;
+import cn.geelato.web.common.security.User;
 import com.alibaba.fastjson2.JSON;
 
 import java.io.IOException;

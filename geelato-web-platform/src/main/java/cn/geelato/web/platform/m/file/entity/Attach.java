@@ -15,7 +15,7 @@ import java.io.IOException;
  */
 @Getter
 @Setter
-@Entity(name = "platform_attach")
+@Entity(name = "platform_attach",catalog = "platform")
 @Title(title = "附件")
 @Accessors(chain = true)
 public class Attach extends Attachment {

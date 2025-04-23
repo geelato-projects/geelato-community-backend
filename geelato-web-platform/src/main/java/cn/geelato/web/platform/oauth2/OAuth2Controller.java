@@ -7,7 +7,7 @@ import cn.geelato.web.common.oauth2.OAuth2ServerResult;
 import cn.geelato.web.common.oauth2.OAuth2ServerTokenResult;
 import cn.geelato.web.common.oauth2.OAuth2Service;
 import cn.geelato.web.platform.m.security.entity.LoginResult;
-import cn.geelato.web.platform.m.security.entity.User;
+import cn.geelato.web.common.security.User;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

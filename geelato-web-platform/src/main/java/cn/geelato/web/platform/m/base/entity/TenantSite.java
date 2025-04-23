@@ -12,7 +12,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_tenant_site")
+@Entity(name = "platform_tenant_site",catalog = "platform")
 @Title(title = "租户站点")
 public class TenantSite extends BaseEntity {
 

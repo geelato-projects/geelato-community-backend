@@ -3,8 +3,9 @@ package cn.geelato.web.common.interceptor;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.security.Tenant;
-import cn.geelato.security.User;
+
 import cn.geelato.web.common.oauth2.OAuth2Helper;
+import cn.geelato.security.User;
 import cn.geelato.web.common.shiro.OAuth2Token;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,7 +36,7 @@ public class OAuth2Interceptor implements HandlerInterceptor {
             throw new InvalidTokenException("InvalidOAuth2TokenException");
         }
         token = token.replace("Bearer ", "");
-        User user= OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
+        cn.geelato.web.common.security.User user= OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
         if (user != null) {
             String loginName  = user.getLoginName();
             User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);

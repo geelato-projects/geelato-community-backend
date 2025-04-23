@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.security.entity;
+package cn.geelato.web.common.security;
 
 
 import cn.geelato.core.constants.ColumnDefault;
@@ -16,7 +16,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_user")
+@Entity(name = "platform_user",catalog = "platform")
 @Title(title = "用户")
 public class User extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "名称")

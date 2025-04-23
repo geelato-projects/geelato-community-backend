@@ -15,7 +15,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Title(title = "数据库连接信息")
-@Entity(name = "platform_dev_db_connect")
+@Entity(name = "platform_dev_db_connect",catalog = "platform")
 public class ConnectMeta extends BaseEntity implements EntityEnableAble {
     @Title(title = "应用Id")
     @Col(name = "app_id")

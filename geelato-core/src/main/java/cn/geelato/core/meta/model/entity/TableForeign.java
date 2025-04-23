@@ -13,7 +13,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Title(title = "实体外键关系")
-@Entity(name = "platform_dev_table_foreign")
+@Entity(name = "platform_dev_table_foreign",catalog = "platform")
 public class TableForeign extends BaseSortableEntity implements EntityEnableAble {
 
     @Title(title = "应用Id")

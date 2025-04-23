@@ -5,6 +5,8 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UUIDUtils;
+import cn.geelato.web.common.security.Org;
+import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.security.entity.*;

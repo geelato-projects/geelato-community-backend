@@ -19,8 +19,8 @@
 package cn.geelato.web.common.shiro;
 
 import cn.geelato.core.orm.Dao;
-import cn.geelato.security.User;
 import cn.geelato.utils.Encodes;
+import cn.geelato.web.common.security.User;
 import jakarta.annotation.PostConstruct;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
@@ -56,7 +56,7 @@ public class DbRealm extends AuthorizingRealm {
         if (user != null) {
             byte[] salt = Encodes.decodeHex(user.getSalt());
             return new SimpleAuthenticationInfo(
-                    new ShiroUser(user.getUserId(), user.getLoginName(), user.getUserName()),
+                    new ShiroUser(user.getId(), user.getLoginName(), user.getName()),
                     user.getPassword(),
                     ByteSource.Util.bytes(salt),
                     getName()

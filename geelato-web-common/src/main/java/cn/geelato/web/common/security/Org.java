@@ -1,7 +1,6 @@
-package cn.geelato.web.platform.m.security.entity;
+package cn.geelato.web.common.security;
 
 
-import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
@@ -10,7 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(name = "platform_org")
+@Entity(name = "platform_org",catalog = "platform")
 @Title(title = "组织")
 public class Org extends BaseSortableEntity {
     private String name;

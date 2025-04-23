@@ -4,6 +4,8 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.utils.Digests;
 import cn.geelato.utils.Encodes;
 import cn.geelato.utils.UUIDUtils;
+import cn.geelato.web.common.security.Org;
+import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.m.base.entity.Tenant;
 import cn.geelato.web.platform.m.base.entity.TenantSite;
 import cn.geelato.web.platform.m.security.entity.*;

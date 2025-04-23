@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.web.platform.constants.MediaTypes;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.file.entity.Attachment;

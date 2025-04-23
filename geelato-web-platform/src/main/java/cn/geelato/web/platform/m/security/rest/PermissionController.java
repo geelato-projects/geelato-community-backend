@@ -3,13 +3,13 @@ package cn.geelato.web.platform.m.security.rest;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.env.EnvManager;
-import cn.geelato.core.env.entity.User;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.security.User;
 import cn.geelato.web.platform.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.Permission;
@@ -163,10 +163,10 @@ public class PermissionController extends BaseController {
 
     @RequestMapping(value = "/getEffective", method = RequestMethod.GET)
     public ApiResult<?> getEffective(String userId, String entity) {
-        List<cn.geelato.core.env.entity.Permission> entityPermission = EnvManager.singleInstance().getUserPermission(userId, entity);
-        List<cn.geelato.core.env.entity.Permission> maxWeightPermissionList = null;
-        cn.geelato.core.env.entity.Permission rtnPermission = null;
-        Optional<cn.geelato.core.env.entity.Permission> maxWeightPermission = entityPermission.stream().max(Comparator.comparing(cn.geelato.core.env.entity.Permission::getWeight));
+        List<cn.geelato.security.Permission> entityPermission = EnvManager.singleInstance().getUserPermission(userId, entity);
+        List<cn.geelato.security.Permission> maxWeightPermissionList = null;
+        cn.geelato.security.Permission rtnPermission = null;
+        Optional<cn.geelato.security.Permission> maxWeightPermission = entityPermission.stream().max(Comparator.comparing(cn.geelato.security.Permission::getWeight));
         if (maxWeightPermission.isPresent()) {
             int maxWeight = maxWeightPermission.get().getWeight();
             maxWeightPermissionList = entityPermission.stream().filter(x -> x.getWeight() == maxWeight).toList();

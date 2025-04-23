@@ -3,11 +3,11 @@ package cn.geelato.core.env;
 
 import cn.geelato.core.AbstractManager;
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.env.entity.Permission;
 import cn.geelato.core.env.entity.SysConfig;
-import cn.geelato.core.env.entity.User;
-import cn.geelato.core.env.entity.UserMenu;
 import cn.geelato.core.orm.Dao;
+import cn.geelato.security.Permission;
+import cn.geelato.security.User;
+import cn.geelato.security.UserMenu;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
@@ -100,7 +100,7 @@ public class EnvManager  extends AbstractManager {
         return sysConfigMap;
     }
 
-    public List<Permission> getUserPermission(String userId,String entity){
+    public List<Permission> getUserPermission(String userId, String entity){
         List<Permission> permissionList= structDataPermission(userId);
         return permissionList.stream().filter(x -> x.getEntity().equals(entity)).toList();
     }

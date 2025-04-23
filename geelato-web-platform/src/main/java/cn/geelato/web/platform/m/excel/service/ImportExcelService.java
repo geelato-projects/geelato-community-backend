@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.excel.service;
 
-import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.web.platform.constants.MediaTypes;
 import cn.geelato.core.enums.MysqlDataTypeEnum;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;

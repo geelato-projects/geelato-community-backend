@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.graal.utils;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.env.entity.User;
+import cn.geelato.security.User;
 
 public class GraalUtils {
 

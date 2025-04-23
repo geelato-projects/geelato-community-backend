@@ -25,6 +25,7 @@ import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.web.platform.boot.DynamicDatasourceHolder;
 import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -259,9 +260,7 @@ public class RuleService {
             // todo : wait to refactor by aspect
             String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
             if (!StringUtils.isEmpty(connectId)) {
-                JdbcTemplate jdbcTemplate = new JdbcTemplate();
-                jdbcTemplate.setDataSource(DataSourceManager.singleInstance().getDataSource(connectId));
-                dao.setJdbcTemplate(jdbcTemplate);
+                DynamicDatasourceHolder.setDataSourceKey(connectId);
             }
             rtnValue = dao.save(boundSql);
             // 增加一个默认清实体缓存的操作

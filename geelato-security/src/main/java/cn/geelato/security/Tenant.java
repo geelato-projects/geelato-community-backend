@@ -1,4 +1,4 @@
-package cn.geelato.web.platform;
+package cn.geelato.security;
 
 import lombok.Getter;
 import lombok.Setter;

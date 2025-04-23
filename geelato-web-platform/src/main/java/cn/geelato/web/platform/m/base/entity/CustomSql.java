@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.entity;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.web.platform.constants.MediaTypes;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;

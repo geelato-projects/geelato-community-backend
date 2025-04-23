@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.security.entity;
 
-import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.web.platform.constants.MediaTypes;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;

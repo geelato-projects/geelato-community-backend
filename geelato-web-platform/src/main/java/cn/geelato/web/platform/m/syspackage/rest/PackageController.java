@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.syspackage.rest;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.constants.MediaTypes;
+import cn.geelato.web.platform.constants.MediaTypes;
 import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.parser.JsonTextSaveParser;

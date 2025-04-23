@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.interceptor;
 
 import cn.geelato.core.env.EnvManager;
-import cn.geelato.core.env.entity.User;
-import cn.geelato.web.platform.PlatformContext;
-import cn.geelato.web.platform.Tenant;
+import cn.geelato.security.SecurityContext;
+import cn.geelato.security.Tenant;
+import cn.geelato.security.User;
 import cn.geelato.web.platform.boot.properties.OAuthConfigurationProperties;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.platform.oauth2.OAuth2Helper;
@@ -40,8 +40,8 @@ public class OAuth2Interceptor implements HandlerInterceptor {
         if (user != null) {
             String loginName  = user.getLoginName();
             User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);
-            PlatformContext.setCurrentUser(currentUser);
-            PlatformContext.setCurrentTenant(new Tenant(user.getTenantCode()));
+            SecurityContext.setCurrentUser(currentUser);
+            SecurityContext.setCurrentTenant(new Tenant(user.getTenantCode()));
             OAuth2Token oauth2Token = new OAuth2Token(token);
             Subject subject = SecurityUtils.getSubject();
             subject.login(oauth2Token);

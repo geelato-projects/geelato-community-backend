@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.interceptor;
 
 import cn.geelato.core.env.EnvManager;
-import cn.geelato.core.env.entity.User;
-import cn.geelato.web.platform.PlatformContext;
-import cn.geelato.web.platform.Tenant;
+import cn.geelato.security.SecurityContext;
+import cn.geelato.security.Tenant;
+import cn.geelato.security.User;
 import cn.geelato.web.platform.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.platform.m.security.service.JWTUtil;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -42,8 +42,8 @@ public class JWTInterceptor implements HandlerInterceptor {
         String loginName = verify.getClaim("loginName").asString();
         String passWord = verify.getClaim("passWord").asString();
         User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);
-        PlatformContext.setCurrentUser(currentUser);
-        PlatformContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
+        SecurityContext.setCurrentUser(currentUser);
+        SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
 
         UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
         Subject subject = SecurityUtils.getSubject();

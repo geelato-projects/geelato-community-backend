@@ -1,12 +1,12 @@
 package cn.geelato.core.gql.parser;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.env.entity.Permission;
 import cn.geelato.core.gql.command.CommandValidator;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
+import cn.geelato.security.Permission;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -90,7 +90,7 @@ public class JsonTextQueryParser extends JsonTextParser {
 
         if (SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName) != null) {
             Permission dp = SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName);
-            String rule = dp.getRuleReplaceVariable();
+            String rule = replaceRuleVariable(dp);
             command.setOriginalWhere(rule);
         } else {
             command.setOriginalWhere(String.format("creator='%s'", SessionCtx.getCurrentUser().getUserId()));
@@ -208,6 +208,13 @@ public class JsonTextQueryParser extends JsonTextParser {
 
         Assert.isTrue(validator.isSuccess(), validator.getMessage());
         return command;
+    }
+
+    private String replaceRuleVariable(Permission dp) {
+        return dp.getRule().replace("#currentUser.userId#", String.format("'%s'", SessionCtx.getCurrentUser().getUserId()))
+                .replace("#currentUser.deptId#", String.format("'%s'", SessionCtx.getCurrentUser().getDefaultOrgId()))
+                .replace("#currentUser.buId#", String.format("'%s'", SessionCtx.getCurrentUser().getBuId()))
+                .replace("#currentUser.cooperatingOrgId#", String.format("'%s'", SessionCtx.getCurrentUser().getCooperatingOrgId()));
     }
 
     private List<FilterGroup> parseKWBrackets(CommandValidator validator, JSONObject jo) {

@@ -37,7 +37,7 @@ public class JWTInterceptor implements HandlerInterceptor {
         if (token == null) {
             throw new InvalidTokenException();
         }
-        token = token.replace("Bearer ", "");
+        token = token.replace("JWTBearer ", "");
         DecodedJWT verify = JWTUtil.verify(token);
         String loginName = verify.getClaim("loginName").asString();
         String passWord = verify.getClaim("passWord").asString();

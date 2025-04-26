@@ -1,10 +1,7 @@
 package cn.geelato.web.platform.boot;
 
 import cn.geelato.web.platform.boot.properties.OAuthConfigurationProperties;
-import cn.geelato.web.platform.interceptor.CacheInterceptor;
-import cn.geelato.web.platform.interceptor.DataSourceInterceptor;
-import cn.geelato.web.platform.interceptor.JWTInterceptor;
-import cn.geelato.web.platform.interceptor.OAuth2Interceptor;
+import cn.geelato.web.platform.interceptor.*;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +25,7 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
         if (getProperty("geelato.application.shiro","db").equals("oauth2")) {
             handlerInterceptor = new OAuth2Interceptor(oAuthConfigurationProperties);
         } else {
-            handlerInterceptor = new JWTInterceptor();
+            handlerInterceptor = new DefaultInterceptor();
         }
         registry.addInterceptor(handlerInterceptor)
                 .addPathPatterns("/**")

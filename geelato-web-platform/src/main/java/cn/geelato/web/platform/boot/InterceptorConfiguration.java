@@ -1,10 +1,6 @@
 package cn.geelato.web.platform.boot;
 
-import cn.geelato.web.platform.boot.properties.OAuthConfigurationProperties;
-import cn.geelato.web.platform.interceptor.CacheInterceptor;
-import cn.geelato.web.platform.interceptor.DataSourceInterceptor;
-import cn.geelato.web.platform.interceptor.DefaultInterceptor;
-import cn.geelato.web.platform.interceptor.OAuth2Interceptor;
+import cn.geelato.web.common.interceptor.*;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;

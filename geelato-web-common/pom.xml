@@ -53,18 +53,10 @@
       <artifactId>spring-boot</artifactId>
     </dependency>
     <dependency>
-      <groupId>cn.geelato</groupId>
-      <artifactId>geelato-security</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-core</artifactId>
       <version>1.10.1</version>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>cn.geelato</groupId>
-      <artifactId>geelato-lang</artifactId>
     </dependency>
     <dependency>
       <groupId>com.auth0</groupId>
@@ -75,6 +67,15 @@
     <dependency>
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-lang</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-security</artifactId>
+      <version>${geelato.version}</version>
     </dependency>
   </dependencies>
 </project>

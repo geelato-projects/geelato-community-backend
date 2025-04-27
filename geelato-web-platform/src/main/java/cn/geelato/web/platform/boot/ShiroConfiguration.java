@@ -1,10 +1,14 @@
 package cn.geelato.web.platform.boot;
 
 
-import cn.geelato.web.common.shiro.DbRealm;
-import cn.geelato.web.common.shiro.OAuth2Realm;
+import cn.geelato.web.platform.shiro.DbRealm;
+import cn.geelato.web.platform.shiro.OAuth2Realm;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.authc.pam.AtLeastOneSuccessfulStrategy;
+import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
@@ -12,12 +16,13 @@ import org.apache.shiro.util.ThreadContext;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author  hongxq
@@ -81,11 +86,7 @@ public class ShiroConfiguration extends BaseConfiguration {
             @Qualifier("oauth2Realm") OAuth2Realm oAuth2Realm,
             @Qualifier("dbShiroRealm") DbRealm dbRealm) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
-        if(getProperty("geelato.application.shiro","db").equals("oauth2")){
-            defaultWebSecurityManager.setRealm(oAuth2Realm);
-        }else{
-            defaultWebSecurityManager.setRealm(dbRealm);
-        }
+        defaultWebSecurityManager.setRealms(Arrays.asList(oAuth2Realm,dbRealm));
         defaultWebSecurityManager.setCacheManager(getEhCacheManager());
         ThreadContext.bind(defaultWebSecurityManager);
         return defaultWebSecurityManager;

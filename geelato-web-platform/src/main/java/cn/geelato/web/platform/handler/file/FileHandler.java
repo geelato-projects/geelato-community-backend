@@ -381,7 +381,7 @@ public class FileHandler extends BaseHandler {
             }
             ZipUtils.compressFiles(fileISs, zpiFilePath);
             // 上传至Oss，保存附件信息
-            FileParam zipFileParam = FileParamUtils.bySaveCompress(param.getServiceType(), param.getSourceType(), String.join(",", fileIds), param.getGenre(), param.getInvalidTime(), param.getBatchNo(), param.getTenantCode(), param.getAppId());
+            FileParam zipFileParam = FileParamUtils.bySaveCompress(param.getServiceType(), param.getSourceType(), String.join(",", fileIds), param.getGenre(), param.getInvalidTime(), param.getBatchNo(), param.getAppId(), param.getTenantCode());
             if (AttachmentServiceEnum.ALIYUN.getValue().equalsIgnoreCase(param.getServiceType())) {
                 attachments.add(uploadCloud(new File(zpiFilePath), zipFileName, zipFileParam));
             } else {

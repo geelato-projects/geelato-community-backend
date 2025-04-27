@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.util.Map;
+
 @ApiRestController("/tenant")
 @Slf4j
 public class TenantController extends BaseController {
@@ -27,12 +29,11 @@ public class TenantController extends BaseController {
     }
 
     @RequestMapping(value = "/after/create/{id}", method = RequestMethod.GET)
-    public ApiResult<String> afterCreate(@PathVariable() String id) {
+    public ApiResult<Map<String, String>> afterCreate(@PathVariable() String id) {
         try {
             Tenant source = tenantService.getModel(CLAZZ, id);
             Assert.notNull(source, ApiErrorMsg.IS_NULL);
-            String password = tenantService.afterCreate(source);
-            return ApiResult.success(password);
+            return ApiResult.success(tenantService.afterCreate(source));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
@@ -40,12 +41,11 @@ public class TenantController extends BaseController {
     }
 
     @RequestMapping(value = "/before/update/{id}", method = RequestMethod.POST)
-    public ApiResult<String> beforeUpdate(@PathVariable() String id, @RequestBody Tenant target) {
+    public ApiResult<Map<String, String>> beforeUpdate(@PathVariable() String id, @RequestBody Tenant target) {
         try {
             Tenant source = tenantService.getModel(CLAZZ, id);
             Assert.notNull(source, ApiErrorMsg.IS_NULL);
-            String password = tenantService.beforeUpdate(source, target);
-            return ApiResult.success(password);
+            return ApiResult.success(tenantService.beforeUpdate(source, target));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
@@ -53,11 +53,10 @@ public class TenantController extends BaseController {
     }
 
     @RequestMapping(value = "/reset/password/{id}", method = RequestMethod.GET)
-    public ApiResult<String> resetPassword(@PathVariable() String id) {
+    public ApiResult<Map<String, String>> resetPassword(@PathVariable() String id) {
         try {
             Tenant source = tenantService.getModel(CLAZZ, id);
-            String password = tenantService.resetPassword(source);
-            return ApiResult.success(password);
+            return ApiResult.success(tenantService.resetPassword(source));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

@@ -79,6 +79,10 @@
             <artifactId>geelato-site-collocation</artifactId>
         </dependency>
         <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-workflow-engine</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.github.gavlyukovskiy</groupId>
             <artifactId>p6spy-spring-boot-starter</artifactId>
             <version>1.9.2</version>

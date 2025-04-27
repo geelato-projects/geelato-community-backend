@@ -1,14 +1,13 @@
-package cn.geelato.web.platform.interceptor;
+package cn.geelato.web.common.interceptor;
 
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.security.Tenant;
 import cn.geelato.security.User;
-import cn.geelato.web.platform.boot.properties.OAuthConfigurationProperties;
-import cn.geelato.web.platform.interceptor.annotation.IgnoreVerify;
-import cn.geelato.web.platform.m.security.service.JWTUtil;
-import cn.geelato.web.platform.oauth2.OAuth2Helper;
-import cn.geelato.web.platform.shiro.OAuth2Token;
+
+import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
+import cn.geelato.web.common.oauth2.OAuth2Helper;
+import cn.geelato.web.common.shiro.OAuth2Token;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -61,7 +60,7 @@ public class DefaultInterceptor implements HandlerInterceptor {
             }
         } else if (token.startsWith("Bearer ")) {
             token = token.replace("Bearer ", "");
-            cn.geelato.web.platform.m.security.entity.User user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
+            cn.geelato.web.common.security.User user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
             if (user != null) {
                 String loginName = user.getLoginName();
                 User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);

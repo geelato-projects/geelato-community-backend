@@ -19,7 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-public class DefaultInterceptor  implements HandlerInterceptor {
+public class DefaultInterceptor implements HandlerInterceptor {
+
+    private final OAuthConfigurationProperties oAuthConfigurationProperties;
+
+    public DefaultInterceptor(OAuthConfigurationProperties config) {
+        oAuthConfigurationProperties = config;
+    }
 
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {
@@ -55,7 +61,6 @@ public class DefaultInterceptor  implements HandlerInterceptor {
             }
         } else if (token.startsWith("Bearer ")) {
             token = token.replace("Bearer ", "");
-            OAuthConfigurationProperties oAuthConfigurationProperties = new OAuthConfigurationProperties();
             cn.geelato.web.platform.m.security.entity.User user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
             if (user != null) {
                 String loginName = user.getLoginName();
@@ -73,5 +78,4 @@ public class DefaultInterceptor  implements HandlerInterceptor {
         }
         return true;
     }
-
 }

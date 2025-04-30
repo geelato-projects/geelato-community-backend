@@ -22,10 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author  hongxq
@@ -89,11 +86,7 @@ public class ShiroConfiguration extends BaseConfiguration {
             @Qualifier("oauth2Realm") OAuth2Realm oAuth2Realm,
             @Qualifier("dbShiroRealm") DbRealm dbRealm) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
-        if(getProperty("geelato.application.shiro","db").equals("oauth2")){
-            defaultWebSecurityManager.setRealm(oAuth2Realm);
-        }else{
-            defaultWebSecurityManager.setRealm(dbRealm);
-        }
+        defaultWebSecurityManager.setRealms(Arrays.asList(oAuth2Realm,dbRealm));
         defaultWebSecurityManager.setCacheManager(getEhCacheManager());
         ThreadContext.bind(defaultWebSecurityManager);
         return defaultWebSecurityManager;

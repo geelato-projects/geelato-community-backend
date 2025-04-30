@@ -327,7 +327,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                 sb.append(")");
             } else if (operator == FilterGroup.Operator.nil) {
                 tryAppendKeywords(em, sb, fm);
-                if ("1".equals(filter.getValue())) {
+                if ("1".equals(filter.getValue()) || "true".equals(filter.getValue())) {
                     sb.append(" is NULL");
                 } else {
                     sb.append(" is NOT NULL");

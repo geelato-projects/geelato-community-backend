@@ -126,9 +126,11 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         if (filter.getOperator().equals(FilterGroup.Operator.in) || filter.getOperator().equals(FilterGroup.Operator.notin)) {
             Object[] ary = filter.getValueAsArray();
             list.addAll(Arrays.asList(ary));
-        } else if (filter.getOperator().equals(FilterGroup.Operator.nil) || filter.getOperator().equals(FilterGroup.Operator.bt)) {
+        } else if (filter.getOperator().equals(FilterGroup.Operator.nil)
+                || filter.getOperator().equals(FilterGroup.Operator.bt)
+                ||filter.getOperator().equals(FilterGroup.Operator.fis)) {
             // not do anything
-        } else {
+        }else {
             if (!"JSON".equals(getEntityMeta(command).getFieldMeta(filter.getField()).getColumnMeta().getDataType())) {
                 list.add(filter.getValue());
             }
@@ -327,7 +329,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                 sb.append(")");
             } else if (operator == FilterGroup.Operator.nil) {
                 tryAppendKeywords(em, sb, fm);
-                if ("1".equals(filter.getValue())) {
+                if ("1".equals(filter.getValue()) || "true".equals(filter.getValue())) {
                     sb.append(" is NULL");
                 } else {
                     sb.append(" is NOT NULL");
@@ -356,7 +358,22 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                     }
                     sb.append("  )");
                 } else {
-                    throw new RuntimeException("该字段不支持fis过滤函数：" + fm.getColumnName());
+                    String[] parts;
+                    if (Pattern.matches("^\\[(\".+\")(,(\".+\"))*]$", filter.getValue())) {
+                        JSONArray jsonArray = JSONArray.parse(filter.getValue());
+                        parts = jsonArray.toArray(String.class);
+                    } else {
+                        parts = filter.getValue().split(",");
+                    }
+                    sb.append("(  ");
+                    for (int i = 0; i < parts.length; i++) {
+                        sb.append(String.format(" FIND_IN_SET( '%s',%s) >0",  parts[i] , fm.getColumnName()));
+                        if (i < parts.length - 1) {
+                            sb.append("  or  ");
+                        }
+                    }
+                    sb.append("  )");
+//                    throw new RuntimeException("该字段为非JSON类型，不支持fis关键字过滤：" + fm.getColumnName());
                 }
             }
             else {

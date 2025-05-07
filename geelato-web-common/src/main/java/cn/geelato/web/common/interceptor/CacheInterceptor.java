@@ -46,10 +46,8 @@ public class CacheInterceptor implements HandlerInterceptor {
 
     private String resolveGql(HttpServletRequest request) throws Exception {
         StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader br = null;
         String str;
-        try {
-            br = request.getReader();
+        try (BufferedReader br = request.getReader()) {
             if (br != null) {
                 while ((str = br.readLine()) != null) {
                     stringBuilder.append(str);
@@ -57,10 +55,6 @@ public class CacheInterceptor implements HandlerInterceptor {
             }
         } catch (IOException e) {
             throw new Exception("未能从httpServletRequest中获取gql的内容");
-        } finally {
-            if (br != null) {
-                br.close();
-            }
         }
 
         return stringBuilder.toString();

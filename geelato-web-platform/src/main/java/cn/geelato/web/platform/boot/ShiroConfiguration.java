@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.boot;
 
 
+import cn.geelato.core.orm.Dao;
 import cn.geelato.web.common.shiro.DbRealm;
 import cn.geelato.web.common.shiro.OAuth2Realm;
 import lombok.extern.slf4j.Slf4j;
@@ -11,10 +12,12 @@ import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.util.ThreadContext;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.annotation.Order;
 
 import java.util.*;
 
@@ -64,8 +67,8 @@ public class ShiroConfiguration extends BaseConfiguration {
 
 
     @Bean(name = "dbShiroRealm")
-    public DbRealm dbRealm(EhCacheManager cacheManager) {
-        DbRealm realm = new DbRealm();
+    public DbRealm dbRealm(@Qualifier("primaryDao") Dao dao, EhCacheManager cacheManager) {
+        DbRealm realm = new DbRealm(dao);
         realm.setCacheManager(cacheManager);
         return realm;
     }

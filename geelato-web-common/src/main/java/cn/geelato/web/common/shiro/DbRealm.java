@@ -37,14 +37,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class DbRealm extends AuthorizingRealm {
 
-    @Autowired
-    @Qualifier("primaryDao")
     protected Dao dao;
-    private final static String SECURITY_USER_PERMISSION_STRING_LIST = "security_user_permission_string_list";
-    private final static String SECURITY_USER_ROLE_CODE_LIST = "security_user_role_code_list";
+    public DbRealm(Dao dao) {
+        this.dao = dao;
+    }
+
 
     /**
      * 认证回调函数,登录时调用.
@@ -74,12 +73,7 @@ public class DbRealm extends AuthorizingRealm {
         ShiroUser shiroUser = (ShiroUser) principals.getPrimaryPrincipal();
         Map params = new HashMap(1);
         params.put("loginName", shiroUser.loginName);
-        List<String> permissionTexts = dao.queryForOneColumnList(SECURITY_USER_PERMISSION_STRING_LIST, params, String.class);
-        List<String> roles = dao.queryForOneColumnList(SECURITY_USER_ROLE_CODE_LIST, params, String.class);
-        SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
-        info.addStringPermissions(permissionTexts);
-        info.addRoles(roles);
-        return info;
+        return new SimpleAuthorizationInfo();
     }
 
     /**

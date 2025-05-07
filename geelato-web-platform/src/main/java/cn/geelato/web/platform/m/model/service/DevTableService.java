@@ -15,6 +15,7 @@ import cn.geelato.web.platform.m.model.utils.SchemaUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -37,7 +38,7 @@ public class DevTableService extends BaseSortableService {
     private static final String UPDATE_COMMENT_PREFIX = "已变更；";
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
     @Lazy
-    @Autowired
+    @Qualifier("dbGenerateDao")
     protected DbGenerateDao dbGenerateDao;
     @Lazy
     @Autowired

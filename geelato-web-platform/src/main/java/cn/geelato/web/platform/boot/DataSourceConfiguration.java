@@ -57,4 +57,9 @@ public class DataSourceConfiguration extends BaseConfiguration {
     public Dao dynamicDao(@Qualifier("dynamicJdbcTemplate") JdbcTemplate jdbcTemplate) {
         return new Dao(jdbcTemplate);
     }
+
+    @Bean(name = "dbGenerateDao")
+    public Dao DbGenerateDao(@Qualifier("primaryJdbcTemplate") JdbcTemplate jdbcTemplate) {
+        return new Dao(jdbcTemplate);
+    }
 }

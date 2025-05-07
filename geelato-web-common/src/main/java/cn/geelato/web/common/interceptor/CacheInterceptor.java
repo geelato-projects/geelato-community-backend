@@ -15,7 +15,6 @@ import java.io.IOException;
 
 @Slf4j
 public class CacheInterceptor implements HandlerInterceptor {
-
     CacheService<Object> cacheService = new CacheServiceImpl<>();
 
     @Override

@@ -25,6 +25,7 @@ import cn.geelato.web.platform.m.model.service.DevTableService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -36,7 +37,7 @@ import java.util.*;
 public class MetaDdlService {
     private final MetaManager metaManager = MetaManager.singleInstance();
     @Lazy
-    @Autowired
+    @Qualifier("dbGenerateDao")
     protected DbGenerateDao dbGenerateDao;
     @Lazy
     @Autowired
@@ -69,7 +70,7 @@ public class MetaDdlService {
             FilterGroup filterGroup = new FilterGroup();
             filterGroup.addFilter("entityName", tableMeta.getEntityName());
             List<TableMeta> tableMetas = devTableService.queryModel(TableMeta.class, filterGroup);
-            if (tableMetas == null || tableMetas.isEmpty() || tableMetas.size() > 1) {
+            if (tableMetas == null || tableMetas.size() != 1) {
                 throw new RuntimeException("实体元数据为空或多个");
             }
             entityMeta.setTableMeta(tableMetas.get(0));

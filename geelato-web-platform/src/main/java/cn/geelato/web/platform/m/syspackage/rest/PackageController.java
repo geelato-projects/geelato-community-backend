@@ -16,6 +16,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.m.base.rest.AppController;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
@@ -36,6 +37,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.TransactionStatus;
@@ -75,6 +77,8 @@ public class PackageController extends BaseController {
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
     private final JsonTextSaveParser jsonTextSaveParser = new JsonTextSaveParser();
+    @Autowired
+    private AppController app;
 
 
     /*
@@ -492,8 +496,8 @@ public class PackageController extends BaseController {
     }
 
     private String writePackageData(AppVersion appVersion, AppPackage appPackage) throws IOException {
-        ObjectMapper objectMapper=new ObjectMapper();
-        String jsonStr =objectMapper.writeValueAsString(appPackage);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonStr = objectMapper.writeValueAsString(appPackage);
         String packageSuffix = ".gdp";
         String dataFileName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String fileName = dataFileName + packageSuffix;

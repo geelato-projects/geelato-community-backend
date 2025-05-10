@@ -31,6 +31,7 @@ import cn.geelato.web.platform.m.syspackage.enums.PackageStatusEnum;
 import cn.geelato.web.platform.m.syspackage.service.AppVersionService;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -491,7 +492,8 @@ public class PackageController extends BaseController {
     }
 
     private String writePackageData(AppVersion appVersion, AppPackage appPackage) throws IOException {
-        String jsonStr = JSONObject.toJSONString(appPackage);
+        ObjectMapper objectMapper=new ObjectMapper();
+        String jsonStr =objectMapper.writeValueAsString(appPackage);
         String packageSuffix = ".gdp";
         String dataFileName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String fileName = dataFileName + packageSuffix;

@@ -12,7 +12,7 @@ import java.util.Map;
 public class JsonTextParser {
     protected final String FN_UPDATE_AT = "updateAt";
     protected final String FN_UPDATER = "updater";
-    protected final String FN_UPDATER_NAME = "updater";
+    protected final String FN_UPDATER_NAME = "updaterName";
 
     protected final String FN_CREATE_AT = "createAt";
     protected final String FN_CREATOR = "creator";

@@ -73,12 +73,14 @@ public class MetaController extends BaseController {
 
     @RequestMapping(value = {"/delete/{biz}/{id}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<Integer> delete(@PathVariable("biz") String biz, @PathVariable("id") String id) {
+        EntityMeta entityMeta = ruleService.resolveEntity(biz, "delete");
+        DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
         return ApiResult.success(ruleService.delete(biz, id));
     }
 
     @RequestMapping(value = {"/delete2/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<Integer> delete(@PathVariable("biz") String biz) {
-        String gql = getGql("delete");
+        String gql = getGql("delete2");
         return ApiResult.success(ruleService.deleteByGql(biz, gql));
     }
 

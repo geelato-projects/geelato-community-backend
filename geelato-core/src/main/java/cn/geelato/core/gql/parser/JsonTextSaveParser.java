@@ -152,7 +152,7 @@ public class JsonTextSaveParser extends JsonTextParser {
         String PK = validator.getPK();
         if (validator.hasPK(fields) && StringUtils.hasText(jo.getString(PK))
                 && !StringUtils.hasText(jo.getString(Force_ID))) {
-            generateUpdateCommand(sessionCtx, jo, PK, command, params);
+            generateUpdateCommand(sessionCtx, jo.getString(PK), PK,command, params);
         } else {
             generateInsertCommand(sessionCtx, commandName, command, params, PK);
         }
@@ -181,18 +181,18 @@ public class JsonTextSaveParser extends JsonTextParser {
         command.setPK(entityMap.get(PK).toString());
     }
 
-    private void generateUpdateCommand(SessionCtx sessionCtx, JSONObject jo, String PK, SaveCommand command, Map<String, Object> params) {
+    private void generateUpdateCommand(SessionCtx sessionCtx, String  pkValue, String pkKey, SaveCommand command, Map<String, Object> params) {
         FilterGroup fg = new FilterGroup();
-        fg.addFilter(PK, jo.getString(PK));
+        fg.addFilter(pkKey ,pkValue);
         command.setWhere(fg);
         command.setCommandType(CommandType.Update);
-        params.remove(PK);
-        putUpdateDefaultField(params, sessionCtx);
+        params.remove(pkValue);
+        putUpdateDefaultField(metaManager.newDefaultEntityMap(command.getEntityName()),params,sessionCtx);
         String[] updateFields = new String[params.size()];
         params.keySet().toArray(updateFields);
         command.setFields(updateFields);
         command.setValueMap(params);
-        command.setPK(jo.getString(PK));
+        command.setPK(pkValue);
     }
 
     private static void EncryptInner(SaveCommand command, EntityMeta entityMeta) {
@@ -211,15 +211,15 @@ public class JsonTextSaveParser extends JsonTextParser {
     }
 
 
-    private void putUpdateDefaultField(Map<String, Object> entity, SessionCtx sessionCtx) {
+    private void putUpdateDefaultField(Map<String, Object> entity,Map<String, Object> params, SessionCtx sessionCtx) {
         if (entity.containsKey(FN_UPDATE_AT)) {
-            entity.put(FN_UPDATE_AT, simpleDateFormat.format(new Date()));
+            params.put(FN_UPDATE_AT, simpleDateFormat.format(new Date()));
         }
         if (entity.containsKey(FN_UPDATER)) {
-            entity.put(FN_UPDATER, SessionCtx.getUserId());
+            params.put(FN_UPDATER, SessionCtx.getUserId());
         }
         if (entity.containsKey(FN_UPDATER_NAME)) {
-            entity.put(FN_UPDATER_NAME, SessionCtx.getUserName());
+            params.put(FN_UPDATER_NAME, SessionCtx.getUserName());
         }
     }
 
@@ -242,6 +242,14 @@ public class JsonTextSaveParser extends JsonTextParser {
         if (entity.containsKey(FN_DEPT_ID)) {
             entity.put(FN_DEPT_ID, SessionCtx.getCurrentUser().getDefaultOrgId());
         }
-        putUpdateDefaultField(entity, sessionCtx);
+        if (entity.containsKey(FN_UPDATE_AT)) {
+            entity.put(FN_UPDATE_AT, simpleDateFormat.format(new Date()));
+        }
+        if (entity.containsKey(FN_UPDATER)) {
+            entity.put(FN_UPDATER, SessionCtx.getUserId());
+        }
+        if (entity.containsKey(FN_UPDATER_NAME)) {
+            entity.put(FN_UPDATER_NAME, SessionCtx.getUserName());
+        }
     }
 }

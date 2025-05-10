@@ -85,8 +85,9 @@ public class RuleService {
                 command = gqlManager.generateBatchSaveSql(gql, getSessionCtx()).get(0);
                 break;
             case "delete":
+                return metaManager.getByEntityName(gql);
+            case "delete2":
                 command = gqlManager.generateDeleteSql(gql, getSessionCtx());
-                break;
             case "pageQuery":
                 command = gqlManager.generatePageQuerySql(gql);
                 break;

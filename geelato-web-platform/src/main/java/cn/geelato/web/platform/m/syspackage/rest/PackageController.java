@@ -16,7 +16,6 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.rest.AppController;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
@@ -32,13 +31,11 @@ import cn.geelato.web.platform.m.syspackage.enums.PackageStatusEnum;
 import cn.geelato.web.platform.m.syspackage.service.AppVersionService;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.alibaba.fastjson2.JSONWriter;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.TransactionStatus;
@@ -50,6 +47,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static org.apache.poi.hemf.record.emfplus.HemfPlusRecordType.object;
 
 @Controller
 @RequestMapping(value = "/package")
@@ -78,8 +77,6 @@ public class PackageController extends BaseController {
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
     private final JsonTextSaveParser jsonTextSaveParser = new JsonTextSaveParser();
-    @Autowired
-    private AppController app;
 
 
     /*
@@ -495,11 +492,19 @@ public class PackageController extends BaseController {
 //        map.put("platform_resources",String.format("select * from platform_permission where app_id='%s'",appId));   //表需要加app_id
         return map;
     }
-
+    public static String toJsonString(Object object) {
+        try (StringWriter writer = new StringWriter();
+             JSONWriter jsonWriter = JSONWriter.of()) {
+            jsonWriter.writeAny(object);
+            return writer.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("JSON序列化失败", e);
+        }
+    }
     private String writePackageData(AppVersion appVersion, AppPackage appPackage) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        String jsonStr = objectMapper.writeValueAsString(appPackage);
+
+        String jsonStr =toJsonString(appPackage);
+
         String packageSuffix = ".gdp";
         String dataFileName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String fileName = dataFileName + packageSuffix;

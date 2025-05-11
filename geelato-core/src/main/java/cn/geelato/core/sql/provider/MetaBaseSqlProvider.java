@@ -131,9 +131,9 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                 ||filter.getOperator().equals(FilterGroup.Operator.fis)) {
             // not do anything
         }else {
-            if (!"JSON".equals(getEntityMeta(command).getFieldMeta(filter.getField()).getColumnMeta().getDataType())) {
-                list.add(filter.getValue());
-            }
+            String fieldType=getEntityMeta(command).getFieldMeta(filter.getField()).getColumnMeta().getDataType();
+            Assert.isTrue(!"JSON".equals(fieldType), filter.getField() + "为JSON,不支持" + filter.getOperator());
+            list.add(filter.getValue());
         }
     }
 

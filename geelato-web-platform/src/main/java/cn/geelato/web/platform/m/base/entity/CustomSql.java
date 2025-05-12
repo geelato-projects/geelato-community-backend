@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.entity;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.web.platform.constants.MediaTypes;
+import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.core.meta.annotation.Col;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.Title;
@@ -15,7 +15,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_sql")
+@Entity(name = "platform_sql",catalog = "platform")
 @Title(title = "自定义接口编排")
 public class CustomSql extends BaseEntity {
     @Title(title = "所属应用")

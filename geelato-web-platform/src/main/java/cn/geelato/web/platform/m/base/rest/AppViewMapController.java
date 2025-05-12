@@ -6,7 +6,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.AppViewMap;
 import cn.geelato.web.platform.m.base.service.AppViewMapService;
@@ -19,8 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 

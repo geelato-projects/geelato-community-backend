@@ -13,7 +13,7 @@ import java.util.Date;
 
 @Getter
 @Setter
-@Entity(name = "platform_schedule_log")
+@Entity(name = "platform_schedule_log",catalog = "platform")
 @Title(title = "调度日志")
 public class ScheduleLog extends BaseEntity {
     @Title(title = "所属应用")

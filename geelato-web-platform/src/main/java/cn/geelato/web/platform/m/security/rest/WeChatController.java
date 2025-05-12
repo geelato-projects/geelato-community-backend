@@ -3,10 +3,10 @@ package cn.geelato.web.platform.m.security.rest;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.wechat.WxChatConfiguration;
-import cn.geelato.web.platform.m.security.entity.User;
+import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.m.security.service.UserService;
 import cn.geelato.web.platform.m.security.wechat.WeChatAccess;
 import cn.geelato.web.platform.m.security.wechat.WeChatUtil;

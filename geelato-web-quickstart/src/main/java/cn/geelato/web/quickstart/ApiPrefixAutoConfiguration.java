@@ -1,7 +1,7 @@
 package cn.geelato.web.quickstart;
 
-import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.annotation.ApiRuntimeRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRuntimeRestController;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;

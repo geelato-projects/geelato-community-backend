@@ -55,6 +55,7 @@
         <geelato.auth.version>0.0.1-SNAPSHOT</geelato.auth.version>
         <geelato.oss.version>0.0.1-SNAPSHOT</geelato.oss.version>
         <geelato.sc.version>0.0.1-SNAPSHOT</geelato.sc.version>
+        <geelato.workflow.version>0.0.1-SNAPSHOT</geelato.workflow.version>
     </properties>
 
 
@@ -152,6 +153,11 @@
             </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
+                <artifactId>geelato-web-common</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
                 <artifactId>geelato-web-platform</artifactId>
                 <version>${geelato.version}</version>
             </dependency>
@@ -217,6 +223,18 @@
                 <groupId>cn.geelato</groupId>
                 <artifactId>geelato-site-collocation</artifactId>
                 <version>${geelato.sc.version}</version>
+            </dependency>
+
+            <!--workflow module-->
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-workflow-core</artifactId>
+                <version>${geelato.workflow.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-workflow-engine</artifactId>
+                <version>${geelato.workflow.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

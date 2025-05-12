@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.script.rest;
 
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.script.entity.Api;
 import cn.geelato.web.platform.m.script.service.ApiService;

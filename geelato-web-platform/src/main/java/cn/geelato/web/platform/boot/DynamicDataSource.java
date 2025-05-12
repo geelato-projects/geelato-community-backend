@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.boot;
 
 import cn.geelato.core.ds.DataSourceManager;
+import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 
 import javax.sql.DataSource;
@@ -12,7 +13,7 @@ import java.util.Map;
 public class DynamicDataSource extends AbstractRoutingDataSource {
     @Override
     protected Object determineCurrentLookupKey() {
-        String dataSourceKey=DynamicDatasourceHolder.getDataSourceKey();
+        String dataSourceKey= DynamicDatasourceHolder.getDataSourceKey();
         if(dataSourceKey!=null){
             if(getResolvedDataSources().get(dataSourceKey)==null){
                 Object lazyDataSource= DataSourceManager.singleInstance().getLazyDataSource(dataSourceKey);

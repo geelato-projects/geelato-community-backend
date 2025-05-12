@@ -3,20 +3,17 @@ package cn.geelato.web.platform.m.example;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.oss.OSSResult;
-import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.common.FileHelper;
 import cn.geelato.web.platform.m.BaseController;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
 import java.io.InputStream;

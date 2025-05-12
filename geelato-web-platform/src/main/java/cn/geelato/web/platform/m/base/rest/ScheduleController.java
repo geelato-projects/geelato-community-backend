@@ -8,7 +8,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.UIDGenerator;
-import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.Schedule;
 import cn.geelato.web.platform.m.base.enums.ScheduleTypeEnum;

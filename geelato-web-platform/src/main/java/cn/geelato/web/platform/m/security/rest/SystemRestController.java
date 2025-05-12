@@ -1,17 +1,17 @@
 package cn.geelato.web.platform.m.security.rest;
 
-import cn.geelato.web.platform.constants.MediaTypes;
+import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
-import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.interceptor.annotation.IgnoreVerify;
+import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.LoginResult;
-import cn.geelato.web.platform.m.security.entity.Org;
+import cn.geelato.web.common.security.Org;
 import cn.geelato.web.platform.m.security.entity.Role;
-import cn.geelato.web.platform.m.security.entity.User;
+import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import cn.geelato.web.platform.m.security.service.OrgService;
 import cn.geelato.web.platform.utils.EncryptUtil;

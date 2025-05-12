@@ -11,7 +11,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Title(title = "应用数据模型检查表")
-@Entity(name = "platform_dev_table_check")
+@Entity(name = "platform_dev_table_check",catalog = "platform")
 public class TableCheck extends BaseEntity implements EntityEnableAble {
     @Title(title = "应用Id")
     @Col(name = "app_id")

@@ -7,7 +7,7 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.utils.SqlParams;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UIDGenerator;
-import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.UploadService;

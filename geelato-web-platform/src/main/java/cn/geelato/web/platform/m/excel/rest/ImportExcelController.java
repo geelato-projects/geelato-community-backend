@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.excel.rest;
 
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
 import cn.geelato.web.platform.m.excel.service.ExportTemplateService;

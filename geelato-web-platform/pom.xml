@@ -30,6 +30,10 @@
         </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>
+            <artifactId>geelato-web-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
             <artifactId>geelato-plugin-manager</artifactId>
         </dependency>
         <dependency>
@@ -47,6 +51,10 @@
 <!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
         <dependency>
@@ -62,11 +70,6 @@
                     <artifactId>jedis</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>${redis.clients.version}</version>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>
@@ -117,17 +120,7 @@
             <artifactId>fst</artifactId>
             <version>${fst-version}</version>
         </dependency>
-        <dependency>
-            <groupId>net.oschina.j2cache</groupId>
-            <artifactId>j2cache-core</artifactId>
-            <version>${j2cache-version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+
         <dependency>
             <groupId>org.ehcache</groupId>
             <artifactId>ehcache</artifactId>

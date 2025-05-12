@@ -5,7 +5,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.plugin.PluginBeanProvider;
 import cn.geelato.plugin.example.Greeting;
 import cn.geelato.plugin.example.PluginInfo;
-import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

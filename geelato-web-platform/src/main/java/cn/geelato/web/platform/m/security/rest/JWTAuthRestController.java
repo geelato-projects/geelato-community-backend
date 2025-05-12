@@ -1,17 +1,19 @@
 package cn.geelato.web.platform.m.security.rest;
 
-import cn.geelato.web.platform.constants.MediaTypes;
+import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.Base64Utils;
-import cn.geelato.web.platform.annotation.ApiRestController;
-import cn.geelato.web.platform.interceptor.annotation.IgnoreVerify;
+import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
+import cn.geelato.web.common.security.Org;
+import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
 import cn.geelato.web.platform.m.security.service.*;
-import cn.geelato.web.platform.shiro.ShiroUser;
+import cn.geelato.web.common.shiro.ShiroUser;
 import cn.geelato.web.platform.utils.EncryptUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;

@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.m.security.service;
 
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
-import cn.geelato.web.platform.m.security.entity.Org;
+import cn.geelato.web.common.security.Org;
 import cn.geelato.web.platform.m.security.entity.OrgUserMap;
-import cn.geelato.web.platform.m.security.entity.User;
+import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.m.security.enums.OrgTypeEnum;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;

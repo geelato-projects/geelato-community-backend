@@ -1,7 +1,5 @@
-package cn.geelato.web.common.interceptor;
+package cn.geelato.web.platform.cache;
 
-import cn.geelato.web.common.cache.CacheService;
-import cn.geelato.web.common.cache.CacheServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;

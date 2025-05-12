@@ -1,4 +1,4 @@
-package cn.geelato.web.common.cache;
+package cn.geelato.web.platform.cache;
 
 public class CacheUtil {
     private static final CacheService<Object> cacheService = new CacheServiceImpl<>();

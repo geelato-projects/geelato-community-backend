@@ -21,9 +21,6 @@ import org.springframework.core.annotation.Order;
 
 import java.util.*;
 
-/**
- * @author  hongxq
- */
 @Configuration
 @Slf4j
 public class ShiroConfiguration extends BaseConfiguration {

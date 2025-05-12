@@ -25,7 +25,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
-import cn.geelato.web.common.cache.CacheUtil;
+import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.HashedMap;

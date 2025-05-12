@@ -1,4 +1,4 @@
-package cn.geelato.web.common.cache;
+package cn.geelato.web.platform.cache;
 
 import net.oschina.j2cache.CacheChannel;
 import net.oschina.j2cache.CacheObject;

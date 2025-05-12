@@ -1,4 +1,4 @@
-package cn.geelato.web.common.cache;
+package cn.geelato.web.platform.cache;
 
 
 public interface CacheService<T> {

@@ -431,7 +431,7 @@ public class MetaManager extends AbstractManager {
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
         } else if (entityMetadataMap.containsKey(entityName)) {
             EntityMeta entityMeta = entityMetadataMap.get(entityName);
-            if (entityMeta != null && entityMeta.getTableMeta() != null && Strings.isBlank(entityMeta.getTableMeta().getConnectId())) {
+            if (entityMeta != null && entityMeta.getTableMeta() != null) {
                 entityMeta.setTableMeta(MetaReflex.getTableMeta(map));
             }
         }

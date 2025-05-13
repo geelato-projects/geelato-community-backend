@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.security.entity;
 
+import cn.geelato.web.common.security.User;
 import lombok.Getter;
 import lombok.Setter;
 

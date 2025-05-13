@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-@Entity(name = "platform_api")
+@Entity(name = "platform_api",catalog = "platform")
 @Title(title = "服务接口")
 public class Api extends BaseEntity {
     @Title(title = "所属应用")

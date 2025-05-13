@@ -10,6 +10,7 @@ import cn.geelato.security.User;
 import cn.geelato.security.UserMenu;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ import java.util.Map;
 public class EnvManager  extends AbstractManager {
     private final Map<String ,Map<String , SysConfig>> sysConfigClassifyMap;
     private final Map<String ,SysConfig> sysConfigMap;
-    private Dao  EnvDao;
+    private JdbcTemplate EnvJdbcTemplate;
     private static EnvManager instance;
 
     private EnvManager(){
@@ -38,8 +39,8 @@ public class EnvManager  extends AbstractManager {
         lock.unlock();
         return instance;
     }
-    public void SetDao(Dao dao){
-        this.EnvDao=dao;
+    public void setJdbcTemplate(JdbcTemplate jdbcTemplate){
+        this.EnvJdbcTemplate=jdbcTemplate;
     }
     public  void EnvInit(){
         LoadSysConfig();
@@ -48,7 +49,7 @@ public class EnvManager  extends AbstractManager {
     private void LoadSysConfig() {
         String sql = "select config_key as configKey,config_value as configValue,app_Id as appId,tenant_code as tenantCode,purpose as purpose " +
                 "from platform_sys_config where enable_status =1 and del_status =0";
-        List<SysConfig> sysConfigList = EnvDao.getJdbcTemplate().query(sql,new BeanPropertyRowMapper<>(SysConfig.class));
+        List<SysConfig> sysConfigList = EnvJdbcTemplate.query(sql,new BeanPropertyRowMapper<>(SysConfig.class));
         for (SysConfig config:sysConfigList) {
             if(!sysConfigMap.containsKey(config.getConfigKey())){
                 sysConfigMap.put(config.getConfigKey(),config);
@@ -75,7 +76,7 @@ public class EnvManager  extends AbstractManager {
     public void refreshConfig(String configKey){
         String sql = "select config_key as configKey,config_value as configValue,app_Id as appId,tenant_code as tenantCode,purpose as purpose from platform_sys_config " +
                 "where enable_status =1 and del_status =0 and config_key='%s'";
-        SysConfig sysConfig = EnvDao.getJdbcTemplate().queryForObject(String.format(sql,configKey),
+        SysConfig sysConfig = EnvJdbcTemplate.queryForObject(String.format(sql,configKey),
                 new BeanPropertyRowMapper<>(SysConfig.class));
         if(sysConfig!=null){
             String key=sysConfig.getConfigKey();
@@ -108,7 +109,7 @@ public class EnvManager  extends AbstractManager {
         String sql = "select id as userId,org_id as defaultOrgId,login_name as loginName," +
                 "name as userName,bu_id as buId,dept_id as deptId,union_id as unionId,"+
                 " cooperating_org_id as cooperatingOrgId,tenant_code as tenantCode from platform_user  where login_name =?";
-        User dbUser = EnvDao.getJdbcTemplate().queryForObject(sql, new BeanPropertyRowMapper<>(User.class), loginName);
+        User dbUser = EnvJdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(User.class), loginName);
         if (dbUser != null) {
             dbUser.setMenus(structUserMenu(dbUser.getUserId()));
             dbUser.setDataPermissions(structDataPermission(dbUser.getUserId()));
@@ -126,7 +127,7 @@ public class EnvManager  extends AbstractManager {
                 "left join platform_role_r_user t4 on t4.role_id =t3.id \n" +
                 "left join platform_user t5 on t5.id =t4.user_id \n" +
                 "where  t2.type='dp' and t1.del_status=0 and t2.del_status=0 and t3.del_status=0 and t4.del_status=0 and t5.id =?";
-        return EnvDao.getJdbcTemplate().query(sql,
+        return EnvJdbcTemplate.query(sql,
                 new BeanPropertyRowMapper<>(Permission.class), userId);
     }
 

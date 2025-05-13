@@ -29,14 +29,12 @@ import java.util.stream.Collectors;
 /**
  * @author geemeta
  */
-@Component
 @Slf4j
 public class DbGenerateDao {
-    @Autowired
-    @Qualifier("dynamicDao")
-    private Dao dao;
+    private final Dao dao;
 
-    public DbGenerateDao() {
+    public DbGenerateDao(Dao dao) {
+        this.dao = dao;
     }
 
     /**

@@ -12,6 +12,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DevTableCheckService extends BaseService {
     @Lazy
-    @Autowired
+    @Qualifier("dbGenerateDao")
     protected DbGenerateDao dbGenerateDao;
     @Lazy
     @Autowired

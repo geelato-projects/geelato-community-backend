@@ -15,7 +15,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_file")
+@Entity(name = "platform_file",catalog = "platform")
 @Title(title = "文件")
 public class FileInfo extends BaseEntity {
 

@@ -6,6 +6,7 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.annotation.ForeignKey;
 import cn.geelato.core.meta.annotation.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import cn.geelato.web.common.security.User;
 import lombok.Getter;
 import lombok.Setter;
 

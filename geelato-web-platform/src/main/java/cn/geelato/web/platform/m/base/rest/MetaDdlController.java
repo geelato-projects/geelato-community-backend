@@ -2,9 +2,9 @@ package cn.geelato.web.platform.m.base.rest;
 
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.web.platform.constants.MediaTypes;
+import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiMetaResult;
-import cn.geelato.web.platform.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.MetaDdlService;
 import lombok.extern.slf4j.Slf4j;

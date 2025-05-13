@@ -13,7 +13,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_tree_node")
+@Entity(name = "platform_tree_node",catalog = "platform")
 @Title(title = "菜单")
 public class TreeNode extends BaseSortableEntity {
 

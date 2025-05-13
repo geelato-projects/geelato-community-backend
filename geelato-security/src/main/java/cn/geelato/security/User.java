@@ -7,22 +7,42 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-@Setter
 @Getter
-public class User {
+@Setter
+public class User extends UserCore{
     private String userId;
     private String userName;
-    private String loginName;
-    private String defaultOrgId;
-    private String defaultOrgName;
-    private String deptId;
+    private String enName;
+    private int sex;
+    private String orgId;
+    private String password;
+    private String salt;
+    private String avatar;
+    private String mobilePrefix;
+    private String mobilePhone;
+    private String telephone;
+    private String email;
+    private String post;
+    private int type;
+    private int source;
+    private String nationCode;
+    private String provinceCode;
+    private String cityCode;
+    private String address;
+    private String description;
+    private String jobNumber;
     private String buId;
     private String cooperatingOrgId;
+    private int enableStatus;
+    private String plainPassword;
+    private boolean stocked;
     private String unionId;
-    private String tenantCode;
-    private List<UserOrg> orgs;
-    private List<UserRole> roles;
+    private String deptId;
+    private String defaultOrgId;
+    private String defaultOrgName;
 
+
+    //todo define this is wrong?
     private List<UserMenu> menus;
 
     private List<Permission> dataPermissions;
@@ -44,5 +64,4 @@ public class User {
         }
         return rtnPermission;
     }
-
 }

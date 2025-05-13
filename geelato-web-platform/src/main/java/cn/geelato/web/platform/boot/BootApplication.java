@@ -70,7 +70,7 @@ public class BootApplication implements CommandLineRunner {
     }
 
     public void initEnvironment(){
-        EnvManager.singleInstance().SetDao(dao);
+        EnvManager.singleInstance().setJdbcTemplate(dao.getJdbcTemplate());
         EnvManager.singleInstance().EnvInit();
     }
     /**

@@ -13,7 +13,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_app")
+@Entity(name = "platform_app",catalog = "platform")
 @Title(title = "应用")
 public class App extends BaseSortableEntity {
     @Title(title = "应用名称")

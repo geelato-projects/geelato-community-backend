@@ -17,6 +17,7 @@ import com.alibaba.fastjson2.JSONArray;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -35,7 +36,7 @@ public class DevViewService extends BaseSortableService {
     private static final String UPDATE_COMMENT_PREFIX = "已变更；";
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
     @Lazy
-    @Autowired
+    @Qualifier("dbGenerateDao")
     protected DbGenerateDao dbGenerateDao;
 
     public List<TableView> getTableView(String connectId, String entityName) {
@@ -44,8 +45,7 @@ public class DevViewService extends BaseSortableService {
         params.put("entityName", entityName);
         params.put("viewType", ViewTypeEnum.DEFAULT.getCode());
         params.put("enableStatus", ColumnDefault.ENABLE_STATUS_VALUE);
-        List<TableView> tableViewList = queryModel(TableView.class, params);
-        return tableViewList;
+        return queryModel(TableView.class, params);
     }
 
     /**
@@ -109,7 +109,7 @@ public class DevViewService extends BaseSortableService {
             });
             // 默认字段
             List<ColumnMeta> metaList = MetaManager.singleInstance().getDefaultColumn();
-            if (metaList != null && metaList.size() > 0) {
+            if (metaList != null && !metaList.isEmpty()) {
                 for (ColumnMeta meta : metaList) {
                     if (!columnNames.contains(meta.getName())) {
                         meta.setAppId(form.getAppId());
@@ -130,8 +130,8 @@ public class DevViewService extends BaseSortableService {
             List<Object> list = new ArrayList<>();
             JSONArray columnData = JSONArray.parse(form.getViewColumn());
             columnData.forEach(x -> {
-                Map<String, Object> m = JSON.parseObject(x.toString(), Map.class);
-                list.add(ClassUtils.toMeta(ColumnMeta.class, m));
+                list.add(ClassUtils.toMeta(ColumnMeta.class,
+                        JSON.parseObject(x.toString(), Map.class)));
             });
             form.setViewColumn(JSON.toJSONString(list));
         }

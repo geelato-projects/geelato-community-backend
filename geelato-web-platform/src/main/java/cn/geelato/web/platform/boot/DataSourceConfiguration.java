@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
@@ -54,6 +55,11 @@ public class DataSourceConfiguration extends BaseConfiguration {
 
     @Bean(name = "dynamicDao")
     public Dao dynamicDao(@Qualifier("dynamicJdbcTemplate") JdbcTemplate jdbcTemplate) {
+        return new Dao(jdbcTemplate);
+    }
+
+    @Bean(name = "dbGenerateDao")
+    public Dao DbGenerateDao(@Qualifier("primaryJdbcTemplate") JdbcTemplate jdbcTemplate) {
         return new Dao(jdbcTemplate);
     }
 }

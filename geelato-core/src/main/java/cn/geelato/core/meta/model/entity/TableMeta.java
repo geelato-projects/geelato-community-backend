@@ -16,7 +16,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Title(title = "实体信息")
-@Entity(name = "platform_dev_table")
+@Entity(name = "platform_dev_table",catalog = "platform")
 public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "应用Id")
     @Col(name = "app_id")

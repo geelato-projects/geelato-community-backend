@@ -1,9 +1,8 @@
 package cn.geelato.web.platform.m.security.service;
 
-import cn.geelato.web.platform.shiro.ShiroUser;
+import cn.geelato.web.common.shiro.ShiroUser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.Subject;
 
 /**
  * Created by hongxueqian on 14-4-12.

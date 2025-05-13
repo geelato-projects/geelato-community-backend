@@ -13,7 +13,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_app_r_sql")
+@Entity(name = "platform_app_r_sql",catalog = "platform")
 @Title(title = "应用接口编码关系表")
 public class AppSqlMap extends BaseEntity {
     @Col(name = "app_id")

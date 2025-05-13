@@ -27,9 +27,9 @@ public class GqlService extends RuleService {
     }
 
     private Dao initDefaultDao(String connectId) {
-        DataSource ds = null;
+        DataSource ds;
         if (Strings.isNotBlank(connectId)) {
-            ds = (DataSource) DataSourceManager.singleInstance().getLazyDataSource(connectId);
+            ds = DataSourceManager.singleInstance().getDataSource(connectId);
         } else {
             ds = (DataSource) DataSourceManager.singleInstance().getDynamicDataSourceMap().get("primary");
         }
@@ -60,7 +60,7 @@ public class GqlService extends RuleService {
      * @param dictId 字典ID
      * @return 返回查询结果的ApiResult对象，包含字典项列表
      */
-    public ApiResult queryDictItems(String dictId) {
+    public ApiResult<?> queryDictItems(String dictId) {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("dictId", dictId);

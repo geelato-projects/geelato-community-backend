@@ -13,6 +13,4 @@
   <packaging>jar</packaging>
   <name>geelato-security</name>
 
-  <dependencies>
-  </dependencies>
 </project>

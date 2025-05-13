@@ -1,14 +1,10 @@
 package cn.geelato.web.platform.boot;
 
-import cn.geelato.web.platform.boot.properties.OAuthConfigurationProperties;
-import cn.geelato.web.platform.interceptor.CacheInterceptor;
-import cn.geelato.web.platform.interceptor.DataSourceInterceptor;
-import cn.geelato.web.platform.interceptor.DefaultInterceptor;
-import cn.geelato.web.platform.interceptor.OAuth2Interceptor;
+import cn.geelato.web.common.interceptor.*;
+import cn.geelato.web.platform.cache.CacheInterceptor;
+import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -18,20 +14,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 // todo：servlet interceptor, does not work under spring webflux，wait refactor
 public class InterceptorConfiguration extends BaseConfiguration implements WebMvcConfigurer {
-    @Autowired
+    @Resource
     private OAuthConfigurationProperties oAuthConfigurationProperties;
 
     private static final String urlPrefix = "/api";
 
     @Override
     public void addInterceptors(@NotNull InterceptorRegistry registry) {
-        HandlerInterceptor handlerInterceptor;
-        if (getProperty("geelato.application.shiro", "db").equals("oauth2")) {
-            handlerInterceptor = new OAuth2Interceptor(oAuthConfigurationProperties);
-        } else {
-            handlerInterceptor = new DefaultInterceptor(oAuthConfigurationProperties);
-        }
-        registry.addInterceptor(handlerInterceptor)
+        registry.addInterceptor(new DefaultSecurityInterceptor(oAuthConfigurationProperties))
                 .addPathPatterns("/**")
                 // 以下为排除鉴权的路径
                 // 登录接口

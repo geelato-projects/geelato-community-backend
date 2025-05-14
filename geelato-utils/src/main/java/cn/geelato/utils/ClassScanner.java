@@ -153,7 +153,8 @@ public class ClassScanner {
                 if (index > 0) {
                     name = clazzName.substring(0, index);
                 }
-                clazz = Class.forName(name);
+                System.out.println("addClassName:" +name);
+                clazz = Class.forName(name,false,Thread.currentThread().getContextClassLoader());
             } catch (ClassNotFoundException e) {
                 logger.error("", e);
             }

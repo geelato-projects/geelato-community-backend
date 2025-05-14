@@ -1,6 +1,5 @@
 package cn.geelato.web.common.shiro;
 
-import cn.geelato.core.orm.Dao;
 import cn.geelato.web.common.interceptor.OAuthConfigurationProperties;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
 import cn.geelato.web.common.security.User;
@@ -11,7 +10,6 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -24,6 +22,7 @@ public class OAuth2Realm extends AuthorizingRealm {
 
     @Autowired
     private OAuthConfigurationProperties oAuthConfigurationProperties;
+
     @Override
     public boolean supports(AuthenticationToken token) {
         return token instanceof OAuth2Token;

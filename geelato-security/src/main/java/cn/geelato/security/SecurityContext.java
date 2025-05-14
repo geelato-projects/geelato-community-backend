@@ -1,9 +1,5 @@
 package cn.geelato.security;
 
-
-/**
- * @author diabl
- */
 public class SecurityContext {
 
     private static final ThreadLocal<User> threadLocalUser = new ThreadLocal<>();

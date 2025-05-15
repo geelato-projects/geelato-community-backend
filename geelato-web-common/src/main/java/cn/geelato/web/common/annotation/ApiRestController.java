@@ -24,4 +24,6 @@ public @interface ApiRestController {
 
     @AliasFor(annotation = RequestMapping.class)
     String[] path() default {};
+
+    String category() default "platform";
 }

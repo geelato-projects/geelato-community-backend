@@ -3,6 +3,7 @@ package cn.geelato.web.quickstart;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.annotation.ApiRuntimeRestController;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -10,8 +11,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class ApiPrefixAutoConfiguration implements WebMvcConfigurer {
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
-        configurer.addPathPrefix("/api", c ->
-                c.isAnnotationPresent(ApiRestController.class)
-                        || c.isAnnotationPresent(ApiRuntimeRestController.class));
+        configurer.addPathPrefix("/api",  handlerType ->
+                MergedAnnotations.from(
+                        handlerType,
+                        MergedAnnotations.SearchStrategy.TYPE_HIERARCHY
+                ).isPresent(ApiRestController.class));
     }
 }

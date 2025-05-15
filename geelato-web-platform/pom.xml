@@ -109,11 +109,6 @@
             <artifactId>commons-codec</artifactId>
             <version>1.13</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.4</version>
-        </dependency>
                 <!--java性能高、内存占用小的序列化工具-->
         <dependency>
             <groupId>de.ruedigermoeller</groupId>

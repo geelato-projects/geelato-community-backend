@@ -158,6 +158,8 @@
             <artifactId>aspose-words</artifactId>
             <version>21.1</version>
             <classifier>jdk17</classifier>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>

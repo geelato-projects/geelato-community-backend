@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.security.rest;
+package cn.geelato.web.platform.auth;
 
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
@@ -30,24 +30,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by hongxq on 2022/5/1.
- */
 @ApiRestController("/user")
 @Slf4j
-public class JWTAuthRestController extends BaseController {
+public class JWTAuthController extends BaseController {
     protected AuthCodeService authCodeService;
     protected OrgService orgService;
 
     @Autowired
-    public JWTAuthRestController(AuthCodeService authCodeService, OrgService orgService) {
+    public JWTAuthController(AuthCodeService authCodeService, OrgService orgService) {
         this.authCodeService = authCodeService;
         this.orgService = orgService;
     }
 
     @IgnoreVerify
     @RequestMapping(value = "/login", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
-    public ApiResult login(@RequestBody LoginParams loginParams) {
+    public ApiResult<LoginResult> login(@RequestBody LoginParams loginParams) {
         try {
             // 用户登录校验
             User loginUser = dao.queryForObject(User.class, "loginName", loginParams.getUsername());
@@ -146,19 +143,6 @@ public class JWTAuthRestController extends BaseController {
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
-    }
-
-
-    @RequestMapping(value = "/logout", method = RequestMethod.POST)
-    public ApiResult<NullResult> logout() {
-        try {
-            User user = this.getUserByToken();
-            log.debug("User [" + user.getLoginName() + "] logout.");
-            return ApiResult.successNoResult();
-        } catch (Exception e) {
-            log.error("退出失败", e);
             return ApiResult.fail(e.getMessage());
         }
     }

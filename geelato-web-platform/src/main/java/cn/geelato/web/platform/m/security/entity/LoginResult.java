@@ -4,8 +4,8 @@ import cn.geelato.web.common.security.User;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author geemeta
@@ -38,7 +38,7 @@ public class LoginResult {
 
     private String token;
     private String homePath;
-    private ArrayList<LoginRoleInfo> roles;
+    private List<LoginRoleInfo> roles;
 
     /**
      * 对象转换

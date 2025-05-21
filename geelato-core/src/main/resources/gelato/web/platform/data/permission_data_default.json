@@ -5,7 +5,7 @@
     "name": "看全部",
     "description": "查看全部的数据",
     "code": "&all",
-    "seqNo": 4
+    "seqNo": 5
   },
   {
     "type": "dp",
@@ -13,7 +13,7 @@
     "name": "看公司/事业部",
     "description": "查看自己公司/事业部的数据",
     "code": "&myBusiness",
-    "seqNo": 3
+    "seqNo": 4
   },
   {
     "type": "dp",
@@ -21,6 +21,14 @@
     "name": "看部门",
     "description": "查看自己部门的数据",
     "code": "&myDept",
+    "seqNo": 3
+  },
+  {
+    "type": "dp",
+    "rule": "bu_id=#currentUser.cooperatingOrgId#",
+    "name": "看本外单位",
+    "description": "查看本外单位的数据",
+    "code": "&myCoop",
     "seqNo": 2
   },
   {

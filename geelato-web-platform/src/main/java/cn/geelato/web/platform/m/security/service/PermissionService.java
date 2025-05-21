@@ -30,7 +30,7 @@ public class PermissionService extends BaseSortableService {
     public static final String PERMISSION_COLUMN_JSON = ResourcesFiles.PERMISSION_COLUMN_DEFAULT_JSON;
     public static final String[] PERMISSION_DEFAULT_TO_ROLE = {"&myself", "&insert", "&update", "&delete"};
     public static final String[] PERMISSION_MODEL_CLASSIFY = {"Insert", "Update", "Delete"};
-    public static final String[] PERMISSION_DATA_ORDER = {"all", "myBusiness", "myDept", "myCoop", "myself"};
+    public static final String[] PERMISSION_DATA_ORDER = {"all", "myBusiness", "myDept", "myself"};
     @Lazy
     @Autowired
     private RolePermissionMapService rolePermissionMapService;

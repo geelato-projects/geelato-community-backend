@@ -86,6 +86,7 @@ public class RuleService {
                 return metaManager.getByEntityName(gql);
             case "delete2":
                 command = gqlManager.generateDeleteSql(gql, getSessionCtx());
+                break;
             case "pageQuery":
                 command = gqlManager.generatePageQuerySql(gql);
                 break;

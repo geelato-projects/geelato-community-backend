@@ -73,14 +73,8 @@ public class RuleService {
     public EntityMeta resolveEntity(String gql, String type) {
         BaseCommand command = null;
         switch (type) {
-            case "save":
-                command = gqlManager.generateSaveSql(gql, getSessionCtx());
-                break;
             case "query":
                 command = gqlManager.generateQuerySql(gql);
-                break;
-            case "batchSave":
-                command = gqlManager.generateBatchSaveSql(gql, getSessionCtx()).get(0);
                 break;
             case "delete":
                 return metaManager.getByEntityName(gql);
@@ -93,7 +87,11 @@ public class RuleService {
             default:
                 break;
         }
-        return metaManager.getByEntityName(command.getEntityName());
+        if(command!=null) {
+            return metaManager.getByEntityName(command.getEntityName());
+        }else {
+            return null;
+        }
     }
 
     public Map<String, Object> queryForMap(String gql) throws DataAccessException {

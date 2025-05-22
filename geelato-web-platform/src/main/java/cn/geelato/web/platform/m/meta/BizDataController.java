@@ -89,7 +89,10 @@ public class BizDataController extends BaseController {
         }
         if (type != null) {
             EntityMeta entityMeta = ruleService.resolveEntity(gql, type);
-            DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
+            if(entityMeta != null) {
+                log.info("change db :{}", entityMeta.getTableMeta().getConnectId());
+                DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
+            }
         }
         return gql;
     }

@@ -1,6 +1,7 @@
 package cn.geelato.web.common.oauth2;
 
 import cn.geelato.utils.HttpUtils;
+import cn.geelato.web.common.interceptor.InvalidTokenException;
 import com.alibaba.fastjson2.JSON;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +13,11 @@ public class OAuth2Service {
         String url=String.format( "%s/oauth2/token?client_id=%s&client_secret=%s&grant_type=authorization_code&code=%s",
                 baseUrl,clientId,clientSecret,code);
         String result=HttpUtils.doGet(url,null);
-        return JSON.parseObject(result, OAuth2ServerTokenResult.class);
+        try{
+            return JSON.parseObject(result, OAuth2ServerTokenResult.class);
+        } catch (Exception e) {
+            throw new InvalidTokenException();
+        }
     }
 
     public OAuth2ServerResult getUserInfo(String baseUrl, String accessToken) throws IOException {

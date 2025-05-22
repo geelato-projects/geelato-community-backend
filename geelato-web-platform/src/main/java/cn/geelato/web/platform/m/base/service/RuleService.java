@@ -4,6 +4,7 @@ import cn.geelato.core.Fn;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.biz.rules.common.EntityValidateRule;
+import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.gql.GqlManager;
 import cn.geelato.core.gql.command.BaseCommand;
 import cn.geelato.core.gql.command.DeleteCommand;
@@ -25,6 +26,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
+import cn.geelato.web.platform.boot.DynamicDataSource;
 import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,7 @@ import org.jeasy.rules.core.DefaultRulesEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionStatus;
@@ -259,9 +262,12 @@ public class RuleService {
             String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
             if (!StringUtils.isEmpty(connectId)) {
                 DynamicDatasourceHolder.setDataSourceKey(connectId);
+                JdbcTemplate jdbcTemplate= new JdbcTemplate(DataSourceManager.singleInstance().getDataSource(connectId));
+                Dao saveDao=new Dao(jdbcTemplate);
+                rtnValue = saveDao.save(boundSql);
+            }else{
+                rtnValue=dao.save(boundSql);
             }
-            rtnValue = dao.save(boundSql);
-            // 增加一个默认清实体缓存的操作
             String cacheKey = command.getEntityName() + "_" + rtnValue;
             if (CacheUtil.exists(cacheKey)) {
                 CacheUtil.remove(cacheKey);

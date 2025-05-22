@@ -7,7 +7,7 @@ import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
-import cn.geelato.core.orm.DbGenerateDao;
+import cn.geelato.core.orm.DbGenerateDynamicDao;
 import cn.geelato.core.util.ClassUtils;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
@@ -17,7 +17,6 @@ import com.alibaba.fastjson2.JSONArray;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -36,8 +35,8 @@ public class DevViewService extends BaseSortableService {
     private static final String UPDATE_COMMENT_PREFIX = "已变更；";
     private static final SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.DATETIME);
     @Lazy
-    @Qualifier("dbGenerateDao")
-    protected DbGenerateDao dbGenerateDao;
+    @Autowired
+    protected DbGenerateDynamicDao dbGenerateDao;
 
     public List<TableView> getTableView(String connectId, String entityName) {
         Map<String, Object> params = new HashMap<>();

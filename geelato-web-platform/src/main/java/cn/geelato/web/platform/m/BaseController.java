@@ -4,6 +4,7 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.DateUtils;
+import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -31,6 +32,7 @@ public class BaseController extends ParameterOperator implements InitializingBea
     private final SimpleDateFormat SDF_DATE_START = new SimpleDateFormat(DateUtils.DATESTART);
     private final SimpleDateFormat SDF_DATE_FINISH = new SimpleDateFormat(DateUtils.DATEFINISH);
     protected Dao dao;
+    protected Dao dynamicDao;
     protected RuleService ruleService;
     protected HttpServletResponse response;
 
@@ -54,6 +56,11 @@ public class BaseController extends ParameterOperator implements InitializingBea
     @Autowired
     protected void setDao(@Qualifier("primaryDao") Dao dao) {
         this.dao = dao;
+    }
+
+    @Autowired
+    protected void setDynamicDao(@Qualifier("dynamicDao") Dao dynamicDao) {
+        this.dynamicDao = dynamicDao;
     }
 
     /**
@@ -97,6 +104,18 @@ public class BaseController extends ParameterOperator implements InitializingBea
             return this.request.getHeader("Tenant-Code");
         }
         return Strings.isNotBlank(tenantCode) ? tenantCode : SessionCtx.getCurrentTenantCode();
+    }
+
+    /**
+     * 切换数据库
+     *
+     * @param connectId 数据库连接ID
+     */
+    public void switchDbByConnectId(String connectId) {
+        if (Strings.isBlank(connectId)) {
+            throw new IllegalArgumentException("数据连接不能为空");
+        }
+        DynamicDatasourceHolder.setDataSourceKey(connectId);
     }
 
     /**

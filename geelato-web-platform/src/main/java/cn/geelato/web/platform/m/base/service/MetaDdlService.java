@@ -15,7 +15,7 @@ import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.meta.schema.SchemaCheck;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.core.orm.DbGenerateDao;
+import cn.geelato.core.orm.DbGenerateDynamicDao;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.utils.SqlParams;
 import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
@@ -25,7 +25,6 @@ import cn.geelato.web.platform.m.model.service.DevTableService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -37,8 +36,8 @@ import java.util.*;
 public class MetaDdlService {
     private final MetaManager metaManager = MetaManager.singleInstance();
     @Lazy
-    @Qualifier("dbGenerateDao")
-    protected DbGenerateDao dbGenerateDao;
+    @Autowired
+    protected DbGenerateDynamicDao dbGenerateDao;
     @Lazy
     @Autowired
     private DevDbConnectService devDbConnectService;

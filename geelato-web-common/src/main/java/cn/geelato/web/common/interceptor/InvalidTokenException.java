@@ -4,7 +4,7 @@ import cn.geelato.lang.exception.CoreException;
 
 public class InvalidTokenException extends CoreException {
     private static final int DEFAULT_CODE = 3000;
-    private static final String DEFAULT_MSG = "InvalidTokenException";
+    private static final String DEFAULT_MSG = "令牌校验异常[InvalidToken]";
 
     public InvalidTokenException() {
         super(DEFAULT_CODE,DEFAULT_MSG);

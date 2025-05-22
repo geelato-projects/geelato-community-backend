@@ -4,7 +4,7 @@ import cn.geelato.lang.exception.CoreException;
 
 public class OAuthGetUserFailException extends CoreException {
     private static final int DEFAULT_CODE = 4000;
-    private static final String DEFAULT_MSG = "OAuth GetUserFailException";
+    private static final String DEFAULT_MSG = "获取用户失败[OAuth]";
 
     public OAuthGetUserFailException() {
         super(DEFAULT_CODE, DEFAULT_MSG);

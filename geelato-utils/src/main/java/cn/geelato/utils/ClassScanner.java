@@ -153,19 +153,15 @@ public class ClassScanner {
                 if (index > 0) {
                     name = clazzName.substring(0, index);
                 }
-                System.out.println("addClassName:" +name);
                 clazz = Class.forName(name,false,Thread.currentThread().getContextClassLoader());
             } catch (ClassNotFoundException e) {
                 logger.error("", e);
             }
-//          System.out.println("isAnnotation=" + clazz.isAnnotation() +" author:" + clazz.isAnnotationPresent(author.class));
             if (clazz != null) {
                 if (annotation == null) {
                     clazzList.add(clazz);
-//                    logger.debug("add:" + clazz);
                 } else if (clazz.isAnnotationPresent(annotation)) {
                     clazzList.add(clazz);
-//                    logger.debug("[ok]added annotation:" + clazz);
                 }
             }
         }

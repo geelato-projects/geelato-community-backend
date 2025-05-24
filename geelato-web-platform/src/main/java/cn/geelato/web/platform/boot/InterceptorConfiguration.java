@@ -50,7 +50,6 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 // oauth2登录接口
                 .excludePathPatterns("/oauth2/**")
         ;
-        registry.addInterceptor(new DataSourceInterceptor()).addPathPatterns("/**");
         registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**");
     }
 }

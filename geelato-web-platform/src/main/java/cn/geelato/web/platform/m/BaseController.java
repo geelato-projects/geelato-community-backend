@@ -115,7 +115,7 @@ public class BaseController extends ParameterOperator implements InitializingBea
         if (Strings.isBlank(connectId)) {
             throw new IllegalArgumentException("数据连接不能为空");
         }
-        DynamicDatasourceHolder.setDataSourceKey(connectId);
+//        DynamicDatasourceHolder.setDataSourceKey(connectId);
     }
 
     /**

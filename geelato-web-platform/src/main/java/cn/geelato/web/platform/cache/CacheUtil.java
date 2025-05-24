@@ -10,14 +10,11 @@ public class CacheUtil {
      * @return 获取不到时，返回null
      */
     public static Object get(String key) {
-        if (key == null||!CacheUtil.exists(key)) {
-            return null;
-        }
-        return cacheService.getCache(key);
+        return null;
     }
 
     public static void put(String key, Object value) {
-        cacheService.putCache(key, value);
+//        cacheService.putCache(key, value);
     }
 
     public static void remove(String key) {
@@ -25,7 +22,7 @@ public class CacheUtil {
     }
 
     public static Boolean exists(String key) {
-        return cacheService.exists(key);
+        return false;
     }
 
     public static String generateCacheKeyByGql(String gql) {

@@ -134,8 +134,10 @@ public class MetaController extends BaseController {
         }
         if (type != null) {
             EntityMeta entityMeta = ruleService.resolveEntity(gql, type);
-            log.info("change db :{}", entityMeta.getTableMeta().getConnectId());
-            DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
+            if(entityMeta != null) {
+                log.info("change db :{}", entityMeta.getTableMeta().getConnectId());
+                DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
+            }
         }
         return gql;
     }

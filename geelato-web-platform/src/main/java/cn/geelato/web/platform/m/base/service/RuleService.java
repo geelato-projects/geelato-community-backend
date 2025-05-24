@@ -90,7 +90,11 @@ public class RuleService {
             default:
                 break;
         }
-        return metaManager.getByEntityName(command.getEntityName());
+        if(command!=null) {
+            return metaManager.getByEntityName(command.getEntityName());
+        }else {
+            return null;
+        }
     }
 
     public Map<String, Object> queryForMap(String gql) throws DataAccessException {
@@ -257,6 +261,7 @@ public class RuleService {
             // todo : wait to refactor by aspect
             String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
             if (!StringUtils.isEmpty(connectId)) {
+                DynamicDatasourceHolder.setDataSourceKey(connectId);
                 JdbcTemplate jdbcTemplate= new JdbcTemplate(DataSourceManager.singleInstance().getDataSource(connectId));
                 Dao saveDao=new Dao(jdbcTemplate);
                 rtnValue = saveDao.save(boundSql);

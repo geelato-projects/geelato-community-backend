@@ -72,6 +72,18 @@ public class JWTAuthController extends BaseController {
         }
     }
 
+    @RequestMapping(value = "/logout", method = RequestMethod.POST)
+    public ApiResult<NullResult> logout() {
+        try {
+            User user = this.getUserByToken();
+            log.debug("User [" + user.getLoginName() + "] logout.");
+            return ApiResult.successNoResult();
+        } catch (Exception e) {
+            log.error("退出失败", e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
     private Boolean CheckPsd(User loginUser, LoginParams loginParams) {
         return loginUser.getPassword().equals(EncryptUtil.encryptPassword(loginParams.getPassword(), loginUser.getSalt()));
     }

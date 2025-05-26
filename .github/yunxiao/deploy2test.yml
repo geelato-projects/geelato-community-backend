@@ -13,5 +13,5 @@ jobs:
           curl \
             --header "Content-Type: application/json" \
             --request POST \
-            --data "{\"Github_Push_Token\":\"${{ secrets.Github_Push_Token }}\"}" \
+            --data "{\"GEELATO_PUSH_TOKEN\":\"${{ secrets.GEELATO_PUSH_TOKEN }}\"}" \
             http://flow-openapi.aliyun.com/scm/webhook/wgXnhEJupbRO7xep2gGO

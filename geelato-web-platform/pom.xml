@@ -158,8 +158,8 @@
             <artifactId>aspose-words</artifactId>
             <version>21.1</version>
             <classifier>jdk17</classifier>
-            <scope>provided</scope>
-            <optional>true</optional>
+<!--            <scope>provided</scope>-->
+<!--            <optional>true</optional>-->
         </dependency>
 
         <dependency>
@@ -167,13 +167,6 @@
             <artifactId>jsoup</artifactId>
             <version>1.16.1</version>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>com.aliyun</groupId>-->
-<!--            <artifactId>dingtalk</artifactId>-->
-<!--            <version>${dingtalk.sdk.version}</version>-->
-<!--        </dependency>-->
-
 
         <!-- 阿里云短信测试 -->
             <dependency>

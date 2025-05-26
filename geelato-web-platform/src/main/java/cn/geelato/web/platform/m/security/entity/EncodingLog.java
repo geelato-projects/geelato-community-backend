@@ -32,4 +32,6 @@ public class EncodingLog extends BaseEntity {
     @Title(title = "状态")
     @Col(name = "enable_status")
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
+    @Title(title = "备注")
+    private String description;
 }

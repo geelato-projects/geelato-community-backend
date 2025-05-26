@@ -1,0 +1,17 @@
+name: Deploy to Test
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trigger-webhook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Webhook
+        run: |
+          curl \
+            --header "Content-Type: application/json" \
+            --request POST \
+            --data "{\"Github_Push_Token\":\"${{ secrets.Github_Push_Token }}\"}" \
+            http://flow-openapi.aliyun.com/scm/webhook/wgXnhEJupbRO7xep2gGO

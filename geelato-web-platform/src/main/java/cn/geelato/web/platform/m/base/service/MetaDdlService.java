@@ -15,7 +15,6 @@ import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.meta.schema.SchemaCheck;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.core.orm.DbGenerateDynamicDao;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.utils.SqlParams;
 import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;

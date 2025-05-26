@@ -1,4 +1,4 @@
-package cn.geelato.core.orm;
+package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.Dialects;
@@ -10,6 +10,7 @@ import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaCheck;
 import cn.geelato.core.meta.schema.SchemaForeign;
 import cn.geelato.core.meta.schema.SchemaIndex;
+import cn.geelato.core.orm.Dao;
 import cn.geelato.core.util.ConnectUtils;
 import cn.geelato.utils.SqlParams;
 import com.alibaba.fastjson2.JSONObject;

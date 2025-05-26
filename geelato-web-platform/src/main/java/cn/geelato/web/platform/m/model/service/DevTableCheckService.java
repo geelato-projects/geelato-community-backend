@@ -7,7 +7,7 @@ import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaCheck;
-import cn.geelato.core.orm.DbGenerateDynamicDao;
+import cn.geelato.web.platform.m.base.service.DbGenerateDynamicDao;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import lombok.extern.slf4j.Slf4j;

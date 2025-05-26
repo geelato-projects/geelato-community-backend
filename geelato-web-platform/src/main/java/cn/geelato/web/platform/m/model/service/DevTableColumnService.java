@@ -9,7 +9,7 @@ import cn.geelato.core.meta.model.column.ColumnSelectType;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaColumn;
 import cn.geelato.core.meta.schema.SchemaIndex;
-import cn.geelato.core.orm.DbGenerateDynamicDao;
+import cn.geelato.web.platform.m.base.service.DbGenerateDynamicDao;
 import cn.geelato.core.util.ClassUtils;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;

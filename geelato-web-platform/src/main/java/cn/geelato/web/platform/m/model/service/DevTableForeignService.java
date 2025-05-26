@@ -4,7 +4,7 @@ import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.schema.SchemaForeign;
-import cn.geelato.core.orm.DbGenerateDynamicDao;
+import cn.geelato.web.platform.m.base.service.DbGenerateDynamicDao;
 import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;

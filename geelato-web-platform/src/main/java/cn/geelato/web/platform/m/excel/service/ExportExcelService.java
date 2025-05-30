@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.m.excel.service;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
+import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.base.entity.SysConfig;
@@ -83,7 +83,7 @@ public class ExportExcelService {
      * @param readonly     是否只读，指定导出的文件是否应为只读
      * @return 返回导出文件的ApiResult对象，包含文件信息或错误信息
      */
-    public ApiResult<?> exportWps(String templateId, String index, String fileName, List<Map> valueMapList, Map valueMap, String markText, String markKey, boolean readonly) {
+    public ApiResult<?> exportWps(String appId, String templateId, String index, String fileName, List<Map> valueMapList, Map valueMap, String markText, String markKey, boolean readonly) {
         try {
             // 水印
             WordWaterMarkMeta markMeta = setWaterMark(markText, markKey);
@@ -119,7 +119,8 @@ public class ExportExcelService {
                 fileName = String.format("%s_%s%s", templateName, sdf.format(new Date()), templateExt);
             }
             // 实体文件 upload/存放表/租户编码/应用Id
-            String directory = UploadService.getRootSavePath(SAVE_TABLE_TYPE, exportTemplate.getTenantCode(), exportTemplate.getAppId(), fileName, true);
+            appId = Strings.isBlank(appId) ? exportTemplate.getAppId() : appId;
+            String directory = UploadService.getRootSavePath(SAVE_TABLE_TYPE, exportTemplate.getTenantCode(), appId, fileName, true);
             File exportFile = new File(directory);
             // 生成实体文件
             generateEntityFile(templateAttach.getFile(), exportFile, metaMap, valueMapList, valueMap, markMeta, readonly);
@@ -127,7 +128,7 @@ public class ExportExcelService {
                 exportFile.setReadOnly();
             }
             // 保存文件信息
-            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, FileGenreEnum.exportFile.name(), exportTemplate.getAppId(), exportTemplate.getTenantCode());
+            FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, FileGenreEnum.exportFile.name(), appId, exportTemplate.getTenantCode());
             Attachment attachment = fileHandler.save(exportFile, fileName, directory, fileParam);
             return ApiResult.success(attachment);
         } catch (Exception e) {

@@ -77,6 +77,7 @@ public class ExportExcelController extends BaseController {
     @RequestMapping(value = "/{dataType}/{templateId}", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult<?> exportWps(@PathVariable String dataType, @PathVariable String templateId, String index, String fileName, String markText, String markKey, boolean readonly, boolean isDownload, boolean isPdf) {
         try {
+            String appId = getAppId();
             // 数据解析，根据dataType的值选择不同的数据解析方式
             String jsonText = GqlUtil.resolveGql(this.request);
             List<Map> valueMapList = new ArrayList<>();
@@ -90,7 +91,7 @@ public class ExportExcelController extends BaseController {
             } else {
                 throw new RuntimeException("Parsing this data type is not supported!");
             }
-            ApiResult<?> result = exportExcelService.exportWps(templateId, index, fileName, valueMapList, valueMap, markText, markKey, readonly);
+            ApiResult<?> result = exportExcelService.exportWps(appId, templateId, index, fileName, valueMapList, valueMap, markText, markKey, readonly);
             return downloadOrPdf(result, isDownload, isPdf);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

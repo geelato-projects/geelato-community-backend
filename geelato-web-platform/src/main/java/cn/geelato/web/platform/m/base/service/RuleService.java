@@ -206,9 +206,10 @@ public class RuleService {
         bizMvelRuleManager.getRule(biz);
         rules.register(new EntityValidateRule());
         rulesEngine.fire(rules, facts);
-        // 存在子命令
         DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager(dao.getJdbcTemplate().getDataSource());
         TransactionStatus transactionStatus = TransactionHelper.beginTransaction(dataSourceTransactionManager);
+
+
         return recursiveSave(command, dataSourceTransactionManager, transactionStatus);
     }
 
@@ -254,7 +255,11 @@ public class RuleService {
      * 不执行业务规则检查
      */
     public String recursiveSave(SaveCommand command, DataSourceTransactionManager dataSourceTransactionManager, TransactionStatus transactionStatus) throws DaoException {
-
+        command.getValueMap().forEach((key, value) -> {
+            if (value != null && !(value instanceof FunctionFieldValue)) {
+                command.getValueMap().put(key, parseValueExp(command, value.toString(), 0));
+            }
+        });
         BoundSql boundSql = sqlManager.generateSaveSql(command);
         String rtnValue;
         try {
@@ -279,11 +284,6 @@ public class RuleService {
         command.setExecution(!"saveFail".equals(rtnValue));
         if (command.hasCommands()) {
             command.getCommands().forEach(subCommand -> {
-                subCommand.getValueMap().forEach((key, value) -> {
-                    if (value != null && !(value instanceof FunctionFieldValue)) {
-                        subCommand.getValueMap().put(key, parseValueExp(subCommand, value.toString(), 0));
-                    }
-                });
                 try {
                     recursiveSave(subCommand, dataSourceTransactionManager, transactionStatus);
                 } catch (DaoException e) {

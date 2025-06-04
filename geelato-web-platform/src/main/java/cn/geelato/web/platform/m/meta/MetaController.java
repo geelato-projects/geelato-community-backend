@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.meta;
 
 
+import cn.geelato.web.common.annotation.Svc;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 import java.util.Map;
 
+@Svc("meta")
 @ApiRestController("/meta")
 @Slf4j
 public class MetaController extends BaseController {
@@ -43,7 +45,7 @@ public class MetaController extends BaseController {
     /**
      * 多列表查询，一次查询返回多个列表
      */
-    @RequestMapping(value = {"/multiList", "multiList/*"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @RequestMapping(value = {"/multiList"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMultiPagedResult<?> multiList(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
         String gql = getGql(null);
         return ruleService.queryForMultiMapList(gql, withMeta);

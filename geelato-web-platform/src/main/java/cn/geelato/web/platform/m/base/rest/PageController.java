@@ -1,12 +1,12 @@
 package cn.geelato.web.platform.m.base.rest;
 
 import cn.geelato.core.SessionCtx;
+import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.security.User;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import cn.geelato.web.platform.cache.CacheUtil;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.AppPage;
@@ -118,7 +118,7 @@ public class PageController extends BaseController {
                     String pageCustomKey = "platform_app_page_custom_" + page.getId() + '_' + user.getUserId();
                     if (!CacheUtil.exists(pageCustomKey) || CacheUtil.get(pageCustomKey) == null) {
                         //todo 线程池问题临时处理方法
-                        DynamicDatasourceHolder.setDataSourceKey("primary");
+                        DynamicDataSourceHolder.setDataSourceKey("primary");
                         ApiPagedResult<List<Map<String, Object>>> apiPagedResult = ruleService.queryForMapList("{\"platform_my_page_custom\":{\"@fs\":\"id,cfg,pageId\",\"creator|eq\":\"" + user.getUserId() + "\",\"pageId|eq\":\"" + page.getId() + "\",\"delStatus|eq\":0,\"@p\":\"1,1\"}}", false);
                         if (apiPagedResult.getDataSize() > 0) {
                             CacheUtil.put(pageCustomKey, ((List<?>) apiPagedResult.getData()).get(0));
@@ -141,7 +141,7 @@ public class PageController extends BaseController {
                     String pagePermissionKey = "platform_app_page_permission_" + page.getId() + '_' + user.getUserId();
                     if (!CacheUtil.exists(pagePermissionKey) || CacheUtil.get(pagePermissionKey) == null) {
                         //todo 线程池问题临时处理方案
-                        DynamicDatasourceHolder.setDataSourceKey("primary");
+                        DynamicDataSourceHolder.setDataSourceKey("primary");
                         List<Map<String, Object>> permsList = dao.queryForMapList("query_permission_code_and_rule_by_role_user", params);
                         if (permsList != null && !permsList.isEmpty()) {
                             CacheUtil.put(pagePermissionKey, permsList);

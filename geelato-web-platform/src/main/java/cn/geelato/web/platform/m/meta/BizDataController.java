@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.meta;
 
 
+import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.orm.DaoException;
@@ -10,7 +11,6 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRuntimeRestController;
-import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.utils.GqlResolveException;
 import cn.geelato.web.platform.utils.GqlUtil;
@@ -65,7 +65,7 @@ public class BizDataController extends BaseController {
     @RequestMapping(value = {"/delete/{biz}/{id}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<Integer> delete(@PathVariable("biz") String biz, @PathVariable("id") String id) {
         EntityMeta entityMeta = ruleService.resolveEntity(biz, "delete");
-        DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
+        DynamicDataSourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
         return ApiResult.success(ruleService.delete(biz,id));
     }
 
@@ -83,17 +83,6 @@ public class BizDataController extends BaseController {
 
 
     private String getGql(String type) {
-        String gql = GqlUtil.resolveGql(this.request);
-        if (StringUtils.isEmpty(gql)) {
-            throw new GqlResolveException();
-        }
-        if (type != null) {
-            EntityMeta entityMeta = ruleService.resolveEntity(gql, type);
-            if(entityMeta != null) {
-                log.info("change db :{}", entityMeta.getTableMeta().getConnectId());
-                DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
-            }
-        }
-        return gql;
+        return GqlUtil.resolveGql(this.request);
     }
 }

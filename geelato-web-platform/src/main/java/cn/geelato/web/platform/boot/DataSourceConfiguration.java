@@ -20,7 +20,6 @@ import java.util.Map;
 @Configuration
 public class DataSourceConfiguration extends BaseConfiguration {
 
-
     @Bean(name = "primaryDataSource")
     @Qualifier("primaryDataSource")
     @ConfigurationProperties(prefix = "spring.datasource.primary")
@@ -36,27 +35,6 @@ public class DataSourceConfiguration extends BaseConfiguration {
         return new Dao(jdbcTemplate);
     }
 
-    @Bean(name = "dynamicDataSource")
-    @Qualifier("dynamicDataSource")
-    public DataSource dynamicDataSource() {
-        DynamicDataSource dynamicDatasource=new DynamicDataSource();
-        DataSourceManager.singleInstance().parseDataSourceMeta(primaryDao(primaryJdbcTemplate(primaryDataSource())));
-        Map<Object, Object> dymanicDataSourceMap=DataSourceManager.singleInstance().getDynamicDataSourceMap();
-        dymanicDataSourceMap.put("primary",primaryDataSource());
-        dynamicDatasource.setTargetDataSources(dymanicDataSourceMap);
-        dynamicDatasource.setDefaultTargetDataSource(primaryDataSource());
-        return dynamicDatasource;
-    }
-
-    @Bean(name = "dynamicJdbcTemplate")
-    public JdbcTemplate dynamicJdbcTemplate(@Qualifier("dynamicDataSource") DataSource dataSource) {
-        return new JdbcTemplate(dataSource);
-    }
-
-    @Bean(name = "dynamicDao")
-    public Dao dynamicDao(@Qualifier("dynamicJdbcTemplate") JdbcTemplate jdbcTemplate) {
-        return new Dao(jdbcTemplate);
-    }
 
     @Bean(name = "dbGenerateDao")
     public Dao DbGenerateDao(@Qualifier("primaryJdbcTemplate") JdbcTemplate jdbcTemplate) {

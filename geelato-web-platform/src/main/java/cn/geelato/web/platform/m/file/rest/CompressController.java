@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.file.rest;
 
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
@@ -8,7 +9,6 @@ import cn.geelato.utils.SqlParams;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.enums.TimeUnitEnum;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.file.entity.Attachment;
@@ -178,7 +178,7 @@ public class CompressController extends BaseController {
         }
         // 设置数据源
         EntityMeta entityMeta = ruleService.resolveEntity(gql, "query");
-        DynamicDatasourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
+        DynamicDataSourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
         // 执行gql查询
         ApiPagedResult<List<Map<String, Object>>> apiPagedResult = ruleService.queryForMapList(gql, false);
         if (apiPagedResult.isSuccess()) {

@@ -8,9 +8,9 @@ import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.orm.Dao;
+import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.DataItems;
-import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
@@ -430,7 +430,7 @@ public class BaseService {
         if (Strings.isBlank(connectId)) {
             throw new IllegalArgumentException("数据连接不能为空");
         }
-        DynamicDatasourceHolder.setDataSourceKey(connectId);
+        DynamicDataSourceHolder.setDataSourceKey(connectId);
     }
 
     /**

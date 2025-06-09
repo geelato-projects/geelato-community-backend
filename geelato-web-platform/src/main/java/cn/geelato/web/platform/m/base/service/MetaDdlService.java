@@ -15,9 +15,9 @@ import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.meta.schema.SchemaCheck;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.orm.Dao;
+import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.utils.SqlParams;
-import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import cn.geelato.web.platform.m.model.service.DevDbConnectService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import cn.geelato.web.platform.m.model.service.DevTableService;
@@ -386,7 +386,7 @@ public class MetaDdlService {
         if (Strings.isBlank(connectId)) {
             throw new IllegalArgumentException("数据连接不能为空");
         }
-        DynamicDatasourceHolder.setDataSourceKey(connectId);
+        DynamicDataSourceHolder.setDataSourceKey(connectId);
     }
 
 

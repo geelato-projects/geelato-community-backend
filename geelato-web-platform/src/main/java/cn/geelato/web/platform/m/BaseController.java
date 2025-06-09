@@ -3,8 +3,9 @@ package cn.geelato.web.platform.m;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
+import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.annotion.UseTransactional;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
 import cn.geelato.web.platform.m.base.service.RuleService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -33,6 +34,7 @@ public class BaseController extends ParameterOperator implements InitializingBea
     private final SimpleDateFormat SDF_DATE_FINISH = new SimpleDateFormat(DateUtils.DATEFINISH);
     protected Dao dao;
     protected Dao dynamicDao;
+    @UseTransactional
     protected RuleService ruleService;
     protected HttpServletResponse response;
 
@@ -115,7 +117,7 @@ public class BaseController extends ParameterOperator implements InitializingBea
         if (Strings.isBlank(connectId)) {
             throw new IllegalArgumentException("数据连接不能为空");
         }
-        DynamicDatasourceHolder.setDataSourceKey(connectId);
+        DynamicDataSourceHolder.setDataSourceKey(connectId);
     }
 
     /**

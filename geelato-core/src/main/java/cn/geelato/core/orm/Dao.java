@@ -25,6 +25,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -159,6 +160,7 @@ public class Dao extends SqlKeyDao {
      * @param boundSql 查询语句
      * @return 主健值
      */
+
     public String save(BoundSql boundSql) throws DaoException {
         SaveCommand command = (SaveCommand) boundSql.getCommand();
         try {

@@ -21,12 +21,13 @@ import cn.geelato.core.orm.DaoException;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.script.rule.BizMvelRuleManager;
 import cn.geelato.core.sql.SqlManager;
+import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.annotion.UseDynamicDataSource;
+import cn.geelato.datasource.annotion.UseTransactional;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.common.interceptor.DynamicDatasourceHolder;
-import cn.geelato.web.platform.boot.DynamicDataSource;
 import cn.geelato.web.platform.cache.CacheUtil;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -51,9 +53,9 @@ import java.util.*;
 @Component
 @Slf4j
 public class RuleService {
+
     @Setter
-    @Autowired
-    @Qualifier("dynamicDao")
+    @UseDynamicDataSource
     private Dao dao;
     private final GqlManager gqlManager = GqlManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
@@ -206,11 +208,7 @@ public class RuleService {
         bizMvelRuleManager.getRule(biz);
         rules.register(new EntityValidateRule());
         rulesEngine.fire(rules, facts);
-        DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager(dao.getJdbcTemplate().getDataSource());
-        TransactionStatus transactionStatus = TransactionHelper.beginTransaction(dataSourceTransactionManager);
-
-
-        return recursiveSave(command, dataSourceTransactionManager, transactionStatus);
+        return recursiveSave(command);
     }
 
     public Object batchSave(String gql, Boolean transaction) throws DaoException {
@@ -266,7 +264,7 @@ public class RuleService {
             // todo : wait to refactor by aspect
             String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
             if (!StringUtils.isEmpty(connectId)) {
-                DynamicDatasourceHolder.setDataSourceKey(connectId);
+                DynamicDataSourceHolder.setDataSourceKey(connectId);
                 JdbcTemplate jdbcTemplate= new JdbcTemplate(DataSourceManager.singleInstance().getDataSource(connectId));
                 Dao saveDao=new Dao(jdbcTemplate);
                 rtnValue = saveDao.save(boundSql);
@@ -337,12 +335,11 @@ public class RuleService {
         return rtnValue;
     }
 
-    public void recursiveSave(SaveCommand command) {
+    public String recursiveSave(SaveCommand command) {
         BoundSql boundSql = sqlManager.generateSaveSql(command);
         String pkValue = dao.save(boundSql);
         if (command.hasCommands()) {
             command.getCommands().forEach(subCommand -> {
-                // 保存之前需先替换subCommand中的变量值，如依赖于父command执行的返回id：$parent.id
                 subCommand.getValueMap().forEach((key, value) -> {
                     if (value != null && !(value instanceof FunctionFieldValue)) {
                         subCommand.getValueMap().put(key, parseValueExp(subCommand, value.toString(), 0));
@@ -351,6 +348,7 @@ public class RuleService {
                 recursiveSave(subCommand);
             });
         }
+        return pkValue;
     }
 
     /**

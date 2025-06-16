@@ -15,7 +15,7 @@ import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.*;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlException;
-import org.apache.xmlbeans.XmlToken;
+import org.apache.xmlbeans.XmlObject;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTNonVisualDrawingProps;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTPositiveSize2D;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline;
@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
@@ -69,31 +70,52 @@ public class WordXWPFWriter {
     }
 
     private static void insertPicture(XWPFDocument document, String filePath, CTInline inline, double imageWidth, double imageHeight) throws FileNotFoundException, InvalidFormatException {
-        int picFormat = getPictureFormat(filePath);
-        document.addPictureData(new FileInputStream(filePath), picFormat);
-        long id = UIDGenerator.generate();
-        long width = (long) Math.floor((double) (Units.toEMU(imageWidth) * 1000) / 35);
-        long height = (long) Math.floor((double) (Units.toEMU(imageHeight) * 1000) / 35);
-        String blipId = document.addPictureData(new FileInputStream(filePath), picFormat);
-        String picXml = getPicXml(blipId, width, height);
-        XmlToken xmlToken;
-        try {
-            xmlToken = XmlToken.Factory.parse(picXml);
-        } catch (XmlException xe) {
-            throw new RuntimeException(xe.getMessage());
+        // 1. 参数校验
+        if (document == null || filePath == null || inline == null) {
+            throw new IllegalArgumentException("Document, filePath and inline cannot be null");
         }
-        inline.set(xmlToken);
-        inline.setDistT(0);
-        inline.setDistB(0);
-        inline.setDistL(0);
-        inline.setDistR(0);
-        CTPositiveSize2D extent = inline.addNewExtent();
-        extent.setCx(width);
-        extent.setCy(height);
-        CTNonVisualDrawingProps docPr = inline.addNewDocPr();
-        docPr.setId(id);
-        docPr.setName("IMG_" + id);
-        docPr.setDescr("IMG_" + id);
+        FileInputStream fis = null;
+        try {
+            // 2. 获取图片格式并只读取一次文件
+            int picFormat = getPictureFormat(filePath);
+            fis = new FileInputStream(filePath);
+            String blipId = document.addPictureData(fis, picFormat);
+            // 3. 计算尺寸
+            long width = (long) Math.floor((double) (Units.toEMU(imageWidth) * 1000) / 35);
+            long height = (long) Math.floor((double) (Units.toEMU(imageHeight) * 1000) / 35);
+            // 4. 创建图片XML
+            String picXml = getPicXml(blipId, width, height);
+            // 5. 解析XML并设置属性
+            try (XmlCursor cursor = XmlObject.Factory.parse(picXml).newCursor()) {
+                inline.set(cursor.getObject());
+                // 设置边距
+                inline.setDistT(0);
+                inline.setDistB(0);
+                inline.setDistL(0);
+                inline.setDistR(0);
+                // 设置尺寸
+                CTPositiveSize2D extent = inline.addNewExtent();
+                extent.setCx(width);
+                extent.setCy(height);
+                // 设置文档属性
+                CTNonVisualDrawingProps docPr = inline.addNewDocPr();
+                long id = UIDGenerator.generate();
+                docPr.setId(id);
+                docPr.setName("IMG_" + id);
+                docPr.setDescr("IMG_" + id);
+            }
+        } catch (XmlException xe) {
+            throw new RuntimeException("Failed to parse picture XML", xe);
+        } finally {
+            // 6. 确保文件流关闭
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    // 记录日志或忽略
+                }
+            }
+        }
     }
 
     private static int getPictureFormat(String filePath) {
@@ -571,15 +593,23 @@ public class WordXWPFWriter {
                                 String value = oValue == null ? "" : String.valueOf(oValue);
                                 if (meta.isIsImage()) {
                                     value = getImagePath(meta, value);
-                                    if (StringUtils.isNotBlank(value) && new File(value).exists()) {
-                                        CTInline inline = run.getCTR().addNewDrawing().addNewInline();
-                                        try {
-                                            insertPicture(document, value, inline, meta.getImageWidth(), meta.getImageHeight());
-                                            document.createParagraph();
-                                            runText = runText.replace(phm.group(), "");
-                                            isReplace = true;
-                                        } catch (Exception e) {
-                                            throw new RuntimeException("Image construction failure!", e);
+                                    if (StringUtils.isNotBlank(value)) {
+                                        File file = new File(value);
+                                        if (file.exists()) {
+                                            CTInline inline = run.getCTR().addNewDrawing().addNewInline();
+                                            try {
+                                                insertPicture(document, value, inline, meta.getImageWidth(), meta.getImageHeight());
+                                                document.createParagraph();
+                                                runText = runText.replace(phm.group(), "");
+                                                isReplace = true;
+                                            } catch (Exception e) {
+                                                throw new RuntimeException("Image construction failure!", e);
+                                            } finally {
+                                                // 插入图片后，删除条形码
+                                                if (meta.isImageSourceBarcode()) {
+                                                    file.delete();
+                                                }
+                                            }
                                         }
                                     }
                                 } else {

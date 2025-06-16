@@ -96,6 +96,8 @@ public class ExportExcelController extends BaseController {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
+        } finally {
+            System.gc();
         }
     }
 
@@ -139,6 +141,8 @@ public class ExportExcelController extends BaseController {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
+        } finally {
+            System.gc();
         }
     }
 

@@ -26,14 +26,17 @@ public class TransactionConfig {
     public UserTransactionManager atomikosTransactionManager() {
         UserTransactionManager userTransactionManager = new UserTransactionManager();
         userTransactionManager.setForceShutdown(false);
+
         return userTransactionManager;
     }
 
     @Bean(name = "dynamicDataSourceTransactionManager")
     @DependsOn({"DynamicDataSourceUserTransaction", "atomikosTransactionManager"})
-    public PlatformTransactionManager transactionManager() throws SystemException,SystemException {
+    public PlatformTransactionManager transactionManager() throws SystemException {
         UserTransaction userTransaction = userTransaction();
         UserTransactionManager atomikosTransactionManager = atomikosTransactionManager();
-        return new JtaTransactionManager(userTransaction, (TransactionManager) atomikosTransactionManager);
+        JtaTransactionManager jtaTransactionManager= new JtaTransactionManager(userTransaction, atomikosTransactionManager);
+        jtaTransactionManager.setAllowCustomIsolationLevels(true);
+        return jtaTransactionManager;
     }
 }

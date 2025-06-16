@@ -1,6 +1,7 @@
 package cn.geelato.datasource;
 
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +12,9 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class DynamicDataSourceRoute extends AbstractRoutingDataSource {
-    
-    private static final Logger logger = LoggerFactory.getLogger(DynamicDataSourceRoute.class);
+
 
     @Setter
     private DynamicDataSourceRegistry dynamicDataSourceRegistry;
@@ -43,12 +44,12 @@ public class DynamicDataSourceRoute extends AbstractRoutingDataSource {
                     targetDataSourcesMap.put(dataSourceKey, dataSource);
                     setTargetDataSources(new HashMap<>(targetDataSourcesMap));
                     afterPropertiesSet();
-                    logger.info("动态创建并添加数据源到路由映射: {}", dataSourceKey);
+                    log.info("动态创建并添加数据源到路由映射: {}", dataSourceKey);
                 } else {
-                    logger.warn("无法从DynamicDataSourceRegistry获取数据源: {}", dataSourceKey);
+                    log.warn("无法从DynamicDataSourceRegistry获取数据源: {}", dataSourceKey);
                 }
             } catch (Exception e) {
-                logger.error("创建或初始化数据源失败: {}", dataSourceKey, e);
+                log.error("创建或初始化数据源失败: {}", dataSourceKey, e);
             }
         }
     }

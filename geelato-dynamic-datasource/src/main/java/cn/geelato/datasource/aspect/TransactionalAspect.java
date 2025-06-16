@@ -1,5 +1,6 @@
 package cn.geelato.datasource.aspect;
 
+import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.annotion.UseTransactional;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -8,6 +9,8 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -24,30 +27,37 @@ import java.lang.reflect.Method;
 @Aspect
 @Component
 public class TransactionalAspect {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(TransactionalAspect.class);
     
     @Autowired
+    @Qualifier("dynamicDataSourceTransactionManager")
     private PlatformTransactionManager transactionManager;
-    
+    @Autowired
+    private ApplicationContext applicationContext;
     /**
      * 拦截所有Dao方法的调用
      * 检查调用方是否有@UseTransactional注解的字段
      */
-    @Around("execution(* cn.geelato.core.orm.Dao.*(..))")
+//    @Around("execution(* cn.geelato.core.orm.Dao.*(..))")
+//    @Around("execution(* cn.geelato.web.platform.m.base.service.RuleService.save(..))")
     public Object aroundDaoMethod(ProceedingJoinPoint joinPoint) throws Throwable {
         Object target = joinPoint.getTarget();
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
-        
+        Field field =  target.getClass().getField("dao");
+        field.setAccessible(true);
+
+        Dao dynamicDao = (Dao) applicationContext.getBean("dynamicDao");
+        field.set(target, dynamicDao);
         // 检查是否需要事务支持
-        UseTransactional useTransactional = findUseTransactionalAnnotation(target);
-        if (useTransactional == null) {
-            return joinPoint.proceed();
-        }
+//        UseTransactional useTransactional = findUseTransactionalAnnotation(target);
+//        if (useTransactional == null) {
+//            return joinPoint.proceed();
+//        }
         if (method.isAnnotationPresent(org.springframework.transaction.annotation.Transactional.class)) {
             return joinPoint.proceed();
         }
-        DefaultTransactionDefinition transactionDefinition = createTransactionDefinition(useTransactional);
+        DefaultTransactionDefinition transactionDefinition = createTransactionDefinition();
         TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
         try {
             logger.debug("开始事务: {}.{}", target.getClass().getSimpleName(), method.getName());
@@ -57,7 +67,7 @@ public class TransactionalAspect {
             return result;
             
         } catch (Exception e) {
-            if (shouldRollback(e, useTransactional)) {
+            if (true) {
                 transactionManager.rollback(transactionStatus);
                 logger.debug("回滚事务: {}.{}, 异常: {}", target.getClass().getSimpleName(), method.getName(), e.getMessage());
             } else {
@@ -160,6 +170,15 @@ public class TransactionalAspect {
         // 设置只读
         definition.setReadOnly(useTransactional.readOnly());
         
+        return definition;
+    }
+
+    private DefaultTransactionDefinition createTransactionDefinition() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+        definition.setIsolationLevel(TransactionDefinition.ISOLATION_READ_UNCOMMITTED);
+        definition.setTimeout(30000);
+        definition.setReadOnly(true);
         return definition;
     }
     

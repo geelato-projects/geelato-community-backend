@@ -2,8 +2,7 @@ package cn.geelato.datasource;
 
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,9 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * 负责根据实体名称解析对应的数据源
  */
 @Component
+@Slf4j
 public class EntityDataSourceResolver {
     MetaManager metaManager=MetaManager.singleInstance();
-    private static final Logger logger = LoggerFactory.getLogger(EntityDataSourceResolver.class);
     
     @Autowired
     private DynamicDataSourceRegistry dynamicDataSourceRegistry;
@@ -44,20 +43,20 @@ public class EntityDataSourceResolver {
         if (cachedDataSource != null) {
             // 验证缓存的数据源是否仍然存在
             if (checkDataSourceExists(cachedDataSource)) {
-                logger.debug("从缓存中找到实体 {} 的数据源: {}", entityName, cachedDataSource);
+                log.debug("从缓存中找到实体 {} 的数据源: {}", entityName, cachedDataSource);
                 return cachedDataSource;
             } else {
                 entityDataSourceCache.remove(entityName);
-                logger.warn("缓存的数据源已不存在，移除缓存: {} -> {}", entityName, cachedDataSource);
+                log.warn("缓存的数据源已不存在，移除缓存: {} -> {}", entityName, cachedDataSource);
             }
         }
         String metaDataSource = resolveFromMetaData(entityName);
         if (metaDataSource != null) {
             entityDataSourceCache.put(entityName, metaDataSource);
-            logger.debug("从实体数据中查询到实体 {} 的数据源: {}", entityName, metaDataSource);
+            log.debug("从实体数据中查询到实体 {} 的数据源: {}", entityName, metaDataSource);
             return metaDataSource;
         }
-        logger.debug("未找到实体 {} 对应的数据源", entityName);
+        log.debug("未找到实体 {} 对应的数据源", entityName);
         return null;
     }
     
@@ -81,7 +80,7 @@ public class EntityDataSourceResolver {
                 }
             }
         } catch (Exception e) {
-            logger.debug("从数据库查询实体映射失败: {}", entityName, e);
+            log.debug("从数据库查询实体映射失败: {}", entityName, e);
         }
         return null;
     }
@@ -99,9 +98,9 @@ public class EntityDataSourceResolver {
     public void addEntityMapping(String entityName, String dataSourceName) {
         if (dynamicDataSourceRegistry.containsDataSource(dataSourceName)) {
             entityDataSourceCache.put(entityName, dataSourceName);
-            logger.info("添加实体数据源映射: {} -> {}", entityName, dataSourceName);
+            log.info("添加实体数据源映射: {} -> {}", entityName, dataSourceName);
         } else {
-            logger.warn("数据源不存在，无法添加映射: {} -> {}", entityName, dataSourceName);
+            log.warn("数据源不存在，无法添加映射: {} -> {}", entityName, dataSourceName);
         }
     }
     
@@ -111,7 +110,7 @@ public class EntityDataSourceResolver {
     public void removeEntityMapping(String entityName) {
         String removed = entityDataSourceCache.remove(entityName);
         if (removed != null) {
-            logger.info("移除实体数据源映射: {} -> {}", entityName, removed);
+            log.info("移除实体数据源映射: {} -> {}", entityName, removed);
         }
     }
     
@@ -120,7 +119,7 @@ public class EntityDataSourceResolver {
      */
     public void clearCache() {
         entityDataSourceCache.clear();
-        logger.info("清除实体数据源映射缓存");
+        log.info("清除实体数据源映射缓存");
     }
     
     /**

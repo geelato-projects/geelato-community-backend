@@ -2,14 +2,10 @@ package cn.geelato.datasource;
 
 import com.atomikos.jdbc.AtomikosDataSourceBean;
 import com.mysql.cj.jdbc.MysqlXADataSource;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
@@ -22,10 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * 负责在程序启动时动态加载数据库表内的数据库信息而形成多个数据库源
  */
 @Configuration
+@Slf4j
 public class DynamicDataSourceRegistry {
 
     private static final boolean delayLoadDataSource = true;
-    private static final Logger logger = LoggerFactory.getLogger(DynamicDataSourceRegistry.class);
 
     private JdbcTemplate primaryJdbcTemplate;
     private final Map<String, DataSource> dataSourceMap = new ConcurrentHashMap<>();
@@ -39,9 +35,9 @@ public class DynamicDataSourceRegistry {
         try {
             this.primaryJdbcTemplate= primaryJdbcTemplate;
             loadDataSourcesFromDatabase();
-            logger.info("For dynamic data sources has been search completed, with a total of {} data sources searched", dataSourceConfigMap.size());
+            log.info("For dynamic data sources has been search completed, with a total of {} data sources searched", dataSourceConfigMap.size());
         } catch (Exception e) {
-            logger.error("For dynamic data sources has been search failed", e);
+            log.error("For dynamic data sources has been search failed", e);
         }
     }
     
@@ -58,9 +54,9 @@ public class DynamicDataSourceRegistry {
 
                 if(!delayLoadDataSource) dataSourceMap.put(key,buildDataSource(dbConnectMap));
 
-                logger.info("dynamic data source config : {}", key);
+                log.info("dynamic data source config : {}", key);
             } catch (Exception e) {
-                logger.error("dynamic data source config failed : {}", dbConnectMap.get("db_name"), e);
+                log.error("dynamic data source config failed : {}", dbConnectMap.get("db_name"), e);
             }
         }
     }
@@ -118,9 +114,9 @@ public class DynamicDataSourceRegistry {
             Map<String, Object> dbConnectMap = primaryJdbcTemplate.queryForMap(sql, key);
             destroyDataSource(key);
             dataSourceConfigMap.put(key, new HashMap<>(dbConnectMap));
-            logger.info("dynamic data source refresh : {}", key);
+            log.info("dynamic data source refresh : {}", key);
         } catch (Exception e) {
-            logger.error("dynamic data source refresh failed: {}", key, e);
+            log.error("dynamic data source refresh failed: {}", key, e);
         }
     }
 
@@ -132,9 +128,9 @@ public class DynamicDataSourceRegistry {
         if (dataSource instanceof AtomikosDataSourceBean) {
             try {
                 ((AtomikosDataSourceBean) dataSource).close();
-                logger.debug("数据源销毁成功: {}", key);
+                log.debug("数据源销毁成功: {}", key);
             } catch (Exception e) {
-                logger.error("数据源销毁失败: {}", key, e);
+                log.error("数据源销毁失败: {}", key, e);
             }
         }
         dataSourceMap.remove(key);
@@ -154,9 +150,9 @@ public class DynamicDataSourceRegistry {
                         Map<String, Object> config = dataSourceConfigMap.get(key);
                         dataSource = buildDataSource(config);
                         dataSourceMap.put(key, dataSource);
-                        logger.info("delayed create dynamic datasource : {}", key);
+                        log.info("delayed create dynamic datasource : {}", key);
                     } catch (Exception e) {
-                        logger.error("delayed create dynamic datasource fail: {}", key, e);
+                        log.error("delayed create dynamic datasource fail: {}", key, e);
                     }
                 }
             }

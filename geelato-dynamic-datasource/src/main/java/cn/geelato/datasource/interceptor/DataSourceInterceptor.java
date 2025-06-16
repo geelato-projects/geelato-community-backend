@@ -5,6 +5,7 @@ import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.datasource.EntityDataSourceResolver;
 import cn.geelato.datasource.annotion.UseDynamicDataSource;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
@@ -24,9 +25,8 @@ import java.lang.reflect.Method;
  */
 @Aspect
 @Component
+@Slf4j
 public class DataSourceInterceptor {
-    
-    private static final Logger logger = LoggerFactory.getLogger(DataSourceInterceptor.class);
 
     
     @Autowired
@@ -55,7 +55,7 @@ public class DataSourceInterceptor {
         if (dataSourceAnnotation != null) {
             String defaultDataSource = dataSourceAnnotation.value();
             DEFAULT_DATA_SOURCE.set(defaultDataSource);
-            logger.debug("设置默认数据源: {}", defaultDataSource);
+            log.debug("设置默认数据源: {}", defaultDataSource);
         }
     }
 
@@ -68,7 +68,7 @@ public class DataSourceInterceptor {
     public void afterTransaction(JoinPoint point) {
         DEFAULT_DATA_SOURCE.remove();
         DynamicDataSourceHolder.clearDataSourceKey();
-        logger.debug("清理数据源上下文");
+        log.debug("清理数据源上下文");
     }
 
     /**
@@ -80,7 +80,7 @@ public class DataSourceInterceptor {
             String defaultSource = DEFAULT_DATA_SOURCE.get();
             if (defaultSource != null) {
                 DynamicDataSourceHolder.setDataSourceKey(defaultSource);
-                logger.debug("使用默认数据源: {}", defaultSource);
+                log.debug("使用默认数据源: {}", defaultSource);
             }
             return;
         }
@@ -90,12 +90,12 @@ public class DataSourceInterceptor {
 
         if (dataSource != null) {
             DynamicDataSourceHolder.setDataSourceKey(dataSource);
-            logger.debug("根据实体 {} 切换到数据源: {}", entityName, dataSource);
+            log.debug("根据实体 {} 切换到数据源: {}", entityName, dataSource);
         } else {
             String defaultSource = DEFAULT_DATA_SOURCE.get();
             if (defaultSource != null) {
                 DynamicDataSourceHolder.setDataSourceKey(defaultSource);
-                logger.debug("实体 {} 未找到映射，使用默认数据源: {}", entityName, defaultSource);
+                log.debug("实体 {} 未找到映射，使用默认数据源: {}", entityName, defaultSource);
             }
         }
     }
@@ -106,7 +106,7 @@ public class DataSourceInterceptor {
             String defaultSource = DEFAULT_DATA_SOURCE.get();
             if (defaultSource != null) {
                 DynamicDataSourceHolder.setDataSourceKey(defaultSource);
-                logger.debug("使用默认数据源: {}", defaultSource);
+                log.debug("使用默认数据源: {}", defaultSource);
             }
             return;
         }
@@ -116,12 +116,12 @@ public class DataSourceInterceptor {
 
         if (dataSource != null) {
             DynamicDataSourceHolder.setDataSourceKey(dataSource);
-            logger.debug("根据实体 {} 切换到数据源: {}", entityName, dataSource);
+            log.debug("根据实体 {} 切换到数据源: {}", entityName, dataSource);
         } else {
             String defaultSource = DEFAULT_DATA_SOURCE.get();
             if (defaultSource != null) {
                 DynamicDataSourceHolder.setDataSourceKey(defaultSource);
-                logger.debug("实体 {} 未找到映射，使用默认数据源: {}", entityName, defaultSource);
+                log.debug("实体 {} 未找到映射，使用默认数据源: {}", entityName, defaultSource);
             }
         }
     }

@@ -279,7 +279,7 @@ public class BaseHandler {
      * @return 转换后的PDF附件对象
      * @throws Exception 如果在转换或保存过程中发生异常
      */
-    public Attachment toPdf(String tableType, File sourceFile, String sourceName, String appId, String tenantCode) throws Exception {
+    public Attachment toPdf(String tableType, File sourceFile, String sourceName, String extraGenre, String appId, String tenantCode) throws Exception {
         String ext = FileUtils.getFileExtension(sourceName);
         String name = FileUtils.setPdfFileName(sourceName);
         // 转为pdf
@@ -287,11 +287,17 @@ public class BaseHandler {
         if (file == null) {
             throw new RuntimeException("toPdfAndSave: PDF File does not exist");
         }
-        FileParam fileParam = FileParamUtils.byLocal(tableType, FileGenreEnum.TOPDF.name(), appId, tenantCode);
+        Attachment attachment = new Attachment();
+        attachment.handleGenre(extraGenre, FileGenreEnum.TOPDF.name());
+        FileParam fileParam = FileParamUtils.byLocal(tableType, attachment.getGenre(), appId, tenantCode);
         return accessoryHandler.save(file, name, file.getPath(), fileParam);
     }
 
+    public Attachment toPdf(String tableType, Attachment attachment, String extraGenre) throws Exception {
+        return toPdf(tableType, FileUtils.pathToFile(attachment.getPath()), attachment.getName(), extraGenre, attachment.getAppId(), attachment.getTenantCode());
+    }
+
     public Attachment toPdf(String tableType, Attachment attachment) throws Exception {
-        return toPdf(tableType, FileUtils.pathToFile(attachment.getPath()), attachment.getName(), attachment.getAppId(), attachment.getTenantCode());
+        return toPdf(tableType, attachment, null);
     }
 }

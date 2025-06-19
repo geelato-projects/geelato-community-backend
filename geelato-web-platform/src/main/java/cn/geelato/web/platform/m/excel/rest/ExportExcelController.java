@@ -14,6 +14,7 @@ import cn.geelato.web.platform.m.excel.service.ExportExcelService;
 import cn.geelato.web.platform.m.file.entity.Attach;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.service.AttachService;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson2.JSON;
@@ -159,7 +160,9 @@ public class ExportExcelController extends BaseController {
             if (result.isSuccess() && result.getData() != null) {
                 if (isPdf) {
                     Attachment attachment = (Attachment) result.getData();
-                    result = ApiResult.success(fileHandler.toPdf(AttachmentSourceEnum.ATTACH.getValue(), attachment));
+                    result = ApiResult.success(fileHandler.toPdf(AttachmentSourceEnum.ATTACH.getValue(), attachment, FileGenreEnum.exportFile.name()));
+                    // 删除原始文件
+                    fileHandler.delete(attachment.getId(), true);
                 }
                 if (isDownload) {
                     Attachment attachment = (Attachment) result.getData();

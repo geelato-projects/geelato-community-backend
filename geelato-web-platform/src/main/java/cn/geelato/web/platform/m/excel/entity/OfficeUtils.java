@@ -11,9 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hwpf.HWPFDocument;
-import org.apache.poi.hwpf.converter.PicturesManager;
 import org.apache.poi.hwpf.converter.WordToHtmlConverter;
-import org.apache.poi.hwpf.usermodel.PictureType;
 import org.apache.poi.xwpf.usermodel.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Entities;
@@ -51,7 +49,7 @@ public class OfficeUtils {
         } else if (WORD_DOC_CONTENT_TYPE.equalsIgnoreCase(contentType)) {
             asposeToPdf(officePath, pdfPath);
         } else {
-            throw new RuntimeException("暂不支持该格式文件转PDF，敬请期待！");
+            throw new RuntimeException("暂不支持该" + contentType + "格式文件转PDF，敬请期待！");
         }
     }
 

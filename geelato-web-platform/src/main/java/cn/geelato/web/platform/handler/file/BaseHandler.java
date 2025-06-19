@@ -249,6 +249,9 @@ public class BaseHandler {
      */
     public File toPdf(File sourceFile, String sourceExt, String appId, String tenantCode) {
         if (sourceFile != null && sourceFile.exists() && Strings.isNotBlank(sourceExt)) {
+            if (".pdf".equalsIgnoreCase(sourceExt)) {
+                return sourceFile;
+            }
             try {
                 // 指定地址
                 String outputPath = UploadService.getSavePath(UploadService.getRootConvertDirectory(), tenantCode, appId, "word-to-pdf.pdf", true);
@@ -258,6 +261,7 @@ public class BaseHandler {
                 return FileUtils.pathToFile(outputPath);
             } catch (Exception e) {
                 log.error("toPdf: error", e);
+                throw new RuntimeException("to pdf error: " + e.getMessage());
             }
         }
         return null;

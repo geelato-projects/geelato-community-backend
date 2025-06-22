@@ -9,6 +9,7 @@ import cn.geelato.core.script.sql.SqlScriptManager;
 import cn.geelato.core.script.sql.SqlScriptManagerFactory;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.core.util.EncryptUtils;
+import lombok.Getter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -24,14 +25,13 @@ public class BaseDao {
     protected final SqlScriptManager sqlScriptManager = SqlScriptManagerFactory.get("sql");
     protected final DbScriptManager dbScriptManager = DbScriptManagerFactory.get("db");
 
+    @Getter
     protected JdbcTemplate jdbcTemplate;
 
     protected final MetaManager metaManager = MetaManager.singleInstance();
     protected final SqlManager sqlManager = SqlManager.singleInstance();
     protected final EntityManager entityManager = EntityManager.singleInstance();
-
     protected static final Map<String, Object> defaultParams = new HashMap<>();
-
     protected List<Map<String, Object>> queryForMapListInner(BoundSql boundSql) throws DataAccessException {
         return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new DecryptingRowMapper());
     }

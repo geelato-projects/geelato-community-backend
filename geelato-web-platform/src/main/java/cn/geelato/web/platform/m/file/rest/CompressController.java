@@ -176,9 +176,6 @@ public class CompressController extends BaseController {
         if (StringUtils.isEmpty(gql)) {
             throw new GqlResolveException();
         }
-        // 设置数据源
-        EntityMeta entityMeta = ruleService.resolveEntity(gql, "query");
-        DynamicDataSourceHolder.setDataSourceKey(entityMeta.getTableMeta().getConnectId());
         // 执行gql查询
         ApiPagedResult<List<Map<String, Object>>> apiPagedResult = ruleService.queryForMapList(gql, false);
         if (apiPagedResult.isSuccess()) {

@@ -47,22 +47,29 @@ public class SM4Utils {
 
 
     public static void main(String[] args) throws Exception {
-        generateKey();
-//        try {
-//            String plainText = "Hello, SM4 Encryption!";
-//            // 假设这里有一个有效的 16 字节（128 位）密钥字符串
-//            String keyStr = "1234567890123456";
-//            String encryptedBase64 = SM4Utils.encrypt(plainText, keyStr);
-//            System.out.println("Encrypted: " + encryptedBase64);
-//
-//            String decryptedText = SM4Utils.decrypt(encryptedBase64, keyStr);
-//            System.out.println("Decrypted: " + decryptedText);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+//        generateKey();
+        try {
+            String plainText = "{\n" +
+                    "\t\"demo_entity\": {\n" +
+                    "\t\t\"name\": \"n_v\",\n" +
+                    "\t\t\"code\": \"c_v\",\n" +
+                    "\t\t\"remark\": \"r_v\"\n" +
+                    "\t},\n" +
+                    "\t\"@biz\": \"0\"\n" +
+                    "}";
+            // 假设这里有一个有效的 16 字节（128 位）密钥字符串
+            String keyStr = "b76278495b7f4df3";
+            String encryptedBase64 = SM4Utils.encrypt(plainText, keyStr);
+            System.out.println("Encrypted: " + encryptedBase64);
+
+            String decryptedText = SM4Utils.decrypt(encryptedBase64, keyStr);
+            System.out.println("Decrypted: " + decryptedText);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void generateKey() throws Exception {
+    public static void generateKey() {
         SecureRandom secureRandom = new SecureRandom();
         byte[] key = new byte[16];
         secureRandom.nextBytes(key);

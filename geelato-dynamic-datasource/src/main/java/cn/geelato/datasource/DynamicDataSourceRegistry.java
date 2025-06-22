@@ -2,12 +2,16 @@ package cn.geelato.datasource;
 
 import com.atomikos.jdbc.AtomikosDataSourceBean;
 import com.mysql.cj.jdbc.MysqlXADataSource;
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.seata.rm.datasource.DataSourceProxy;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
+import javax.sql.XADataSource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class DynamicDataSourceRegistry {
 
-    private static final boolean delayLoadDataSource = true;
+    private static final boolean delayLoadDataSource = false;
 
     private JdbcTemplate primaryJdbcTemplate;
     private final Map<String, DataSource> dataSourceMap = new ConcurrentHashMap<>();
@@ -58,6 +62,27 @@ public class DynamicDataSourceRegistry {
             } catch (Exception e) {
                 log.error("dynamic data source config failed : {}", dbConnectMap.get("db_name"), e);
             }
+        }
+    }
+
+    public DataSource buildDataSourceProxy(Map<String, Object> dbConnectMap) {
+        String dbType = dbConnectMap.get("db_type").toString().toLowerCase();
+        if(dbType.equals("mysql")){
+            String serverHost = dbConnectMap.get("db_hostname_ip").toString();
+            String serverPort = dbConnectMap.get("db_port").toString();
+            String dbUserName = dbConnectMap.get("db_user_name").toString();
+            String dbPassWord =dbConnectMap.get("db_password").toString();
+            String dbName = dbConnectMap.get("db_name").toString();
+
+            HikariDataSource dataSource = new HikariDataSource();
+            String commonParams = "useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true";
+            String jdbcUrl = String.format("jdbc:mysql://%s:%s/%s?%s", serverHost, serverPort, dbName, commonParams);
+            dataSource.setJdbcUrl(jdbcUrl);
+            dataSource.setUsername(dbUserName);
+            dataSource.setPassword(dbPassWord);
+            return new DataSourceProxy(dataSource);
+        }else{
+            return null;
         }
     }
     

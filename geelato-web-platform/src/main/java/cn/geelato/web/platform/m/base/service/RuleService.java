@@ -6,7 +6,6 @@ import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.biz.rules.common.EntityValidateRule;
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.gql.GqlManager;
-import cn.geelato.core.gql.command.BaseCommand;
 import cn.geelato.core.gql.command.DeleteCommand;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.command.SaveCommand;
@@ -23,15 +22,15 @@ import cn.geelato.core.script.rule.BizMvelRuleManager;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.datasource.annotion.UseDynamicDataSource;
-import cn.geelato.datasource.annotion.UseTransactional;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.cache.CacheUtil;
-import lombok.Setter;
+import io.opentracing.Scope;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.jeasy.rules.api.Facts;
 import org.jeasy.rules.api.Rules;
 import org.jeasy.rules.api.RulesEngine;
@@ -54,9 +53,9 @@ import java.util.*;
 @Slf4j
 public class RuleService {
 
-    @Setter
-    @UseDynamicDataSource
-    private Dao dao;
+    @Autowired
+    @Qualifier("dynamicDao")
+    public Dao dao;
     private final GqlManager gqlManager = GqlManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
     private final MetaManager metaManager = MetaManager.singleInstance();
@@ -67,37 +66,6 @@ public class RuleService {
     // $fn.now.
     private final static String VARS_FN = "$fn";
 
-    /**
-     * <p>注意: 在使用之前，需先设置dao
-     *
-     * @see #setDao
-     */
-    public RuleService() {
-    }
-
-    public EntityMeta resolveEntity(String gql, String type) {
-        BaseCommand command = null;
-        switch (type) {
-            case "query":
-                command = gqlManager.generateQuerySql(gql);
-                break;
-            case "delete":
-                return metaManager.getByEntityName(gql);
-            case "delete2":
-                command = gqlManager.generateDeleteSql(gql, getSessionCtx());
-                break;
-            case "pageQuery":
-                command = gqlManager.generatePageQuerySql(gql);
-                break;
-            default:
-                break;
-        }
-        if(command!=null) {
-            return metaManager.getByEntityName(command.getEntityName());
-        }else {
-            return null;
-        }
-    }
 
     public Map<String, Object> queryForMap(String gql) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
@@ -199,6 +167,7 @@ public class RuleService {
         return dao.queryForOneColumnList(boundSql, elementType);
     }
 
+    @Transactional
     public String save(String biz, String gql) throws DaoException {
         SaveCommand command = gqlManager.generateSaveSql(gql, getSessionCtx());
         Facts facts = new Facts();

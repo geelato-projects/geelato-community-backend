@@ -9,16 +9,31 @@ import org.springframework.context.annotation.Configuration;
 @SuppressWarnings("rawtypes")
 public class FilterConfiguration {
     @Bean
-    public FilterRegistrationBean filterRegistration() {
-        FilterRegistrationBean registration = new FilterRegistrationBean();
-        registration.setFilter(cacheHttpServletFilter());
-        registration.addUrlPatterns("/*");
-        registration.setName("cacheHttpServletFilter");
-        return registration;
+    public FilterRegistrationBean cacheFilterRegistration() {
+        FilterRegistrationBean<CacheHttpServletFilter> cacheHttpServletFilterFilterRegistrationBean = new FilterRegistrationBean<>();
+        cacheHttpServletFilterFilterRegistrationBean.setFilter(cacheHttpServletFilter());
+        cacheHttpServletFilterFilterRegistrationBean.addUrlPatterns("/*");
+        cacheHttpServletFilterFilterRegistrationBean.setName("cacheHttpServletFilter");
+        cacheHttpServletFilterFilterRegistrationBean.setOrder(2);
+        return cacheHttpServletFilterFilterRegistrationBean;
     }
 
     @Bean(name = "cacheHttpServletFilter")
-    public Filter cacheHttpServletFilter() {
+    public CacheHttpServletFilter cacheHttpServletFilter() {
         return new CacheHttpServletFilter();
+    }
+
+    @Bean
+    public FilterRegistrationBean decryptFilterRegistration() {
+        FilterRegistrationBean<DecryptHttpServletFilter> decryptHttpServletFilterFilterRegistrationBean = new FilterRegistrationBean<>();
+        decryptHttpServletFilterFilterRegistrationBean.setFilter(decryptHttpServletFilter());
+        decryptHttpServletFilterFilterRegistrationBean.addUrlPatterns("/*");
+        decryptHttpServletFilterFilterRegistrationBean.setName("decryptHttpServletFilter");
+        decryptHttpServletFilterFilterRegistrationBean.setOrder(0);
+        return decryptHttpServletFilterFilterRegistrationBean;
+    }
+    @Bean(name = "decryptHttpServletFilter")
+    public DecryptHttpServletFilter decryptHttpServletFilter() {
+        return new DecryptHttpServletFilter();
     }
 }

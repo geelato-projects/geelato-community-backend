@@ -49,6 +49,8 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/wx/redirect")
                 // oauth2登录接口
                 .excludePathPatterns("/oauth2/**")
+                // 监控页面
+                .excludePathPatterns("/monitor/**")
         ;
         registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**");
     }

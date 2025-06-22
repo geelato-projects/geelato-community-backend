@@ -1,6 +1,9 @@
 package cn.geelato.datasource;
 
 
+import com.atomikos.jdbc.AtomikosDataSourceBean;
+import com.mysql.cj.jdbc.MysqlXADataSource;
+import org.apache.seata.rm.datasource.DataSourceProxy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -13,6 +16,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 
 import javax.sql.DataSource;
+import javax.sql.XADataSource;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +35,7 @@ public class DynamicDataSourceConfiguration {
      */
     @Bean
     @Primary
-    @ConfigurationProperties(prefix = "spring.datasource", ignoreUnknownFields = true)
+    @ConfigurationProperties(prefix = "spring.datasource")
     public DataSourceProperties primaryDataSourceProperties() {
         return new DataSourceProperties();
     }
@@ -40,7 +44,7 @@ public class DynamicDataSourceConfiguration {
      * 备用主数据源配置属性（当使用 spring.datasource.primary 时）
      */
     @Bean
-    @ConfigurationProperties(prefix = "spring.datasource.primary", ignoreUnknownFields = true)
+    @ConfigurationProperties(prefix = "spring.datasource.primary")
     public DataSourceProperties primaryDataSourcePropertiesAlternative() {
         return new DataSourceProperties();
     }
@@ -55,11 +59,13 @@ public class DynamicDataSourceConfiguration {
     @ConditionalOnMissingBean(name = "primaryDataSource")
     public DataSource primaryDataSource() {
         DataSourceProperties properties = primaryDataSourcePropertiesAlternative();
-        // 如果 spring.datasource.primary 配置为空，则使用 spring.datasource 配置
         if (properties.getUrl() == null || properties.getUrl().isEmpty()) {
             properties = primaryDataSourceProperties();
         }
-        return properties.initializeDataSourceBuilder().build();
+        AtomikosDataSourceBean ds = new AtomikosDataSourceBean();
+        ds.setUniqueResourceName("primary");
+        ds.setXaDataSource(properties.initializeDataSourceBuilder().type(MysqlXADataSource.class).build());
+        return ds;
     }
     
     /**

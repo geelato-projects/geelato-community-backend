@@ -238,6 +238,12 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.14.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.seata</groupId>
+            <artifactId>seata-all</artifactId>
+            <version>2.3.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <!--该工程打包成普通的jar，以便发布到仓库共其它应用模块使用，不采用spring-boot-maven-plugin打成fat jar

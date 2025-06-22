@@ -40,26 +40,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @SuppressWarnings("rawtypes")
 public class Dao extends SqlKeyDao {
-
-
     private Boolean defaultFilterOption = false;
     private FilterGroup defaultFilterGroup;
-
-    /**
-     * <p>注意: 在使用之前，需先设置JdbcTemplate
-     */
-    public Dao() {
-    }
-
     public Dao(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
-    public JdbcTemplate getJdbcTemplate() {
-        return jdbcTemplate;
-    }
-
-    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 

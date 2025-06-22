@@ -32,7 +32,7 @@ import java.util.Map;
 
 @ApiRestController("/user")
 @Slf4j
-public class    JWTAuthController extends BaseController {
+public class JWTAuthController extends BaseController {
     protected AuthCodeService authCodeService;
     protected OrgService orgService;
 

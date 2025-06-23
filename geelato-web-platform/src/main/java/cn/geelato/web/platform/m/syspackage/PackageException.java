@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.syspackage;
 import cn.geelato.lang.exception.CoreException;
 
 public class PackageException extends CoreException {
-    private static final int DEFAULT_CODE = 2000;
+    private static final int DEFAULT_CODE = 10002;
     private static final String DEFAULT_MSG = "PackageException";
 
     public PackageException() {

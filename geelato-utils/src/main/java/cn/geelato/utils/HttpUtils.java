@@ -1,6 +1,7 @@
 package cn.geelato.utils;
 
 import okhttp3.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -39,7 +40,6 @@ public class HttpUtils {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
             builder.sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0]);
             builder.hostnameVerifier((hostname, session) -> true);
-
             return builder.build();
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             throw new RuntimeException(e);
@@ -56,21 +56,7 @@ public class HttpUtils {
      */
     public static String doGet(String url, Map<String, String> headers) throws IOException {
         Request.Builder requestBuilder = new Request.Builder().url(url);
-        if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                if (entry.getKey() != null && entry.getValue() != null) {
-                    requestBuilder.addHeader(entry.getKey(), entry.getValue());
-                }
-            }
-        }
-        Request request = requestBuilder.build();
-        try (Response response = client.newCall(request).execute()) {
-            if (response.isSuccessful() && response.body() != null) {
-                return response.body().string();
-            } else {
-                throw new IOException("Unexpected code " + response);
-            }
-        }
+        return doHttpInner(headers, requestBuilder);
     }
 
     /**
@@ -86,6 +72,11 @@ public class HttpUtils {
         MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
         RequestBody body = RequestBody.create(mediaType, json);
         Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
+        return doHttpInner(headers, requestBuilder);
+    }
+
+    @NotNull
+    private static String doHttpInner(Map<String, String> headers, Request.Builder requestBuilder) throws IOException {
         if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
                 if (entry.getKey() != null && entry.getValue() != null) {

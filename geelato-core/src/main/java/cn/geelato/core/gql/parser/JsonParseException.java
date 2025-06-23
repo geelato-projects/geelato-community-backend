@@ -3,8 +3,8 @@ package cn.geelato.core.gql.parser;
 import cn.geelato.lang.exception.CoreException;
 
 public class JsonParseException extends CoreException {
-    private static final int DEFAULT_CODE = 8888;
-    private static final String DEFAULT_MSG = "JsonParseException";
+    private static final int DEFAULT_CODE = 10008;
+    private static final String DEFAULT_MSG = "Gql json解析异常";
 
     public JsonParseException() {
         super(DEFAULT_CODE, DEFAULT_MSG);

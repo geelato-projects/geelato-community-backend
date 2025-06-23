@@ -21,43 +21,26 @@ public class DecryptHttpServletFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
-        // 只处理POST请求且Content-Type为application/json
         if ("POST".equalsIgnoreCase(request.getMethod()) &&
                 "application/json".equalsIgnoreCase(request.getContentType())) {
-
-            // 读取请求体
             String requestBody = readRequestBody(request);
-
             try {
-                // 尝试解析JSON
                 JSONObject jsonObject = JSONObject.parseObject(requestBody);
-
-                // 检查是否包含edata字段
                 if (jsonObject.containsKey("edata")) {
                     String encryptedData = jsonObject.getString("edata");
 
                     if (encryptedData != null) {
-                        // 解密请求体
                         String decryptedBody = SM4Utils.decrypt(encryptedData,sm4Key);
-
-                        // 将解密后的内容作为新的请求体
                         EncryptedRequestWrapper requestWrapper = new EncryptedRequestWrapper(request, decryptedBody);
-
-                        // 继续处理请求
                         filterChain.doFilter(requestWrapper, response);
                         return;
                     }
                 }
             } catch (Exception e) {
-                // 解析失败或解密失败，继续处理原始请求体
             }
-
-            // 默认情况：使用原始请求体
             EncryptedRequestWrapper requestWrapper = new EncryptedRequestWrapper(request, requestBody);
             filterChain.doFilter(requestWrapper, response);
         } else {
-            // 非POST请求或非JSON请求直接放行
             filterChain.doFilter(request, response);
         }
     }

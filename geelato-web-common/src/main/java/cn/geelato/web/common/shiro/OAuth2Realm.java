@@ -1,5 +1,6 @@
 package cn.geelato.web.common.shiro;
 
+import cn.geelato.web.common.interceptor.InvalidTokenException;
 import cn.geelato.web.common.interceptor.OAuthConfigurationProperties;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
 import cn.geelato.web.common.security.User;
@@ -40,19 +41,19 @@ public class OAuth2Realm extends AuthorizingRealm {
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
         OAuth2Token oauth2Token = (OAuth2Token) authenticationToken;
         String accessToken = oauth2Token.getAccessToken();
-        User user = getUserInfo(accessToken);
-        if (user != null) {
-            return new SimpleAuthenticationInfo(
-                    new ShiroUser(user.getId(), user.getLoginName(), user.getName()),
-                    accessToken,
-                    getName()
-            );
-        } else {
-            return null;
+        try{
+            User user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(),accessToken);
+            if (user != null) {
+                return new SimpleAuthenticationInfo(
+                        new ShiroUser(user.getId(), user.getLoginName(), user.getName()),
+                        accessToken,
+                        getName()
+                );
+            } else {
+                throw new InvalidTokenException("获取用户异常");
+            }
+        }catch (Exception e){
+            throw new InvalidTokenException();
         }
-    }
-
-    private User getUserInfo(String accessToken) throws IOException {
-        return OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(),accessToken);
     }
 }

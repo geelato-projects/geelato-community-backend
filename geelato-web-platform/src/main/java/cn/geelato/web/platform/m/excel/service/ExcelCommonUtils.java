@@ -7,6 +7,7 @@ import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.script.js.JsProvider;
+import cn.geelato.datasource.annotion.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.exception.file.FileException;
@@ -46,9 +47,10 @@ public class ExcelCommonUtils {
     private static final String REDIS_UNIQUE_KEY = "uniques";
     private final FilterGroup filterGroup = new FilterGroup().addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
     private final MetaManager metaManager = MetaManager.singleInstance();
-    @Autowired
-    @Qualifier("primaryDao")
+
+    @UseDynamicDataSource
     protected Dao dao;
+
     @Autowired
     protected RuleService ruleService;
     @Resource

@@ -3,7 +3,7 @@ package cn.geelato.web.common.interceptor;
 import cn.geelato.lang.exception.CoreException;
 
 public class InvalidTokenException extends CoreException {
-    private static final int DEFAULT_CODE = 3000;
+    private static final int DEFAULT_CODE = 10007;
     private static final String DEFAULT_MSG = "令牌校验异常[InvalidToken]";
 
     public InvalidTokenException() {

@@ -4,6 +4,7 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.annotion.UseDynamicDataSource;
 import cn.geelato.datasource.annotion.UseTransactional;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.m.base.service.RuleService;
@@ -32,9 +33,13 @@ public class BaseController extends ParameterOperator implements InitializingBea
     private final SimpleDateFormat SDF_DATE = new SimpleDateFormat(DateUtils.DATE);
     private final SimpleDateFormat SDF_DATE_START = new SimpleDateFormat(DateUtils.DATESTART);
     private final SimpleDateFormat SDF_DATE_FINISH = new SimpleDateFormat(DateUtils.DATEFINISH);
+
+    @Autowired
+    @Qualifier("primaryDao")
     protected Dao dao;
+
+    @UseDynamicDataSource
     protected Dao dynamicDao;
-    @UseTransactional
     protected RuleService ruleService;
     protected HttpServletResponse response;
 
@@ -49,21 +54,6 @@ public class BaseController extends ParameterOperator implements InitializingBea
         this.request = httpServletRequest;
     }
 
-    /**
-     * 通过Spring框架的@Autowired注解自动注入Dao对象
-     * 这个方法主要用于设置Dao对象，以便在类内部使用
-     *
-     * @param dao 数据访问对象，用于执行数据库操作
-     */
-    @Autowired
-    protected void setDao(@Qualifier("primaryDao") Dao dao) {
-        this.dao = dao;
-    }
-
-    @Autowired
-    protected void setDynamicDao(@Qualifier("dynamicDao") Dao dynamicDao) {
-        this.dynamicDao = dynamicDao;
-    }
 
     /**
      * 通过Spring框架的@Autowired注解自动注入RuleService对象

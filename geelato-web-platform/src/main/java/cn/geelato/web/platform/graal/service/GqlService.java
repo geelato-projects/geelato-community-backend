@@ -23,7 +23,7 @@ public class GqlService extends RuleService {
     private static final String EXECUTE_SQL_KEY = "execute_sql_key";
 
     public GqlService() {
-        setDao(initDefaultDao(null));
+//        setDao(initDefaultDao(null));
     }
 
     private Dao initDefaultDao(String connectId) {

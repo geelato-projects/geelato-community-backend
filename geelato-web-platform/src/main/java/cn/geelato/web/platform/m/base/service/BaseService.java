@@ -9,6 +9,7 @@ import cn.geelato.core.meta.annotation.Entity;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.annotion.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.DataItems;
 import com.alibaba.fastjson2.JSON;
@@ -35,8 +36,8 @@ public class BaseService {
     @Autowired
     @Qualifier("primaryDao")
     public Dao dao;
-    @Autowired
-    @Qualifier("dynamicDao")
+
+    @UseDynamicDataSource
     public Dao dynamicDao;
 
     public FilterGroup filterGroup = new FilterGroup().addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(ColumnDefault.DEL_STATUS_VALUE));

@@ -156,7 +156,7 @@ public class JsonTextSaveParser extends JsonTextParser {
         } else {
             generateInsertCommand(sessionCtx, commandName, command, params, PK);
         }
-        if(GlobalContext.getColumnEncrypt()){
+        if(GlobalContext.getColumnEncryptOption()){
             EncryptInner(command, entityMeta);
         }
         return command;

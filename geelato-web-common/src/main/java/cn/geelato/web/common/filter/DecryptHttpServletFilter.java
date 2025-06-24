@@ -1,5 +1,6 @@
 package cn.geelato.web.common.filter;
 
+import cn.geelato.utils.AesUtils;
 import cn.geelato.utils.SM4Utils;
 import com.alibaba.fastjson2.JSONObject;
 import jakarta.servlet.FilterChain;
@@ -14,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DecryptHttpServletFilter extends OncePerRequestFilter {
-    private final String sm4Key = "b76278495b7f4df3";
+    private final String key = "b76278495b7f4df3";
     /**
      * 处理请求
      */
@@ -30,7 +31,7 @@ public class DecryptHttpServletFilter extends OncePerRequestFilter {
                     String encryptedData = jsonObject.getString("edata");
 
                     if (encryptedData != null) {
-                        String decryptedBody = SM4Utils.decrypt(encryptedData,sm4Key);
+                        String decryptedBody = AesUtils.decrypt(encryptedData,key);
                         EncryptedRequestWrapper requestWrapper = new EncryptedRequestWrapper(request, decryptedBody);
                         filterChain.doFilter(requestWrapper, response);
                         return;

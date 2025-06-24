@@ -44,11 +44,10 @@ public class SM2Utils {
         // 使用SM2加密
         byte[] encrypt = SM2Utils.encrypt(value.getBytes(), publicKey);
         // 加密转base64
-        String encryptBase64Str = Base64.getEncoder().encodeToString(encrypt);
         // 私钥签名,方便对方收到数据后用公钥验签
         // byte[] sign = Sm2Utils.signByPrivateKey(encryptBase64Str.getBytes(), privateKey);
 
-        return encryptBase64Str;
+        return Base64.getEncoder().encodeToString(encrypt);
     }
 
     /**

@@ -36,6 +36,8 @@ public class LoginResult {
     private int enableStatus;
     private String unionId;
 
+    private String roleIds;
+
     private String token;
     private String homePath;
     private List<LoginRoleInfo> roles;

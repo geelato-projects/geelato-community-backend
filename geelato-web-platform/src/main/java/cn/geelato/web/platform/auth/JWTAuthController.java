@@ -1,20 +1,24 @@
 package cn.geelato.web.platform.auth;
 
-import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.Base64Utils;
 import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.common.security.Org;
 import cn.geelato.web.common.security.User;
+import cn.geelato.web.common.shiro.ShiroUser;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.enums.ValidTypeEnum;
-import cn.geelato.web.platform.m.security.service.*;
-import cn.geelato.web.common.shiro.ShiroUser;
+import cn.geelato.web.platform.m.security.service.AuthCodeService;
+import cn.geelato.web.platform.m.security.service.JWTUtil;
+import cn.geelato.web.platform.m.security.service.OrgService;
+import cn.geelato.web.platform.m.security.service.SecurityHelper;
 import cn.geelato.web.platform.utils.EncryptUtil;
+import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -62,6 +66,9 @@ public class JWTAuthController extends BaseController {
                 loginResult.setToken(token);
                 loginResult.setHomePath("");
                 setCompany(loginResult);
+                // 用户角色
+                loginResult.setRoleIds(getRoleIdsByUserId(loginUser.getId(), null, loginUser.getTenantCode()));
+
                 return ApiResult.success(loginResult, "认证成功!");
             } else {
                 return ApiResult.fail("账号或密码不正确");
@@ -103,6 +110,8 @@ public class JWTAuthController extends BaseController {
             loginResult.setRoles(null);
             // 用户所属公司
             setCompany(loginResult);
+            // 用户角色
+            loginResult.setRoleIds(getRoleIdsByUserId(user.getId(), null, user.getTenantCode()));
 
             return ApiResult.success(loginResult);
         } catch (Exception e) {
@@ -410,5 +419,29 @@ public class JWTAuthController extends BaseController {
                 loginResult.setCompanyName(org.getName());
             }
         }
+    }
+
+    /**
+     * 获取用户的角色信息
+     *
+     * @param userId     用户ID
+     * @param appId      应用ID
+     * @param tenantCode 租户代码
+     */
+    private List<Role> getRolesByUserId(String userId, String appId, String tenantCode) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("appId", appId);
+        params.put("tenantCode", tenantCode);
+        List<Map<String, Object>> mapList = dao.queryForMapList("page_query_platform_role_by_user_id", params);
+        return JSON.parseArray(JSON.toJSONString(mapList), Role.class);
+    }
+
+    private String getRoleIdsByUserId(String userId, String appId, String tenantCode) {
+        List<Role> roles = getRolesByUserId(userId, appId, tenantCode);
+        if (roles != null && !roles.isEmpty()) {
+            return roles.stream().map(Role::getId).reduce((a, b) -> a + "," + b).get();
+        }
+        return null;
     }
 }

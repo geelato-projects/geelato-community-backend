@@ -537,3 +537,26 @@ WHERE 1=1 and p.del_status = 0
 @if $.pageSize!=null&&$.pageSize!=''
   LIMIT $.pageSize OFFSET $.startNum
 @/if
+
+-- @sql page_query_platform_role_by_user_id
+SELECT
+    p2.id,
+    p2.app_id as appId,
+    p2.name,
+    p2.code,
+    p2.type,
+    p2.weight,
+    p2.description,
+    p2.seq_no as seqNo,
+    p2.used_app as usedApp
+FROM platform_role_r_user p1
+LEFT JOIN platform_role p2 ON p2.id = p1.role_id
+WHERE p1.del_status = 0 AND p2.del_status = 0 AND p2.enable_status = 1
+@if $.appId!=null&&$.appId!=''
+  AND p2.app_id = '$.appId'
+@/if
+@if $.tenantCode!=null&&$.tenantCode!=''
+  AND p2.tenant_code = '$.tenantCode'
+@/if
+AND p1.user_id = '$.userId'
+ORDER BY p2.seq_no ASC

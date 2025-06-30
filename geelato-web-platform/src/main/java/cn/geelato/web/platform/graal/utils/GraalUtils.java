@@ -1,6 +1,8 @@
 package cn.geelato.web.platform.graal.utils;
 
 import cn.geelato.core.SessionCtx;
+import cn.geelato.security.SecurityContext;
+import cn.geelato.security.Tenant;
 import cn.geelato.security.User;
 
 public class GraalUtils {
@@ -32,8 +34,8 @@ public class GraalUtils {
      */
     public static SessionCtx getCxt() {
         User user = getUser();
-        SessionCtx.setCurrentUser(user);
-        SessionCtx.setCurrentTenant("geelato");
+        SecurityContext.setCurrentUser(user);
+        SecurityContext.setCurrentTenant(new Tenant("geelato"));
         return new SessionCtx();
     }
 

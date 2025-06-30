@@ -2,23 +2,31 @@ package cn.geelato.security;
 
 public class SecurityContext {
 
-    private static final ThreadLocal<User> threadLocalUser = new ThreadLocal<>();
+    private static final ThreadLocal<User> threadUser = new ThreadLocal<>();
 
-    private static final ThreadLocal<Tenant> threadLocalTenant = new ThreadLocal<>();
+    private static final ThreadLocal<Tenant> threadTenant = new ThreadLocal<>();
+
+    private static final ThreadLocal<String> threadPassword = new ThreadLocal<>();
 
     public static void setCurrentUser(User user) {
-        threadLocalUser.set(user);
+        threadUser.set(user);
     }
 
     public static void setCurrentTenant(Tenant tenant) {
-        threadLocalTenant.set(tenant);
+        threadTenant.set(tenant);
+    }
+    public static void setCurrentPassword(String password) {
+        threadPassword.set(password);
     }
 
     public static User getCurrentUser() {
-        return threadLocalUser.get();
+        return threadUser.get();
     }
 
     public static Tenant getCurrentTenant() {
-        return threadLocalTenant.get();
+        return threadTenant.get();
+    }
+    public static String getCurrentPassword() {
+        return threadPassword.get();
     }
 }

@@ -52,7 +52,6 @@ public class SystemRestController extends BaseController {
             User user = this.getUserByToken();
             LoginResult loginResult = LoginResult.formatLoginResult(user);
             loginResult.setToken(this.getToken());
-            loginResult.setHomePath("");
             loginResult.setRoles(null);
             // 用户所属公司
             setCompany(loginResult);

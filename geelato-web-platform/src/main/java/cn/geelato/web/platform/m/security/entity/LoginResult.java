@@ -1,5 +1,7 @@
 package cn.geelato.web.platform.m.security.entity;
 
+import cn.geelato.security.Tenant;
+import cn.geelato.security.UserOrg;
 import cn.geelato.web.common.security.User;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,8 +41,9 @@ public class LoginResult {
     private String roleIds;
 
     private String token;
-    private String homePath;
     private List<LoginRoleInfo> roles;
+    private List<Tenant> tenants;
+    private List<UserOrg> orgs;
 
     /**
      * 对象转换

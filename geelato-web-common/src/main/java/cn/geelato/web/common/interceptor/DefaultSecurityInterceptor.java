@@ -5,6 +5,7 @@ import cn.geelato.security.SecurityContext;
 import cn.geelato.security.Tenant;
 import cn.geelato.security.User;
 
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
 import cn.geelato.web.common.shiro.OAuth2Token;
@@ -54,7 +55,16 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                 DecodedJWT verify = JWTUtil.verify(token);
                 String loginName = verify.getClaim("loginName").asString();
                 String passWord = verify.getClaim("passWord").asString();
+                String orgId=verify.getClaim("orgId").asString();
+                String tenantCode = verify.getClaim("tenantCode").asString();
+
                 User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);
+                if(StringUtils.isEmpty(orgId)) {
+                    currentUser.setOrgId(orgId);
+                }
+                if(StringUtils.isEmpty(tenantCode)) {
+                    currentUser.setTenantCode(tenantCode);
+                }
                 SecurityContext.setCurrentUser(currentUser);
                 SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
                 UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);

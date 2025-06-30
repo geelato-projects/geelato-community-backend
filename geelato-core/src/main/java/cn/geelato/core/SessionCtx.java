@@ -1,5 +1,6 @@
 package cn.geelato.core;
 
+import cn.geelato.security.SecurityContext;
 import cn.geelato.security.User;
 
 import java.util.HashMap;
@@ -11,12 +12,7 @@ import java.util.HashMap;
  *
  */
 public class SessionCtx extends HashMap<String,String> {
-
-    private static final ThreadLocal<User> threadLocalUser = new ThreadLocal<>();
-
-    private static final ThreadLocal<String> threadLocalTenantCode = new ThreadLocal<>();
-
-    public SessionCtx(){
+        public SessionCtx(){
         this.put("userId",getCurrentUser().getUserId());
         this.put("userName",getCurrentUser().getUserName());
         this.put("defaultOrgId",getCurrentUser().getDefaultOrgId());
@@ -29,20 +25,12 @@ public class SessionCtx extends HashMap<String,String> {
     public static String getUserName(){
         return getCurrentUser().getUserName();
     }
-    public static void setCurrentUser(User user){
-        threadLocalUser.set(user);
-    }
-
-    public static void setCurrentTenant(String tenantCode){
-        threadLocalTenantCode.set(tenantCode);
-    }
-
     public static User getCurrentUser(){
-        return threadLocalUser.get();
+        return SecurityContext.getCurrentUser();
     }
 
     public static String getCurrentTenantCode() {
-        return threadLocalTenantCode.get();
+        return SecurityContext.getCurrentTenant().getCode();
     }
 
 }

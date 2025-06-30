@@ -15,4 +15,8 @@ public class Tenant {
     public Tenant(String code) {
         this.code = code;
     }
+    public Tenant(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
 }

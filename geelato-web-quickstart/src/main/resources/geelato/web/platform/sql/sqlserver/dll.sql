@@ -128,12 +128,9 @@ END
 -- @sql sqlserver_upgradeTable
 @if $.tableTitle!='' && $.tableTitle!=null
   EXEC sp_addextendedproperty
-    @name = N'MS_Description',
-    @value = '$.tableTitle',
-    @level0type = N'SCHEMA',
-    @level0name = 'dbo',
-    @level1type = N'TABLE',
-    @level1name = '$.tableName';
+    'MS_Description', '$.tableTitle',
+    'SCHEMA', 'dbo',
+    'TABLE', '$.tableName';
 @/if
 @for i in $.addList
 ALTER TABLE $.tableName ADD $.addList[i].name $.addList[i].type
@@ -210,10 +207,9 @@ ALTER TABLE $.tableName ALTER COLUMN $.modifyList[i].name $.modifyList[i].type
 -- @sql sqlserver_renameTable
 EXEC sp_rename '$.entityName', '$.newEntityName';
 EXEC sp_addextendedproperty
-    @name = N'MS_Description',
-    @value = '$.newComment',
-    @level0type = N'SCHEMA', @level0name = 'dbo',
-    @level1type = N'TABLE', @level1name = '$.entityName';
+    'MS_Description', '$.newComment',
+    'SCHEMA', 'dbo',
+    'TABLE',  '$.entityName';
 
 -- 字段变更，删除字段时
 -- @sql sqlserver_renameColumn
@@ -230,11 +226,10 @@ ALTER TABLE $.tableName
 @/if
 @if $.comment!='' && $.comment!=null
     EXEC sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = '$.comment',
-        @level0type = N'SCHEMA', @level0name = 'dbo',
-        @level1type = N'TABLE', @level1name = '$.tableName',
-        @level2type = N'COLUMN', @level2name = '$.newName';
+        'MS_Description', '$.comment',
+        'SCHEMA', 'dbo',
+        'TABLE', '$.tableName',
+        'COLUMN', '$.newName';
 @/if
 
 -- 获取数据库表外键信息

@@ -62,17 +62,17 @@ public class JWTAuthController extends BaseController {
             if (checkPsdRst) {
                 String userId = loginUser.getId();
 
-                List<Tenant> tenantList= queryTenantList(userId);
-                List<UserOrg> userOrgList= queryOrgList(userId);
+                List<Tenant> tenantList = queryTenantList(userId);
+                List<UserOrg> userOrgList = queryOrgList(userId);
 
-                String orgId= checkOrg(userOrgList,loginParams.getOrg())?loginParams.getOrg():loginUser.getOrgId();
+                String orgId = checkOrg(userOrgList, loginParams.getOrg()) ? loginParams.getOrg() : loginUser.getOrgId();
                 String tenantCodeParam;
-                if(StringUtils.isEmpty(loginParams.getSuffix())){
-                    tenantCodeParam=loginParams.getTenant().replace("@","");
-                }else {
+                if (StringUtils.isNotEmpty(loginParams.getSuffix())) {
+                    tenantCodeParam = loginParams.getSuffix().replace("@", "");
+                } else {
                     tenantCodeParam = loginParams.getTenant();
                 }
-                String tenantCode=checkTenant(tenantList,tenantCodeParam)?tenantCodeParam:loginUser.getTenantCode();
+                String tenantCode = checkTenant(tenantList, tenantCodeParam) ? tenantCodeParam : loginUser.getTenantCode();
                 Map<String, String> payload = new HashMap<>(5);
                 payload.put("id", userId);
                 payload.put("loginName", loginUser.getLoginName());
@@ -97,16 +97,17 @@ public class JWTAuthController extends BaseController {
             return ApiResult.fail("账号或密码不正确!");
         }
     }
+
     @SneakyThrows
     @RequestMapping(value = "/switchIdentity", method = RequestMethod.GET, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
-    public ApiResult<LoginResult> switchIdentity(String org,String tenant) {
+    public ApiResult<LoginResult> switchIdentity(String org, String tenant) {
         String userId = SecurityContext.getCurrentUser().getUserId();
         User loginUser = dao.queryForObject(User.class, "id", userId);
         List<Tenant> tenantList = queryTenantList(userId);
         List<UserOrg> userOrgList = queryOrgList(userId);
 
-        String orgId = checkOrg(userOrgList, org) ? org :loginUser.getOrgId();
-        String tenantCode = checkTenant(tenantList,tenant ) ?tenant: loginUser.getTenantCode();
+        String orgId = checkOrg(userOrgList, org) ? org : loginUser.getOrgId();
+        String tenantCode = checkTenant(tenantList, tenant) ? tenant : loginUser.getTenantCode();
 
         Map<String, String> payload = new HashMap<>(5);
         payload.put("id", userId);
@@ -125,6 +126,7 @@ public class JWTAuthController extends BaseController {
         loginResult.setOrgs(userOrgList);
         return ApiResult.success(loginResult, "切换身份成功，请使用新令牌!");
     }
+
     private @NotNull List<UserOrg> queryOrgList(String userId) {
         return dao.getJdbcTemplate().query(
                 "select o.id, o.name, oru.default_org as defaultOrg, o.pid as pid, o.tenant_code as tenantCode " +
@@ -156,7 +158,7 @@ public class JWTAuthController extends BaseController {
                 .anyMatch(code -> code.equals(tenantCode));
     }
 
-    private Boolean checkOrg(List<UserOrg> userOrgList, String  orgId) {
+    private Boolean checkOrg(List<UserOrg> userOrgList, String orgId) {
         return userOrgList.stream()
                 .map(UserOrg::getId)
                 .anyMatch(id -> id.equals(orgId));
@@ -194,6 +196,12 @@ public class JWTAuthController extends BaseController {
             setCompany(loginResult);
             // 用户角色
             loginResult.setRoleIds(getRoleIdsByUserId(user.getId(), null, user.getTenantCode()));
+            // 用户所属租户
+            List<Tenant> tenantList = queryTenantList(user.getId());
+            loginResult.setTenants(tenantList);
+            // 用户所属组织
+            List<UserOrg> userOrgList = queryOrgList(user.getId());
+            loginResult.setOrgs(userOrgList);
 
             return ApiResult.success(loginResult);
         } catch (Exception e) {

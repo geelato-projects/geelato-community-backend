@@ -215,7 +215,10 @@ public class UploadController extends BaseController {
             }
             // 模型默认字段，不添加
             List<ColumnMeta> metaList = MetaManager.singleInstance().getDefaultColumn();
-            List<String> defaultColumnNames = metaList.stream().map(ColumnMeta::getFieldName).toList();
+            List<String> defaultColumnNames = metaList.stream()
+                    .map(ColumnMeta::getFieldName)
+                    .filter(fieldName -> !"tenantCode".equals(fieldName))
+                    .toList();
             // 遍历字段
             Map<String, Object> columnMapNew = new HashMap<>();
             for (Map.Entry<String, Object> columnEntry : columnMap.entrySet()) {

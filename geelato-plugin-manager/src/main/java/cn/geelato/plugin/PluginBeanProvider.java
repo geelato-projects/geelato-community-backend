@@ -18,7 +18,7 @@ public class PluginBeanProvider {
 
 
     public <T> T getBean(Class<T> type,String pluginId){
-        List<T> extensions=null;
+        List<T> extensions;
         if(StringUtils.isEmpty(pluginId)){
             extensions=springPluginManager.getExtensions(type);
         }else{

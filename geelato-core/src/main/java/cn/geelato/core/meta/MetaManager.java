@@ -398,7 +398,7 @@ public class MetaManager extends AbstractManager {
 
     public void parseOneOther(EntityMeta entityMeta) {
         List checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", entityMeta.getTableMeta().getId()));
-        if (checkList != null && !checkList.isEmpty()) {
+        if (!checkList.isEmpty()) {
             entityMeta.setTableChecks(MetaReflex.getTableCheckMetas(checkList));
         }
     }

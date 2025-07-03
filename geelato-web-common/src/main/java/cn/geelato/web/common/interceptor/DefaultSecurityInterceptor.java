@@ -67,6 +67,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                 }
                 SecurityContext.setCurrentUser(currentUser);
                 SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
+                SecurityContext.setCurrentPassword(passWord);
                 UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
                 Subject subject = SecurityUtils.getSubject();
                 subject.login(userToken);

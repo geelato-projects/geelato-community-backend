@@ -108,7 +108,8 @@ public class EnvManager  extends AbstractManager {
     public User InitCurrentUser(String loginName) {
         String sql = "select id as userId,org_id as orgId,login_name as loginName," +
                 "name as userName,bu_id as buId,dept_id as deptId,union_id as unionId,"+
-                " cooperating_org_id as cooperatingOrgId,tenant_code as tenantCode from platform_user  where login_name =?";
+                " cooperating_org_id as cooperatingOrgId,tenant_code as tenantCode from platform_user  " +
+                "where del_status = 0 and login_name =?";
         User dbUser = EnvJdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(User.class), loginName);
         if (dbUser != null) {
             dbUser.setMenus(structUserMenu(dbUser.getUserId()));

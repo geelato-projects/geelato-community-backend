@@ -109,3 +109,49 @@ WHERE 1=1 AND p1.del_status = 0
   AND p1.tenant_code = '$.tenantCode'
 @/if
 ORDER BY p1.seq_no ASC
+
+-- @sql query_tree_platform_org_full_name
+WITH RECURSIVE platform_org_tree AS (
+    SELECT
+        o.id,
+        o.pid,
+        o.`code`,
+        o.`name`,
+        o.`name` AS full_name,
+        o.`status`,
+        o.description,
+        o.type,
+        o.category,
+        o.tenant_code,
+        o.del_status,
+        o.seq_no,
+        CASE WHEN o.type = 'department' THEN o.id ELSE NULL END AS dept_id,
+        CASE WHEN o.type = 'company' THEN o.id ELSE NULL END AS company_id
+    FROM platform_org o WHERE o.pid IS NULL AND o.`status` = 1 AND o.del_status = 0
+    UNION ALL
+    SELECT
+        o.id,
+        o.pid,
+        o.`code`,
+        o.`name`,
+        CONCAT(ot.full_name, '/', o.`name`) AS full_name,
+        o.`status`,
+        o.description,
+        o.type,
+        o.category,
+        o.tenant_code,
+        o.del_status,
+        o.seq_no,
+        CASE WHEN o.type = 'department' THEN o.id ELSE ot.dept_id END AS dept_id,
+        CASE WHEN o.type = 'company' THEN o.id ELSE ot.company_id END AS company_id
+    FROM platform_org o JOIN platform_org_tree ot ON o.pid = ot.id WHERE o.`status` = 1 AND o.del_status = 0
+)
+SELECT * FROM platform_org_tree
+WHERE `status` = 1 AND del_status = 0
+@if $.tenantCode!=null&&$.tenantCode!=''
+  AND tenant_code = '$.tenantCode'
+@/if
+@if $.id!=null&&$.id!=''
+  AND FIND_IN_SET(id,'$.id')
+@/if
+ORDER BY seq_no ASC,full_name ASC;

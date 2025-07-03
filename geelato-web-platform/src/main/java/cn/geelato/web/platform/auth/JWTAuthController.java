@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.auth;
 
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
@@ -7,6 +8,7 @@ import cn.geelato.security.SecurityContext;
 import cn.geelato.security.Tenant;
 import cn.geelato.security.UserOrg;
 import cn.geelato.utils.Base64Utils;
+import cn.geelato.utils.SqlParams;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.constants.MediaTypes;
@@ -22,6 +24,7 @@ import cn.geelato.web.platform.m.security.service.JWTUtil;
 import cn.geelato.web.platform.m.security.service.OrgService;
 import cn.geelato.web.platform.m.security.service.SecurityHelper;
 import cn.geelato.web.platform.utils.EncryptUtil;
+import cn.geelato.web.platform.utils.LoginMultiTenantException;
 import com.alibaba.fastjson2.JSON;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +38,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @ApiRestController("/user")
 @Slf4j
@@ -56,38 +57,47 @@ public class JWTAuthController extends BaseController {
     @RequestMapping(value = "/login", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
     public ApiResult<LoginResult> login(@RequestBody LoginParams loginParams) {
         try {
-            // 用户登录校验
-            User loginUser = dao.queryForObject(User.class, "loginName", loginParams.getUsername());
+            // 查询的租户
+            String tenantCodeParam = StringUtils.isNotEmpty(loginParams.getSuffix()) ? loginParams.getSuffix().replace("@", "") : loginParams.getTenant();
+            // 用户查询
+            FilterGroup filterGroup = new FilterGroup();
+            filterGroup.addFilter("loginName", loginParams.getUsername());
+            filterGroup.addFilter("enableStatus", "1");
+            filterGroup.addFilter("delStatus", "0");
+            if (StringUtils.isNotBlank(tenantCodeParam)) {
+                filterGroup.addFilter("tenantCode", tenantCodeParam);
+            }
+            List<User> loginUsers = dao.queryList(User.class, filterGroup, "");
+            // 没有对应的用户
+            if (loginUsers == null || loginUsers.isEmpty()) {
+                return ApiResult.fail("账号或密码不正确");
+            }
+            // 多个用户
+            if (loginUsers.size() > 1) {
+                List<Tenant> tenantList = queryTenantListByLoginName(loginParams.getUsername());
+                if (tenantList.size() > 1) {
+                    LoginResult loginResult = new LoginResult();
+                    loginResult.setTenants(tenantList);
+                    return ApiResult.fail(loginResult, LoginMultiTenantException.DEFAULT_CODE, "请选择租户");
+                }
+                return ApiResult.fail("账号信息不唯一，请联系管理员");
+            }
+            // 仅有一个用户时
+            User loginUser = loginUsers.get(0);
             Boolean checkPsdRst = checkPsd(loginUser, loginParams);
             if (checkPsdRst) {
                 String userId = loginUser.getId();
-
-                List<Tenant> tenantList = queryTenantList(userId);
-                List<UserOrg> userOrgList = queryOrgList(userId);
-
-                String orgId = checkOrg(userOrgList, loginParams.getOrg()) ? loginParams.getOrg() : loginUser.getOrgId();
-                String tenantCodeParam;
-                if (StringUtils.isNotEmpty(loginParams.getSuffix())) {
-                    tenantCodeParam = loginParams.getSuffix().replace("@", "");
-                } else {
-                    tenantCodeParam = loginParams.getTenant();
-                }
-                String tenantCode = checkTenant(tenantList, tenantCodeParam) ? tenantCodeParam : loginUser.getTenantCode();
+                // 生成登录密钥 token
                 Map<String, String> payload = new HashMap<>(5);
                 payload.put("id", userId);
                 payload.put("loginName", loginUser.getLoginName());
                 payload.put("passWord", loginParams.getPassword());
-                payload.put("orgId", orgId);
-                payload.put("tenantCode", tenantCode);
+                payload.put("orgId", loginUser.getOrgId());
+                payload.put("tenantCode", loginUser.getTenantCode());
                 String token = JWTUtil.getToken(payload);
-
+                // 用户信息
                 LoginResult loginResult = LoginResult.formatLoginResult(loginUser);
                 loginResult.setToken(token);
-                setCompany(loginResult);
-                // 用户角色
-                loginResult.setRoleIds(getRoleIdsByUserId(loginUser.getId(), null, loginUser.getTenantCode()));
-                loginResult.setTenants(tenantList);
-                loginResult.setOrgs(userOrgList);
                 return ApiResult.success(loginResult, "认证成功!");
             } else {
                 return ApiResult.fail("账号或密码不正确");
@@ -103,12 +113,12 @@ public class JWTAuthController extends BaseController {
     public ApiResult<LoginResult> switchIdentity(String org, String tenant) {
         String userId = SecurityContext.getCurrentUser().getUserId();
         User loginUser = dao.queryForObject(User.class, "id", userId);
-        List<Tenant> tenantList = queryTenantList(userId);
+        List<Tenant> tenantList = queryTenantListByUserId(userId);
         List<UserOrg> userOrgList = queryOrgList(userId);
 
         String orgId = checkOrg(userOrgList, org) ? org : loginUser.getOrgId();
         String tenantCode = checkTenant(tenantList, tenant) ? tenant : loginUser.getTenantCode();
-
+        // 生成登录密钥 token
         Map<String, String> payload = new HashMap<>(5);
         payload.put("id", userId);
         payload.put("loginName", SecurityContext.getCurrentUser().getLoginName());
@@ -116,23 +126,63 @@ public class JWTAuthController extends BaseController {
         payload.put("orgId", orgId);
         payload.put("tenantCode", tenantCode);
         String token = JWTUtil.getToken(payload);
-
+        // 用户信息
         LoginResult loginResult = LoginResult.formatLoginResult(loginUser);
         loginResult.setToken(token);
-
-        setCompany(loginResult);
-        loginResult.setRoleIds(getRoleIdsByUserId(loginUser.getId(), null, loginUser.getTenantCode()));
-        loginResult.setTenants(tenantList);
-        loginResult.setOrgs(userOrgList);
         return ApiResult.success(loginResult, "切换身份成功，请使用新令牌!");
     }
 
+    @RequestMapping(value = "/info", method = {RequestMethod.POST, RequestMethod.GET})
+    public ApiResult getUserInfo() {
+        try {
+            cn.geelato.security.User securityUser = SecurityContext.getCurrentUser();
+            if (securityUser == null) {
+                return ApiResult.fail("获取用户失败");
+            }
+            User user = dao.queryForObject(User.class, "id", securityUser.getUserId());
+            LoginResult loginResult = LoginResult.formatLoginResult(user);
+            loginResult.setToken(this.getToken());
+            loginResult.setRoles(null);
+            // 当前用户组织信息，如果没有设置默认组织，则使用用户的组织
+            List<UserOrg> userOrgList = queryOrgList(user.getId());
+            if (userOrgList != null && !userOrgList.isEmpty()) {
+                loginResult.setOrgs(userOrgList);
+                String orgId = checkOrg(userOrgList, securityUser.getOrgId()) ? securityUser.getOrgId() : user.getOrgId();
+                UserOrg userOrg = userOrgList.stream()
+                        .filter(org -> org.getId().equals(orgId))
+                        .findFirst()
+                        .orElse(null);
+                if (userOrg != null) {
+                    loginResult.setOrgId(userOrg.getId());
+                    loginResult.setOrgName(userOrg.getName());
+                    loginResult.setCompanyId(userOrg.getCompanyId());
+                    loginResult.setCompanyName(null);
+                }
+            }
+            if (StringUtils.isNotBlank(loginResult.getCompanyId()) && StringUtils.isBlank(loginResult.getCompanyName())) {
+                Org org = dao.queryForObject(Org.class, loginResult.getCompanyId());
+                loginResult.setCompanyName(org == null ? null : org.getName());
+            }
+            // 用户所属租户
+            List<Tenant> tenantList = queryTenantListByUserId(user.getId());
+            loginResult.setTenants(tenantList);
+            String tenantCode = checkTenant(tenantList, securityUser.getTenantCode()) ? securityUser.getTenantCode() : user.getTenantCode();
+            loginResult.setTenantCode(tenantCode);
+            // 用户角色
+            loginResult.setRoleIds(getRoleIdsByUserId(user.getId(), null, user.getTenantCode()));
+            return ApiResult.success(loginResult);
+        } catch (Exception e) {
+            log.error("getUserInfo", e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
     private @NotNull List<UserOrg> queryOrgList(String userId) {
-        return dao.getJdbcTemplate().query(
+        List<UserOrg> userOrgs = dao.getJdbcTemplate().query(
                 "select o.id, o.name, oru.default_org as defaultOrg, o.pid as pid, o.tenant_code as tenantCode " +
                         "from platform_org_r_user oru " +
                         "left join platform_org o on oru.org_id = o.id " +
-                        "where oru.user_id = ?",
+                        "where oru.del_status=0 and o.status=1 and o.del_status=0 and oru.user_id = ?",
                 (rs, rowNum) -> {
                     UserOrg userOrg = new UserOrg();
                     userOrg.setId(rs.getString("id"));
@@ -144,12 +194,43 @@ public class JWTAuthController extends BaseController {
                 },
                 userId
         );
+        if (userOrgs != null && !userOrgs.isEmpty()) {
+            String orgIds = userOrgs.stream().map(UserOrg::getId).collect(Collectors.joining(","));
+            List<Map<String, Object>> mapList = dao.queryForMapList("query_tree_platform_org_full_name", SqlParams.map("id", orgIds));
+            if (mapList != null && !mapList.isEmpty()) {
+                // 将mapList转换为以ID为key的Map，方便快速查找
+                Map<String, UserOrg> idToUserOrgMap = mapList.stream().collect(Collectors.toMap(
+                        map -> map.get("id").toString(),
+                        map -> new UserOrg(
+                                map.get("full_name").toString(),
+                                Optional.ofNullable(map.get("dept_id")).map(Object::toString).orElse(null),
+                                Optional.ofNullable(map.get("company_id")).map(Object::toString).orElse(null)
+                        )
+                ));
+                // 将full_name设置回UserOrg对象
+                userOrgs.forEach(userOrg -> {
+                    UserOrg uo = idToUserOrgMap.get(userOrg.getId());
+                    if (uo != null) {
+                        userOrg.setFullName(uo.getFullName());
+                        userOrg.setDeptId(uo.getDeptId());
+                        userOrg.setCompanyId(uo.getCompanyId());
+                    }
+                });
+            }
+        }
+        return userOrgs;
     }
 
-    private @NotNull List<Tenant> queryTenantList(String userId) {
-        return dao.getJdbcTemplate().query("select t.`code` as code ,t.company_name as name from platform_user u left join platform_tenant t on u.tenant_code=t.tenant_code\n" +
-                "where u.id=?", (rs, rowNum) -> new Tenant(rs.getString("code"),
+    private @NotNull List<Tenant> queryTenantListByUserId(String userId) {
+        return dao.getJdbcTemplate().query("select t.`code` as code ,t.company_name as name from platform_user u left join platform_tenant t on u.tenant_code=t.`code`\n" +
+                "where t.del_status=0 and u.id=?", (rs, rowNum) -> new Tenant(rs.getString("code"),
                 rs.getString("name")), userId);
+    }
+
+    private @NotNull List<Tenant> queryTenantListByLoginName(String loginName) {
+        return dao.getJdbcTemplate().query("select t.`code` as code ,t.company_name as name from platform_user u left join platform_tenant t on u.tenant_code=t.`code`\n" +
+                "where t.del_status=0 and u.login_name=?", (rs, rowNum) -> new Tenant(rs.getString("code"),
+                rs.getString("name")), loginName);
     }
 
     private Boolean checkTenant(List<Tenant> tenantList, String tenantCode) {
@@ -178,36 +259,6 @@ public class JWTAuthController extends BaseController {
 
     private Boolean checkPsd(User loginUser, LoginParams loginParams) {
         return loginUser.getPassword().equals(EncryptUtil.encryptPassword(loginParams.getPassword(), loginUser.getSalt()));
-    }
-
-
-    @RequestMapping(value = "/info", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult getUserInfo() {
-        try {
-            User user = this.getUserByToken();
-            if (user == null) {
-                return ApiResult.fail("获取用户失败");
-            }
-
-            LoginResult loginResult = LoginResult.formatLoginResult(user);
-            loginResult.setToken(this.getToken());
-            loginResult.setRoles(null);
-            // 用户所属公司
-            setCompany(loginResult);
-            // 用户角色
-            loginResult.setRoleIds(getRoleIdsByUserId(user.getId(), null, user.getTenantCode()));
-            // 用户所属租户
-            List<Tenant> tenantList = queryTenantList(user.getId());
-            loginResult.setTenants(tenantList);
-            // 用户所属组织
-            List<UserOrg> userOrgList = queryOrgList(user.getId());
-            loginResult.setOrgs(userOrgList);
-
-            return ApiResult.success(loginResult);
-        } catch (Exception e) {
-            log.error("getUserInfo", e);
-            return ApiResult.fail(e.getMessage());
-        }
     }
 
     @RequestMapping(value = "/avatar/{userId}", method = {RequestMethod.POST, RequestMethod.GET})

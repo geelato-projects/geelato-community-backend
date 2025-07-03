@@ -106,7 +106,7 @@ public class EnvManager  extends AbstractManager {
         return permissionList.stream().filter(x -> x.getEntity().equals(entity)).toList();
     }
     public User InitCurrentUser(String loginName) {
-        String sql = "select id as userId,org_id asorgId,login_name as loginName," +
+        String sql = "select id as userId,org_id as orgId,login_name as loginName," +
                 "name as userName,bu_id as buId,dept_id as deptId,union_id as unionId,"+
                 " cooperating_org_id as cooperatingOrgId,tenant_code as tenantCode from platform_user  where login_name =?";
         User dbUser = EnvJdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(User.class), loginName);

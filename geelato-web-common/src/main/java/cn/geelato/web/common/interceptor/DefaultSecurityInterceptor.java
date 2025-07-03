@@ -59,10 +59,10 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                 String tenantCode = verify.getClaim("tenantCode").asString();
 
                 User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);
-                if(StringUtils.isEmpty(orgId)) {
+                if(!StringUtils.isEmpty(orgId)) {
                     currentUser.setOrgId(orgId);
                 }
-                if(StringUtils.isEmpty(tenantCode)) {
+                if(!StringUtils.isEmpty(tenantCode)) {
                     currentUser.setTenantCode(tenantCode);
                 }
                 SecurityContext.setCurrentUser(currentUser);

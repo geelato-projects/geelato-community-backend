@@ -34,6 +34,6 @@ cd ../geelato-web-platform
 call mvn install -Dmaven.test.skip=true
 
 cd ../geelato-web-quickstart
-call mvn install -Dmaven.test.skip=true
+call mvn clean install -U -Dmaven.test.skip=true
 
 cd ..

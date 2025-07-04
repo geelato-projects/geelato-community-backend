@@ -73,6 +73,19 @@ public class ExportTemplateController extends BaseController {
         }
     }
 
+    @RequestMapping(value = "/copy/{id}", method = RequestMethod.GET)
+    public ApiResult<?> copy(@PathVariable() String id) {
+        try {
+            ExportTemplate template = exportTemplateService.getModel(CLAZZ, id);
+            template.setTitle(template.getTitle() + " - 副本");
+            template.setId(null);
+            return ApiResult.success(exportTemplateService.createModel(template));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult<?> createOrUpdate(@RequestBody ExportTemplate form) {
         try {

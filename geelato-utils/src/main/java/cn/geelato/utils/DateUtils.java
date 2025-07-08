@@ -112,11 +112,49 @@ public class DateUtils {
         if (StringUtils.isNotBlank(time)) {
             SimpleDateFormat parseSDF = buildSimpleDateFormat(parse, timeZone, locale);
             Date date = parseSDF.parse(time);
+            // 补全日期信息
+            date = completeDate(date, parse, format);
             // 将Date对象转换为目标格式的字符串
             SimpleDateFormat formatSDF = buildSimpleDateFormat(format, timeZone, locale);
             return formatSDF.format(date);
         }
         return null;
+    }
+
+    /**
+     * 补全日期信息
+     *
+     * @param date   需要补全的日期对象
+     * @param parse  实际解析的日期字符串
+     * @param format 日期格式
+     * @return 补全后的日期对象
+     */
+    public static Date completeDate(Date date, String parse, String format) {
+        // 检查parse中没有年份但format中有年份的情况
+        if (!hasYear(parse) && hasYear(format)) {
+            // 获取当前日历实例
+            Calendar calendar = Calendar.getInstance();
+            int currentYear = calendar.get(Calendar.YEAR);
+
+            // 设置解析出的日期的年份为当前年份
+            calendar.setTime(date);
+            calendar.set(Calendar.YEAR, currentYear);
+            date = calendar.getTime();
+        }
+        return date;
+    }
+
+    /**
+     * 检查字符串中是否包含年份标识符(y或Y)
+     *
+     * @param str 要检查的字符串
+     * @return 是否包含年份标识符
+     */
+    private static boolean hasYear(String str) {
+        if (str == null) {
+            return false;
+        }
+        return str.indexOf('y') != -1 || str.indexOf('Y') != -1;
     }
 
     /**

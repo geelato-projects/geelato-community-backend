@@ -213,6 +213,7 @@ public class JsonTextQueryParser extends JsonTextParser {
     private String replaceRuleVariable(Permission dp) {
         return dp.getRule().replace("#currentUser.userId#", String.format("'%s'", SessionCtx.getCurrentUser().getUserId()))
                 .replace("#currentUser.deptId#", String.format("'%s'", SessionCtx.getCurrentUser().getDefaultOrgId()))
+                .replace("#currentUser.orgId#", String.format("'%s'", SessionCtx.getCurrentUser().getDefaultOrgId()))
                 .replace("#currentUser.buId#", String.format("'%s'", SessionCtx.getCurrentUser().getBuId()))
                 .replace("#currentUser.cooperatingOrgId#", String.format("'%s'", SessionCtx.getCurrentUser().getCooperatingOrgId()));
     }

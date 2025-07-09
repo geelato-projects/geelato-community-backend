@@ -105,12 +105,12 @@ public class EnvManager  extends AbstractManager {
         List<Permission> permissionList= structDataPermission(userId);
         return permissionList.stream().filter(x -> x.getEntity().equals(entity)).toList();
     }
-    public User InitCurrentUser(String loginName) {
+    public User InitCurrentUser(String loginName,String tenantCode) {
         String sql = "select id as userId,org_id as orgId,login_name as loginName," +
                 "name as userName,bu_id as buId,dept_id as deptId,union_id as unionId,"+
                 " cooperating_org_id as cooperatingOrgId,tenant_code as tenantCode from platform_user  " +
-                "where del_status = 0 and login_name =?";
-        User dbUser = EnvJdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(User.class), loginName);
+                "where del_status = 0 and login_name =? and tenant_code =?";
+        User dbUser = EnvJdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(User.class), loginName,tenantCode);
         if (dbUser != null) {
             dbUser.setMenus(structUserMenu(dbUser.getUserId()));
             dbUser.setDataPermissions(structDataPermission(dbUser.getUserId()));

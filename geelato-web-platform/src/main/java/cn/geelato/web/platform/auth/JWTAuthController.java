@@ -114,7 +114,7 @@ public class JWTAuthController extends BaseController {
         String userId = SecurityContext.getCurrentUser().getUserId();
         User loginUser = dao.queryForObject(User.class, "id", userId);
         List<Tenant> tenantList = queryTenantListByUserId(userId);
-        List<UserOrg> userOrgList = queryOrgList(userId);
+        List<UserOrg> userOrgList = queryOrgListByUserId(userId);
 
         String orgId = checkOrg(userOrgList, org) ? org : loginUser.getOrgId();
         String tenantCode = checkTenant(tenantList, tenant) ? tenant : loginUser.getTenantCode();
@@ -144,8 +144,8 @@ public class JWTAuthController extends BaseController {
             loginResult.setToken(this.getToken());
             loginResult.setRoles(null);
             // 当前用户组织信息，如果没有设置默认组织，则使用用户的组织
-            List<UserOrg> userOrgList = queryOrgList(user.getId());
-            if (userOrgList != null && !userOrgList.isEmpty()) {
+            List<UserOrg> userOrgList = queryOrgListByUserId(user.getId());
+            if (!userOrgList.isEmpty()) {
                 loginResult.setOrgs(userOrgList);
                 String orgId = checkOrg(userOrgList, securityUser.getOrgId()) ? securityUser.getOrgId() : user.getOrgId();
                 UserOrg userOrg = userOrgList.stream()
@@ -177,7 +177,7 @@ public class JWTAuthController extends BaseController {
         }
     }
 
-    private @NotNull List<UserOrg> queryOrgList(String userId) {
+    private @NotNull List<UserOrg> queryOrgListByUserId(String userId) {
         List<UserOrg> userOrgs = dao.getJdbcTemplate().query(
                 "select o.id, o.name, oru.default_org as defaultOrg, o.pid as pid, o.tenant_code as tenantCode " +
                         "from platform_org_r_user oru " +
@@ -194,7 +194,7 @@ public class JWTAuthController extends BaseController {
                 },
                 userId
         );
-        if (userOrgs != null && !userOrgs.isEmpty()) {
+        if (!userOrgs.isEmpty()) {
             String orgIds = userOrgs.stream().map(UserOrg::getId).collect(Collectors.joining(","));
             List<Map<String, Object>> mapList = dao.queryForMapList("query_tree_platform_org_full_name", SqlParams.map("id", orgIds));
             if (mapList != null && !mapList.isEmpty()) {

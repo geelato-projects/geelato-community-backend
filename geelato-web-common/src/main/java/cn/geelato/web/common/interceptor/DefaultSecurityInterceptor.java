@@ -58,12 +58,9 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                 String orgId=verify.getClaim("orgId").asString();
                 String tenantCode = verify.getClaim("tenantCode").asString();
 
-                User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);
+                User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName,tenantCode);
                 if(StringUtils.isNotEmpty(orgId)) {
                     currentUser.setOrgId(orgId);
-                }
-                if(StringUtils.isNotEmpty(tenantCode)) {
-                    currentUser.setTenantCode(tenantCode);
                 }
                 SecurityContext.setCurrentUser(currentUser);
                 SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
@@ -79,7 +76,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             cn.geelato.web.common.security.User user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
             if (user != null) {
                 String loginName = user.getLoginName();
-                User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName);
+                User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName,null);
                 SecurityContext.setCurrentUser(currentUser);
                 SecurityContext.setCurrentTenant(new Tenant(user.getTenantCode()));
                 OAuth2Token oauth2Token = new OAuth2Token(token);

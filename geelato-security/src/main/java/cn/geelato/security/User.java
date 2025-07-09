@@ -34,7 +34,6 @@ public class User extends UserCore{
     private String buId;
     private String cooperatingOrgId;
     private int enableStatus;
-    private String plainPassword;
     private boolean stocked;
     private String unionId;
     private String deptId;

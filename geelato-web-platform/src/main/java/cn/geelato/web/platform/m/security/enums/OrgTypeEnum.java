@@ -10,6 +10,7 @@ public enum OrgTypeEnum {
     ROOT("根组织", "root"),
     COMPANY("公司", "company"),
     DEPT("部门", "department"),
+    SECTION("科室", "section"),
     FACTORY("工厂", "factory"),
     OFFICE("办事处", "office");
 

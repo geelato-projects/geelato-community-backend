@@ -19,6 +19,7 @@ import org.apache.xmlbeans.XmlObject;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTNonVisualDrawingProps;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTPositiveSize2D;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -580,7 +581,8 @@ public class WordXWPFWriter {
             List<String> runList = new ArrayList<>();
             List<XWPFRun> runs = paragraph.getRuns();
             if (runs != null) {
-                for (XWPFRun run : runs) {
+                for (int i = 0; i < runs.size(); i++) {
+                    XWPFRun run = runs.get(i);
                     String runText = run.getText(0);
                     runList.add(runText);
                     if (Strings.isNotBlank(runText)) {
@@ -613,7 +615,23 @@ public class WordXWPFWriter {
                                         }
                                     }
                                 } else {
+                                    value = normalizeNewlines(value);
                                     runText = runText.replace(phm.group(), value);
+                                    if (value.contains("\n")) {
+                                        // 拆分多行文本
+                                        String[] lines = value.split("\n");
+                                        // 第一行替换原 Run 的文本
+                                        runText = lines[0];
+                                        // 剩余行插入新 Run 并换行
+                                        for (int j = 1; j < lines.length; j++) {
+                                            XWPFRun newRun = paragraph.insertNewRun(i + j);
+                                            newRun.addBreak();
+                                            newRun.setText(lines[j], 0);
+                                            copyRunStyle(newRun, run);
+                                        }
+                                        // 更新循环索引（避免重复处理新增的 Run）
+                                        i += lines.length - 1;
+                                    }
                                     isReplace = true;
                                 }
                             }
@@ -626,6 +644,10 @@ public class WordXWPFWriter {
                 }
             }
         }
+    }
+
+    private String normalizeNewlines(String text) {
+        return text.replace("\r\n", "\n").replace("\r", "\n");
     }
 
     private String getImagePath(PlaceholderMeta meta, String value) {
@@ -875,7 +897,21 @@ public class WordXWPFWriter {
         newRun.setUnderlineThemeColor(String.valueOf(originalRun.getUnderlineThemeColor()));
         newRun.setVanish(originalRun.isVanish());
         newRun.setVerticalAlignment(originalRun.getVerticalAlignment() == null ? null : String.valueOf(originalRun.getVerticalAlignment()));
+    }
 
+    private void copyRunStyle(XWPFRun newRun, XWPFRun originalRun) {
+        // 优先复制底层 XML 样式（高效且完整）
+        if (originalRun.getCTR().isSetRPr()) {
+            newRun.getCTR().setRPr((CTRPr) originalRun.getCTR().getRPr().copy());
+        }
+        // 确保基础样式生效（兜底逻辑）
+        newRun.setFontFamily(originalRun.getFontFamily());
+        // newRun.setFontSize(originalRun.getFontSize());
+        newRun.setColor(originalRun.getColor());
+        newRun.setBold(originalRun.isBold());
+        newRun.setItalic(originalRun.isItalic());
+        newRun.setUnderline(originalRun.getUnderline());
+        newRun.setStrikeThrough(originalRun.isStrikeThrough());
     }
 
     private XWPFParagraph copyParagraphAndRuns(XWPFParagraph newParagraph, XWPFParagraph originalParagraph) {

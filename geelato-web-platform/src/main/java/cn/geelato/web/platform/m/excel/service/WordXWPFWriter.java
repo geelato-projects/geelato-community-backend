@@ -617,9 +617,9 @@ public class WordXWPFWriter {
                                 } else {
                                     value = normalizeNewlines(value);
                                     runText = runText.replace(phm.group(), value);
-                                    if (value.contains("\n")) {
+                                    if (runText.contains("\n")) {
                                         // 拆分多行文本
-                                        String[] lines = value.split("\n");
+                                        String[] lines = runText.split("\n");
                                         // 第一行替换原 Run 的文本
                                         runText = lines[0];
                                         // 剩余行插入新 Run 并换行

@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.m.excel.entity;
 
+import cn.geelato.web.platform.m.excel.enums.ExcelDynamicTypeEnum;
 import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,6 +41,12 @@ public class PlaceholderMeta {
     @Getter
     @Setter
     private String valueComputeMode;
+    // 动态列表
+    private boolean isDynamic;
+    // 动态列表的类型
+    @Getter
+    @Setter
+    private String dynamicType;
     // 是否列表中的一项，是否按列表处理
     private boolean isList;
     // 是否需要从上往下同名合并
@@ -82,6 +89,14 @@ public class PlaceholderMeta {
     @Getter
     @Setter
     private String formatExport;
+
+    public boolean isIsDynamic() {
+        return isDynamic;
+    }
+
+    public void setIsDynamic(boolean dynamic) {
+        isDynamic = dynamic;
+    }
 
     public boolean isIsList() {
         return isList;
@@ -157,5 +172,9 @@ public class PlaceholderMeta {
 
     public boolean isImageSourceNetAddress() {
         return "NETADDRESS".equalsIgnoreCase(this.imageSource);
+    }
+
+    public boolean isDynamicTypeCover() {
+        return ExcelDynamicTypeEnum.COVER.name().equalsIgnoreCase(this.dynamicType);
     }
 }

@@ -41,7 +41,7 @@ public class ExcelXSSFWriter {
             // 按行扫描处理
             XSSFRow row = sheet.getRow(rowIndex);
             if (row == null) {
-                break;
+                continue;
             }
             RowMeta rowMeta = parseTemplateRow(row, placeholderMetaMap);
             int newRowCount;
@@ -88,7 +88,7 @@ public class ExcelXSSFWriter {
             // 按行扫描处理
             XSSFRow row = sheet.getRow(rowIndex);
             if (row == null) {
-                break;
+                continue;
             }
             RowMeta rowMeta = parseTemplateRow(row, placeholderMetaMap);
             int newRowCount = setRowValue(sheet, rowIndex, rowMeta, valueMap);
@@ -168,7 +168,29 @@ public class ExcelXSSFWriter {
         XSSFRow row = sheet.getRow(rowIndex);
         // ----1 设置类型为非list的cell
         for (CellMeta cellMeta : rowMeta.getNotListCellIndexes()) {
-            setCellValue(row.getCell(cellMeta.getIndex()), cellMeta.getPlaceholderMeta(), valueMap, null);
+            PlaceholderMeta placeholderMeta = cellMeta.getPlaceholderMeta();
+            if (!placeholderMeta.isIsDynamic()) {
+                setCellValue(row.getCell(cellMeta.getIndex()), placeholderMeta, valueMap, null);
+            }
+        }
+        int dynamicRowCount = 0;
+        int shiftRowCount = 0;
+        for (CellMeta cellMeta : rowMeta.getNotListCellIndexes()) {
+            int newRowCount = cellMeta.getIndex() + shiftRowCount;
+            XSSFCell cell = row.getCell(newRowCount);
+            PlaceholderMeta placeholderMeta = cellMeta.getPlaceholderMeta();
+            if (placeholderMeta.isIsDynamic()) {
+                Map<String, Integer> dynamicCountMap = setCellDynamicValue(cell, placeholderMeta, valueMap, null);
+                if (dynamicCountMap.get("rows") > 0) {
+                    dynamicRowCount = Math.max(dynamicCountMap.get("rows"), dynamicRowCount);
+                }
+                if (dynamicCountMap.get("cells") > 0) {
+                    shiftRowCount += dynamicCountMap.get("cells");
+                }
+            }
+        }
+        if (dynamicRowCount > 0) {
+            return dynamicRowCount;
         }
         // ----2 设置类型为list的cell
         // ----2.1 动态创建空行
@@ -298,6 +320,81 @@ public class ExcelXSSFWriter {
         return placeholderMetaMap.get(cellValue);
     }
 
+    private Map<String, Integer> setCellDynamicValue(XSSFCell cell, PlaceholderMeta meta, Map valueMap, Map listValueMap) {
+        int newRows = 0;
+        int newCells = 0;
+        if (meta.getVar() == null || meta.getVar().trim().isEmpty()) {
+            return Map.of("rows", newRows, "cells", newCells);
+        }
+        Object data = valueMap.get(meta.getVar());
+        if (data instanceof List) {
+            XSSFSheet sheet = cell.getSheet();
+            int colIndex = cell.getColumnIndex();
+            int rowIndex = cell.getRow().getRowNum();
+
+            // 处理List<String>横向扩展
+            if (!((List<?>) data).isEmpty() && ((List<?>) data).get(0) instanceof String) {
+                List<String> rowData = (List<String>) data;
+                // 横向插入单元格
+                copyCell(cell, rowData.size() - 1);
+                newCells = rowData.size() - 1;
+                for (int i = 0; i < rowData.size(); i++) {
+                    cell.getRow().getCell(colIndex + i).setCellValue(rowData.get(i));
+                }
+            }
+            // 处理List<List<String>>纵向扩展
+            else if (!((List<?>) data).isEmpty() && ((List<?>) data).get(0) instanceof List) {
+                List<List<String>> tableData = (List<List<String>>) data;
+                copyRow(cell, tableData.size() - 1);
+                newRows = tableData.size() - 1;
+                // 插入数据
+                for (int i = 0; i < tableData.size(); i++) {
+                    List<String> rowData = tableData.get(i);
+                    copyCell(sheet.getRow(rowIndex + i).getCell(colIndex), rowData.size() - 1);
+                    newCells = Math.max(rowData.size() - 1, newCells);
+                    for (int j = 0; j < rowData.size(); j++) {
+                        sheet.getRow(rowIndex + i).getCell(colIndex + j).setCellValue(rowData.get(j));
+                    }
+                }
+            }
+        }
+
+        return Map.of("rows", newRows, "cells", newCells);
+    }
+
+    private void copyCell(XSSFCell cell, int addCellCount) {
+        XSSFRow row = cell.getRow();
+        // 向右移动现有单元格（从当前列的下一个单元格开始）
+        row.shiftCellsRight(cell.getColumnIndex() + 1, row.getLastCellNum(), addCellCount);
+        for (int i = 0; i < addCellCount; i++) {
+            XSSFCell newCell = cell.getRow().createCell(cell.getColumnIndex() + 1 + i);
+            newCell.setCellStyle(cell.getCellStyle());
+        }
+    }
+
+    private void copyRow(XSSFCell cell, int addRowCount) {
+        XSSFSheet sheet = cell.getSheet();
+        XSSFRow sourceRow = cell.getRow();
+        int rowIndex = sourceRow.getRowNum();
+        // 向下移动
+        if (addRowCount > 0) {
+            int lastRowNo = sheet.getLastRowNum();
+            if (rowIndex + 1 <= lastRowNo) {
+                sheet.shiftRows(rowIndex + 1, lastRowNo, addRowCount);
+            }
+        }
+        for (int i = 0; i < addRowCount; i++) {
+            XSSFRow newRow = sheet.createRow(rowIndex + 1 + i);
+            newRow.setHeight(sourceRow.getHeight());
+            newRow.setRowStyle(sourceRow.getRowStyle());
+            // 复制样式
+            for (int cellIndex = 0; cellIndex < sourceRow.getLastCellNum(); cellIndex++) {
+                XSSFCell templateCell = sourceRow.getCell(cellIndex);
+                XSSFCell newCell = newRow.createCell(cellIndex);
+                newCell.setCellStyle(templateCell.getCellStyle());
+            }
+        }
+    }
 
     private void setCellValue(XSSFCell cell, PlaceholderMeta meta, Map valueMap, Map listValueMap) {
         if (Strings.isBlank(meta.getFormatExport())) {
@@ -590,6 +687,10 @@ public class ExcelXSSFWriter {
             }
             if (row.getCell(18) != null) {
                 placeholderMeta.setRemark(row.getCell(18).getStringCellValue());
+            }
+            placeholderMeta.setIsDynamic(getBoolean(row.getCell(19)));
+            if (row.getCell(20) != null) {
+                placeholderMeta.setDynamicType(row.getCell(20).getStringCellValue());
             }
             placeholderMeta.setBarcode(null);
             // 校验占位符元数据

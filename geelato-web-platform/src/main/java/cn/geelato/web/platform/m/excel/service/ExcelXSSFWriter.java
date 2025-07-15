@@ -10,6 +10,7 @@ import cn.geelato.web.platform.m.excel.enums.ExcelAlignmentEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.util.Strings;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
@@ -336,7 +337,11 @@ public class ExcelXSSFWriter {
             if (!((List<?>) data).isEmpty() && ((List<?>) data).get(0) instanceof String) {
                 List<String> rowData = (List<String>) data;
                 // 横向插入单元格
-                copyCell(cell, rowData.size() - 1);
+                if (meta.isDynamicTypeCover()) {
+                    coverCell(cell, rowData.size() - 1);
+                } else {
+                    extensionCell(cell, rowData.size() - 1);
+                }
                 newCells = rowData.size() - 1;
                 for (int i = 0; i < rowData.size(); i++) {
                     cell.getRow().getCell(colIndex + i).setCellValue(rowData.get(i));
@@ -345,15 +350,23 @@ public class ExcelXSSFWriter {
             // 处理List<List<String>>纵向扩展
             else if (!((List<?>) data).isEmpty() && ((List<?>) data).get(0) instanceof List) {
                 List<List<String>> tableData = (List<List<String>>) data;
-                copyRow(cell, tableData.size() - 1);
+                if (meta.isDynamicTypeCover()) {
+                    coverRow(cell, tableData.size() - 1);
+                } else {
+                    extensionRow(cell, tableData.size() - 1);
+                }
                 newRows = tableData.size() - 1;
                 // 插入数据
                 for (int i = 0; i < tableData.size(); i++) {
                     List<String> rowData = tableData.get(i);
-                    copyCell(sheet.getRow(rowIndex + i).getCell(colIndex), rowData.size() - 1);
+                    if (meta.isDynamicTypeCover()) {
+                        coverCell(sheet.getRow(rowIndex + i).getCell(colIndex), rowData.size() - 1);
+                    } else {
+                        extensionCell(sheet.getRow(rowIndex + i).getCell(colIndex), rowData.size() - 1);
+                    }
                     newCells = Math.max(rowData.size() - 1, newCells);
                     for (int j = 0; j < rowData.size(); j++) {
-                        sheet.getRow(rowIndex + i).getCell(colIndex + j).setCellValue(rowData.get(j));
+                      sheet.getRow(rowIndex + i).getCell(colIndex + j).setCellValue(rowData.get(j));
                     }
                 }
             }
@@ -362,36 +375,125 @@ public class ExcelXSSFWriter {
         return Map.of("rows", newRows, "cells", newCells);
     }
 
-    private void copyCell(XSSFCell cell, int addCellCount) {
+    private void extensionCell(XSSFCell cell, int addCellCount) {
+        // 参数校验
+        if (cell == null || addCellCount <= 0) {
+            return;
+        }
         XSSFRow row = cell.getRow();
-        // 向右移动现有单元格（从当前列的下一个单元格开始）
-        row.shiftCellsRight(cell.getColumnIndex() + 1, row.getLastCellNum(), addCellCount);
+        // 获取源单元格样式（只获取一次）
+        CellStyle newStyle = cell.getCellStyle();
+        int startCol = cell.getColumnIndex() + 1;
+        // getLastCellNum()返回的是下一个空列的索引
+        int endCol = row.getLastCellNum() - 1;
+        // 向右移动现有单元格
+        if (endCol >= startCol) {
+            row.shiftCellsRight(startCol, endCol, addCellCount);
+        }
+        // 创建新单元格并设置样式
         for (int i = 0; i < addCellCount; i++) {
-            XSSFCell newCell = cell.getRow().createCell(cell.getColumnIndex() + 1 + i);
-            newCell.setCellStyle(cell.getCellStyle());
+            XSSFCell newCell = row.createCell(startCol + i);
+            newCell.setCellStyle(newStyle);
         }
     }
 
-    private void copyRow(XSSFCell cell, int addRowCount) {
+    private void coverCell(XSSFCell cell, int addCellCount) {
+        if (cell == null || addCellCount <= 0) {
+            return; // 参数检查
+        }
+        XSSFRow row = cell.getRow();
+        // 获取源单元格样式（只获取一次）
+        CellStyle newStyle = cell.getCellStyle();
+        for (int i = 0; i < addCellCount; i++) {
+            // 目标列索引
+            int targetCol = cell.getColumnIndex() + 1 + i;
+            XSSFCell targetCell = row.getCell(targetCol);
+            if (targetCell == null) {
+                // 创建新单元格
+                targetCell = row.createCell(targetCol);
+            } else {
+                // 清空内容
+                targetCell.setCellValue("");
+                // 重置为空白样式
+                targetCell.setCellStyle(row.getSheet().getWorkbook().createCellStyle());
+            }
+            // 应用新样式
+            targetCell.setCellStyle(newStyle);
+        }
+    }
+
+    private void extensionRow(XSSFCell cell, int addRowCount) {
+        // 参数校验
+        if (cell == null || addRowCount <= 0) {
+            return;
+        }
         XSSFSheet sheet = cell.getSheet();
         XSSFRow sourceRow = cell.getRow();
         int rowIndex = sourceRow.getRowNum();
-        // 向下移动
-        if (addRowCount > 0) {
-            int lastRowNo = sheet.getLastRowNum();
-            if (rowIndex + 1 <= lastRowNo) {
-                sheet.shiftRows(rowIndex + 1, lastRowNo, addRowCount);
-            }
+        short rowHeight = sourceRow.getHeight();
+        CellStyle sourceRowStyle = sourceRow.getRowStyle();
+        CellStyle sourceCellStyle = cell.getCellStyle();
+        // 获取源单元格列索引
+        int sourceColIndex = cell.getColumnIndex();
+        int lastRowNo = sheet.getLastRowNum();
+        // 向下移动现有行
+        if (rowIndex + 1 <= lastRowNo) {
+            sheet.shiftRows(rowIndex + 1, lastRowNo, addRowCount);
         }
+        // 创建新行并复制指定列的样式
         for (int i = 0; i < addRowCount; i++) {
             XSSFRow newRow = sheet.createRow(rowIndex + 1 + i);
-            newRow.setHeight(sourceRow.getHeight());
-            newRow.setRowStyle(sourceRow.getRowStyle());
+            newRow.setHeight(rowHeight);
+            if (sourceRowStyle != null) {
+                newRow.setRowStyle(sourceRowStyle);
+            }
             // 复制样式
             for (int cellIndex = 0; cellIndex < sourceRow.getLastCellNum(); cellIndex++) {
                 XSSFCell templateCell = sourceRow.getCell(cellIndex);
                 XSSFCell newCell = newRow.createCell(cellIndex);
-                newCell.setCellStyle(templateCell.getCellStyle());
+                if (templateCell != null) {
+                    newCell.setCellStyle(templateCell.getCellStyle());
+                }
+            }
+        }
+    }
+
+    private void coverRow(XSSFCell cell, int addRowCount) {
+        // 参数校验
+        if (cell == null || addRowCount <= 0) {
+            return;
+        }
+
+        XSSFSheet sheet = cell.getSheet();
+        XSSFRow sourceRow = cell.getRow();
+        int rowIndex = sourceRow.getRowNum();
+        short rowHeight = sourceRow.getHeight();
+        CellStyle sourceRowStyle = sourceRow.getRowStyle();
+        CellStyle sourceCellStyle = cell.getCellStyle();
+        int sourceColIndex = cell.getColumnIndex();
+
+        for (int i = 1; i <= addRowCount; i++) {
+            int targetRowIndex = rowIndex + i;
+            XSSFRow targetRow = sheet.getRow(targetRowIndex);
+            // 存在则调整，不存在则创建
+            if (targetRow == null) {
+                targetRow = sheet.createRow(targetRowIndex);
+            }
+            // 调整高度和样式
+            targetRow.setHeight(rowHeight);
+            if (sourceRowStyle != null) {
+                targetRow.setRowStyle(sourceRowStyle);
+            }
+            // 处理目标单元格（覆盖或创建）
+            XSSFCell targetCell = targetRow.getCell(sourceColIndex);
+            if (targetCell != null) {
+                // 覆盖已有单元格
+                targetCell.setCellValue("");
+                targetCell.setCellStyle(sourceCellStyle);
+            } else {
+                // 创建新单元格
+                targetCell = targetRow.createCell(sourceColIndex);
+                targetCell.setCellStyle(sourceCellStyle);
             }
         }
     }

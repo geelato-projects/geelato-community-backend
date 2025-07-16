@@ -18,7 +18,7 @@ call mvn clean install -U -Dmaven.test.skip=true
 cd ../geelato-security
 call mvn clean install -U -Dmaven.test.skip=true
 
-cd ../geelato-common-web
+cd ../geelato-web-common
 call mvn clean install -U -Dmaven.test.skip=true
 
 cd ../geelato-dynamic-datasource

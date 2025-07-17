@@ -28,7 +28,7 @@ import java.util.Map;
  * @author geemeta
  */
 @SuppressWarnings("all")
-public class BaseController extends ParameterOperator implements InitializingBean {
+public class BaseController extends ParameterOperator {
 
     private final SimpleDateFormat SDF_DATE = new SimpleDateFormat(DateUtils.DATE);
     private final SimpleDateFormat SDF_DATE_START = new SimpleDateFormat(DateUtils.DATESTART);
@@ -218,7 +218,4 @@ public class BaseController extends ParameterOperator implements InitializingBea
     }
 
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-    }
 }

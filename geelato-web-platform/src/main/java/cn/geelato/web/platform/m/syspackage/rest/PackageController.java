@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.syspackage.rest;
 
 import cn.geelato.core.SessionCtx;
+import cn.geelato.core.orm.Dao;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.gql.execute.BoundSql;
@@ -34,10 +35,13 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.context.LifecycleAutoConfiguration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Controller;
@@ -54,7 +58,11 @@ import java.util.*;
 @Controller
 @RequestMapping(value = "/package")
 @Slf4j
-public class PackageController extends BaseController {
+public class PackageController {
+
+    @Autowired
+    @Qualifier("primaryDao")
+    protected Dao dao;
     private DataSourceTransactionManager dataSourceTransactionManager;
     private TransactionStatus transactionStatus;
     private final String defaultPackageName = "geelatoApp";
@@ -65,7 +73,6 @@ public class PackageController extends BaseController {
     private final String[] incrementPlatformMetas = {"platform_dict", "platform_dict_item", "platform_sys_config", "platform_encoding", "platform_resources"};
 
     private final ArrayList<String> incrementBizMetas = new ArrayList<>();
-
 
     private final Map<String, List<String>> incrementMetaIds = new HashMap<>();
     @Resource
@@ -78,9 +85,14 @@ public class PackageController extends BaseController {
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
     private final JsonTextSaveParser jsonTextSaveParser = new JsonTextSaveParser();
-    @Autowired
-    private LifecycleAutoConfiguration lifecycleAutoConfiguration;
 
+    protected HttpServletRequest request;
+    protected HttpServletResponse response;
+    @ModelAttribute
+    public void setReqAndRes(HttpServletRequest request, HttpServletResponse response) {
+        this.request = request;
+        this.response = response;
+    }
 
     /*
     打包应用
@@ -96,6 +108,9 @@ public class PackageController extends BaseController {
         appDataMap.putAll(appBizDataMap);
         AppPackage appPackage = new AppPackage();
         List<AppMeta> appMetaList = new ArrayList<>();
+        String basePlatformVersion = dao.getJdbcTemplate().queryForMap("select version_info from platform_app where code='geelato_admin'").
+                get("version_info").toString();
+        appPackage.setBasePlatformVersion(basePlatformVersion);
         for (String key : appDataMap.keySet()) {
             String value = appDataMap.get(key);
             List<Map<String, Object>> metaData = dao.getJdbcTemplate().queryForList(value);
@@ -325,10 +340,13 @@ public class PackageController extends BaseController {
             AppPackage appPackage = resolveAppPackageData(appPackageData);
             if (appPackage != null && !appPackage.getAppMetaList().isEmpty()) {
                 try {
-                    backupCurrentVersion(appVersion.getAppId());
-                    deleteCurrentVersion(appVersion.getAppId());
-                    deployAppPackageData(appPackage);
-                    refreshApp(appVersion.getAppId());
+                    if(validatePackageData(appPackage)){
+                        backupCurrentVersion(appVersion.getAppId());
+                        deployAppPackageData(appPackage);
+                        refreshApp(appVersion.getAppId());
+                    }else {
+                        throw new PackageException("应用包校验不通过,请先更新平台应用geelato_admin至版本" + appPackage.getBasePlatformVersion());
+                    }
                 } catch (Exception ex) {
                     if (transactionStatus != null) {
                         dataSourceTransactionManager.rollback(transactionStatus);
@@ -358,8 +376,6 @@ public class PackageController extends BaseController {
         Map<String, String> appMetaMap = appMetaMap(appId, "remove");
         for (String key : appMetaMap.keySet()) {
             String value = appMetaMap.get(key);
-//            log.info(String.format("remove sql：%s ",value));
-//            dao.getJdbcTemplate().execute(value);
         }
         log.info("----------------------backup version end--------------------");
     }
@@ -527,7 +543,7 @@ public class PackageController extends BaseController {
         String appPackageName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String appPackageFullName = (Strings.isNotBlank(appVersion.getVersion()) ? appVersion.getVersion() : appPackageName) + packageSuffix;
         String targetZipPath;
-        targetZipPath = UploadService.getRootSavePath(SAVE_TABLE_TYPE, getTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
+        targetZipPath = UploadService.getRootSavePath(SAVE_TABLE_TYPE, SessionCtx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
         ZipUtils.compressDirectory(sourcePackageFolder, targetZipPath);
         File file = new File(targetZipPath);
         FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "package", appPackage.getSourceAppId(), appVersion.getTenantCode());
@@ -547,8 +563,9 @@ public class PackageController extends BaseController {
         log.info("----------------------deploy start--------------------");
         dataSourceTransactionManager = new DataSourceTransactionManager(dao.getJdbcTemplate().getDataSource());
         transactionStatus = TransactionHelper.beginTransaction(dataSourceTransactionManager);
+        deleteVersion(appPackage.getSourceAppId());
         for (AppMeta appMeta : appPackage.getAppMetaList()) {
-            log.info(String.format("开始处理元数据：%s", appMeta.getMetaName()));
+            log.info("开始处理元数据：{}", appMeta.getMetaName());
             Map<String, Object> metaData = new HashMap<>();
             ArrayList<Map<String, Object>> metaDataArray = new ArrayList<>();
             String appMetaName = appMeta.getMetaName();
@@ -586,11 +603,34 @@ public class PackageController extends BaseController {
             List<SaveCommand> saveCommandList = jsonTextSaveParser.parseBatch(JSONObject.toJSONString(metaData), new SessionCtx());
             for (SaveCommand saveCommand : saveCommandList) {
                 BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
-                String pkValue = dao.save(boundSql);
+                dao.save(boundSql);
             }
             log.info("结束处理元数据：{}", appMeta.getMetaName());
         }
         TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
         log.info("----------------------deploy end--------------------");
+    }
+
+    private boolean validatePackageData(AppPackage appPackage) {
+        log.info("----------------------validate package data start--------------------");
+        boolean result = true;
+        for (AppMeta appMeta : appPackage.getAppMetaList()) {
+            String appMetaName = appMeta.getMetaName();
+            Object appMetaData = appMeta.getMetaData();
+            EntityMeta entityMeta = metaManager.getByEntityName(appMetaName);
+            JSONArray jsonArray = JSONArray.parseArray(JSONObject.toJSONString(appMetaData));
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject jo = jsonArray.getJSONObject(i);
+                for (String key : jo.keySet()) {
+                    FieldMeta fieldMeta = entityMeta.getFieldMetaByColumn(key);
+                    if (fieldMeta == null) {
+                        log.error("应用包元数据校验失败，元数据名称：{}，字段名称：{}，校验失败原因：字段不存在", appMetaName, key);
+                        return false;
+                    }
+                }
+            }
+            log.info("----------------------validate package data end--------------------");
+        }
+        return result;
     }
 }

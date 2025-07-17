@@ -11,7 +11,6 @@ import java.util.List;
 @Getter
 @Setter
 public class AppPackage {
-
     private String sourceAppId;
     private String targetAppId;
     private String version;
@@ -19,4 +18,5 @@ public class AppPackage {
     private String appName;
     private List<AppMeta> appMetaList;
     private List<AppResource> appResourceList;
+    private String basePlatformVersion;
 }

@@ -2,9 +2,9 @@ package cn.geelato.web.platform.m.base.rest;
 
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.MetaDdlService;
 import lombok.extern.slf4j.Slf4j;
@@ -97,6 +97,17 @@ public class MetaDdlController extends BaseController {
         } catch (Exception e) {
             log.error(e.getMessage());
             return ApiMetaResult.success(false, metaDdlService.getMessage(e));
+        }
+    }
+
+    @RequestMapping(value = {"/view/valid/{connectId}/{entityName}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    public ApiMetaResult<Map<String, String>> validateView(@PathVariable("connectId") String connectId, @PathVariable("entityName") String entityName) {
+        try {
+            Map<String, String> resultMap = metaDdlService.validateViewSqlByTable(connectId, entityName);
+            return ApiMetaResult.success(resultMap);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return ApiMetaResult.fail(metaDdlService.getMessage(e));
         }
     }
 

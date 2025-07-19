@@ -372,6 +372,29 @@ public class MetaDdlService {
         return dbGenerateDao.validateViewSql(meta, sql);
     }
 
+    public Map<String, String> validateViewSqlByTable(String connectId, String entityName) {
+        Map<String, String> result = new HashMap<>();
+        FilterGroup filterGroup = new FilterGroup();
+        filterGroup.addFilter("connectId", connectId);
+        filterGroup.addFilter("entityName", entityName);
+        List<TableView> viewMetas = viewService.queryModel(TableView.class, filterGroup);
+        if (viewMetas == null || viewMetas.isEmpty()) {
+            return result;
+        }
+        for (TableView viewMeta : viewMetas) {
+            if (Strings.isNotBlank(viewMeta.getConnectId()) && Strings.isNotBlank(viewMeta.getViewConstruct())) {
+                try {
+                    boolean isValid = validateViewSql(viewMeta.getConnectId(), viewMeta.getViewConstruct());
+                    result.put(viewMeta.getViewName(), isValid ? "true" : "false");
+                } catch (Exception e) {
+                    log.error(e.getMessage());
+                    result.put(viewMeta.getViewName(), e.getMessage());
+                }
+            }
+        }
+        return result;
+    }
+
     public void refreshRedis(Dao primaryDao, Map<String, String> params) {
         Map<String, String> table = new HashMap<>();
         table.put("id", params.get("tableId"));

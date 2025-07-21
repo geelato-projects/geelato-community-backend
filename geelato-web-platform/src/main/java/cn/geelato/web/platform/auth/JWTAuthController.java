@@ -169,7 +169,7 @@ public class JWTAuthController extends BaseController {
             String tenantCode = checkTenant(tenantList, securityUser.getTenantCode()) ? securityUser.getTenantCode() : user.getTenantCode();
             loginResult.setTenantCode(tenantCode);
             // 用户角色
-            loginResult.setRoleIds(getRoleIdsByUserId(user.getId(), null, user.getTenantCode()));
+            getRoleIdsByUserId(loginResult, user.getId(), null, user.getTenantCode());
             return ApiResult.success(loginResult);
         } catch (Exception e) {
             log.error("getUserInfo", e);
@@ -570,11 +570,25 @@ public class JWTAuthController extends BaseController {
         return JSON.parseArray(JSON.toJSONString(mapList), Role.class);
     }
 
-    private String getRoleIdsByUserId(String userId, String appId, String tenantCode) {
+    private void getRoleIdsByUserId(LoginResult loginResult, String userId, String appId, String tenantCode) {
         List<Role> roles = getRolesByUserId(userId, appId, tenantCode);
+        Map<String, String> roleMap = new HashMap<>();
         if (roles != null && !roles.isEmpty()) {
-            return roles.stream().map(Role::getId).reduce((a, b) -> a + "," + b).get();
+            loginResult.setRoleIds(roles.stream()
+                    .map(Role::getId)
+                    .filter(Objects::nonNull)
+                    .filter(item -> !item.isEmpty())
+                    .distinct()
+                    .collect(Collectors.joining(",")));
+            loginResult.setRoleCodes(roles.stream()
+                    .map(Role::getCode)
+                    .filter(Objects::nonNull)
+                    .filter(item -> !item.isEmpty())
+                    .distinct()
+                    .collect(Collectors.joining(",")));
+        } else {
+            loginResult.setRoleIds(null);
+            loginResult.setRoleCodes(null);
         }
-        return null;
     }
 }

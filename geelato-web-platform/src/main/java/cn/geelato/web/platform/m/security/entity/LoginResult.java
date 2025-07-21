@@ -38,6 +38,9 @@ public class LoginResult {
     private int enableStatus;
     private String unionId;
 
+    // 角色编码，逗号分割
+    private String roleCodes;
+    // 角色id，逗号分割
     private String roleIds;
 
     private String token;

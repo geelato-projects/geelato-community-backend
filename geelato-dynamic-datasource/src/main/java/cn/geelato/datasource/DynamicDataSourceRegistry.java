@@ -96,9 +96,9 @@ public class DynamicDataSourceRegistry {
         String dbUserName = dbConnectMap.get("db_user_name").toString();
         String dbPassWord =dbConnectMap.get("db_password").toString();
         String dbName = dbConnectMap.get("db_name").toString();
-        
+        String dbId = dbConnectMap.get("id").toString();
         AtomikosDataSourceBean ds = new AtomikosDataSourceBean();
-        ds.setUniqueResourceName(dbName);
+        ds.setUniqueResourceName(dbId);
         
         switch (dbType) {
             case "mysql":

@@ -12,6 +12,7 @@
   <artifactId>geelato-dynamic-datasource</artifactId>
   <packaging>jar</packaging>
   <name>geelato-dynamic-datasource</name>
+
   <properties>
     <atomikos.version>5.0.6</atomikos.version> <!-- Spring Boot 3 默认集成版本 -->
   </properties>

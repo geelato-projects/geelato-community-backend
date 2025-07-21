@@ -76,7 +76,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             cn.geelato.web.common.security.User user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
             if (user != null) {
                 String loginName = user.getLoginName();
-                User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName,null);
+                User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName,"geelato");
                 SecurityContext.setCurrentUser(currentUser);
                 SecurityContext.setCurrentTenant(new Tenant(user.getTenantCode()));
                 OAuth2Token oauth2Token = new OAuth2Token(token);

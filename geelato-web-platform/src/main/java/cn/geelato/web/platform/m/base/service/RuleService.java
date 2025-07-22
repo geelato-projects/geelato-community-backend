@@ -167,7 +167,7 @@ public class RuleService {
         return dao.queryForOneColumnList(boundSql, elementType);
     }
 
-    @Transactional
+//    @Transactional
     public String save(String biz, String gql) throws DaoException {
         SaveCommand command = gqlManager.generateSaveSql(gql, getSessionCtx());
         Facts facts = new Facts();

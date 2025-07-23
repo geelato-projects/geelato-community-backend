@@ -306,7 +306,12 @@ public class RuleService {
 
     public String recursiveSave(SaveCommand command) {
         BoundSql boundSql = sqlManager.generateSaveSql(command);
-        String pkValue = dao.save(boundSql);
+        String rtnValue = dao.save(boundSql);
+        //todo 缓存清除
+        String cacheKey = command.getEntityName() + "_" + rtnValue;
+        if (CacheUtil.exists(cacheKey)) {
+            CacheUtil.remove(cacheKey);
+        }
         if (command.hasCommands()) {
             command.getCommands().forEach(subCommand -> {
                 subCommand.getValueMap().forEach((key, value) -> {
@@ -317,7 +322,7 @@ public class RuleService {
                 recursiveSave(subCommand);
             });
         }
-        return pkValue;
+        return rtnValue;
     }
 
     /**

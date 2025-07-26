@@ -55,21 +55,41 @@ AND p4.del_status = 0 AND p3.del_status = 0
 
 -- 查询应用，角色和用户关联
 -- @sql query_app_by_role_user
-SELECT DISTINCT
-    p1.*
-FROM platform_app p1
-LEFT JOIN platform_role p2 ON p2.app_id = p1.id
-LEFT JOIN platform_role_r_user p3 ON p3.role_id = p2.id
-LEFT JOIN platform_user p4 ON p4.id = p3.user_id
-WHERE 1=1
-  AND p1.del_status = 0
-  AND p2.del_status = 0
-  AND p3.del_status = 0
-  AND p4.del_status = 0
-  AND p2.enable_status = 1
-  AND p1.tenant_code = '$.tenantCode'
-  AND p4.id = '$.userId'
-ORDER BY p1.seq_no ASC
+SELECT DISTINCT * FROM (
+   SELECT DISTINCT
+       p1.*
+   FROM platform_app p1
+            LEFT JOIN platform_role p2 ON p2.app_id = p1.id
+            LEFT JOIN platform_role_r_user p3 ON p3.role_id = p2.id
+            LEFT JOIN platform_user p4 ON p4.id = p3.user_id
+   WHERE 1=1
+     AND p1.del_status = 0
+     AND p2.del_status = 0
+     AND p3.del_status = 0
+     AND p4.del_status = 0
+     AND p2.enable_status = 1
+     AND p2.type = 'app'
+     AND p1.tenant_code = '$.tenantCode'
+     AND p4.id = '$.userId'
+   UNION ALL
+   SELECT DISTINCT
+       p1.*
+   FROM platform_app p1
+            LEFT JOIN platform_role_r_app p5 ON p5.app_id = p1.id
+            LEFT JOIN platform_role p2 ON p2.id = p5.role_id
+            LEFT JOIN platform_role_r_user p3 ON p3.role_id = p2.id
+            LEFT JOIN platform_user p4 ON p4.id = p3.user_id
+   WHERE 1=1
+     AND p1.del_status = 0
+     AND p2.del_status = 0
+     AND p3.del_status = 0
+     AND p4.del_status = 0
+     AND p5.del_status = 0
+     AND p2.enable_status = 1
+     AND p2.type = 'platform'
+     AND p1.tenant_code = '$.tenantCode'
+     AND p4.id = '$.userId'
+)t ORDER BY type ASC, seq_no ASC
 
 -- 查询权限，角色和用户关联
 -- @sql query_permission_by_role_user

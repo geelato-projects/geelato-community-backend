@@ -2,8 +2,12 @@ package cn.geelato.orm.executor;
 
 import cn.geelato.orm.WrapperResultFunction;
 import cn.geelato.orm.query.MetaQuery;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,7 +21,7 @@ import java.util.Map;
  * 集成Spring JdbcTemplate执行SQL查询
  */
 public class JdbcTemplateQueryExecutor implements QueryExecutor {
-    
+
     private final JdbcTemplate jdbcTemplate;
     
     public JdbcTemplateQueryExecutor(JdbcTemplate jdbcTemplate) {
@@ -27,18 +31,15 @@ public class JdbcTemplateQueryExecutor implements QueryExecutor {
     /**
      * 通用的RowMapper，将ResultSet转换为Map
      */
-    private final RowMapper<Map<String, Object>> mapRowMapper = new RowMapper<Map<String, Object>>() {
-        @Override
-        public Map<String, Object> mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Map<String, Object> row = new HashMap<>();
-            int columnCount = rs.getMetaData().getColumnCount();
-            for (int i = 1; i <= columnCount; i++) {
-                String columnName = rs.getMetaData().getColumnName(i);
-                Object value = rs.getObject(i);
-                row.put(columnName, value);
-            }
-            return row;
+    private final RowMapper<Map<String, Object>> mapRowMapper = (rs, rowNum) -> {
+        Map<String, Object> row = new HashMap<>();
+        int columnCount = rs.getMetaData().getColumnCount();
+        for (int i = 1; i <= columnCount; i++) {
+            String columnName = rs.getMetaData().getColumnName(i);
+            Object value = rs.getObject(i);
+            row.put(columnName, value);
         }
+        return row;
     };
     
     @Override

@@ -57,6 +57,7 @@
         <geelato.sc.version>0.0.1-SNAPSHOT</geelato.sc.version>
         <geelato.workflow.version>0.0.1-SNAPSHOT</geelato.workflow.version>
         <geelato.svcp.version>0.0.1-SNAPSHOT</geelato.svcp.version>
+        <geelato.market.version>0.0.1-SNAPSHOT</geelato.market.version>
     </properties>
     <scm>
         <connection>scm:git:https://github.com/geelato-projects/geelato-community-backend.git</connection>
@@ -196,6 +197,11 @@
                 <groupId>cn.geelato</groupId>
                 <artifactId>geelato-svcp</artifactId>
                 <version>${geelato.svcp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-market</artifactId>
+                <version>${geelato.market.version}</version>
             </dependency>
             <!--project plugin-->
             <dependency>

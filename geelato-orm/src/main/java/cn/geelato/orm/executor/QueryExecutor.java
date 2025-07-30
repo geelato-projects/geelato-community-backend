@@ -1,6 +1,7 @@
 package cn.geelato.orm.executor;
 
 import cn.geelato.orm.query.MetaQuery;
+import jakarta.annotation.Resource;
 
 import java.util.List;
 import java.util.Map;

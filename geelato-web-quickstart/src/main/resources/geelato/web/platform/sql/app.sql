@@ -68,7 +68,7 @@ SELECT DISTINCT * FROM (
      AND p3.del_status = 0
      AND p4.del_status = 0
      AND p2.enable_status = 1
-     AND p2.type = 'normal'
+     AND p2.type = 'app'
      AND p1.tenant_code = '$.tenantCode'
      AND p4.id = '$.userId'
    UNION ALL

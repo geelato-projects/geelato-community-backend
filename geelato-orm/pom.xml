@@ -16,6 +16,10 @@
   <name>geelato-orm</name>
 
   <dependencies>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-lang</artifactId>
+    </dependency>
      <!-- Spring Boot Starter -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

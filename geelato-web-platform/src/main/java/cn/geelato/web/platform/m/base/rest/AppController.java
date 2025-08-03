@@ -8,11 +8,11 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.security.User;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.entity.App;
 import cn.geelato.web.platform.m.base.service.AppService;
+import cn.geelato.web.platform.m.security.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +23,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author diabl
@@ -36,11 +38,13 @@ public class AppController extends BaseController {
     private static final Class<App> CLAZZ = App.class;
     private static final String DEFAULT_ORDER_BY = "seq_no ASC,update_at DESC";
     private final AppService appService;
+    private final UserService userService;
 
 
     @Autowired
-    public AppController(AppService appService) {
+    public AppController(AppService appService, UserService userService) {
         this.appService = appService;
+        this.userService = userService;
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
@@ -71,9 +75,14 @@ public class AppController extends BaseController {
     @RequestMapping(value = "/queryByUser", method = RequestMethod.GET)
     public ApiResult queryByUser(String tenantCode, String userId) {
         try {
+            int userType = 0;
             if (Strings.isBlank(userId)) {
-                User user = SessionCtx.getCurrentUser();
-                userId = user != null ? user.getUserId() : "";
+                cn.geelato.security.User user = SessionCtx.getCurrentUser();
+                userType = user.getType();
+                userId = user.getUserId();
+            } else {
+                cn.geelato.web.common.security.User user = userService.getModel(cn.geelato.web.common.security.User.class, userId);
+                userType = user.getType();
             }
             if (Strings.isBlank(tenantCode) || Strings.isBlank(userId)) {
                 return ApiResult.fail("The tenant code and user ID cannot be empty");
@@ -82,6 +91,23 @@ public class AppController extends BaseController {
             map.put("tenantCode", tenantCode);
             map.put("userId", userId);
             List<Map<String, Object>> appList = dao.queryForMapList("query_app_by_role_user", map);
+            // app.type normal：普通应用；platform：平台应用
+            // app.purpose inside：企业内部； outside：企业外部； side：企业内外部
+            // user.type 0：员工；1：系统；2：企业外部人员；999：租户管理员
+            if (appList != null && !appList.isEmpty()) {
+                if (userType == 0) {
+                    // user.type: [0],只能看 app.type=normal,app.purpose=inside/side
+                    appList = appList.stream().filter(x -> "normal".equals(x.get("type")) && ("inside".equals(x.get("purpose")) || "side".equals(x.get("purpose")))).collect(Collectors.toList());
+                } else if (userType == 1 || userType == 999) {
+                    // user.type: [1,999],只能看 app.type=normal/platform,app.purpose=inside/outside/side
+                    appList = appList.stream().filter(x -> "normal".equals(x.get("type")) || "platform".equals(x.get("type"))).collect(Collectors.toList());
+                } else if (userType == 2) {
+                    // user.type: [2], 只能看 app.type=normal,app.purpose=outside
+                    appList = appList.stream().filter(x -> "normal".equals(x.get("type")) && "outside".equals(x.get("purpose"))).collect(Collectors.toList());
+                } else {
+                    appList = new ArrayList<>();
+                }
+            }
             return ApiResult.success(appList);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

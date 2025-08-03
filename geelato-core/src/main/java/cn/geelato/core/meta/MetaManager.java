@@ -6,7 +6,7 @@ import cn.geelato.core.constants.MetaDaoSql;
 import cn.geelato.core.constants.ResourcesFiles;
 import cn.geelato.core.enums.DataTypeRadiusEnum;
 import cn.geelato.core.enums.MysqlToJavaEnum;
-import cn.geelato.core.meta.annotation.Entity;
+import cn.geelato.lang.meta.Entity;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.column.ColumnSelectType;
 import cn.geelato.core.meta.model.entity.EntityLiteMeta;

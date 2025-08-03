@@ -2,9 +2,9 @@ package cn.geelato.web.platform.m.base.entity;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.web.common.constants.MediaTypes;
-import cn.geelato.core.meta.annotation.Col;
-import cn.geelato.core.meta.annotation.Entity;
-import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.lang.meta.Col;
+import cn.geelato.lang.meta.Entity;
+import cn.geelato.lang.meta.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.utils.Base64Utils;
 import lombok.Getter;

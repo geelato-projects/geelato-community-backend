@@ -1,8 +1,8 @@
 package cn.geelato.web.platform.m.ocr.entity;
 
-import cn.geelato.core.meta.annotation.*;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
+import cn.geelato.lang.meta.*;
 import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
 import lombok.Setter;

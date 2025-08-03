@@ -1,8 +1,8 @@
 package cn.geelato.web.platform.m.security.entity;
 
 
-import cn.geelato.core.meta.annotation.*;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import cn.geelato.lang.meta.*;
 import lombok.Getter;
 import lombok.Setter;
 

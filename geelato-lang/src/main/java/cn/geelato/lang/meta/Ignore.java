@@ -1,4 +1,4 @@
-package cn.geelato.core.meta.annotation;
+package cn.geelato.lang.meta;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

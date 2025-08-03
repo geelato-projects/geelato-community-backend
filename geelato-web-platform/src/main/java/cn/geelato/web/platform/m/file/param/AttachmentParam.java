@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.file.param;
 
-import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.lang.meta.Title;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import lombok.Getter;
 import lombok.Setter;

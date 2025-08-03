@@ -1,8 +1,8 @@
 package cn.geelato.web.platform.m.settings.entity;
 
 
-import cn.geelato.core.meta.annotation.Col;
-import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.lang.meta.Col;
+import cn.geelato.lang.meta.Title;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import lombok.Setter;
 

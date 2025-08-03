@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.file.entity;
 
-import cn.geelato.core.meta.annotation.Entity;
-import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.lang.meta.Entity;
+import cn.geelato.lang.meta.Title;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;

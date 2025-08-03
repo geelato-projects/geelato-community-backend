@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.site.entity;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.lang.meta.Title;
 import cn.geelato.web.platform.m.arco.entity.TreeNodeData;
 import cn.geelato.web.platform.m.site.utils.FolderUtils;
 import lombok.Getter;

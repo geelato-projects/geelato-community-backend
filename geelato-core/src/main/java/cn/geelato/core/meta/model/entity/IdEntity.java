@@ -1,7 +1,7 @@
 package cn.geelato.core.meta.model.entity;
 
-import cn.geelato.core.meta.annotation.Id;
-import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.lang.meta.Id;
+import cn.geelato.lang.meta.Title;
 import lombok.Getter;
 import lombok.Setter;
 

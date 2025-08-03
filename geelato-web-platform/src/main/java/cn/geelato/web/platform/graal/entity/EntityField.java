@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.graal.entity;
 
-import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.lang.meta.Title;
 import lombok.Getter;
 import lombok.Setter;
 

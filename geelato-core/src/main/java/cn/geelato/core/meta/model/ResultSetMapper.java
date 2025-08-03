@@ -1,7 +1,7 @@
 package cn.geelato.core.meta.model;
 
-import cn.geelato.core.meta.annotation.Col;
-import cn.geelato.core.meta.annotation.Entity;
+import cn.geelato.lang.meta.Col;
+import cn.geelato.lang.meta.Entity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 

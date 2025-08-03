@@ -1,4 +1,4 @@
-package cn.geelato.core.meta.annotation;
+package cn.geelato.lang.meta;
 
 public enum IgnoreType {
     PAGE_QUERY,

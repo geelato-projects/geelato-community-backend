@@ -1,6 +1,6 @@
 package cn.geelato.core.util;
 
-import cn.geelato.core.meta.annotation.Col;
+import cn.geelato.lang.meta.Col;
 
 import java.lang.reflect.Field;
 import java.util.*;

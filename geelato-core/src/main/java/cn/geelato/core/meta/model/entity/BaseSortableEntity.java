@@ -2,8 +2,8 @@ package cn.geelato.core.meta.model.entity;
 
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.meta.annotation.Col;
-import cn.geelato.core.meta.annotation.Title;
+import cn.geelato.lang.meta.Col;
+import cn.geelato.lang.meta.Title;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -16,16 +16,7 @@
   <name>geelato-orm</name>
 
   <dependencies>
-    <dependency>
-      <groupId>cn.geelato</groupId>
-      <artifactId>geelato-lang</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>cn.geelato</groupId>
-      <artifactId>geelato-core</artifactId>
-    </dependency>
-    
-    <!-- Spring Boot Starter -->
+     <!-- Spring Boot Starter -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter</artifactId>
@@ -42,6 +33,12 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.baomidou</groupId>
+      <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+      <version>3.5.11</version>
     </dependency>
 
     <!-- H2 Database for testing -->

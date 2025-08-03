@@ -1,6 +1,7 @@
 package cn.geelato.orm.query;
 
 import cn.geelato.orm.Filter;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +12,7 @@ import java.util.StringJoiner;
  * 元数据更新构建器
  * 提供流式API构建SQL更新语句
  */
+@Getter
 public class MetaUpdate extends MetaOperate {
     private String[] columns;
     private Object[] values;
@@ -122,15 +124,7 @@ public class MetaUpdate extends MetaOperate {
     public String getEntityName() {
         return entityName;
     }
-    
-    public String[] getColumns() {
-        return columns;
-    }
-    
-    public Object[] getValues() {
-        return values;
-    }
-    
+
     public List<Filter> getFilters() {
         return filters;
     }

@@ -3,6 +3,7 @@ package cn.geelato.orm.query;
 import cn.geelato.orm.Filter;
 import cn.geelato.orm.WrapperResultFunction;
 import cn.geelato.orm.Order;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +14,7 @@ import java.util.StringJoiner;
  * 元数据查询构建器
  * 提供流式API构建SQL查询
  */
+@Getter
 public class MetaQuery extends MetaOperate {
     private String[] selectFields;
     private List<Order> orders = new ArrayList<>();
@@ -199,27 +201,8 @@ public class MetaQuery extends MetaOperate {
         return entityName;
     }
 
-    public String[] getSelectFields() {
-        return selectFields;
-    }
-
     public List<Filter> getFilters() {
         return filters;
     }
 
-    public List<Order> getOrders() {
-        return orders;
-    }
-
-    public Integer getPageNum() {
-        return pageNum;
-    }
-
-    public Integer getPageSize() {
-        return pageSize;
-    }
-    
-    public WrapperResultFunction<?, ?> getWrapperFunction() {
-        return wrapperFunction;
-    }
 }

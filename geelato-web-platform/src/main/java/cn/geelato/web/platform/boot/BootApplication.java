@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.boot;
 
 import cn.geelato.core.biz.rules.BizManagerFactory;
+import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.core.orm.Dao;
@@ -41,6 +42,7 @@ public class BootApplication implements CommandLineRunner {
         resolveSqlScript(args);
         resolveGraalContext();
         initEnvironment();
+        DataSourceManager.singleInstance().parseDataSourceMeta(this.dao);
         log.info("[start application]...finish");
         log.info("[application version is {}:{}]", Version.current.getEdition(), Version.current.getVersion());
     }

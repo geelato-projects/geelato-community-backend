@@ -1,11 +1,15 @@
 package cn.geelato.web.platform.graal.service;
 
+import cn.geelato.core.gql.GqlManager;
+import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.graal.ApplicationContextProvider;
 import cn.geelato.web.platform.graal.entity.EntityField;
 import cn.geelato.web.platform.graal.entity.EntityGraal;
@@ -14,7 +18,6 @@ import cn.geelato.web.platform.graal.entity.EntityParams;
 import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.graal.utils.NumbChineseUtils;
 import cn.geelato.web.platform.m.base.service.RuleService;
-import cn.geelato.web.common.security.User;
 import cn.geelato.web.platform.m.security.service.UserService;
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
@@ -171,6 +174,12 @@ public class FnService {
         // 切换数据链接，执行查询
         switchDataSource(entityReader.getEntity());
         return ruleService.queryForMapList(entity.toString(), true);
+    }
+
+    public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta) {
+        QueryCommand command = GqlManager.singleInstance().generateQuerySql(gql);
+        switchDataSource(command.getEntityName());
+        return ruleService.queryForMapList(gql, withMeta);
     }
 
     private void switchDataSource(String entityName) {

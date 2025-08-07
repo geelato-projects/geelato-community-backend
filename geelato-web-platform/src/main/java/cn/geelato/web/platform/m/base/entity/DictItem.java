@@ -1,12 +1,12 @@
 package cn.geelato.web.platform.m.base.entity;
 
 import cn.geelato.core.constants.ColumnDefault;
+import cn.geelato.core.meta.model.entity.BaseSortableEntity;
+import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
 import cn.geelato.lang.meta.Transient;
-import cn.geelato.core.meta.model.entity.BaseSortableEntity;
-import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-@Entity(name = "platform_dict_item",catalog = "platform")
+@Entity(name = "platform_dict_item", catalog = "platform")
 @Title(title = "数据字典项")
 public class DictItem extends BaseSortableEntity implements EntityEnableAble {
 
@@ -50,8 +50,10 @@ public class DictItem extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "启用状态")
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
 
+    @Col(name = "item_extra")
+    @Title(title = "扩展字段")
+    private String itemExtra;
+
     @Transient
     private List<DictItem> children;
-
-
 }

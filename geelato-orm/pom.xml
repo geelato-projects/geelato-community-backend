@@ -20,10 +20,17 @@
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-lang</artifactId>
     </dependency>
-     <!-- Spring Boot Starter -->
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter</artifactId>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-utils</artifactId>
     </dependency>
 
     <!-- Spring Boot JDBC Starter -->
@@ -43,6 +50,17 @@
       <groupId>com.baomidou</groupId>
       <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
       <version>3.5.11</version>
+    </dependency>
+    <dependency>
+      <groupId>com.baomidou</groupId>
+      <artifactId>mybatis-plus-jsqlparser</artifactId>
+      <version>3.5.11</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.jsqlparser</groupId>
+      <artifactId>jsqlparser</artifactId>
+      <version>4.6</version>
     </dependency>
 
     <!-- H2 Database for testing -->

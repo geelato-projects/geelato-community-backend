@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @EnableConfigurationProperties
-@MapperScan("cn.geelato.workflow.*.mapper")
+//@MapperScan("cn.geelato.workflow.*.mapper")
 @EnableCaching
 @EnableAsync
 @Slf4j

@@ -40,6 +40,19 @@
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
     </dependency>
+    
+    <!-- Jackson for JSON processing -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    
+    <!-- Spring WebFlux for Reactive support (optional) -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webflux</artifactId>
+      <optional>true</optional>
+    </dependency>
 
     <dependency>
       <groupId>net.oschina.j2cache</groupId>
@@ -99,7 +112,26 @@
     <dependency>
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-security</artifactId>
-      <version>${geelato.version}</version>
+    </dependency>
+    
+    <!-- MyBatis Plus for pagination support -->
+    <dependency>
+      <groupId>com.baomidou</groupId>
+      <artifactId>mybatis-plus-extension</artifactId>
+      <version>3.5.3.1</version>
+    </dependency>
+    
+    <!-- Reactor Core for Reactive support -->
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+    </dependency>
+    
+    <!-- FastJSON2 for JSON processing -->
+    <dependency>
+      <groupId>com.alibaba.fastjson2</groupId>
+      <artifactId>fastjson2</artifactId>
+      <version>2.0.40</version>
     </dependency>
   </dependencies>
 </project>

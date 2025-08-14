@@ -1,6 +1,8 @@
 package cn.geelato.web.platform.m.arco.enums;
 
 import cn.geelato.core.enums.*;
+import cn.geelato.syspackage.enums.PackageSourceEnum;
+import cn.geelato.syspackage.enums.PackageStatusEnum;
 import cn.geelato.utils.enums.LocaleEnum;
 import cn.geelato.utils.enums.TimeUnitEnum;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
@@ -17,8 +19,6 @@ import cn.geelato.web.platform.m.ocr.enums.RuleTypeEnum;
 import cn.geelato.web.platform.m.script.enums.AlternateTypeEnum;
 import cn.geelato.web.platform.m.security.enums.*;
 import cn.geelato.web.platform.m.settings.enums.MessageSendStatus;
-import cn.geelato.web.platform.m.syspackage.enums.PackageSourceEnum;
-import cn.geelato.web.platform.m.syspackage.enums.PackageStatusEnum;
 import cn.geelato.web.platform.m.zxing.enums.*;
 import lombok.Getter;
 

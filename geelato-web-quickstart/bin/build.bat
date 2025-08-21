@@ -8,6 +8,6 @@ call maven_install.bat
 
 cd geelato-web-quickstart
 
-call mvn clean package -Dmaven.test.skip=true
+call mvn clean package -D maven.test.skip=true
 
 cd bin

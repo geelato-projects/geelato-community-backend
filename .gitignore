@@ -39,6 +39,13 @@ build/
 ### Mac OS ###
 .DS_Store
 /log/
+/logs/
 /.idea/
 
 geelato-web-quickstart/dump.rdb
+
+.geelato/
+
+*.log
+*.lck
+

@@ -20,7 +20,6 @@ import java.util.Properties;
  * MyBatis拦截器，用于自动处理BaseEntity的基础属性
  * 包括ID生成、创建时间、更新时间、创建人、更新人等
  */
-@Component
 @Intercepts({
     @Signature(type = Executor.class, method = "update", args = {MappedStatement.class, Object.class})
 })

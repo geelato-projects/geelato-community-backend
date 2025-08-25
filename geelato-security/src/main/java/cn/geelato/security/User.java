@@ -10,8 +10,6 @@ import java.util.Optional;
 @Getter
 @Setter
 public class User extends UserCore{
-    private String userId;
-    private String userName;
     private String enName;
     private int sex;
     private String orgId;

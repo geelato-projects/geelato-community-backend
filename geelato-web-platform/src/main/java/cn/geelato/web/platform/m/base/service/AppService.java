@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.syspackage.entiry.AppPackage;
+import cn.geelato.syspackage.entity.AppPackage;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.handler.file.FileHandler;

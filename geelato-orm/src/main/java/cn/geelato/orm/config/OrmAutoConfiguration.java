@@ -10,14 +10,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.sql.DataSource;
 
 /**
  * ORM模块自动配置类
  * 提供MyBatis Plus和BaseEntity拦截器的自动配置
  */
 @Configuration
-@ConditionalOnClass({MybatisPlusInterceptor.class})
 public class OrmAutoConfiguration {
 
     /**
@@ -25,7 +23,6 @@ public class OrmAutoConfiguration {
      * @return BaseEntityInterceptor
      */
     @Bean
-    @ConditionalOnMissingBean
     public BaseEntityInterceptor baseEntityInterceptor() {
         return new BaseEntityInterceptor();
     }

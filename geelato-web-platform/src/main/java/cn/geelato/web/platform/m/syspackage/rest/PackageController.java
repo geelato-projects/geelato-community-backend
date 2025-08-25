@@ -2,8 +2,9 @@ package cn.geelato.web.platform.m.syspackage.rest;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.syspackage.entiry.AppMeta;
-import cn.geelato.syspackage.entiry.AppPackage;
+import cn.geelato.syspackage.core.PackageService;
+import cn.geelato.syspackage.entity.AppMeta;
+import cn.geelato.syspackage.entity.AppPackage;
 import cn.geelato.syspackage.enums.PackageSourceEnum;
 import cn.geelato.syspackage.enums.PackageStatusEnum;
 import cn.geelato.web.common.constants.MediaTypes;
@@ -119,7 +120,7 @@ public class PackageController {
             } else {
                 if (appointMetas != null) {
                     if (appointMetas.containsKey(key)) {
-                        List<Map<String, Object>> appointMetaData = pickMetaData(metaData, appointMetas.get(key));
+                        List<Map<String, Object>> appointMetaData = PackageService.pickMetaData(metaData, appointMetas.get(key));
                         AppMeta appMeta = new AppMeta(key, appointMetaData);
                         appMetaList.add(appMeta);
                     }
@@ -164,8 +165,7 @@ public class PackageController {
                                                 @RequestBody(required = false) Map<String, Map<String, String>> appointMetas) throws IOException {
         String[] versionIds = appointMetas.keySet().toArray(new String[0]);
         List<AppPackage> appPackages = getAppointAppPackage(versionIds);
-        AppPackage appPackage = mergePackage(appPackages, appointMetas);
-
+        AppPackage appPackage = PackageService.mergePackage(appPackages, appointMetas);
         AppVersion av = new AppVersion();
         av.setAppId(appId);
         if (StringUtils.isEmpty(version)) {
@@ -184,50 +184,12 @@ public class PackageController {
         av.setPacketTime(new Date());
         String filePath = writePackageData(av, appPackage);
         av.setPackagePath(filePath);
-
         return ApiResult.success(appVersionService.createModel(av));
     }
 
-    private AppPackage mergePackage(List<AppPackage> sourceAppPackageList, Map<String, Map<String, String>> appointMetas) {
-        AppPackage appPackage = new AppPackage();
 
-        List<AppMeta> mergeAppMetaList = new ArrayList<>();
-        for (AppPackage pkg : sourceAppPackageList) {
-            String pkgVersion = pkg.getVersion();
-            appPackage.setAppCode(pkg.getAppCode());
-            Map<String, String> pkgAppoints = appointMetas.get(pkgVersion);
-            for (AppMeta appMeta : pkg.getAppMetaList()) {
-                List<Map<String, Object>> metaData = (List<Map<String, Object>>) appMeta.getMetaData();
-                String metaName = appMeta.getMetaName();
-                if (pkgAppoints.containsKey(metaName)) {
-                    List<Map<String, Object>> appointMetaData = pickMetaData(metaData, pkgAppoints.get(metaName));
-                    AppMeta pkgAppMeta = new AppMeta(metaName, appointMetaData);
-                    mergeAppMetaList.add(pkgAppMeta);
-                }
-            }
-        }
-        appPackage.setAppMetaList(distinctMergrAppMetaList(mergeAppMetaList));
-        return appPackage;
-    }
 
-    private List<AppMeta> distinctMergrAppMetaList(List<AppMeta> waitMergeAppMetaList) {
-        List<AppMeta> distinctAppMetaList = new ArrayList<>();
-        for (AppMeta appMeta : waitMergeAppMetaList) {
-            AppMeta mergeAppMeta = distinctAppMetaList.stream().filter(x -> x.getMetaName().equals(appMeta.getMetaName())).findFirst().orElse(null);
-            if (mergeAppMeta == null) {
-                distinctAppMetaList.add(appMeta);
-            } else {
-                List<Map<String, Object>> metaData = (List<Map<String, Object>>) mergeAppMeta.getMetaData();
-                for (Map<String, Object> map : (List<Map<String, Object>>) appMeta.getMetaData()) {
-                    String id = map.get("id").toString();
-                    if (metaData.stream().noneMatch(x -> x.get("id").toString().equals(id))) {
-                        metaData.add(map);
-                    }
-                }
-            }
-        }
-        return distinctAppMetaList;
-    }
+
 
     private List<AppPackage> getAppointAppPackage(String[] versions) {
         List<AppPackage> appPackageList = new ArrayList<>();
@@ -245,24 +207,13 @@ public class PackageController {
                 } catch (IOException ex) {
                     throw new PackageException(ex.getMessage());
                 }
-                AppPackage appPackage = resolveAppPackageData(appPackageData);
+                AppPackage appPackage =PackageService.resolveAppPackageData(appPackageData);
                 appPackageList.add(appPackage);
             }
         }
         return appPackageList;
     }
 
-    private List<Map<String, Object>> pickMetaData(List<Map<String, Object>> metaData, String appointMetas) {
-        String[] appointIds = appointMetas.split(",");
-        List<Map<String, Object>> pickMetaData = new ArrayList<>();
-        for (Map<String, Object> singleMetaData : metaData) {
-            String metaId = singleMetaData.get("id").toString();
-            if (Arrays.asList(appointIds).contains(metaId)) {
-                pickMetaData.add(singleMetaData);
-            }
-        }
-        return pickMetaData;
-    }
 
 
     private String generateVersionCode(String appCode) {
@@ -335,10 +286,10 @@ public class PackageController {
                 throw new PackageException(ex.getMessage());
             }
 
-            AppPackage appPackage = resolveAppPackageData(appPackageData);
+            AppPackage appPackage = PackageService.resolveAppPackageData(appPackageData);
             if (appPackage != null && !appPackage.getAppMetaList().isEmpty()) {
                 try {
-                    if(validatePackageData(appPackage)){
+                    if(PackageService.validatePackageData(appPackage,metaManager.getAll())){
                         backupCurrentVersion(appVersion.getAppId());
                         deployAppPackageData(appPackage);
                         refreshApp(appVersion.getAppId());
@@ -401,43 +352,6 @@ public class PackageController {
         log.info("----------------------delete version end--------------------");
     }
 
-
-    /*
-        获取打包进度
-     */
-    @RequestMapping(value = {"/packet/progress/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    @ResponseBody
-    public ApiResult<?> packetProcess(@PathVariable("versionId") String appId) {
-        return null;
-    }
-
-
-    /*
-    获取部署进度
-     */
-    @RequestMapping(value = {"/deploy/progress/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    @ResponseBody
-    public ApiResult<?> deployProcess(@PathVariable("versionId") String appId) {
-        return null;
-    }
-
-    /*
-    获取指定应用的版本信息
-    */
-    @RequestMapping(value = {"/queryVersion/{appId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    @ResponseBody
-    public ApiResult<?> queryVersion(@PathVariable("appId") String appId) {
-        return null;
-    }
-
-    /*
-    删除版本
-    */
-    @RequestMapping(value = {"/deleteVersion/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    @ResponseBody
-    public ApiResult<?> deleteVersion(@PathVariable("versionId") String appId) {
-        return null;
-    }
 
 
     private Map<String, String> appMetaMap(String appId, String type) {
@@ -504,12 +418,6 @@ public class PackageController {
         return bizDataSqlMap;
     }
 
-    private Map<String, String> appResourceMetaMap(String appId) {
-        Map<String, String> map = new HashMap<>();
-//        map.put("platform_resources",String.format("select * from platform_permission where app_id='%s'",appId));   //表需要加app_id
-        return map;
-    }
-
     private String writePackageData(AppVersion appVersion, AppPackage appPackage) throws IOException {
         JSON.config(JSONWriter.Feature.LargeObject,true);
         String jsonStr = JSONObject.toJSONString(appPackage);
@@ -528,12 +436,7 @@ public class PackageController {
         } catch (IOException ex) {
             throw new PackageException(ex.getMessage());
         }
-        writePackageResourceData(appPackage);
         return compressAppPackage(packageConfigurationProperties.getPath() + tempFolderPath, appVersion, appPackage);
-    }
-
-    private void writePackageResourceData(AppPackage appPackage) {
-        // todo 处理打包资源文件
     }
 
     private String compressAppPackage(String sourcePackageFolder, AppVersion appVersion, AppPackage appPackage) throws IOException {
@@ -549,13 +452,6 @@ public class PackageController {
         return attachment.getId();
     }
 
-    private AppPackage resolveAppPackageData(String appPackageData) {
-        AppPackage appPackage = null;
-        if (!StringUtils.isEmpty(appPackageData)) {
-            appPackage = JSONObject.parseObject(appPackageData, AppPackage.class);
-        }
-        return appPackage;
-    }
 
     private void deployAppPackageData(AppPackage appPackage) throws DaoException {
         log.info("----------------------deploy start--------------------");
@@ -607,28 +503,5 @@ public class PackageController {
         }
         TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
         log.info("----------------------deploy end--------------------");
-    }
-
-    private boolean validatePackageData(AppPackage appPackage) {
-        log.info("----------------------validate package data start--------------------");
-        boolean result = true;
-        for (AppMeta appMeta : appPackage.getAppMetaList()) {
-            String appMetaName = appMeta.getMetaName();
-            Object appMetaData = appMeta.getMetaData();
-            EntityMeta entityMeta = metaManager.getByEntityName(appMetaName);
-            JSONArray jsonArray = JSONArray.parseArray(JSONObject.toJSONString(appMetaData));
-            for (int i = 0; i < jsonArray.size(); i++) {
-                JSONObject jo = jsonArray.getJSONObject(i);
-                for (String key : jo.keySet()) {
-                    FieldMeta fieldMeta = entityMeta.getFieldMetaByColumn(key);
-                    if (fieldMeta == null) {
-                        log.error("应用包元数据校验失败，元数据名称：{}，字段名称：{}，校验失败原因：字段不存在", appMetaName, key);
-                        return false;
-                    }
-                }
-            }
-            log.info("----------------------validate package data end--------------------");
-        }
-        return result;
     }
 }

@@ -53,14 +53,14 @@ public class DynamicDaoFieldProcessor implements BeanPostProcessor, ApplicationC
             String dataSourceKey = annotation.value();
             Class<?> fieldType = field.getType();
             String dynamicBeanName = "dynamic" + fieldType.getSimpleName();
-            log.debug("处理字段 {}.{}, 数据源: {}, 寻找Bean: {}", 
+            log.debug("operate field {}.{}, datasource: {}, found Bean: {}",
                     bean.getClass().getSimpleName(), field.getName(), dataSourceKey, dynamicBeanName);
-            Object dynamicDao = null;
+            Object dynamicDao;
             try {
                 dynamicDao = applicationContext.getBean(dynamicBeanName, fieldType);
-                log.debug("找到dynamic bean: {}", dynamicBeanName);
+                log.debug("found dynamic bean: {}", dynamicBeanName);
             } catch (Exception e) {
-                log.error("无法找到dynamic bean: {}，请确保已配置对应的dynamic版本Bean。字段: {}.{}", 
+                log.error("unfound dynamic bean: {}。filed: {}.{}",
                         dynamicBeanName, bean.getClass().getSimpleName(), field.getName());
                 throw new RuntimeException(String.format(
                         "@UseDynamicDataSource注解要求使用dynamic版本的Bean，但未找到Bean: %s。" +
@@ -69,11 +69,11 @@ public class DynamicDaoFieldProcessor implements BeanPostProcessor, ApplicationC
             }
             field.setAccessible(true);
             field.set(bean, dynamicDao);
-            log.info("成功注入dynamic dao到字段 {}.{}, 数据源: {}",
+            log.info("inject dynamic dao to field {}.{}, datasource: {}",
                     bean.getClass().getSimpleName(), field.getName(), dataSourceKey);
             setDataSourceContext(dynamicDao, dataSourceKey, annotation);
         } catch (Exception e) {
-            log.error("处理dynamic dao字段时发生错误: {}.{}", 
+            log.error("inject dynamic dao fail: {}.{}",
                     bean.getClass().getSimpleName(), field.getName(), e);
         }
     }

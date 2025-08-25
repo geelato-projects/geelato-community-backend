@@ -23,7 +23,7 @@ public class ReactiveRequestParamsExtractor implements RequestParamsExtractor<Se
         PageParams queryParams = extractPageParamsFromQuery(request);
         
         // 如果查询参数中有有效的分页参数，直接返回
-        if (queryParams != null && queryParams.isValid()) {
+        if (queryParams.isValid()) {
             return queryParams;
         }
         

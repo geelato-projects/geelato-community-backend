@@ -443,7 +443,7 @@ public class BaseController {
                     stringBuilder.append(str);
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         } finally {
             if (br != null) {
                 try {

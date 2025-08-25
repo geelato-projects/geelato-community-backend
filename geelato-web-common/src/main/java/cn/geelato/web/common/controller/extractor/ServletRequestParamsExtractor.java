@@ -26,7 +26,7 @@ public class ServletRequestParamsExtractor implements RequestParamsExtractor<Htt
         PageParams params = extractPageParamsFromQuery(request);
         
         // 如果查询参数中没有有效的分页参数，尝试从请求体中获取
-        if (params == null || !params.isValid()) {
+        if (!params.isValid()) {
             params = extractPageParamsFromBody(request);
         }
         

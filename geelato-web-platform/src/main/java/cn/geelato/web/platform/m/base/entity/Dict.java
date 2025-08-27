@@ -44,6 +44,18 @@ public class Dict extends BaseSortableEntity implements EntityEnableAble {
     @Col(name = "enable_status")
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
 
+    @Col(name = "extra_name")
+    @Title(title = "扩展字段")
+    private String extraName;
+
+    @Col(name = "extra_value_type")
+    @Title(title = "扩展字段值")
+    private String extraValueType;
+
+    @Col(name = "extra_remark")
+    @Title(title = "扩展字段备注")
+    private String extraRemark;
+
     @Transient
     private Set<DictItem> dictItems = new LinkedHashSet<>();
 }

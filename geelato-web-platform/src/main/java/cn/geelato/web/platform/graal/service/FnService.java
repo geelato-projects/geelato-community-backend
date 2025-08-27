@@ -123,7 +123,7 @@ public class FnService {
      * @return 返回查询结果，结果以Map列表的形式表示
      * @throws RuntimeException 如果实体名称或字段列表为空，则抛出此异常
      */
-    public Object convertEntityReader(Map<String, Object> entityParams) {
+    public Object convertEntityReader(Map<String, Object> entityParams, Map<String, Object> params) {
         EntityGraal entityReader = JSON.parseObject(JSON.toJSONString(entityParams), EntityGraal.class);
         if (StringUtils.isBlank(entityReader.getEntity()) || entityReader.getFields() == null || entityReader.getFields().isEmpty()) {
             throw new RuntimeException("entityName or fields is empty");
@@ -163,10 +163,10 @@ public class FnService {
         if (entityReader.getParams() != null && entityReader.getParams().size() > 0) {
             StringBuffer sb = new StringBuffer();
             for (EntityParams param : entityReader.getParams()) {
-                if (StringUtils.isBlank(param.getTitle()) || StringUtils.isBlank(param.getCop()) || StringUtils.isBlank(param.getValueExpression())) {
+                if (StringUtils.isBlank(param.getName()) || StringUtils.isBlank(param.getCop()) || StringUtils.isBlank(param.getValueExpression())) {
                     continue;
                 }
-                entity.append("\"").append(param.getTitle()).append("|").append(param.getCop()).append("\":\"").append(param.getValueExpression()).append("\",");
+                entity.append("\"").append(param.getName()).append("|").append(param.getCop()).append("\":\"").append(param.getValueExpression()).append("\",");
             }
         }
         entity.deleteCharAt(entity.length() - 1);

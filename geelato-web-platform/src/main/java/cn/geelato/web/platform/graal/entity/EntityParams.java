@@ -13,7 +13,7 @@ public class EntityParams {
     @Title(title = "分组名称")
     private String groupName;
     @Title(title = "字段名")
-    private String title;
+    private String name;
     @Title(title = "比较类型")
     private String cop;
     @Title(title = "值表达式")

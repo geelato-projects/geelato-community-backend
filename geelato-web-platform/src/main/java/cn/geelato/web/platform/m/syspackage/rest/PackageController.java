@@ -7,6 +7,8 @@ import cn.geelato.syspackage.entity.AppMeta;
 import cn.geelato.syspackage.entity.AppPackage;
 import cn.geelato.syspackage.enums.PackageSourceEnum;
 import cn.geelato.syspackage.enums.PackageStatusEnum;
+import cn.geelato.syspackage.utils.AppMetaUtils;
+import cn.geelato.syspackage.utils.PackageUtils;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.gql.execute.BoundSql;
@@ -69,7 +71,6 @@ public class PackageController {
 
     private final ArrayList<String> incrementMetas = new ArrayList<>();
 
-    private final String[] incrementPlatformMetas = {"platform_dict", "platform_dict_item", "platform_sys_config", "platform_encoding", "platform_resources"};
 
     private final ArrayList<String> incrementBizMetas = new ArrayList<>();
 
@@ -101,7 +102,7 @@ public class PackageController {
     public ApiResult<AppVersion> packetApp(@NotNull @PathVariable("appId") String appId, String version, String description,
                                            @RequestBody(required = false) Map<String, String> appointMetas) throws IOException {
         Map<String, String> appDataMap = new HashMap<>();
-        Map<String, String> appMetaDataMap = appMetaMap(appId, "package");
+        Map<String, String> appMetaDataMap = AppMetaUtils.buildPackageAppMetaMap(appId);
         Map<String, String> appBizDataMap = appBizDataMap(appId, "package");
         appDataMap.putAll(appMetaDataMap);
         appDataMap.putAll(appBizDataMap);
@@ -153,6 +154,8 @@ public class PackageController {
         av.setPackageSource(PackageSourceEnum.PACKET.getValue());
         av.setStatus(PackageStatusEnum.DRAFT.getValue());
         av.setPacketTime(new Date());
+        String targetPath=null;
+        PackageUtils.writePackageData(appPackage,av.getVersion(),targetPath);
         String filePath = writePackageData(av, appPackage);
         av.setPackagePath(filePath);
 
@@ -322,7 +325,7 @@ public class PackageController {
     // todo
     private void backupCurrentVersion(String appId) {
         log.info("----------------------backup version start--------------------");
-        Map<String, String> appMetaMap = appMetaMap(appId, "remove");
+        Map<String, String> appMetaMap = AppMetaUtils.buildRemoveAppMetaMap(appId);
         for (String key : appMetaMap.keySet()) {
             String value = appMetaMap.get(key);
         }
@@ -332,7 +335,7 @@ public class PackageController {
     private void deleteCurrentVersion(String appId) {
         log.info("----------------------delete version start--------------------");
         Map<String, String> appDataMap = new HashMap<>();
-        Map<String, String> appMetaDataMap = appMetaMap(appId, "remove");
+        Map<String, String> appMetaDataMap = AppMetaUtils.buildRemoveAppMetaMap(appId);
         Map<String, String> appBizDataMap = appBizDataMap(appId, "remove");
         appDataMap.putAll(appMetaDataMap);
         appDataMap.putAll(appBizDataMap);
@@ -350,44 +353,6 @@ public class PackageController {
             dao.getJdbcTemplate().execute(value);
         }
         log.info("----------------------delete version end--------------------");
-    }
-
-
-
-    private Map<String, String> appMetaMap(String appId, String type) {
-        Map<String, String> map = new HashMap<>();
-        String preOperateSql = "";
-        switch (type) {
-            case "package":
-                preOperateSql = "select * from ";
-                map.put("platform_app", String.format("%s platform_app where id='%s'", preOperateSql, appId));
-                break;
-            case "remove":
-                preOperateSql = "delete from  ";
-                break;
-            default:
-                break;
-        }
-        map.put("platform_app_page", String.format("%s  platform_app_page where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_tree_node", String.format("%s  platform_tree_node where tree_id='%s' ", preOperateSql, appId));
-        map.put("platform_dev_db_connect", String.format("%s platform_dev_db_connect where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_dev_table", String.format("%s  platform_dev_table where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_dev_column", String.format("%s  platform_dev_column where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_dev_table_foreign", String.format("%s  platform_dev_table_foreign where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_dev_view", String.format("%s  platform_dev_view where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_dict", String.format("%s  platform_dict where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_dict_item", String.format("%s  platform_dict_item where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_permission", String.format("%s platform_permission where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_role", String.format("%s  platform_role where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_role_r_permission", String.format("%s  platform_role_r_permission where app_id='%s'", preOperateSql, appId));
-        map.put("platform_role_r_tree_node", String.format("%s  platform_role_r_tree_node where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_role_r_app", String.format("%s  platform_role_r_app where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_sys_config", String.format("%s  platform_sys_config where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_export_template", String.format("%s  platform_export_template where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_encoding", String.format("%s  platform_encoding where app_id='%s' ", preOperateSql, appId));
-        map.put("platform_resources", String.format("%s  platform_resources where app_id='%s' ", preOperateSql, appId));
-        incrementMetas.addAll(Arrays.asList(incrementPlatformMetas));
-        return map;
     }
 
     private Map<String, String> appBizDataMap(String appId, String type) {
@@ -444,7 +409,8 @@ public class PackageController {
         String appPackageName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String appPackageFullName = (Strings.isNotBlank(appVersion.getVersion()) ? appVersion.getVersion() : appPackageName) + packageSuffix;
         String targetZipPath;
-        targetZipPath = UploadService.getRootSavePath(SAVE_TABLE_TYPE, SessionCtx.getCurrentTenantCode(), appPackage.getSourceAppId(), appPackageFullName, true);
+        targetZipPath = UploadService.getRootSavePath(SAVE_TABLE_TYPE, SessionCtx.getCurrentTenantCode(),
+                appPackage.getSourceAppId(), appPackageFullName, true);
         ZipUtils.compressDirectory(sourcePackageFolder, targetZipPath);
         File file = new File(targetZipPath);
         FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "package", appPackage.getSourceAppId(), appVersion.getTenantCode());

@@ -154,8 +154,6 @@ public class PackageController {
         av.setPackageSource(PackageSourceEnum.PACKET.getValue());
         av.setStatus(PackageStatusEnum.DRAFT.getValue());
         av.setPacketTime(new Date());
-        String targetPath=null;
-        PackageUtils.writePackageData(appPackage,av.getVersion(),targetPath);
         String filePath = writePackageData(av, appPackage);
         av.setPackagePath(filePath);
 

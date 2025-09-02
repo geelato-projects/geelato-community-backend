@@ -52,9 +52,9 @@ public class Dict extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "扩展字段值")
     private String extraValueType;
 
-    @Col(name = "extra_remark")
-    @Title(title = "扩展字段备注")
-    private String extraRemark;
+    @Col(name = "extra_content")
+    @Title(title = "扩展字段内容")
+    private String extraContent;
 
     @Transient
     private Set<DictItem> dictItems = new LinkedHashSet<>();

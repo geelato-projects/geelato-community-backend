@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.syspackage.service;
 
-import cn.geelato.syspackage.enums.PackageSourceEnum;
-import cn.geelato.syspackage.enums.PackageStatusEnum;
+import cn.geelato.pack.enums.PackageSourceEnum;
+import cn.geelato.pack.enums.PackageStatusEnum;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.syspackage.entity.AppVersion;
 import org.springframework.stereotype.Component;

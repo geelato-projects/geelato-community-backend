@@ -8,6 +8,8 @@ import cn.geelato.security.User;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
+import cn.geelato.web.common.oauth2.OAuth2ServerTokenResult;
+import cn.geelato.web.common.oauth2.TokenManager;
 import cn.geelato.web.common.shiro.OAuth2Token;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
@@ -37,7 +39,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {
+    public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) {
         String upgradeHeader = request.getHeader("Upgrade");
         if ("websocket".equalsIgnoreCase(upgradeHeader)
         ||!(handler instanceof HandlerMethod handlerMethod)
@@ -73,16 +75,46 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             }
         } else if (token.startsWith(__OAuthTokenTag__)) {
             token = token.replace(__OAuthTokenTag__, "");
-            cn.geelato.web.common.security.User user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
-            if (user != null) {
-                String loginName = user.getLoginName();
-                User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName,"geelato");
-                SecurityContext.setCurrentUser(currentUser);
-                SecurityContext.setCurrentTenant(new Tenant(user.getTenantCode()));
-                OAuth2Token oauth2Token = new OAuth2Token(token);
-                Subject subject = SecurityUtils.getSubject();
-                subject.login(oauth2Token);
-            } else {
+            try {
+                cn.geelato.web.common.security.User user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
+                if (user != null) {
+                    performOAuth2Login(user, token);
+                } else {
+                    throw new OAuthGetUserFailException();
+                }
+            }catch (Exception e) {
+                // 尝试使用refresh_token刷新访问令牌
+                try {
+                    String refreshToken = TokenManager.getRefreshToken(token);
+                    if (refreshToken != null) {
+                        OAuth2ServerTokenResult refreshResult = OAuth2Helper.refreshToken(
+                            oAuthConfigurationProperties.getUrl(),
+                            oAuthConfigurationProperties.getClientId(),
+                            oAuthConfigurationProperties.getClientSecret(),
+                            refreshToken
+                        );
+                        
+                        if (refreshResult != null && "200".equals(refreshResult.getCode())) {
+                            // 更新token映射关系
+                            TokenManager.updateTokens(token, refreshResult.getAccess_token(), refreshResult.getRefresh_token());
+                            
+                            // 使用新的access_token重新获取用户信息
+                            cn.geelato.web.common.security.User user = OAuth2Helper.getUserInfo(
+                                oAuthConfigurationProperties.getUrl(), 
+                                refreshResult.getAccess_token()
+                            );
+                            
+                            if (user != null) {
+                                performOAuth2Login(user, refreshResult.getAccess_token());
+                                return true;
+                            }
+                        }
+                    }
+                } catch (Exception refreshException) {
+                    // 刷新token失败，移除无效的token映射
+                    TokenManager.removeTokens(token);
+                }
+                
                 throw new OAuthGetUserFailException();
             }
         } else {
@@ -216,5 +248,20 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
 
 
+    }
+
+    /**
+     * 执行OAuth2登录操作
+     * @param user OAuth2用户信息
+     * @param accessToken 访问令牌
+     */
+    private void performOAuth2Login(cn.geelato.web.common.security.User user, String accessToken) {
+        String loginName = user.getLoginName();
+        User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, "geelato");
+        SecurityContext.setCurrentUser(currentUser);
+        SecurityContext.setCurrentTenant(new Tenant(user.getTenantCode()));
+        OAuth2Token oauth2Token = new OAuth2Token(accessToken);
+        Subject subject = SecurityUtils.getSubject();
+        subject.login(oauth2Token);
     }
 }

@@ -6,6 +6,7 @@ import cn.geelato.web.common.interceptor.OAuthConfigurationProperties;
 import cn.geelato.web.common.oauth2.OAuth2ServerResult;
 import cn.geelato.web.common.oauth2.OAuth2ServerTokenResult;
 import cn.geelato.web.common.oauth2.OAuth2Service;
+import cn.geelato.web.common.oauth2.TokenManager;
 import cn.geelato.web.platform.m.security.entity.LoginResult;
 import cn.geelato.web.common.security.User;
 import com.alibaba.fastjson.JSON;
@@ -39,6 +40,9 @@ public class OAuth2Controller {
                     oAuthConfigurationProperties.getUrl(),
                     oAuthServerTokenResult.getAccess_token());
             if (userInfoResult.getCode().equals("200")) {
+                // 存储token映射关系
+                TokenManager.storeTokens(oAuthServerTokenResult.getAccess_token(), oAuthServerTokenResult.getRefresh_token());
+                
                 User user = JSON.parseObject(userInfoResult.getData(), User.class);
                 LoginResult loginResult = LoginResult.formatLoginResult(user);
                 loginResult.setToken(oAuthServerTokenResult.getAccess_token());

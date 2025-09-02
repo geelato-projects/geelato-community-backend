@@ -2,13 +2,12 @@ package cn.geelato.web.platform.m.syspackage.rest;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.syspackage.core.PackageService;
-import cn.geelato.syspackage.entity.AppMeta;
-import cn.geelato.syspackage.entity.AppPackage;
-import cn.geelato.syspackage.enums.PackageSourceEnum;
-import cn.geelato.syspackage.enums.PackageStatusEnum;
-import cn.geelato.syspackage.utils.AppMetaUtils;
-import cn.geelato.syspackage.utils.PackageUtils;
+import cn.geelato.pack.entity.AppMeta;
+import cn.geelato.pack.entity.AppPackage;
+import cn.geelato.pack.enums.PackageSourceEnum;
+import cn.geelato.pack.enums.PackageStatusEnum;
+import cn.geelato.pack.utils.AppMetaUtils;
+import cn.geelato.pack.utils.PackageUtils;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.gql.execute.BoundSql;
@@ -28,8 +27,8 @@ import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
-import cn.geelato.syspackage.PackageConfigurationProperties;
-import cn.geelato.syspackage.PackageException;
+import cn.geelato.pack.PackageConfigurationProperties;
+import cn.geelato.pack.PackageException;
 import cn.geelato.web.platform.m.syspackage.entity.AppVersion;
 import cn.geelato.web.platform.m.syspackage.service.AppVersionService;
 import com.alibaba.fastjson2.JSON;
@@ -121,7 +120,7 @@ public class PackageController {
             } else {
                 if (appointMetas != null) {
                     if (appointMetas.containsKey(key)) {
-                        List<Map<String, Object>> appointMetaData = PackageService.pickMetaData(metaData, appointMetas.get(key));
+                        List<Map<String, Object>> appointMetaData = PackageUtils.pickMetaData(metaData, appointMetas.get(key));
                         AppMeta appMeta = new AppMeta(key, appointMetaData);
                         appMetaList.add(appMeta);
                     }
@@ -166,7 +165,7 @@ public class PackageController {
                                                 @RequestBody(required = false) Map<String, Map<String, String>> appointMetas) throws IOException {
         String[] versionIds = appointMetas.keySet().toArray(new String[0]);
         List<AppPackage> appPackages = getAppointAppPackage(versionIds);
-        AppPackage appPackage = PackageService.mergePackage(appPackages, appointMetas);
+        AppPackage appPackage = PackageUtils.mergePackage(appPackages, appointMetas);
         AppVersion av = new AppVersion();
         av.setAppId(appId);
         if (StringUtils.isEmpty(version)) {
@@ -208,7 +207,7 @@ public class PackageController {
                 } catch (IOException ex) {
                     throw new PackageException(ex.getMessage());
                 }
-                AppPackage appPackage =PackageService.resolveAppPackageData(appPackageData);
+                AppPackage appPackage =PackageUtils.resolveAppPackageData(appPackageData);
                 appPackageList.add(appPackage);
             }
         }
@@ -287,10 +286,10 @@ public class PackageController {
                 throw new PackageException(ex.getMessage());
             }
 
-            AppPackage appPackage = PackageService.resolveAppPackageData(appPackageData);
+            AppPackage appPackage = PackageUtils.resolveAppPackageData(appPackageData);
             if (appPackage != null && !appPackage.getAppMetaList().isEmpty()) {
                 try {
-                    if(PackageService.validatePackageData(appPackage,metaManager.getAll())){
+                    if(PackageUtils.validatePackageData(appPackage,metaManager.getAll())){
                         backupCurrentVersion(appVersion.getAppId());
                         deployAppPackageData(appPackage);
                         refreshApp(appVersion.getAppId());

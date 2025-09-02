@@ -1,8 +1,8 @@
 package cn.geelato.web.platform.m.arco.enums;
 
 import cn.geelato.core.enums.*;
-import cn.geelato.syspackage.enums.PackageSourceEnum;
-import cn.geelato.syspackage.enums.PackageStatusEnum;
+import cn.geelato.pack.enums.PackageSourceEnum;
+import cn.geelato.pack.enums.PackageStatusEnum;
 import cn.geelato.utils.enums.LocaleEnum;
 import cn.geelato.utils.enums.TimeUnitEnum;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;

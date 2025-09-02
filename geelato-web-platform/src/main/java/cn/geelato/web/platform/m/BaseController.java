@@ -37,9 +37,6 @@ public class BaseController extends ParameterOperator {
     @Autowired
     @Qualifier("primaryDao")
     protected Dao dao;
-
-    @UseDynamicDataSource
-    protected Dao dynamicDao;
     protected RuleService ruleService;
     protected HttpServletResponse response;
 

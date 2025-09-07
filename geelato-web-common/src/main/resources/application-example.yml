@@ -1,0 +1,19 @@
+# Geelato Web Common 配置示例
+# 用于演示如何配置Web架构类型
+
+geelato:
+  web:
+    # Web架构类型配置
+    # servlet: 使用传统的Servlet架构（默认值）
+    # reactor: 使用Spring WebFlux Reactive架构
+    architecture: servlet
+    
+# 示例配置说明：
+# 1. 默认情况下使用servlet架构，适用于传统的Spring MVC应用
+# 2. 如果要使用Reactive架构，请设置为reactor
+# 3. 这个配置会影响BaseController中分页参数提取器的选择
+
+# 使用Reactive架构的配置示例：
+# geelato:
+#   web:
+#     architecture: reactor

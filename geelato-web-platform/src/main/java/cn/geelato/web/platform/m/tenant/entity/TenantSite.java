@@ -55,9 +55,6 @@ public class TenantSite extends BaseEntity {
     @Title(title = "用于指定该站点配置信息绑定的域名，格式如www.xxx.com")
     private String domain;
 
-    // @Title(title = "用于指定该站点配置信息绑定的域名的端口号，格式如8080")
-    // private String port;
-
     @Title(title = "启动多语言")
     @Col(name = "enable_multi_lang")
     private boolean enableMultiLang = false;

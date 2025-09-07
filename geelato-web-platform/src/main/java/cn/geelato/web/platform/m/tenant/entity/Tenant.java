@@ -1,15 +1,17 @@
-package cn.geelato.web.platform.m.base.entity;
+package cn.geelato.web.platform.m.tenant.entity;
 
 import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity(name = "platform_tenant",catalog = "platform")
+@TableName("platform_tenant")
 @Title(title = "租户站点")
 public class Tenant extends BaseEntity {
     @Title(title = "企业的编码即租户编码")
@@ -32,4 +34,5 @@ public class Tenant extends BaseEntity {
     @Title(title = "公司corpToken")
     @Col(name = "corp_token")
     private String corpToken;
+
 }

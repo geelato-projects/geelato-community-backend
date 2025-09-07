@@ -7,7 +7,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.pack.entity.AppPackage;
+import cn.geelato.pack.entity.AppPackData;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
@@ -83,7 +83,7 @@ public class AppVersionController extends BaseController {
     }
 
     @RequestMapping(value = "/package/{id}", method = RequestMethod.GET)
-    public ApiResult<AppPackage> getPackage(@PathVariable(required = true) String id) {
+    public ApiResult<AppPackData> getPackage(@PathVariable(required = true) String id) {
         try {
             AppVersion appVersion = appVersionService.getModel(CLAZZ, id);
             Assert.notNull(appVersion, "AppVersion does not exist");
@@ -99,9 +99,9 @@ public class AppVersionController extends BaseController {
                         throw new RuntimeException("AppVersion package file does not exist");
                     }
                 }
-                AppPackage appPackage = null;
+                AppPackData appPackage = null;
                 if (!StringUtils.isEmpty(appPackageData)) {
-                    appPackage = JSONObject.parseObject(appPackageData, AppPackage.class);
+                    appPackage = JSONObject.parseObject(appPackageData, AppPackData.class);
                     return ApiResult.success(appPackage);
                 } else {
                     throw new RuntimeException("*.gdp file read failed");

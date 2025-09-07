@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.pack.entity.AppPackage;
+import cn.geelato.pack.entity.AppPackData;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.handler.file.FileHandler;
@@ -157,7 +157,7 @@ public class AppService extends BaseSortableService {
             Map<String, String> packageData = ZipUtils.parseGdpFromZip(file, ".gdp", fields);
             if (packageData != null && !packageData.isEmpty()) {
                 // 解析包数据
-                AppPackage appPackage = JSONObject.parseObject(JSON.toJSONString(packageData), AppPackage.class);
+                AppPackData appPackage = JSONObject.parseObject(JSON.toJSONString(packageData), AppPackData.class);
                 // 上传应用
                 app = uploadApp(appPackage.getSourceAppId(), appPackage.getAppName(), appPackage.getAppCode());
                 // 上传版本

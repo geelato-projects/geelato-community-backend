@@ -3,6 +3,7 @@ package cn.geelato.web.platform.m.tenant.rest;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.security.SecurityContext;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.tenant.service.TenantService;
@@ -165,14 +166,13 @@ public class TenantController extends BaseController {
     @Transactional
     public ApiResult<Boolean> updateTenant(
             @PathVariable String id,
-            @RequestBody Tenant tenant,
-            HttpServletRequest request) {
+            @RequestBody Tenant tenant) {
         try {
             tenant.setId(id);
 
-            // 从请求中获取更新者信息
-            String updater = request.getHeader("userId");
-            String updaterName = request.getHeader("userName");
+            // 从SecurityContext获取更新者信息
+            String updater = SecurityContext.getCurrentUser().getUserId();
+            String updaterName = SecurityContext.getCurrentUser().getUserName();
 
             if (updater == null) {
                 updater = "system";
@@ -216,6 +216,124 @@ public class TenantController extends BaseController {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    /**
+     * 创建租户
+     */
+    @PostMapping("/create")
+    @Transactional
+    public ApiResult<?> createTenant(@RequestBody Tenant tenant) {
+        try {
+            // 参数验证
+            if (!StringUtils.hasText(tenant.getCompanyName())) {
+                return ApiResult.fail("公司名称不能为空");
+            }
+            if (!StringUtils.hasText(tenant.getCode())) {
+                return ApiResult.fail("租户编码不能为空");
+            }
+
+            // 检查租户编码是否已存在
+            Tenant existingTenant = tenantMapper.selectByCode(tenant.getCode());
+            if (existingTenant != null) {
+                return ApiResult.fail("租户编码已存在");
+            }
+
+            // 从SecurityContext获取创建者信息
+            String creator = SecurityContext.getCurrentUser().getUserId();
+            String creatorName = SecurityContext.getCurrentUser().getUserName();
+
+            if (creator == null) {
+                creator = "system";
+            }
+            if (creatorName == null) {
+                creatorName = "系统管理员";
+            }
+
+            // 设置创建信息
+            tenant.setCreator(creator);
+            tenant.setCreatorName(creatorName);
+            tenant.setCreateAt(new java.util.Date());
+            tenant.setDelStatus(0);
+
+            // 创建租户
+            int result = tenantMapper.insert(tenant);
+            if (result <= 0) {
+                return ApiResult.fail("创建租户失败");
+            }
+
+            // 直接返回租户信息
+            return ApiResult.success(tenant, "租户创建成功");
+        } catch (IllegalArgumentException e) {
+            log.warn("创建租户参数错误: {}", e.getMessage());
+            return ApiResult.fail(e.getMessage());
+        } catch (Exception e) {
+            log.error("创建租户失败", e);
+            return ApiResult.fail("创建租户失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 邀请租户（仅创建包含邮箱地址的待填租户信息）
+     */
+    @PostMapping("/invite")
+    @Transactional
+    public ApiResult<?> inviteTenant(@RequestParam String email) {
+        try {
+            // 参数验证
+            if (!StringUtils.hasText(email)) {
+                return ApiResult.fail("邮箱地址不能为空");
+            }
+
+            // 生成租户编码（使用邮箱前缀加随机字符）
+            String emailPrefix = email.split("@")[0];
+            String tenantCode = emailPrefix + "_" + System.currentTimeMillis() % 10000;
+
+            // 检查租户编码是否已存在
+            Tenant existingTenant = tenantMapper.selectByCode(tenantCode);
+            if (existingTenant != null) {
+                // 如果已存在，添加随机后缀
+                tenantCode = tenantCode + "_" + (int)(Math.random() * 1000);
+            }
+
+            // 从SecurityContext获取创建者信息
+            String creator = SecurityContext.getCurrentUser().getUserId();
+            String creatorName = SecurityContext.getCurrentUser().getUserName();
+
+            if (creator == null) {
+                creator = "system";
+            }
+            if (creatorName == null) {
+                creatorName = "系统管理员";
+            }
+
+            // 创建租户对象，只设置邮箱和必要信息，其他信息留空
+            Tenant tenant = new Tenant();
+            tenant.setMainEmail(email);
+            tenant.setCode(tenantCode);
+            tenant.setCompanyName("待完善"); // 临时名称，等待用户完善
+            tenant.setCreator(creator);
+            tenant.setCreatorName(creatorName);
+            tenant.setCreateAt(new java.util.Date());
+            tenant.setDelStatus(0);
+
+            // 创建租户
+            int result = tenantMapper.insert(tenant);
+            if (result <= 0) {
+                return ApiResult.fail("邀请租户失败");
+            }
+
+            // TODO: 发送邀请邮件给用户，包含完善信息的链接
+            
+            // 返回租户信息
+            return ApiResult.success(tenant, "租户邀请成功，等待完善信息");
+        } catch (IllegalArgumentException e) {
+            log.warn("邀请租户参数错误: {}", e.getMessage());
+            return ApiResult.fail(e.getMessage());
+        } catch (Exception e) {
+            log.error("邀请租户失败", e);
+            return ApiResult.fail("邀请租户失败: " + e.getMessage());
         }
     }
 }

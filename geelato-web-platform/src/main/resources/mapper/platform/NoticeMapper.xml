@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.geelato.web.platform.m.notice.mapper.NoticeMapper">
+
+    <resultMap id="BaseResultMap" type="cn.geelato.web.platform.m.notice.entity.Notice">
+        <id column="id" property="id" />
+        <result column="receiver" property="receiver" />
+        <result column="notice_title" property="noticeTitle" />
+        <result column="notice_content" property="noticeContent" />
+        <result column="sender" property="sender" />
+        <result column="biz_ref" property="bizRef" />
+        <result column="status" property="status" />
+        <result column="dept_id" property="deptId" />
+        <result column="bu_id" property="buId" />
+        <result column="tenant_code" property="tenantCode" />
+        <result column="del_status" property="delStatus" />
+        <result column="update_at" property="updateAt" />
+        <result column="updater" property="updater" />
+        <result column="updater_name" property="updaterName" />
+        <result column="create_at" property="createAt" />
+        <result column="creator" property="creator" />
+        <result column="creator_name" property="creatorName" />
+        <result column="delete_at" property="deleteAt" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, receiver, notice_title, notice_content, sender, biz_ref, status, dept_id, bu_id, tenant_code, 
+        del_status, update_at, updater, updater_name, create_at, creator, creator_name, delete_at
+    </sql>
+
+    <select id="selectNoticeList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM platform_notice
+        WHERE del_status = 0
+        <if test="receiver != null and receiver != ''">
+            AND receiver LIKE CONCAT('%', #{receiver}, '%')
+        </if>
+        <if test="noticeTitle != null and noticeTitle != ''">
+            AND notice_title LIKE CONCAT('%', #{noticeTitle}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        ORDER BY create_at DESC
+    </select>
+
+    <select id="selectUserNotices" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM platform_notice
+        WHERE del_status = 0
+        AND receiver LIKE CONCAT('%', #{receiver}, '%')
+        ORDER BY create_at DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <update id="markAsRead">
+        UPDATE platform_notice
+        SET status = 'read',
+            update_at = NOW(),
+            updater = #{updater}
+        WHERE id = #{id}
+        AND del_status = 0
+    </update>
+
+    <update id="markAllAsRead">
+        UPDATE platform_notice
+        SET status = 'read',
+            update_at = NOW(),
+            updater = #{updater}
+        WHERE receiver LIKE CONCAT('%', #{receiver}, '%')
+        AND status != 'read'
+        AND del_status = 0
+    </update>
+</mapper>

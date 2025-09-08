@@ -104,7 +104,7 @@ public class JWTAuthController extends BaseController {
             }
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
-            return ApiResult.fail("账号或密码不正确!");
+            return ApiResult.fail("服务暂不可用，请稍后重试!");
         }
     }
 

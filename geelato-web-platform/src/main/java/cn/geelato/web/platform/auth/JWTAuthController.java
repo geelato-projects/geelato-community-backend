@@ -104,7 +104,7 @@ public class JWTAuthController extends BaseController {
             }
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
-            return ApiResult.fail("系统异常，请重试或联系平台!");
+            return ApiResult.fail("服务暂不可用，请稍后重试!");
         }
     }
 

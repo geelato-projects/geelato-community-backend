@@ -412,7 +412,7 @@ public class JWTAuthController extends BaseController {
             BeanUtils.populate(form, params);
             // 用户、密码
             if (Strings.isBlank(form.getUserId()) || Strings.isBlank(form.getPassword())) {
-                throw new Exception("User or password is null");
+                throw new Exception("参数异常，请联系平台");
             }
             // 验证码
             AuthCodeParams code = AuthCodeParams.buildAuthCodeParams(form);
@@ -439,7 +439,7 @@ public class JWTAuthController extends BaseController {
             BeanUtils.populate(form, params);
             // 用户、密码
             if (Strings.isBlank(form.getValidType()) || Strings.isBlank(form.getUserId()) || Strings.isBlank(form.getAuthCode())) {
-                throw new RuntimeException("Parameter error");
+                throw new Exception("参数异常，请联系平台");
             }
             // 用户验证
             User user = dao.queryForObject(User.class, form.getUserId());

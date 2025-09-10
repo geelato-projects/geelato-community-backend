@@ -18,6 +18,7 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
@@ -27,7 +28,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Calendar;
 import java.util.Map;
-
+@Slf4j
 public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private static final String __AuthorizationTag__="Authorization";
     private static final String __JWTTokenTag__="JWTBearer ";
@@ -40,28 +41,28 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) {
-        String upgradeHeader = request.getHeader("Upgrade");
-        if ("websocket".equalsIgnoreCase(upgradeHeader)
-        ||!(handler instanceof HandlerMethod handlerMethod)
+        if (!(handler instanceof HandlerMethod handlerMethod)
         ||handlerMethod.getMethod().isAnnotationPresent(IgnoreVerify.class)) {
             return true;
         }
 
         String token = request.getHeader(__AuthorizationTag__);
         if (token == null) {
-            throw new InvalidTokenException();
+            throw new UnauthorizedException();
         }
+        log.info("handle token:{}",token);
         if (token.startsWith(__JWTTokenTag__)) {
             token = token.replace(__JWTTokenTag__, "");
             try {
                 DecodedJWT verify = JWTUtil.verify(token);
                 String loginName = verify.getClaim("loginName").asString();
                 String passWord = verify.getClaim("passWord").asString();
-                String orgId=verify.getClaim("orgId").asString();
+                String orgId = verify.getClaim("orgId").asString();
                 String tenantCode = verify.getClaim("tenantCode").asString();
 
-                User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName,tenantCode);
-                if(StringUtils.isNotEmpty(orgId)) {
+                log.info("jwt token resolve loginName:{},passWord:{},orgId:{},tenantCode:{}", loginName, passWord, orgId, tenantCode);
+                User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
+                if (StringUtils.isNotEmpty(orgId)) {
                     currentUser.setOrgId(orgId);
                 }
                 SecurityContext.setCurrentUser(currentUser);
@@ -71,7 +72,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                 Subject subject = SecurityUtils.getSubject();
                 subject.login(userToken);
             } catch (Exception e) {
-                throw new InvalidTokenException();
+                throw new UnauthorizedException();
             }
         } else if (token.startsWith(__OAuthTokenTag__)) {
             token = token.replace(__OAuthTokenTag__, "");
@@ -80,12 +81,13 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                 if (user != null) {
                     performOAuth2Login(user, token);
                 } else {
-                    throw new OAuthGetUserFailException();
+                    throw new UnauthorizedException("获取用户信息失败");
                 }
             }catch (Exception e) {
                 // 尝试使用refresh_token刷新访问令牌
                 try {
                     String refreshToken = TokenManager.getRefreshToken(token);
+                    log.info("oauth2 get user fail and refresh token，the refresh token :{}", refreshToken);
                     if (refreshToken != null) {
                         OAuth2ServerTokenResult refreshResult = OAuth2Helper.refreshToken(
                             oAuthConfigurationProperties.getUrl(),
@@ -97,7 +99,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                         if (refreshResult != null && "200".equals(refreshResult.getCode())) {
                             // 更新token映射关系
                             TokenManager.updateTokens(token, refreshResult.getAccess_token(), refreshResult.getRefresh_token());
-                            
+                            log.info("token by refresh token  :{}", refreshResult.getAccess_token());
                             // 使用新的access_token重新获取用户信息
                             cn.geelato.web.common.security.User user = OAuth2Helper.getUserInfo(
                                 oAuthConfigurationProperties.getUrl(), 
@@ -114,11 +116,10 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                     // 刷新token失败，移除无效的token映射
                     TokenManager.removeTokens(token);
                 }
-                
-                throw new OAuthGetUserFailException();
+                throw new UnauthorizedException("OAuth认证失败");
             }
         } else {
-            throw new InvalidTokenException();
+            throw new UnauthorizedException("无效的令牌格式");
         }
         return true;
     }

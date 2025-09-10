@@ -1,7 +1,6 @@
 package cn.geelato.web.common.oauth2;
 
 import cn.geelato.utils.HttpUtils;
-import cn.geelato.web.common.interceptor.InvalidTokenException;
 import com.alibaba.fastjson2.JSON;
 import org.springframework.stereotype.Component;
 

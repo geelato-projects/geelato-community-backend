@@ -1,6 +1,6 @@
 package cn.geelato.web.common.shiro;
 
-import cn.geelato.web.common.interceptor.InvalidTokenException;
+import cn.geelato.web.common.oauth2.InvalidTokenException;
 import cn.geelato.web.common.interceptor.OAuthConfigurationProperties;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
 import cn.geelato.web.common.security.User;
@@ -13,9 +13,7 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Component

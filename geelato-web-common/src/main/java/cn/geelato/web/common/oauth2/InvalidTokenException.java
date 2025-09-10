@@ -1,4 +1,4 @@
-package cn.geelato.web.common.interceptor;
+package cn.geelato.web.common.oauth2;
 
 import cn.geelato.lang.exception.CoreException;
 

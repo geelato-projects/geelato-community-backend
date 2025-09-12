@@ -278,7 +278,15 @@ public class RuleService {
         BoundSql boundSql = sqlManager.generateSaveSql(command);
         String rtnValue;
         try {
-            rtnValue = dao.save(boundSql);
+            String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
+            if (!StringUtils.isEmpty(connectId)) {
+                DynamicDataSourceHolder.setDataSourceKey(connectId);
+                JdbcTemplate jdbcTemplate= new JdbcTemplate(DataSourceManager.singleInstance().getDataSource(connectId));
+                Dao saveDao=new Dao(jdbcTemplate);
+                rtnValue = saveDao.save(boundSql);
+            }else{
+                rtnValue=dao.save(boundSql);
+            }
         } catch (DaoException e) {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
             throw e;

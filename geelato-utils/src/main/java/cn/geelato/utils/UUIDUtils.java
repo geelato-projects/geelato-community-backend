@@ -20,7 +20,7 @@ public class UUIDUtils {
      */
     public static String generateRandom(int extent) {
         extent = extent > 0 ? extent : 4;
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < extent; i++) {
             int randomIndex = (int) Math.floor(Math.random() * CHARS_NUMBER.length());
             sb.append(CHARS_NUMBER.charAt(randomIndex));

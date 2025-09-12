@@ -35,6 +35,7 @@ public class LoginResult {
     private String description;
     private String tenantCode;
     private String cooperatingOrgId;
+    private String companyExtendId;
     private int enableStatus;
     private String unionId;
 

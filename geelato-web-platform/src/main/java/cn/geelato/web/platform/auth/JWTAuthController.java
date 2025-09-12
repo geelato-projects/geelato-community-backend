@@ -157,11 +157,18 @@ public class JWTAuthController extends BaseController {
                     loginResult.setOrgName(userOrg.getName());
                     loginResult.setCompanyId(userOrg.getCompanyId());
                     loginResult.setCompanyName(null);
+                    loginResult.setCompanyExtendId(userOrg.getExtendId());
                 }
             }
+            // 公司名称
             if (StringUtils.isNotBlank(loginResult.getCompanyId()) && StringUtils.isBlank(loginResult.getCompanyName())) {
                 Org org = dao.queryForObject(Org.class, loginResult.getCompanyId());
                 loginResult.setCompanyName(org == null ? null : org.getName());
+            }
+            // 公司形态扩展
+            if (StringUtils.isBlank(loginResult.getCompanyExtendId()) && StringUtils.isNotBlank(loginResult.getOrgId())) {
+                Org org = dao.queryForObject(Org.class, loginResult.getOrgId());
+                loginResult.setCompanyName(org == null ? null : org.getExtendId());
             }
             // 用户所属租户
             List<Tenant> tenantList = queryTenantListByUserId(user.getId());
@@ -204,7 +211,8 @@ public class JWTAuthController extends BaseController {
                         map -> new UserOrg(
                                 map.get("full_name").toString(),
                                 Optional.ofNullable(map.get("dept_id")).map(Object::toString).orElse(null),
-                                Optional.ofNullable(map.get("company_id")).map(Object::toString).orElse(null)
+                                Optional.ofNullable(map.get("company_id")).map(Object::toString).orElse(null),
+                                Optional.ofNullable(map.get("extend_id")).map(Object::toString).orElse(null)
                         )
                 ));
                 // 将full_name设置回UserOrg对象
@@ -214,6 +222,7 @@ public class JWTAuthController extends BaseController {
                         userOrg.setFullName(uo.getFullName());
                         userOrg.setDeptId(uo.getDeptId());
                         userOrg.setCompanyId(uo.getCompanyId());
+                        userOrg.setExtendId(uo.getExtendId());
                     }
                 });
             }

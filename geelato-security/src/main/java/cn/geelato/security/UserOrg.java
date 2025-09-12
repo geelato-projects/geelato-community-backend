@@ -12,7 +12,7 @@ public class UserOrg extends OrgCore {
 
     }
 
-    public UserOrg(String fullName, String deptId, String companyId) {
-        super(null, null, fullName, fullName, deptId, companyId, null);
+    public UserOrg(String fullName, String deptId, String companyId, String extendId) {
+        super(null, null, fullName, fullName, deptId, companyId, extendId, null);
     }
 }

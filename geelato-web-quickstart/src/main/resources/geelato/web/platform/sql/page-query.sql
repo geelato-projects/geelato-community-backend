@@ -337,6 +337,7 @@ SELECT
     p2.status as orgStatus,
     p2.seq_no as orgSeqNo,
     p2.description as orgDescription,
+    p2.extend_id as orgExtendId,
     p3.name as userName,
     p3.en_name as userEnName,
     p3.login_name as userLoginName,

@@ -1,15 +1,16 @@
 package cn.geelato.web.common.security;
 
 
+import cn.geelato.core.meta.model.entity.BaseSortableEntity;
+import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
-import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(name = "platform_org",catalog = "platform")
+@Entity(name = "platform_org", catalog = "platform")
 @Title(title = "组织")
 public class Org extends BaseSortableEntity {
     @Title(title = "组织名称")
@@ -26,4 +27,8 @@ public class Org extends BaseSortableEntity {
     private int status;
     @Title(title = "组织描述")
     private String description;
+
+    @Title(title = "组织形态扩展")
+    @Col(name = "extend_id")
+    private String extendId;
 }

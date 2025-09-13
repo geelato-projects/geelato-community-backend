@@ -127,7 +127,9 @@ WITH RECURSIVE platform_org_tree AS (
         o.del_status,
         o.seq_no,
         CASE WHEN o.type = 'department' THEN o.id ELSE NULL END AS dept_id,
-        CASE WHEN o.type = 'company' THEN o.id ELSE NULL END AS company_id
+        CASE WHEN o.type = 'company' THEN o.id ELSE NULL END AS company_id,
+        CASE WHEN o.type = 'company' THEN o.`name` ELSE NULL END AS company_name,
+        CASE WHEN o.type = 'company' THEN o.extend_id ELSE NULL END AS company_extend_id
     FROM platform_org o WHERE o.pid IS NULL AND o.`status` = 1 AND o.del_status = 0
     UNION ALL
     SELECT
@@ -138,14 +140,16 @@ WITH RECURSIVE platform_org_tree AS (
         CONCAT(ot.full_name, '/', o.`name`) AS full_name,
         o.`status`,
         o.description,
-        o.extend_id,
+        COALESCE(o.extend_id, ot.company_extend_id) AS extend_id,
         o.type,
         o.category,
         o.tenant_code,
         o.del_status,
         o.seq_no,
         CASE WHEN o.type = 'department' THEN o.id ELSE ot.dept_id END AS dept_id,
-        CASE WHEN o.type = 'company' THEN o.id ELSE ot.company_id END AS company_id
+        CASE WHEN o.type = 'company' THEN o.id ELSE ot.company_id END AS company_id,
+        CASE WHEN o.type = 'company' THEN o.name ELSE ot.company_name END AS company_name,
+        COALESCE(CASE WHEN o.type = 'company' THEN o.extend_id END, ot.company_extend_id) AS company_extend_id
     FROM platform_org o JOIN platform_org_tree ot ON o.pid = ot.id WHERE o.`status` = 1 AND o.del_status = 0
 )
 SELECT * FROM platform_org_tree

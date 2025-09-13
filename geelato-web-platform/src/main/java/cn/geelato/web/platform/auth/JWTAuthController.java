@@ -160,15 +160,17 @@ public class JWTAuthController extends BaseController {
                     loginResult.setCompanyExtendId(userOrg.getExtendId());
                 }
             }
-            // 公司名称
-            if (StringUtils.isNotBlank(loginResult.getCompanyId()) && StringUtils.isBlank(loginResult.getCompanyName())) {
+            // 公司相关信息
+            if (StringUtils.isNotBlank(loginResult.getCompanyId())) {
                 Org org = dao.queryForObject(Org.class, loginResult.getCompanyId());
-                loginResult.setCompanyName(org == null ? null : org.getName());
-            }
-            // 公司形态扩展
-            if (StringUtils.isBlank(loginResult.getCompanyExtendId()) && StringUtils.isNotBlank(loginResult.getOrgId())) {
-                Org org = dao.queryForObject(Org.class, loginResult.getOrgId());
-                loginResult.setCompanyName(org == null ? null : org.getExtendId());
+                // 公司形态扩展
+                if (StringUtils.isNotBlank(loginResult.getCompanyExtendId())) {
+                    loginResult.setCompanyExtendId(org == null ? null : org.getExtendId());
+                }
+                // 公司名称
+                if (StringUtils.isBlank(loginResult.getCompanyName())) {
+                    loginResult.setCompanyName(org == null ? null : org.getName());
+                }
             }
             // 用户所属租户
             List<Tenant> tenantList = queryTenantListByUserId(user.getId());

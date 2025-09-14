@@ -133,7 +133,7 @@ public class TenantService extends BaseService {
         role.setCode(defaultRoleCode);
         role.setType(RoleTypeEnum.PLATFORM.getValue());
         role.setWeight(1);
-        role.setUsedApp(true);
+        role.setUsedApp(1);
         role.setEnableStatus(ColumnDefault.ENABLE_STATUS_VALUE);
         role.setTenantCode(tenantCode);
         return roleService.createModel(role);

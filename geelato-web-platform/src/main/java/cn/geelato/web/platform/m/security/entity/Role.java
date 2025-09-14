@@ -37,10 +37,14 @@ public class Role extends BaseSortableEntity implements EntityEnableAble {
     private Integer weight;
     @Title(title = "是否用于应用")
     @Col(name = "used_app")
-    private boolean usedApp = false;
+    private int usedApp;
 
     @Transient
     private String appName;
     @Transient
     private String appIds;
+    @Transient
+    public boolean isUsedApp() {
+        return usedApp > 0;
+    }
 }

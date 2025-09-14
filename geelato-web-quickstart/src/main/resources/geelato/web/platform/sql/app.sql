@@ -69,6 +69,7 @@ SELECT DISTINCT * FROM (
      AND p4.del_status = 0
      AND p2.enable_status = 1
      AND p2.type = 'app'
+     AND p1.apply_status = 1
      AND p1.tenant_code = '$.tenantCode'
      AND p4.id = '$.userId'
    UNION ALL
@@ -87,6 +88,7 @@ SELECT DISTINCT * FROM (
      AND p5.del_status = 0
      AND p2.enable_status = 1
      AND p2.type = 'platform'
+     AND p1.apply_status = 1
      AND p1.tenant_code = '$.tenantCode'
      AND p4.id = '$.userId'
 )t ORDER BY type ASC, seq_no ASC

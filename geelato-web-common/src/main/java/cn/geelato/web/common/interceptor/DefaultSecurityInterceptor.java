@@ -87,6 +87,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                 try {
                     user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
                     if (user != null) {
+                        tokenUserCache.put(token, user);
                         performOAuth2Login(user, token);
                     } else {
                         throw new UnauthorizedException("获取用户信息失败");

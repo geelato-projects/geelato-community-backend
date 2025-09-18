@@ -37,7 +37,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private static final String __OAuthTokenTag__="Bearer ";
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
  
-    private static final ConcurrentHashMap<String, cn.geelato.web.common.security.User> tokenUserCache = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<String, cn.geelato.web.common.security.User> tokenUserCache = new ConcurrentHashMap<>();
 
     public DefaultSecurityInterceptor(OAuthConfigurationProperties config) {
         oAuthConfigurationProperties = config;
@@ -93,38 +93,6 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                         throw new UnauthorizedException("获取用户信息失败");
                     }
                 } catch (Exception e) {
-                    // 尝试使用refresh_token刷新访问令牌
-                    try {
-                        String refreshToken = TokenManager.getRefreshToken(token);
-                        log.info("oauth2 get user fail and refresh token，the refresh token :{}", refreshToken);
-                        if (refreshToken != null) {
-                            OAuth2ServerTokenResult refreshResult = OAuth2Helper.refreshToken(
-                                    oAuthConfigurationProperties.getUrl(),
-                                    oAuthConfigurationProperties.getClientId(),
-                                    oAuthConfigurationProperties.getClientSecret(),
-                                    refreshToken
-                            );
-
-                            if (refreshResult != null && "200".equals(refreshResult.getCode())) {
-                                // 更新token映射关系
-                                TokenManager.updateTokens(token, refreshResult.getAccess_token(), refreshResult.getRefresh_token());
-                                log.info("token by refresh token  :{}", refreshResult.getAccess_token());
-                                // 使用新的access_token重新获取用户信息
-                                user = OAuth2Helper.getUserInfo(
-                                        oAuthConfigurationProperties.getUrl(),
-                                        refreshResult.getAccess_token()
-                                );
-
-                                if (user != null) {
-                                    performOAuth2Login(user, refreshResult.getAccess_token());
-                                    return true;
-                                }
-                            }
-                        }
-                    } catch (Exception refreshException) {
-                        // 刷新token失败，移除无效的token映射
-                        TokenManager.removeTokens(token);
-                    }
                     throw new UnauthorizedException("OAuth认证失败");
                 }
             }

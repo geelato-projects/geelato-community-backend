@@ -1,6 +1,7 @@
 package cn.geelato.web.wework;
 
 import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.slf4j.Logger;
@@ -15,43 +16,62 @@ import java.util.Map;
  */
 public class XmlUtil {
     private static final Logger logger = LoggerFactory.getLogger(XmlUtil.class);
-
+    
     /**
-     * 解析XML字符串为Map
+     * 解析XML为Map
      * @param xml XML字符串
      * @return 解析后的Map
-     * @throws Exception 解析异常
      */
-    public static Map<String, String> parseXml(String xml) throws Exception {
+    public static Map<String, String> parseXmlToMap(String xml) {
         Map<String, String> map = new HashMap<>();
         try {
             Document document = DocumentHelper.parseText(xml);
             Element root = document.getRootElement();
             List<Element> elements = root.elements();
-            for (Element e : elements) {
-                map.put(e.getName(), e.getText());
+            for (Element element : elements) {
+                map.put(element.getName(), element.getTextTrim());
             }
-            return map;
-        } catch (Exception e) {
+        } catch (DocumentException e) {
             logger.error("解析XML异常", e);
-            throw new Exception("解析XML异常");
         }
+        return map;
     }
-
+    
+    /**
+     * 兼容旧方法名
+     * @param xml XML字符串
+     * @return 解析后的Map
+     */
+    public static Map<String, String> parseXml(String xml) {
+        return parseXmlToMap(xml);
+    }
+    
     /**
      * 生成回复消息的XML
      * @param encrypt 加密后的消息内容
-     * @param signature 消息签名
+     * @param signature 签名
      * @param timestamp 时间戳
      * @param nonce 随机数
      * @return XML字符串
      */
-    public static String generateXml(String encrypt, String signature, String timestamp, String nonce) {
+    public static String generateResponseXml(String encrypt, String signature, String timestamp, String nonce) {
         return "<xml>" +
                 "<Encrypt><![CDATA[" + encrypt + "]]></Encrypt>" +
                 "<MsgSignature><![CDATA[" + signature + "]]></MsgSignature>" +
                 "<TimeStamp>" + timestamp + "</TimeStamp>" +
                 "<Nonce><![CDATA[" + nonce + "]]></Nonce>" +
                 "</xml>";
+    }
+    
+    /**
+     * 兼容旧方法名
+     * @param encrypt 加密后的消息内容
+     * @param signature 签名
+     * @param timestamp 时间戳
+     * @param nonce 随机数
+     * @return XML字符串
+     */
+    public static String generateXml(String encrypt, String signature, String timestamp, String nonce) {
+        return generateResponseXml(encrypt, signature, timestamp, nonce);
     }
 }

@@ -15,14 +15,14 @@ import org.springframework.context.annotation.Configuration;
  * ORM模块自动配置类
  * 提供MyBatis Plus和BaseEntity拦截器的自动配置
  */
-@Configuration
+//@Configuration
 public class OrmAutoConfiguration {
 
     /**
      * 配置BaseEntity拦截器
      * @return BaseEntityInterceptor
      */
-    @Bean
+//    @Bean
     public BaseEntityInterceptor baseEntityInterceptor() {
         return new BaseEntityInterceptor();
     }
@@ -31,8 +31,8 @@ public class OrmAutoConfiguration {
      * 配置MyBatis Plus拦截器
      * @return MybatisPlusInterceptor
      */
-    @Bean
-    @ConditionalOnMissingBean
+//    @Bean
+//    @ConditionalOnMissingBean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));

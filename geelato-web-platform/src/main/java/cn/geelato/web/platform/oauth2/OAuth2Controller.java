@@ -62,7 +62,7 @@ public class OAuth2Controller {
      * @param oldToken 旧的访问令牌
      * @return 新的token信息
      */
-    @RequestMapping(value = "/refreshToken", method = RequestMethod.GET)
+    @RequestMapping(value = "/refreshToken", method = RequestMethod.POST)
     public ApiResult<HashMap<String, String>> refreshToken(String oldToken) {
         log.info("开始刷新token，旧token: {}", oldToken);
         

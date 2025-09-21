@@ -80,14 +80,14 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             }
         } else if (token.startsWith(__OAuthTokenTag__)) {
             token = token.replace(__OAuthTokenTag__, "");
-            cn.geelato.web.common.security.User user = null;
+            cn.geelato.web.common.security.User user = tokenUserCache.get(token);
             if(user!=null){
                 performOAuth2Login(user, token);
             }else {
                 try {
                     user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
                     if (user != null) {
-//                        tokenUserCache.put(token, user);
+                        tokenUserCache.put(token, user);
                         performOAuth2Login(user, token);
                     } else {
                         throw new UnauthorizedException("未授权访问[OAUTH2]");

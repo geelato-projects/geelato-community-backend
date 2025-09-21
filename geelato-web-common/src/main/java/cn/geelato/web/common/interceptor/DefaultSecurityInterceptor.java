@@ -76,24 +76,24 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                 Subject subject = SecurityUtils.getSubject();
                 subject.login(userToken);
             } catch (Exception e) {
-                throw new UnauthorizedException();
+                throw new UnauthorizedException("未授权访问[JWT]");
             }
         } else if (token.startsWith(__OAuthTokenTag__)) {
             token = token.replace(__OAuthTokenTag__, "");
-            cn.geelato.web.common.security.User user = tokenUserCache.get(token);
+            cn.geelato.web.common.security.User user = null;
             if(user!=null){
                 performOAuth2Login(user, token);
             }else {
                 try {
                     user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
                     if (user != null) {
-                        tokenUserCache.put(token, user);
+//                        tokenUserCache.put(token, user);
                         performOAuth2Login(user, token);
                     } else {
-                        throw new UnauthorizedException("获取用户信息失败");
+                        throw new UnauthorizedException("未授权访问[OAUTH2]");
                     }
                 } catch (Exception e) {
-                    throw new UnauthorizedException("OAuth认证失败");
+                    throw new UnauthorizedException("未授权访问[OAUTH2]");
                 }
             }
         } else {

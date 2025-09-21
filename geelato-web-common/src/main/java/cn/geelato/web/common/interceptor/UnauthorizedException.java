@@ -8,7 +8,7 @@ import cn.geelato.lang.exception.CoreException;
  */
 public class UnauthorizedException extends CoreException {
     private static final int DEFAULT_CODE = 401;
-    private static final String DEFAULT_MSG = "未授权访问[Unauthorized]";
+    private static final String DEFAULT_MSG = "未授权访问[OAUTH]";
 
     public UnauthorizedException() {
         super(DEFAULT_CODE, DEFAULT_MSG);

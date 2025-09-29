@@ -3,6 +3,7 @@ package cn.geelato.datasource;
 import com.atomikos.jdbc.AtomikosDataSourceBean;
 import com.mysql.cj.jdbc.MysqlXADataSource;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.seata.rm.datasource.DataSourceProxy;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -89,6 +90,7 @@ public class DynamicDataSourceRegistry {
     /**
      * 构建数据源
      */
+    @SneakyThrows
     public DataSource buildDataSource(Map<String, Object> dbConnectMap) {
         String dbType = dbConnectMap.get("db_type").toString().toLowerCase();
         String serverHost = dbConnectMap.get("db_hostname_ip").toString();
@@ -109,6 +111,7 @@ public class DynamicDataSourceRegistry {
                 xaDataSource.setUrl(jdbcUrl);
                 xaDataSource.setUser(dbUserName);
                 xaDataSource.setPassword(dbPassWord);
+                xaDataSource.setAutoReconnect(true);
                 ds.setXaDataSource(xaDataSource);
                 break;
             case "sqlserver":
@@ -120,11 +123,11 @@ public class DynamicDataSourceRegistry {
         }
         
         // 设置连接池参数
-        ds.setMinPoolSize(1);
-        ds.setMaxPoolSize(3);
+        ds.setMinPoolSize(10);
+        ds.setMaxPoolSize(50);
         ds.setMaxIdleTime(60);
+        ds.setMaxLifetime(300000);
         ds.setBorrowConnectionTimeout(30);
-        
         return ds;
     }
 

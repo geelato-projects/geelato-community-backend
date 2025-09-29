@@ -43,7 +43,12 @@ AND p4.del_status = 0 AND p3.del_status = 0
   AND p3.type = '$.type'
 @/if
 @if $.roleId!=null&&$.roleId!=''
-  AND p2.id = '$.roleId'
+  @if $.roleId.indexOf(',')>-1
+    AND p1.role_id IN ($.roleId)
+  @/if
+  @if $.roleId.indexOf(',')==-1
+    AND p2.id = '$.roleId'
+  @/if
 @/if
 @if $.appId!=null&&$.appId!=''
   AND p1.app_id = '$.appId'

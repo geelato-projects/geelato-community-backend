@@ -59,7 +59,7 @@ public class AppVersionController extends BaseController {
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
+    public ApiResult<NullResult> isDelete(@PathVariable String id) {
         try {
             AppVersion model = appVersionService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
@@ -72,7 +72,7 @@ public class AppVersionController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult<AppVersion> get(@PathVariable(required = true) String id) {
+    public ApiResult<AppVersion> get(@PathVariable String id) {
         try {
             AppVersion model = appVersionService.getModel(CLAZZ, id);
             return ApiResult.success(model);
@@ -83,7 +83,7 @@ public class AppVersionController extends BaseController {
     }
 
     @RequestMapping(value = "/package/{id}", method = RequestMethod.GET)
-    public ApiResult<AppPackData> getPackage(@PathVariable(required = true) String id) {
+    public ApiResult<AppPackData> getPackage(@PathVariable String id) {
         try {
             AppVersion appVersion = appVersionService.getModel(CLAZZ, id);
             Assert.notNull(appVersion, "AppVersion does not exist");

@@ -38,10 +38,6 @@ public class User extends UserCore{
     private String defaultOrgId;
     private String defaultOrgName;
 
-
-    //todo define this is wrong?
-    private List<UserMenu> menus;
-
     private List<Permission> dataPermissions;
 
     private List<Permission> elementPermissions;

@@ -8,8 +8,8 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.common.security.Org;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.service.OrgService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -143,6 +143,16 @@ public class OrgRestController extends BaseController {
     public ApiResult getCompany(@PathVariable(required = true) String id) {
         try {
             return ApiResult.success(orgService.getCompany(id));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/getDepartment/{id}", method = RequestMethod.GET)
+    public ApiResult getDepartment(@PathVariable(required = true) String id) {
+        try {
+            return ApiResult.success(orgService.getDepartment(id));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

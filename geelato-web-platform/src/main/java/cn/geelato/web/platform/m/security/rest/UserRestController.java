@@ -12,9 +12,9 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.common.security.Org;
 import cn.geelato.web.common.security.User;
+import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.security.entity.UserStockMap;
 import cn.geelato.web.platform.m.security.service.OrgService;
 import cn.geelato.web.platform.m.security.service.UserService;
@@ -374,9 +374,10 @@ public class UserRestController extends BaseController {
             if (users != null && users.size() > 0) {
                 for (User user : users) {
                     if (Strings.isNotBlank(user.getOrgId())) {
-                        Org org = orgService.getCompany(user.getOrgId());
-                        user.setBuId(org.getId());
-                        user.setDeptId(user.getOrgId());
+                        Org buOrg = orgService.getCompany(user.getOrgId());
+                        user.setBuId(buOrg.getId());
+                        Org deptOrg = orgService.getDepartment(user.getOrgId());
+                        user.setDeptId(deptOrg == null ? user.getOrgId() : deptOrg.getId());
                     } else {
                         user.setBuId(null);
                         user.setDeptId(null);

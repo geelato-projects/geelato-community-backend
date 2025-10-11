@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.m.security.service;
 
-import cn.geelato.web.platform.m.base.service.BaseSortableService;
 import cn.geelato.web.common.security.Org;
-import cn.geelato.web.platform.m.security.entity.OrgUserMap;
 import cn.geelato.web.common.security.User;
+import cn.geelato.web.platform.m.base.service.BaseSortableService;
+import cn.geelato.web.platform.m.security.entity.OrgUserMap;
 import cn.geelato.web.platform.m.security.enums.OrgTypeEnum;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,13 +82,23 @@ public class OrgService extends BaseSortableService {
                 if (OrgTypeEnum.ROOT.getValue().equals(model.getType())) {
                     return model;
                 } else if (OrgTypeEnum.COMPANY.getValue().equals(model.getType())) {
-                    if (Strings.isNotBlank(model.getPid())) {
-                        return getCompany(model.getPid());
-                    } else {
-                        return model;
-                    }
+                    return model;
                 } else if (Strings.isNotBlank(model.getPid())) {
                     return getCompany(model.getPid());
+                }
+            }
+        }
+        return null;
+    }
+
+    public Org getDepartment(String id) {
+        if (Strings.isNotBlank(id)) {
+            Org model = this.getModel(Org.class, id);
+            if (model != null) {
+                if (OrgTypeEnum.DEPT.getValue().equals(model.getType())) {
+                    return model;
+                } else if (Strings.isNotBlank(model.getPid())) {
+                    return getDepartment(model.getPid());
                 }
             }
         }

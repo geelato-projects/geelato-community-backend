@@ -2,12 +2,12 @@ package cn.geelato.web.common.security;
 
 
 import cn.geelato.core.constants.ColumnDefault;
+import cn.geelato.core.meta.model.entity.BaseSortableEntity;
+import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
 import cn.geelato.lang.meta.Transient;
-import cn.geelato.core.meta.model.entity.BaseSortableEntity;
-import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,7 +16,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_user",catalog = "platform")
+@Entity(name = "platform_user", catalog = "platform")
 @Title(title = "用户")
 public class User extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "名称")
@@ -85,6 +85,9 @@ public class User extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "企业微信标识")
     @Col(name = "weixin_work_userId")
     private String weixinWorkUserId;
+    @Title(title = "F9用户主键")
+    @Col(name = "db_user_id")
+    private String dbUserId;
 
     @Title(title = "明文密码", description = "不持久化到数据库，也不显示在Restful接口的属性.")
     @Transient

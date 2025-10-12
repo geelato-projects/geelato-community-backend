@@ -52,7 +52,7 @@ public class JsonTextDeleteParser extends JsonTextParser {
         Map<String, Object> params = new HashMap<>();
         putDeleteDefaultField(sessionCtx,params,validator);
 
-        String[] updateFields = new String[params.keySet().size()];
+        String[] updateFields = new String[params.size()];
         params.keySet().toArray(updateFields);
         command.setFields(updateFields);
         command.setValueMap(params);

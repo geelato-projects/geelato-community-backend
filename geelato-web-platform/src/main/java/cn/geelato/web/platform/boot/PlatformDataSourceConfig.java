@@ -1,5 +1,8 @@
 package cn.geelato.web.platform.boot;
 
+import cn.geelato.orm.handler.BaseEntityMetaObjectHandler;
+import com.baomidou.mybatisplus.core.config.GlobalConfig;
+import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.annotation.MapperScan;
@@ -26,11 +29,16 @@ public class PlatformDataSourceConfig {
      */
     @Bean(name = "platformSqlSessionFactory")
     public SqlSessionFactory platformSqlSessionFactory(
-            @Qualifier("primaryDataSource") DataSource primaryDataSource) throws Exception {
+            @Qualifier("primaryDataSource") DataSource primaryDataSource,
+            MetaObjectHandler baseEntityMetaObjectHandler) throws Exception {
         MybatisSqlSessionFactoryBean mybatisSqlSessionFactoryBean = new MybatisSqlSessionFactoryBean();
         mybatisSqlSessionFactoryBean.setDataSource(primaryDataSource);
         mybatisSqlSessionFactoryBean.setMapperLocations(new PathMatchingResourcePatternResolver()
                 .getResources("classpath*:mapper/platform/*Mapper.xml"));
+
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setMetaObjectHandler(baseEntityMetaObjectHandler); // 关联你的处理器
+        mybatisSqlSessionFactoryBean.setGlobalConfig(globalConfig);
         return mybatisSqlSessionFactoryBean.getObject();
     }
 }

@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.m.meta;
 
 import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.test.annotation.GeelatoTest;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
@@ -31,6 +32,7 @@ public class MetaController extends BaseController {
     private final MetaManager metaManager = MetaManager.singleInstance();
 
 
+    @GeelatoTest(description = "元数据列表查询测试")
     @RequestMapping(value = {"/list", "list/*"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiPagedResult<?> list(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
         String gql = getGql("query");
@@ -40,6 +42,7 @@ public class MetaController extends BaseController {
     /**
      * 多列表查询，一次查询返回多个列表
      */
+    @GeelatoTest(description = "元数据多列表查询测试")
     @RequestMapping(value = {"/multiList"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMultiPagedResult<?> multiList(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
         String gql = getGql(null);
@@ -50,29 +53,34 @@ public class MetaController extends BaseController {
      * @param biz 业务代码
      * @return SaveResult
      */
+    @GeelatoTest(description = "元数据保存测试")
     @RequestMapping(value = {"/save/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<?> save(@PathVariable("biz") String biz) throws DaoException {
         String gql = getGql("save");
         return ApiMetaResult.success(ruleService.save(biz, gql));
     }
 
+    @GeelatoTest(description = "元数据批量保存测试")
     @RequestMapping(value = {"/batchSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<?> batchSave() throws DaoException {
         String gql = getGql("batchSave");
         return ApiMetaResult.success(ruleService.batchSave(gql, true));
     }
 
+    @GeelatoTest(description = "元数据多保存测试")
     @RequestMapping(value = {"/multiSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<?> multiSave() {
         String gql = getGql("multiSave");
         return ApiMetaResult.success(ruleService.multiSave(gql));
     }
 
+    @GeelatoTest(description = "元数据删除测试")
     @RequestMapping(value = {"/delete/{biz}/{id}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<Integer> delete(@PathVariable("biz") String biz, @PathVariable("id") String id) {
         return ApiResult.success(ruleService.delete(biz, id));
     }
 
+    @GeelatoTest(description = "元数据删除2测试")
     @RequestMapping(value = {"/delete2/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<Integer> delete(@PathVariable("biz") String biz) {
         String gql = getGql("delete2");
@@ -84,6 +92,7 @@ public class MetaController extends BaseController {
      *
      * @param entityOrQueryKey 实体名称或查询键
      */
+    @GeelatoTest(description = "元数据定义查询测试")
     @RequestMapping(value = {"/defined/{entityOrQueryKey}"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<?> defined(@PathVariable("entityOrQueryKey") String entityOrQueryKey) {
         if (metaManager.containsEntity(entityOrQueryKey)) {
@@ -96,6 +105,7 @@ public class MetaController extends BaseController {
     /**
      * 获取实体名称列表
      */
+    @GeelatoTest(description = "实体名称列表查询测试")
     @RequestMapping(value = {"/entityNames"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> entityNames() {
         return ApiResult.success(metaManager.getAllEntityNames());
@@ -104,6 +114,7 @@ public class MetaController extends BaseController {
     /**
      * 获取指定应用下的精简版实体元数据信息列表
      */
+    @GeelatoTest(description = "精简版实体元数据查询测试")
     @RequestMapping(value = {"/entityLiteMetas"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> queryLiteEntities() {
         return ApiResult.success(metaManager.getAllEntityLiteMetas());
@@ -116,6 +127,7 @@ public class MetaController extends BaseController {
      * @param biz 业务代码
      * @return ApiResult
      */
+    @GeelatoTest(description = "通用树数据查询测试")
     @RequestMapping(value = {"/tree/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> treeNodeList(@RequestParam String entity, @RequestParam Long treeId, @PathVariable String biz) {
         return ruleService.queryForTreeNodeList(entity, treeId);
@@ -129,6 +141,7 @@ public class MetaController extends BaseController {
     /**
      * 唯一性校验
      */
+    @GeelatoTest(description = "唯一性校验测试")
     @RequestMapping(value = {"/uniqueness"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> uniqueness() {
         String gql = getGql("query");

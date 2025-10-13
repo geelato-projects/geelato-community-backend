@@ -37,7 +37,7 @@ public class PlatformDataSourceConfig {
                 .getResources("classpath*:mapper/platform/*Mapper.xml"));
 
         GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setMetaObjectHandler(baseEntityMetaObjectHandler); // 关联你的处理器
+        globalConfig.setMetaObjectHandler(baseEntityMetaObjectHandler);
         mybatisSqlSessionFactoryBean.setGlobalConfig(globalConfig);
         return mybatisSqlSessionFactoryBean.getObject();
     }

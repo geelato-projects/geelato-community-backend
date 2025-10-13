@@ -77,7 +77,7 @@ public class User extends BaseSortableEntity implements EntityEnableAble {
     @Col(name = "cooperating_org_id")
     private String cooperatingOrgId;
     @Title(title = "启用状态", description = "1表示启用、0表示未启用")
-    @Col(name = "enable_status", nullable = false, dataType = "tinyint", numericPrecision = 1)
+    @Col(name = "enable_status")
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
     @Title(title = "微信用户统一标识")
     @Col(name = "union_id")
@@ -96,11 +96,4 @@ public class User extends BaseSortableEntity implements EntityEnableAble {
     private boolean stocked;
     @Transient
     private String orgUserPost;
-
-    public User() {
-    }
-
-    public User(String id) {
-        this.setId(id);
-    }
 }

@@ -11,7 +11,7 @@ import java.util.Map;
 public class Tenant {
     private String code;
     private String name;
-    private Map<String, Object> config;
+    private Map<String, Object> configuration;
     private Map<String,Object> properties;
 
     public Tenant(String code) {
@@ -27,7 +27,7 @@ public class Tenant {
 
     private void initConfigAndProperties() {
         //todo
-        this.config = new HashMap<>();
+        this.configuration = new HashMap<>();
         this.properties = new HashMap<>();
     }
 }

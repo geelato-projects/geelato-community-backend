@@ -269,8 +269,8 @@ public class WeixinWorkController extends BaseController {
             }
 
             try {
-                String corpId = SecurityContext.getCurrentTenant().getConfig().getOrDefault("corpId", "wwfed14f2fada336fd").toString();
-                String corpSecret = SecurityContext.getCurrentTenant().getConfig().getOrDefault("corpSecret", "Pm4fjHTNfP5epQ4Ai5w0zJ_1OD8V4-HQXkJcz1xkOOY").toString();
+                String corpId = SecurityContext.getCurrentTenant().getConfiguration().getOrDefault("corpId", "wwfed14f2fada336fd").toString();
+                String corpSecret = SecurityContext.getCurrentTenant().getConfiguration().getOrDefault("corpSecret", "Pm4fjHTNfP5epQ4Ai5w0zJ_1OD8V4-HQXkJcz1xkOOY").toString();
                 String url = weixinWorkConfig.getApiBaseUrl() + "/gettoken?corpid=" + corpId + "&corpsecret=" + corpSecret;
                 
                 log.info("正在获取企业微信访问令牌...");

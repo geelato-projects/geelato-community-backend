@@ -1,11 +1,11 @@
 package cn.geelato.web.platform.message.controller;
 
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.message.mapper.PlatformMsgMapper;
+import cn.geelato.message.model.PlatformMsg;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.message.entity.PlatformMsg;
 import cn.geelato.web.platform.message.entity.UniMsg;
-import cn.geelato.web.platform.message.mapper.PlatformMsgMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

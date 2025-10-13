@@ -40,6 +40,16 @@
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </layout>
     </appender>
+    <appender name="messageLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>log/message/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <maxHistory>10</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </layout>
+    </appender>
     <appender name="interceptorLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -56,6 +66,10 @@
     </logger>
     <logger name="cn.geelato.auth" additivity="false">
         <appender-ref ref="authLogFile"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.message" additivity="false">
+        <appender-ref ref="messageLogFile"/>
         <appender-ref ref="console"/>
     </logger>
     <logger name="cn.geelato.web.common.interceptor" additivity="false">

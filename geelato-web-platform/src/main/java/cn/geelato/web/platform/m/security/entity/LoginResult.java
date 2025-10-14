@@ -37,7 +37,7 @@ public class LoginResult {
     private String cooperatingOrgId;
     private String companyExtendId;
     private int enableStatus;
-    private String unionId;
+    private String weixinUnionId;
 
     // 角色编码，逗号分割
     private String roleCodes;
@@ -79,7 +79,7 @@ public class LoginResult {
         loginResult.setCooperatingOrgId(user.getCooperatingOrgId());
         loginResult.setEnableStatus(user.getEnableStatus());
         loginResult.setCompanyId(user.getBuId());
-        loginResult.setUnionId(user.getUnionId());
+        loginResult.setWeixinUnionId(user.getWeixinUnionId());
         return loginResult;
     }
 }

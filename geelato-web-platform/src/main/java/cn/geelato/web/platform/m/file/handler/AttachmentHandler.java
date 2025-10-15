@@ -71,6 +71,11 @@ public abstract class AttachmentHandler<E extends Attachment> {
     public abstract E update(E attachment);
 
     /**
+     * 创建附件信息
+     */
+    public abstract E create(E attachment);
+
+    /**
      * 上传文件并保存到磁盘和数据库，同时可选生成缩略图
      *
      * @param file 要上传的文件
@@ -82,6 +87,8 @@ public abstract class AttachmentHandler<E extends Attachment> {
 
     public abstract E upload(String base64String, String name, String path, ThumbnailParam param) throws IOException;
 
+    public abstract E upload(File file, String name, String path, ThumbnailParam param) throws IOException;
+
     public abstract E thumbAndSave(File file, String name, String path, ThumbnailParam param) throws IOException;
 
     public List<ThumbnailResolution> createThumbnail(File file, String fileName, String attachmentSource, String appId, String tenantCode, String dimension, String thumbScale) throws IOException {
@@ -90,7 +97,7 @@ public abstract class AttachmentHandler<E extends Attachment> {
         List<Resolution> thumbResolutions = ThumbnailUtils.resolution(file, dimension, thumbScale);
         if (!thumbResolutions.isEmpty()) {
             for (Resolution resolution : thumbResolutions) {
-                String thumbPath = UploadService.getRootSavePath( attachmentSource, tenantCode, appId, fileName, true);
+                String thumbPath = UploadService.getRootSavePath(attachmentSource, tenantCode, appId, fileName, true);
                 File thumbFile = new File(thumbPath);
                 ThumbnailUtils.thumbnail(file, thumbFile, resolution);
                 if (!thumbFile.exists()) {

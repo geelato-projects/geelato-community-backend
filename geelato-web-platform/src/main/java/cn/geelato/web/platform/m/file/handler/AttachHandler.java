@@ -100,6 +100,16 @@ public class AttachHandler extends AttachmentHandler<Attach> {
     }
 
     /**
+     * 创建附件信息
+     *
+     * @param attachment
+     */
+    @Override
+    public Attach create(Attach attachment) {
+        return attachService.createModel(attachment);
+    }
+
+    /**
      * 上传文件并保存到磁盘和数据库，同时可选生成缩略图
      *
      * @param file 要上传的文件
@@ -119,6 +129,14 @@ public class AttachHandler extends AttachmentHandler<Attach> {
     public Attach upload(String base64String, String name, String path, ThumbnailParam param) throws IOException {
         // 保存文件到磁盘
         FileUtils.saveFile(base64String, path);
+        // 附件存附件表
+        return thumbAndSave(FileUtils.pathToFile(path), name, path, param);
+    }
+
+    @Override
+    public Attach upload(File file, String name, String path, ThumbnailParam param) throws IOException {
+        // 保存文件到磁盘
+        FileUtils.copyToFile(file, path);
         // 附件存附件表
         return thumbAndSave(FileUtils.pathToFile(path), name, path, param);
     }

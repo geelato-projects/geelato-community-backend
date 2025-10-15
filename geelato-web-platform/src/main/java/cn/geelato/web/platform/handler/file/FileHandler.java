@@ -63,8 +63,17 @@ public class FileHandler extends BaseHandler {
         if (AttachmentServiceEnum.ALIYUN.getValue().equalsIgnoreCase(param.getServiceType())) {
             return uploadCloud(base64String, name, param);
         } else {
-            String path = UploadService.getRootSavePath(param.getSourceType(), param.getTenantCode(), param.getAppId(), name, false);
+            String path = UploadService.getRootSavePath(param.getSourceType(), param.getTenantCode(), param.getAppId(), name, true);
             return uploadLocal(base64String, name, path, param);
+        }
+    }
+
+    public Attachment upload(File file, String name, FileParam param) throws IOException {
+        if (AttachmentServiceEnum.ALIYUN.getValue().equalsIgnoreCase(param.getServiceType())) {
+            return uploadCloud(file, name, param);
+        } else {
+            String path = UploadService.getRootSavePath(param.getSourceType(), param.getTenantCode(), param.getAppId(), name, true);
+            return uploadLocal(file, name, path, param);
         }
     }
 

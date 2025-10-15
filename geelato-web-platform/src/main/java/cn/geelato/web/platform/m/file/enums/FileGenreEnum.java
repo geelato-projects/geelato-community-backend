@@ -10,5 +10,7 @@ public enum FileGenreEnum {
     TOPDF,
     uploadVersion,
     UpdateStorage,
-    Replace;
+    Replace,
+    Copy,
+    Quote;
 }

@@ -4,9 +4,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
-import cn.geelato.utils.SqlParams;
-import cn.geelato.utils.StringUtils;
-import cn.geelato.utils.UIDGenerator;
+import cn.geelato.utils.*;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
@@ -14,6 +12,8 @@ import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentServiceEnum;
 import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
+import cn.geelato.web.platform.m.file.param.FileParam;
+import cn.geelato.web.platform.m.file.utils.FileParamUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -44,6 +44,86 @@ public class AttachController extends BaseController {
     @Autowired
     public AttachController(FileHandler fileHandler) {
         this.fileHandler = fileHandler;
+    }
+
+    /**
+     * 复制附件
+     * 复制一份新的文件。Copy
+     *
+     * @param id 要复制的附件ID
+     * @return 新的附件对象
+     */
+    @RequestMapping(value = "/copy/{id}", method = RequestMethod.POST)
+    public ApiResult<?> copy(@PathVariable(required = true) String id, @RequestBody Map<String, Object> requestMap) throws IOException {
+        String genre = (String) requestMap.get("genre");
+        String name = (String) requestMap.get("name");
+        Date invalidTime = DateUtils.parse((String) requestMap.get("invalidTime"), DateUtils.DATETIME);
+        log.info("copy attachment id: {}, genre: {}, name: {}, invalidTime: {}", id, genre, name, invalidTime);
+        // 1. 查询
+        Attachment attachment = fileHandler.getAttachment(id);
+        // 2. 检查是否存在
+        if (attachment == null) {
+            return ApiResult.fail("附件不存在!");
+        }
+        // 3. 找到文件
+        File file = fileHandler.toFile(attachment);
+        if (file == null || !file.exists()) {
+            return ApiResult.fail("文件不存在!");
+        }
+        // 3.5,文件名称处理
+        if (StringUtils.isNotBlank(name)) {
+            name = String.format("%s.%s", FileUtils.getFileName(name), FileUtils.getFileExtensionWithNoDot(attachment.getName()));
+        } else {
+            name = attachment.getName();
+        }
+        // 4. 上传文件
+        FileParam fileParam = FileParamUtils.by(attachment.getStorageType(), attachment.getSource(), null, null, attachment.getGenre(), invalidTime, null, attachment.getAppId(), attachment.getTenantCode(), null, null, null, null);
+        Attachment copyAttachment = fileHandler.upload(file, StringUtils.isBlank(name) ? attachment.getName() : name, fileParam);
+        // 5. 处理附件属性
+        copyAttachment.handleGenre(genre, FileGenreEnum.Copy.name());
+        copyAttachment.setPid(attachment.getPid());
+        copyAttachment.setResolution(attachment.getResolution());
+        copyAttachment.setSource(attachment.getSource());
+        copyAttachment.setStorageType(attachment.getStorageType());
+        fileHandler.updateAttachment(copyAttachment);
+        return ApiResult.success(copyAttachment);
+    }
+
+    /**
+     * 引用附件,返回新的附件对象
+     * 引用一份已存在的文件，路径一致。Quote，pid
+     *
+     * @param id 要引用的附件ID
+     * @return 新的附件对象
+     */
+    @RequestMapping(value = "/quote/{id}", method = RequestMethod.POST)
+    public ApiResult<?> quote(@PathVariable(required = true) String id, @RequestBody Map<String, Object> requestMap) {
+        String genre = (String) requestMap.get("genre");
+        String name = (String) requestMap.get("name");
+        Date invalidTime = DateUtils.parse((String) requestMap.get("invalidTime"), DateUtils.DATETIME);
+        log.info("quote attachment id: {}, genre: {}, name: {}, invalidTime: {}", id, genre, name, invalidTime);
+        // 1. 查询
+        Attachment attachment = fileHandler.getAttachment(id);
+        // 2. 检查是否存在
+        if (attachment == null) {
+            return ApiResult.fail("附件不存在!");
+        }
+        // 2.5,文件名称处理
+        if (StringUtils.isNotBlank(name)) {
+            name = String.format("%s.%s", FileUtils.getFileName(name), FileUtils.getFileExtensionWithNoDot(attachment.getName()));
+        } else {
+            name = attachment.getName();
+        }
+        // 3. 检查是否已引用
+        if (attachment.getGenre() == null || !attachment.getGenre().contains(FileGenreEnum.Quote.name())) {
+            attachment.setPid(attachment.getId());
+        }
+        attachment.handleGenre(genre, FileGenreEnum.Quote.name());
+        attachment.setName(StringUtils.isBlank(name) ? attachment.getName() : name);
+        attachment.setInvalidTime(invalidTime);
+        attachment.setId(null);
+        Attachment quoteAttachment = fileHandler.createAttachment(attachment);
+        return ApiResult.success(quoteAttachment);
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)

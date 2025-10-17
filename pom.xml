@@ -21,6 +21,7 @@
         <module>geelato-reactor-platform</module>
         <module>geelato-web-quickstart</module>
         <module>geelato-plugin-manager</module>
+        <module>geelato-test</module>
     </modules>
     <dependencies>
         <dependency>

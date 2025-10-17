@@ -255,7 +255,7 @@ SELECT
     p3.mobile_phone as userMobilePhone,
     p3.job_number as userJobNumber,
     p3.cooperating_org_id as userCooperatingOrgId,
-    p3.union_id as userUnionId,
+    p3.weixin_unionId as userWeixinUnionId,
     p3.enable_status as userEnableStatus,
     p3.description as userDescription
 FROM platform_role_r_user p1
@@ -353,7 +353,7 @@ SELECT
     p3.mobile_phone as userMobilePhone,
     p3.job_number as userJobNumber,
     p3.cooperating_org_id as userCooperatingOrgId,
-    p3.union_id as userUnionId,
+    p3.weixin_unionId as userWeixinUnionId,
     p3.enable_status as userEnableStatus,
     p3.description as userDescription
 FROM platform_org_r_user p1

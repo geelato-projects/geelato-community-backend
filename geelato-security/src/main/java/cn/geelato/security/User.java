@@ -33,7 +33,7 @@ public class User extends UserCore{
     private String cooperatingOrgId;
     private int enableStatus;
     private boolean stocked;
-    private String unionId;
+    private String weixinUnionId;
     private String deptId;
     private String defaultOrgId;
     private String defaultOrgName;

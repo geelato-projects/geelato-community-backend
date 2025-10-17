@@ -46,7 +46,7 @@ public class WeChatController extends BaseController {
     public ApiResult<Null> signOut(@PathVariable(required = true) String id) {
         User user = userService.getModel(CLAZZ, id);
         Assert.notNull(user, ApiErrorMsg.IS_NULL);
-        user.setUnionId(null);
+        user.setWeixinUnionId(null);
         userService.updateModel(user);
         return ApiResult.successNoResult();
     }
@@ -70,13 +70,13 @@ public class WeChatController extends BaseController {
         }
         // 判断是否已经绑定过微信
         Map<String, Object> params = new HashMap<>();
-        params.put("unionId", access.getUnionid());
+        params.put("weixinUnionId", access.getUnionid());
         List<User> userList = userService.queryModel(CLAZZ, params);
         if (userList != null && !userList.isEmpty()) {
             return ApiResult.fail("The unionId of weChat has been occupied");
         }
         // 绑定微信
-        user.setUnionId(access.getUnionid());
+        user.setWeixinUnionId(access.getUnionid());
         userService.updateModel(user);
         return ApiResult.successNoResult();
     }

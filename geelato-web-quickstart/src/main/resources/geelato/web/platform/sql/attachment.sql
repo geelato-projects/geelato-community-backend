@@ -60,8 +60,14 @@ FROM (
 @if $.path!=null&&$.path!=''
   AND p.path like '%$.path%'
 @/if
+@if $.pathUrl!=null&&$.pathUrl!=''
+  AND p.path = '%$.pathUrl%'
+@/if
 @if $.genre!=null&&$.genre!=''
     AND p.genre like '%$.genre%'
+@/if
+@if $.genref!=null&&$.genref!=''
+  AND find_in_set('$.genref', p.genre)
 @/if
 @if $.invalidTime!=null&&$.invalidTime!=''
   AND p.invalid_time = '$.invalidTime'

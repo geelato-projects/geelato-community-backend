@@ -1,9 +1,11 @@
 package cn.geelato.web.platform.m.file.handler;
 
+import cn.geelato.utils.SqlParams;
 import cn.geelato.web.platform.m.file.entity.Attach;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.entity.Compress;
 import cn.geelato.web.platform.m.file.entity.Resources;
+import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
@@ -45,6 +47,13 @@ public class AccessoryHandler {
     }
 
     /**
+     * 上传到本地磁盘（File）
+     */
+    public <T extends Attachment> T upload(File file, String name, String path, FileParam param) throws IOException {
+        return (T) getAttachHandler(param.getSourceType()).upload(file, name, path, param.toThumbnailParam());
+    }
+
+    /**
      * 保存文件信息（MultipartFile）
      */
     public <T extends Attachment> T save(MultipartFile file, String path, FileParam param) {
@@ -76,6 +85,22 @@ public class AccessoryHandler {
         } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
             Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
             return resourcesHandler.update(model);
+        }
+        return null;
+    }
+
+    public Attachment createAttachment(Attachment attachment) {
+        attachment.handleGenre();
+        attachment.setId(null);
+        if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
+            return attachHandler.create(model);
+        } else if (CompressHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
+            return compressHandler.create(model);
+        } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
+            return resourcesHandler.create(model);
         }
         return null;
     }
@@ -137,31 +162,55 @@ public class AccessoryHandler {
             List<Attachment> attachments = attachmentHandler.list("pids", id);
             for (Attachment attachment : attachments) {
                 if (isRemoved && Strings.isBlank(attachment.getObjectId())) {
-                    // 物理删除附件的原图和缩略图（本地存储）
-                    if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
-                        Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
-                        attachHandler.delete(model);
-                    } else if (CompressHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
-                        Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
-                        compressHandler.delete(model);
-                    } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
-                        Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
-                        resourcesHandler.delete(model);
+                    // 引用附件，仅需删除附件信息
+                    if (attachment.getGenre() != null && attachment.getGenre().contains(FileGenreEnum.Quote.name())) {
+                        isDelete(attachment);
+                    } else {
+                        // 物理删除附件的原图和缩略图（本地存储）
+                        delete(attachment);
+                        // 将同一个path的其他附件也删除
+                        deleteSamePaths(attachmentHandler, attachment);
                     }
                 } else {
                     // 逻辑删除附件的原图和缩略图
-                    if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
-                        Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
-                        attachHandler.isDelete(model);
-                    } else if (CompressHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
-                        Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
-                        compressHandler.isDelete(model);
-                    } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
-                        Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
-                        resourcesHandler.isDelete(model);
-                    }
+                    isDelete(attachment);
                 }
             }
+        }
+    }
+
+    public void deleteSamePaths(AttachmentHandler<?> attachmentHandler, Attachment attachment) {
+        List<Attachment> quoteAttachments = attachmentHandler.list(SqlParams.map("pathUrl", attachment.getPath()));
+        if (!quoteAttachments.isEmpty()) {
+            for (Attachment quoteAttachment : quoteAttachments) {
+                isDelete(quoteAttachment);
+            }
+        }
+    }
+
+    public void delete(Attachment attachment) {
+        if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
+            attachHandler.delete(model);
+        } else if (CompressHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
+            compressHandler.delete(model);
+        } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
+            resourcesHandler.delete(model);
+        }
+    }
+
+    public void isDelete(Attachment attachment) {
+        if (AttachHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Attach model = JSON.parseObject(JSON.toJSONString(attachment), Attach.class);
+            attachHandler.isDelete(model);
+        } else if (CompressHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Compress model = JSON.parseObject(JSON.toJSONString(attachment), Compress.class);
+            compressHandler.isDelete(model);
+        } else if (ResourcesHandler.ATTACHMENT_SOURCE.equalsIgnoreCase(attachment.getSource())) {
+            Resources model = JSON.parseObject(JSON.toJSONString(attachment), Resources.class);
+            resourcesHandler.isDelete(model);
         }
     }
 

@@ -69,6 +69,10 @@ public class BaseHandler {
         return accessoryHandler.updateAttachment(attachment);
     }
 
+    public Attachment createAttachment(Attachment attachment) {
+        return accessoryHandler.createAttachment(attachment);
+    }
+
     public void updateId(String tableType, String sourceId, String targetId, boolean isDelete) {
         accessoryHandler.updateId(tableType, sourceId, targetId, isDelete);
     }
@@ -131,6 +135,10 @@ public class BaseHandler {
      */
     public Attachment uploadLocal(String base64String, String name, String path, FileParam param) throws IOException {
         return accessoryHandler.upload(base64String, name, path, param);
+    }
+
+    public Attachment uploadLocal(File file, String name, String path, FileParam param) throws IOException {
+        return accessoryHandler.upload(file, name, path, param);
     }
 
     /**

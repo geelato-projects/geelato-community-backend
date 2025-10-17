@@ -21,6 +21,9 @@ call mvn clean install -U -D maven.test.skip=true
 cd ../geelato-web-common
 call mvn clean install -U -D maven.test.skip=true
 
+cd ../geelato-orm
+call mvn clean install -U -D maven.test.skip=true
+
 cd ../geelato-dynamic-datasource
 call mvn clean install -U -D maven.test.skip=true
 

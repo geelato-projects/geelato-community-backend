@@ -5,6 +5,7 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.platform.cache.CacheUtil;
 import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
@@ -128,6 +129,16 @@ public class RolePermissionMapService extends BaseService {
                 if (!isExist) {
                     this.createByRoleAndPermission(role, permission);
                 }
+            }
+        }
+        // 刷新缓存
+        List<String> objList = permissions.stream()
+                .filter(permission -> PermissionTypeEnum.ELEMENT.getValue().equals(permission.getType()))
+                .map(Permission::getObject).filter(object -> object != null && !object.isEmpty()).distinct().collect(Collectors.toList());
+        if (objList != null && objList.size() > 0) {
+            for (String object : objList) {
+                String patternKey = String.format("platform_app_page_permission_%s*", object);
+                CacheUtil.removeByPattern(patternKey);
             }
         }
     }

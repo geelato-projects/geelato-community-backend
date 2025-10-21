@@ -147,6 +147,29 @@ public class ExportExcelController extends BaseController {
         }
     }
 
+    @RequestMapping(value = "/toPdf/{id}", method = RequestMethod.GET)
+    public ApiResult<String> toPdf(@PathVariable String id) {
+        try {
+            java.io.File excelFile = fileHandler.toFile(id);
+            if (excelFile == null || !excelFile.exists()) {
+                return ApiResult.fail("文件不存在");
+            }
+            Attachment originalAttachment = fileHandler.getAttachment(id);
+            if (originalAttachment == null) {
+                return ApiResult.fail("附件信息不存在");
+            }
+            Attachment pdfAttachment = fileHandler.toPdf(AttachmentSourceEnum.ATTACH.getValue(), originalAttachment, FileGenreEnum.exportFile.name());
+            if (pdfAttachment != null) {
+                return ApiResult.success(pdfAttachment.getId());
+            } else {
+                return ApiResult.fail("PDF转换失败");
+            }
+        } catch (Exception e) {
+            log.error("Excel转PDF失败: {}", e.getMessage(), e);
+            return ApiResult.fail("Excel转PDF失败: " + e.getMessage());
+        }
+    }
+
     /**
      * 根据参数下载文件或将其转换为PDF格式。
      *

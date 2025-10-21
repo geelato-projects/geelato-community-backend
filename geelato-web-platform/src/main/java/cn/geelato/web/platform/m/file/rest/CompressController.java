@@ -1,8 +1,6 @@
 package cn.geelato.web.platform.m.file.rest;
 
-import cn.geelato.core.meta.model.entity.EntityMeta;
-import cn.geelato.datasource.DynamicDataSourceHolder;
-import cn.geelato.lang.api.ApiPagedResult;
+
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.SqlParams;
@@ -15,10 +13,8 @@ import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.param.CompressRequestBody;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
-import cn.geelato.web.platform.utils.GqlResolveException;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,19 +36,19 @@ public class CompressController extends BaseController {
     }
 
     @RequestMapping(value = "/by/fileIds", method = RequestMethod.POST)
-    public ApiResult byFileIds(@RequestBody Map<String, Object> params) throws IOException {
+    public ApiResult<?> byFileIds(@RequestBody Map<String, Object> params) throws IOException {
         CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
         return build(compBody);
     }
 
     @RequestMapping(value = "/by/batch", method = RequestMethod.POST)
-    public ApiResult byBatchNos(@RequestBody Map<String, Object> params) throws IOException {
+    public ApiResult<?> byBatchNos(@RequestBody Map<String, Object> params) throws IOException {
         CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
         return build(compBody);
     }
 
     @RequestMapping(value = "/by/{type}/{column}", method = RequestMethod.POST)
-    public ApiResult downloadFiles(@PathVariable(required = true) String type, @PathVariable(required = true) String column, @RequestBody Map<String, Object> params) throws Exception {
+    public ApiResult<?> downloadFiles(@PathVariable(required = true) String type, @PathVariable(required = true) String column, @RequestBody Map<String, Object> params) throws Exception {
         List<String> attachmentIds = new ArrayList<>();
         // 参数
         String ids = Objects.toString(params.get("attachmentIds"), "");
@@ -95,7 +91,7 @@ public class CompressController extends BaseController {
                 attachmentIds = StringUtils.toListDr(ids);
             }
         }
-        if (attachmentIds != null && !attachmentIds.isEmpty()) {
+        if (!attachmentIds.isEmpty()) {
             attachmentIds = listStream(attachmentIds);
         } else {
             throw new RuntimeException("附件不存在!");
@@ -105,7 +101,7 @@ public class CompressController extends BaseController {
 
     private List<String> listStream(List<String> list) {
         return list == null ? new ArrayList<>() : list.stream()
-                .filter(s -> s != null) // 去null
+                .filter(Objects::nonNull) // 去null
                 .map(String::trim)      // 去除字符串两端的空白
                 .filter(s -> !s.isBlank()) // 去空字符串
                 .distinct()             // 去重
@@ -113,18 +109,10 @@ public class CompressController extends BaseController {
     }
 
     @RequestMapping(value = "/by/thumb", method = RequestMethod.POST)
-    public ApiResult byThumbs(@RequestBody Map<String, Object> params) throws IOException {
+    public ApiResult<?> byThumbs(@RequestBody Map<String, Object> params) throws IOException {
         CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
         compBody.setAttachmentIds(buildThumb(compBody.getAttachmentIds()));
         return build(compBody);
-    }
-
-    @RequestMapping(value = "/meta", method = RequestMethod.POST)
-    public ApiResult meta(@RequestBody Map<String, Object> params) throws IOException {
-        // CompressRequestBody compBody = JSON.parseObject(JSON.toJSONString(params), CompressRequestBody.class);
-        // List<String> attachmentIds = getAttachmentIdsByGql(compBody.getGql());
-        // return build(compBody, attachmentIds);
-        return ApiResult.successNoResult();
     }
 
     private String buildThumb(String attachmentIds) {
@@ -138,13 +126,9 @@ public class CompressController extends BaseController {
         return String.join(",", ids);
     }
 
-    private ApiResult build(CompressRequestBody compBody, List<String> attachmentIds) throws IOException {
-        compBody.setAttachmentIds(String.join(",", attachmentIds));
-        return build(compBody);
-    }
 
-    private ApiResult build(CompressRequestBody compBody) throws IOException {
-        if (compBody.getValidDuration() != null && compBody.getValidDuration().intValue() > 0) {
+    private ApiResult<?> build(CompressRequestBody compBody) throws IOException {
+        if (compBody.getValidDuration() != null && compBody.getValidDuration() > 0) {
             Date invalidTime = DateUtils.calculateTime(compBody.getValidDuration().toString(), TimeUnitEnum.SECOND.name());
             compBody.setInvalidTime(invalidTime);
         }
@@ -163,37 +147,4 @@ public class CompressController extends BaseController {
         return ApiResult.success(result);
     }
 
-    /**
-     * 通过GQL查询获取附件ID列表
-     *
-     * @param gql GQL查询语句
-     * @return 包含所有查询到的附件ID的列表
-     * @throws GqlResolveException 如果GQL查询语句为空，则抛出此异常
-     */
-    private List<String> getAttachmentIdsByGql(String gql) {
-        List<String> attachmentIds = new ArrayList<>();
-        // 检查gql是否为空
-        if (StringUtils.isEmpty(gql)) {
-            throw new GqlResolveException();
-        }
-        // 执行gql查询
-        ApiPagedResult<List<Map<String, Object>>> apiPagedResult = ruleService.queryForMapList(gql, false);
-        if (apiPagedResult.isSuccess()) {
-            // 获取查询结果中的附件ID字段值，并添加到attachmentIds列表中
-            List<Map<String, Object>> mapList = apiPagedResult.getData();
-            if (mapList != null && !mapList.isEmpty()) {
-                for (Map<String, Object> map : mapList) {
-                    // 取第一个字段的值作为附件ID
-                    for (Map.Entry<String, Object> entry : map.entrySet()) {
-                        String value = entry.getValue() == null ? "" : entry.getValue().toString();
-                        if (Strings.isNotBlank(value) && !attachmentIds.contains(value)) {
-                            attachmentIds.add(value);
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-        return attachmentIds;
-    }
 }

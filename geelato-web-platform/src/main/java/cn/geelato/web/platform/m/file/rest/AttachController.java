@@ -11,6 +11,7 @@ import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.file.entity.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentServiceEnum;
+import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;
@@ -97,7 +98,7 @@ public class AttachController extends BaseController {
      * @return 新的附件对象
      */
     @RequestMapping(value = "/quote/{id}", method = RequestMethod.POST)
-    public ApiResult<?> quote(@PathVariable(required = true) String id, @RequestBody Map<String, Object> requestMap) {
+    public ApiResult<?> quote(@PathVariable String id, @RequestBody Map<String, Object> requestMap) {
         String genre = (String) requestMap.get("genre");
         String name = (String) requestMap.get("name");
         Date invalidTime = DateUtils.parse((String) requestMap.get("invalidTime"), DateUtils.DATETIME);
@@ -127,7 +128,7 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult<?> get(@PathVariable(required = true) String id) {
+    public ApiResult<?> get(@PathVariable String id) {
         Attachment attachment = fileHandler.getAttachment(id, false);
         return ApiResult.success(attachment);
     }
@@ -141,7 +142,7 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.POST)
-    public ApiResult<?> update(@PathVariable(required = true) String id, @RequestBody Map<String, Object> requestMap) throws InvocationTargetException, IllegalAccessException {
+    public ApiResult<?> update(@PathVariable String id, @RequestBody Map<String, Object> requestMap) throws InvocationTargetException, IllegalAccessException {
         Attachment attachment = fileHandler.getAttachment(id);
         BeanUtils.populate(attachment, requestMap);
         fileHandler.updateAttachment(attachment);
@@ -149,7 +150,7 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/replace/{sourceId}/{targetId}", method = RequestMethod.POST)
-    public ApiResult<?> replace(@PathVariable(required = true) String sourceId, @PathVariable(required = true) String targetId, @RequestBody Map<String, Object> requestMap) throws InvocationTargetException, IllegalAccessException {
+    public ApiResult<?> replace(@PathVariable String sourceId, @PathVariable(required = true) String targetId, @RequestBody Map<String, Object> requestMap) throws InvocationTargetException, IllegalAccessException {
         Attachment source = fileHandler.getAttachment(sourceId);
         if (source == null) {
             return ApiResult.fail("源附件不存在!");
@@ -208,7 +209,7 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/storage/{type}", method = RequestMethod.POST)
-    public ApiResult<?> updateStorageType(@PathVariable(required = true) String type, @RequestBody Map<String, Object> requestMap) throws IOException {
+    public ApiResult<?> updateStorageType(@PathVariable String type, @RequestBody Map<String, Object> requestMap) throws IOException {
         String attachmentIds = Objects.toString(requestMap.get("attachmentIds"), "");
         List<String> ids = StringUtils.toListDr(attachmentIds);
         if (ids.isEmpty()) {
@@ -285,7 +286,7 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/column/{type}", method = RequestMethod.GET)
-    public ApiResult<?> columnType(@PathVariable(required = true) String type) {
+    public ApiResult<?> columnType(@PathVariable String type) {
         List<String> typeValues = new ArrayList<>();
         if (List.of("type", "resolution").contains(type)) {
             List<Map<String, Object>> data = dao.queryForMapList("platform_attachment_query_" + type, new HashMap<>());
@@ -302,13 +303,13 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/remove/{id}", method = RequestMethod.DELETE)
-    public ApiResult<NullResult> remove(@PathVariable(required = true) String id, Boolean isRemoved) {
+    public ApiResult<NullResult> remove(@PathVariable String id, Boolean isRemoved) {
         fileHandler.delete(id, isRemoved);
         return ApiResult.successNoResult();
     }
 
     @RequestMapping(value = "/remove/{type}", method = RequestMethod.POST)
-    public ApiResult<NullResult> batchRemove(@PathVariable(required = true) String type, Boolean isRemoved, @RequestBody Map<String, Object> requestMap) {
+    public ApiResult<NullResult> batchRemove(@PathVariable String type, Boolean isRemoved, @RequestBody Map<String, Object> requestMap) {
         // 附件id集合处理
         List<String> attachmentIds = listStream(StringUtils.toListDr(Objects.toString(requestMap.get("attachmentIds"), "")));
         if (attachmentIds == null || attachmentIds.isEmpty()) {
@@ -336,9 +337,54 @@ public class AttachController extends BaseController {
         return ApiResult.successNoResult();
     }
 
+    /**
+     * 将附件转换为PDF
+     * 支持Excel文件（.xlsx, .xls）转换为PDF格式
+     *
+     * @param id 附件ID
+     * @return 转换后的PDF附件ID
+     */
+    @RequestMapping(value = "/toPdf/{id}", method = RequestMethod.POST)
+    public ApiResult<?> toPdf(@PathVariable String id) {
+        try {
+            log.info("Converting attachment to PDF, id: {}", id);
+            
+            // 1. 获取原始附件信息
+            Attachment attachment = fileHandler.getAttachment(id, false);
+            if (attachment == null) {
+                return ApiResult.fail("附件不存在!");
+            }
+            
+            // 2. 获取文件
+            File file = fileHandler.toFile(id);
+            if (file == null || !file.exists()) {
+                return ApiResult.fail("文件不存在!");
+            }
+            
+            // 3. 验证文件格式
+            String fileName = attachment.getName();
+            if (!fileName.toLowerCase().endsWith(".xlsx") && !fileName.toLowerCase().endsWith(".xls")) {
+                return ApiResult.fail("仅支持Excel文件(.xlsx, .xls)转换为PDF!");
+            }
+            
+            // 4. 转换为PDF
+            Attachment pdfAttachment = fileHandler.toPdf(AttachmentSourceEnum.ATTACH.getValue(), attachment);
+            if (pdfAttachment == null) {
+                return ApiResult.fail("PDF转换失败!");
+            }
+            
+            log.info("Successfully converted attachment {} to PDF: {}", id, pdfAttachment.getId());
+            return ApiResult.success(pdfAttachment.getId());
+            
+        } catch (Exception e) {
+            log.error("Failed to convert attachment {} to PDF: {}", id, e.getMessage(), e);
+            return ApiResult.fail("PDF转换失败: " + e.getMessage());
+        }
+    }
+
     private List<String> listStream(List<String> list) {
         return list == null ? new ArrayList<>() : list.stream()
-                .filter(s -> s != null) // 去null
+                .filter(Objects::nonNull) // 去null
                 .map(String::trim)      // 去除字符串两端的空白
                 .filter(s -> !s.isBlank()) // 去空字符串
                 .distinct()             // 去重

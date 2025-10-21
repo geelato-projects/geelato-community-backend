@@ -14,14 +14,12 @@ public class EncryptUtil {
      * 对用户密码进行加密处理
      *
      * @param user 用户对象，包含明文密码等信息
-     * @return 加密后的用户对象，密码字段已更新为加密后的密码
      */
-    public static User encryptPassword(User user) {
+    public static void encryptPassword(User user) {
         byte[] salt = Digests.generateSalt(SALT_SIZE);
         user.setSalt(Encodes.encodeHex(salt));
         byte[] hashPassword = Digests.sha1(user.getPlainPassword().getBytes(), salt, HASH_ITERATIONS);
         user.setPassword(Encodes.encodeHex(hashPassword));
-        return user;
     }
 
     /**

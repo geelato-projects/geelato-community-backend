@@ -1,5 +1,6 @@
-package cn.geelato.web.platform.m.excel.entity;
+package cn.geelato.web.platform.m.excel.rest;
 
+import com.aspose.cells.Workbook;
 import com.aspose.words.FontSettings;
 import com.aspose.words.PdfSaveOptions;
 import com.itextpdf.text.Document;
@@ -12,7 +13,6 @@ import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.converter.WordToHtmlConverter;
-import org.apache.poi.xwpf.usermodel.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Entities;
 import org.jsoup.select.Elements;
@@ -26,11 +26,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author diabl
@@ -39,73 +35,36 @@ import java.util.Map;
 public class OfficeUtils {
 
     private static final String CHINA_FONT_RESOURCE = "geelato/fonts/simfang.ttf";
-    private static final String WORD_DOCX_CONTENT_TYPE = ".DOCX";
-    private static final String WORD_DOC_CONTENT_TYPE = ".DOC";
     public static final String OS_UNIX_FONT_FOLDER = "/usr/share/fonts";
 
     public static void toPdf(String officePath, String pdfPath, String contentType) throws Exception {
-        if (WORD_DOCX_CONTENT_TYPE.equalsIgnoreCase(contentType)) {
-            asposeToPdf(officePath, pdfPath);
-        } else if (WORD_DOC_CONTENT_TYPE.equalsIgnoreCase(contentType)) {
-            asposeToPdf(officePath, pdfPath);
-        } else {
-            throw new RuntimeException("暂不支持该" + contentType + "格式文件转PDF，敬请期待！");
+        switch (contentType.toUpperCase()) {
+            case ".DOCX":
+            case ".DOC":
+                wordToPdf(officePath, pdfPath);
+                break;
+            case ".XLSX":
+            case ".XLS":
+                excelToPdf(officePath, pdfPath);
+                break;
+            default:
+                throw new RuntimeException("暂不支持该" + contentType + "格式文件转PDF！");
         }
     }
 
-    public static void wordToPdf(String inputPath, String outputPath, String contentType, String printType, int width, int height) throws Exception {
-        if (Strings.isNotBlank(contentType)) {
-            if (WORD_DOCX_CONTENT_TYPE.equalsIgnoreCase(contentType)) {
-                asposeToPdf(inputPath, outputPath);
-            } else if (WORD_DOC_CONTENT_TYPE.equalsIgnoreCase(contentType)) {
-                Rectangle pageSize = null;
-                if ("RM".equalsIgnoreCase(printType) && width > 0 && height > 0) {
-                    pageSize = new Rectangle(width * 72f / 25.4f, height * 72f / 25.4f);
-                } else if (Strings.isNotBlank(printType)) {
-                    Map<String, Rectangle> rectangleMap = getRectangle();
-                    if (!rectangleMap.isEmpty()) {
-                        for (Map.Entry<String, Rectangle> entry : rectangleMap.entrySet()) {
-                            if (entry.getKey().equalsIgnoreCase(printType)) {
-                                pageSize = entry.getValue();
-                                break;
-                            }
-                        }
-                    }
-                }
-                docToPdf(inputPath, outputPath, pageSize);
-            }
-        } else {
-            throw new RuntimeException("文件格式错误！");
-        }
-    }
-
-    private static Map<String, Rectangle> getRectangle() {
-        Map<String, Rectangle> pageSizeMap = new HashMap<>();
-        Field[] fields = PageSize.class.getDeclaredFields();
-        for (Field field : fields) {
-            int modifiers = field.getModifiers();
-            if (Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers)) {
-                try {
-                    // 获取字段的值，注意这里可能抛出IllegalAccessException
-                    // 如果字段不是public的，则需要先设置setAccessible(true)
-                    field.setAccessible(true); // 允许访问私有字段
-                    Object value = field.get(null); // static字段的实例为null
-                    pageSizeMap.put(field.getName(), (Rectangle) value);
-                } catch (IllegalAccessException ignored) {
-                }
-            }
-        }
-
-        return pageSizeMap;
-    }
-
-    public static void asposeToPdf(String inputPath, String outputPath) throws Exception {
+    public static void wordToPdf(String inputPath, String outputPath) throws Exception {
         com.aspose.words.Document wordDoc = new com.aspose.words.Document(inputPath);
         if (SystemUtils.IS_OS_UNIX || SystemUtils.IS_OS_LINUX) {
             FontSettings.getDefaultInstance().setFontsFolder(OS_UNIX_FONT_FOLDER, true);
         }
         PdfSaveOptions pso = new PdfSaveOptions();
         wordDoc.save(outputPath, pso);
+    }
+
+    public static void excelToPdf(String inputPath, String outputPath) throws Exception {
+        Workbook workbook = new Workbook(inputPath);
+        com.aspose.cells.PdfSaveOptions pdfSaveOptions = new com.aspose.cells.PdfSaveOptions();
+        workbook.save(outputPath, pdfSaveOptions);
     }
 
 
@@ -147,8 +106,8 @@ public class OfficeUtils {
         wordToHtmlConverter.processDocument(wordDocument);
         org.w3c.dom.Document htmlDocument = wordToHtmlConverter.getDocument();
         DOMSource domSource = new DOMSource(htmlDocument);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        StreamResult streamResult = new StreamResult(baos);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        StreamResult streamResult = new StreamResult(byteArrayOutputStream);
 
         TransformerFactory tf = TransformerFactory.newInstance();
         Transformer serializer = tf.newTransformer();
@@ -156,8 +115,8 @@ public class OfficeUtils {
         serializer.setOutputProperty(OutputKeys.INDENT, "yes");
         serializer.setOutputProperty(OutputKeys.METHOD, "html");
         serializer.transform(domSource, streamResult);
-        String content = baos.toString(StandardCharsets.UTF_8);
-        baos.close();
+        String content = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
+        byteArrayOutputStream.close();
 
         return content;
     }
@@ -200,9 +159,9 @@ public class OfficeUtils {
      * @throws IOException       当I/O操作异常时抛出
      */
     public static void htmlToPdf(String html, String outputPath, Rectangle pageSize) throws DocumentException, IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         Document document = new com.itextpdf.text.Document(pageSize);
-        PdfWriter writer = PdfWriter.getInstance(document, baos);
+        PdfWriter writer = PdfWriter.getInstance(document, byteArrayOutputStream);
         document.open();
         ByteArrayInputStream bais = new ByteArrayInputStream(html.getBytes());
         XMLWorkerHelper.getInstance().parseXHtml(writer, document, bais, StandardCharsets.UTF_8, new FontProvider() {
@@ -227,8 +186,8 @@ public class OfficeUtils {
         });
         document.close();
         writer.close();
-        baos.writeTo(new FileOutputStream(outputPath));
-        baos.close();
+        byteArrayOutputStream.writeTo(new FileOutputStream(outputPath));
+        byteArrayOutputStream.close();
         bais.close();
     }
 

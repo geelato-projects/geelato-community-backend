@@ -9,7 +9,7 @@
   },
   {
     "group": "字符串",
-    "label": "单行文本[1~21483]",
+    "label": "单行文本[1~15000]",
     "value": "varchar",
     "mysql": "varchar",
     "disabled": false,
@@ -18,7 +18,7 @@
   },
   {
     "group": "字符串",
-    "label": "多行文本[1~21483]",
+    "label": "多行文本[1~15000]",
     "value": "remark",
     "mysql": "varchar",
     "disabled": false,

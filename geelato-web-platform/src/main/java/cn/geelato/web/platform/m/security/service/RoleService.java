@@ -208,7 +208,7 @@ public class RoleService extends BaseSortableService {
      * @return 返回查询到的角色列表
      */
     public List<Role> queryRoles(Map<String, Object> params) {
-        String orderBy = "seq_no ASC";
+        String orderBy = "name ASC,weight DESC,seq_no ASC";
         List<Role> roles = new ArrayList<>();
         String tenantCode = (String) params.get("tenantCode");
         tenantCode = Strings.isNotBlank(tenantCode) ? tenantCode : getSessionTenantCode();

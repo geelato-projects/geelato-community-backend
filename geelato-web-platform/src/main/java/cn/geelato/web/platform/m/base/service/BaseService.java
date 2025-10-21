@@ -12,6 +12,7 @@ import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.datasource.annotion.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.DataItems;
+import cn.geelato.utils.DateUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
@@ -190,7 +191,7 @@ public class BaseService {
      */
     public <T extends BaseEntity> T createModel(T model) {
         model.setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
-        model.setDeleteAt(null);
+        model.setDeleteAt(DateUtils.defaultDeleteAt());
         if (Strings.isBlank(model.getTenantCode())) {
             model.setTenantCode(getSessionTenantCode());
         }
@@ -210,7 +211,7 @@ public class BaseService {
      */
     public <T extends BaseEntity> T updateModel(T model) {
         model.setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
-        model.setDeleteAt(null);
+       // model.setDeleteAt(DateUtils.defaultDeleteAt());
         if (Strings.isBlank(model.getTenantCode())) {
             model.setTenantCode(getSessionTenantCode());
         }

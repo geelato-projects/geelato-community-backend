@@ -2,6 +2,7 @@ package cn.geelato.web.platform.m.notice.rest;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.security.SecurityContext;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
@@ -154,14 +155,15 @@ public class NoticeController extends BaseController {
             if (!StringUtils.hasText(notice.getNoticeTitle())) {
                 return ApiResult.fail("通知标题不能为空");
             }
-            
+
             // 设置通知信息
             notice.setId(String.valueOf(UIDGenerator.generate()));
             notice.setStatus("unread");
             notice.setDelStatus(0);
-            
+            notice.setDeleteAt(DateUtils.defaultDeleteAt());
+
             // 设置创建和更新信息
-            String userId =SecurityContext.getCurrentUser().getUserId();
+            String userId = SecurityContext.getCurrentUser().getUserId();
             String userName = SecurityContext.getCurrentUser().getUserName();
             notice.setCreator(userId);
             notice.setCreatorName(userName);
@@ -169,7 +171,7 @@ public class NoticeController extends BaseController {
             notice.setUpdaterName(userName);
             notice.setCreateAt(new Date());
             notice.setUpdateAt(new Date());
-            
+
             // 保存通知
             int result = noticeMapper.insert(notice);
             if (result > 0) {
@@ -193,19 +195,19 @@ public class NoticeController extends BaseController {
             if (!StringUtils.hasText(id)) {
                 return ApiResult.fail("通知ID不能为空");
             }
-            
+
             Notice notice = noticeMapper.selectById(id);
             if (notice == null) {
                 return ApiResult.fail("通知不存在");
             }
-            
+
             // 逻辑删除
             notice.setDelStatus(1);
             notice.setDeleteAt(new Date());
             notice.setUpdateAt(new Date());
             notice.setUpdater(SecurityContext.getCurrentUser().getUserId());
             notice.setUpdaterName(SecurityContext.getCurrentUser().getUserName());
-            
+
             int result = noticeMapper.updateById(notice);
             if (result > 0) {
                 return ApiResult.success(true);

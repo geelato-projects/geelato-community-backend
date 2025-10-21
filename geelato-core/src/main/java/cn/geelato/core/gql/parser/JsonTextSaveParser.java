@@ -11,6 +11,7 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
 import cn.geelato.core.util.EncryptUtils;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.SM4Utils;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson2.JSON;
@@ -250,6 +251,12 @@ public class JsonTextSaveParser extends JsonTextParser {
         }
         if (entity.containsKey(FN_UPDATER_NAME)) {
             entity.put(FN_UPDATER_NAME, SessionCtx.getUserName());
+        }
+        if (entity.containsKey(FN_DEL_STATUS)) {
+            entity.put(FN_DEL_STATUS, 0);
+        }
+        if (entity.containsKey(FN_DELETE_AT)) {
+            entity.put(FN_DELETE_AT, DateUtils.defaultDeleteAt());
         }
     }
 }

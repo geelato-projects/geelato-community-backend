@@ -25,6 +25,8 @@ public class DateUtils {
     public static final String DATETIME = "yyyy-MM-dd HH:mm:ss";
     public static final String TIMESTAMP = "yyyy-MM-dd HH:mm:ss.SSS";
 
+    public static final String DEFAULT_DELETE_AT = "1970-01-01 00:00:00";
+
     public static final String TIMEZONE = "GMT+8";
 
     public static final String TIME_ZONE_SIGN = "zzz";
@@ -238,5 +240,9 @@ public class DateUtils {
             }
         }
         return date;
+    }
+
+    public static Date defaultDeleteAt() {
+        return parse(DateUtils.DEFAULT_DELETE_AT, DateUtils.DATETIME);
     }
 }

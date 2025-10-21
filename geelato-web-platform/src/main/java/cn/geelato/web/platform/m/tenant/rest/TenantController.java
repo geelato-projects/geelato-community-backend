@@ -2,23 +2,20 @@ package cn.geelato.web.platform.m.tenant.rest;
 
 
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.security.SecurityContext;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.tenant.service.TenantService;
 import cn.geelato.web.platform.m.tenant.entity.Tenant;
 import cn.geelato.web.platform.m.tenant.mapper.TenantMapper;
+import cn.geelato.web.platform.m.tenant.service.TenantService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,7 +103,6 @@ public class TenantController extends BaseController {
             return ApiResult.fail("查询租户信息失败: " + e.getMessage());
         }
     }
-
 
 
     /**
@@ -208,6 +204,7 @@ public class TenantController extends BaseController {
             return ApiResult.fail("更新租户失败: " + e.getMessage());
         }
     }
+
     @RequestMapping(value = "/reset/password/{id}", method = RequestMethod.GET)
     public ApiResult<Map<String, String>> resetPassword(@PathVariable() String id) {
         try {
@@ -256,6 +253,7 @@ public class TenantController extends BaseController {
             tenant.setCreatorName(creatorName);
             tenant.setCreateAt(new java.util.Date());
             tenant.setDelStatus(0);
+            tenant.setDeleteAt(DateUtils.defaultDeleteAt());
 
             // 创建租户
             int result = tenantMapper.insert(tenant);
@@ -294,7 +292,7 @@ public class TenantController extends BaseController {
             Tenant existingTenant = tenantMapper.selectByCode(tenantCode);
             if (existingTenant != null) {
                 // 如果已存在，添加随机后缀
-                tenantCode = tenantCode + "_" + (int)(Math.random() * 1000);
+                tenantCode = tenantCode + "_" + (int) (Math.random() * 1000);
             }
 
             // 从SecurityContext获取创建者信息
@@ -325,7 +323,7 @@ public class TenantController extends BaseController {
             }
 
             // TODO: 发送邀请邮件给用户，包含完善信息的链接
-            
+
             // 返回租户信息
             return ApiResult.success(tenant, "租户邀请成功，等待完善信息");
         } catch (IllegalArgumentException e) {

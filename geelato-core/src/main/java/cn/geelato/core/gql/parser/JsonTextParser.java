@@ -22,6 +22,7 @@ public class JsonTextParser {
     protected final String FN_DEPT_ID = "deptId";
 
     protected final String FN_DEL_STATUS = "delStatus";
+    protected final String FN_DELETE_AT = "deleteAt";
     protected final String FN_ENABLE_STATUS = "enableStatus";
 
     protected final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);

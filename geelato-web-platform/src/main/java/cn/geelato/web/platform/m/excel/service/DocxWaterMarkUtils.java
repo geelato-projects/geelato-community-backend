@@ -172,7 +172,7 @@ public class DocxWaterMarkUtils {
      * @return 返回包含Shape样式参数的字符串
      */
     private static String getShapeStyle() {
-        String sb = "position: " + "absolute" + // 文本path绘制的定位方式
+        return "position: " + "absolute" + // 文本path绘制的定位方式
                 ";left: " + "opt" +
                 ";width: " + "500pt" + // 计算文本占用的长度（文本总个数*单字长度）
                 ";height: " + "150pt" + // 字体高度
@@ -185,7 +185,6 @@ public class DocxWaterMarkUtils {
                 ";mso-width-relative: " + "page" +
                 ";mso-height-relative: " + "page" +
                 ";rotation: " + "-45";
-        return sb;
     }
 
 }

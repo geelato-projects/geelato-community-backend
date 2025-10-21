@@ -24,6 +24,15 @@ public class CacheUtil {
         cacheService.removeCache(key);
     }
 
+    /**
+     * 模糊移除缓存，支持通配符模式
+     * @param pattern 匹配模式，支持 *xxx、xxx*、*xxx* 格式
+     * @return 移除的缓存数量
+     */
+    public static int removeByPattern(String pattern) {
+        return cacheService.removeCacheByPattern(pattern);
+    }
+
     public static Boolean exists(String key) {
         return cacheService.exists(key);
     }

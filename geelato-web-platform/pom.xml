@@ -178,10 +178,12 @@
             <artifactId>aspose-words</artifactId>
             <version>21.1</version>
             <classifier>jdk17</classifier>
-<!--            <scope>provided</scope>-->
-<!--            <optional>true</optional>-->
         </dependency>
-
+        <dependency>
+            <groupId>com.aspose</groupId>
+            <artifactId>aspose-cells</artifactId>
+            <version>21.11</version>
+        </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>

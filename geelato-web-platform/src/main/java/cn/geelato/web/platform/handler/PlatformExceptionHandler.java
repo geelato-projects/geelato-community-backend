@@ -8,7 +8,6 @@ import cn.geelato.plugin.UnFoundPluginException;
 import cn.geelato.utils.BeanValidators;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.PlatformRuntimeException;
-import cn.geelato.web.platform.m.base.rest.RestException;
 import com.alibaba.fastjson.JSON;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -40,15 +39,6 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
         return handleExceptionInternal(ex, body, headers, HttpStatus.BAD_REQUEST, request);
     }
 
-    /**
-     * 处理RestException.
-     */
-    @org.springframework.web.bind.annotation.ExceptionHandler(value = {RestException.class})
-    public final ResponseEntity<?> handleException(RestException ex, WebRequest request) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(MediaTypes.TEXT_PLAIN_UTF_8));
-        return handleExceptionInternal(ex, ex.getMessage(), headers, ex.status, request);
-    }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {CoreException.class})
     public final ResponseEntity<?> handleException(CoreException ex, WebRequest request) {

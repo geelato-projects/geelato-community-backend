@@ -99,58 +99,6 @@ public class OfficeUtils {
         return pageSizeMap;
     }
 
-    /**
-     * 将 docx 文件转换为 pdf 文件
-     * <p>
-     * 该方法将指定路径的 docx 文件转换为 pdf 文件，并保存到指定路径。
-     *
-     * @param inputPath  docx 文件的输入路径
-     * @param outputPath pdf 文件的输出路径
-     * @throws IOException       如果在文件输入输出过程中发生错误，则抛出 IOException
-     * @throws DocumentException 如果在文档处理过程中发生错误，则抛出 DocumentException
-     */
-    public static void docxToPdf(String inputPath, String outputPath) throws IOException, DocumentException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        // pdf文件的尺寸
-        Document pdfDocument = new Document(PageSize.A4);
-        PdfWriter pdfWriter = PdfWriter.getInstance(pdfDocument, baos);
-        FileInputStream fis = new FileInputStream(inputPath);
-        XWPFDocument doc = new XWPFDocument(fis);
-        pdfWriter.setInitialLeading(20);
-        java.util.List<XWPFParagraph> plist = doc.getParagraphs();
-        pdfWriter.open();
-        pdfDocument.open();
-        for (XWPFParagraph pa : plist) {
-            java.util.List<XWPFRun> runs = pa.getRuns();
-            for (XWPFRun run : runs) {
-                java.util.List<XWPFPicture> piclist = run.getEmbeddedPictures();
-                for (XWPFPicture pic : piclist) {
-                    XWPFPictureData picdata = pic.getPictureData();
-                    byte[] bytepic = picdata.getData();
-                    Image imag = Image.getInstance(bytepic);
-                    pdfDocument.add(imag);
-                }
-                // 中文字体的解决
-                BaseFont bf = BaseFont.createFont(CHINA_FONT_RESOURCE, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-                Font font = new Font(bf, 11.0f, Font.NORMAL, BaseColor.BLACK);
-                String text = run.getText(-1);
-                byte[] bs;
-                if (text != null) {
-                    bs = text.getBytes();
-                    String str = new String(bs);
-                    Chunk chObj1 = new Chunk(str, font);
-                    pdfDocument.add(chObj1);
-                }
-            }
-            pdfDocument.add(new Chunk(Chunk.NEWLINE));
-        }
-        // 需要关闭，不然无法获取到输出流
-        pdfDocument.close();
-        pdfWriter.close();
-        baos.writeTo(new FileOutputStream(outputPath));
-        baos.close();
-    }
-
     public static void asposeToPdf(String inputPath, String outputPath) throws Exception {
         com.aspose.words.Document wordDoc = new com.aspose.words.Document(inputPath);
         if (SystemUtils.IS_OS_UNIX || SystemUtils.IS_OS_LINUX) {
@@ -160,15 +108,6 @@ public class OfficeUtils {
         wordDoc.save(outputPath, pso);
     }
 
-    public static void spireToPdf(String inputPath, String outputPath) {
-        //  com.spire.license.LicenseProvider.setLicenseFile("license.elic.xml");
-        // 实例化Document类的对象
-        //  com.spire.doc.Document doc = new com.spire.doc.Document();
-        // 加载Word
-        //   doc.loadFromFile(inputPath);
-        // 保存为PDF格式
-        //   doc.saveToFile(outputPath, FileFormat.PDF);
-    }
 
     /**
      * 将 doc 文件转换为 pdf 文件

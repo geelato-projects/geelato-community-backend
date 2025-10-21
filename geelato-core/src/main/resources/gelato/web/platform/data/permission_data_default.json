@@ -9,7 +9,7 @@
   },
   {
     "type": "dp",
-    "rule": "bu_id=#currentUser.deptId#",
+    "rule": "bu_id=#currentUser.buId#",
     "name": "看公司/事业部",
     "description": "查看自己公司/事业部的数据",
     "code": "&myBusiness",

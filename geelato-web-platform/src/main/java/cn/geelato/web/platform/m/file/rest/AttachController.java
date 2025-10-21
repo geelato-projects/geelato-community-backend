@@ -344,7 +344,7 @@ public class AttachController extends BaseController {
      * @param id 附件ID
      * @return 转换后的PDF附件ID
      */
-    @RequestMapping(value = "/toPdf/{id}", method = RequestMethod.POST)
+    @RequestMapping(value = "/toPdf/{id}", method = RequestMethod.GET)
     public ApiResult<?> toPdf(@PathVariable String id) {
         try {
             log.info("Converting attachment to PDF, id: {}", id);

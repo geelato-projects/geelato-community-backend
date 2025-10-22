@@ -32,11 +32,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author diabl
@@ -60,42 +60,27 @@ public class DevTableController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
-    public ApiPagedResult pageQuery() {
-        try {
-            Map<String, Object> requestBody = this.getRequestBody();
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
-            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
-            return devTableService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiPagedResult.fail(e.getMessage());
-        }
+    public ApiPagedResult<?> pageQuery() throws ParseException {
+        Map<String, Object> requestBody = this.getRequestBody();
+        PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+        FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
+        return devTableService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
     }
 
     @RequestMapping(value = "/query", method = RequestMethod.GET)
     public ApiResult<List<TableMeta>> query() {
-        try {
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
-            Map<String, Object> params = this.getQueryParameters(CLAZZ);
-            return ApiResult.success(devTableService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
+        PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+        Map<String, Object> params = this.getQueryParameters(CLAZZ);
+        return ApiResult.success(devTableService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult<TableMeta> get(@PathVariable(required = true) String id) {
-        try {
-            return ApiResult.success(devTableService.getModel(CLAZZ, id));
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
+    public ApiResult<TableMeta> get(@PathVariable String id) {
+        return ApiResult.success(devTableService.getModel(CLAZZ, id));
     }
 
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
-    public ApiResult createOrUpdate(@RequestBody TableMeta form, Boolean isAlter) {
+    public ApiResult<?> createOrUpdate(@RequestBody TableMeta form) {
         try {
             devTableService.afterSet(form);
             TableMeta resultMap = new TableMeta();
@@ -114,7 +99,7 @@ public class DevTableController extends BaseController {
                     }
                     // 刷新默认视图
                     List<TableView> tableViewList = devViewService.getTableView(form.getConnectId(), form.getEntityName());
-                    if (tableViewList != null && tableViewList.size() > 0) {
+                    if (tableViewList != null && !tableViewList.isEmpty()) {
                         devViewService.createOrUpdateDefaultTableView(form, devTableColumnService.getDefaultViewSql(form.getEntityName()));
                     }
                 } else {
@@ -183,9 +168,6 @@ public class DevTableController extends BaseController {
                 throw new RuntimeException("tableId or columnNames is null");
             }
             String[] columnNameArray = columnNames.split(",");
-            if (columnNameArray == null && columnNameArray.length == 0) {
-                throw new RuntimeException("columnNames is null");
-            }
             Map<String, ColumnMeta> columnMetaMap = metaManager.getTableUpgradeList();
             Assert.notNull(columnMetaMap, "Upgrade template not found");
             TableMeta tableMeta = devTableService.getModel(CLAZZ, tableId);
@@ -194,8 +176,8 @@ public class DevTableController extends BaseController {
             Map<String, Object> columnParams = new HashMap<>();
             columnParams.put("tableId", tableMeta.getId());
             List<ColumnMeta> columnMetas = devTableColumnService.queryModel(ColumnMeta.class, columnParams);
-            if (columnMetas != null && columnMetas.size() > 0) {
-                columnNameList = columnMetas.stream().map(ColumnMeta::getFieldName).collect(Collectors.toList());
+            if (columnMetas != null && !columnMetas.isEmpty()) {
+                columnNameList = columnMetas.stream().map(ColumnMeta::getFieldName).toList();
             }
             for (String columnName : columnNameArray) {
                 if (!columnNameList.contains(columnName)) {
@@ -213,10 +195,10 @@ public class DevTableController extends BaseController {
                 }
             }
             if (Strings.isNotBlank(upgradeType)) {
-                if (upgradeType.indexOf("app") != -1) {
+                if (upgradeType.contains("app")) {
                     tableMeta.setAcrossApp(true);
                 }
-                if (upgradeType.indexOf("workflow") != -1) {
+                if (upgradeType.contains("workflow")) {
                     tableMeta.setAcrossWorkflow(true);
                 }
                 devTableService.updateModel(tableMeta);
@@ -234,7 +216,7 @@ public class DevTableController extends BaseController {
 
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
+    public ApiResult<NullResult> isDelete(@PathVariable String id) {
         try {
             TableMeta model = devTableService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
@@ -251,7 +233,7 @@ public class DevTableController extends BaseController {
     }
 
     @RequestMapping(value = "/queryDefaultView/{entityName}", method = RequestMethod.GET)
-    public ApiResult<String> queryDefaultView(@PathVariable(required = true) String entityName) {
+    public ApiResult<String> queryDefaultView(@PathVariable String entityName) {
         try {
             Map<String, Object> viewParams = devTableColumnService.getDefaultViewSql(entityName);
             return ApiResult.success(String.valueOf(viewParams.get("viewConstruct")));
@@ -271,7 +253,7 @@ public class DevTableController extends BaseController {
                 params.put("connectId", form.getConnectId());
                 params.put("entityName", form.getEntityName());
                 List<TableMeta> tableMetaList = devTableService.queryModel(CLAZZ, params);
-                if (tableMetaList != null && tableMetaList.size() > 0) {
+                if (tableMetaList != null && !tableMetaList.isEmpty()) {
                     for (TableMeta meta : tableMetaList) {
                         devViewService.createOrUpdateDefaultTableView(meta, devTableColumnService.getDefaultViewSql(meta.getEntityName()));
                     }
@@ -288,7 +270,7 @@ public class DevTableController extends BaseController {
 
 
     @RequestMapping(value = {"/reset/{tableId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiMetaResult resetModelFormTable(@PathVariable("tableId") String tableId) {
+    public ApiMetaResult<?> resetModelFormTable(@PathVariable("tableId") String tableId) {
         try {
             if (Strings.isNotBlank(tableId)) {
                 // dev_table

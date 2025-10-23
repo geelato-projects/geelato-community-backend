@@ -163,11 +163,6 @@ public class MetaManager extends AbstractManager {
     private void refreshTableMeta(String entityName) {
         String tableListSql = MetaDaoSql.SQL_TABLE_LIST;
         if (Strings.isNotEmpty(entityName)) {
-            EntityMeta entityMeta = entityMetadataMap.get(entityName);
-            if (entityMeta != null && entityMeta.getEntityType() == EntityType.Class) {
-                //class实体不刷新。
-                return;
-            }
             tableListSql = String.format(MetaDaoSql.SQL_TABLE_LIST + " and entity_name='%s'", entityName);
         }
         List<Map<String, Object>> tableList = dao.getJdbcTemplate().queryForList(tableListSql);

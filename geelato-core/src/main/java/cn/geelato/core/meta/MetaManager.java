@@ -163,6 +163,11 @@ public class MetaManager extends AbstractManager {
     private void refreshTableMeta(String entityName) {
         String tableListSql = MetaDaoSql.SQL_TABLE_LIST;
         if (Strings.isNotEmpty(entityName)) {
+            EntityMeta entityMeta = entityMetadataMap.get(entityName);
+            if (entityMeta != null && entityMeta.getEntityType() == EntityType.Class) {
+                //class实体不刷新。
+                return;
+            }
             tableListSql = String.format(MetaDaoSql.SQL_TABLE_LIST + " and entity_name='%s'", entityName);
         }
         List<Map<String, Object>> tableList = dao.getJdbcTemplate().queryForList(tableListSql);
@@ -416,7 +421,6 @@ public class MetaManager extends AbstractManager {
         String entityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
             EntityMeta entityMeta = MetaReflex.getEntityMetaByTable(map, columnList, viewList, checkList, foreignList);
-            // EntityType = class
             if (entityMetaClassMap.containsKey(entityName)) {
                 entityMeta.setClassType(entityMetaClassMap.get(entityName));
                 entityMeta.setEntityType(EntityType.Class);

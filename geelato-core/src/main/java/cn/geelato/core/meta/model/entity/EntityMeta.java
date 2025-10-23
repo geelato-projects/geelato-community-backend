@@ -261,14 +261,14 @@ public class EntityMeta {
 
     public FieldMeta getFieldMetaByColumn(String columnName) {
         if (this.fieldMetas == null || this.fieldMetas.isEmpty()) {
-            return null;
+            throw new RuntimeException("FieldMetas is Null");
         }
         for (FieldMeta fm : fieldMetas) {
             if (fm.getColumnName().equals(columnName)) {
                 return fm;
             }
         }
-        return null;
+        throw new RuntimeException("unfound FieldMeta "+ columnName);
     }
 
     public boolean isIgnoreUpdateField(String field) {

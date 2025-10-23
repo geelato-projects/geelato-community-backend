@@ -161,8 +161,7 @@ public class MetaDdlService {
                 });
                 String currentConnect = "";
                 // 创建或更新模型
-                for (int i = 0; i < tableMetas.size(); i++) {
-                    TableMeta tableMeta = tableMetas.get(i);
+                for (TableMeta tableMeta : tableMetas) {
                     if (!TableSourceTypeEnum.CREATION.getValue().equalsIgnoreCase(tableMeta.getSourceType())) {
                         tableResult.put(tableMeta.getEntityName(), "ignore");
                         continue;
@@ -234,8 +233,7 @@ public class MetaDdlService {
                 tableResult.put(meta.getViewName(), false);
             }
             String currentConnect = "";
-            for (int i = 0; i < viewMetas.size(); i++) {
-                TableView viewMeta = viewMetas.get(i);
+            for (TableView viewMeta : viewMetas) {
                 Optional<ConnectMeta> connectMetaResult = connectMetas.stream().filter(c -> c.getId().equals(viewMeta.getConnectId())).findFirst();
                 if (connectMetaResult.isEmpty()) {
                     tableResult.put(viewMeta.getViewName(), "不存在可以关联的数据库链接");

@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.base.rest;
+package cn.geelato.web.platform.m.meta;
 
 
 import cn.geelato.core.SessionCtx;

@@ -159,6 +159,11 @@
             </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
+                <artifactId>geelato-meta</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
                 <artifactId>geelato-security</artifactId>
                 <version>${geelato.version}</version>
             </dependency>

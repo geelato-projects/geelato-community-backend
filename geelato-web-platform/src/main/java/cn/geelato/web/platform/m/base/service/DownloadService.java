@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.base.service;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.meta.Attachment;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;

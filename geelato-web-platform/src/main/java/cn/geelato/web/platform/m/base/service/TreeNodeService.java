@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.web.platform.m.base.entity.TreeNode;
-import cn.geelato.web.platform.m.security.entity.RoleTreeNodeMap;
+import cn.geelato.meta.TreeNode;
+import cn.geelato.meta.RoleTreeNodeMap;
 import cn.geelato.web.platform.m.security.service.RoleTreeNodeMapService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;

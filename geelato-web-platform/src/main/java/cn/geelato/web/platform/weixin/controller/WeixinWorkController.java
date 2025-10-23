@@ -4,7 +4,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.utils.HttpUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.common.security.User;
+import cn.geelato.meta.User;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.weixin.config.WeixinWorkConfigurationProperties;
 import cn.geelato.web.platform.weixin.mapper.WeixinWorkMapper;

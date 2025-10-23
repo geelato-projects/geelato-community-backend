@@ -101,6 +101,10 @@
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-core</artifactId>
     </dependency>
+      <dependency>
+          <groupId>cn.geelato</groupId>
+          <artifactId>geelato-meta</artifactId>
+      </dependency>
     <dependency>
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-utils</artifactId>
@@ -109,6 +113,7 @@
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-lang</artifactId>
     </dependency>
+
     <dependency>
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-security</artifactId>

@@ -8,7 +8,7 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.security.entity.RoleUserMap;
+import cn.geelato.meta.RoleUserMap;
 import cn.geelato.web.platform.m.security.service.RoleUserMapService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

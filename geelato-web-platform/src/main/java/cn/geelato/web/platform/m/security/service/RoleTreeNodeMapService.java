@@ -1,11 +1,11 @@
 package cn.geelato.web.platform.m.security.service;
 
-import cn.geelato.web.platform.m.security.entity.Role;
-import cn.geelato.web.platform.m.security.entity.RoleTreeNodeMap;
+import cn.geelato.meta.Role;
+import cn.geelato.meta.RoleTreeNodeMap;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.web.platform.m.base.entity.TreeNode;
+import cn.geelato.meta.TreeNode;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.base.service.TreeNodeService;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,12 +1,10 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.web.platform.m.base.entity.App;
-import cn.geelato.web.platform.m.base.entity.AppSqlMap;
-import cn.geelato.web.platform.m.base.entity.CustomSql;
+import cn.geelato.meta.App;
+import cn.geelato.meta.AppSqlMap;
+import cn.geelato.meta.CustomSql;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;

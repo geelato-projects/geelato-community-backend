@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.file.handler;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.entity.Resolution;
-import cn.geelato.web.platform.m.file.entity.Attach;
+import cn.geelato.meta.Attach;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.AttachmentParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailParam;

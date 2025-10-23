@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.security.entity;
 
 import cn.geelato.security.Tenant;
 import cn.geelato.security.UserOrg;
-import cn.geelato.web.common.security.User;
+import cn.geelato.meta.User;
 import lombok.Getter;
 import lombok.Setter;
 

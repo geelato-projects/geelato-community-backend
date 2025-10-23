@@ -5,7 +5,7 @@ import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.entity.Resolution;
 import cn.geelato.web.platform.m.base.service.UploadService;
-import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.m.file.param.AttachmentParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailResolution;

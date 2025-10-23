@@ -8,8 +8,6 @@ import cn.geelato.security.User;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
-import cn.geelato.web.common.oauth2.OAuth2ServerTokenResult;
-import cn.geelato.web.common.oauth2.TokenManager;
 import cn.geelato.web.common.shiro.OAuth2Token;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
@@ -37,7 +35,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private static final String __OAuthTokenTag__="Bearer ";
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
  
-    public static final ConcurrentHashMap<String, cn.geelato.web.common.security.User> tokenUserCache = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();
 
     public DefaultSecurityInterceptor(OAuthConfigurationProperties config) {
         oAuthConfigurationProperties = config;
@@ -80,7 +78,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             }
         } else if (token.startsWith(__OAuthTokenTag__)) {
             token = token.replace(__OAuthTokenTag__, "");
-            cn.geelato.web.common.security.User user = tokenUserCache.get(token);
+            cn.geelato.meta.User user = tokenUserCache.get(token);
             if(user!=null){
                 performOAuth2Login(user, token);
             }else {
@@ -234,7 +232,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
      * @param user OAuth2用户信息
      * @param accessToken 访问令牌
      */
-    private void performOAuth2Login(cn.geelato.web.common.security.User user, String accessToken) {
+    private void performOAuth2Login(cn.geelato.meta.User user, String accessToken) {
         String loginName = user.getLoginName();
         User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, "geelato");
         SecurityContext.setCurrentUser(currentUser);

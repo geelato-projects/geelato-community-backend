@@ -5,9 +5,9 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.web.platform.m.security.enums.IsDefaultOrgEnum;
 import cn.geelato.web.platform.m.base.service.BaseService;
-import cn.geelato.web.common.security.Org;
-import cn.geelato.web.platform.m.security.entity.OrgUserMap;
-import cn.geelato.web.common.security.User;
+import cn.geelato.meta.Org;
+import cn.geelato.meta.OrgUserMap;
+import cn.geelato.meta.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

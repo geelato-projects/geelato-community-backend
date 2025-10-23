@@ -9,7 +9,7 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
+import cn.geelato.meta.ExportTemplate;
 import cn.geelato.web.platform.m.excel.service.ExportTemplateService;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;

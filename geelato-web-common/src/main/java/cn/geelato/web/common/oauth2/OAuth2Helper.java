@@ -1,13 +1,10 @@
 package cn.geelato.web.common.oauth2;
 
 import cn.geelato.utils.HttpUtils;
-import cn.geelato.web.common.security.User;
+import cn.geelato.meta.User;
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class OAuth2Helper {
 

@@ -4,7 +4,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.common.security.User;
+import cn.geelato.meta.User;
 import cn.geelato.web.platform.m.security.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;

@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.web.platform.m.model.service.DevViewService;
-import cn.geelato.web.platform.m.security.entity.Permission;
+import cn.geelato.meta.Permission;
 import cn.geelato.web.platform.m.security.service.PermissionService;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.core.gql.filter.FilterGroup;

@@ -4,7 +4,7 @@ import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.m.base.service.DownloadService;
 import cn.geelato.web.platform.m.base.service.UploadService;
 import cn.geelato.web.platform.m.excel.rest.OfficeUtils;
-import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.handler.AccessoryHandler;
 import cn.geelato.web.platform.m.file.param.FileParam;

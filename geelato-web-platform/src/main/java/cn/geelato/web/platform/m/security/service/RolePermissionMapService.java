@@ -10,9 +10,9 @@ import cn.geelato.web.platform.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.model.service.DevTableColumnService;
 import cn.geelato.web.platform.m.model.service.DevTableService;
-import cn.geelato.web.platform.m.security.entity.Permission;
-import cn.geelato.web.platform.m.security.entity.Role;
-import cn.geelato.web.platform.m.security.entity.RolePermissionMap;
+import cn.geelato.meta.Permission;
+import cn.geelato.meta.Role;
+import cn.geelato.meta.RolePermissionMap;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import org.apache.logging.log4j.util.Strings;
@@ -249,7 +249,7 @@ public class RolePermissionMapService extends BaseService {
         List<Permission> defaultPermissions = permissionService.getDefaultTypePermission(type);
         // 默认字段
         List<String> permissionIds = new ArrayList<>();
-        if (permissions != null && permissions.size() > 0) {
+        if (permissions != null && !permissions.isEmpty()) {
             for (Permission model : permissions) {
                 model.setPerDefault(permissionService.isDefault(model, defaultPermissions));
                 permissionIds.add(model.getId());
@@ -265,7 +265,7 @@ public class RolePermissionMapService extends BaseService {
         roleParams.put("tenantCode", tenantCode);
         List<Role> roles = roleService.queryRoles(roleParams);
         List<String> roleIds = new ArrayList<>();
-        if (roles != null && roles.size() > 0) {
+        if (roles != null && !roles.isEmpty()) {
             for (Role model : roles) {
                 roleIds.add(model.getId());
             }
@@ -275,7 +275,7 @@ public class RolePermissionMapService extends BaseService {
         }
         // 数据
         List<RolePermissionMap> rolePermissionMaps = new ArrayList<>();
-        if (permissionIds.size() > 0 && roleIds.size() > 0) {
+        if (!permissionIds.isEmpty() && !roleIds.isEmpty()) {
             FilterGroup filter = new FilterGroup();
             filter.addFilter("permissionId", FilterGroup.Operator.in, Strings.join(permissionIds, ','));
             filter.addFilter("roleId", FilterGroup.Operator.in, Strings.join(roleIds, ','));
@@ -284,7 +284,7 @@ public class RolePermissionMapService extends BaseService {
         }
         // 构建表格数据
         List<Map<String, Object>> tableMapList = new ArrayList<>();
-        if (roles != null && roles.size() > 0) {
+        if (roles != null && !roles.isEmpty()) {
             for (Role role : roles) {
                 Map<String, Object> tableMap = new HashMap<>();
                 tableMap.put("id", role.getId());
@@ -296,10 +296,10 @@ public class RolePermissionMapService extends BaseService {
                 tableMap.put("type", role.getType());
                 tableMap.put("weight", role.getWeight());
                 tableMap.put("description", role.getDescription());
-                if (permissions != null && permissions.size() > 0) {
+                if (permissions != null && !permissions.isEmpty()) {
                     for (Permission permission : permissions) {
                         tableMap.put(permission.getId(), false);
-                        if (rolePermissionMaps != null && rolePermissionMaps.size() > 0) {
+                        if (rolePermissionMaps != null && !rolePermissionMaps.isEmpty()) {
                             for (RolePermissionMap model : rolePermissionMaps) {
                                 if (role.getId().equals(model.getRoleId()) && permission.getId().equals(model.getPermissionId())) {
                                     tableMap.put(permission.getId(), true);
@@ -312,7 +312,7 @@ public class RolePermissionMapService extends BaseService {
                 tableMapList.add(tableMap);
             }
         }
-        tablePermissionMap.put("table", tableMapList.size() > 0 ? JSON.parseArray(JSON.toJSONString(tableMapList)) : null);
+        tablePermissionMap.put("table", !tableMapList.isEmpty() ? JSON.parseArray(JSON.toJSONString(tableMapList)) : null);
 
         return tablePermissionMap;
     }

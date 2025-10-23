@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.m.base.service;
 
-import cn.geelato.web.platform.m.base.entity.AppSqlMap;
-import cn.geelato.web.platform.m.base.entity.CustomSql;
+import cn.geelato.meta.AppSqlMap;
+import cn.geelato.meta.CustomSql;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;

@@ -9,7 +9,7 @@ import cn.geelato.utils.enums.TimeUnitEnum;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.m.file.param.CompressRequestBody;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;

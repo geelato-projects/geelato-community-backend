@@ -1,10 +1,10 @@
 package cn.geelato.web.platform.m.file.handler;
 
 import cn.geelato.utils.SqlParams;
-import cn.geelato.web.platform.m.file.entity.Attach;
-import cn.geelato.web.platform.m.file.entity.Attachment;
-import cn.geelato.web.platform.m.file.entity.Compress;
-import cn.geelato.web.platform.m.file.entity.Resources;
+import cn.geelato.meta.Attach;
+import cn.geelato.meta.Attachment;
+import cn.geelato.meta.Compress;
+import cn.geelato.meta.Resources;
 import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import com.alibaba.fastjson2.JSON;

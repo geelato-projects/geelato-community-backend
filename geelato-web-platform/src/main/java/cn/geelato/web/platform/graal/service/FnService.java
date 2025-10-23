@@ -9,7 +9,7 @@ import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.common.security.User;
+import cn.geelato.meta.User;
 import cn.geelato.web.platform.graal.ApplicationContextProvider;
 import cn.geelato.web.platform.graal.entity.EntityField;
 import cn.geelato.web.platform.graal.entity.EntityGraal;
@@ -145,7 +145,7 @@ public class FnService {
         }
         entity.append("\"@fs\":\"").append(StringUtils.join(fields, ",")).append("\",");
         // 构建查询排序，@order
-        if (entityReader.getOrder() != null && entityReader.getOrder().size() > 0) {
+        if (entityReader.getOrder() != null && !entityReader.getOrder().isEmpty()) {
             StringBuffer sb = new StringBuffer();
             for (EntityOrder order : entityReader.getOrder()) {
                 if (StringUtils.isBlank(order.getField()) || StringUtils.isBlank(order.getOrder())) {
@@ -156,12 +156,11 @@ public class FnService {
             entity.append("\"@order\":\"").append(sb.deleteCharAt(sb.length() - 1)).append("\",");
         }
         // 构建分页查询，@p
-        if (entityReader.getPageSize() != null && entityReader.getPageSize().intValue() > 0) {
+        if (entityReader.getPageSize() != null && entityReader.getPageSize() > 0) {
             entity.append("\"@p\":\"").append("1").append(",").append(entityReader.getPageSize()).append("\",");
         }
         // 构建查询条件，@q
-        if (entityReader.getParams() != null && entityReader.getParams().size() > 0) {
-            StringBuffer sb = new StringBuffer();
+        if (entityReader.getParams() != null && !entityReader.getParams().isEmpty()) {
             for (EntityParams param : entityReader.getParams()) {
                 if (StringUtils.isBlank(param.getName()) || StringUtils.isBlank(param.getCop()) || StringUtils.isBlank(param.getValueExpression())) {
                     continue;

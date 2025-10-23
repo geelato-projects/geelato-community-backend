@@ -693,7 +693,7 @@ public class MetaReflex {
         Assert.notNull(after, "不能为空");
         Assert.isTrue(before.getClass().equals(after.getClass()), "before与after为相同类型");
         HashMap<String, Field> beforeFieldHashMap = getAccessibleFields(before);
-        if (beforeFieldHashMap.values().isEmpty()) {
+        if (beforeFieldHashMap.isEmpty()) {
             return "";
         }
         HashMap<String, Field> afterFieldHashMap = getAccessibleFields(after);

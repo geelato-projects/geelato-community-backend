@@ -9,7 +9,7 @@ import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.UploadService;
-import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentServiceEnum;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.enums.FileGenreEnum;

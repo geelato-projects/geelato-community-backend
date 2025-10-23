@@ -12,7 +12,7 @@ import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.BaseController;
 import cn.geelato.web.platform.m.base.service.UploadService;
-import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;

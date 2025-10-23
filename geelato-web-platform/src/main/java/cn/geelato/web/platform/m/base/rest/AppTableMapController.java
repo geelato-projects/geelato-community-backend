@@ -8,7 +8,7 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.AppTableMap;
+import cn.geelato.meta.AppTableMap;
 import cn.geelato.web.platform.m.base.service.AppTableMapService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;

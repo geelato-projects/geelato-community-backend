@@ -2,13 +2,14 @@ package cn.geelato.web.platform.m.file.handler;
 
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.entity.Resolution;
-import cn.geelato.web.platform.m.file.entity.Resources;
+import cn.geelato.meta.Resources;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.AttachmentParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailParam;
 import cn.geelato.web.platform.m.file.param.ThumbnailResolution;
 import cn.geelato.web.platform.m.file.service.ResourcesService;
 import cn.geelato.web.platform.utils.ThumbnailUtils;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -69,7 +70,9 @@ public class ResourcesHandler extends AttachmentHandler<Resources> {
      * @param path 文件保存的路径
      * @return 构建好的附件对象
      */
+
     @Override
+    @SneakyThrows
     public Resources build(MultipartFile file, String path, AttachmentParam param) {
         return build(new Resources(file), path, param);
     }

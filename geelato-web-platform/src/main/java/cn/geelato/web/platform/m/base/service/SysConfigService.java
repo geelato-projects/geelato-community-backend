@@ -2,7 +2,7 @@ package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.utils.KeyUtils;
 import cn.geelato.utils.SM2Utils;
-import cn.geelato.web.platform.m.base.entity.SysConfig;
+import cn.geelato.meta.SysConfig;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;

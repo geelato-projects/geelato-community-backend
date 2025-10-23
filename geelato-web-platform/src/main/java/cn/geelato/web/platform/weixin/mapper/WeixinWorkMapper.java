@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.weixin.mapper;
 
-import cn.geelato.web.common.security.User;
+import cn.geelato.meta.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;

@@ -10,7 +10,7 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.base.entity.Schedule;
+import cn.geelato.meta.Schedule;
 import cn.geelato.web.platform.m.base.enums.ScheduleTypeEnum;
 import cn.geelato.web.platform.m.base.service.ScheduleService;
 import lombok.extern.slf4j.Slf4j;

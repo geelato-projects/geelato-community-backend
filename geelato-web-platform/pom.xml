@@ -26,6 +26,10 @@
         </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>
+            <artifactId>geelato-meta</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
             <artifactId>geelato-security</artifactId>
         </dependency>
         <dependency>

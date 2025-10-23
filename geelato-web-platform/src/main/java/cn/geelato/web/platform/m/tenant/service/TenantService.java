@@ -1,15 +1,17 @@
 package cn.geelato.web.platform.m.tenant.service;
 
 import cn.geelato.core.constants.ColumnDefault;
+import cn.geelato.meta.OrgUserMap;
+import cn.geelato.meta.Role;
+import cn.geelato.meta.RoleUserMap;
 import cn.geelato.utils.Digests;
 import cn.geelato.utils.Encodes;
 import cn.geelato.utils.UUIDUtils;
-import cn.geelato.web.common.security.Org;
-import cn.geelato.web.common.security.User;
+import cn.geelato.meta.Org;
+import cn.geelato.meta.User;
 import cn.geelato.web.platform.m.base.service.BaseService;
 import cn.geelato.web.platform.m.tenant.entity.Tenant;
 import cn.geelato.web.platform.m.tenant.entity.TenantSite;
-import cn.geelato.web.platform.m.security.entity.*;
 import cn.geelato.web.platform.m.security.enums.*;
 import cn.geelato.web.platform.m.security.service.*;
 import cn.geelato.web.platform.utils.EncryptUtil;

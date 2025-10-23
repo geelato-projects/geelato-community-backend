@@ -252,11 +252,8 @@ public class JsonTextSaveParser extends JsonTextParser {
         if (entity.containsKey(FN_UPDATER_NAME)) {
             entity.put(FN_UPDATER_NAME, SessionCtx.getUserName());
         }
-        if (entity.containsKey(FN_DEL_STATUS)) {
-            entity.put(FN_DEL_STATUS, 0);
-        }
         if (entity.containsKey(FN_DELETE_AT)) {
-            entity.put(FN_DELETE_AT, DateUtils.defaultDeleteAt());
+            entity.put(FN_DELETE_AT, DateUtils.DEFAULT_DELETE_AT);
         }
     }
 }

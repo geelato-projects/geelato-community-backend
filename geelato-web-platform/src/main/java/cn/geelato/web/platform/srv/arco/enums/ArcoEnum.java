@@ -5,8 +5,6 @@ import cn.geelato.pack.enums.PackageSourceEnum;
 import cn.geelato.pack.enums.PackageStatusEnum;
 import cn.geelato.utils.enums.LocaleEnum;
 import cn.geelato.utils.enums.TimeUnitEnum;
-import cn.geelato.web.platform.enums.PermissionTypeEnum;
-import cn.geelato.web.platform.enums.RestfulConfigType;
 import cn.geelato.web.platform.srv.arco.entity.SelectOptionData;
 import cn.geelato.web.platform.srv.base.enums.*;
 import cn.geelato.web.platform.srv.excel.enums.*;

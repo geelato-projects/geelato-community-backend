@@ -6,7 +6,7 @@ import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.utils.CacheUtil;
-import cn.geelato.web.platform.enums.PermissionTypeEnum;
+import cn.geelato.web.platform.srv.arco.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.srv.base.service.BaseService;
 import cn.geelato.web.platform.srv.model.service.DevTableColumnService;
 import cn.geelato.web.platform.srv.model.service.DevTableService;

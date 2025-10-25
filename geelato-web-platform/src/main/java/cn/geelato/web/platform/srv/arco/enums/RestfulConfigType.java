@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.enums;
+package cn.geelato.web.platform.srv.arco.enums;
 
 import lombok.Getter;
 

@@ -4,7 +4,7 @@ import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.meta.*;
-import cn.geelato.web.platform.enums.PermissionTypeEnum;
+import cn.geelato.web.platform.srv.arco.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.srv.base.service.AppService;
 import cn.geelato.web.platform.srv.base.service.BaseSortableService;
 import cn.geelato.web.platform.srv.security.enums.RoleTypeEnum;

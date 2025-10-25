@@ -17,7 +17,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.enums.PermissionTypeEnum;
+import cn.geelato.web.platform.srv.arco.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.model.service.DevTableColumnService;
 import cn.geelato.web.platform.srv.model.service.DevTableService;

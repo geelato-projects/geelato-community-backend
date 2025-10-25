@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.auth;
+package cn.geelato.web.platform.srv.auth;
 
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.lang.api.ApiResult;

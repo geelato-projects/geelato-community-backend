@@ -7,7 +7,7 @@ import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.cache.CacheUtil;
+import cn.geelato.web.platform.utils.CacheUtil;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.AppPage;
 import lombok.extern.slf4j.Slf4j;

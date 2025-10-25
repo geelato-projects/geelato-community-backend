@@ -5,7 +5,7 @@ import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.handler.file.FileHandler;
+import cn.geelato.web.platform.handler.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import lombok.extern.slf4j.Slf4j;

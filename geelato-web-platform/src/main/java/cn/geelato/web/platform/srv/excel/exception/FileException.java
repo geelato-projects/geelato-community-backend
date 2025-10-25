@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.exception.file;
+package cn.geelato.web.platform.srv.excel.exception;
 
 
 import cn.geelato.lang.exception.CoreException;

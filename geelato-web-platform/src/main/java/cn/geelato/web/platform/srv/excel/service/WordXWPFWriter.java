@@ -3,7 +3,7 @@ package cn.geelato.web.platform.srv.excel.service;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UIDGenerator;
-import cn.geelato.web.platform.handler.file.FileHandler;
+import cn.geelato.web.platform.handler.FileHandler;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.web.platform.srv.excel.entity.*;
 import cn.geelato.web.platform.srv.excel.enums.WordTableLoopTypeEnum;

@@ -1,6 +1,5 @@
-package cn.geelato.web.platform.boot;
+package cn.geelato.web.platform.boot.mybatis;
 
-import cn.geelato.orm.handler.BaseEntityMetaObjectHandler;
 import cn.geelato.orm.handler.EntityTableNameHandler;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;

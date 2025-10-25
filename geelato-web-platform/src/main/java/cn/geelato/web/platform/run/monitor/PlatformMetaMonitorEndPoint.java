@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.monitor;
+package cn.geelato.web.platform.run.monitor;
 
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;

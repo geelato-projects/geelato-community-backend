@@ -9,7 +9,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.enums.LocaleEnum;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.common.Base64Helper;
-import cn.geelato.web.platform.handler.file.FileHandler;
+import cn.geelato.web.platform.handler.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.meta.Attachment;

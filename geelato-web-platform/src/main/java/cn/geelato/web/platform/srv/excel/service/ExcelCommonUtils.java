@@ -10,7 +10,7 @@ import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.datasource.annotion.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.web.platform.exception.file.FileException;
+import cn.geelato.web.platform.srv.excel.exception.FileException;
 import cn.geelato.meta.Dict;
 import cn.geelato.meta.DictItem;
 import cn.geelato.web.platform.srv.base.service.RuleService;

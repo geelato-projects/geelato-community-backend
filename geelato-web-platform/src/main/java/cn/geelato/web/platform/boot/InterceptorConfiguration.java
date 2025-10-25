@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.boot;
 
 import cn.geelato.web.common.interceptor.*;
-import cn.geelato.web.platform.cache.CacheInterceptor;
+import cn.geelato.web.platform.boot.Inteceptor.CacheInterceptor;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Configuration;

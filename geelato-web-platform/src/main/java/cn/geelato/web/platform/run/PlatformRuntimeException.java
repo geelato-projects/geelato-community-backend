@@ -1,4 +1,4 @@
-package cn.geelato.web.platform;
+package cn.geelato.web.platform.run;
 
 
 import cn.geelato.lang.exception.CoreException;

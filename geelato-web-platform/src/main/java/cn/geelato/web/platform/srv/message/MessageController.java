@@ -6,9 +6,11 @@ import cn.geelato.message.model.PlatformMsg;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.message.entity.UniMsg;
+import cn.geelato.web.platform.srv.message.event.MsgGenerateEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -22,6 +24,9 @@ public class MessageController extends BaseController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     @RequestMapping(value = "/send", method = RequestMethod.POST)
     public ApiResult<?> send(@RequestBody UniMsg msg) {
@@ -46,6 +51,7 @@ public class MessageController extends BaseController {
             
             if (result > 0) {
                 log.info("消息插入成功，ID: {}", platformMsg.getId());
+                eventPublisher.publishEvent(new MsgGenerateEvent(this, platformMsg));
                 return ApiResult.success(platformMsg.getId());
             } else {
                 log.error("消息插入失败");

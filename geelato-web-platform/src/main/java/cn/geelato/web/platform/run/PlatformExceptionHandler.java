@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.handler;
+package cn.geelato.web.platform.run;
 
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
@@ -7,7 +7,6 @@ import cn.geelato.lang.exception.UnSupportedVersionException;
 import cn.geelato.plugin.UnFoundPluginException;
 import cn.geelato.utils.BeanValidators;
 import cn.geelato.utils.UIDGenerator;
-import cn.geelato.web.platform.PlatformRuntimeException;
 import com.alibaba.fastjson.JSON;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;

@@ -20,13 +20,16 @@ public class MetaConfiguration extends BaseConfiguration{
     @Resource
     @Qualifier("primaryDao")
     private Dao dao;
-
     MetaManager metaManager=MetaManager.singleInstance();
-
     public MetaConfiguration() {
 
     }
-
+    @Override
+    public void setApplicationContext(@NotNull ApplicationContext context) throws BeansException {
+        this.applicationContext=context;
+        initClassPackageMeta();
+        initDataBaseMeta();
+    }
     private void initClassPackageMeta() {
         String[] packageNames = getProperty("geelato.meta.scan-package-names", "cn.geelato").split(",");
         for (String packageName : packageNames) {
@@ -36,13 +39,5 @@ public class MetaConfiguration extends BaseConfiguration{
 
     private void initDataBaseMeta() {
         metaManager.parseDBMeta(dao);
-    }
-
-
-    @Override
-    public void setApplicationContext(@NotNull ApplicationContext context) throws BeansException {
-        this.applicationContext=context;
-        initClassPackageMeta();
-        initDataBaseMeta();
     }
 }

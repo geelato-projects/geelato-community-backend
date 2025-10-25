@@ -1,6 +1,6 @@
-package cn.geelato.web.platform.aop;
+package cn.geelato.web.platform.boot;
 import cn.geelato.core.SessionCtx;
-import cn.geelato.web.platform.aop.annotation.OpLog;
+import cn.geelato.web.platform.annitation.UserOperateLog;
 import com.alibaba.fastjson2.JSONArray;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
@@ -27,7 +27,7 @@ import java.util.Map;
 
 @Aspect
 @Component
-public class OpLogAOPConfig {
+public class UserOperateLogConfiguration {
 
     @Autowired
     @Qualifier("primaryDao")
@@ -35,16 +35,16 @@ public class OpLogAOPConfig {
 
     private final GqlManager gqlManager = GqlManager.singleInstance();
 
-    @Around(value = "@annotation( cn.geelato.web.platform.aop.annotation.OpLog)")
+    @Around(value = "@annotation( cn.geelato.web.platform.annitation.UserOperateLog)")
     public Object around(ProceedingJoinPoint proceedingJoinPoint){
         MethodSignature methodSignature = (MethodSignature)proceedingJoinPoint.getSignature();
         Method method = methodSignature.getMethod();
-        OpLog opLog=method.getAnnotation(OpLog.class);
+        UserOperateLog opLog=method.getAnnotation(UserOperateLog.class);
         Object ret;
         try {
             ret = proceedingJoinPoint.proceed();
         } catch (Throwable ex) {
-            throw new AOPException(ex.getMessage());
+            throw new RuntimeException(ex.getMessage());
         }
         if (opLog.type().equals("save")) {
             resolveSaveOpRecord(proceedingJoinPoint, ret);

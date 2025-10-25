@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.handler.file;
+package cn.geelato.web.platform.handler;
 
 import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.srv.base.service.DownloadService;

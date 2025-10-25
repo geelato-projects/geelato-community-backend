@@ -4,7 +4,7 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.pack.entity.AppPackData;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.utils.ZipUtils;
-import cn.geelato.web.platform.handler.file.FileHandler;
+import cn.geelato.web.platform.handler.FileHandler;
 import cn.geelato.meta.App;
 import cn.geelato.meta.RoleAppMap;
 import cn.geelato.web.platform.srv.security.service.RoleAppMapService;

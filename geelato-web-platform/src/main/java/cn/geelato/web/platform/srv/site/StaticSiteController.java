@@ -10,7 +10,7 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.SqlParams;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.handler.file.FileHandler;
+import cn.geelato.web.platform.handler.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.site.entity.FileInfo;
 import cn.geelato.web.platform.srv.site.entity.StaticSite;

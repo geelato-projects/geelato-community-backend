@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.monitor;
+package cn.geelato.web.platform.run.monitor;
 
 import cn.geelato.lang.monitor.HealthEndpoint;
 import cn.geelato.lang.monitor.HealthStatus;

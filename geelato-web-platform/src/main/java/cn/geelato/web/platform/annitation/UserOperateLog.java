@@ -1,10 +1,10 @@
-package cn.geelato.web.platform.aop.annotation;
+package cn.geelato.web.platform.annitation;
 
 import java.lang.annotation.*;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface OpLog {
+public @interface UserOperateLog {
     String type();
 }

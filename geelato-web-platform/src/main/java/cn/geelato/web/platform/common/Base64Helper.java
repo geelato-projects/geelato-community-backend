@@ -40,7 +40,7 @@ public class Base64Helper {
         return helper;
     }
 
-    public static Base64Helper fromString(String base64) throws IOException {
+    public static Base64Helper fromString(String base64) {
         Base64Helper helper = null;
         try {
             helper = JSON.parseObject(base64, Base64Helper.class);
@@ -74,7 +74,7 @@ public class Base64Helper {
      */
     public File toTempFile() throws IOException {
         File tempFile = FileUtils.createTempFile(this.getBase64(), this.getName());
-        if (tempFile == null || !tempFile.exists()) {
+        if (!tempFile.exists()) {
             throw new RuntimeException("Base64Helper temp file not exist");
         }
         return tempFile;

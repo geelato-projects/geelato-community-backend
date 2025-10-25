@@ -135,19 +135,16 @@ public class ApiResult<E> {
         return apiResult;
     }
 
-    @Deprecated
     public ApiResult<E> setMsg(String msg) {
         this.msg = msg;
         return this;
     }
 
-    @Deprecated
     public ApiResult<E> setCode(int code) {
         this.code = code;
         return this;
     }
 
-    @Deprecated
     public ApiResult<E> setData(E data) {
         this.data = data;
         return this;

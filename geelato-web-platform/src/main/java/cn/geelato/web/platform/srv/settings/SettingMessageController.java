@@ -21,13 +21,13 @@ import java.util.Map;
  */
 @ApiRestController("/app/settings/message")
 @Slf4j
-public class MessageRestController extends BaseController {
+public class SettingMessageController extends BaseController {
     private static final Class<Message> CLAZZ = Message.class;
 
     private final MessageService messageService;
 
     @Autowired
-    public MessageRestController(MessageService messageService) {
+    public SettingMessageController(MessageService messageService) {
         this.messageService = messageService;
     }
 
@@ -57,7 +57,7 @@ public class MessageRestController extends BaseController {
     }
 
     @RequestMapping(value = "/read", method = RequestMethod.POST)
-    public ApiResult read(String[] ids) {
+    public ApiResult read() {
         try {
             return ApiResult.success(new Message[]{});
         } catch (Exception e) {

@@ -21,9 +21,8 @@ import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.security.entity.*;
 import cn.geelato.web.platform.srv.security.enums.ValidTypeEnum;
 import cn.geelato.web.platform.srv.security.service.AuthCodeService;
-import cn.geelato.web.platform.srv.security.service.JWTUtil;
+import cn.geelato.web.platform.utils.JWTUtil;
 import cn.geelato.web.platform.srv.security.service.OrgService;
-import cn.geelato.web.platform.srv.security.service.SecurityHelper;
 import cn.geelato.web.platform.utils.EncryptUtil;
 import cn.geelato.web.platform.utils.LoginMultiTenantException;
 import com.alibaba.fastjson2.JSON;
@@ -32,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.util.Strings;
+import org.apache.shiro.SecurityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
@@ -531,10 +531,9 @@ public class JWTAuthController extends BaseController {
      * 根据当前会话的token获取对应的用户信息。
      *
      * @return 返回获取到的用户信息对象，如果未找到对应的用户则返回null
-     * @throws Exception 如果在获取用户信息的过程中发生异常，则抛出该异常
      */
-    private User getUserByToken() throws Exception {
-        ShiroUser shiroUser = SecurityHelper.getCurrentUser();
+    private User getUserByToken() {
+        ShiroUser shiroUser = (ShiroUser) SecurityUtils.getSubject().getPrincipal();
         User user = null;
         if (shiroUser != null) {
             user = dao.queryForObject(User.class, "loginName", shiroUser.loginName);

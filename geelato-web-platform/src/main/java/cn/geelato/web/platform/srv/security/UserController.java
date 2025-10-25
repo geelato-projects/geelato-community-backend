@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  */
 @ApiRestController(value = "/security/user")
 @Slf4j
-public class UserRestController extends BaseController {
+public class UserController extends BaseController {
     private static final int DEFAULT_PASSWORD_DIGIT = 8;
     private static final Class<User> CLAZZ = User.class;
     private final UserService userService;
@@ -46,7 +46,7 @@ public class UserRestController extends BaseController {
     private final UserStockMapService userStockMapService;
 
     @Autowired
-    public UserRestController(UserService userService, OrgService orgService, UserStockMapService userStockMapService) {
+    public UserController(UserService userService, OrgService orgService, UserStockMapService userStockMapService) {
         this.userService = userService;
         this.orgService = orgService;
         this.userStockMapService = userStockMapService;

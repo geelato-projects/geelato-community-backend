@@ -10,7 +10,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class ApiPagedResult<E> extends ApiResult<E> {
+public class ApiPagedResult<E> extends ApiResult<E>  {
 
     /**
      * 符合查询条件且不分页时的总记录数（相当于dataTotal）

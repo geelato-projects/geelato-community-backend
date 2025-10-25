@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 
 @ApiRestController("/sys/account")
-public class AccountRestController extends BaseController {
+public class AccountController extends BaseController {
 
     protected AccountService accountService;
 
     @Autowired
-    public AccountRestController(AccountService accountService) {
+    public AccountController(AccountService accountService) {
         this.accountService = accountService;
     }
 

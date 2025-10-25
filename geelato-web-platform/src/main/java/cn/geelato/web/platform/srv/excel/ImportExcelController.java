@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.excel.rest;
+package cn.geelato.web.platform.srv.excel;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRestController;

@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.excel.rest;
+package cn.geelato.web.platform.srv.excel;
 
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;

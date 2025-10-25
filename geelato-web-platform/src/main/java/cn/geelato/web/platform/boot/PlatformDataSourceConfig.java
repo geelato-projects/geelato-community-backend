@@ -1,8 +1,13 @@
 package cn.geelato.web.platform.boot;
 
 import cn.geelato.orm.handler.BaseEntityMetaObjectHandler;
+import cn.geelato.orm.handler.EntityTableNameHandler;
+import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.DynamicTableNameInnerInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.annotation.MapperScan;
@@ -22,6 +27,23 @@ import javax.sql.DataSource;
 public class PlatformDataSourceConfig {
 
     /**
+     * 配置MyBatis-Plus拦截器
+     * @return MybatisPlusInterceptor
+     */
+    @Bean
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        
+        // 添加动态表名拦截器
+        DynamicTableNameInnerInterceptor dynamicTableNameInnerInterceptor = new DynamicTableNameInnerInterceptor();
+        dynamicTableNameInnerInterceptor.setTableNameHandler(new EntityTableNameHandler());
+        interceptor.addInnerInterceptor(dynamicTableNameInnerInterceptor);
+        //分页插件
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+        return interceptor;
+    }
+
+    /**
      * 配置Platform模块的SqlSessionFactory
      * @param primaryDataSource 主数据源
      * @return SqlSessionFactory
@@ -35,6 +57,8 @@ public class PlatformDataSourceConfig {
         mybatisSqlSessionFactoryBean.setDataSource(primaryDataSource);
         mybatisSqlSessionFactoryBean.setMapperLocations(new PathMatchingResourcePatternResolver()
                 .getResources("classpath*:mapper/platform/*Mapper.xml"));
+        // 设置拦截器
+        mybatisSqlSessionFactoryBean.setPlugins(mybatisPlusInterceptor());
 
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setMetaObjectHandler(baseEntityMetaObjectHandler);

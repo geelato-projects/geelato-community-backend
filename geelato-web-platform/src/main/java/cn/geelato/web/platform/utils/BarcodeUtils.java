@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.zxing.utils;
+package cn.geelato.web.platform.utils;
 
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.orm.Dao;

@@ -2,6 +2,7 @@ package cn.geelato.web.platform.srv.site.entity;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.lang.meta.Title;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.srv.arco.entity.TreeNodeData;
 import cn.geelato.web.platform.srv.site.utils.FolderUtils;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import lombok.Setter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Getter
@@ -64,6 +66,28 @@ public class FileInfo {
             // 清空原集合并添加排序后的元素
             fileInfos.clear();
             fileInfos.addAll(list);
+        }
+    }
+
+    public static class FileInfoComparator implements Comparator<FileInfo> {
+        private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(DateUtils.DATETIME);
+
+        @Override
+        public int compare(FileInfo f1, FileInfo f2) {
+            // 1. 文件夹优先
+            if (f1.isDirectory() && !f2.isDirectory()) {
+                return -1;
+            } else if (!f1.isDirectory() && f2.isDirectory()) {
+                return 1;
+            }
+            // 2. 都同为文件夹或文件时，按最后修改时间逆序排序
+            try {
+                Date date1 = DATE_FORMAT.parse(f1.getLastModified());
+                Date date2 = DATE_FORMAT.parse(f2.getLastModified());
+                return date2.compareTo(date1); // 逆序排序
+            } catch (Exception e) {
+                return 0; // 如果日期解析失败，保持原顺序
+            }
         }
     }
 }

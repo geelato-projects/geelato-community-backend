@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.zxing.utils;
+package cn.geelato.web.platform.utils;
 
 import cn.geelato.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;

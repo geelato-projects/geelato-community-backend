@@ -44,15 +44,14 @@
             <groupId>cn.geelato</groupId>
             <artifactId>plugin-all</artifactId>
         </dependency>
-
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-web-oss</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>cn.geelato</groupId>-->
-<!--            <artifactId>geelato-orm</artifactId>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-orm</artifactId>
+        </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-dynamic-datasource</artifactId>
@@ -74,17 +73,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
-        
-        <!-- MyBatis Plus 依赖 -->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.5.3.1</version>
-        </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-web</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>

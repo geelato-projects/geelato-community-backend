@@ -7,7 +7,7 @@ import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.web.platform.srv.excel.entity.*;
 import cn.geelato.web.platform.srv.excel.enums.WordTableLoopTypeEnum;
-import cn.geelato.web.platform.srv.zxing.utils.BarcodeUtils;
+import cn.geelato.web.platform.utils.BarcodeUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;

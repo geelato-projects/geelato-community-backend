@@ -27,8 +27,6 @@ public class Base64Helper {
     /**
      * 将附件转换为Base64Helper对象,仅用于本地存储
      *
-     * @param attachment
-     * @return
      */
     public static Base64Helper fromAttachment(Attachment attachment) {
         Base64Helper helper = new Base64Helper();

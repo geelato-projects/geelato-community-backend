@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.site.rest;
+package cn.geelato.web.platform.srv.site;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.EnableStatusEnum;

@@ -98,6 +98,11 @@ public class FilterGroup {
         private String value;
 
         private Object[] arrayValue;
+        /**
+         * -- GETTER --
+         *  基于setField的值，若为tableName.fieldName，则为true
+         */
+        @Getter
         private boolean isRefField;
         @Getter
         private String refEntityName;
@@ -154,13 +159,6 @@ public class FilterGroup {
             this.value = value;
             this.arrayValue = null;
             return this;
-        }
-
-        /**
-         * 基于setField的值，若为tableName.fieldName，则为true
-         */
-        public boolean isRefField() {
-            return isRefField;
         }
 
     }

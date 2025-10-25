@@ -25,7 +25,6 @@ import java.util.Map;
 /**
  * 自定义ExceptionHandler，专门处理Restful异常.
  **/
-// 会被Spring-MVC自动扫描，但又不属于Controller的annotation。
 @RestControllerAdvice
 @Slf4j
 public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {

@@ -3,7 +3,7 @@ package cn.geelato.web.platform.handler.file;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.web.platform.srv.base.service.DownloadService;
 import cn.geelato.web.platform.srv.base.service.UploadService;
-import cn.geelato.web.platform.srv.excel.rest.OfficeUtils;
+import cn.geelato.web.platform.utils.OfficeUtils;
 import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.srv.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.srv.file.handler.AccessoryHandler;

@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.security.service;
+package cn.geelato.web.platform.utils;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;

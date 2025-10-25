@@ -7,7 +7,7 @@ import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.srv.zxing.enums.*;
-import cn.geelato.web.platform.srv.zxing.utils.ColorUtils;
+import cn.geelato.web.platform.utils.ColorUtils;
 import lombok.Getter;
 import lombok.Setter;
 

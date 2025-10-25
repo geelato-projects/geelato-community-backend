@@ -1,0 +1,132 @@
+package cn.geelato.web.platform.srv.security;
+
+import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.api.NullResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.platform.srv.BaseController;
+import cn.geelato.meta.RoleTreeNodeMap;
+import cn.geelato.web.platform.srv.security.service.RoleTreeNodeMapService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.Assert;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @author diabl
+ */
+@ApiRestController(value = "/security/role/tree")
+@Slf4j
+public class RoleTreeNodeMapController extends BaseController {
+    private static final Class<RoleTreeNodeMap> CLAZZ = RoleTreeNodeMap.class;
+    private final RoleTreeNodeMapService roleTreeNodeMapService;
+
+    @Autowired
+    public RoleTreeNodeMapController(RoleTreeNodeMapService roleTreeNodeMapService) {
+        this.roleTreeNodeMapService = roleTreeNodeMapService;
+    }
+
+    @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
+    public ApiPagedResult pageQuery() {
+        try {
+            Map<String, Object> requestBody = this.getRequestBody();
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
+            FilterGroup filterGroup = this.getFilterGroup(CLAZZ, requestBody, true);
+            return roleTreeNodeMapService.pageQueryModel(CLAZZ, filterGroup, pageQueryRequest);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiPagedResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/pageQueryOf", method = RequestMethod.GET)
+    public ApiPagedResult pageQueryOf() {
+        try {
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters();
+            return roleTreeNodeMapService.pageQueryModel("page_query_platform_role_r_tree_node", params, pageQueryRequest);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiPagedResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/query", method = RequestMethod.GET)
+    public ApiResult query() {
+        try {
+            PageQueryRequest pageQueryRequest = this.getPageQueryParameters();
+            Map<String, Object> params = this.getQueryParameters(CLAZZ);
+            return ApiResult.success(roleTreeNodeMapService.queryModel(CLAZZ, params, pageQueryRequest.getOrderBy()));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/insert", method = RequestMethod.POST)
+    public ApiResult insert(@RequestBody RoleTreeNodeMap form) {
+        try {
+            return ApiResult.success(roleTreeNodeMapService.insertModels(form));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/delete", method = RequestMethod.POST)
+    public ApiResult<NullResult> delete(@RequestBody RoleTreeNodeMap form) {
+        try {
+            roleTreeNodeMapService.cancelModels(form);
+            return ApiResult.successNoResult();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
+        try {
+            RoleTreeNodeMap model = roleTreeNodeMapService.getModel(CLAZZ, id);
+            Assert.notNull(model, ApiErrorMsg.IS_NULL);
+            roleTreeNodeMapService.isDeleteModel(model);
+            return ApiResult.successNoResult();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/isDelete/{roleId}/{treeNodeId}", method = RequestMethod.DELETE)
+    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String roleId, @PathVariable(required = true) String treeNodeId) {
+        try {
+            if (Strings.isBlank(roleId) || Strings.isBlank(treeNodeId)) {
+                throw new RuntimeException("Parameter missing: roleId,treeNodeId");
+            }
+            Map<String, Object> params = new HashMap<>();
+            params.put("roleId", roleId);
+            params.put("treeNodeId", treeNodeId);
+            List<RoleTreeNodeMap> roleTreeNodeMaps = roleTreeNodeMapService.queryModel(CLAZZ, params);
+            if (roleTreeNodeMaps != null && roleTreeNodeMaps.size() > 0) {
+                for (RoleTreeNodeMap model : roleTreeNodeMaps) {
+                    roleTreeNodeMapService.isDeleteModel(model);
+                }
+            }
+            return ApiResult.successNoResult();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+}

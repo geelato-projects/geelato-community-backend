@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.m.base.rest;
+package cn.geelato.web.platform.srv.base.rest;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
@@ -10,10 +10,10 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.meta.User;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.m.BaseController;
+import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.App;
-import cn.geelato.web.platform.m.base.service.AppService;
-import cn.geelato.web.platform.m.security.service.UserService;
+import cn.geelato.web.platform.srv.base.service.AppService;
+import cn.geelato.web.platform.srv.security.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;

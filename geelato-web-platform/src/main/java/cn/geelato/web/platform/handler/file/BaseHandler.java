@@ -1,14 +1,14 @@
 package cn.geelato.web.platform.handler.file;
 
 import cn.geelato.utils.FileUtils;
-import cn.geelato.web.platform.m.base.service.DownloadService;
-import cn.geelato.web.platform.m.base.service.UploadService;
-import cn.geelato.web.platform.m.excel.rest.OfficeUtils;
+import cn.geelato.web.platform.srv.base.service.DownloadService;
+import cn.geelato.web.platform.srv.base.service.UploadService;
+import cn.geelato.web.platform.srv.excel.rest.OfficeUtils;
 import cn.geelato.meta.Attachment;
-import cn.geelato.web.platform.m.file.enums.FileGenreEnum;
-import cn.geelato.web.platform.m.file.handler.AccessoryHandler;
-import cn.geelato.web.platform.m.file.param.FileParam;
-import cn.geelato.web.platform.m.file.utils.FileParamUtils;
+import cn.geelato.web.platform.srv.file.enums.FileGenreEnum;
+import cn.geelato.web.platform.srv.file.handler.AccessoryHandler;
+import cn.geelato.web.platform.srv.file.param.FileParam;
+import cn.geelato.web.platform.srv.file.utils.FileParamUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;

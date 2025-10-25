@@ -1,0 +1,83 @@
+package cn.geelato.web.platform.srv.security;
+
+
+import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.platform.srv.BaseController;
+import cn.geelato.web.platform.srv.security.wechat.WxChatConfiguration;
+import cn.geelato.meta.User;
+import cn.geelato.web.platform.srv.security.service.UserService;
+import cn.geelato.web.platform.srv.security.wechat.WeChatAccess;
+import cn.geelato.web.platform.srv.security.wechat.WeChatUtil;
+import jakarta.validation.constraints.Null;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.Assert;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@ApiRestController(value = "/security/wechat")
+@Slf4j
+public class WeChatController extends BaseController {
+    private static final Class<User> CLAZZ = User.class;
+    private final WxChatConfiguration wxConfiguration;
+    private final UserService userService;
+
+    @Autowired
+    public WeChatController(WxChatConfiguration wxConfiguration, UserService userService) {
+        this.wxConfiguration = wxConfiguration;
+        this.userService = userService;
+    }
+
+    /**
+     * 取消绑定微信
+     *
+     * @param id
+     * @return
+     */
+    @RequestMapping(value = "/signOut/{id}", method = RequestMethod.POST)
+    public ApiResult<Null> signOut(@PathVariable(required = true) String id) {
+        User user = userService.getModel(CLAZZ, id);
+        Assert.notNull(user, ApiErrorMsg.IS_NULL);
+        user.setWeixinUnionId(null);
+        userService.updateModel(user);
+        return ApiResult.successNoResult();
+    }
+
+    /**
+     * 绑定微信
+     *
+     * @param id
+     * @param code
+     * @return
+     */
+    @RequestMapping(value = "/signIn/{id}", method = RequestMethod.POST)
+    public ApiResult bindWeChat(@PathVariable(required = true) String id, String code) {
+        // 获取用户信息
+        User user = userService.getModel(CLAZZ, id);
+        Assert.notNull(user, ApiErrorMsg.IS_NULL);
+        // 获取微信access_token
+        WeChatAccess access = WeChatUtil.accessToken(wxConfiguration.getUrl(), wxConfiguration.getAppId(), wxConfiguration.getSecret(), code);
+        if (access == null || Strings.isBlank(access.getUnionid())) {
+            return ApiResult.fail("Failed to obtain the unionId of weChat");
+        }
+        // 判断是否已经绑定过微信
+        Map<String, Object> params = new HashMap<>();
+        params.put("weixinUnionId", access.getUnionid());
+        List<User> userList = userService.queryModel(CLAZZ, params);
+        if (userList != null && !userList.isEmpty()) {
+            return ApiResult.fail("The unionId of weChat has been occupied");
+        }
+        // 绑定微信
+        user.setWeixinUnionId(access.getUnionid());
+        userService.updateModel(user);
+        return ApiResult.successNoResult();
+    }
+}

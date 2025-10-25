@@ -10,7 +10,7 @@ import cn.geelato.core.script.sql.SqlScriptParser;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.meta.DictItem;
-import cn.geelato.web.platform.m.base.service.RuleService;
+import cn.geelato.web.platform.srv.base.service.RuleService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 

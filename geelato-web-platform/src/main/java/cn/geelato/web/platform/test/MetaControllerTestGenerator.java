@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.test;
 
 import cn.geelato.test.generator.TestCaseGenerator;
-import cn.geelato.web.platform.m.meta.MetaController;
+import cn.geelato.web.platform.srv.meta.MetaController;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;

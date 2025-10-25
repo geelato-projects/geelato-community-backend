@@ -6,11 +6,11 @@ import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.DataItems;
-import cn.geelato.web.platform.srv.base.service.BaseSortableService;
 import cn.geelato.meta.OrgUserMap;
 import cn.geelato.meta.Role;
 import cn.geelato.meta.RoleUserMap;
 import cn.geelato.meta.User;
+import cn.geelato.web.platform.srv.base.service.BaseSortableService;
 import cn.geelato.web.platform.srv.security.enums.IsDefaultOrgEnum;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -78,26 +78,31 @@ public class UserService extends BaseSortableService {
     }
 
     public void setDefaultOrg(User model) {
+        String orgId = String.valueOf(model.getOrgId());
         Map<String, Object> params = new HashMap<>();
         params.put("userId", model.getId());
         boolean isExit = false;
         List<OrgUserMap> oList = orgUserMapService.queryModel(OrgUserMap.class, params);
+        OrgUserMap defaultOrg = null;
+        OrgUserMap currentOrg = null;
         if (oList != null) {
-            for (OrgUserMap oModel : oList) {
-                if (oModel.getOrgId() != null && oModel.getOrgId().equals(model.getOrgId())) {
-                    isExit = true;
-                    if (IsDefaultOrgEnum.IS.getValue() != oModel.getDefaultOrg()) {
-                        oModel.setDefaultOrg(IsDefaultOrgEnum.IS.getValue());
-                        orgUserMapService.updateModel(oModel);
-                    }
-                } else if (IsDefaultOrgEnum.IS.getValue() == oModel.getDefaultOrg()) {
-                    oModel.setDefaultOrg(IsDefaultOrgEnum.NO.getValue());
-                    orgUserMapService.updateModel(oModel);
-                }
+            defaultOrg = oList.stream().filter(orgUserMap -> IsDefaultOrgEnum.IS.getValue() == orgUserMap.getDefaultOrg()).findFirst().orElse(null);
+            if (Strings.isNotBlank(orgId)) {
+                currentOrg = oList.stream().filter(orgUserMap -> IsDefaultOrgEnum.IS.getValue() != orgUserMap.getDefaultOrg() && orgUserMap.getOrgId().equals(orgId)).findFirst().orElse(null);
             }
         }
-        String orgId = String.valueOf(model.getOrgId());
-        if (!isExit && Strings.isNotBlank(orgId)) {
+        // 清除默认组织，当用户切换组织时
+        if (defaultOrg != null) {
+            if (Strings.isNotBlank(orgId) && defaultOrg.getOrgId().equals(orgId)) {
+                return;
+            }
+            orgUserMapService.deleteModel(OrgUserMap.class, defaultOrg.getId());
+        }
+        // 已存在兼职组织关系，设置为默认组织，否则创建新的组织用户关系
+        if (currentOrg != null) {
+            currentOrg.setDefaultOrg(IsDefaultOrgEnum.IS.getValue());
+            orgUserMapService.updateModel(currentOrg);
+        } else if (Strings.isNotBlank(orgId)) {
             OrgUserMap oModel = new OrgUserMap();
             oModel.setUserId(model.getId());
             oModel.setUserName(model.getName());

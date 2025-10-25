@@ -23,7 +23,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.m.base.service.UploadService;
-import cn.geelato.web.platform.m.file.entity.Attachment;
+import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.file.param.FileParam;
 import cn.geelato.web.platform.m.file.utils.FileParamUtils;

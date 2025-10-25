@@ -2,8 +2,8 @@ package cn.geelato.web.platform.m.base.service;
 
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.platform.m.base.entity.Dict;
-import cn.geelato.web.platform.m.base.entity.DictItem;
+import cn.geelato.meta.Dict;
+import cn.geelato.meta.DictItem;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

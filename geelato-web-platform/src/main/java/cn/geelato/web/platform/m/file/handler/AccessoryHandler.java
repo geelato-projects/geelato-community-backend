@@ -56,7 +56,7 @@ public class AccessoryHandler {
     /**
      * 保存文件信息（MultipartFile）
      */
-    public <T extends Attachment> T save(MultipartFile file, String path, FileParam param) {
+    public <T extends Attachment> T save(MultipartFile file, String path, FileParam param) throws IOException {
         return (T) getAttachHandler(param.getSourceType()).save(file, path, param.toAttachmentParam());
     }
 

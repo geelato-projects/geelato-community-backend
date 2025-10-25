@@ -41,7 +41,7 @@ public class CompressHandler extends AttachmentHandler<Compress> {
      * @return 保存后的附件对象
      */
     @Override
-    public Compress save(MultipartFile file, String path, AttachmentParam param) {
+    public Compress save(MultipartFile file, String path, AttachmentParam param) throws IOException {
         Compress model = build(file, path, param);
         return compressService.createModel(model);
     }
@@ -70,8 +70,12 @@ public class CompressHandler extends AttachmentHandler<Compress> {
      * @return 构建好的附件对象
      */
     @Override
-    public Compress build(MultipartFile file, String path, AttachmentParam param) {
-        return build(new Compress(file), path, param);
+    public Compress build(MultipartFile file, String path, AttachmentParam param) throws IOException {
+        Compress compress = new Compress();
+        compress.setName(file.getOriginalFilename());
+        compress.setType(file.getContentType());
+        compress.setSize(file.getSize());
+        return build(compress, path, param);
     }
 
     @Override

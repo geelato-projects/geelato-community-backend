@@ -1,4 +1,4 @@
-package cn.geelato.meta;
+package cn.geelato.web.platform.m.security.entity;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.lang.meta.Col;

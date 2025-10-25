@@ -74,7 +74,11 @@ public class ResourcesHandler extends AttachmentHandler<Resources> {
     @Override
     @SneakyThrows
     public Resources build(MultipartFile file, String path, AttachmentParam param) {
-        return build(new Resources(file), path, param);
+        Resources resources = new Resources();
+        resources.setName(file.getOriginalFilename());
+        resources.setType(file.getContentType());
+        resources.setSize(file.getSize());
+        return build(resources, path, param);
     }
 
     @Override

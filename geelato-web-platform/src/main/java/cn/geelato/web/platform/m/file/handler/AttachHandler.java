@@ -43,7 +43,7 @@ public class AttachHandler extends AttachmentHandler<Attach> {
      * @return 保存后的附件对象
      */
     @Override
-    public Attach save(MultipartFile file, String path, AttachmentParam param) {
+    public Attach save(MultipartFile file, String path, AttachmentParam param) throws IOException {
         Attach model = build(file, path, param);
         return attachService.createModel(model);
     }
@@ -72,8 +72,12 @@ public class AttachHandler extends AttachmentHandler<Attach> {
      * @return 构建好的附件对象
      */
     @Override
-    public Attach build(MultipartFile file, String path, AttachmentParam param) {
-        return build(new Attach(file), path, param);
+    public Attach build(MultipartFile file, String path, AttachmentParam param) throws IOException {
+        Attach attach = new Attach();
+        attach.setName(file.getOriginalFilename());
+        attach.setType(file.getContentType());
+        attach.setSize(file.getSize());
+        return build(attach, path, param);
     }
 
     @Override

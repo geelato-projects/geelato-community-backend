@@ -3,7 +3,7 @@ package cn.geelato.web.platform.m.excel.rest;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.m.BaseController;
-import cn.geelato.web.platform.m.excel.entity.ExportTemplate;
+import cn.geelato.meta.ExportTemplate;
 import cn.geelato.web.platform.m.excel.service.ExportTemplateService;
 import cn.geelato.web.platform.m.excel.service.ImportExcelService;
 import lombok.extern.slf4j.Slf4j;

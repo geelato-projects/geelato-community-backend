@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.m.ocr.enums;
 
-import cn.geelato.web.platform.m.base.entity.DictItem;
+import cn.geelato.meta.DictItem;
 
 import java.util.ArrayList;
 import java.util.List;

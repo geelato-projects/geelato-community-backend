@@ -5,7 +5,7 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.Base64Utils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.m.base.service.UploadService;
-import cn.geelato.web.platform.m.file.entity.Attach;
+import cn.geelato.meta.Attach;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.m.zxing.entity.Barcode;
 import cn.geelato.web.platform.m.zxing.enums.*;

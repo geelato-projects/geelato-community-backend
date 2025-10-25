@@ -4,7 +4,7 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.UIDGenerator;
-import cn.geelato.web.platform.m.file.entity.Attach;
+import cn.geelato.meta.Attach;
 import cn.geelato.web.platform.m.file.enums.AttachmentSourceEnum;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

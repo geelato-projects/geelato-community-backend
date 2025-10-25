@@ -4,7 +4,7 @@ import cn.geelato.web.common.interceptor.DefaultSecurityInterceptor;
 import cn.geelato.web.common.oauth2.InvalidTokenException;
 import cn.geelato.web.common.interceptor.OAuthConfigurationProperties;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
-import cn.geelato.web.common.security.User;
+import cn.geelato.meta.User;
 import lombok.SneakyThrows;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;

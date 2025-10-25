@@ -20,7 +20,7 @@ package cn.geelato.web.common.shiro;
 
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.Encodes;
-import cn.geelato.web.common.security.User;
+import cn.geelato.meta.User;
 import jakarta.annotation.PostConstruct;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;

@@ -35,7 +35,7 @@ public abstract class AttachmentHandler<E extends Attachment> {
      * @param path 文件路径（地址或oss）
      * @return 保存后的附件对象
      */
-    public abstract E save(MultipartFile file, String path, AttachmentParam param);
+    public abstract E save(MultipartFile file, String path, AttachmentParam param) throws IOException;
 
     public abstract E save(File file, String path, AttachmentParam param) throws IOException;
 
@@ -51,7 +51,7 @@ public abstract class AttachmentHandler<E extends Attachment> {
      * @param path 文件保存的路径
      * @return 构建好的附件对象
      */
-    public abstract E build(MultipartFile file, String path, AttachmentParam param);
+    public abstract E build(MultipartFile file, String path, AttachmentParam param) throws IOException;
 
     public abstract E build(File file, String path, AttachmentParam param) throws IOException;
 

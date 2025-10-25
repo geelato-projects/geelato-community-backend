@@ -15,7 +15,7 @@ import cn.geelato.web.platform.srv.file.enums.AttachmentServiceEnum;
 import cn.geelato.web.platform.srv.file.handler.AccessoryHandler;
 import cn.geelato.web.platform.srv.file.param.FileParam;
 import cn.geelato.web.platform.srv.file.param.ThumbnailResolution;
-import cn.geelato.web.platform.srv.file.utils.FileParamUtils;
+import cn.geelato.web.platform.utils.FileParamUtils;
 import cn.geelato.web.platform.utils.ThumbnailUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

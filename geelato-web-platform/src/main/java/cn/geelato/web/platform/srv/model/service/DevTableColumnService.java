@@ -17,7 +17,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.srv.arco.entity.SelectOptionData;
 import cn.geelato.web.platform.srv.arco.entity.SelectOptionGroup;
 import cn.geelato.web.platform.srv.base.service.BaseSortableService;
-import cn.geelato.web.platform.srv.model.utils.SchemaUtils;
+import cn.geelato.web.platform.utils.SchemaUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;

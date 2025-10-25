@@ -6,7 +6,7 @@ import cn.geelato.security.SecurityContext;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.srv.tenant.entity.Tenant;
+import cn.geelato.meta.Tenant;
 import cn.geelato.web.platform.srv.tenant.mapper.TenantMapper;
 import cn.geelato.web.platform.srv.tenant.service.TenantService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;

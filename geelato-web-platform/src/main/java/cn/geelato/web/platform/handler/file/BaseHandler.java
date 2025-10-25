@@ -8,7 +8,7 @@ import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.srv.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.srv.file.handler.AccessoryHandler;
 import cn.geelato.web.platform.srv.file.param.FileParam;
-import cn.geelato.web.platform.srv.file.utils.FileParamUtils;
+import cn.geelato.web.platform.utils.FileParamUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;

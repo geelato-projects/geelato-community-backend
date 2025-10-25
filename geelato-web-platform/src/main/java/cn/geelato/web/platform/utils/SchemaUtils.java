@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.model.utils;
+package cn.geelato.web.platform.utils;
 
 import cn.geelato.utils.StringUtils;
 

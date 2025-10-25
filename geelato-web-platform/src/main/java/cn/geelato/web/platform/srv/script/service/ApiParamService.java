@@ -2,8 +2,8 @@ package cn.geelato.web.platform.srv.script.service;
 
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.srv.base.service.BaseService;
-import cn.geelato.web.platform.srv.script.entity.Api;
-import cn.geelato.web.platform.srv.script.entity.ApiParam;
+import cn.geelato.meta.Api;
+import cn.geelato.meta.ApiParam;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

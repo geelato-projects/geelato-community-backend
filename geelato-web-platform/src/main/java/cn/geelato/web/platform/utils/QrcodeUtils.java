@@ -3,7 +3,7 @@ package cn.geelato.web.platform.utils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.web.platform.srv.file.enums.AttachmentSourceEnum;
-import cn.geelato.web.platform.srv.zxing.entity.Qrcode;
+import cn.geelato.meta.Qrcode;
 import cn.geelato.web.platform.srv.zxing.enums.BarcodePictureFormatEnum;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;

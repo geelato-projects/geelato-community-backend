@@ -12,7 +12,7 @@ import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.srv.file.param.CompressRequestBody;
 import cn.geelato.web.platform.srv.file.param.FileParam;
-import cn.geelato.web.platform.srv.file.utils.FileParamUtils;
+import cn.geelato.web.platform.utils.FileParamUtils;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -17,7 +17,7 @@ import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.srv.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.srv.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.srv.file.param.FileParam;
-import cn.geelato.web.platform.srv.file.utils.FileParamUtils;
+import cn.geelato.web.platform.utils.FileParamUtils;
 import cn.geelato.web.platform.srv.zxing.entity.Barcode;
 import cn.geelato.web.platform.srv.zxing.service.BarcodeService;
 import com.alibaba.fastjson2.JSON;

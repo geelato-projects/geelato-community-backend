@@ -14,7 +14,7 @@ import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.srv.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.srv.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.srv.file.param.FileParam;
-import cn.geelato.web.platform.srv.file.utils.FileParamUtils;
+import cn.geelato.web.platform.utils.FileParamUtils;
 import com.alibaba.fastjson2.JSON;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.util.Strings;

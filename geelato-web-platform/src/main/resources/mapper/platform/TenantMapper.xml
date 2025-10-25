@@ -3,7 +3,7 @@
 <mapper namespace="cn.geelato.web.platform.srv.tenant.mapper.TenantMapper">
 
     <!-- 基础结果映射 -->
-    <resultMap id="BaseResultMap" type="cn.geelato.web.platform.srv.tenant.entity.Tenant">
+    <resultMap id="BaseResultMap" type="cn.geelato.meta.Tenant">
         <id column="id" property="id" jdbcType="VARCHAR"/>
         <result column="code" property="code" jdbcType="VARCHAR"/>
         <result column="corp_id" property="corpId" jdbcType="VARCHAR"/>

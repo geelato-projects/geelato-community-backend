@@ -6,7 +6,7 @@ import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.security.entity.AuthCodeParams;
 import cn.geelato.web.platform.srv.security.service.AuthCodeService;
-import cn.geelato.web.platform.srv.settings.entity.Message;
+import cn.geelato.meta.Message;
 import cn.geelato.web.platform.srv.settings.enums.MessageSendStatus;
 import cn.geelato.web.platform.srv.settings.service.MessageService;
 import lombok.extern.slf4j.Slf4j;

@@ -14,7 +14,7 @@ import cn.geelato.web.platform.srv.file.enums.AttachmentServiceEnum;
 import cn.geelato.web.platform.srv.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.srv.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.srv.file.param.FileParam;
-import cn.geelato.web.platform.srv.file.utils.FileParamUtils;
+import cn.geelato.web.platform.utils.FileParamUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.math.NumberUtils;

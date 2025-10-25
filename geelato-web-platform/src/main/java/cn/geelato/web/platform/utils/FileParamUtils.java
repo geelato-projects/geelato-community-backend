@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.file.utils;
+package cn.geelato.web.platform.utils;
 
 import cn.geelato.web.platform.srv.file.handler.CompressHandler;
 import cn.geelato.web.platform.srv.file.param.FileParam;

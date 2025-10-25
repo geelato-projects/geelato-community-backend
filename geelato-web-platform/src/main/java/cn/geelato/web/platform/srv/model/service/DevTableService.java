@@ -11,7 +11,7 @@ import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.srv.base.service.BaseSortableService;
-import cn.geelato.web.platform.srv.model.utils.SchemaUtils;
+import cn.geelato.web.platform.utils.SchemaUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;

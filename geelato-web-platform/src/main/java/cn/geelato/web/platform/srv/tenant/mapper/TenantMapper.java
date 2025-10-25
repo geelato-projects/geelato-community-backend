@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.srv.tenant.mapper;
 
-import cn.geelato.web.platform.srv.tenant.entity.Tenant;
+import cn.geelato.meta.Tenant;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Mapper;

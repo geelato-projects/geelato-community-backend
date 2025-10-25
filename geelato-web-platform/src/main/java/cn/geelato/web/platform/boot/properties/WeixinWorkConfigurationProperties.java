@@ -1,6 +1,5 @@
-package cn.geelato.web.platform.srv.weixin.config;
+package cn.geelato.web.platform.boot.properties;
 
-import cn.geelato.security.SecurityContext;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;

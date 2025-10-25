@@ -4,7 +4,7 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.srv.security.enums.ValidTypeEnum;
-import cn.geelato.web.platform.srv.settings.entity.Message;
+import cn.geelato.meta.Message;
 import cn.geelato.web.platform.srv.settings.enums.MessageSendStatus;
 import cn.geelato.web.platform.utils.EncryptUtil;
 import lombok.Getter;

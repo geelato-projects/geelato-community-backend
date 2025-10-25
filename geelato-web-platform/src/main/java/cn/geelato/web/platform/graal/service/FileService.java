@@ -12,7 +12,7 @@ import cn.geelato.web.platform.srv.excel.service.ExportExcelService;
 import cn.geelato.meta.Attach;
 import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.srv.file.param.FileParam;
-import cn.geelato.web.platform.srv.file.utils.FileParamUtils;
+import cn.geelato.web.platform.utils.FileParamUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import org.apache.logging.log4j.util.Strings;

@@ -14,7 +14,7 @@ import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.srv.file.param.FileParam;
-import cn.geelato.web.platform.srv.file.utils.FileParamUtils;
+import cn.geelato.web.platform.utils.FileParamUtils;
 import cn.geelato.web.platform.srv.model.service.DevTableColumnService;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;

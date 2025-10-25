@@ -4,7 +4,7 @@ import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.srv.script.entity.Api;
+import cn.geelato.meta.Api;
 import cn.geelato.web.platform.srv.script.service.ApiService;
 import cn.geelato.web.platform.utils.GqlUtil;
 import jakarta.annotation.Resource;

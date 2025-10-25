@@ -6,7 +6,7 @@ import cn.geelato.utils.HttpUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.meta.User;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.srv.weixin.config.WeixinWorkConfigurationProperties;
+import cn.geelato.web.platform.boot.properties.WeixinWorkConfigurationProperties;
 import cn.geelato.web.platform.srv.weixin.mapper.WeixinWorkMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

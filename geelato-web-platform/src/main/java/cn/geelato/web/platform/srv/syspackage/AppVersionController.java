@@ -13,7 +13,7 @@ import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.file.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.srv.syspackage.entity.AppVersion;
+import cn.geelato.meta.AppVersion;
 import cn.geelato.web.platform.srv.syspackage.service.AppVersionService;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;

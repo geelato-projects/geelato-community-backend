@@ -16,7 +16,7 @@ import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.srv.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.srv.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.srv.file.param.FileParam;
-import cn.geelato.web.platform.srv.file.utils.FileParamUtils;
+import cn.geelato.web.platform.utils.FileParamUtils;
 import cn.geelato.web.platform.srv.ocr.entity.*;
 import cn.geelato.web.platform.srv.ocr.service.OcrPdfService;
 import cn.geelato.web.platform.srv.ocr.service.OcrService;

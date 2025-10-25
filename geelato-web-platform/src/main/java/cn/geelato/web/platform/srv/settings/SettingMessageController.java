@@ -6,7 +6,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.srv.settings.entity.Message;
+import cn.geelato.meta.Message;
 import cn.geelato.web.platform.srv.settings.service.MessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

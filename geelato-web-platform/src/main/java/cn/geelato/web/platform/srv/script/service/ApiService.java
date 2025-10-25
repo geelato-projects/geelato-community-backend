@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.script.service;
 
 import cn.geelato.web.platform.srv.base.service.BaseService;
-import cn.geelato.web.platform.srv.script.entity.Api;
+import cn.geelato.meta.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;

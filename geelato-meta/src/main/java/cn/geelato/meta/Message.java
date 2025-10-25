@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.settings.entity;
+package cn.geelato.meta;
 
 import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;

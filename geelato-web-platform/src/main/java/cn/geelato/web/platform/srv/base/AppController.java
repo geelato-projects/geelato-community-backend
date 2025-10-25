@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.base.rest;
+package cn.geelato.web.platform.srv.base;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;

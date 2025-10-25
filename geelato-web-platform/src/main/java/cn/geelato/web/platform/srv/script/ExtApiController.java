@@ -30,13 +30,13 @@ import java.util.Map;
 
 @ApiRestController("/ext")
 @Slf4j
-public class OutsideController extends BaseController {
+public class ExtApiController extends BaseController {
     private final GraalManager graalManager = GraalManager.singleInstance();
     private final ApiService apiService;
     private final RuleService ruleService;
 
     @Autowired
-    public OutsideController(ApiService apiService, RuleService ruleService) {
+    public ExtApiController(ApiService apiService, RuleService ruleService) {
         this.apiService = apiService;
         this.ruleService = ruleService;
     }

@@ -12,6 +12,7 @@
     <modules>
         <module>geelato-lang</module>
         <module>geelato-core</module>
+        <module>geelato-meta</module>
         <module>geelato-security</module>
         <module>geelato-utils</module>
         <module>geelato-orm</module>

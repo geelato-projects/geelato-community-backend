@@ -53,7 +53,7 @@ public class UserRestController extends BaseController {
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
-    public ApiPagedResult pageQuery() {
+    public ApiPagedResult<?> pageQuery() {
         try {
             Map<String, Object> requestBody = this.getRequestBody();
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);

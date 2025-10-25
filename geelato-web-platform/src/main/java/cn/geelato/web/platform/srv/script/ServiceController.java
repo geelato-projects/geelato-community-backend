@@ -21,7 +21,7 @@ import java.util.Map;
 
 
 @ApiRestController("/service")
-public class ScriptController extends BaseController {
+public class ServiceController extends BaseController {
     private final GraalManager graalManager = GraalManager.singleInstance();
 
     @Resource

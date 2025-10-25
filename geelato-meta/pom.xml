@@ -28,6 +28,11 @@
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-core</artifactId>
     </dependency>
+      <dependency>
+          <groupId>com.baomidou</groupId>
+          <artifactId>mybatis-plus</artifactId>
+          <version>3.5.14</version>
+      </dependency>
   </dependencies>
 
 </project>

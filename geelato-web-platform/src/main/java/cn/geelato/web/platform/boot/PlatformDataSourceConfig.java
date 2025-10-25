@@ -18,7 +18,7 @@ import javax.sql.DataSource;
  * 参照MarketDataSourceConfig配置MyBatis SqlSessionFactory
  */
 @Configuration
-@MapperScan(basePackages = "cn.geelato.web", sqlSessionFactoryRef = "platformSqlSessionFactory")
+@MapperScan(basePackages = "cn.geelato.web,cn.geelato.meta", sqlSessionFactoryRef = "platformSqlSessionFactory")
 public class PlatformDataSourceConfig {
 
     /**

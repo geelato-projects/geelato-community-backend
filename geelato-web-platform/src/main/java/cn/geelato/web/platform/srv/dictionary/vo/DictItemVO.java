@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.dict.vo;
+package cn.geelato.web.platform.srv.dictionary.vo;
 
 import lombok.Data;
 

@@ -1,0 +1,20 @@
+{
+  "name": "元数据定义查询测试",
+  "description": "测试获取指定实体的元数据定义信息",
+  "className": "cn.geelato.web.platform.m.meta.MetaController",
+  "methodName": "defined",
+  "testItems": [
+    {
+      "id": "1",
+      "description": "获取platform_dev_project实体的元数据定义",
+      "input": "{\"param0\":\"platform_dev_project\"}",
+      "expectedOutput": "{\"code\":0,\"success\":true,\"msg\":\"操作成功\",\"data\":[{\"name\":\"id\",\"type\":\"varchar\"}]}"
+    },
+    {
+      "id": "2",
+      "description": "获取不存在的实体的元数据定义",
+      "input": "{\"param0\":\"not_exist_entity\"}",
+      "expectedOutput": "{\"code\":1,\"success\":false,\"msg\":\"not found meta defined\",\"data\":null}"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.dict.mapper;
+package cn.geelato.web.platform.srv.dictionary.mapper;
 
 import cn.geelato.meta.DictItem;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;

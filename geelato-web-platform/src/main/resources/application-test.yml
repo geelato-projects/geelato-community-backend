@@ -1,0 +1,23 @@
+# 测试环境配置
+spring:
+  datasource:
+    # 主数据源配置
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/geelato?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    # 测试数据源配置
+    test:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      jdbc-url: jdbc:mysql://localhost:3306/geelato_test?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+      username: root
+      password: root
+
+# 测试配置
+geelato:
+  test:
+    enabled: true
+    # 测试用例文件路径
+    testcase-path: classpath:testcases/
+    # 测试结果存储路径
+    result-path: ./test-results/

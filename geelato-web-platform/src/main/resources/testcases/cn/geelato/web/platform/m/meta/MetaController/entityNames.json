@@ -1,0 +1,14 @@
+{
+  "name": "实体名称列表查询测试",
+  "description": "测试获取所有实体名称列表的功能",
+  "className": "cn.geelato.web.platform.m.meta.MetaController",
+  "methodName": "entityNames",
+  "testItems": [
+    {
+      "id": "1",
+      "description": "获取所有实体名称列表",
+      "input": "{}",
+      "expectedOutput": "{\"code\":0,\"success\":true,\"msg\":\"操作成功\",\"data\":[\"platform_dev_project\",\"platform_dev_datasource\"]}"
+    }
+  ]
+}

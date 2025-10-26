@@ -150,11 +150,11 @@ public class JWTAuthController extends BaseController {
                 loginResult.setOrgs(userOrgList);
                 String orgId = checkOrg(userOrgList, securityUser.getOrgId()) ? securityUser.getOrgId() : user.getOrgId();
                 UserOrg userOrg = userOrgList.stream()
-                        .filter(org -> org.getId().equals(orgId))
+                        .filter(org -> org.getOrgId().equals(orgId))
                         .findFirst()
                         .orElse(null);
                 if (userOrg != null) {
-                    loginResult.setOrgId(userOrg.getId());
+                    loginResult.setOrgId(userOrg.getOrgId());
                     loginResult.setOrgName(userOrg.getName());
                     loginResult.setCompanyId(userOrg.getCompanyId());
                     loginResult.setCompanyName(null);
@@ -195,7 +195,7 @@ public class JWTAuthController extends BaseController {
                         "where oru.del_status=0 and o.status=1 and o.del_status=0 and oru.user_id = ?",
                 (rs, rowNum) -> {
                     UserOrg userOrg = new UserOrg();
-                    userOrg.setId(rs.getString("id"));
+                    userOrg.setOrgId(rs.getString("id"));
                     userOrg.setName(rs.getString("name"));
                     userOrg.setDefaultOrg(rs.getBoolean("defaultOrg"));
                     userOrg.setPid(rs.getString("pid"));
@@ -205,7 +205,7 @@ public class JWTAuthController extends BaseController {
                 userId
         );
         if (!userOrgs.isEmpty()) {
-            String orgIds = userOrgs.stream().map(UserOrg::getId).collect(Collectors.joining(","));
+            String orgIds = userOrgs.stream().map(UserOrg::getOrgId).collect(Collectors.joining(","));
             List<Map<String, Object>> mapList = dao.queryForMapList("query_tree_platform_org_full_name", SqlParams.map("id", orgIds));
             if (mapList != null && !mapList.isEmpty()) {
                 // 将mapList转换为以ID为key的Map，方便快速查找
@@ -220,7 +220,7 @@ public class JWTAuthController extends BaseController {
                 ));
                 // 将full_name设置回UserOrg对象
                 userOrgs.forEach(userOrg -> {
-                    UserOrg uo = idToUserOrgMap.get(userOrg.getId());
+                    UserOrg uo = idToUserOrgMap.get(userOrg.getOrgId());
                     if (uo != null) {
                         userOrg.setFullName(uo.getFullName());
                         userOrg.setDeptId(uo.getDeptId());
@@ -253,7 +253,7 @@ public class JWTAuthController extends BaseController {
 
     private Boolean checkOrg(List<UserOrg> userOrgList, String orgId) {
         return userOrgList.stream()
-                .map(UserOrg::getId)
+                .map(UserOrg::getOrgId)
                 .anyMatch(id -> id.equals(orgId));
     }
 

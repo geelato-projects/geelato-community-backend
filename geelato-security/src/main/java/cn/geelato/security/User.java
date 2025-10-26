@@ -10,36 +10,41 @@ import java.util.Optional;
 @Getter
 @Setter
 public class User extends UserCore{
+
+    private String jobNumber;
+    private String description;
+    private String orgId;
+    private String orgName;
+    private String defaultOrgId;
+    private String defaultOrgName;
+    private String cooperatingOrgId;
+    private String deptId;
+    private String buId;
     private String enName;
     private int sex;
-    private String orgId;
-    private String password;
-    private String salt;
     private String avatar;
     private String mobilePrefix;
     private String mobilePhone;
     private String telephone;
     private String email;
     private String post;
-    private int type;
-    private int source;
     private String nationCode;
     private String provinceCode;
     private String cityCode;
     private String address;
-    private String description;
-    private String jobNumber;
-    private String buId;
-    private String cooperatingOrgId;
+    private int type;
+    private int source;
     private int enableStatus;
-    private boolean stocked;
     private String weixinUnionId;
-    private String deptId;
-    private String defaultOrgId;
-    private String defaultOrgName;
+    private String weixinWorkUserId;
+
+    private UserOrg defaultOrg;
+    private Tenant tenant;
+
+    private List<UserOrg> userOrgs;
+    private List<UserRole> userRoles;
 
     private List<Permission> dataPermissions;
-
     private List<Permission> elementPermissions;
 
     public Permission getDataPermissionByEntity(String entity) {

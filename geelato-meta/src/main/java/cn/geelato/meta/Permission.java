@@ -1,10 +1,10 @@
 package cn.geelato.meta;
 
+import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
 import cn.geelato.lang.meta.Transient;
-import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.utils.Base64Utils;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,5 +39,12 @@ public class Permission extends BaseSortableEntity {
 
     @Transient
     private boolean perDefault;
+
+    @Override
+    public void afterSet() {
+        if (Base64Utils.isBase64(this.getRule(), "data:text/plain;base64")) {
+            this.setRule(Base64Utils.decode(this.getRule()));
+        }
+    }
 
 }

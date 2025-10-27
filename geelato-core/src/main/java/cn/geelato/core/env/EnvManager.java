@@ -25,7 +25,7 @@ public class EnvManager  extends AbstractManager {
     // 内存缓存相关
     private static final long USER_CACHE_EXPIRE_MILLIS = 30 * 60 * 1000; // 30分钟
     private final Map<String, CachedUser> userCache = new ConcurrentHashMap<>();
-    
+
     private final Map<String ,Map<String , SysConfig>> sysConfigClassifyMap;
     private final Map<String ,SysConfig> sysConfigMap;
     @Setter
@@ -155,7 +155,7 @@ public class EnvManager  extends AbstractManager {
                 "from platform_user " +
                 "where del_status = 0 and login_name =? and tenant_code =?";
         User user = jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(User.class), loginName, tenantCode);
-        
+
         if (user != null) {
             if (user.getEnableStatus() == 0) {
                 throw new RuntimeException("用户已被禁用");
@@ -172,10 +172,10 @@ public class EnvManager  extends AbstractManager {
             if (user.getDefaultOrgId() == null || user.getDefaultOrgId().trim().isEmpty()) {
                 throw new RuntimeException("默认组织ID不能为空");
             }
-            
+
             loadUserOrg(user);
             loadTenant(user);
-            
+
             // 将用户基本信息放入缓存（不包含权限信息）
             userCache.put(cacheKey, new CachedUser(user));
             log.debug("用户信息已缓存: {}", loginName);
@@ -185,20 +185,27 @@ public class EnvManager  extends AbstractManager {
         }
         return user;
     }
-    
+
     private void loadUserOrg(User user) {
-        List<UserOrg> userOrgs=jdbcTemplate.query("    select " +
-                "t2.id as orgId," +
-                "t2.code," +
-                "t2.name," +
-                "t2.pid," +
-                "t2.tenant_code as tenantCode," +
-                "t2.bu_id as companyId," +
-                "t2.extend_id as extendId," +
-                "t1.default_org as defaultOrg," +
-                "t2.type," +
-                "t2.category from platform_org_r_user t1 left join platform_org t2 on t1.org_id =t2.id \n" +
-                "where t2.`status`=1 and t2.del_status=0 and  t1.user_id=?",
+        List<UserOrg> userOrgs=jdbcTemplate.query("    WITH RECURSIVE platform_org_tree AS (\n" +
+                        "    SELECT\n" +
+                        "        o.id,o.pid,o.code,o.name,o.name AS full_name,o.type,o.category,o.tenant_code,\n" +
+                        "        CASE WHEN o.type = 'department' THEN o.id ELSE NULL END AS dept_id,\n" +
+                        "        CASE WHEN o.type = 'company' THEN o.id ELSE NULL END AS company_id,\n" +
+                        "        CASE WHEN o.type = 'company' THEN o.extend_id ELSE NULL END AS company_extend_id\n" +
+                        "    FROM platform_org o WHERE o.pid IS NULL AND o.status = 1 AND o.del_status = 0\n" +
+                        "    UNION ALL\n" +
+                        "    SELECT \n" +
+                        "        o.id,o.pid,o.code,o.name,\n" +
+                        "        CONCAT(ot.full_name, '/', o.name) AS full_name,\n" +
+                        "        o.type,o.category,o.tenant_code,\n" +
+                        "        CASE WHEN o.type = 'department' THEN o.id ELSE ot.dept_id END AS dept_id,\n" +
+                        "        CASE WHEN o.type = 'company' THEN o.id ELSE ot.company_id END AS company_id,\n" +
+                        "        COALESCE(CASE WHEN o.type = 'company' THEN o.extend_id END, ot.company_extend_id) AS company_extend_id\n" +
+                        "    FROM platform_org o JOIN platform_org_tree ot ON o.pid = ot.id WHERE o.status = 1 AND o.del_status = 0\n" +
+                        ") SELECT t2.id AS orgId, t2.code, t2.name,t2.full_name AS fullName, t2.pid,t2.tenant_code AS tenantCode,\n" +
+                        "t2.dept_id AS deptId,t2.company_id AS companyId,t2.company_extend_id AS extendId,t1.default_org AS defaultOrg,t2.type,t2.category \n" +
+                        "FROM platform_org_r_user t1 LEFT JOIN platform_org_tree t2 ON t1.org_id =t2.id WHERE t1.del_status = 0 AND t1.user_id= ?",
                 new BeanPropertyRowMapper<>(UserOrg.class), user.getUserId());
         user.setUserOrgs(userOrgs);
         user.setDefaultOrg(userOrgs.stream().filter(UserOrg::getDefaultOrg).findFirst().orElse(null));

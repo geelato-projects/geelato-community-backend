@@ -140,7 +140,7 @@ WITH RECURSIVE platform_org_tree AS (
         CONCAT(ot.full_name, '/', o.`name`) AS full_name,
         o.`status`,
         o.description,
-        COALESCE(o.extend_id, ot.company_extend_id) AS extend_id,
+        COALESCE(NULLIF(o.extend_id, ''), ot.company_extend_id) AS extend_id,
         o.type,
         o.category,
         o.tenant_code,

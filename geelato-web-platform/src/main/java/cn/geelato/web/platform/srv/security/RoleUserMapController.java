@@ -6,10 +6,12 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.meta.RoleUserMap;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.meta.RoleUserMap;
 import cn.geelato.web.platform.srv.security.service.RoleUserMapService;
+import cn.geelato.web.platform.utils.CacheUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,7 +77,9 @@ public class RoleUserMapController extends BaseController {
     @RequestMapping(value = "/insert", method = RequestMethod.POST)
     public ApiResult inserts(@RequestBody RoleUserMap form) {
         try {
-            return ApiResult.success(roleUserMapService.insertModels(form));
+            List<RoleUserMap> models = roleUserMapService.insertModels(form);
+            removeCache(form.getUserId());
+            return ApiResult.success(models);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
@@ -85,6 +90,7 @@ public class RoleUserMapController extends BaseController {
     public ApiResult<NullResult> switchInsert(@RequestBody RoleUserMap form) {
         try {
             roleUserMapService.switchModel(form);
+            removeCache(form.getUserId());
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -98,6 +104,7 @@ public class RoleUserMapController extends BaseController {
             RoleUserMap model = roleUserMapService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             roleUserMapService.isDeleteModel(model);
+            removeCache(model.getUserId());
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -113,6 +120,20 @@ public class RoleUserMapController extends BaseController {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    private void removeCache(String userIds) {
+        if (StringUtils.isBlank(userIds)) {
+            return;
+        }
+        List<String> userList = StringUtils.toListDr(userIds);
+        if (userList.isEmpty()) {
+            return;
+        }
+        for (String userId : userList) {
+            String patternKey = String.format("*_%s", userId);
+            CacheUtil.removeByPattern(patternKey);
         }
     }
 }

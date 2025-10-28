@@ -64,14 +64,14 @@ public class ExtApiController extends BaseController {
                 Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
                 Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
                 Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
-                context.getBindings("js").putMember("$gl", globalGraalVariableMap);
+                context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
                 for (Map.Entry entry : graalServiceMap.entrySet()) {
-                    context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
+                    context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
                 }
                 for (Map.Entry entry : graalVariableMap.entrySet()) {
-                    context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
+                    context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
                 }
-                Source source = Source.newBuilder("js", scriptContent, "graal.mjs").build();
+                Source source = Source.newBuilder(GraalUse.Language_JS, scriptContent, GraalUse.BASE_SCRIPT_JS_FILE).build();
                 Map result = context.eval(source).execute(JSON.parse(parameter)).as(Map.class);
                 // 记录日志
                 createApiLogByLevel(api.getLogLevel(), "info", api.getAppId(), api.getCode(), parameter, null, null, null, JSONObject.toJSONString(result.get("result")));
@@ -127,17 +127,6 @@ public class ExtApiController extends BaseController {
     }
 
     private String getScriptContent(String customContent) {
-        String scriptTemplate = scriptTemplate();
-        return scriptTemplate.replace("#scriptContent#", customContent);
-    }
-
-    private String scriptTemplate() {
-        return """
-                (function(parameter){
-                \t var ctx={};
-                \t ctx.parameter=parameter;
-                \t ctx.result=#scriptContent# ();
-                \t return ctx;\t
-                })""";
+        return GraalUse.BASE_SCRIPT_CONTENT.replace("#scriptContent#", customContent);
     }
 }

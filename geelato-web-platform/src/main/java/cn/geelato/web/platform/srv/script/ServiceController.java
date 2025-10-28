@@ -35,45 +35,32 @@ public class ServiceController extends BaseController {
         String scriptContent = getScriptContent(scriptId);
 
         try (
-                Context context = Context.newBuilder("js")
+                Context context = Context.newBuilder(GraalUse.Language_JS)
                         .allowHostAccess(HostAccess.ALL)
                         .allowIO(true)
                         .allowHostClassLookup(className -> true).build()) {
             Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
             Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
             Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
-            context.getBindings("js").putMember("$gl", globalGraalVariableMap);
+            context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
             for (Map.Entry entry : graalServiceMap.entrySet()) {
-                context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
+                context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
             }
             for (Map.Entry entry : graalVariableMap.entrySet()) {
-                context.getBindings("js").putMember(entry.getKey().toString(), entry.getValue());
+                context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
             }
-            Source source = Source.newBuilder("js", scriptContent, "graal.mjs").build();
+            Source source = Source.newBuilder(GraalUse.Language_JS, scriptContent, GraalUse.BASE_SCRIPT_JS_FILE).build();
             Map result = context.eval(source).execute(parameter).as(Map.class);
             return ApiResult.success(result.get("result"));
         }
     }
 
     private String getScriptContent(String scriptId) {
-        String scriptTemplate = scriptTemplate();
-        return scriptTemplate.replace("#scriptContent#", customContent(scriptId));
+        return GraalUse.BASE_SCRIPT_CONTENT.replace("#scriptContent#", customContent(scriptId));
     }
 
     private String customContent(String id) {
         Api api = apiService.getModel(Api.class, id);
         return api.getReleaseContent();
-    }
-
-    private String scriptTemplate() {
-//        String preImport="import {Foo} from 'graaljs/foo.mjs';\t" +
-//                "import Base64 from 'graaljs/crypto-js/enc-base64.js';\t";
-        return """
-                (function(parameter){
-                \t var sessionCtx={};
-                \t sessionCtx.parameter=parameter;
-                \t sessionCtx.result=#scriptContent# ();
-                \t return sessionCtx;\t
-                })""";
     }
 }

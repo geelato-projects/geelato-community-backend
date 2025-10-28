@@ -56,7 +56,7 @@ public class ServiceController extends BaseController {
     }
 
     private String getScriptContent(String scriptId) {
-        return GraalUse.BASE_SCRIPT_CONTENT.replace("#scriptContent#", customContent(scriptId));
+        return GraalUse.BASE_SCRIPT_CONTENT.replace(GraalUse.CUSTOM_CONTENT_TAG, customContent(scriptId));
     }
 
     private String customContent(String id) {

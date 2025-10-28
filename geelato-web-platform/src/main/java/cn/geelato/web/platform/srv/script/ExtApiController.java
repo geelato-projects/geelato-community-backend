@@ -127,6 +127,6 @@ public class ExtApiController extends BaseController {
     }
 
     private String getScriptContent(String customContent) {
-        return GraalUse.BASE_SCRIPT_CONTENT.replace("#scriptContent#", customContent);
+        return GraalUse.BASE_SCRIPT_CONTENT.replace(GraalUse.CUSTOM_CONTENT_TAG, customContent);
     }
 }

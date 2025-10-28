@@ -14,5 +14,6 @@ public class GraalUse {
                 \t return ctx;\t
                 })""";
 
+    public static final String CUSTOM_CONTENT_TAG="#scriptContent#";
     public static final String BASE_SCRIPT_JS_FILE="graal.mjs";
 }

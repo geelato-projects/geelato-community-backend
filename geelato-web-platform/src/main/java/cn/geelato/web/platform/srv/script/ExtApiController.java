@@ -92,7 +92,7 @@ public class ExtApiController extends BaseController {
     }
 
     private void createApiLogByLevel(String level, String dg, String appId, String code, String rp, String rb, String rh, String rc, String resp) {
-        if (Strings.isNotBlank(level) && level.indexOf("dg") != -1) {
+        if (Strings.isNotBlank(level) && level.contains("dg")) {
             createApiLog(dg, appId, code, rp, rb, rh, rc, resp);
         }
     }
@@ -111,7 +111,7 @@ public class ExtApiController extends BaseController {
      */
     private void createApiLog(String dg, String appId, String code, String rp, String rb, String rh, String rc, String resp) {
         GraalUtils.getCurrentTenantCode();
-        StringBuffer gql = new StringBuffer();
+        StringBuilder gql = new StringBuilder();
         gql.append("{\"@biz\":\"0\",\"").append("platform_api_log").append("\":{");
         gql.append("\"").append("code").append("\":").append(JSON.toJSONString(code)).append(",");
         gql.append("\"").append("requestParams").append("\":").append(JSON.toJSONString(rp)).append(",");

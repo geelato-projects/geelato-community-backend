@@ -131,6 +131,38 @@ public class BaseController extends ParameterOperator {
     }
 
     /**
+     * 根据请求体快速构建查询参数（从FilterGroup提取有效字段到Map）。
+     *
+     * @param elementType 元素类型
+     * @param requestBodyMap 请求体参数
+     * @param isOperation 是否为操作参数（启用数据权限）
+     * @return 查询参数Map
+     * @throws ParseException 解析异常
+     */
+    protected Map<String, Object> buildQueryParams(Class elementType, Map<String, Object> requestBodyMap, boolean isOperation) throws ParseException {
+        FilterGroup filterGroup = this.getFilterGroup(elementType, requestBodyMap, isOperation);
+        return toParams(filterGroup);
+    }
+
+    /**
+     * 将FilterGroup转换为简单的参数Map（仅包含非空的字段和值）。
+     *
+     * @param filterGroup 过滤条件组
+     * @return 查询参数Map
+     */
+    protected Map<String, Object> toParams(FilterGroup filterGroup) {
+        Map<String, Object> params = new HashMap<>();
+        if (filterGroup != null && filterGroup.getFilters() != null) {
+            for (FilterGroup.Filter filter : filterGroup.getFilters()) {
+                if (filter.getValue() != null && !filter.getValue().trim().isEmpty()) {
+                    params.put(filter.getField(), filter.getValue());
+                }
+            }
+        }
+        return params;
+    }
+
+    /**
      * 获取指定元素类型的过滤组。
      *
      * @param elementType 元素类型

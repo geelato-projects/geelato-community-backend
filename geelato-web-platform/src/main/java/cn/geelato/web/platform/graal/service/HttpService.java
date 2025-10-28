@@ -67,144 +67,72 @@ public class HttpService {
      * Execute GET request
      * 
      * @param url Request URL
+     * @param requestParams Query parameters (can be null)
+     * @param body Request body (not used for GET, can be null)
+     * @param headers Request headers (can be null)
      * @return Response content
      */
-    public String get(String url) {
-        return get(url, null);
-    }
-    
-    /**
-     * Execute GET request
-     * 
-     * @param url Request URL
-     * @param headers Request headers
-     * @return Response content
-     */
-    public String get(String url, Map<String, String> headers) {
-        try {
-            return HttpUtils.doGet(url, headers);
-        } catch (IOException e) {
-            throw new RuntimeException("GET request failed: " + e.getMessage(), e);
-        }
+    public String get(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
+        String finalUrl = buildUrl(url, requestParams);
+        return executeRequest(finalUrl, "GET", null, headers);
     }
     
     /**
      * Execute POST request
      * 
      * @param url Request URL
-     * @param body Request body content
+     * @param requestParams Query parameters (can be null)
+     * @param body Request body content (can be null)
+     * @param headers Request headers (can be null)
      * @return Response content
      */
-    public String post(String url, String body) {
-        return post(url, body, null);
+    public String post(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
+        String finalUrl = buildUrl(url, requestParams);
+        return executeRequest(finalUrl, "POST", body, headers);
     }
     
-    /**
-     * Execute POST request
-     * 
-     * @param url Request URL
-     * @param body Request body content
-     * @param headers Request headers
-     * @return Response content
-     */
-    public String post(String url, String body, Map<String, String> headers) {
-        try {
-            return HttpUtils.doPost(url, body, headers);
-        } catch (IOException e) {
-            throw new RuntimeException("POST request failed: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * Execute POST JSON request
-     * 
-     * @param url Request URL
-     * @param json JSON string
-     * @return Response content
-     */
-    public String postJson(String url, String json) {
-        return postJson(url, json, null);
-    }
-    
-    /**
-     * Execute POST JSON request
-     * 
-     * @param url Request URL
-     * @param json JSON string
-     * @param headers Request headers
-     * @return Response content
-     */
-    public String postJson(String url, String json, Map<String, String> headers) {
-        Map<String, String> finalHeaders = headers != null ? new HashMap<>(headers) : new HashMap<>();
-        finalHeaders.put("Content-Type", "application/json; charset=utf-8");
-        return post(url, json, finalHeaders);
-    }
+
     
     /**
      * Execute PUT request
      * 
      * @param url Request URL
-     * @param body Request body content
+     * @param requestParams Query parameters (can be null)
+     * @param body Request body content (can be null)
+     * @param headers Request headers (can be null)
      * @return Response content
      */
-    public String put(String url, String body) {
-        return put(url, body, null);
-    }
-    
-    /**
-     * Execute PUT request
-     * 
-     * @param url Request URL
-     * @param body Request body content
-     * @param headers Request headers
-     * @return Response content
-     */
-    public String put(String url, String body, Map<String, String> headers) {
-        return executeRequest(url, "PUT", body, headers);
+    public String put(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
+        String finalUrl = buildUrl(url, requestParams);
+        return executeRequest(finalUrl, "PUT", body, headers);
     }
     
     /**
      * Execute DELETE request
      * 
      * @param url Request URL
+     * @param requestParams Query parameters (can be null)
+     * @param body Request body (not used for DELETE, can be null)
+     * @param headers Request headers (can be null)
      * @return Response content
      */
-    public String delete(String url) {
-        return delete(url, null);
-    }
-    
-    /**
-     * Execute DELETE request
-     * 
-     * @param url Request URL
-     * @param headers Request headers
-     * @return Response content
-     */
-    public String delete(String url, Map<String, String> headers) {
-        return executeRequest(url, "DELETE", null, headers);
+    public String delete(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
+        String finalUrl = buildUrl(url, requestParams);
+        return executeRequest(finalUrl, "DELETE", null, headers);
     }
     
     /**
      * Execute PATCH request
      * 
      * @param url Request URL
-     * @param body Request body content
+     * @param requestParams Query parameters (can be null)
+     * @param body Request body content (can be null)
+     * @param headers Request headers (can be null)
      * @return Response content
      */
-    public String patch(String url, String body) {
-        return patch(url, body, null);
-    }
-    
-    /**
-     * Execute PATCH request
-     * 
-     * @param url Request URL
-     * @param body Request body content
-     * @param headers Request headers
-     * @return Response content
-     */
-    public String patch(String url, String body, Map<String, String> headers) {
-        return executeRequest(url, "PATCH", body, headers);
+    public String patch(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
+        String finalUrl = buildUrl(url, requestParams);
+        return executeRequest(finalUrl, "PATCH", body, headers);
     }
     
     /**
@@ -232,7 +160,17 @@ public class HttpService {
             // Set request method and body
             RequestBody requestBody = null;
             if (StringUtils.isNotBlank(body)) {
-                MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
+                // Determine MediaType based on Content-Type header
+                String contentType = "application/json; charset=utf-8"; // default
+                if (headers != null) {
+                    for (Map.Entry<String, String> entry : headers.entrySet()) {
+                        if ("Content-Type".equalsIgnoreCase(entry.getKey()) && entry.getValue() != null) {
+                            contentType = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                MediaType mediaType = MediaType.parse(contentType);
                 requestBody = RequestBody.create(body, mediaType);
             } else if ("POST".equals(method) || "PUT".equals(method) || "PATCH".equals(method)) {
                 requestBody = RequestBody.create(new byte[0], null);

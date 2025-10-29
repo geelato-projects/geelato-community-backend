@@ -153,14 +153,14 @@ public class OcrUtils {
      */
     public static String calculateItemCodes(String content, String dictCode, String type) {
         List<String> names = StringUtils.toList(content);
-        if (names == null || names.size() == 0) {
+        if (names.isEmpty()) {
             return null;
         }
         List<String> codes = new ArrayList<>();
         // 获取字典项
         List<DictItem> dictItemList = queryDictItemsByDictCode(dictCode);
         // 比对
-        if (dictItemList != null && dictItemList.size() > 0) {
+        if (dictItemList != null && !dictItemList.isEmpty()) {
             DictDisposeEnum disposeEnum = DictDisposeEnum.lookUp(type);
             if (disposeEnum != null) {
                 codes = disposeEnum.dispose(names, dictItemList);
@@ -168,7 +168,7 @@ public class OcrUtils {
                 throw new RuntimeException("暂不支持该处理规则");
             }
         }
-        return codes.size() > 0 ? String.join(",", codes) : null;
+        return !codes.isEmpty() ? String.join(",", codes) : null;
     }
 
     /**
@@ -237,7 +237,7 @@ public class OcrUtils {
                 columnNames = StringUtils.toListDr(arr[1]);
             }
         }
-        if (Strings.isBlank(tableName) || columnNames == null || columnNames.size() == 0) {
+        if (Strings.isBlank(tableName) || columnNames.isEmpty()) {
             return null;
         }
         // 校验表名

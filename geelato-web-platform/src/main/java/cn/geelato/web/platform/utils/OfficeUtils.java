@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.utils;
 
+import com.aspose.cells.License;
 import com.aspose.cells.Workbook;
 import com.aspose.words.FontSettings;
 import com.aspose.words.PdfSaveOptions;
@@ -62,9 +63,32 @@ public class OfficeUtils {
     }
 
     public static void excelToPdf(String inputPath, String outputPath) throws Exception {
+        preSetLicense();
         Workbook workbook = new Workbook(inputPath);
         com.aspose.cells.PdfSaveOptions pdfSaveOptions = new com.aspose.cells.PdfSaveOptions();
         workbook.save(outputPath, pdfSaveOptions);
+    }
+
+    private static void preSetLicense() {
+        String str = "<License>\n" +
+                "    <Data>\n" +
+                "        <Products>\n" +
+                "            <Product>Aspose.Total for Java</Product>\n" +
+                "            <Product>Aspose.Words for Java</Product>\n" +
+                "        </Products>\n" +
+                "        <EditionType>Enterprise</EditionType>\n" +
+                "        <SubscriptionExpiry>20991231</SubscriptionExpiry>\n" +
+                "        <LicenseExpiry>20991231</LicenseExpiry>\n" +
+                "        <SerialNumber>8bfe198c-7f0c-4ef8-8ff0-acc3237bf0d7</SerialNumber>\n" +
+                "    </Data>\n" +
+                "    <Signature>\n" +
+                "        sNLLKGMUdF0r8O1kKilWAGdgfs2BvJb/2Xp8p5iuDVfZXmhppo+d0Ran1P9TKdjV4ABwAgKXxJ3jcQTqE/2IRfqwnPf8itN8aFZlV3TJPYeD3yWE7IT55Gz6EijUpC7aKeoohTb4w2fpox58wWoF3SNp6sK6jDfiAUGEHYJ9pjU=\n" +
+                "    </Signature>\n" +
+                "</License>";
+        byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+        InputStream inputStream = new ByteArrayInputStream(bytes);
+        License license = new License();
+        license.setLicense(inputStream);
     }
 
 

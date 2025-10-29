@@ -6,11 +6,13 @@ import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.utils.StringUtils;
+import cn.geelato.lang.meta.Entity;
 import cn.geelato.meta.Dict;
 import cn.geelato.meta.DictItem;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.srv.ocr.enums.DictDisposeEnum;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -24,15 +26,7 @@ import java.util.regex.Pattern;
 
 @Slf4j
 public class OcrUtils {
-    private static final Dao dao;
     private static final MetaManager metaManager = MetaManager.singleInstance();
-
-    static {
-        DataSource ds = (DataSource) DataSourceManager.singleInstance().getDynamicDataSourceMap().get("primary");
-        JdbcTemplate jdbcTemplate = new JdbcTemplate();
-        jdbcTemplate.setDataSource(ds);
-        dao = new Dao(jdbcTemplate);
-    }
 
     /**
      * 从给定内容中提取与正则表达式匹配的子串
@@ -80,12 +74,12 @@ public class OcrUtils {
         FilterGroup filter1 = new FilterGroup();
         filter1.addFilter("dictCode", FilterGroup.Operator.in, dictCode);
         filter1.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
-        List<Dict> dicts = dao.queryList(Dict.class, filter1, "update_at DESC");
+        List<Dict> dicts = getDao(null).queryList(Dict.class, filter1, "update_at DESC");
         if (dicts != null && !dicts.isEmpty()) {
             FilterGroup filter2 = new FilterGroup();
             filter2.addFilter("dictId", FilterGroup.Operator.in, dicts.get(0).getId());
             filter2.addFilter(ColumnDefault.DEL_STATUS_FIELD, String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
-            return dao.queryList(DictItem.class, filter2, null);
+            return getDao(null).queryList(DictItem.class, filter2, null);
         }
         return null;
     }
@@ -206,7 +200,7 @@ public class OcrUtils {
         }
         sql.append(")");
         try {
-            List<Map<String, Object>> list = dao.getJdbcTemplate().queryForList(sql.toString());
+            List<Map<String, Object>> list = getDao(tableName).getJdbcTemplate().queryForList(sql.toString());
             if (list != null && list.size() > 0) {
                 Object obj = list.get(0).get(goalColumnName);
                 return obj != null ? obj.toString() : null;
@@ -281,5 +275,23 @@ public class OcrUtils {
             }
         }
         return columnMap;
+    }
+
+    private static Dao getDao(String tableName) {
+        if (StringUtils.isBlank(tableName)) {
+            Class<?> entityClass = TableMeta.class;
+            tableName = Optional.ofNullable(entityClass.getAnnotation(Entity.class))
+                    .map(Entity::name)
+                    .filter(name -> !name.isEmpty())
+                    .orElseGet(entityClass::getSimpleName);
+        }
+        EntityMeta entityMeta = MetaManager.singleInstance().getByEntityName(tableName);
+        if (entityMeta == null || entityMeta.getTableMeta() == null || org.apache.commons.lang3.StringUtils.isBlank(entityMeta.getTableMeta().getConnectId())) {
+            throw new RuntimeException("The model does not exist in memory");
+        }
+        DataSource ds = DataSourceManager.singleInstance().getDataSource(entityMeta.getTableMeta().getConnectId());
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        jdbcTemplate.setDataSource(ds);
+        return new Dao(jdbcTemplate);
     }
 }

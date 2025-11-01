@@ -35,10 +35,10 @@ public class BootApplication implements CommandLineRunner {
         log.info("[start args]：{}", StringUtils.join(args, ","));
         log.info("[configuration file]：{}", applicationContext.getEnvironment().getProperty("geelato.env"));
         log.info("[start application]...start");
+        DataSourceManager.singleInstance().parseDataSourceMeta(this.dao);
         resolveSqlScript(args);
         resolveGraalContext();
         initEnvironment();
-        DataSourceManager.singleInstance().parseDataSourceMeta(this.dao);
         log.info("[start application]...finish");
         log.info("[application version is {}:{}]", Version.current.getEdition(), Version.current.getVersion());
     }

@@ -16,10 +16,8 @@ public class GqlUtil {
      */
     public static String resolveGql(HttpServletRequest request) {
         StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader br = null;
         String str;
-        try {
-            br = request.getReader();
+        try (BufferedReader br = request.getReader()) {
             if (br != null) {
                 while ((str = br.readLine()) != null) {
                     stringBuilder.append(str);
@@ -28,14 +26,6 @@ public class GqlUtil {
         } catch (IOException e) {
             log.error("未能从httpServletRequest中获取gql的内容", e);
             throw new GqlResolveException();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
         }
 
         return stringBuilder.toString();

@@ -61,7 +61,7 @@ public class OcrPdfService extends BaseService {
         // 创建自己
         OcrPdf op = super.createModel(model);
         // 创建子表
-        if (hasMeta != null && hasMeta.booleanValue()) {
+        if (hasMeta != null && hasMeta) {
             op.setMetas(model.getMetas());
             createOcrPdfMeta(op);
         }
@@ -80,7 +80,7 @@ public class OcrPdfService extends BaseService {
         // 更新自己
         OcrPdf op = super.updateModel(model);
         // 更新子表
-        if (hasMeta != null && hasMeta.booleanValue()) {
+        if (hasMeta != null && hasMeta) {
             // 删除子表
             ocrPdfMetaService.isDeleteModelByPdfId(model.getId());
             // 更新子表

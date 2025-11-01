@@ -49,7 +49,6 @@ public class OcrService extends BaseService {
      * @param pdfAnnotationPickContents PDF解析数据
      * @param ocrPdfMetas               ocr元数据
      * @return 处理后的数据
-     * @throws ParseException 如果解析规则时发生错误
      */
     public List<OcrPdfContent> formatContent(List<PDFAnnotationPickContent> pdfAnnotationPickContents, List<OcrPdfMeta> ocrPdfMetas) {
         List<OcrPdfContent> ocrPdfContents = OcrPdfContent.buildList(pdfAnnotationPickContents);
@@ -212,7 +211,7 @@ public class OcrService extends BaseService {
         if (ocrPdfRule == null || ocrPdfRule.getName() == null || ocrPdfRule.getName().length == 0) {
             return true;
         }
-        List<String> templateNames = pdfAnnotationPickContentList.stream().map(PDFAnnotationPickContent::getAnnotationAreaContent).distinct().collect(Collectors.toList());
+        List<String> templateNames = pdfAnnotationPickContentList.stream().map(PDFAnnotationPickContent::getAnnotationAreaContent).distinct().toList();
         for (String name : ocrPdfRule.getName()) {
             if (Strings.isNotBlank(name) && !templateNames.contains(name)) {
                 return false;

@@ -43,6 +43,9 @@ public class DataSourceManager extends AbstractManager {
 
 
     public void parseDataSourceMeta(Dao dao){
+        if (dao.getJdbcTemplate().getDataSource() != null) {
+            dataSourceMap.put("primary",dao.getJdbcTemplate().getDataSource());
+        }
         List<Map<String,Object>> dbConenctList=dao.getJdbcTemplate().queryForList("SELECT * FROM platform_dev_db_connect");
         for (Map<String,Object> dbConnectMap:dbConenctList){
             String connectId=dbConnectMap.get("id").toString();

@@ -19,12 +19,15 @@ import javax.sql.DataSource;
 import java.util.*;
 
 @GraalService(name = "dao", built = "true")
-public class GqlService extends RuleService {
+public class DaoService extends RuleService {
     private final SqlScriptParser sqlScriptParser = new SqlScriptParser();
     private static final String EXECUTE_SQL_KEY = "execute_sql_key";
 
-    public GqlService() {
-//        setDao(initDefaultDao(null));
+    public DaoService() {
+        DataSource ds = DataSourceManager.singleInstance().getDataSource("primary");
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        jdbcTemplate.setDataSource(ds);
+        this.dao= new Dao(jdbcTemplate);
     }
 
     private Dao initDefaultDao(String connectId) {

@@ -21,6 +21,7 @@ import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.script.rule.BizMvelRuleManager;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.annotion.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
@@ -49,8 +50,8 @@ import java.util.*;
 @Slf4j
 public class RuleService {
 
-    @Autowired
-    @Qualifier("dynamicDao")
+
+    @UseDynamicDataSource
     public Dao dao;
     private final GqlManager gqlManager = GqlManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();

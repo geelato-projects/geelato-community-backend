@@ -121,7 +121,7 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/queryItemByDictCode/{dictCode}", method = RequestMethod.GET)
-    public ApiResult queryItemByDictCode(@PathVariable(required = true) String dictCode) {
+    public ApiResult queryItemByDictCode(@PathVariable String dictCode) {
         List<DictItem> iResult = new ArrayList<>();
         try {
             Map<String, Object> params = new HashMap<>();
@@ -187,7 +187,7 @@ public class DictItemController extends BaseController {
             dict.setDictName(form.getDictName());
             dict.setDictRemark(form.getDictRemark());
             dict = dictService.createModel(dict);
-            if (form.getDictItems() != null && form.getDictItems().size() > 0) {
+            if (form.getDictItems() != null && !form.getDictItems().isEmpty()) {
                 Set<DictItem> items = new HashSet<>();
                 int orderNum = 1;
                 for (DictItem item : form.getDictItems()) {
@@ -208,14 +208,14 @@ public class DictItemController extends BaseController {
     }
 
     @RequestMapping(value = "/queryItemTagsByDict/{dictString}", method = RequestMethod.GET)
-    public ApiResult queryItemTagsByDict(@PathVariable(required = true) String dictString) {
+    public ApiResult queryItemTagsByDict(@PathVariable String dictString) {
         Set<String> tags = new HashSet<>();
         try {
             String sql = String.format("SELECT id FROM platform_dict WHERE 1=1 AND del_status = 0 AND (id = '%s' or dict_code = '%s')", dictString, dictString);
             // 字典
             List<Map<String, Object>> dResult = dao.getJdbcTemplate().queryForList(sql);
             // 字典项
-            if (dResult != null && !dResult.isEmpty()) {
+            if (!dResult.isEmpty()) {
                 Map<String, Object> params = new HashMap<>();
                 params.put(DICT_ID, dResult.get(0).get("id"));
                 params.put(ColumnDefault.ENABLE_STATUS_FIELD, ColumnDefault.ENABLE_STATUS_VALUE);

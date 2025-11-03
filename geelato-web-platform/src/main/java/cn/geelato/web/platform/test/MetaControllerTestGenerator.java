@@ -14,7 +14,7 @@ import java.util.List;
  * 用于自动生成MetaController的测试用例
  */
 @Slf4j
-@Component
+//@Component
 public class MetaControllerTestGenerator implements CommandLineRunner {
 
     @Autowired

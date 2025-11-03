@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.boot.Inteceptor;
 
-import cn.geelato.web.platform.cache.CacheService;
-import cn.geelato.web.platform.cache.CacheServiceImpl;
+import cn.geelato.web.common.cache.CacheProvider;
+import cn.geelato.web.platform.cache.DefaultCacheProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ import java.io.IOException;
 
 @Slf4j
 public class CacheInterceptor implements HandlerInterceptor {
-    CacheService<Object> cacheService = new CacheServiceImpl<>();
+    CacheProvider<Object> cacheService = new DefaultCacheProvider<>();
 
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {

@@ -1,12 +1,13 @@
 package cn.geelato.web.platform.cache;
 
+import cn.geelato.web.common.cache.CacheProvider;
 import net.oschina.j2cache.CacheChannel;
 import net.oschina.j2cache.CacheObject;
 import net.oschina.j2cache.J2Cache;
 import java.util.Collection;
 
 @SuppressWarnings("All")
-public class CacheServiceImpl<T> implements CacheService<T>{
+public class DefaultCacheProvider<T> implements CacheProvider<T> {
 
     private final String __Region__="default";
     CacheChannel cache = J2Cache.getChannel();

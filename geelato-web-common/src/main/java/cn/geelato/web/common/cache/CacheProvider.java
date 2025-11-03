@@ -1,7 +1,8 @@
-package cn.geelato.web.platform.cache;
+package cn.geelato.web.common.cache;
 
 
-public interface CacheService<T> {
+public interface CacheProvider<T> {
+
     void putCache(String key, T value);
     T getCache(String key);
     void removeCache(String key);

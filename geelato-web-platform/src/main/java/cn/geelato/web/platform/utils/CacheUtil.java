@@ -1,10 +1,10 @@
 package cn.geelato.web.platform.utils;
 
-import cn.geelato.web.platform.cache.CacheService;
-import cn.geelato.web.platform.cache.CacheServiceImpl;
+import cn.geelato.web.common.cache.CacheProvider;
+import cn.geelato.web.platform.cache.DefaultCacheProvider;
 
 public class CacheUtil {
-    private static final CacheService<Object> cacheService = new CacheServiceImpl<>();
+    private static final CacheProvider<Object> cacheProvider = new DefaultCacheProvider<>();
 
     /**
      * 获取缓存
@@ -16,15 +16,15 @@ public class CacheUtil {
         if (key == null||!CacheUtil.exists(key)) {
             return null;
         }
-        return cacheService.getCache(key);
+        return cacheProvider.getCache(key);
     }
 
     public static void put(String key, Object value) {
-        cacheService.putCache(key, value);
+        cacheProvider.putCache(key, value);
     }
 
     public static void remove(String key) {
-        cacheService.removeCache(key);
+        cacheProvider.removeCache(key);
     }
 
     /**
@@ -33,15 +33,11 @@ public class CacheUtil {
      * @return 移除的缓存数量
      */
     public static int removeByPattern(String pattern) {
-        return cacheService.removeCacheByPattern(pattern);
+        return cacheProvider.removeCacheByPattern(pattern);
     }
 
     public static Boolean exists(String key) {
-        return cacheService.exists(key);
-    }
-
-    public static String generateCacheKeyByGql(String gql) {
-        return gql;
+        return cacheProvider.exists(key);
     }
 
 }

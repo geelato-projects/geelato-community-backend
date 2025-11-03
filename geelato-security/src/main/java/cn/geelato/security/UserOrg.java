@@ -6,8 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UserOrg extends OrgCore {
-
-
     private String fullName;
     private String deptId;
     private String companyId;

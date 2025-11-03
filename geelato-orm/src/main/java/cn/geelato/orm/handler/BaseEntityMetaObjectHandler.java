@@ -21,7 +21,8 @@ public class BaseEntityMetaObjectHandler implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         // 填充ID字段（使用雪花ID生成器）
         if (hasField(metaObject, "id")) {
-            this.strictInsertFill(metaObject, "id", String.class, String.valueOf(UIDGenerator.generate()));
+            // 使用setFieldValByName强制覆盖原有值
+            this.setFieldValByName("id", String.valueOf(UIDGenerator.generate()), metaObject);
         }
 
         // 获取当前时间
@@ -29,62 +30,62 @@ public class BaseEntityMetaObjectHandler implements MetaObjectHandler {
 
         // 填充创建相关字段
         if (hasField(metaObject, "createAt")) {
-            this.strictInsertFill(metaObject, "createAt", Date.class, currentTime);
+            this.setFieldValByName("createAt", currentTime, metaObject);
         }
         if (hasField(metaObject, "creator")) {
-            this.strictInsertFill(metaObject, "creator", String.class, SessionCtx.getUserId());
+            this.setFieldValByName("creator", SessionCtx.getUserId(), metaObject);
         }
         if (hasField(metaObject, "creatorName")) {
-            this.strictInsertFill(metaObject, "creatorName", String.class, SessionCtx.getUserName());
+            this.setFieldValByName("creatorName", SessionCtx.getUserName(), metaObject);
         }
 
         // 填充租户和组织相关字段
         if (hasField(metaObject, "tenantCode")) {
-            this.strictInsertFill(metaObject, "tenantCode", String.class, SessionCtx.getCurrentTenantCode());
+            this.setFieldValByName("tenantCode", SessionCtx.getCurrentTenantCode(), metaObject);
         }
         if (hasField(metaObject, "buId") && SessionCtx.getCurrentUser() != null) {
-            this.strictInsertFill(metaObject, "buId", String.class, SessionCtx.getCurrentUser().getBuId());
+            this.setFieldValByName("buId", SessionCtx.getCurrentUser().getBuId(), metaObject);
         }
         if (hasField(metaObject, "deptId") && SessionCtx.getCurrentUser() != null) {
-            this.strictInsertFill(metaObject, "deptId", String.class, SessionCtx.getCurrentUser().getDefaultOrgId());
+            this.setFieldValByName("deptId", SessionCtx.getCurrentUser().getDefaultOrgId(), metaObject);
         }
 
         // 填充更新相关字段（插入时也需要填充，与JsonTextSaveParser保持一致）
         if (hasField(metaObject, "updateAt")) {
-            this.strictInsertFill(metaObject, "updateAt", Date.class, currentTime);
+            this.setFieldValByName("updateAt", currentTime, metaObject);
         }
         if (hasField(metaObject, "updater")) {
-            this.strictInsertFill(metaObject, "updater", String.class, SessionCtx.getUserId());
+            this.setFieldValByName("updater", SessionCtx.getUserId(), metaObject);
         }
         if (hasField(metaObject, "updaterName")) {
-            this.strictInsertFill(metaObject, "updaterName", String.class, SessionCtx.getUserName());
+            this.setFieldValByName("updaterName", SessionCtx.getUserName(), metaObject);
         }
 
         // 填充删除状态字段
         if (hasField(metaObject, "delStatus")) {
-            this.strictInsertFill(metaObject, "delStatus", Integer.class, 0);
+            this.setFieldValByName("delStatus", 0, metaObject);
         }
         if (hasField(metaObject, "deleteAt")) {
-            this.strictInsertFill(metaObject, "deleteAt", Date.class, DateUtils.defaultDeleteAt());
+            this.setFieldValByName("deleteAt", DateUtils.defaultDeleteAt(), metaObject);
         }
     }
 
     @Override
-    public void updateFill(MetaObject metaObject) {
-        // 获取当前时间
-        Date currentTime = new Date();
+     public void updateFill(MetaObject metaObject) {
+         // 获取当前时间
+         Date currentTime = new Date();
 
-        // 填充更新相关字段（与JsonTextSaveParser中的putUpdateDefaultField方法保持一致）
-        if (hasField(metaObject, "updateAt")) {
-            this.strictUpdateFill(metaObject, "updateAt", Date.class, currentTime);
-        }
-        if (hasField(metaObject, "updater")) {
-            this.strictUpdateFill(metaObject, "updater", String.class, SessionCtx.getUserId());
-        }
-        if (hasField(metaObject, "updaterName")) {
-            this.strictUpdateFill(metaObject, "updaterName", String.class, SessionCtx.getUserName());
-        }
-    }
+         // 填充更新相关字段，使用setFieldValByName强制覆盖原有值
+         if (hasField(metaObject, "updateAt")) {
+             this.setFieldValByName("updateAt", currentTime, metaObject);
+         }
+         if (hasField(metaObject, "updater")) {
+             this.setFieldValByName("updater", SessionCtx.getUserId(), metaObject);
+         }
+         if (hasField(metaObject, "updaterName")) {
+             this.setFieldValByName("updaterName", SessionCtx.getUserName(), metaObject);
+         }
+     }
 
     /**
      * 检查MetaObject是否包含指定字段

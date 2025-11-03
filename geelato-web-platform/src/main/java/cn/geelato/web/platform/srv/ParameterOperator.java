@@ -1,17 +1,29 @@
 package cn.geelato.web.platform.srv;
 
 import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.web.platform.utils.GqlResolveException;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson2.JSON;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
 
 @SuppressWarnings("rawtypes")
 public class ParameterOperator extends RequestOperator {
-    public static final String OPERATOR_SEPARATOR = "|";
+    protected static final String OPERATOR_SEPARATOR = "|";
+
+    protected final String PAGE_NUM_PARAM = "current";
+    protected final String PAGE_SIZE_PARAM = "pageSize";
+    protected final String ORDER_BY_PARAM = "order";
+    protected final int DEFAULT_PAGE_NUM = 1;
+    protected final int DEFAULT_PAGE_SIZE = 10;
+    protected static final String DEFAULT_ORDER_BY = "seq_no ASC,update_at DESC";
+
 
     protected Map<String, Object> getQueryParameters(Class elementType) {
         return getQueryParameters(elementType, false);
@@ -77,21 +89,35 @@ public class ParameterOperator extends RequestOperator {
     @Deprecated
     protected PageQueryRequest getPageQueryParameters(HttpServletRequest request) {
         PageQueryRequest queryRequest = new PageQueryRequest();
-        int pageNum = Strings.isNotBlank(request.getParameter("current")) ? Integer.parseInt(request.getParameter("current")) : -1;
+        int pageNum = Strings.isNotBlank(request.getParameter(PAGE_NUM_PARAM)) ?
+                Integer.parseInt(request.getParameter(PAGE_NUM_PARAM)) : -1;
         queryRequest.setPageNum(pageNum);
-        int pageSize = Strings.isNotBlank(request.getParameter("pageSize")) ? Integer.parseInt(request.getParameter("pageSize")) : -1;
+        int pageSize = Strings.isNotBlank(request.getParameter(PAGE_SIZE_PARAM)) ?
+                Integer.parseInt(request.getParameter(PAGE_SIZE_PARAM)) : -1;
         queryRequest.setPageSize(pageSize);
-        String orderBy = Strings.isNotBlank(request.getParameter("order")) ? String.valueOf(request.getParameter("order")) : "";
+        String orderBy = Strings.isNotBlank(request.getParameter(ORDER_BY_PARAM)) ?
+                String.valueOf(request.getParameter(ORDER_BY_PARAM)) : "";
         orderBy = orderBy.replaceAll("\\|", " ");
         queryRequest.setOrderBy(orderBy);
 
         return queryRequest;
     }
 
-    protected Map<String, Object> getRequestBody() {
-        Map<String, Object> requestBodyMap = new LinkedHashMap<>();
+    protected Map getRequestBody() {
+        Map requestBodyMap;
         try {
-            String requestBody = GqlUtil.resolveGql(this.request);
+            StringBuilder stringBuilder = new StringBuilder();
+            String str;
+            try (BufferedReader br = request.getReader()) {
+                if (br != null) {
+                    while ((str = br.readLine()) != null) {
+                        stringBuilder.append(str);
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("无法读取消息体");
+            }
+            String requestBody = stringBuilder.toString();
             requestBodyMap = JSON.parseObject(requestBody, Map.class);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -102,11 +128,14 @@ public class ParameterOperator extends RequestOperator {
     protected PageQueryRequest getPageQueryParameters(Map<String, Object> requestBodyMap) {
         PageQueryRequest queryRequest = new PageQueryRequest();
         if (requestBodyMap != null) {
-            Object current = requestBodyMap.get("current");
-            queryRequest.setPageNum(current == null || Strings.isBlank(current.toString()) ? 1 : Integer.parseInt(current.toString()));
-            Object pageSize = requestBodyMap.get("pageSize");
-            queryRequest.setPageSize(pageSize == null || Strings.isBlank(pageSize.toString()) ? 10 : Integer.parseInt(pageSize.toString()));
-            String orderBy = requestBodyMap.get("order") == null ? "" : requestBodyMap.get("order").toString();
+            Object current = requestBodyMap.get(PAGE_NUM_PARAM);
+            queryRequest.setPageNum(current == null || Strings.isBlank(current.toString()) ?
+                    DEFAULT_PAGE_NUM : Integer.parseInt(current.toString()));
+            Object pageSize = requestBodyMap.get(PAGE_SIZE_PARAM);
+            queryRequest.setPageSize(pageSize == null || Strings.isBlank(pageSize.toString()) ?
+                    DEFAULT_PAGE_SIZE : Integer.parseInt(pageSize.toString()));
+            String orderBy = requestBodyMap.get(ORDER_BY_PARAM) == null
+                    ? "" : requestBodyMap.get(ORDER_BY_PARAM).toString();
             orderBy = orderBy.replaceAll("\\|", " ");
             queryRequest.setOrderBy(orderBy);
         }
@@ -152,7 +181,6 @@ public class ParameterOperator extends RequestOperator {
             fieldsList.addAll(Arrays.asList(declaredFields));
             elementType = elementType.getSuperclass();
         }
-
         return fieldsList;
     }
 

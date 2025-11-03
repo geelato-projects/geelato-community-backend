@@ -15,6 +15,14 @@ import java.util.List;
 public interface WeixinWorkMapper {
     
     /**
+     * 根据组织ID获取企业微信配置信息
+     * @param orgId 组织ID
+     * @return 企业微信配置信息JSON字符串
+     */
+    @Select("SELECT weixin_work_info FROM platform_company WHERE org_id = #{orgId}")
+    String getCompanyWeixinWorkInfo(@Param("orgId") String orgId);
+    
+    /**
      * 更新用户的企业微信userId
      *
      * @param weixinWorkUserId 企业微信用户ID

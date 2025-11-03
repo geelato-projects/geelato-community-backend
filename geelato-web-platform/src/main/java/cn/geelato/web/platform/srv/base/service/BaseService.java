@@ -328,21 +328,16 @@ public class BaseService {
      */
     public boolean validate(String tableName, String id, Map<String, String> params, Map<String, String> lowers) {
         Map<String, Object> map = new HashMap<>();
-        // 租户编码
-        if (Strings.isBlank(params.get("tenant_code"))) {
-            params.put("tenant_code", getSessionTenantCode());
-        }
-        // 查询表格
         if (Strings.isBlank(tableName)) {
             return false;
         }
+        if (Strings.isBlank(params.get("tenant_code"))) {
+            params.put("tenant_code", getSessionTenantCode());
+        }
         map.put("tableName", tableName);
-        // 排除本身
         map.put("id", Strings.isNotBlank(id) ? id : null);
-        // 条件限制
         map.put("condition", formatParameter(params));
         map.put("lowers", formatParameter(lowers));
-
         List<Map<String, Object>> vlist = dao.queryForMapList("platform_validate_lowers", map);
         return vlist.isEmpty();
     }
@@ -444,7 +439,6 @@ public class BaseService {
     public <T> String getEntityName(Class<T> entity) {
         Entity entityAnnotation = entity.getAnnotation(Entity.class);
         if (entityAnnotation != null) {
-            // 如果name属性是默认值(空字符串)，则返回类名
             return entityAnnotation.name().isEmpty() ? entity.getSimpleName() : entityAnnotation.name();
         }
         return null;

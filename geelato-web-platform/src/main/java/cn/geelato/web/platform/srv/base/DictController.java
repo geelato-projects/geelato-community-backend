@@ -63,7 +63,7 @@ public class DictController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult get(@PathVariable(required = true) String id) {
+    public ApiResult get(@PathVariable String id) {
         try {
             return ApiResult.success(dictService.getModel(CLAZZ, id));
         } catch (Exception e) {
@@ -88,7 +88,7 @@ public class DictController extends BaseController {
     }
 
     @RequestMapping(value = "/isDelete/{id}", method = RequestMethod.DELETE)
-    public ApiResult<NullResult> isDelete(@PathVariable(required = true) String id) {
+    public ApiResult<NullResult> isDelete(@PathVariable String id) {
         try {
             Dict model = dictService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);

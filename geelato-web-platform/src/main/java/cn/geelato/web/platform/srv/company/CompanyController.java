@@ -1,36 +1,26 @@
 package cn.geelato.web.platform.srv.company;
-
-import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
+import cn.geelato.lang.api.ApiResult;
 import cn.geelato.meta.Company;
-import cn.geelato.orm.PageResult;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.srv.company.mapper.CompanyMapper;
-import com.github.pagehelper.PageHelper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.github.pagehelper.PageInfo;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
-/**
- * 公司信息控制器
- * 
- * @author geelato
- */
 @Slf4j
+@Validated
 @ApiRestController("/company")
 public class CompanyController extends BaseController {
-    
-    private static final Class<Company> CLAZZ = Company.class;
-    
+
     @Autowired
-    private CompanyMapper companyMapper;
+    private BaseMapper<Company> companyMapper;
 
     /**
      * 分页查询公司列表
@@ -39,46 +29,91 @@ public class CompanyController extends BaseController {
      */
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult<List<Company>> pageQuery() {
+        startPage();
+        List<Company> list = companyMapper.selectList(null);
+        PageInfo<Company> pageInfo = new PageInfo<>(list);
+        return ApiPagedResult.success(
+                list,
+                getPageNum(),
+                getPageSize(),
+                list.size(),
+                pageInfo.getTotal()
+        );
+    }
+    
+    /**
+     * 保存公司信息
+     * 根据是否有ID决定新增或更新
+     * 
+     * @param company 公司信息
+     * @return 操作结果
+     */
+    @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
+    public ApiResult<String> save(@RequestBody Company company) {
         try {
-            // 1. 获取请求体和分页参数
-            Map<String, Object> requestBody = this.getRequestBody();
-            PageQueryRequest pageQueryRequest = this.getPageQueryParameters(requestBody);
-            
-            // 2. 使用封装方法构建查询参数
-            Map<String, Object> params = buildQueryParams(CLAZZ, requestBody, true);
-
-            // 3. 启动PageHelper分页，不侵入性传递分页参数
-            PageHelper.startPage(pageQueryRequest.getPageNum(), pageQueryRequest.getPageSize());
-
-            // 4. 执行查询，Mapper返回列表
-            List<Company> list = companyMapper.selectCompanyList(params);
-
-            // 5. 通过PageInfo获取总数等分页信息
-            PageInfo<Company> pageInfo = new PageInfo<>(list);
-
-            // 6. 直接构建ApiPagedResult
-            return ApiPagedResult.success(
-                    list,
-                    pageQueryRequest.getPageNum(),
-                    pageQueryRequest.getPageSize(),
-                    list.size(),
-                    pageInfo.getTotal()
-            );
-            
+            if (company.getId() != null && !company.getId().isEmpty()) {
+                Company existingCompany = companyMapper.selectById(company.getId());
+                
+                if (existingCompany != null) {
+                    companyMapper.updateById(company);
+                    log.info("更新公司信息成功, ID: {}, 名称: {}", company.getId(), company.getName());
+                    return ApiResult.success("更新公司信息成功");
+                } else {
+                    companyMapper.insert(company);
+                    log.info("新增公司信息成功, ID: {}, 名称: {}", company.getId(), company.getName());
+                    return ApiResult.success("新增公司信息成功");
+                }
+            } else {
+                companyMapper.insert(company);
+                log.info("新增公司信息成功, 名称: {}", company.getName());
+                return ApiResult.success("新增公司信息成功");
+            }
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiPagedResult.fail(e.getMessage());
+            log.error("保存公司信息失败: {}", e.getMessage(), e);
+            return ApiResult.fail("保存公司信息失败：" + e.getMessage());
         }
     }
     
     /**
-     * 将FilterGroup转换为Map参数
-     * @param filterGroup 过滤条件组
-     * @return 查询参数Map
+     * 根据ID获取公司信息
+     * 
+     * @param id 公司ID
+     * @return 公司信息
      */
-    // 已由BaseController提供封装方法，移除本地转换逻辑
-
-
+    @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
+    public ApiResult<Company> get(@NotNull(message = "公司ID不能为空") @PathVariable String id) {
+        try {
+            Company company = companyMapper.selectById(id);
+            if (company != null) {
+                return ApiResult.success(company);
+            } else {
+                return ApiResult.fail("未找到对应的公司信息");
+            }
+        } catch (Exception e) {
+            log.error("获取公司信息失败", e);
+            return ApiResult.fail("获取公司信息失败：" + e.getMessage());
+        }
+    }
     
-
+    /**
+     * 根据ID删除公司信息
+     * 支持 DELETE 和 GET 请求
+     * 
+     * @param id 公司ID
+     * @return 操作结果
+     */
+    @RequestMapping(value = "/delete/{id}", method = {RequestMethod.DELETE, RequestMethod.GET})
+    public ApiResult<String> delete(@NotNull(message = "公司ID不能为空") @PathVariable String id) {
+        try {
+            int result = companyMapper.deleteById(id);
+            if (result > 0) {
+                return ApiResult.success("删除公司信息成功");
+            } else {
+                return ApiResult.fail("删除公司信息失败，可能该公司不存在");
+            }
+        } catch (Exception e) {
+            log.error("删除公司信息失败", e);
+            return ApiResult.fail("删除公司信息失败：" + e.getMessage());
+        }
+    }
 }

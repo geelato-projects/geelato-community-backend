@@ -31,7 +31,6 @@ public class DictService extends BaseSortableService {
     public void isDeleteModel(Dict model) {
         model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
         super.isDeleteModel(model);
-        // 清理 字典项
         Map<String, Object> params = new HashMap<>();
         params.put("dictId", model.getId());
         List<DictItem> iList = dictItemService.queryModel(DictItem.class, params);

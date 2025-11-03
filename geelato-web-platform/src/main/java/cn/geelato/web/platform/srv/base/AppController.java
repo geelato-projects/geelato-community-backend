@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AppController extends BaseController {
     private static final Class<App> CLAZZ = App.class;
-    private static final String DEFAULT_ORDER_BY = "seq_no ASC,update_at DESC";
+
     private final AppService appService;
     private final UserService userService;
 

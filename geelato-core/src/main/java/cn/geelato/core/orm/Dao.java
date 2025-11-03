@@ -8,14 +8,14 @@ import cn.geelato.core.gql.execute.BoundPageSql;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.lang.api.ApiMultiPagedResult;
+import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.meta.Ignore;
 import cn.geelato.lang.meta.IgnoreType;
 import cn.geelato.core.meta.model.CommonRowMapper;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.IdEntity;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import cn.geelato.lang.api.ApiMultiPagedResult;
-import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.DataItems;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -402,13 +402,15 @@ public class Dao extends SqlKeyDao {
         // 查询总数
         BoundSql boundSql = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
         log.info(boundSql.toString());
-        List<T> queryList = jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<T>(), boundSql.getParams());
+        List<T> queryList = jdbcTemplate.query(boundSql.getSql(),
+                new CommonRowMapper<>(), boundSql.getParams());
         // 分页查询
         command.setPageNum(request.getPageNum());
         command.setPageSize(request.getPageSize());
         boundSql = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
         log.info(boundSql.toString());
-        List<T> pageQueryList = jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<T>(), boundSql.getParams());
+        List<T> pageQueryList = jdbcTemplate.query(boundSql.getSql(),
+                new CommonRowMapper<>(), boundSql.getParams());
         // 分页结果
         long total = queryList.size();
         int dataSize = pageQueryList.size();

@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class DataItems<T> {
-    private long total = 0;
+    private long total;
     private T items;
 
     public DataItems(T items, long total) {

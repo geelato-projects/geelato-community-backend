@@ -2,12 +2,14 @@ package cn.geelato.web.platform.srv;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.srv.base.service.RuleService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
+import com.github.pagehelper.PageHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
@@ -73,9 +75,20 @@ public class BaseController extends ParameterOperator {
 
     /**
      * 获取请求中的应用ID
+     * 支持多种格式的请求头参数，优先级为 appId > AppId > App-Id
      */
     public String getAppId() {
         if (this.request != null) {
+            String appId = this.request.getHeader("appId");
+            if (appId != null) {
+                return appId;
+            }
+            
+            appId = this.request.getHeader("AppId");
+            if (appId != null) {
+                return appId;
+            }
+            
             return this.request.getHeader("App-Id");
         }
         return null;
@@ -83,11 +96,22 @@ public class BaseController extends ParameterOperator {
 
     /**
      * 获取请求中的或上下文中的租户代码
+     * 支持多种格式的请求头参数，优先级为 tenantCode > TenantCode > Tenant-Code
      */
     public String getTenantCode() {
         String tenantCode = null;
         if (this.request != null) {
-            return this.request.getHeader("Tenant-Code");
+            tenantCode = this.request.getHeader("tenantCode");
+            if (tenantCode != null) {
+                return tenantCode;
+            }
+            
+            tenantCode = this.request.getHeader("TenantCode");
+            if (tenantCode != null) {
+                return tenantCode;
+            }
+            
+            tenantCode = this.request.getHeader("Tenant-Code");
         }
         return Strings.isNotBlank(tenantCode) ? tenantCode : SessionCtx.getCurrentTenantCode();
     }
@@ -161,6 +185,36 @@ public class BaseController extends ParameterOperator {
         }
         return params;
     }
+    
+    /**
+     * 启动分页查询
+     * 直接调用 PageHelper.startPage 方法，使用从请求中获取的分页参数
+     */
+    protected void startPage() {
+        PageHelper.startPage(getPageNum(), getPageSize());
+    }
+    
+    /**
+     * 获取当前页码
+     * 
+     * @return 当前页码
+     */
+    protected int getPageNum() {
+        Map<String, Object> requestBodyMap = getRequestBody();
+        PageQueryRequest pageRequest = getPageQueryParameters(requestBodyMap);
+        return pageRequest.getPageNum();
+    }
+    
+    /**
+     * 获取每页大小
+     * 
+     * @return 每页大小
+     */
+    protected int getPageSize() {
+        Map<String, Object> requestBodyMap = getRequestBody();
+        PageQueryRequest pageRequest = getPageQueryParameters(requestBodyMap);
+        return pageRequest.getPageSize();
+    }
 
     /**
      * 获取指定元素类型的过滤组。
@@ -169,59 +223,105 @@ public class BaseController extends ParameterOperator {
      * @return 指定元素类型的过滤组
      * @throws ParseException 如果解析过程中发生错误，则抛出该异常
      */
+    /**
+     * 将请求参数转换为FilterGroup对象
+     * 
+     * @param params 请求参数
+     * @return FilterGroup对象
+     * @throws ParseException 解析异常
+     */
     private FilterGroup getFilterGroup(Map<String, Object> params) throws ParseException {
         FilterGroup filterGroup = new FilterGroup();
-        if (params != null && !params.isEmpty()) {
-            for (Map.Entry<String, Object> entry : params.entrySet()) {
-                Map<String, String> keyMap = this.formatMapKey(entry.getKey());
-                String key = keyMap.get("key");
-                if (Strings.isBlank(key)) {
-                    throw new RuntimeException("不支持的查询条件：" + entry.getKey());
+        if (params == null || params.isEmpty()) {
+            return filterGroup;
+        }
+
+        for (Map.Entry<String, Object> entry : params.entrySet()) {
+            Map<String, String> keyMap = this.formatMapKey(entry.getKey());
+            String key = keyMap.get("key");
+            if (Strings.isBlank(key)) {
+                throw new RuntimeException("不支持的查询条件：" + entry.getKey());
+            }
+            
+            String operator = keyMap.get("operator");
+            Object value = entry.getValue();
+            
+            // 处理空值情况
+            if (value == null || Strings.isBlank(value.toString())) {
+                if (FilterGroup.Operator.nil.getText().equals(operator)) {
+                    filterGroup.addFilter(key, FilterGroup.Operator.nil, "1");
                 }
-                String operator = keyMap.get("operator");
-                // value 不为空，“”也算空
-                if (entry.getValue() == null || Strings.isBlank(entry.getValue().toString())) {
-                    // nil为null
-                    if (FilterGroup.Operator.nil.getText().equals(operator)) {
-                        filterGroup.addFilter(key, FilterGroup.Operator.nil, "1");
-                    }
-                    continue;
-                }
-                if (Strings.isNotBlank(operator)) {
-                    if (FilterGroup.Operator.bt.getText().equals(operator)) {
-                        if (entry.getValue() instanceof String) {
-                            String[] values = entry.getValue().toString().split(",");
-                            if (values.length == 2 && Strings.isNotBlank(values[0]) && Strings.isNotBlank(values[1])) {
-                                filterGroup.addFilter(key, FilterGroup.Operator.bt, JSON.toJSONString(values));
-                            }
-                        } else if (entry.getValue() instanceof JSONArray) {
-                            JSONArray values = (JSONArray) entry.getValue();
-                            if (values.size() == 2 && Strings.isNotBlank(values.getString(0)) && Strings.isNotBlank(values.getString(1))) {
-                                filterGroup.addFilter(key, FilterGroup.Operator.bt, JSON.toJSONString(entry.getValue()));
-                            }
-                        }
-                    } else if (FilterGroup.Operator.nil.getText().equals(operator)) {
-                        filterGroup.addFilter(key, FilterGroup.Operator.nil, Strings.isNotBlank(entry.getValue().toString()) ? "1" : null);
-                    } else {
-                        boolean isOp = false;
-                        for (FilterGroup.Operator op : FilterGroup.Operator.values()) {
-                            if (op.getText().equals(operator)) {
-                                filterGroup.addFilter(key, op, entry.getValue().toString());
-                                isOp = true;
-                                break;
-                            }
-                        }
-                        if (!isOp) {
-                            throw new RuntimeException("不支持的运算符：" + operator);
-                        }
-                    }
-                } else {
-                    filterGroup.addFilter(key, entry.getValue().toString());
-                }
+                continue;
+            }
+            
+            // 处理有操作符的情况
+            if (Strings.isNotBlank(operator)) {
+                processOperatorFilter(filterGroup, key, operator, value);
+            } else {
+                // 无操作符，使用默认等于操作符
+                filterGroup.addFilter(key, value.toString());
             }
         }
 
         return filterGroup;
+    }
+    
+    /**
+     * 处理带操作符的过滤条件
+     * 
+     * @param filterGroup 过滤组
+     * @param key 字段名
+     * @param operator 操作符
+     * @param value 值
+     */
+    private void processOperatorFilter(FilterGroup filterGroup, String key, String operator, Object value) {
+        // 处理区间操作符
+        if (FilterGroup.Operator.bt.getText().equals(operator)) {
+            processBetweenOperator(filterGroup, key, value);
+            return;
+        }
+        
+        // 处理空值操作符
+        if (FilterGroup.Operator.nil.getText().equals(operator)) {
+            String filterValue = Strings.isNotBlank(value.toString()) ? "1" : null;
+            filterGroup.addFilter(key, FilterGroup.Operator.nil, filterValue);
+            return;
+        }
+        
+        // 处理其他操作符
+        boolean isValidOperator = false;
+        for (FilterGroup.Operator op : FilterGroup.Operator.values()) {
+            if (op.getText().equals(operator)) {
+                filterGroup.addFilter(key, op, value.toString());
+                isValidOperator = true;
+                break;
+            }
+        }
+        
+        if (!isValidOperator) {
+            throw new RuntimeException("不支持的运算符：" + operator);
+        }
+    }
+    
+    /**
+     * 处理区间操作符
+     * 
+     * @param filterGroup 过滤组
+     * @param key 字段名
+     * @param value 值
+     */
+    private void processBetweenOperator(FilterGroup filterGroup, String key, Object value) {
+        if (value instanceof String) {
+            String[] values = value.toString().split(",");
+            if (values.length == 2 && Strings.isNotBlank(values[0]) && Strings.isNotBlank(values[1])) {
+                filterGroup.addFilter(key, FilterGroup.Operator.bt, JSON.toJSONString(values));
+            }
+        } else if (value instanceof JSONArray) {
+            JSONArray values = (JSONArray) value;
+            if (values.size() == 2 && Strings.isNotBlank(values.getString(0)) && Strings.isNotBlank(values.getString(1))) {
+                filterGroup.addFilter(key, FilterGroup.Operator.bt, JSON.toJSONString(value));
+            }
+        }
     }
 
     /**
@@ -242,6 +342,5 @@ public class BaseController extends ParameterOperator {
         }
         return map;
     }
-
 
 }

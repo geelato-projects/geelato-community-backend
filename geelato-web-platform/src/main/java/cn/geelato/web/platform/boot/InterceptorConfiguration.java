@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.boot;
 
 import cn.geelato.web.common.interceptor.*;
-import cn.geelato.web.platform.boot.Inteceptor.CacheInterceptor;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Configuration;
@@ -54,6 +53,5 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/monitor/**")
                 .excludePathPatterns("/wx/validate/**")
         ;
-        registry.addInterceptor(new CacheInterceptor()).addPathPatterns("/**");
     }
 }

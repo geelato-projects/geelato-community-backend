@@ -7,7 +7,7 @@ import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.util.ConnectUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.srv.base.service.BaseService;
+import cn.geelato.web.platform.srv.platform.service.BaseService;
 import com.alibaba.fastjson2.JSON;
 import org.springframework.stereotype.Component;
 

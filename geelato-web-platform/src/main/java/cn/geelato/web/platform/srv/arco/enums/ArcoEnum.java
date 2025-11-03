@@ -6,7 +6,8 @@ import cn.geelato.pack.enums.PackageStatusEnum;
 import cn.geelato.utils.enums.LocaleEnum;
 import cn.geelato.utils.enums.TimeUnitEnum;
 import cn.geelato.web.platform.srv.arco.entity.SelectOptionData;
-import cn.geelato.web.platform.srv.base.enums.*;
+import cn.geelato.web.platform.srv.base.enums.SysConfigPurposeEnum;
+import cn.geelato.web.platform.srv.platform.enums.*;
 import cn.geelato.web.platform.srv.excel.enums.*;
 import cn.geelato.web.platform.srv.file.enums.AttachmentMimeEnum;
 import cn.geelato.web.platform.srv.file.enums.AttachmentServiceEnum;
@@ -125,8 +126,8 @@ public enum ArcoEnum {
         return null;
     }
 
-    public static List<SelectOptionData> getSelectOptions(String code) {
-        List<SelectOptionData> options = new ArrayList<>();
+    public static List<SelectOptionData<?>> getSelectOptions(String code) {
+        List<SelectOptionData<?>> options = new ArrayList<>();
         // 获取枚举类
         ArcoEnum arcoEnum = ArcoEnum.getEnum(code);
         if (arcoEnum == null) {
@@ -139,7 +140,7 @@ public enum ArcoEnum {
         }
         Object[] enumConstants = clazz.getEnumConstants();
         for (Object enumConstant : enumConstants) {
-            SelectOptionData option = new SelectOptionData();
+            SelectOptionData<?> option = new SelectOptionData<>();
             // 设置value (优先尝试getValue()或value字段，否则使用name())
             if (arcoEnum.getValueClass() == Integer.class) {
                 option.setValue(getEnumIntegerValue(enumConstant));

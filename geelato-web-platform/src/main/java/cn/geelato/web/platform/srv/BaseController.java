@@ -6,7 +6,7 @@ import cn.geelato.core.gql.parser.PageQueryRequest;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.web.platform.srv.base.service.RuleService;
+import cn.geelato.web.platform.srv.platform.service.RuleService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.github.pagehelper.PageHelper;

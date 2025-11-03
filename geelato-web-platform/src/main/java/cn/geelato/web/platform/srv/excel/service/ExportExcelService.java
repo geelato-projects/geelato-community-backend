@@ -7,7 +7,7 @@ import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.handler.FileHandler;
 import cn.geelato.meta.SysConfig;
-import cn.geelato.web.platform.srv.base.service.SysConfigService;
+import cn.geelato.web.platform.srv.platform.service.SysConfigService;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.web.platform.srv.excel.entity.ExportColumn;
 import cn.geelato.meta.ExportTemplate;

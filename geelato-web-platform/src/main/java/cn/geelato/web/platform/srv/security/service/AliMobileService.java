@@ -4,7 +4,7 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.meta.SysConfig;
-import cn.geelato.web.platform.srv.base.service.SysConfigService;
+import cn.geelato.web.platform.srv.platform.service.SysConfigService;
 import cn.geelato.web.platform.srv.security.entity.AliMobile;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;

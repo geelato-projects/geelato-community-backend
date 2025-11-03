@@ -10,7 +10,7 @@ import cn.geelato.meta.OrgUserMap;
 import cn.geelato.meta.Role;
 import cn.geelato.meta.RoleUserMap;
 import cn.geelato.meta.User;
-import cn.geelato.web.platform.srv.base.service.BaseSortableService;
+import cn.geelato.web.platform.srv.platform.service.BaseSortableService;
 import cn.geelato.web.platform.srv.security.enums.IsDefaultOrgEnum;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;

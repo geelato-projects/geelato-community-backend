@@ -3,7 +3,7 @@ package cn.geelato.web.platform.srv.ocr.service;
 import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.plugin.ocr.PDFAnnotationPickContent;
 import cn.geelato.plugin.ocr.PDFResolveData;
-import cn.geelato.web.platform.srv.base.service.BaseService;
+import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.web.platform.srv.ocr.entity.*;
 import cn.geelato.web.platform.srv.ocr.enums.MetaTypeEnum;
 import cn.geelato.web.platform.srv.ocr.enums.RuleTypeEnum;
@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Component
 @Slf4j

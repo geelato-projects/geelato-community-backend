@@ -4,7 +4,7 @@ import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.web.platform.srv.security.enums.IsDefaultOrgEnum;
-import cn.geelato.web.platform.srv.base.service.BaseService;
+import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.meta.Org;
 import cn.geelato.meta.OrgUserMap;
 import cn.geelato.meta.User;

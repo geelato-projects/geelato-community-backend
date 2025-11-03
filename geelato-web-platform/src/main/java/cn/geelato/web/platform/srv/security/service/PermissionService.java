@@ -7,7 +7,7 @@ import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.utils.FastJsonUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.srv.arco.enums.PermissionTypeEnum;
-import cn.geelato.web.platform.srv.base.service.BaseSortableService;
+import cn.geelato.web.platform.srv.platform.service.BaseSortableService;
 import cn.geelato.meta.Permission;
 import cn.geelato.meta.Role;
 import cn.geelato.meta.RolePermissionMap;

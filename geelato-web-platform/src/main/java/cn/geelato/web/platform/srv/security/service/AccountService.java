@@ -2,7 +2,7 @@ package cn.geelato.web.platform.srv.security.service;
 
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.web.platform.srv.base.service.RuleService;
+import cn.geelato.web.platform.srv.platform.service.RuleService;
 import cn.geelato.meta.User;
 import cn.geelato.web.platform.utils.EncryptUtil;
 import net.oschina.j2cache.CacheChannel;

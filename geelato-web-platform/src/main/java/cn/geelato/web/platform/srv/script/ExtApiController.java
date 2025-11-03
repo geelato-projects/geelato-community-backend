@@ -6,7 +6,7 @@ import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.srv.base.service.RuleService;
+import cn.geelato.web.platform.srv.platform.service.RuleService;
 import cn.geelato.meta.Api;
 import cn.geelato.web.platform.srv.script.service.ApiService;
 import cn.geelato.web.platform.utils.GqlUtil;

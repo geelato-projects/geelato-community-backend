@@ -134,7 +134,7 @@ public class JWTAuthController extends BaseController {
     }
 
     @RequestMapping(value = "/info", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult getUserInfo() {
+    public ApiResult<?> getUserInfo() {
         try {
             cn.geelato.security.User securityUser = SecurityContext.getCurrentUser();
             if (securityUser == null) {

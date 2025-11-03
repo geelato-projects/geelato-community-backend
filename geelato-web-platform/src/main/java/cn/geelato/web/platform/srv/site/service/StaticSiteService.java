@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.srv.site.service;
 
-import cn.geelato.web.platform.srv.base.service.BaseService;
+import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.web.platform.srv.site.entity.StaticSite;
 import cn.geelato.web.platform.srv.site.utils.FolderUtils;
 import net.sf.sevenzipjbinding.*;

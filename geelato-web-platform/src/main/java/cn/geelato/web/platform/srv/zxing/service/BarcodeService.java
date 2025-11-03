@@ -3,7 +3,7 @@ package cn.geelato.web.platform.srv.zxing.service;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.srv.base.service.BaseService;
+import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.web.platform.srv.zxing.entity.Barcode;
 import org.springframework.stereotype.Component;
 

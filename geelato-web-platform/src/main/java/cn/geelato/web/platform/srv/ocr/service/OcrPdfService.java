@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.srv.ocr.service;
 
-import cn.geelato.web.platform.srv.base.service.BaseService;
+import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.web.platform.srv.ocr.entity.OcrPdf;
 import cn.geelato.web.platform.srv.ocr.entity.OcrPdfMeta;
 import lombok.extern.slf4j.Slf4j;

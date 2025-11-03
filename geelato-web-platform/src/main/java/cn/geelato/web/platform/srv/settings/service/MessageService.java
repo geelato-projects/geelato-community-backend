@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.srv.settings.service;
 
-import cn.geelato.web.platform.srv.base.service.BaseService;
+import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.meta.Message;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;

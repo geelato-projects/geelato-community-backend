@@ -9,7 +9,7 @@ import cn.geelato.utils.Encodes;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.meta.Org;
 import cn.geelato.meta.User;
-import cn.geelato.web.platform.srv.base.service.BaseService;
+import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.meta.Tenant;
 import cn.geelato.meta.TenantSite;
 import cn.geelato.web.platform.srv.security.enums.*;

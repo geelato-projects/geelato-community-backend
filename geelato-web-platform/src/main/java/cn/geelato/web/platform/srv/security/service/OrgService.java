@@ -2,7 +2,7 @@ package cn.geelato.web.platform.srv.security.service;
 
 import cn.geelato.meta.Org;
 import cn.geelato.meta.User;
-import cn.geelato.web.platform.srv.base.service.BaseSortableService;
+import cn.geelato.web.platform.srv.platform.service.BaseSortableService;
 import cn.geelato.meta.OrgUserMap;
 import cn.geelato.web.platform.srv.security.enums.OrgTypeEnum;
 import org.apache.logging.log4j.util.Strings;

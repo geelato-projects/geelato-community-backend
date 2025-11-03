@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="cn.geelato.web.platform.srv.dictionary.mapper.DictItemMapper">
+<mapper namespace="cn.geelato.web.platform.mapper.DictItemMapper">
 
     <!-- 根据字典编码查询字典项 -->
     <select id="selectByDictCode" parameterType="string" resultType="map">

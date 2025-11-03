@@ -13,7 +13,7 @@ import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.srv.excel.exception.FileException;
 import cn.geelato.meta.Dict;
 import cn.geelato.meta.DictItem;
-import cn.geelato.web.platform.srv.base.service.RuleService;
+import cn.geelato.web.platform.srv.platform.service.RuleService;
 import cn.geelato.web.platform.srv.excel.entity.*;
 import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;

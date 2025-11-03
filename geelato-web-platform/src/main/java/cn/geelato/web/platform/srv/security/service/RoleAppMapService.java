@@ -6,8 +6,8 @@ import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.meta.App;
-import cn.geelato.web.platform.srv.base.service.AppService;
-import cn.geelato.web.platform.srv.base.service.BaseService;
+import cn.geelato.web.platform.srv.platform.service.AppService;
+import cn.geelato.web.platform.srv.platform.service.BaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

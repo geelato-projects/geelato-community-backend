@@ -6,7 +6,7 @@ import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.srv.base.service.MetaDdlService;
+import cn.geelato.web.platform.srv.platform.service.MetaDdlService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -10,7 +10,7 @@ import cn.geelato.utils.UUIDUtils;
 import cn.geelato.meta.Org;
 import cn.geelato.meta.User;
 import cn.geelato.meta.App;
-import cn.geelato.web.platform.srv.base.service.BaseService;
+import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.web.platform.srv.security.entity.*;
 import cn.geelato.web.platform.srv.security.enums.EncodingItemTypeEnum;
 import cn.geelato.web.platform.srv.security.enums.EncodingSerialTypeEnum;

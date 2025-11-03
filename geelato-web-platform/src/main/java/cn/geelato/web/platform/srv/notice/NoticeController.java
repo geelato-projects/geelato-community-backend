@@ -7,7 +7,7 @@ import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Notice;
-import cn.geelato.web.platform.srv.notice.mapper.NoticeMapper;
+import cn.geelato.web.platform.mapper.NoticeMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

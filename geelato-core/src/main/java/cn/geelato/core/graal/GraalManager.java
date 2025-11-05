@@ -85,6 +85,8 @@ public class GraalManager extends AbstractManager {
                 GraalFunction graalFunction = method.getAnnotation(GraalFunction.class);
                 if (graalFunction != null) {
                     GraalFunctionDescription fdesc = new GraalFunctionDescription();
+                    // 方法名作为函数名称
+                    fdesc.setName(method.getName());
                     fdesc.setExample(graalFunction.example());
                     fdesc.setDescription(graalFunction.description());
                     functionDescriptions.add(fdesc);

@@ -2,7 +2,6 @@ package cn.geelato.web.platform.graal.service;
 
 import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
-import cn.geelato.utils.HttpUtils;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -69,12 +67,11 @@ import java.util.concurrent.TimeUnit;
      * 
      * @param url Request URL
      * @param requestParams Query parameters (can be null)
-     * @param body Request body (not used for GET, can be null)
      * @param headers Request headers (can be null)
      * @return Response content
      */
-    @GraalFunction(example = "$gl.http.get({url},{params},{body},{headers})", description = "执行GET请求并返回响应文本")
-    public String get(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
+    @GraalFunction(example = "$gl.http.get({url},{params},{headers})", description = "执行GET请求并返回响应文本")
+    public String get(String url, Map<String, String> requestParams, Map<String, String> headers) {
         String finalUrl = buildUrl(url, requestParams);
         return executeRequest(finalUrl, "GET", null, headers);
     }

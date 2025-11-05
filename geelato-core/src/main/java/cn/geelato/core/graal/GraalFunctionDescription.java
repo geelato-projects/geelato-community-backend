@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class GraalFunctionDescription {
+    private String name;
     private String example;
     private String description;
 }

@@ -12,4 +12,5 @@ public @interface GraalService {
     String name();
     String type() default "simple";
     String built() default "false";
+    String descrption() default "";
 }

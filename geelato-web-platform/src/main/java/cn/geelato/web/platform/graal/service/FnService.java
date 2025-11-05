@@ -2,6 +2,7 @@ package cn.geelato.web.platform.graal.service;
 
 import cn.geelato.core.gql.GqlManager;
 import cn.geelato.core.gql.command.QueryCommand;
+import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
@@ -26,7 +27,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-@GraalService(name = "fn", built = "true")
+@GraalService(name = "fn", built = "true", descrption = "帮助方法")
 public class FnService {
 
     private final RuleService ruleService;
@@ -37,15 +38,18 @@ public class FnService {
         this.ruleService = ApplicationContextProvider.getBean(RuleService.class);
     }
 
+    @GraalFunction(example = "$gl.fn.getUser({userId})", description = "根据用户ID获取用户信息")
     public User getUser(String userId) {
         UserService userService = new UserService();
         return userService.getModel(User.class, userId);
     }
 
+    @GraalFunction(example = "$gl.fn.toChineseCurrency({digit})", description = "将数字金额转换为中文大写")
     public String toChineseCurrency(String digit) {
         return NumbChineseUtils.byOldChinese(digit);
     }
 
+    @GraalFunction(example = "$gl.fn.dateText({format},{dateStr})", description = "按格式输出日期文本，dateStr为空则取当前时间")
     public String dateText(String targetFormat, String dateStr) throws ParseException {
         String formatDate = null;
         Date date = null;
@@ -67,6 +71,7 @@ public class FnService {
      * @param sumFields  需要求和的字段名数组
      * @return 返回一个包含分组求和结果的Map，键为分组依据的字段值，值为对应字段求和的结果
      */
+    @GraalFunction(example = "$gl.fn.groupSum({data},{groupField},{sumFields})", description = "对列表数据按照字段分组并进行求和")
     public Map<String, Object> groupSum(Object[] data, String groupField, String[] sumFields) {
         Map<String, Object> map = new HashMap<>();
         return map;
@@ -82,6 +87,7 @@ public class FnService {
      * @return 返回保存操作的结果字符串
      * @throws RuntimeException 如果实体名称或字段为空，则抛出运行时异常
      */
+    @GraalFunction(example = "$gl.fn.convertEntitySaver({entityParams},{params})", description = "将实体保存参数转换为规则引擎保存请求并执行")
     public String convertEntitySaver(Map<String, Object> entityParams, Map<String, Object> params) {
         EntityGraal entitySaver = JSON.parseObject(JSON.toJSONString(entityParams), EntityGraal.class);
         if (StringUtils.isBlank(entitySaver.getEntity()) || entitySaver.getFields() == null || entitySaver.getFields().isEmpty()) {
@@ -123,6 +129,7 @@ public class FnService {
      * @return 返回查询结果，结果以Map列表的形式表示
      * @throws RuntimeException 如果实体名称或字段列表为空，则抛出此异常
      */
+    @GraalFunction(example = "$gl.fn.convertEntityReader({entityParams},{params})", description = "将实体查询参数转换为规则引擎查询并返回结果")
     public Object convertEntityReader(Map<String, Object> entityParams, Map<String, Object> params) {
         EntityGraal entityReader = JSON.parseObject(JSON.toJSONString(entityParams), EntityGraal.class);
         if (StringUtils.isBlank(entityReader.getEntity()) || entityReader.getFields() == null || entityReader.getFields().isEmpty()) {
@@ -175,6 +182,7 @@ public class FnService {
         return ruleService.queryForMapList(entity.toString(), true);
     }
 
+    @GraalFunction(example = "$gl.fn.queryForMapList({gql},{withMeta})", description = "执行GQL查询，返回带或不带元数据的分页结果")
     public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta) {
         QueryCommand command = GqlManager.singleInstance().generateQuerySql(gql);
         switchDataSource(command.getEntityName());

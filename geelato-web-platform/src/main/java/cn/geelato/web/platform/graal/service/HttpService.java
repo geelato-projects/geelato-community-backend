@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.graal.service;
 
+import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.utils.HttpUtils;
 import okhttp3.*;
@@ -21,8 +22,8 @@ import java.util.concurrent.TimeUnit;
  * HTTP Service for GraalJS
  * Based on OkHttp, supports GET, POST, PUT, DELETE methods
  */
-@GraalService(name = "http", built = "true")
-public class HttpService {
+@GraalService(name = "http", built = "true", descrption = "http服务调用")
+    public class HttpService {
     
     private static final OkHttpClient defaultClient = createDefaultClient();
     
@@ -72,6 +73,7 @@ public class HttpService {
      * @param headers Request headers (can be null)
      * @return Response content
      */
+    @GraalFunction(example = "$gl.http.get({url},{params},{body},{headers})", description = "执行GET请求并返回响应文本")
     public String get(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
         String finalUrl = buildUrl(url, requestParams);
         return executeRequest(finalUrl, "GET", null, headers);
@@ -86,6 +88,7 @@ public class HttpService {
      * @param headers Request headers (can be null)
      * @return Response content
      */
+    @GraalFunction(example = "$gl.http.post({url},{params},{body},{headers})", description = "执行POST请求并返回响应文本")
     public String post(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
         String finalUrl = buildUrl(url, requestParams);
         return executeRequest(finalUrl, "POST", body, headers);
@@ -102,6 +105,7 @@ public class HttpService {
      * @param headers Request headers (can be null)
      * @return Response content
      */
+    @GraalFunction(example = "$gl.http.put({url},{params},{body},{headers})", description = "执行PUT请求并返回响应文本")
     public String put(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
         String finalUrl = buildUrl(url, requestParams);
         return executeRequest(finalUrl, "PUT", body, headers);
@@ -116,6 +120,7 @@ public class HttpService {
      * @param headers Request headers (can be null)
      * @return Response content
      */
+    @GraalFunction(example = "$gl.http.delete({url},{params},{body},{headers})", description = "执行DELETE请求并返回响应文本")
     public String delete(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
         String finalUrl = buildUrl(url, requestParams);
         return executeRequest(finalUrl, "DELETE", null, headers);
@@ -130,6 +135,7 @@ public class HttpService {
      * @param headers Request headers (can be null)
      * @return Response content
      */
+    @GraalFunction(example = "$gl.http.patch({url},{params},{body},{headers})", description = "执行PATCH请求并返回响应文本")
     public String patch(String url, Map<String, String> requestParams, String body, Map<String, String> headers) {
         String finalUrl = buildUrl(url, requestParams);
         return executeRequest(finalUrl, "PATCH", body, headers);
@@ -199,6 +205,7 @@ public class HttpService {
      * @param writeTimeoutSeconds Write timeout in seconds
      * @return HttpService instance
      */
+    @GraalFunction(example = "$gl.http.withTimeout({connectTimeout},{readTimeout},{writeTimeout})", description = "创建带超时配置的HttpService实例")
     public HttpService withTimeout(int connectTimeoutSeconds, int readTimeoutSeconds, int writeTimeoutSeconds) {
         return new HttpService();
     }
@@ -210,6 +217,7 @@ public class HttpService {
      * @param params Parameter map
      * @return Complete URL with parameters
      */
+    @GraalFunction(example = "$gl.http.buildUrl({baseUrl},{params})", description = "构建带查询参数的URL字符串")
     public String buildUrl(String baseUrl, Map<String, String> params) {
         if (params == null || params.isEmpty()) {
             return baseUrl;

@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.graal.service;
 
 import cn.geelato.core.ds.DataSourceManager;
+import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.api.ApiResult;
@@ -25,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@GraalService(name = "file", built = "true")
+@GraalService(name = "file", built = "true", descrption = "文件处理操作")
 public class FileService {
 
     private final ExportExcelService exportExcelService;
@@ -54,6 +55,7 @@ public class FileService {
      * @param options    其他参数
      * @return 返回文件的ID，用于后续下载
      */
+    @GraalFunction(example = "$gl.file.exportExcel({fileName},{templateId},{index},{data},{options})", description = "导出Excel并返回附件ID")
     public String exportExcel(String fileName, String templateId, String index, Object data, Map<String, Object> options) {
         if (Strings.isBlank(fileName) || Strings.isBlank(templateId) || data == null) {
             return null;
@@ -94,6 +96,7 @@ public class FileService {
      * @return 保存的图片的附件ID
      * @throws IOException 如果在保存文件或生成缩略图时发生I/O异常
      */
+    @GraalFunction(example = "$gl.file.saveBase64({base64},{fileName},{suffix},{serviceType},{tableType},{batchNo},{isThumbnail},{onlyThumb},{dimension})", description = "保存Base64图片，返回附件ID")
     public String saveBase64(String base64String, String fileName, String suffix, String serviceType, String tableType, String batchNo, Boolean isThumbnail, Boolean onlyThumb, String dimension) throws IOException {
         if (Strings.isBlank(base64String) || Strings.isBlank(fileName) || Strings.isBlank(suffix)) {
             throw new RuntimeException("saveBase64：base64String or fileName or suffix can not be empty");

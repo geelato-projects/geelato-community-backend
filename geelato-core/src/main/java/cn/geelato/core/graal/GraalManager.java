@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,8 @@ public class GraalManager extends AbstractManager {
     @Getter
     private final Map<String, Object> graalVariableMap = new HashMap<>();
     private final Map<String, Object> globalGraalServiceMap = new HashMap<>();
+    @Getter
+    private final List<GraalServiceDescription> graalServiceDescriptions = new ArrayList<>();
 
     private GraalManager() {
         log.info("GraalManager Instancing...");
@@ -70,6 +74,24 @@ public class GraalManager extends AbstractManager {
             } else {
                 graalServiceMap.put(serviceName, serviceBean);
             }
+
+            GraalServiceDescription serviceDescription = new GraalServiceDescription();
+            serviceDescription.setServiceName(serviceName);
+            // 注意：注解字段为 descrption（原始拼写）
+            serviceDescription.setDescription(graalService.descrption());
+
+            List<GraalFunctionDescription> functionDescriptions = new ArrayList<>();
+            for (Method method : clazz.getDeclaredMethods()) {
+                GraalFunction graalFunction = method.getAnnotation(GraalFunction.class);
+                if (graalFunction != null) {
+                    GraalFunctionDescription fdesc = new GraalFunctionDescription();
+                    fdesc.setExample(graalFunction.example());
+                    fdesc.setDescription(graalFunction.description());
+                    functionDescriptions.add(fdesc);
+                }
+            }
+            serviceDescription.setFunctions(functionDescriptions);
+            graalServiceDescriptions.add(serviceDescription);
         }
     }
 

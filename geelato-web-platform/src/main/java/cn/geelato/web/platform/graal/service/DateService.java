@@ -1,13 +1,14 @@
 package cn.geelato.web.platform.graal.service;
 
+import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.utils.StringUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-@GraalService(name = "date", built = "true")
-public class DateService {
+@GraalService(name = "date", built = "true", descrption = "时间格式化处理")
+    public class DateService {
 
     /**
      * 格式化日期
@@ -18,6 +19,7 @@ public class DateService {
      * @param format 日期格式字符串，例如 "yyyy-MM-dd"
      * @return 格式化后的日期字符串，如果输入参数无效则返回null
      */
+    @GraalFunction(example = "$gl.date.formatDate({date},{format})", description = "按格式化字符串格式化日期对象")
     public String formatDate(Date date, String format) {
         if (date != null && StringUtils.isNotBlank(format)) {
             try {
@@ -38,6 +40,7 @@ public class DateService {
      * @param format    日期格式字符串，如 "yyyy-MM-dd HH:mm:ss"
      * @return 格式化后的日期字符串，如果输入参数无效或格式化失败则返回null
      */
+    @GraalFunction(example = "$gl.date.formatDate({timeStamp},{format})", description = "按格式化字符串格式化时间戳")
     public String formatDate(String timeStamp, String format) {
         if (StringUtils.isNotBlank(timeStamp) && StringUtils.isNotBlank(format)) {
             try {

@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.graal.service;
 
 import cn.geelato.core.ds.DataSourceManager;
+import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
@@ -18,7 +19,7 @@ import javax.script.ScriptException;
 import javax.sql.DataSource;
 import java.util.*;
 
-@GraalService(name = "dao", built = "true")
+@GraalService(name = "dao", built = "true", descrption = "数据持久化处理相关")
 public class DaoService extends RuleService {
     private final SqlScriptParser sqlScriptParser = new SqlScriptParser();
     private static final String EXECUTE_SQL_KEY = "execute_sql_key";
@@ -50,6 +51,7 @@ public class DaoService extends RuleService {
      * @throws ScriptException       如果在执行SQL语句时发生脚本异常，则抛出此异常
      * @throws NoSuchMethodException 如果在尝试执行SQL语句时找不到对应的方法，则抛出此异常
      */
+    @GraalFunction(example = "$gl.dao.executeSqlKey({sqlKey},{connectId},{params})", description = "执行SQL键绑定的语句并返回结果")
     public Object executeSqlKey(String sqlKey, String connectId, Map<String, Object> params) throws ScriptException, NoSuchMethodException {
         return this.initDefaultDao(connectId).executeKey(sqlKey, params);
     }
@@ -64,6 +66,7 @@ public class DaoService extends RuleService {
      * @return 返回查询结果的ApiResult对象，包含字典项列表
      * @throws IllegalArgumentException 如果dictId为空
      */
+    @GraalFunction(example = "$gl.dao.queryDictItems({dictId},{itemValue})", description = "按字典ID与可选值过滤查询字典项列表")
     public ApiResult<List<DictItem>> queryDictItems(String dictId, Object itemValue) {
         // 参数校验
         if (StringUtils.isBlank(dictId)) {
@@ -92,6 +95,7 @@ public class DaoService extends RuleService {
      * @param dictId 字典ID（必填）
      * @return 返回查询结果的ApiResult对象，包含字典项列表
      */
+    @GraalFunction(example = "$gl.dao.queryDictItems({dictId})", description = "按字典ID查询所有有效字典项")
     public Object queryDictItems(String dictId) {
         return queryDictItems(dictId, null);
     }
@@ -106,6 +110,7 @@ public class DaoService extends RuleService {
      * @return 返回查询结果的ApiResult对象，包含单个字典项
      * @throws IllegalArgumentException 如果dictId或itemValue为空
      */
+    @GraalFunction(example = "$gl.dao.queryDictItem({dictId},{itemValue})", description = "按字典ID与项值查询单个字典项")
     public ApiResult<DictItem> queryDictItem(String dictId, Object itemValue) {
         if (itemValue == null) {
             throw new IllegalArgumentException("字典项值不能为空");

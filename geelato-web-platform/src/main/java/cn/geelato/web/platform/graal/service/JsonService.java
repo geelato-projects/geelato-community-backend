@@ -1,12 +1,13 @@
 package cn.geelato.web.platform.graal.service;
 
+import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alibaba.fastjson2.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 
-@GraalService(name = "json", built = "true")
+@GraalService(name = "json", built = "true", descrption = "json处理操作")
 public class JsonService {
     /**
      * 将对象序列化为JSON字符串
@@ -14,6 +15,7 @@ public class JsonService {
      * @param object 可以是任意Java对象
      * @return JSON字符串，如果输入为null则返回null
      */
+    @GraalFunction(example = "$gl.json.toString({object})", description = "将对象序列化为JSON字符串")
     public String toString(Object object) {
         return object == null ? null : JSON.toJSONString(object, SerializerFeature.WriteMapNullValue);
     }
@@ -25,6 +27,7 @@ public class JsonService {
      * @return 解析后的Java对象，如果输入为空则返回null
      * @throws IllegalArgumentException 如果jsonString不是合法的JSON
      */
+    @GraalFunction(example = "$gl.json.toObject({jsonString})", description = "将JSON字符串反序列化为对象")
     public Object toObject(String jsonString) {
         if (StringUtils.isBlank(jsonString)) {
             return null;
@@ -43,6 +46,7 @@ public class JsonService {
      * @return 解析后的Java对象
      * @throws IllegalArgumentException 如果输入无法解析
      */
+    @GraalFunction(example = "$gl.json.toParse({input})", description = "智能解析：String/JSONObject/对象均可解析")
     public Object toParse(Object input) {
         if (input == null) {
             return null;

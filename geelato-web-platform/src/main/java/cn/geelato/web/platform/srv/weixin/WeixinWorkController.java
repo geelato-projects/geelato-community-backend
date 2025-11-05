@@ -33,7 +33,7 @@ public class WeixinWorkController extends BaseController {
     private volatile String cachedAccessToken;
     private volatile long tokenExpireTime;
     @RequestMapping(value = "/syncUser", method = RequestMethod.GET)
-    public ApiResult<?> syncContacts(@RequestParam(required = false) String orgId) {
+    public ApiResult<?> syncContacts(@RequestParam String orgId) {
         try {
             // 从 platform_company 表获取企业微信配置信息
             String corpId = null;
@@ -60,12 +60,8 @@ public class WeixinWorkController extends BaseController {
             
             int successCount = 0;
             List<User> users;
-            if (orgId != null && !orgId.isEmpty()) {
-                users = weixinWorkMapper.findUsersByOrgId(orgId);
-            } else {
-                users = weixinWorkMapper.findAllUsers();
-            }
-            
+            users = weixinWorkMapper.findUsersByOrgId(orgId);
+
             for (User user : users) {
                 String mobilePhone = user.getMobilePhone();
                 String existingWeixinWorkUserId = user.getWeixinWorkUserId();

@@ -77,6 +77,25 @@ public class RuleService {
 
     public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta) {
         QueryCommand command = gqlManager.generateQuerySql(gql);
+        //todo,待优化
+        command.getWhere().getParams().forEach((key, value) -> {
+            if (value != null) {
+                if (value.toString().startsWith(VARS_FN)) {
+                    String fnName = value.toString().substring(VARS_FN.length() + 1);
+                    String newValue;
+                    switch (fnName) {
+                        case "now", "nowDateTime" -> newValue = Fn.nowDateTime();
+                        case "nowDate" -> newValue = Fn.nowDate();
+                        default -> newValue = null;
+                    }
+                    command.getWhere().getFilters().stream().filter(
+                            filter -> value.equals(filter.getValue())).
+                            forEach(filter -> filter.setValue(newValue)
+                    );
+                    command.getWhere().getParams().replace(key, newValue);
+                }
+            }
+        });
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
         List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
         Long total = dao.queryTotal(boundPageSql);
@@ -366,7 +385,7 @@ public class RuleService {
                 } else if ("id".equals(valueExpTrim)) {
                     return currentCommand.getPK();
                 }
-                log.error("dao exception:通过表达式变量：{}获取不到值。", valueExp);
+                log.error("parseValueExp:通过表达式变量：{}获取不到值。", valueExp);
                 // throw new DaoException("dao exception:通过表达式变量：" + valueExp + "获取不到值。");
                 return null;
             }

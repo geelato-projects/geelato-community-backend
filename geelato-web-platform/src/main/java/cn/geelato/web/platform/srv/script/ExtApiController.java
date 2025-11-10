@@ -2,6 +2,7 @@ package cn.geelato.web.platform.srv.script;
 
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.platform.graal.utils.GraalUtils;
@@ -9,9 +10,11 @@ import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.platform.service.RuleService;
 import cn.geelato.meta.Api;
 import cn.geelato.web.platform.srv.script.service.ApiService;
+import cn.geelato.web.platform.utils.GqlResolveException;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson2.JSON;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.graalvm.polyglot.Context;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +50,7 @@ public class ExtApiController extends BaseController {
     @ResponseBody
     @SuppressWarnings("rawtypes")
     public Object exec(@PathVariable("outside_url") String outside_url) throws IOException {
-        String parameter = GqlUtil.resolveGql(this.request);
+        String parameter = resolveBody(this.request);
         Api api = null;
         Map<String, Object> params = new HashMap<>();
         params.put("outsideUrl", "/" + outside_url);
@@ -64,6 +68,10 @@ public class ExtApiController extends BaseController {
                 Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
                 Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
                 Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
+
+                if(!StringUtils.isEmpty(parameter)){
+                    globalGraalVariableMap.put("ctx",parameter);
+                }
                 context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
                 for (Map.Entry entry : graalServiceMap.entrySet()) {
                     context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
@@ -128,5 +136,20 @@ public class ExtApiController extends BaseController {
 
     private String getScriptContent(String customContent) {
         return GraalUse.BASE_SCRIPT_CONTENT.replace(GraalUse.CUSTOM_CONTENT_TAG, customContent);
+    }
+
+    private String resolveBody(HttpServletRequest request) {
+        StringBuilder stringBuilder = new StringBuilder();
+        String str;
+        try (BufferedReader br = request.getReader()) {
+            if (br != null) {
+                while ((str = br.readLine()) != null) {
+                    stringBuilder.append(str);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException();
+        }
+        return stringBuilder.toString();
     }
 }

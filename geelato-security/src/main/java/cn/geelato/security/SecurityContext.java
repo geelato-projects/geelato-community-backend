@@ -8,6 +8,8 @@ public class SecurityContext {
 
     private static final ThreadLocal<String> threadPassword = new ThreadLocal<>();
 
+    private static final ThreadLocal<App> threadApp = new ThreadLocal<>();
+
     public static void setCurrentUser(User user) {
         threadUser.set(user);
     }
@@ -19,6 +21,10 @@ public class SecurityContext {
         threadPassword.set(password);
     }
 
+    public static void setCurrentApp(App app) {
+        threadApp.set(app);
+    }
+
     public static User getCurrentUser() {
         return threadUser.get();
     }
@@ -28,5 +34,8 @@ public class SecurityContext {
     }
     public static String getCurrentPassword() {
         return threadPassword.get();
+    }
+    public static App getCurrentApp() {
+        return threadApp.get();
     }
 }

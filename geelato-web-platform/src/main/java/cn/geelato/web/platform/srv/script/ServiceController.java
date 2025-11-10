@@ -2,12 +2,14 @@ package cn.geelato.web.platform.srv.script;
 
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Api;
 import cn.geelato.web.platform.srv.script.service.ApiService;
 import cn.geelato.web.platform.utils.GqlUtil;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Source;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Map;
 
@@ -31,7 +34,7 @@ public class ServiceController extends BaseController {
     @ResponseBody
     @SuppressWarnings("rawtypes")
     public ApiResult<?> exec(@PathVariable("scriptId") String scriptId) throws IOException {
-        String parameter = GqlUtil.resolveGql(this.request);
+        String parameter = resolveBody(this.request);
         String scriptContent = getScriptContent(scriptId);
 
         try (
@@ -42,6 +45,9 @@ public class ServiceController extends BaseController {
             Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
             Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
             Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
+            if(!StringUtils.isEmpty(parameter)){
+                globalGraalVariableMap.put("ctx",parameter);
+            }
             context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
             for (Map.Entry entry : graalServiceMap.entrySet()) {
                 context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
@@ -62,5 +68,20 @@ public class ServiceController extends BaseController {
     private String customContent(String id) {
         Api api = apiService.getModel(Api.class, id);
         return api.getReleaseContent();
+    }
+
+    private String resolveBody(HttpServletRequest request) {
+        StringBuilder stringBuilder = new StringBuilder();
+        String str;
+        try (BufferedReader br = request.getReader()) {
+            if (br != null) {
+                while ((str = br.readLine()) != null) {
+                    stringBuilder.append(str);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException();
+        }
+        return stringBuilder.toString();
     }
 }

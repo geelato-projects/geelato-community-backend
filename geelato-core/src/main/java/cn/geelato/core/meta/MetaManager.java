@@ -16,7 +16,7 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.util.MapUtils;
 import cn.geelato.utils.ClassScanner;
-import cn.geelato.utils.FastJsonUtils;
+import cn.geelato.utils.JsonUtils;
 import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -486,7 +486,7 @@ public class MetaManager extends AbstractManager {
         List<ColumnMeta> defaultColumnMetaList = new ArrayList<ColumnMeta>();
 
         try {
-            String jsonStr = FastJsonUtils.readJsonFile(ResourcesFiles.COLUMN_DEFAULT_JSON);
+            String jsonStr = JsonUtils.readJsonFile(ResourcesFiles.COLUMN_DEFAULT_JSON);
             List<ColumnMeta> columnMetaList = JSON.parseArray(jsonStr, ColumnMeta.class);
             if (columnMetaList != null && !columnMetaList.isEmpty()) {
                 for (ColumnMeta meta : columnMetaList) {
@@ -505,7 +505,7 @@ public class MetaManager extends AbstractManager {
         List<ColumnSelectType> columnSelectTypes = new ArrayList<ColumnSelectType>();
 
         try {
-            String jsonStr = FastJsonUtils.readJsonFile(ResourcesFiles.COLUMN_SELECT_TYPE_JSON);
+            String jsonStr = JsonUtils.readJsonFile(ResourcesFiles.COLUMN_SELECT_TYPE_JSON);
             List<ColumnSelectType> selectTypeList = JSON.parseArray(jsonStr, ColumnSelectType.class);
             if (selectTypeList != null && !selectTypeList.isEmpty()) {
                 for (ColumnSelectType selectType : selectTypeList) {
@@ -545,7 +545,7 @@ public class MetaManager extends AbstractManager {
     public Map<String, ColumnMeta> getTableUpgradeList() {
         Map<String, ColumnMeta> columnMetaMap = new HashMap<>();
         try {
-            String jsonStr = FastJsonUtils.readJsonFile(ResourcesFiles.TABLE_UPGRADE_JSON);
+            String jsonStr = JsonUtils.readJsonFile(ResourcesFiles.TABLE_UPGRADE_JSON);
             List<ColumnMeta> columnMetaList = JSON.parseArray(jsonStr, ColumnMeta.class);
             if (columnMetaList != null && !columnMetaList.isEmpty()) {
                 for (ColumnMeta columnMeta : columnMetaList) {

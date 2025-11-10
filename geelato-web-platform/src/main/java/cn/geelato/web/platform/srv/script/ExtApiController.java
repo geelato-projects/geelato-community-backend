@@ -2,6 +2,7 @@ package cn.geelato.web.platform.srv.script;
 
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.utils.JsonUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
@@ -10,16 +11,12 @@ import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.platform.service.RuleService;
 import cn.geelato.meta.Api;
 import cn.geelato.web.platform.srv.script.service.ApiService;
-import cn.geelato.web.platform.utils.GqlResolveException;
-import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson2.JSON;
-import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Source;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,6 +37,8 @@ public class ExtApiController extends BaseController {
     private final ApiService apiService;
     private final RuleService ruleService;
 
+    @Autowired
+    Context GraalContext;
     @Autowired
     public ExtApiController(ApiService apiService, RuleService ruleService) {
         this.apiService = apiService;
@@ -62,16 +61,13 @@ public class ExtApiController extends BaseController {
         if (api != null) {
             String scriptContent = getScriptContent(api.getReleaseContent());
             try {
-                Context context = Context.newBuilder("js")
-                        .allowHostAccess(HostAccess.ALL)
-                        .allowIO(true)
-                        .allowHostClassLookup(className -> true).build();
+                Context context = GraalContext;
                 Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
                 Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
                 Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
 
                 if(!StringUtils.isEmpty(parameter)){
-                    Map<String, Object> ctxMap = Map.of("parameter", parameter);
+                    Map<String, Object> ctxMap = Map.of("parameter", JsonUtils.safeParse(parameter));
                     globalGraalVariableMap.put("ctx",ctxMap);
                 }
                 context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
@@ -82,7 +78,7 @@ public class ExtApiController extends BaseController {
                     context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
                 }
                 Source source = Source.newBuilder(GraalUse.Language_JS, scriptContent, GraalUse.BASE_SCRIPT_JS_FILE).build();
-                Map result = context.eval(source).execute(JSON.parse(parameter)).as(Map.class);
+                Map result = context.eval(source).execute(JsonUtils.safeParse(parameter)).as(Map.class);
                 // 记录日志
                 createApiLogByLevel(api.getLogLevel(), "info", api.getAppId(), api.getCode(), parameter, null, null, null, JSONObject.toJSONString(result.get("result")));
                 // 返回结果

@@ -8,7 +8,7 @@ public class GlobalContext {
     protected final static Boolean __ApiEncrypt__ = __SecurityLevel__ > 1;
     protected final static String __Environment__ = "development";
     protected final static Boolean __CACHE__ = __Environment__.equals("product");
-
+    protected final static Boolean __POLYGLOT_DEBUGGER__ = __Environment__.equals("development");
     public static String getEnvironment() {
         return __Environment__;
     }

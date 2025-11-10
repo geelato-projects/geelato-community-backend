@@ -4,7 +4,7 @@ import cn.geelato.core.constants.ResourcesFiles;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
-import cn.geelato.utils.FastJsonUtils;
+import cn.geelato.utils.JsonUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.srv.arco.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.srv.platform.service.BaseSortableService;
@@ -165,7 +165,7 @@ public class PermissionService extends BaseSortableService {
         List<Permission> defaultPermissions = new ArrayList<Permission>();
 
         try {
-            String jsonStr = FastJsonUtils.readJsonFile(jsonFile);
+            String jsonStr = JsonUtils.readJsonFile(jsonFile);
             List<Permission> permissionList = JSON.parseArray(jsonStr, Permission.class);
             if (permissionList != null && !permissionList.isEmpty()) {
                 for (Permission permission : permissionList) {

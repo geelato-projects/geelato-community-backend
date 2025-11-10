@@ -1,12 +1,15 @@
 package cn.geelato.utils;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONException;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 /**
  * @author diabl
  */
-public class FastJsonUtils {
+public class JsonUtils {
 
     /**
      * 从指定路径的文件中读取JSON格式的字符串。
@@ -23,12 +26,21 @@ public class FastJsonUtils {
                  BufferedReader bufferedReader = new BufferedReader(reader)) {
                 StringBuilder sb = new StringBuilder();
                 String line;
-                // 逐行读取文件内容
                 while ((line = bufferedReader.readLine()) != null) {
                     sb.append(line);
                 }
                 return sb.toString();
             }
+        }
+    }
+    public static Object safeParse(String jsonStr) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return jsonStr;
+        }
+        try {
+            return JSON.parse(jsonStr); // 解析成功返回对象，失败抛异常
+        } catch (JSONException e) {
+            return jsonStr; // 失败返回原字符串
         }
     }
 }

@@ -46,7 +46,8 @@ public class ServiceController extends BaseController {
             Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
             Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
             if(!StringUtils.isEmpty(parameter)){
-                globalGraalVariableMap.put("ctx",parameter);
+                Map<String, Object> ctxMap = Map.of("parameter", parameter);
+                globalGraalVariableMap.put("ctx",ctxMap);
             }
             context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
             for (Map.Entry entry : graalServiceMap.entrySet()) {

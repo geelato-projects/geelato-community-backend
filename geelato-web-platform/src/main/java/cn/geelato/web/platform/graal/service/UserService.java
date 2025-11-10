@@ -26,8 +26,6 @@ public class UserService implements ProxyObject {
             allClasses.add(currentClass);
             currentClass = currentClass.getSuperclass();
         }
-
-        // 收集所有非黑名单字段（含父类）
         ALLOWED_FIELD_CACHE = allClasses.stream()
                 .flatMap(clz -> Arrays.stream(clz.getDeclaredFields()))
                 .filter(field -> !FORBIDDEN_FIELDS.contains(field.getName()))

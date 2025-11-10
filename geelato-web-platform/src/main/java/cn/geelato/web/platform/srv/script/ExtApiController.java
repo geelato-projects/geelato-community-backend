@@ -14,6 +14,7 @@ import cn.geelato.web.platform.utils.GqlResolveException;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson2.JSON;
+import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -70,7 +71,8 @@ public class ExtApiController extends BaseController {
                 Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
 
                 if(!StringUtils.isEmpty(parameter)){
-                    globalGraalVariableMap.put("ctx",parameter);
+                    Map<String, Object> ctxMap = Map.of("parameter", parameter);
+                    globalGraalVariableMap.put("ctx",ctxMap);
                 }
                 context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
                 for (Map.Entry entry : graalServiceMap.entrySet()) {

@@ -22,4 +22,11 @@ public class SpringContextHolder implements ApplicationContextAware {
             throw new RuntimeException("ApplicationContext is not ConfigurableApplicationContext");
         }
     }
+
+    public static <T> T getBean(Class<T> clazz) {
+        if (applicationContext == null) {
+            throw new IllegalStateException("Spring 容器未初始化");
+        }
+        return applicationContext.getBean(clazz);
+    }
 }

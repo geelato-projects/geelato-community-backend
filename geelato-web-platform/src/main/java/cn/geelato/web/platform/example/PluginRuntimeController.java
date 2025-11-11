@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.srv.example;
+package cn.geelato.web.platform.example;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.plugin.PluginBeanProvider;

@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.sse;
 
-import cn.geelato.web.platform.boot.mybatis.SpringContextHolder;
+import cn.geelato.web.platform.run.SpringContextHolder;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Collections;

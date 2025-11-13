@@ -1,5 +1,8 @@
 package cn.geelato.web.platform.srv.platform.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum ApplicationTypeEnum {
     PLATFORM("平台应用", "platform"),
     NORMAL("普通应用", "normal");

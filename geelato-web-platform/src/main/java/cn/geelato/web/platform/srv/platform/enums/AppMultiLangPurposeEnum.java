@@ -3,15 +3,14 @@ package cn.geelato.web.platform.srv.platform.enums;
 import lombok.Getter;
 
 @Getter
-public enum ApplicationPurposeEnum {
-    INSIDE("企业内部", "inside"),
-    OUTSIDE("企业外部", "outside"),
-    SIDE("企业内外部", "side");
+public enum AppMultiLangPurposeEnum {
+    WEBAPP("前端", "webapp"),
+    ENDPOINT("后端", "endpoint");
 
     private final String label;// 选项内容
     private final String value;// 选项值
 
-    ApplicationPurposeEnum(String label, String value) {
+    AppMultiLangPurposeEnum(String label, String value) {
         this.label = label;
         this.value = value;
     }

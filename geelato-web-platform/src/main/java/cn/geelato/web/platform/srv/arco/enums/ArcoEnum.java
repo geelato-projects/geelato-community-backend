@@ -42,6 +42,9 @@ public enum ArcoEnum {
     APPROVAL_STATUS_ENUM("ApprovalStatusEnum", ApprovalStatusEnum.class),
     APPLICATION_TYPE_ENUM("ApplicationTypeEnum", ApplicationTypeEnum.class),
     APPLICATION_PURPOSE_ENUM("ApplicationPurposeEnum", ApplicationPurposeEnum.class),
+    // 多语言相关枚举
+    APP_MULTI_LANG_TYPE_ENUM("AppMultiLangTypeEnum", AppMultiLangTypeEnum.class),
+    APP_MULTI_LANG_PURPOSE_ENUM("AppMultiLangPurposeEnum", AppMultiLangPurposeEnum.class),
     // Excel相关枚举
     EXCEL_ALIGNMENT_ENUM("ExcelAlignmentEnum", ExcelAlignmentEnum.class),
     EXCEL_MULTI_SCENE_TYPE_ENUM("ExcelMultiSceneTypeEnum", ExcelMultiSceneTypeEnum.class),

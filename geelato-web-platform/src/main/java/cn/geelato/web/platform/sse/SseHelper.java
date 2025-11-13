@@ -38,6 +38,13 @@ public class SseHelper {
         return sseEmitterManager.subscribe(topic);
     }
 
+    public static SseEmitter subscribeAll() {
+        if (sseEmitterManager == null) {
+            throw new IllegalStateException("SseEmitterManager未初始化");
+        }
+        return sseEmitterManager.subscribeAll();
+    }
+
     public static Set<String> getActiveTopics() {
         return sseEmitterManager != null ? sseEmitterManager.getActiveTopics() : Collections.emptySet();
     }

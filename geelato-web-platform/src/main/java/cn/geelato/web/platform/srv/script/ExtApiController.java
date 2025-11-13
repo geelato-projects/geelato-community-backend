@@ -49,7 +49,7 @@ public class ExtApiController extends BaseController {
     @RequestMapping(value = "{outside_url}", method = {RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
     @SuppressWarnings("rawtypes")
-    public Object exec(@PathVariable("outside_url") String outside_url) throws IOException {
+    public Object exec(@PathVariable("outside_url") String outside_url) {
         String parameter = resolveBody(this.request);
         Api api = null;
         Map<String, Object> params = new HashMap<>();

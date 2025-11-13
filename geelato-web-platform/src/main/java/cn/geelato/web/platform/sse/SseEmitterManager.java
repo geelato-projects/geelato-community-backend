@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SseEmitterManager {
     // 核心映射：主题 -> 订阅者集合（线程安全）
     private final Map<String, Set<SseEmitter>> topicSubscribers = new ConcurrentHashMap<>();
+    private final Set<SseEmitter> allSubscribers = ConcurrentHashMap.newKeySet();
 
     /**
      * 订阅主题：创建SseEmitter并关联到主题
@@ -30,26 +31,42 @@ public class SseEmitterManager {
         return emitter;
     }
 
+    public SseEmitter subscribeAll() {
+        SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
+        emitter.onCompletion(() -> removeAllEmitter(emitter));
+        emitter.onTimeout(() -> removeAllEmitter(emitter));
+        emitter.onError((e) -> removeAllEmitter(emitter));
+        allSubscribers.add(emitter);
+        return emitter;
+    }
+
     /**
      * 向主题推送消息：遍历订阅者并推送
      */
     public void sendToTopic(String topic, Object message) {
         // 1. 获取主题的订阅者集合（无订阅者则直接返回）
         Set<SseEmitter> emitters = topicSubscribers.get(topic);
-        if (emitters == null || emitters.isEmpty()) {
-            return;
+        if (emitters != null && !emitters.isEmpty()) {
+            for (SseEmitter emitter : emitters) {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .data(message, MediaType.APPLICATION_JSON)
+                            .reconnectTime(3000));
+                } catch (IOException e) {
+                    removeEmitter(topic, emitter);
+                }
+            }
         }
 
-        // 2. 遍历订阅者，推送消息（失败则移除无效连接）
-        for (SseEmitter emitter : emitters) {
-            try {
-                // 发送SSE格式消息（包含数据和重连时间）
-                emitter.send(SseEmitter.event()
-                        .data(message, MediaType.APPLICATION_JSON) // 指定JSON格式
-                        .reconnectTime(3000)); // 断线后3秒重连
-            } catch (IOException e) {
-                // 推送失败（如客户端已断开），移除该Emitter
-                removeEmitter(topic, emitter);
+        if (!allSubscribers.isEmpty()) {
+            for (SseEmitter emitter : allSubscribers) {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .data(message, MediaType.APPLICATION_JSON)
+                            .reconnectTime(3000));
+                } catch (IOException e) {
+                    removeAllEmitter(emitter);
+                }
             }
         }
     }
@@ -66,6 +83,10 @@ public class SseEmitterManager {
                 topicSubscribers.remove(topic);
             }
         }
+    }
+
+    private void removeAllEmitter(SseEmitter emitter) {
+        allSubscribers.remove(emitter);
     }
 
     // 辅助方法：获取所有活跃主题

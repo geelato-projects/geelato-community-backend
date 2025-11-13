@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 public class AllExampleController {
     @RequestMapping(value = "/send_event", method = RequestMethod.GET)
     public ApiResult<?> send_event() {
-        EventPublisher.publish(new DemoEvent(this,"fuck"));
+        EventPublisher.publish(new DemoEvent(this,"ok"));
         EventPublisher.publish(new SSEDemoEevent(this));
         EventPublisher.publish(new UpgradeDictionaryEvent(this));
         return ApiResult.success("success");

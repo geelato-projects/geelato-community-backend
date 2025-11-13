@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.boot.mybatis;
+package cn.geelato.web.platform.run;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;

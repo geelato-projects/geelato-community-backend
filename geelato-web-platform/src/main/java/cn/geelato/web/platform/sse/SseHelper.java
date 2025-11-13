@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.sse;
 
-import cn.geelato.web.platform.boot.mybatis.SpringContextHolder;
+import cn.geelato.web.platform.run.SpringContextHolder;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Collections;
@@ -36,6 +36,13 @@ public class SseHelper {
             throw new IllegalStateException("SseEmitterManager未初始化");
         }
         return sseEmitterManager.subscribe(topic);
+    }
+
+    public static SseEmitter subscribeAll() {
+        if (sseEmitterManager == null) {
+            throw new IllegalStateException("SseEmitterManager未初始化");
+        }
+        return sseEmitterManager.subscribeAll();
     }
 
     public static Set<String> getActiveTopics() {

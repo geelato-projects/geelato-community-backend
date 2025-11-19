@@ -7,9 +7,12 @@ import cn.geelato.web.platform.sse.SseMessage;
 import java.util.HashMap;
 import java.util.Map;
 
-public class UpgradeDictionaryEvent extends BusinessEvent  {
-    public UpgradeDictionaryEvent(Object source) {
+public class UpgradeDictionaryEvent extends BusinessEvent {
+    private final String dictId;
+
+    public UpgradeDictionaryEvent(Object source, String dictId) {
         super(source);
+        this.dictId = dictId;
     }
 
     @Override
@@ -21,6 +24,7 @@ public class UpgradeDictionaryEvent extends BusinessEvent  {
     public void handle() {
         Map<String, Object> data = new HashMap<>();
         data.put("DATA", getEventCode());
-        SseHelper.push(new SseMessage("upgrade_dictionary_topic",data));
+        data.put("DICT_ID", dictId);
+        SseHelper.push(new SseMessage("upgrade_dictionary_topic", data));
     }
 }

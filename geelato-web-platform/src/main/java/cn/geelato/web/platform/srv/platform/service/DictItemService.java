@@ -4,6 +4,7 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.meta.DictItem;
+import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 
@@ -77,7 +78,7 @@ public class DictItemService extends BaseSortableService {
      * @param model 要更新的字典项数据
      * @return 返回更新后的数据映射
      */
-    public Map updateModel(DictItem model) {
+    public DictItem updateModel(DictItem model) {
         model.setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
         Map<String, Object> map = dao.save(model);
 
@@ -95,7 +96,7 @@ public class DictItemService extends BaseSortableService {
                 }
             }
         }
-        return map;
+        return JSON.parseObject(JSON.toJSONString(map), DictItem.class);
     }
 
     /**

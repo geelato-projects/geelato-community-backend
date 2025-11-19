@@ -8,10 +8,12 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Dict;
 import cn.geelato.meta.DictItem;
+import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.event.EventPublisher;
+import cn.geelato.web.platform.event.UpgradeDictionaryEvent;
+import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.platform.service.DictItemService;
 import cn.geelato.web.platform.srv.platform.service.DictService;
 import lombok.extern.slf4j.Slf4j;
@@ -84,11 +86,14 @@ public class DictItemController extends BaseController {
     public ApiResult createOrUpdate(@RequestBody DictItem form) {
         try {
             // ID为空方可插入
+            DictItem model = null;
             if (Strings.isNotBlank(form.getId())) {
-                return ApiResult.success(dictItemService.updateModel(form));
+                model = dictItemService.updateModel(form);
             } else {
-                return ApiResult.success(dictItemService.createModel(form));
+                model = dictItemService.createModel(form);
             }
+            EventPublisher.publish(new UpgradeDictionaryEvent(this, model.getDictId()));
+            return ApiResult.success(model);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
@@ -99,6 +104,7 @@ public class DictItemController extends BaseController {
     public ApiResult<NullResult> batchCreateOrUpdate(@RequestBody List<DictItem> forms, String dictId, String parentId) {
         try {
             dictItemService.batchCreateOrUpdate(dictId, parentId, forms);
+            EventPublisher.publish(new UpgradeDictionaryEvent(this, dictId));
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -113,6 +119,7 @@ public class DictItemController extends BaseController {
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             model.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
             dictItemService.isDeleteModel(model);
+            EventPublisher.publish(new UpgradeDictionaryEvent(this, model.getDictId()));
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -200,6 +207,7 @@ public class DictItemController extends BaseController {
                 }
                 dict.setDictItems(items);
             }
+            EventPublisher.publish(new UpgradeDictionaryEvent(this, dict.getId()));
             return ApiResult.success(dict);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

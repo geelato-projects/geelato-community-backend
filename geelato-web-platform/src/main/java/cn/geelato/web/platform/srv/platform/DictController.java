@@ -7,9 +7,11 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Dict;
+import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.event.EventPublisher;
+import cn.geelato.web.platform.event.UpgradeDictionaryEvent;
+import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.platform.service.DictService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -76,11 +78,14 @@ public class DictController extends BaseController {
     public ApiResult createOrUpdate(@RequestBody Dict form) {
         try {
             // ID为空方可插入
+            Dict model = null;
             if (Strings.isNotBlank(form.getId())) {
-                return ApiResult.success(dictService.updateModel(form));
+                model = dictService.updateModel(form);
             } else {
-                return ApiResult.success(dictService.createModel(form));
+                model = dictService.createModel(form);
             }
+            EventPublisher.publish(new UpgradeDictionaryEvent(this, model.getId()));
+            return ApiResult.success(model);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
@@ -93,6 +98,7 @@ public class DictController extends BaseController {
             Dict model = dictService.getModel(CLAZZ, id);
             Assert.notNull(model, ApiErrorMsg.IS_NULL);
             dictService.isDeleteModel(model);
+            EventPublisher.publish(new UpgradeDictionaryEvent(this, model.getId()));
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);

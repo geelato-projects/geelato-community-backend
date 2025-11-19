@@ -18,7 +18,7 @@ public class AllExampleController {
     public ApiResult<?> send_event() {
         EventPublisher.publish(new DemoEvent(this,"ok"));
         EventPublisher.publish(new SSEDemoEevent(this));
-        EventPublisher.publish(new UpgradeDictionaryEvent(this));
+        EventPublisher.publish(new UpgradeDictionaryEvent(this, "dict_1"));
         return ApiResult.success("success");
     }
 }

@@ -10,6 +10,7 @@ import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.utils.CacheUtil;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.AppPage;
+import cn.geelato.meta.AppPageLang;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,15 +64,93 @@ public class PageController extends BaseController {
     }
 
     /**
+     * 获取页面的多语言信息
+     * 用于页面已加载后，仅切换语言时使用，只返回语言包数据
+     *
+     * @param idType "pageId"或"extendId"
+     * @param id     id值
+     * @return {pageLang: 语言包内容, locale: 当前语言}
+     */
+    @RequestMapping(value = {"/getPageLang/{idType}/{id}", "/getPageLang/{idType}/{id}/*"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    public ApiResult<HashMap<String, Object>> getPageLang(@PathVariable String idType, @PathVariable String id) {
+        try {
+            // 从请求头获取客户端语言信息
+            String acceptLanguage = getHeader("Accept-Language");
+            String locale = parseLocale(acceptLanguage);
+
+            // 获取页面信息，以确定实际的pageId
+            AppPage page = null;
+            if ("pageId".equals(idType)) {
+                String key = "platform_app_page_" + id;
+                if (CacheUtil.exists(key) && CacheUtil.get(key) != null) {
+                    page = (AppPage) CacheUtil.get(key);
+                } else {
+                    page = dao.queryForObject(AppPage.class, "id", id, "delStatus", "0");
+                    if (page != null) {
+                        CacheUtil.put(key, page);
+                    }
+                }
+            } else if ("extendId".equals(idType)) {
+                String key = "platform_app_page_extend_" + id;
+                if (CacheUtil.exists(key) && CacheUtil.get(key) != null) {
+                    page = (AppPage) CacheUtil.get(key);
+                } else {
+                    page = dao.queryForObject(AppPage.class, "extendId", id, "delStatus", "0");
+                    if (page != null) {
+                        CacheUtil.put(key, page);
+                    }
+                }
+            } else {
+                return ApiResult.fail("不支持的id类型" + idType);
+            }
+
+            if (page == null) {
+                return ApiResult.fail("页面不存在或已删除！");
+            }
+
+            HashMap<String, Object> result = new HashMap<>(2);
+            
+            // 获取页面多语言信息
+            String pageLangKey = "platform_app_page_lang_" + page.getId() + "_" + locale;
+            if (!CacheUtil.exists(pageLangKey) || CacheUtil.get(pageLangKey) == null) {
+                //todo 线程池问题临时处理方法
+                DynamicDataSourceHolder.setDataSourceKey("primary");
+                // 构建查询条件
+                Map<String, Object> langParams = new HashMap<>();
+                langParams.put("pageId", page.getId());
+                langParams.put("langType", locale);
+                langParams.put("delStatus", "0");
+                List<AppPageLang> pageLangList = dao.queryList(AppPageLang.class, langParams, null);
+                if (pageLangList != null && !pageLangList.isEmpty()) {
+                    CacheUtil.put(pageLangKey, pageLangList.get(0).getContent());
+                } else {
+                    // 缓存空值，避免重复查询
+                    CacheUtil.put(pageLangKey, "");
+                }
+            }
+            result.put("pageLang", CacheUtil.get(pageLangKey));
+            result.put("locale", locale);
+            
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            log.error("获取页面多语言信息出错！", e);
+            return ApiResult.fail("获取页面多语言信息出错！" + e.getMessage());
+        }
+    }
+
+    /**
      * 获取页面配置信息
      * @param idType id类型，pageId或extendId
      * @param id pageId或extendId
      * @param withSourceContent 是否返回源代码，默认不返回
      * @param withCustomConfig 是否返回该用户此页面的自定义配置，默认不返回
      * @param withPermission 是否返回该用户此页面的权限信息，默认不返回
-     * @return {id,type,appId,code,releaseContent,sourceContent,pageCustom,pagePermission}
+     * @return {id,type,appId,code,releaseContent,sourceContent,pageCustom,pagePermission,pageLang}
      */
     private ApiResult<HashMap<String, Object>> getPage(String idType,String id,Boolean withSourceContent,Boolean withCustomConfig,Boolean withPermission) {
+        // 从请求头获取客户端语言信息
+        String acceptLanguage = getHeader("Accept-Language");
+        String locale = parseLocale(acceptLanguage);
         try {
             // 获取页面定义信息
             AppPage page = null;
@@ -99,7 +178,7 @@ public class PageController extends BaseController {
                 return ApiResult.fail("不支持的id类型" + idType);
             }
 
-            HashMap<String, Object> pageMap = new HashMap<String, Object>(6);
+            HashMap<String, Object> pageMap = new HashMap<String, Object>(7);
             if (page != null) {
                 pageMap.put("id", page.getId());
                 pageMap.put("type", page.getType());
@@ -111,6 +190,26 @@ public class PageController extends BaseController {
                 }else{
                     pageMap.put("sourceContent", "");
                 }
+
+                // 获取页面多语言信息
+                String pageLangKey = "platform_app_page_lang_" + page.getId() + "_" + locale;
+                if (!CacheUtil.exists(pageLangKey) || CacheUtil.get(pageLangKey) == null) {
+                    //todo 线程池问题临时处理方法
+                    DynamicDataSourceHolder.setDataSourceKey("primary");
+                    // 构建查询条件
+                    Map<String, Object> langParams = new HashMap<>();
+                    langParams.put("pageId", page.getId());
+                    langParams.put("langType", locale);
+                    langParams.put("delStatus", "0");
+                    List<AppPageLang> pageLangList = dao.queryList(AppPageLang.class, langParams, null);
+                    if (pageLangList != null && !pageLangList.isEmpty()) {
+                        CacheUtil.put(pageLangKey, pageLangList.get(0).getContent());
+                    } else {
+                        // 缓存空值，避免重复查询
+                        CacheUtil.put(pageLangKey, "");
+                    }
+                }
+                pageMap.put("pageLang", CacheUtil.get(pageLangKey));
 
                 User user = SessionCtx.getCurrentUser();
                 // 用户自定义信息
@@ -161,5 +260,31 @@ public class PageController extends BaseController {
             log.error("获取页面配置信息出错！", e);
             return ApiResult.fail("获取页面配置信息出错！" + e.getMessage());
         }
+    }
+
+    /**
+     * 解析Accept-Language请求头，获取客户端首选语言
+     * @param acceptLanguage Accept-Language请求头值，例如："zh-CN,zh;q=0.9,en;q=0.8"
+     * @return 语言代码，例如："zh-CN"、"en-US"，默认返回"zh-CN"
+     */
+    private String parseLocale(String acceptLanguage) {
+        if (acceptLanguage == null || acceptLanguage.trim().isEmpty()) {
+            return "zh-CN"; // 默认语言
+        }
+        
+        // 解析Accept-Language，格式如：zh-CN,zh;q=0.9,en;q=0.8
+        String[] languages = acceptLanguage.split(",");
+        if (languages.length > 0) {
+            // 取第一个语言（优先级最高）
+            String firstLang = languages[0].trim();
+            // 移除权重参数（如果有）
+            int semicolonIndex = firstLang.indexOf(';');
+            if (semicolonIndex > 0) {
+                firstLang = firstLang.substring(0, semicolonIndex).trim();
+            }
+            return firstLang;
+        }
+        
+        return "zh-CN"; // 默认语言
     }
 }

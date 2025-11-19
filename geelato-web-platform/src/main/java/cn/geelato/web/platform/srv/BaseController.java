@@ -117,6 +117,18 @@ public class BaseController extends ParameterOperator {
     }
 
     /**
+     * 获取请求头参数
+     * @param headerName 请求头名称
+     * @return 请求头值
+     */
+    protected String getHeader(String headerName) {
+        if (this.request != null) {
+            return this.request.getHeader(headerName);
+        }
+        return null;
+    }
+
+    /**
      * 切换数据库
      *
      * @param connectId 数据库连接ID

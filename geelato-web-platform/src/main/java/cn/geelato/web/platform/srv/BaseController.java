@@ -129,6 +129,36 @@ public class BaseController extends ParameterOperator {
     }
 
     /**
+     * 获取客户端locale（基于Accept-Language解析）
+     * @return 语言代码，如 zh-CN、en-US
+     */
+    protected String getLocale() {
+        String acceptLanguage = getHeader("Accept-Language");
+        return parseLocale(acceptLanguage);
+    }
+
+    /**
+     * 解析Accept-Language请求头，获取客户端首选语言
+     * @param acceptLanguage Accept-Language请求头值，例如："zh-CN,zh;q=0.9,en;q=0.8"
+     * @return 语言代码，例如："zh-CN"、"en-US"，默认返回"zh-CN"
+     */
+    protected String parseLocale(String acceptLanguage) {
+        if (acceptLanguage == null || acceptLanguage.trim().isEmpty()) {
+            return "zh-CN"; // 默认语言
+        }
+        String[] languages = acceptLanguage.split(",");
+        if (languages.length > 0) {
+            String firstLang = languages[0].trim();
+            int semicolonIndex = firstLang.indexOf(';');
+            if (semicolonIndex > 0) {
+                firstLang = firstLang.substring(0, semicolonIndex).trim();
+            }
+            return firstLang;
+        }
+        return "zh-CN"; // 默认语言
+    }
+
+    /**
      * 切换数据库
      *
      * @param connectId 数据库连接ID

@@ -74,9 +74,7 @@ public class PageController extends BaseController {
     @RequestMapping(value = {"/getPageLang/{idType}/{id}", "/getPageLang/{idType}/{id}/*"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<HashMap<String, Object>> getPageLang(@PathVariable String idType, @PathVariable String id) {
         try {
-            // 从请求头获取客户端语言信息
-            String acceptLanguage = getHeader("Accept-Language");
-            String locale = parseLocale(acceptLanguage);
+            String locale = getLocale();
 
             // 获取页面信息，以确定实际的pageId
             AppPage page = null;
@@ -148,9 +146,7 @@ public class PageController extends BaseController {
      * @return {id,type,appId,code,releaseContent,sourceContent,pageCustom,pagePermission,pageLang}
      */
     private ApiResult<HashMap<String, Object>> getPage(String idType,String id,Boolean withSourceContent,Boolean withCustomConfig,Boolean withPermission) {
-        // 从请求头获取客户端语言信息
-        String acceptLanguage = getHeader("Accept-Language");
-        String locale = parseLocale(acceptLanguage);
+        String locale = getLocale();
         try {
             // 获取页面定义信息
             AppPage page = null;
@@ -262,29 +258,4 @@ public class PageController extends BaseController {
         }
     }
 
-    /**
-     * 解析Accept-Language请求头，获取客户端首选语言
-     * @param acceptLanguage Accept-Language请求头值，例如："zh-CN,zh;q=0.9,en;q=0.8"
-     * @return 语言代码，例如："zh-CN"、"en-US"，默认返回"zh-CN"
-     */
-    private String parseLocale(String acceptLanguage) {
-        if (acceptLanguage == null || acceptLanguage.trim().isEmpty()) {
-            return "zh-CN"; // 默认语言
-        }
-        
-        // 解析Accept-Language，格式如：zh-CN,zh;q=0.9,en;q=0.8
-        String[] languages = acceptLanguage.split(",");
-        if (languages.length > 0) {
-            // 取第一个语言（优先级最高）
-            String firstLang = languages[0].trim();
-            // 移除权重参数（如果有）
-            int semicolonIndex = firstLang.indexOf(';');
-            if (semicolonIndex > 0) {
-                firstLang = firstLang.substring(0, semicolonIndex).trim();
-            }
-            return firstLang;
-        }
-        
-        return "zh-CN"; // 默认语言
-    }
 }

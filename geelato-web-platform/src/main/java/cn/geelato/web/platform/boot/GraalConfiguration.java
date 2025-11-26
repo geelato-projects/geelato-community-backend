@@ -7,10 +7,12 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 @Configuration
 public class GraalConfiguration extends GlobalContext{
     @Bean
+    @Scope("prototype")
     public Context Context() {
         if (GlobalContext.__POLYGLOT_DEBUGGER__) {
             String port = "4242";

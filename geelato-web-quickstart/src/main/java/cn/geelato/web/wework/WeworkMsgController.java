@@ -29,7 +29,7 @@ public class WeworkMsgController {
     @Value("${wework.aeskey:xBkfnZcxCI10PY8tGWEs5sjju1568zpx3M33XWyI4w1}")
     private String encodingAesKey;
 
-    @Value("${wework.corpid:wwfed14f2fada336fd}")
+    @Value("${wework.corpid:wwc87d7b0460346552}")
     private String corpId;
 
     private WeworkMsgCryptUtil cryptUtil;
@@ -67,14 +67,14 @@ public class WeworkMsgController {
 
     /**
      * 企业微信消息加解密工具类
-     * 按照企业微信官方文档实现：https://developer.work.weixin.qq.com/document/path/90968
+     * 按照企业微信官方文档实现：<a href="https://developer.work.weixin.qq.com/document/path/90968">...</a>
      */
     public static class WeworkMsgCryptUtil {
         private static final Logger logger = LoggerFactory.getLogger(WeworkMsgCryptUtil.class);
 
         private final String token;
         private final String encodingAesKey;
-        private final String receiveId; // 企业微信的CorpID，当为第三方套件回调事件时，CorpID的内容为suiteid
+        private final String receiveId;
         private final byte[] aesKey;
         private static final int BLOCK_SIZE = 32;
 

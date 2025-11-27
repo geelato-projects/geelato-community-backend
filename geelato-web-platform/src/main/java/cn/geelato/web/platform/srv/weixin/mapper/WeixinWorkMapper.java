@@ -13,44 +13,21 @@ import java.util.List;
  */
 @Mapper
 public interface WeixinWorkMapper {
-    
-    /**
-     * 根据组织ID获取企业微信配置信息
-     * @param orgId 组织ID
-     * @return 企业微信配置信息JSON字符串
-     */
+
     @Select("SELECT weixin_work_info FROM platform_company WHERE org_id = #{orgId}")
     String getCompanyWeixinWorkInfo(@Param("orgId") String orgId);
-    
-    /**
-     * 更新用户的企业微信userId
-     *
-     * @param weixinWorkUserId 企业微信用户ID
-     * @param userId           平台用户ID
-     */
+
     @Update("UPDATE platform_user SET weixin_work_userId = #{weixinWorkUserId} WHERE id = #{userId}")
     void updateUserWeixinWorkUserId(@Param("weixinWorkUserId") String weixinWorkUserId, @Param("userId") String userId);
-    
-    /**
-     * 根据组织ID查询用户
-     * @param orgId 组织ID
-     * @return 用户列表
-     */
-    @Select("SELECT * FROM platform_user WHERE org_id = #{orgId}")
+
+    @Select("WITH RECURSIVE org_tree AS (\n" +
+            "  SELECT id FROM platform_org WHERE id = #{orgId}\n" +
+            "  UNION ALL\n" +
+            "  SELECT o.id FROM platform_org o JOIN org_tree ot ON o.pid = ot.id\n" +
+            ")\n" +
+            "SELECT u.* FROM platform_user u WHERE u.org_id IN (SELECT id FROM org_tree)")
     List<User> findUsersByOrgId(@Param("orgId") String orgId);
-    
-    /**
-     * 查询所有用户
-     * @return 所有用户列表
-     */
-    @Select("SELECT * FROM platform_user")
-    List<User> findAllUsers();
-    
-    /**
-     * 根据用户ID获取企业微信用户ID
-     * @param userId 平台用户ID
-     * @return 企业微信用户ID
-     */
+
     @Select("SELECT weixin_work_userId FROM platform_user WHERE id = #{userId}")
     String getWeixinWorkUserIdByUserId(@Param("userId") String userId);
 }

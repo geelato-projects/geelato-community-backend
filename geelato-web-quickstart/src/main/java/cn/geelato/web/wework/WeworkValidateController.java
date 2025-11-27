@@ -20,16 +20,16 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/wx/validate")
-public class WeworkMsgController {
-    private static final Logger logger = LoggerFactory.getLogger(WeworkMsgController.class);
+public class WeworkValidateController {
+    private static final Logger logger = LoggerFactory.getLogger(WeworkValidateController.class);
 
-    @Value("${wework.token:rPcRqcWuF}")
+    @Value("${wework.validate.token}")
     private String token;
 
-    @Value("${wework.aeskey:xBkfnZcxCI10PY8tGWEs5sjju1568zpx3M33XWyI4w1}")
+    @Value("${wework.validate.aeskey}")
     private String encodingAesKey;
 
-    @Value("${wework.corpid:wwc87d7b0460346552}")
+    @Value("${wework.validate.corpid}")
     private String corpId;
 
     private WeworkMsgCryptUtil cryptUtil;
@@ -41,6 +41,15 @@ public class WeworkMsgController {
         if (cryptUtil == null) {
             cryptUtil = new WeworkMsgCryptUtil(token, encodingAesKey, corpId);
         }
+    }
+
+    @GetMapping("/config")
+    public Map<String, String> config() {
+        Map<String, String> map = new HashMap<>();
+        map.put("token", token);
+        map.put("aeskey", encodingAesKey);
+        map.put("corpid", corpId);
+        return map;
     }
 
     @GetMapping("/receive")
@@ -73,7 +82,6 @@ public class WeworkMsgController {
         private static final Logger logger = LoggerFactory.getLogger(WeworkMsgCryptUtil.class);
 
         private final String token;
-        private final String encodingAesKey;
         private final String receiveId;
         private final byte[] aesKey;
         private static final int BLOCK_SIZE = 32;
@@ -86,7 +94,6 @@ public class WeworkMsgController {
          */
         public WeworkMsgCryptUtil(String token, String encodingAesKey, String receiveId) {
             this.token = token;
-            this.encodingAesKey = encodingAesKey;
             this.receiveId = receiveId;
             this.aesKey = Base64.decodeBase64(encodingAesKey + "=");
         }
@@ -155,7 +162,7 @@ public class WeworkMsgController {
                 // 分离16位随机字符串、网络字节序和receiveId
                 // 前16字节是随机字符串
                 // 接下来4字节是网络字节序的msg长度
-                int xmlLength = bytesToInt(bytes, 16);
+                int xmlLength = bytesToInt(bytes);
 
                 if (xmlLength < 0) {
                     throw new Exception("xml长度不合法");
@@ -197,9 +204,6 @@ public class WeworkMsgController {
 
             // 计算需要填充的长度
             int padLength = BLOCK_SIZE - (contentLength % BLOCK_SIZE);
-            if (padLength == 0) {
-                padLength = BLOCK_SIZE;
-            }
 
             // 创建最终的字节数组
             byte[] unencrypted = new byte[contentLength + padLength];
@@ -300,15 +304,15 @@ public class WeworkMsgController {
 
         /**
          * 将网络字节序的byte数组转换为int
+         *
          * @param bytes byte数组
-         * @param offset 偏移量
          * @return 整数值
          */
-        private int bytesToInt(byte[] bytes, int offset) {
-            return ((bytes[offset] & 0xFF) << 24)
-                    | ((bytes[offset + 1] & 0xFF) << 16)
-                    | ((bytes[offset + 2] & 0xFF) << 8)
-                    | (bytes[offset + 3] & 0xFF);
+        private int bytesToInt(byte[] bytes) {
+            return ((bytes[16] & 0xFF) << 24)
+                    | ((bytes[16 + 1] & 0xFF) << 16)
+                    | ((bytes[16 + 2] & 0xFF) << 8)
+                    | (bytes[16 + 3] & 0xFF);
         }
 
         /**

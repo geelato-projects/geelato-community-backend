@@ -6,6 +6,7 @@ import cn.geelato.utils.JsonUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.graal.GraalContext;
+import cn.geelato.web.platform.graal.GraalExecutor;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Api;
 import cn.geelato.web.platform.srv.script.service.ApiService;
@@ -57,6 +58,9 @@ public class ServiceController extends BaseController {
         for (Map.Entry entry : graalVariableMap.entrySet()) {
             context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
         }
+
+        context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_EXECUTOR, new GraalExecutor(apiService));
+
         Source source = Source.newBuilder(GraalUse.Language_JS, scriptContent, GraalUse.BASE_SCRIPT_JS_FILE).build();
         Map result = context.eval(source).execute(JsonUtils.safeParse(parameter)).as(Map.class);
         return ApiResult.success(result.get("result"));

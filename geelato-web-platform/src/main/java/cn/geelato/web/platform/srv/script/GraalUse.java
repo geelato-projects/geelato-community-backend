@@ -4,6 +4,7 @@ public class GraalUse {
     public static final String Language_JS="js";
 
     public static final String GLOBAL_OBJECT="$gl";
+    public static final String GLOBAL_EXECUTOR="$executor";
 
     public static final String BASE_SCRIPT_CONTENT="""
                 (function(parameter){

@@ -219,8 +219,16 @@ public class JsonTextSaveParser extends JsonTextParser {
                             || FN_DEL_STATUS.equals(fieldMeta.getFieldName())
                             || FN_ENABLE_STATUS.equals(fieldMeta.getFieldName())
                     )) {
-                        String v = jo.getString(key).toLowerCase();
-                        params.put(key, "true".equals(v) ? 1 : ("false".equals(v) ? 0 : v));
+                        Object o = jo.get(key);
+                        if (o instanceof Boolean) {
+                            params.put(key, ((Boolean) o) ? 1 : 0);
+                        } else if (o instanceof Number) {
+                            int n = ((Number) o).intValue();
+                            params.put(key, n);
+                        } else {
+                            String v = jo.getString(key).toLowerCase();
+                            params.put(key, "true".equals(v) || "1".equals(v) ? 1 : ("false".equals(v) || "0".equals(v) ? 0 : v));
+                        }
                     } else {
                         params.put(key, jo.getString(key));
                     }

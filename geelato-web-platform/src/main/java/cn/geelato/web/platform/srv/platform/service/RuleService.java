@@ -253,7 +253,7 @@ public class RuleService {
     public String recursiveSave(SaveCommand command, DataSourceTransactionManager dataSourceTransactionManager, TransactionStatus transactionStatus) throws DaoException {
         command.getValueMap().forEach((key, value) -> {
             if (value != null && !(value instanceof FunctionFieldValue)) {
-                command.getValueMap().put(key, parseValueExp(command, value.toString(), 0));
+                command.getValueMap().put(key, parseValueExp(command, value, 0));
             }
         });
         BoundSql boundSql = sqlManager.generateSaveSql(command);
@@ -325,7 +325,7 @@ public class RuleService {
             command.getCommands().forEach(subCommand -> {
                 subCommand.getValueMap().forEach((key, value) -> {
                     if (value != null && !(value instanceof FunctionFieldValue)) {
-                        subCommand.getValueMap().put(key, parseValueExp(subCommand, value.toString(), 0));
+                        subCommand.getValueMap().put(key, parseValueExp(subCommand, value, 0));
                     }
                 });
                 try {
@@ -352,8 +352,8 @@ public class RuleService {
         if (command.hasCommands()) {
             command.getCommands().forEach(subCommand -> {
                 subCommand.getValueMap().forEach((key, value) -> {
-                    if (value != null && !(value instanceof FunctionFieldValue)) {
-                        subCommand.getValueMap().put(key, parseValueExp(subCommand, value.toString(), 0));
+                    if (value != null && !(value instanceof FunctionFieldValue) ) {
+                        subCommand.getValueMap().put(key, parseValueExp(subCommand, value, 0));
                     }
                 });
                 recursiveSave(subCommand);
@@ -372,8 +372,11 @@ public class RuleService {
      * @param times          递归调用的次数，初次调用时传入0，之后每次递归调用时自增
      * @return 根据表达式类型返回相应的值，如果无法解析则返回null
      */
-    private Object parseValueExp(SaveCommand currentCommand, String valueExp, int times) {
-        String valueExpTrim = valueExp.trim();
+    private Object parseValueExp(SaveCommand currentCommand, Object valueExp, int times) {
+        if(!valueExp.toString().startsWith("$"))
+            return valueExp;
+
+        String valueExpTrim = valueExp.toString().trim();
         if (valueExpTrim.startsWith(VARS_CTX)) {
             // 检查是否存在变更$ctx.userId等
             return getSessionCtx().get(valueExpTrim.substring(VARS_CTX.length() + 1));

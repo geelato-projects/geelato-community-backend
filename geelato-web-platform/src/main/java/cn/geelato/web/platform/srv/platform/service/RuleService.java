@@ -373,9 +373,6 @@ public class RuleService {
      * @return 根据表达式类型返回相应的值，如果无法解析则返回null
      */
     private Object parseValueExp(SaveCommand currentCommand, Object valueExp, int times) {
-        if(!valueExp.toString().startsWith("$"))
-            return valueExp;
-
         String valueExpTrim = valueExp.toString().trim();
         if (valueExpTrim.startsWith(VARS_CTX)) {
             // 检查是否存在变更$ctx.userId等

@@ -27,10 +27,10 @@ import java.util.Properties;
 @Component
 @Slf4j
 public class EmailService {
-    private static final String CONFIG_KEY_EMAIL_PORT = "emailPort";
-    private static final String CONFIG_KEY_EMAIL_HOST = "emailHost";
-    private static final String CONFIG_KEY_EMAIL_USERNAME = "emailUserName";
-    private static final String CONFIG_KEY_EMAIL_PASSWORD = "emailPassWord";
+    private static final String CONFIG_KEY_EMAIL_PORT = "emailPort_hq";
+    private static final String CONFIG_KEY_EMAIL_HOST = "emailHost_hq";
+    private static final String CONFIG_KEY_EMAIL_USERNAME = "emailUserName_hq";
+    private static final String CONFIG_KEY_EMAIL_PASSWORD = "emailPassWord_hq";
 
     @Autowired
     @Qualifier("primaryDao")

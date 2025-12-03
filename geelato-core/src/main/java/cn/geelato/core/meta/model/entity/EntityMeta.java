@@ -42,6 +42,9 @@ public class EntityMeta {
     @Setter
     @Getter
     private EntityType entityType;
+    @Setter
+    @Getter
+    private String catalog = "none";
     /**
      * -- GETTER --
      * 基于@Id获取实体中的主键字段名
@@ -268,7 +271,9 @@ public class EntityMeta {
                 return fm;
             }
         }
-        throw new RuntimeException("unfound FieldMeta "+ columnName);
+        String entity = this.getEntityName();
+        String table = this.getTableMeta() != null ? this.getTableMeta().getTableName() : "";
+        throw new RuntimeException("unfound FieldMeta, entity=" + entity + ", table=" + table + ", column=" + columnName);
     }
 
     public boolean isIgnoreUpdateField(String field) {

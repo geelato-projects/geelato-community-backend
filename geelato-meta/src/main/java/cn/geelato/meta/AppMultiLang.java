@@ -10,7 +10,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(name = "platform_app_multi_lang", catalog = "platform")
+@Entity(name = "platform_app_multi_lang")
 @Title(title = "应用多语言")
 public class AppMultiLang extends BaseEntity {
     @Title(title = "应用ID")

@@ -127,6 +127,9 @@ public class MetaReflex {
         em.setEntityTitle(em.getTableMeta().getTitle());
         em.setEntityType(EntityType.Class);
         em.setClassType(clazz);
+        Entity entity = (Entity) clazz.getAnnotation(Entity.class);
+        String catalog = entity != null && StringUtils.hasText(entity.catalog()) ? entity.catalog() : "none";
+        em.setCatalog(catalog);
 
         Collection<TableForeign> tableForeigns = new ArrayList<>();
         HashMap<String, FieldMeta> map = getColumnFieldMetas(clazz, tableForeigns);

@@ -14,7 +14,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_company", catalog = "platform")
+@Entity(name = "platform_company")
 @Title(title = "公司信息")
 public class Company extends BaseEntity {
 

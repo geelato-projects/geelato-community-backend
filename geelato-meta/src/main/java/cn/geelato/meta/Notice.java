@@ -10,7 +10,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(name = "platform_notice", catalog = "platform")
+@Entity(name = "platform_notice")
 @TableName("platform_notice")
 @Title(title = "平台通知")
 public class Notice extends BaseEntity {

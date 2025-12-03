@@ -132,10 +132,13 @@ public class MetaManager extends AbstractManager {
      * @param entityName 实体名称
      */
     public void refreshDBMeta(String entityName) {
+        EntityMeta em = getByEntityName(entityName);
+        if (em != null && "platform".equalsIgnoreCase(em.getCatalog())) {
+            throw new RuntimeException("实体标记为平台，无法刷新: " + entityName);
+        }
         log.info("refresh meta...{}", entityName);
         refreshTableMeta(entityName);
         refreshViewMeta(entityName);
-
     }
 
     /**
@@ -237,11 +240,6 @@ public class MetaManager extends AbstractManager {
         return newDefaultEntityMap(getByEntityName(entityName));
     }
 
-
-    public Map<String, Object> newDefaultEntityMap(Class clazz) {
-        return newDefaultEntityMap(get(clazz));
-    }
-
     /**
      * 基于元数据，创建默认实体（Map），并以各字段的默认值填充
      *
@@ -249,6 +247,9 @@ public class MetaManager extends AbstractManager {
      * @return 返回填充后的map
      */
     public Map<String, Object> newDefaultEntityMap(EntityMeta em) {
+        if (em == null || em.getFieldMetas() == null) {
+            return new HashMap<>();
+        }
         HashMap<String, Object> map = new HashMap<>(em.getFieldMetas().size());
         for (FieldMeta fm : em.getFieldMetas()) {
             ColumnMeta cm = fm.getColumnMeta();
@@ -295,10 +296,9 @@ public class MetaManager extends AbstractManager {
     /**
      * 检索批定包名中包含所有的包javax.persistence.Entity的类，并进行解析
      */
-    private void scanAndParse(String parkeName) {
-        // TODO 启动的时候扫描实体类，这里做个开关，如果开启，就默认将实体类更新至数据库。
-        log.debug("开始从包{}中扫描到包含注解{}的实体......", parkeName, Entity.class);
-        List<Class<?>> classes = ClassScanner.scan(parkeName, true, Entity.class);
+    private void scanAndParse(String packageName) {
+        log.debug("开始从包{}中扫描到包含注解{}的实体......", packageName, Entity.class);
+        List<Class<?>> classes = ClassScanner.scan(packageName, true, Entity.class);
         for (Class<?> clazz : classes) {
             parseOne(clazz);
         }
@@ -314,57 +314,6 @@ public class MetaManager extends AbstractManager {
         scanAndParse(packageName);
         if (isUpdateMetadataFormDb) {
             // todo 解析实体类，写入到数据库
-            updateMetadataFromDbAfterParse(null);
-        }
-    }
-
-    /**
-     * 从数据库的元数据表中更新元数据信息，如字段长度
-     * 注：需在scanAndParse之后执行才有效
-     *
-     * @param columns 待更新的列
-     */
-    public void updateMetadataFromDbAfterParse(List<HashMap<?, ?>> columns) {
-        for (HashMap<?, ?> map : columns) {
-            String TABLE_NAME = map.get("TABLE_NAME").toString();
-            EntityMeta entityMapping = null;
-            for (EntityMeta obj : entityMetadataMap.values()) {
-                if (obj.getTableName().equalsIgnoreCase(TABLE_NAME)) {
-                    entityMapping = obj;
-                    break;
-                }
-            }
-            if (entityMapping == null) {
-                continue;
-            }
-            String COLUMN_NAME = map.get("COLUMN_NAME").toString();
-            String COLUMN_COMMENT = MapUtils.getOrDefaultString(map, "COLUMN_COMMENT", "");
-            String ORDINAL_POSITION = MapUtils.getOrDefaultString(map, "ORDINAL_POSITION", "");
-            String COLUMN_DEFAULT = MapUtils.getOrDefaultString(map, "COLUMN_DEFAULT", "");
-            String IS_NULLABLE = MapUtils.getOrDefaultString(map, "IS_NULLABLE", "NO");
-            String DATA_TYPE = MapUtils.getOrDefaultString(map, "DATA_TYPE", "varchar");
-            String CHARACTER_MAXIMUM_LENGTH = MapUtils.getOrDefaultString(map, "CHARACTER_MAXIMUM_LENGTH", "20");
-            String CHARACTER_OCTET_LENGTH = MapUtils.getOrDefaultString(map, "CHARACTER_OCTET_LENGTH", "24");
-            String NUMERIC_PRECISION = MapUtils.getOrDefaultString(map, "NUMERIC_PRECISION", "8");
-            String NUMERIC_SCALE = MapUtils.getOrDefaultString(map, "NUMERIC_SCALE", "2");
-            String DATETIME_PRECISION = MapUtils.getOrDefaultString(map, "DATETIME_PRECISION", "");
-            String COLUMN_TYPE = MapUtils.getOrDefaultString(map, "COLUMN_TYPE", "");
-            String COLUMN_KEY = MapUtils.getOrDefaultString(map, "COLUMN_KEY", "");
-            String EXTRA = MapUtils.getOrDefaultString(map, "EXTRA", "");
-
-            FieldMeta fm = entityMapping.getFieldMetaByColumn(COLUMN_NAME);
-            if (fm != null) {
-                fm.getColumnMeta().setCharMaxLength(Integer.parseInt(CHARACTER_MAXIMUM_LENGTH));
-                fm.getColumnMeta().setNullable(!"NO".equalsIgnoreCase(IS_NULLABLE));
-                fm.getColumnMeta().setExtra(EXTRA);
-                fm.getColumnMeta().setNumericPrecision(Integer.parseInt(NUMERIC_PRECISION));
-                fm.getColumnMeta().setNumericScale(Integer.parseInt(NUMERIC_SCALE));
-                fm.getColumnMeta().setComment(COLUMN_COMMENT);
-                if (Strings.isEmpty(fm.getColumnMeta().getTitle())) {
-                    fm.getColumnMeta().setTitle(COLUMN_COMMENT);
-                }
-                fm.getColumnMeta().setOrdinalPosition(Integer.parseInt(ORDINAL_POSITION));
-            }
         }
     }
 
@@ -374,6 +323,9 @@ public class MetaManager extends AbstractManager {
      * @param clazz 待解析的类
      */
     public void parseOne(Class clazz) {
+        if (clazz == null) {
+            return;
+        }
         log.info("parse meta from class :{}", clazz.getName());
         String entityName = MetaReflex.getEntityName(clazz);
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
@@ -382,6 +334,7 @@ public class MetaManager extends AbstractManager {
             entityMetaClassMap.put(entityMeta.getTableName(), clazz);
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Class));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
+            printEntityTree(entityMeta);
             if (log.isDebugEnabled()) {
                 log.debug("success in parsing class:{}", clazz.getName());
                 for (FieldMeta fm : entityMeta.getFieldMetas()) {
@@ -396,22 +349,6 @@ public class MetaManager extends AbstractManager {
         }
     }
 
-    public void parseOneOther(EntityMeta entityMeta) {
-        List checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", entityMeta.getTableMeta().getId()));
-        if (!checkList.isEmpty()) {
-            entityMeta.setTableChecks(MetaReflex.getTableCheckMetas(checkList));
-        }
-    }
-
-
-    public void parseOne(Map<String, Object> map, List<Map<String, Object>> columnList) {
-        parseTableEntity(map, columnList, null);
-    }
-
-    public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList) {
-        parseTableEntity(map, columnList, viewList, null, null);
-    }
-
     public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList, List<Map<String, Object>> checkList, List<Map<String, Object>> foreignList) {
         String entityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
@@ -424,6 +361,7 @@ public class MetaManager extends AbstractManager {
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
+            printEntityTree(entityMeta);
         } else if (entityMetadataMap.containsKey(entityName)) {
             EntityMeta entityMeta = entityMetadataMap.get(entityName);
             if (entityMeta != null && entityMeta.getTableMeta() != null) {
@@ -439,6 +377,9 @@ public class MetaManager extends AbstractManager {
     }
 
     public void parseViewEntity(Map<String, Object> view) {
+        if (view == null || view.get("view_name") == null) {
+            return;
+        }
         String entityName = view.get("view_name").toString();
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
             EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);
@@ -446,6 +387,7 @@ public class MetaManager extends AbstractManager {
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.View));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
+            printEntityTree(entityMeta);
         }
     }
 
@@ -460,6 +402,26 @@ public class MetaManager extends AbstractManager {
             tableNameMetadataMap.remove(entityMeta.getTableName());
             entityMetadataMap.remove(entityName);
             removeLiteMeta(entityName);
+        }
+    }
+
+    private void printEntityTree(EntityMeta em) {
+        String title = em.getEntityTitle() == null ? "" : em.getEntityTitle();
+        String type = em.getEntityType() == null ? "" : em.getEntityType().name();
+        String catalog = em.getCatalog() == null ? "none" : em.getCatalog();
+        String head = em.getEntityName() + (Strings.isNotBlank(type) ? " [" + type + "]" : "") + (Strings.isNotBlank(catalog) ? " (catalog:" + catalog + ")" : "") + (Strings.isNotBlank(title) ? " (" + title + ")" : "");
+        log.info(head);
+        Collection<FieldMeta> fms = em.getFieldMetas();
+        if (fms != null && !fms.isEmpty()) {
+            int idx = 0;
+            int size = fms.size();
+            for (FieldMeta fm : fms) {
+                String prefix = (idx == size - 1) ? "  └─ " : "  ├─ ";
+                String javaType = fm.getFieldType() != null ? fm.getFieldType().getSimpleName() : "";
+                String colType = fm.getColumnMeta() != null ? (org.apache.logging.log4j.util.Strings.isNotBlank(fm.getColumnMeta().getType()) ? fm.getColumnMeta().getType() : fm.getColumnMeta().getDataType()) : "";
+                log.info("{}{} ({}) : {} ({})", prefix, fm.getFieldName(), javaType, fm.getColumnName(), colType);
+                idx++;
+            }
         }
     }
 
@@ -484,7 +446,6 @@ public class MetaManager extends AbstractManager {
 
     public List<ColumnMeta> getDefaultColumn() {
         List<ColumnMeta> defaultColumnMetaList = new ArrayList<ColumnMeta>();
-
         try {
             String jsonStr = JsonUtils.readJsonFile(ResourcesFiles.COLUMN_DEFAULT_JSON);
             List<ColumnMeta> columnMetaList = JSON.parseArray(jsonStr, ColumnMeta.class);
@@ -502,7 +463,7 @@ public class MetaManager extends AbstractManager {
     }
 
     public List<ColumnSelectType> getColumnSelectType() {
-        List<ColumnSelectType> columnSelectTypes = new ArrayList<ColumnSelectType>();
+        List<ColumnSelectType> columnSelectTypes = new ArrayList<>();
 
         try {
             String jsonStr = JsonUtils.readJsonFile(ResourcesFiles.COLUMN_SELECT_TYPE_JSON);
@@ -522,12 +483,7 @@ public class MetaManager extends AbstractManager {
                     }
                     columnSelectTypes.add(selectType);
                 }
-                columnSelectTypes.sort(new Comparator<ColumnSelectType>() {
-                    @Override
-                    public int compare(ColumnSelectType o1, ColumnSelectType o2) {
-                        return o1.getSeqNo().intValue() - o2.getSeqNo().intValue();
-                    }
-                });
+                columnSelectTypes.sort(Comparator.comparingInt(o -> o.getSeqNo().intValue()));
             }
         } catch (IOException e) {
             columnSelectTypes = new ArrayList<>();
@@ -540,7 +496,6 @@ public class MetaManager extends AbstractManager {
      * 获取表升级列信息列表
      *
      * @return 包含列信息的Map，键为列名，值为列信息对象
-     * @throws IOException 当读取JSON文件时发生IO异常
      */
     public Map<String, ColumnMeta> getTableUpgradeList() {
         Map<String, ColumnMeta> columnMetaMap = new HashMap<>();

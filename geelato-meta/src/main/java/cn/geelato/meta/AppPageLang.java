@@ -9,7 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(name = "platform_app_page_lang", catalog = "platform")
+@Entity(name = "platform_app_page_lang")
 @Title(title = "页面多语言")
 public class AppPageLang extends BaseEntity {
     @Title(title = "所属页面")

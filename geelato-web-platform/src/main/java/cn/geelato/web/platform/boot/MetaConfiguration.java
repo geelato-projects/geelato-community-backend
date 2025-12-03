@@ -40,4 +40,5 @@ public class MetaConfiguration extends BaseConfiguration{
     private void initDataBaseMeta() {
         metaManager.parseDBMeta(dao);
     }
+
 }

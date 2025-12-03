@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.base;
 
 import cn.geelato.core.orm.Dao;
-import cn.geelato.datasource.annotion.UseDynamicDataSource;
+import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;

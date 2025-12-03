@@ -21,7 +21,7 @@ import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.script.rule.BizMvelRuleManager;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.datasource.DynamicDataSourceHolder;
-import cn.geelato.datasource.annotion.UseDynamicDataSource;
+import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
@@ -196,7 +196,6 @@ public class RuleService {
         });
     }
 
-//    @Transactional
     public String save(String biz, String gql) throws DaoException {
         SaveCommand command = gqlManager.generateSaveSql(gql, getSessionCtx());
         Facts facts = new Facts();

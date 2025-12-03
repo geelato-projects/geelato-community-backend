@@ -7,7 +7,7 @@ import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.script.js.JsProvider;
-import cn.geelato.datasource.annotion.UseDynamicDataSource;
+import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.srv.excel.exception.FileException;

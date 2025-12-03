@@ -9,7 +9,7 @@ import cn.geelato.lang.meta.Entity;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.DynamicDataSourceHolder;
-import cn.geelato.datasource.annotion.UseDynamicDataSource;
+import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.DataItems;
 import cn.geelato.utils.DateUtils;

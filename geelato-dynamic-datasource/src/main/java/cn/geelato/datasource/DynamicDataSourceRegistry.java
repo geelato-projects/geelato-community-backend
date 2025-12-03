@@ -45,7 +45,10 @@ public class DynamicDataSourceRegistry {
             log.error("For dynamic data sources has been search failed", e);
         }
     }
-    
+
+    public DataSource getPrimaryDataSource() {
+        return primaryJdbcTemplate.getDataSource();
+    }
     /**
      * 从数据库加载数据源配置
      */
@@ -66,6 +69,7 @@ public class DynamicDataSourceRegistry {
         }
     }
 
+    //seata处理，待定
     public DataSource buildDataSourceProxy(Map<String, Object> dbConnectMap) {
         String dbType = dbConnectMap.get("db_type").toString().toLowerCase();
         if(dbType.equals("mysql")){

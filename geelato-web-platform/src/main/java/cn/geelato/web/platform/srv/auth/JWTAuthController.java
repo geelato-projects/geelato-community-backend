@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 public class JWTAuthController extends BaseController {
     protected AuthCodeService authCodeService;
     protected OrgService orgService;
+    private static final String anonymousFixedPassword = "H2k9ZpQ3@geElAto";
 
     @Autowired
     public JWTAuthController(AuthCodeService authCodeService, OrgService orgService) {
@@ -57,10 +58,23 @@ public class JWTAuthController extends BaseController {
     @IgnoreVerify
     @RequestMapping(value = "/login", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
     public ApiResult<LoginResult> login(@RequestBody LoginParams loginParams) {
+        return doLogin(loginParams, false);
+    }
+
+    @RequestMapping(value = "/login/anonymous", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
+    public ApiResult<LoginResult> loginAnonymous(@RequestBody LoginParams loginParams) {
+        return doLogin(loginParams, true);
+    }
+
+    private ApiResult<LoginResult> doLogin(LoginParams loginParams, boolean anonymousMode) {
         try {
-            // 查询的租户
+            if (anonymousMode) {
+                if (!anonymousFixedPassword.equals(loginParams.getPassword())) {
+                    return ApiResult.fail("固定密码不正确");
+                }
+            }
+
             String tenantCodeParam = StringUtils.isNotEmpty(loginParams.getSuffix()) ? loginParams.getSuffix().replace("@", "") : loginParams.getTenant();
-            // 用户查询
             FilterGroup filterGroup = new FilterGroup();
             filterGroup.addFilter("loginName", loginParams.getUsername());
             filterGroup.addFilter("enableStatus", "1");
@@ -69,11 +83,9 @@ public class JWTAuthController extends BaseController {
                 filterGroup.addFilter("tenantCode", tenantCodeParam);
             }
             List<User> loginUsers = dao.queryList(User.class, filterGroup, "");
-            // 没有对应的用户
             if (loginUsers == null || loginUsers.isEmpty()) {
-                return ApiResult.fail("账号或密码不正确");
+                return ApiResult.fail(anonymousMode ? "账号不存在或不可用" : "账号或密码不正确");
             }
-            // 多个用户
             if (loginUsers.size() > 1) {
                 List<Tenant> tenantList = queryTenantListByLoginName(loginParams.getUsername());
                 if (tenantList.size() > 1) {
@@ -83,26 +95,27 @@ public class JWTAuthController extends BaseController {
                 }
                 return ApiResult.fail("账号信息不唯一，请联系管理员");
             }
-            // 仅有一个用户时
+
             User loginUser = loginUsers.get(0);
-            Boolean checkPsdRst = checkPsd(loginUser, loginParams);
-            if (checkPsdRst) {
-                String userId = loginUser.getId();
-                // 生成登录密钥 token
-                Map<String, String> payload = new HashMap<>(5);
-                payload.put("id", userId);
-                payload.put("loginName", loginUser.getLoginName());
-                payload.put("passWord", loginParams.getPassword());
-                payload.put("orgId", loginUser.getOrgId());
-                payload.put("tenantCode", loginUser.getTenantCode());
-                String token = JWTUtil.getToken(payload);
-                // 用户信息
-                LoginResult loginResult = LoginResult.formatLoginResult(loginUser);
-                loginResult.setToken(token);
-                return ApiResult.success(loginResult, "认证成功!");
-            } else {
-                return ApiResult.fail("账号或密码不正确");
+            if (!anonymousMode) {
+                Boolean checkPsdRst = checkPsd(loginUser, loginParams);
+                if (!checkPsdRst) {
+                    return ApiResult.fail("账号或密码不正确");
+                }
             }
+
+            String userId = loginUser.getId();
+            Map<String, String> payload = new HashMap<>(5);
+            payload.put("id", userId);
+            payload.put("loginName", loginUser.getLoginName());
+            payload.put("passWord", loginParams.getPassword());
+            payload.put("orgId", loginUser.getOrgId());
+            payload.put("tenantCode", loginUser.getTenantCode());
+            String token = JWTUtil.getToken(payload);
+
+            LoginResult loginResult = LoginResult.formatLoginResult(loginUser);
+            loginResult.setToken(token);
+            return ApiResult.success(loginResult, anonymousMode ? "匿名认证成功!" : "认证成功!");
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
             return ApiResult.fail("服务暂不可用，请稍后重试!");

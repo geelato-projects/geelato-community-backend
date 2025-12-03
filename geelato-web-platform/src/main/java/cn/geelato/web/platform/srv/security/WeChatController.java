@@ -7,7 +7,7 @@ import cn.geelato.utils.HttpUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.boot.properties.WechatConfigurationProperties;
+import cn.geelato.web.platform.boot.properties.WeixinConfigurationProperties;
 import cn.geelato.meta.User;
 import cn.geelato.web.platform.srv.security.service.UserService;
 import com.alibaba.fastjson2.JSON;
@@ -31,11 +31,11 @@ import java.util.Map;
 @Slf4j
 public class WeChatController extends BaseController {
     private static final Class<User> CLAZZ = User.class;
-    private final WechatConfigurationProperties wxConfiguration;
+    private final WeixinConfigurationProperties wxConfiguration;
     private final UserService userService;
 
     @Autowired
-    public WeChatController(WechatConfigurationProperties wxConfiguration, UserService userService) {
+    public WeChatController(WeixinConfigurationProperties wxConfiguration, UserService userService) {
         this.wxConfiguration = wxConfiguration;
         this.userService = userService;
     }

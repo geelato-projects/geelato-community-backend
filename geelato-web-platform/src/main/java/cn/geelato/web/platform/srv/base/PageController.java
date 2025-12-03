@@ -77,7 +77,7 @@ public class PageController extends BaseController {
             String locale = getLocale();
 
             // 获取页面信息，以确定实际的pageId
-            AppPage page = null;
+            AppPage page;
             if ("pageId".equals(idType)) {
                 String key = "platform_app_page_" + id;
                 if (CacheUtil.exists(key) && CacheUtil.get(key) != null) {
@@ -149,7 +149,7 @@ public class PageController extends BaseController {
         String locale = getLocale();
         try {
             // 获取页面定义信息
-            AppPage page = null;
+            AppPage page;
             if ("pageId".equals(idType)) {
                 String key = "platform_app_page_" + id;
                 if (CacheUtil.exists(key) && CacheUtil.get(key) != null) {

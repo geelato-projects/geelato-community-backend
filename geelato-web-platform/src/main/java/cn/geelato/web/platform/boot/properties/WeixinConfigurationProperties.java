@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Data
 @Component
 @ConfigurationProperties(prefix = "geelato.wx")
-public class WechatConfigurationProperties {
+public class WeixinConfigurationProperties {
     private String url;
     private String appId;
     private String secret;

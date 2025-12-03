@@ -2,18 +2,14 @@ package cn.geelato.datasource;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
-import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
-public class DynamicDataSourceRoute extends AbstractRoutingDataSource {
+public class DynamicRoutingDataSource extends AbstractRoutingDataSource {
 
 
     @Setter

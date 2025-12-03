@@ -25,10 +25,6 @@ public class DaoService extends RuleService {
     private static final String EXECUTE_SQL_KEY = "execute_sql_key";
 
     public DaoService() {
-        DataSource ds = DataSourceManager.singleInstance().getDataSource("primary");
-        JdbcTemplate jdbcTemplate = new JdbcTemplate();
-        jdbcTemplate.setDataSource(ds);
-        this.dao= new Dao(jdbcTemplate);
     }
 
     private Dao initDefaultDao(String connectId) {

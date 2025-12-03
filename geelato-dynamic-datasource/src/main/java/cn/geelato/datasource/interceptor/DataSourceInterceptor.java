@@ -4,7 +4,7 @@ import cn.geelato.core.gql.execute.BoundPageSql;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.datasource.EntityDataSourceResolver;
-import cn.geelato.datasource.annotion.UseDynamicDataSource;
+import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
@@ -14,8 +14,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 
@@ -40,8 +38,8 @@ public class DataSourceInterceptor {
      * 事务开始前的数据源设置
      * 拦截被@UseDynamicDataSource注解标注的类中的所有方法
      */
-    @Before("@within(cn.geelato.datasource.annotion.UseDynamicDataSource) " +
-            "|| @annotation(cn.geelato.datasource.annotion.UseDynamicDataSource)")
+    @Before("@within(cn.geelato.datasource.annotation.UseDynamicDataSource) " +
+            "|| @annotation(cn.geelato.datasource.annotation.UseDynamicDataSource)")
     public void beforeTransaction(JoinPoint point) {
         MethodSignature signature = (MethodSignature) point.getSignature();
         Method method = signature.getMethod();
@@ -62,8 +60,8 @@ public class DataSourceInterceptor {
     /**
      * 事务结束后的清理工作
      */
-    @After("(@within(cn.geelato.datasource.annotion.UseDynamicDataSource) " +
-            "|| @annotation(cn.geelato.datasource.annotion.UseDynamicDataSource))" +
+    @After("(@within(cn.geelato.datasource.annotation.UseDynamicDataSource) " +
+            "|| @annotation(cn.geelato.datasource.annotation.UseDynamicDataSource))" +
             " && @annotation(org.springframework.transaction.annotation.Transactional)")
     public void afterTransaction(JoinPoint point) {
         DEFAULT_DATA_SOURCE.remove();

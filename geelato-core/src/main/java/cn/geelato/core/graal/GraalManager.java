@@ -1,6 +1,7 @@
 package cn.geelato.core.graal;
 
 import cn.geelato.core.AbstractManager;
+import cn.geelato.core.util.BeansUtils;
 import cn.geelato.utils.ClassScanner;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +70,7 @@ public class GraalManager extends AbstractManager {
             String serviceName = graalService.name();
             String built = graalService.built();
             Object serviceBean = clazz.getDeclaredConstructor().newInstance();
+            injectDynamicDataSource(serviceBean);
             if ("true".equals(built)) {
                 globalGraalServiceMap.put(serviceName, serviceBean);
             } else {
@@ -95,6 +97,52 @@ public class GraalManager extends AbstractManager {
             serviceDescription.setFunctions(functionDescriptions);
             graalServiceDescriptions.add(serviceDescription);
         }
+    }
+
+    private void injectDynamicDataSource(Object serviceBean) {
+        Class<?> current = serviceBean.getClass();
+        while (current != null) {
+            for (java.lang.reflect.Field f : current.getDeclaredFields()) {
+                if (!"cn.geelato.core.orm.Dao".equals(f.getType().getName())) {
+                    continue;
+                }
+                if (!hasDynamicDsAnnotation(f)) {
+                    continue;
+                }
+                cn.geelato.core.orm.Dao daoBean = resolveSpringDaoBean();
+                if (daoBean != null) {
+                    try {
+                        f.setAccessible(true);
+                        f.set(serviceBean, daoBean);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+            current = current.getSuperclass();
+        }
+    }
+
+    private boolean hasDynamicDsAnnotation(java.lang.reflect.Field f) {
+        for (java.lang.annotation.Annotation a : f.getDeclaredAnnotations()) {
+            String n = a.annotationType().getName();
+            if ("cn.geelato.datasource.annotation.UseDynamicDataSource".equals(n)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private cn.geelato.core.orm.Dao resolveSpringDaoBean() {
+        try {
+            return BeansUtils.getBean("dynamicDao", cn.geelato.core.orm.Dao.class);
+        } catch (Throwable ignored) {
+        }
+        try {
+            return BeansUtils.getBean(cn.geelato.core.orm.Dao.class);
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     private void initGraalVariableBean(Class<?> clazz) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {

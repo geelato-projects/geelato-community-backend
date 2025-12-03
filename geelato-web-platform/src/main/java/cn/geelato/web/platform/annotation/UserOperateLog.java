@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.annitation;
+package cn.geelato.web.platform.annotation;
 
 import java.lang.annotation.*;
 

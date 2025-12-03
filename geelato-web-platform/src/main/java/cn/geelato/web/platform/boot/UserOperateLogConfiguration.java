@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.boot;
 import cn.geelato.core.SessionCtx;
-import cn.geelato.web.platform.annitation.UserOperateLog;
+import cn.geelato.web.platform.annotation.UserOperateLog;
 import com.alibaba.fastjson2.JSONArray;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
@@ -35,7 +35,7 @@ public class UserOperateLogConfiguration {
 
     private final GqlManager gqlManager = GqlManager.singleInstance();
 
-    @Around(value = "@annotation( cn.geelato.web.platform.annitation.UserOperateLog)")
+    @Around(value = "@annotation( cn.geelato.web.platform.annotation.UserOperateLog)")
     public Object around(ProceedingJoinPoint proceedingJoinPoint){
         MethodSignature methodSignature = (MethodSignature)proceedingJoinPoint.getSignature();
         Method method = methodSignature.getMethod();

@@ -1,4 +1,4 @@
-package cn.geelato.datasource.annotion;
+package cn.geelato.datasource.annotation;
 
 import java.lang.annotation.*;
 

@@ -33,6 +33,8 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private static final String __AuthorizationTag__="Authorization";
     private static final String __JWTTokenTag__="JWTBearer ";
     private static final String __OAuthTokenTag__="Bearer ";
+    private static final String __AnonymousTokenTag__="Anonymous ";
+    private static final String anonymousFixedPassword = "H2k9ZpQ3@geElAto";
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
  
     public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();
@@ -53,51 +55,103 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             throw new UnauthorizedException();
         }
         log.info("handle token:{}",token);
-        if (token.startsWith(__JWTTokenTag__)) {
-            token = token.replace(__JWTTokenTag__, "");
-            try {
-                DecodedJWT verify = JWTUtil.verify(token);
-                String loginName = verify.getClaim("loginName").asString();
-                String passWord = verify.getClaim("passWord").asString();
-                String orgId = verify.getClaim("orgId").asString();
-                String tenantCode = verify.getClaim("tenantCode").asString();
-
-                log.info("jwt token resolve loginName:{},passWord:{},orgId:{},tenantCode:{}", loginName, passWord, orgId, tenantCode);
-                User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
-                if (StringUtils.isNotEmpty(orgId)) {
-                    currentUser.setOrgId(orgId);
-                }
-                SecurityContext.setCurrentUser(currentUser);
-                SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
-                SecurityContext.setCurrentPassword(passWord);
-                UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
-                Subject subject = SecurityUtils.getSubject();
-                subject.login(userToken);
-            } catch (Exception e) {
-                throw new UnauthorizedException("未授权访问[JWT]");
-            }
-        } else if (token.startsWith(__OAuthTokenTag__)) {
-            token = token.replace(__OAuthTokenTag__, "");
-            cn.geelato.meta.User user = tokenUserCache.get(token);
-            if(user!=null){
-                performOAuth2Login(user, token);
-            }else {
-                try {
-                    user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
-                    if (user != null) {
-                        tokenUserCache.put(token, user);
-                        performOAuth2Login(user, token);
-                    } else {
-                        throw new UnauthorizedException("未授权访问[OAUTH2]");
-                    }
-                } catch (Exception e) {
-                    throw new UnauthorizedException("未授权访问[OAUTH2]");
-                }
-            }
-        } else {
-            throw new UnauthorizedException("无效的令牌格式");
+        boolean authenticated = false;
+        if (!authenticated) {
+            authenticated = tryAnonymousAuthenticate(token);
+        }
+        if (!authenticated) {
+            authenticated = tryJwtAuthenticate(token);
+        }
+        if (!authenticated) {
+            authenticated = tryOAuth2Authenticate(token);
+        }
+        if (!authenticated) {
+            throw new UnauthorizedException("未授权访问");
         }
         return true;
+    }
+
+    private boolean tryAnonymousAuthenticate(String rawToken) {
+        String token = rawToken;
+        if (!token.startsWith(__AnonymousTokenTag__)) {
+            return false;
+        }
+        token = token.replace(__AnonymousTokenTag__, "");
+        try {
+            DecodedJWT verify = JWTUtil.verify(token);
+            String anonymous = verify.getClaim("anonymous").asString();
+            if (!StringUtils.isNotEmpty(anonymous) || !anonymousFixedPassword.equals(anonymous)) {
+                return false;
+            }
+            String loginName = verify.getClaim("loginName").asString();
+            String orgId = verify.getClaim("orgId").asString();
+            String tenantCode = verify.getClaim("tenantCode").asString();
+            User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
+            if (StringUtils.isNotEmpty(orgId)) {
+                currentUser.setOrgId(orgId);
+            }
+            SecurityContext.setCurrentUser(currentUser);
+            SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
+            SecurityContext.setCurrentPassword(anonymousFixedPassword);
+            UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, anonymousFixedPassword);
+            Subject subject = SecurityUtils.getSubject();
+            subject.login(userToken);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean tryJwtAuthenticate(String rawToken) {
+        String token = rawToken;
+        if (!token.startsWith(__JWTTokenTag__)) {
+            return false;
+        }
+        token = token.replace(__JWTTokenTag__, "");
+        try {
+            DecodedJWT verify = JWTUtil.verify(token);
+            String loginName = verify.getClaim("loginName").asString();
+            String passWord = verify.getClaim("passWord").asString();
+            String orgId = verify.getClaim("orgId").asString();
+            String tenantCode = verify.getClaim("tenantCode").asString();
+            User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
+            if (StringUtils.isNotEmpty(orgId)) {
+                currentUser.setOrgId(orgId);
+            }
+            SecurityContext.setCurrentUser(currentUser);
+            SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
+            SecurityContext.setCurrentPassword(passWord);
+            UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
+            Subject subject = SecurityUtils.getSubject();
+            subject.login(userToken);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean tryOAuth2Authenticate(String rawToken) {
+        String token = rawToken;
+        if (!token.startsWith(__OAuthTokenTag__)) {
+            return false;
+        }
+        token = token.replace(__OAuthTokenTag__, "");
+        cn.geelato.meta.User user = tokenUserCache.get(token);
+        if (user != null) {
+            performOAuth2Login(user, token);
+            return true;
+        }
+        try {
+            user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
+            if (user != null) {
+                tokenUserCache.put(token, user);
+                performOAuth2Login(user, token);
+                return true;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        return false;
     }
 
     /**

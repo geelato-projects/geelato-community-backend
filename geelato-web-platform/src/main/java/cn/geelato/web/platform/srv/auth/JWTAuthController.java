@@ -111,6 +111,9 @@ public class JWTAuthController extends BaseController {
             payload.put("passWord", loginParams.getPassword());
             payload.put("orgId", loginUser.getOrgId());
             payload.put("tenantCode", loginUser.getTenantCode());
+            if(anonymousMode){
+                payload.put("anonymous", anonymousFixedPassword);
+            }
             String token = JWTUtil.getToken(payload);
 
             LoginResult loginResult = LoginResult.formatLoginResult(loginUser);

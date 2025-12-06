@@ -9,7 +9,7 @@ public class GraalUse {
     public static final String BASE_SCRIPT_CONTENT="""
                 (function(parameter){
                 \t var ctx={};
-                \t $gl.vars={};
+                \t $gl.vars= $gl.vars || {};
                 \t ctx.parameter=parameter;
                 \t ctx.result=#scriptContent# ();
                 \t return ctx;\t

@@ -7,9 +7,11 @@ import cn.geelato.core.meta.model.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
-@Entity(name = "platform_schedule",catalog = "platform")
+@Entity(name = "platform_schedule")
 @Title(title = "应用")
 public class Schedule extends BaseEntity {
     @Title(title = "所属应用")
@@ -37,4 +39,10 @@ public class Schedule extends BaseEntity {
     private Integer retryTimes;
     @Title(title = "冗余字段")
     private String extra;
+    @Title(title = "上次任务开始时间")
+    private Date lastStartTime;
+    @Title(title = "上次任务结束时间")
+    private Date lastFinishTime;
+    @Title(title = "任务持久化上下文")
+    private String context;
 }

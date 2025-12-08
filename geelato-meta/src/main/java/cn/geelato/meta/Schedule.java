@@ -39,10 +39,14 @@ public class Schedule extends BaseEntity {
     private Integer retryTimes;
     @Title(title = "冗余字段")
     private String extra;
+
     @Title(title = "上次任务开始时间")
+    @Col(name = "last_start_time")
     private Date lastStartTime;
     @Title(title = "上次任务结束时间")
+    @Col(name = "last_finish_time")
     private Date lastFinishTime;
     @Title(title = "任务持久化上下文")
+    @Col(name = "context")
     private String context;
 }

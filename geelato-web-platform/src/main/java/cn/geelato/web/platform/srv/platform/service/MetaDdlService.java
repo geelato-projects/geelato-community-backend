@@ -85,13 +85,13 @@ public class MetaDdlService {
         // 与元数据对比，判断字段名称是否一修改了。
         // setBeforeFieldName(tableMeta, columnMetas);
         // 切换数据库
-        // switchDbByConnectId(tableMeta.getConnectId());
-        // 判断表是否存在
+        switchDbByConnectId(tableMeta.getConnectId());
+        // 判断表是否存在，需要分库查询
         List<Map<String, Object>> tableMapList = dbGenerateDao.dbQueryAllTables(tableMeta.getDbType(), tableMeta.dbTableName());
         boolean isExistsTable = tableMapList != null && !tableMapList.isEmpty();
-        // 表字段
+        // 表字段，需要分库查询
         Map<String, Object> schemaColumnMap = dbGenerateDao.dbQueryColumnMapByTableName(tableMeta.getDbType(), tableMeta.dbTableName());
-        // 表唯一约束
+        // 表唯一约束，需要分库查询
         List<SchemaIndex> schemaIndexList = dbGenerateDao.dbQueryUniqueIndexesByTableName(tableMeta.getDbType(), tableMeta.dbTableName());
         // 表检查
         List<SchemaCheck> schemaCheckList = new ArrayList<>();

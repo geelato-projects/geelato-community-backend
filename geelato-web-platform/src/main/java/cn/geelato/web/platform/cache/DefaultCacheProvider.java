@@ -18,6 +18,7 @@ public class DefaultCacheProvider<T> implements CacheProvider<T> {
 
     @Override
     public T getCache(String key) {
+
         CacheObject cacheObject= cache.get(__Region__, key);
         try{
             if(cacheObject.getValue()!=null){

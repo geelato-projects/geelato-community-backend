@@ -43,7 +43,7 @@ public class ShiroConfiguration extends BaseConfiguration {
     @Bean
     public EhCacheManager getEhCacheManager() {
         EhCacheManager em = new EhCacheManager();
-        em.setCacheManagerConfigFile("classpath:ehcache/ehcache-shiro.xml");
+        em.setCacheManagerConfigFile("classpath:shiro/ehcache.xml");
         return em;
     }
 

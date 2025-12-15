@@ -6,6 +6,7 @@ import cn.geelato.web.platform.cache.DefaultCacheProvider;
 public class CacheUtil {
     private static final CacheProvider<Object> cacheProvider = new DefaultCacheProvider<>();
 
+
     /**
      * 获取缓存
      *

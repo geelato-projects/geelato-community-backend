@@ -24,7 +24,6 @@ import cn.geelato.web.platform.srv.security.service.AuthCodeService;
 import cn.geelato.web.platform.utils.JWTUtil;
 import cn.geelato.web.platform.srv.security.service.OrgService;
 import cn.geelato.web.platform.utils.EncryptUtil;
-import cn.geelato.web.platform.utils.LoginMultiTenantException;
 import com.alibaba.fastjson2.JSON;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

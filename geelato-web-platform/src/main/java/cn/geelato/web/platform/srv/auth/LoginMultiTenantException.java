@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.utils;
+package cn.geelato.web.platform.srv.auth;
 
 import cn.geelato.lang.exception.CoreException;
 

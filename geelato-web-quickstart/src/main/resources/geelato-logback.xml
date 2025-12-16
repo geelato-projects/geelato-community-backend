@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds" debug="false">
     <contextName>logback-geelato</contextName>
+    <property name="LOG_DIR" value="/log"/>
     <!--输出到控制台-->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -13,7 +14,7 @@
     <appender name="logFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>log/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>${LOG_DIR}/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}.log</FileNamePattern>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -23,7 +24,7 @@
     <appender name="scheduleLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>log/schedule/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>${LOG_DIR}/schedule/%d{yyyy-MM-dd}.log</FileNamePattern>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -33,7 +34,7 @@
     <appender name="authLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>log/auth/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>${LOG_DIR}/auth/%d{yyyy-MM-dd}.log</FileNamePattern>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -43,7 +44,7 @@
     <appender name="messageLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>log/message/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>${LOG_DIR}/message/%d{yyyy-MM-dd}.log</FileNamePattern>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -53,7 +54,7 @@
     <appender name="interceptorLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>log/interceptor/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>${LOG_DIR}/interceptor/%d{yyyy-MM-dd}.log</FileNamePattern>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">

@@ -2,7 +2,6 @@ package cn.geelato.web.platform.srv.meta;
 
 
 import cn.geelato.web.common.constants.MediaTypes;
-import cn.geelato.core.orm.DaoException;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
@@ -41,13 +40,13 @@ public class BizDataController extends BaseController {
      * @return SaveResult
      */
     @RequestMapping(value = {"/save/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiMetaResult<?> save(@PathVariable("biz") String biz) throws DaoException {
+    public ApiMetaResult<?> save(@PathVariable("biz") String biz)  {
         String gql = getGql("save");
         return ApiMetaResult.success(ruleService.save(biz, gql));
     }
 
     @RequestMapping(value = {"/batchSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiMetaResult<?> batchSave() throws DaoException {
+    public ApiMetaResult<?> batchSave() {
         String gql = getGql("batchSave");
         return ApiMetaResult.success(ruleService.batchSave(gql,true));
     }

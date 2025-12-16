@@ -116,6 +116,7 @@ public class DynamicDataSourceRegistry {
                 xaDataSource.setUser(dbUserName);
                 xaDataSource.setPassword(dbPassWord);
                 xaDataSource.setAutoReconnect(true);
+                xaDataSource.setPinGlobalTxToPhysicalConnection(true);
                 ds.setXaDataSource(xaDataSource);
                 break;
             case "sqlserver":

@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.srv.base;
 
 
-import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
@@ -12,20 +11,15 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import net.oschina.j2cache.CacheChannel;
 import net.oschina.j2cache.J2Cache;
 import net.oschina.j2cache.CacheObject;
 import redis.clients.jedis.Jedis;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -44,7 +38,7 @@ public class CacheController extends BaseController {
      * 清除缓存
      * keys: 多个key以英文逗号分隔, 不能为空值
      */
-    @RequestMapping(value = {"/remove/{keys}"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @RequestMapping(value = {"/remove/{keys}"}, method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult<?> remove(@PathVariable("keys") String keys) {
         if (Strings.isEmpty(keys)) {
             return ApiResult.fail("Keys is empty");
@@ -57,7 +51,7 @@ public class CacheController extends BaseController {
         return ApiResult.successNoResult();
     }
 
-    @RequestMapping(value = {"/config"}, method = {RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @RequestMapping(value = {"/config"}, method = {RequestMethod.GET})
     public ApiResult<?> config() {
         Map<String, Object> result = new HashMap<>();
         boolean channelPresent = false;
@@ -170,17 +164,23 @@ public class CacheController extends BaseController {
     }
 
 
-    @RequestMapping(value = {"/list/l1"}, method = {RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult<?> listL1() {
-        List<String> l2Keys = getL2Keys();
+    @RequestMapping(value = {"/list/l1"}, method = {RequestMethod.GET})
+    public ApiResult<?> listL1(@RequestParam(value = "keyword", required = false) String keyword) {
         List<Map<String, Object>> list = new ArrayList<>();
         try {
             CacheChannel channel = J2Cache.getChannel();
-            for (String k : l2Keys) {
-                if (k == null) continue;
-                CacheObject obj = channel.get("default", k);
-                if (obj != null && obj.getValue() != null && obj.getLevel() == 1) {
-                    list.add(buildInfo(k, obj, "L1"));
+            List<String> regions = getRegions();
+            for (String region : regions) {
+                String reg = regionNameOf(region);
+                Collection<String> keys = channel.keys(reg);
+                if (keys == null) keys = List.of();
+                for (String k : keys) {
+                    if (k == null) continue;
+                    if (StringUtils.isNotBlank(keyword) && !k.toLowerCase().contains(keyword.toLowerCase())) continue;
+                    CacheObject obj = channel.get(reg, k);
+                    if (obj != null && obj.getValue() != null && obj.getLevel() == 1) {
+                        list.add(buildInfo(k, obj, "L1", reg));
+                    }
                 }
             }
         } catch (Exception ex) {
@@ -189,15 +189,23 @@ public class CacheController extends BaseController {
         return ApiResult.success(list);
     }
 
-    @RequestMapping(value = {"/list/l2"}, method = {RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult<?> listL2() {
-        List<String> l2Keys = getL2Keys();
+    @RequestMapping(value = {"/list/l2"}, method = {RequestMethod.GET})
+    public ApiResult<?> listL2(@RequestParam(value = "keyword", required = false) String keyword) {
         List<Map<String, Object>> list = new ArrayList<>();
         try {
             CacheChannel channel = J2Cache.getChannel();
-            for (String k : l2Keys) {
-                CacheObject obj = channel.get("default", k);
-                list.add(buildInfo(k, obj, "L2"));
+            List<String> regions = getRegions();
+            for (String region : regions) {
+                String reg = regionNameOf(region);
+                Collection<String> keys = channel.keys(reg);
+                if (keys == null) keys = List.of();
+                for (String k : keys) {
+                    if (StringUtils.isNotBlank(keyword) && (k == null || !k.toLowerCase().contains(keyword.toLowerCase()))) continue;
+                    CacheObject obj = channel.get(reg, k);
+                    if (obj != null && obj.getValue() != null && obj.getLevel() == 2) {
+                        list.add(buildInfo(k, obj, "L2", reg));
+                    }
+                }
             }
         } catch (Exception ex) {
             log.error("list l2 keys error", ex);
@@ -205,35 +213,7 @@ public class CacheController extends BaseController {
         return ApiResult.success(list);
     }
 
-    @RequestMapping(value = {"/list/lx/{likeKey}"}, method = {RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult<?> listLikeAll(@PathVariable("likeKey") String likeKey) {
-        if (Strings.isEmpty(likeKey)) {
-            return ApiResult.success(List.of());
-        }
-        List<Map<String, Object>> result = new ArrayList<>();
-        List<String> l2Keys = getL2Keys();
-        try {
-            CacheChannel channel = J2Cache.getChannel();
-            for (String k : l2Keys) {
-                if (k != null && k.contains(likeKey)) {
-                    CacheObject obj = channel.get("default", k);
-                    String type = "L2";
-                    if (obj != null && obj.getValue() != null && obj.getLevel() == 1) {
-                        type = "L1";
-                    }
-                    Map<String, Object> info = buildInfo(k, obj, type);
-                    if (!containsKey(result, k)) {
-                        result.add(info);
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            log.error("list all like keys error", ex);
-        }
-        return ApiResult.success(result);
-    }
-
-    @RequestMapping(value = {"/get/{key}"}, method = {RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @RequestMapping(value = {"/get/{key}"}, method = {RequestMethod.GET})
     public ApiResult<?> get(@PathVariable("key") String key) {
         if (Strings.isEmpty(key)) {
             return ApiResult.fail("Key is empty");
@@ -242,7 +222,7 @@ public class CacheController extends BaseController {
         return ApiResult.success(value);
     }
 
-    @RequestMapping(value = {"/clear"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @RequestMapping(value = {"/clear"}, method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult<?> clearAll() {
         clearAllCaches();
         return ApiResult.successNoResult();
@@ -268,34 +248,17 @@ public class CacheController extends BaseController {
         return new ArrayList<>();
     }
 
-    private List<String> getL2Keys() {
-        try {
-            CacheChannel channel = J2Cache.getChannel();
-            Collection<String> keys = channel.keys("default");
-            List<String> list = new ArrayList<>();
-            if (keys != null) {
-                for (Object o : keys) {
-                    if (o != null) {
-                        list.add(String.valueOf(o));
-                    }
-                }
-            }
-            return list;
-        } catch (Exception ex) {
-            log.error("list l2 keys error", ex);
-        }
-        return new ArrayList<>();
-    }
-
-    private Map<String, Object> buildInfo(String key, CacheObject obj, String type) {
+    private Map<String, Object> buildInfo(String key, CacheObject obj, String type, String region) {
         Map<String, Object> info = new HashMap<>();
         info.put("key", key);
         info.put("type", type);
+        info.put("region", region);
         Object value = obj == null ? null : obj.getValue();
-        info.put("size", sizeOf(value));
+        long sizeBytes = sizeOf(value);
+        info.put("size", sizeBytes);
         Long expireAt = null;
         if ("L2".equalsIgnoreCase(type)) {
-            Long ttl = getRedisTTL("default", key);
+            Long ttl = getRedisTTL(region, key);
             if (ttl != null && ttl >= 0) {
                 expireAt = Instant.now().toEpochMilli() + ttl * 1000;
             }
@@ -303,14 +266,6 @@ public class CacheController extends BaseController {
         info.put("createTime", null);
         info.put("expireTime", expireAt);
         return info;
-    }
-
-    private boolean containsKey(List<Map<String, Object>> list, String key) {
-        for (Map<String, Object> m : list) {
-            Object k = m.get("key");
-            if (k != null && String.valueOf(k).equals(key)) return true;
-        }
-        return false;
     }
 
     private long sizeOf(Object v) {
@@ -323,7 +278,7 @@ public class CacheController extends BaseController {
     private Long getRedisTTL(String region, String key) {
         try {
             String mode = p("redis.mode");
-            if (mode == null || !"single".equalsIgnoreCase(mode)) return null;
+            if (!"single".equalsIgnoreCase(mode)) return null;
             String hosts = p("redis.hosts");
             if (hosts == null || hosts.isEmpty()) return null;
             String[] hp = hosts.split(",")[0].split(":");
@@ -344,6 +299,75 @@ public class CacheController extends BaseController {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private List<String> getRegions() {
+        try {
+            CacheChannel channel = J2Cache.getChannel();
+            try {
+                Method m = channel.getClass().getMethod("regions");
+                Object res = m.invoke(channel);
+                List<String> list = new ArrayList<>();
+                if (res instanceof Collection) {
+                    for (Object o : (Collection<?>) res) {
+                        if (o != null) list.add(String.valueOf(o));
+                    }
+                }
+                if (!list.isEmpty()) return list;
+            } catch (NoSuchMethodException ignored) {
+            }
+        } catch (Exception ignored) {
+        }
+        String mode = p("redis.mode");
+        if ("single".equalsIgnoreCase(mode)) {
+            try {
+                String hosts = p("redis.hosts");
+                if (hosts == null || hosts.isEmpty()) return List.of("default");
+                String[] hp = hosts.split(",")[0].split(":");
+                String host = hp[0];
+                int port = hp.length > 1 ? Integer.parseInt(hp[1]) : 6379;
+                String password = p("redis.password");
+                String dbStr = p("redis.database");
+                int db = 0;
+                try { if (dbStr != null && !dbStr.isEmpty()) db = Integer.parseInt(dbStr); } catch (Exception ignored) {}
+                String namespace = p("redis.namespace");
+                Jedis jedis = new Jedis(host, port);
+                if (password != null && !password.isEmpty()) jedis.auth(password);
+                if (db > 0) jedis.select(db);
+                String pattern = (namespace != null && !namespace.isEmpty() ? namespace + ":" : "") + "*:*";
+                Set<String> keys = jedis.keys(pattern);
+                jedis.close();
+                List<String> regions = new ArrayList<>();
+                if (keys != null) {
+                    for (String k : keys) {
+                        if (k == null) continue;
+                        int first = k.indexOf(':');
+                        if (first < 0) continue;
+                        String rest = k.substring(first + 1);
+                        int second = rest.indexOf(':');
+                        if (second < 0) continue;
+                        String region = rest.substring(0, second);
+                        if (!regions.contains(region)) regions.add(region);
+                    }
+                }
+                if (!regions.isEmpty()) return regions;
+            } catch (Exception ignored) {
+            }
+        }
+        return List.of("default");
+    }
+
+    private String regionNameOf(String r) {
+        if (r == null) return "default";
+        String s = r.trim();
+        if (s.startsWith("[") && s.endsWith("]")) s = s.substring(1, s.length() - 1);
+        int c = s.indexOf(',');
+        if (c > 0) return s.substring(0, c).trim();
+        int sz = s.toLowerCase().indexOf("size");
+        if (sz > 0) return s.substring(0, sz).replaceAll("[,\\s]+$", "").trim();
+        int tt = s.toLowerCase().indexOf("ttl");
+        if (tt > 0) return s.substring(0, tt).replaceAll("[,\\s]+$", "").trim();
+        return s;
     }
 
     private Object getCacheValue(String key) {

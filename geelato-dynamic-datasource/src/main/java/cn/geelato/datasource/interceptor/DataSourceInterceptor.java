@@ -7,13 +7,16 @@ import cn.geelato.datasource.EntityDataSourceResolver;
 import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.lang.reflect.Method;
 
@@ -122,5 +125,35 @@ public class DataSourceInterceptor {
                 log.debug("实体 {} 未找到映射，使用默认数据源: {}", entityName, defaultSource);
             }
         }
+    }
+
+    @Around("execution(* cn.geelato.core.orm.Dao.*(..))")
+    public Object aroundDaoMethod(ProceedingJoinPoint pjp) throws Throwable {
+        Object[] args = pjp.getArgs();
+        String entityName = null;
+        for (Object arg : args) {
+            if (arg instanceof BoundPageSql bps) {
+                if (bps.getBoundSql() != null && bps.getBoundSql().getCommand() != null) {
+                    entityName = bps.getBoundSql().getCommand().getEntityName();
+                }
+                break;
+            } else if (arg instanceof BoundSql bs) {
+                if (bs.getCommand() != null) {
+                    entityName = bs.getCommand().getEntityName();
+                }
+                break;
+            }
+        }
+        String dataSourceKey = null;
+        if (entityName != null) {
+            dataSourceKey = entityDataSourceResolver.resolveDataSource(entityName);
+        }
+        if (dataSourceKey == null) {
+            dataSourceKey = DEFAULT_DATA_SOURCE.get();
+        }
+        if (dataSourceKey != null) {
+            DynamicDataSourceHolder.setDataSourceKey(dataSourceKey);
+        }
+        return pjp.proceed();
     }
 }

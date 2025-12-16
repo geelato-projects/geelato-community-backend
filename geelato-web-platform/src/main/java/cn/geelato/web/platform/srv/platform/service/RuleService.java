@@ -4,7 +4,6 @@ import cn.geelato.core.Fn;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.biz.rules.common.EntityValidateRule;
-import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.gql.GqlManager;
 import cn.geelato.core.gql.command.DeleteCommand;
 import cn.geelato.core.gql.command.QueryCommand;
@@ -16,12 +15,10 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.core.orm.DaoException;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.script.rule.BizMvelRuleManager;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.datasource.DynamicDataSourceHolder;
-import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
@@ -33,11 +30,15 @@ import org.jeasy.rules.api.Facts;
 import org.jeasy.rules.api.Rules;
 import org.jeasy.rules.api.RulesEngine;
 import org.jeasy.rules.core.DefaultRulesEngine;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -49,7 +50,8 @@ import java.util.*;
 public class RuleService {
 
 
-    @UseDynamicDataSource
+    @Autowired
+    @Qualifier("dynamicDao")
     public Dao dao;
     private final GqlManager gqlManager = GqlManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
@@ -196,7 +198,13 @@ public class RuleService {
         });
     }
 
-    public String save(String biz, String gql) throws DaoException {
+    @Transactional(
+            transactionManager = "dynamicDataSourceTransactionManager", // 指定自定义管理器
+            propagation = Propagation.REQUIRED, // 传播行为（默认）
+            isolation = Isolation.READ_COMMITTED, // 隔离级别（适配XA）
+            rollbackFor = Exception.class // 所有异常回滚
+    )
+    public String save(String biz, String gql) {
         SaveCommand command = gqlManager.generateSaveSql(gql, getSessionCtx());
         Facts facts = new Facts();
         facts.put("saveCommand", command);
@@ -208,7 +216,7 @@ public class RuleService {
         return recursiveSave(command);
     }
 
-    public Object batchSave(String gql, Boolean transaction) throws DaoException {
+    public Object batchSave(String gql, Boolean transaction) {
         List<String> returnPks = new ArrayList<>();
         List<SaveCommand> commandList = gqlManager.generateBatchSaveSql(gql, getSessionCtx());
         if (transaction) {
@@ -249,7 +257,7 @@ public class RuleService {
      * 递归执行，存在需解析依赖变更的情况
      * 不执行业务规则检查
      */
-    public String recursiveSave(SaveCommand command, DataSourceTransactionManager dataSourceTransactionManager, TransactionStatus transactionStatus) throws DaoException {
+    public String recursiveSave(SaveCommand command, DataSourceTransactionManager dataSourceTransactionManager, TransactionStatus transactionStatus) {
         command.getValueMap().forEach((key, value) -> {
             if (value != null && !(value instanceof FunctionFieldValue)) {
                 command.getValueMap().put(key, parseValueExp(command, value, 0));
@@ -262,17 +270,13 @@ public class RuleService {
             String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
             if (!StringUtils.isEmpty(connectId)) {
                 DynamicDataSourceHolder.setDataSourceKey(connectId);
-                JdbcTemplate jdbcTemplate= new JdbcTemplate(DataSourceManager.singleInstance().getDataSource(connectId));
-                Dao saveDao=new Dao(jdbcTemplate);
-                rtnValue = saveDao.save(boundSql);
-            }else{
-                rtnValue=dao.save(boundSql);
             }
+            rtnValue = dao.save(boundSql);
             String cacheKey = command.getEntityName() + "_" + rtnValue;
             if (CacheUtil.exists(cacheKey)) {
                 CacheUtil.remove(cacheKey);
             }
-        } catch (DaoException e) {
+        } catch (Exception e) {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
             throw e;
         }
@@ -281,7 +285,7 @@ public class RuleService {
             command.getCommands().forEach(subCommand -> {
                 try {
                     recursiveSave(subCommand, dataSourceTransactionManager, transactionStatus);
-                } catch (DaoException e) {
+                } catch (Exception e) {
                     if (!transactionStatus.isCompleted()) {
                         TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
                     }
@@ -309,13 +313,9 @@ public class RuleService {
             String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
             if (!StringUtils.isEmpty(connectId)) {
                 DynamicDataSourceHolder.setDataSourceKey(connectId);
-                JdbcTemplate jdbcTemplate= new JdbcTemplate(DataSourceManager.singleInstance().getDataSource(connectId));
-                Dao saveDao=new Dao(jdbcTemplate);
-                rtnValue = saveDao.save(boundSql);
-            }else{
-                rtnValue=dao.save(boundSql);
             }
-        } catch (DaoException e) {
+            rtnValue = dao.save(boundSql);
+        } catch (Exception e) {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
             throw e;
         }
@@ -329,7 +329,7 @@ public class RuleService {
                 });
                 try {
                     recursiveBatchSave(subCommand, dataSourceTransactionManager, transactionStatus);
-                } catch (DaoException e) {
+                } catch (Exception e) {
                     if (!transactionStatus.isCompleted()) {
                         TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
                     }

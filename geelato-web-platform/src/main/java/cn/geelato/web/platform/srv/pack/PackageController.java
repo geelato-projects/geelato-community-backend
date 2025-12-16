@@ -15,7 +15,6 @@ import cn.geelato.core.gql.parser.JsonTextSaveParser;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import cn.geelato.core.orm.DaoException;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.lang.api.ApiResult;
@@ -264,7 +263,7 @@ public class PackageController {
      */
     @RequestMapping(value = {"/deploy/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
-    public ApiResult<?> deployPackage(@PathVariable("versionId") String versionId) throws DaoException {
+    public ApiResult<?> deployPackage(@PathVariable("versionId") String versionId) {
         if ("init_source".equals(packageConfigurationProperties.getEnv())) {
             return ApiResult.fail("本环境无法部署任何应用，请联系管理员！");
         }
@@ -415,7 +414,7 @@ public class PackageController {
     }
 
 
-    private void deployAppPackageData(AppPackData appPackage) throws DaoException {
+    private void deployAppPackageData(AppPackData appPackage) {
         log.info("----------------------deploy start--------------------");
         dataSourceTransactionManager = new DataSourceTransactionManager(dao.getJdbcTemplate().getDataSource());
         transactionStatus = TransactionHelper.beginTransaction(dataSourceTransactionManager);

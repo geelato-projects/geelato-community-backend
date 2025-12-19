@@ -60,7 +60,7 @@ public class DbScriptManager extends AbstractScriptManager {
 
     @Override
     public void loadDb() {
-        String sql = "select key_name,encoding_content,response_type  from platform_sql where enable_status=1 and del_status=0";
+        String sql = "select key_name,encoding_content,response_type from platform_sql where enable_status=1 and del_status=0";
         List<Map<String, Object>> list = dao.getJdbcTemplate().queryForList(sql);
         for (Map<String, Object> map : list) {
             initOrRefreshMap(map);

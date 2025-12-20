@@ -52,7 +52,11 @@ public class User extends UserCore{
     private List<Permission> dataPermissions;
     private List<Permission> elementPermissions;
 
-    public Permission getDataPermissionByEntity(String entity) {
+    public List<Permission> getDataPermissionByEntity(String entity) {
+        return this.dataPermissions.stream().filter(x -> x.getEntity().equals(entity)).toList();
+    }
+
+    public Permission getDataPermissionByEntity_old(String entity) {
         // 根据weight权重排序，取第一条
         List<Permission> entityPermission = this.dataPermissions.stream().filter(x -> x.getEntity().equals(entity)).toList();
         List<Permission> maxWeightPermissionList = null;

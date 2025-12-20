@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 public class ExcelCommonUtils {
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(DateUtils.DATE);
     public static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat(DateUtils.DATETIME);
-    public static final Pattern CELL_META_PATTERN = Pattern.compile("\\$\\{[\\\u4e00-\\\u9fa5,\\w,\\.\\(\\)\\（\\）]+\\}");
+    public static final Pattern CELL_META_PATTERN = Pattern.compile("\\$\\{[\\\u4e00-\\\u9fa5,/\\w,\\.\\(\\)\\（\\）\\s\\|#\\-\\+]+\\}");
     public static final Pattern ROW_META_PATTERN = Pattern.compile("\\$\\{rowMeta\\.[\\w,\\.,\\=]+\\}");
     private static final int REDIS_TIME_OUT = 60;
     private static final int GGL_QUERY_TOTAL = 10000;

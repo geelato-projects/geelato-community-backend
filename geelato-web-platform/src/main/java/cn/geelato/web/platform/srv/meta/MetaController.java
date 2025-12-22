@@ -32,7 +32,7 @@ public class MetaController extends BaseController {
     @GeelatoTest(description = "元数据列表查询测试")
     @RequestMapping(value = {"/list", "list/*"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiPagedResult<?> list(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
-        String gql = getGql("query");
+        String gql = getGql();
         return ruleService.queryForMapList(gql, withMeta);
     }
 
@@ -42,7 +42,7 @@ public class MetaController extends BaseController {
     @GeelatoTest(description = "元数据多列表查询测试")
     @RequestMapping(value = {"/multiList"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMultiPagedResult<?> multiList(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
-        String gql = getGql(null);
+        String gql = getGql();
         return ruleService.queryForMultiMapList(gql, withMeta);
     }
 
@@ -53,21 +53,21 @@ public class MetaController extends BaseController {
     @GeelatoTest(description = "元数据保存测试")
     @RequestMapping(value = {"/save/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<?> save(@PathVariable("biz") String biz) {
-        String gql = getGql("save");
+        String gql = getGql();
         return ApiMetaResult.success(ruleService.save(biz, gql));
     }
 
     @GeelatoTest(description = "元数据批量保存测试")
     @RequestMapping(value = {"/batchSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<?> batchSave() {
-        String gql = getGql("batchSave");
+        String gql = getGql();
         return ApiMetaResult.success(ruleService.batchSave(gql, true));
     }
 
     @GeelatoTest(description = "元数据多保存测试")
     @RequestMapping(value = {"/multiSave"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<?> multiSave() {
-        String gql = getGql("multiSave");
+        String gql = getGql();
         return ApiMetaResult.success(ruleService.multiSave(gql));
     }
 
@@ -80,20 +80,20 @@ public class MetaController extends BaseController {
     @GeelatoTest(description = "元数据删除2测试")
     @RequestMapping(value = {"/delete2/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<Integer> delete(@PathVariable("biz") String biz) {
-        String gql = getGql("delete2");
+        String gql = getGql();
         return ApiResult.success(ruleService.deleteByGql(biz, gql));
     }
 
     /**
      * 获取数据定义信息，即元数据信息
      *
-     * @param entityOrQueryKey 实体名称或查询键
+     * @param entity 实体名称
      */
     @GeelatoTest(description = "元数据定义查询测试")
-    @RequestMapping(value = {"/defined/{entityOrQueryKey}"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiMetaResult<?> defined(@PathVariable("entityOrQueryKey") String entityOrQueryKey) {
-        if (metaManager.containsEntity(entityOrQueryKey)) {
-            return ApiMetaResult.success(metaManager.getByEntityName(entityOrQueryKey).getAllSimpleFieldMetas());
+    @RequestMapping(value = {"/defined/{entity}"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    public ApiMetaResult<?> defined(@PathVariable("entity") String entity) {
+        if (metaManager.containsEntity(entity)) {
+            return ApiMetaResult.success(metaManager.getByEntityName(entity).getAllSimpleFieldMetas());
         }
         return ApiMetaResult.fail("not found meta defined");
     }
@@ -131,7 +131,7 @@ public class MetaController extends BaseController {
     }
 
 
-    private String getGql(String type) {
+    private String getGql() {
         return GqlUtil.resolveGql(this.request);
     }
 
@@ -141,7 +141,7 @@ public class MetaController extends BaseController {
     @GeelatoTest(description = "唯一性校验测试")
     @RequestMapping(value = {"/uniqueness"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> uniqueness() {
-        String gql = getGql("query");
+        String gql = getGql();
         if (Strings.isNotBlank(gql)) {
             JSONObject jo = JSON.parseObject(gql);
             String key = jo.keySet().iterator().next();

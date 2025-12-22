@@ -198,12 +198,12 @@ public class RuleService {
         });
     }
 
-    @Transactional(
-            transactionManager = "dynamicDataSourceTransactionManager", // 指定自定义管理器
-            propagation = Propagation.REQUIRED, // 传播行为（默认）
-            isolation = Isolation.READ_COMMITTED, // 隔离级别（适配XA）
-            rollbackFor = Exception.class // 所有异常回滚
-    )
+//    @Transactional(
+//            transactionManager = "dynamicDataSourceTransactionManager",
+//            propagation = Propagation.REQUIRED,
+//            isolation = Isolation.READ_COMMITTED,
+//            rollbackFor = Exception.class
+//    )
     public String save(String biz, String gql) {
         SaveCommand command = gqlManager.generateSaveSql(gql, getSessionCtx());
         Facts facts = new Facts();

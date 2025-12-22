@@ -33,7 +33,12 @@ public class BaseDao {
     protected final EntityManager entityManager = EntityManager.singleInstance();
     protected static final Map<String, Object> defaultParams = new HashMap<>();
     protected List<Map<String, Object>> queryForMapListInner(BoundSql boundSql) throws DataAccessException {
-        return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new DecryptingRowMapper());
+        try{
+            return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new DecryptingRowMapper());
+        }catch (DataAccessException dataAccessException){
+            throw new SqlExecuteException(dataAccessException,boundSql.getSql(),boundSql.getParams());
+        }
+
     }
 }
 

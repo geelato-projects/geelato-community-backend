@@ -37,14 +37,7 @@ import java.util.*;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class MetaReflex {
 
-    /**
-     * -- SETTER --
-     * 如果在spring环境下，可以设置该值，以便可直接获取spring中已创建的bean，不需重新创建
-     */
-    @Setter
-    private static ApplicationContext applicationContext;
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat(DateUtils.DATETIME);
-    // 一些类型默认的长度
     public static HashedMap dataTypeDefaultMaxLengthMap = new HashedMap();
 
     static {
@@ -59,16 +52,12 @@ public class MetaReflex {
     }
 
     private static Object getBean(Class clazz) {
-        if (applicationContext == null) {
-            try {
-                return clazz.getDeclaredConstructor().newInstance();
-            } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | InstantiationException e) {
-                log.error("创建对象失败！", e);
-            }
-            return null;
-        } else {
-            return applicationContext.getBean(clazz);
+        try {
+            return clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception ex) {
+            log.error("init meta class fail!", ex);
         }
+        return null;
     }
 
     /**
@@ -144,42 +133,37 @@ public class MetaReflex {
         return em;
     }
 
-    // 方法重载，通过数据库读取的数据，构造EntityMeta
-    public static EntityMeta getEntityMeta(Map tmap, List columnList) {
-        EntityMeta em = new EntityMeta();
-        em.setTableMeta(getTableMeta(tmap));
-        em.setEntityName(tmap.get("entity_name").toString());
-        em.setEntityTitle(em.getTableMeta().getTitle());
-
-        HashMap<String, FieldMeta> map = getColumnFieldMetas(columnList);
-        em.setFieldMetas(map.values());
-        if (em.getFieldMetas() != null) {
-            for (FieldMeta fm : em.getFieldMetas()) {
-                fm.getColumnMeta().setTableName(em.getTableMeta().getTableName());
-            }
-        }
-        em.setId(getPrimaryKey(map));
-        return em;
-    }
-
     public static EntityMeta getEntityMetaByTable(Map tmap, List columnList, List viewList,List checkList, List foreignList) {
         EntityMeta em = new EntityMeta();
         em.setTableMeta(getTableMeta(tmap));
         em.setEntityName(tmap.get("entity_name").toString());
         em.setEntityTitle(em.getTableMeta().getTitle());
         em.setEntityType(EntityType.Table);
-        HashMap<String, FieldMeta> columnMap = getColumnFieldMetas(columnList);
+        if(tmap.get("version_control")!=null) {
+            em.setVersionControl(Boolean.parseBoolean(tmap.get("version_control").toString()));
+        }
+        if(columnList==null ||columnList.isEmpty()){
+            throw new RuntimeException("column list is empty!");
+        }else {
+            HashMap<String, FieldMeta> columnMap = getColumnFieldMetas(columnList);
+            em.setFieldMetas(columnMap.values());
+            em.setId(getPrimaryKey(columnMap));
+        }
 
-        em.setFieldMetas(columnMap.values());
-        HashMap<String, ViewMeta> viewMap = getViewMetas(viewList);
-        em.setViewMetas(viewMap.values());
+        if(viewList!=null&&!viewList.isEmpty()){
+            HashMap<String, ViewMeta> viewMap = getViewMetas(viewList);
+            em.setViewMetas(viewMap.values());
+        }
 
-        List<TableCheck> checks = getTableCheckMetas(checkList);
-        em.setTableChecks(checks);
+        if(checkList!=null&&!checkList.isEmpty()){
+            List<TableCheck> checks = getTableCheckMetas(checkList);
+            em.setTableChecks(checks);
+        }
 
-        List<TableForeign> foreigns = getTableForeignMetas(foreignList);
-        em.setTableForeigns(foreigns);
-        em.setId(getPrimaryKey(columnMap));
+        if(foreignList!=null&&!foreignList.isEmpty()){
+            List<TableForeign> foreigns = getTableForeignMetas(foreignList);
+            em.setTableForeigns(foreigns);
+        }
         return em;
     }
 

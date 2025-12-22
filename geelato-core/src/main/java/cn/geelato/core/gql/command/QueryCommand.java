@@ -16,21 +16,21 @@ public class QueryCommand extends BaseCommand<QueryCommand> {
      * -- GETTER --
      *  是查询单条记录还是多条记录，默认值为false，即查询单条记录
      */
-    private boolean queryForList = false;
-    private int pageNum = -1;
-    private int pageSize = -1;
+    protected boolean queryForList = false;
+    protected int pageNum = -1;
+    protected int pageSize = -1;
     /**
      * 查询字段重命名
      */
-    private HashedMap alias = new HashedMap();
+    protected HashedMap alias = new HashedMap();
     /**
      * 查询语句
      */
-    private String selectSql;
-    private String groupBy;
-    private String orderBy;
-    private FilterGroup having;
-    private String ACL;  //access control  list
+    protected String selectSql;
+    protected String groupBy;
+    protected String orderBy;
+    protected FilterGroup having;
+    protected String ACL;  //access control  list
 
     public QueryCommand() {
         setCommandType(CommandType.Query);

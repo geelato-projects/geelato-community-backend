@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.srv.base.service;
 
-import cn.geelato.web.common.constants.MediaTypes;
+import cn.geelato.meta.Attachment;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.meta.Attachment;
+import cn.geelato.web.common.constants.MediaTypes;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -115,21 +116,70 @@ public class DownloadService {
      */
     public void setResponse(HttpServletRequest request, HttpServletResponse response, String name, boolean isPreview, String mineType) {
         // 编码
-        String encodeName = URLEncoder.encode(name, StandardCharsets.UTF_8);
+        String disposition = this.setFileDownloadHeader(request, response, name);
         if (mineType == null) {
-            mineType = request.getServletContext().getMimeType(encodeName);
+            mineType = request.getServletContext().getMimeType(name);
             // 如果没有取到常用的媒体类型，则获取自配置的媒体类型
             if (mineType == null) {
                 mineType = EXT_MAP.get(FileUtils.getFileExtensionWithNoDot(name));
             }
         }
         response.setContentType(mineType);
+        response.setCharacterEncoding("UTF-8");
         // 在线查看图片、pdf
         if (isPreview && Strings.isNotBlank(mineType) && (mineType.startsWith("image/") || mineType.equalsIgnoreCase(MediaTypes.APPLICATION_PDF))) {
             //  file = downloadService.copyToFile(file, name);
         } else {
-            response.setHeader("Content-Disposition", "attachment; filename=" + encodeName);
+            response.setHeader("Content-Disposition", disposition);
         }
     }
 
+    /**
+     * 编码文件名，确保在HTTP头部正确传输
+     */
+    private String encodeFileName(String fileName) {
+        try {
+            // 先对文件名进行URL编码
+            String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
+            // 但URLEncoder会将空格转为+，在HTTP头部中应使用%20
+            // 所以需要将+替换为%20
+            return encoded.replace("+", "%20");
+        } catch (UnsupportedEncodingException e) {
+            return fileName;
+        }
+    }
+
+    /**
+     * 设置HTTP响应头的Content-Disposition
+     */
+    private String setFileDownloadHeader(HttpServletRequest request, HttpServletResponse response, String fileName) {
+        String encodedFileName = this.encodeFileName(fileName);
+        // 根据浏览器类型处理
+        String userAgent = request.getHeader("User-Agent");
+        String disposition = "attachment;filename=\"" + encodedFileName + "\"";
+
+        // 处理不同浏览器兼容性
+        if (userAgent != null) {
+            userAgent = userAgent.toLowerCase();
+
+            // IE浏览器处理
+            if (userAgent.contains("msie") || userAgent.contains("trident")) {
+                // IE需要特殊处理
+                encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+                disposition = "attachment;filename=\"" + encodedFileName + "\"";
+            }
+            // Firefox浏览器
+            else if (userAgent.contains("firefox")) {
+                // Firefox使用RFC 5987编码
+                encodedFileName = "=?UTF-8?B?" + Base64.getEncoder().encodeToString(fileName.getBytes(StandardCharsets.UTF_8)) + "?=";
+                disposition = "attachment;filename*=" + encodedFileName;
+            }
+            // Chrome、Safari等现代浏览器
+            else {
+                encodedFileName = new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
+                disposition = "attachment;filename=\"" + encodedFileName + "\"";
+            }
+        }
+        return disposition;
+    }
 }

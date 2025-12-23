@@ -18,11 +18,10 @@ import org.springframework.transaction.support.TransactionSynchronization;
 
 @Configuration
 public class TransactionConfig {
-    @Bean(name = "DynamicDataSourceUserTransaction")
+    @Bean(name = "userTransaction")
     public UserTransaction userTransaction() throws SystemException {
         UserTransactionImp userTransactionImp = new UserTransactionImp();
-        // 事务超时：生产建议60秒内，避免长事务占用连接
-        userTransactionImp.setTransactionTimeout(60);
+        userTransactionImp.setTransactionTimeout(300);
         return userTransactionImp;
     }
 
@@ -49,17 +48,8 @@ public class TransactionConfig {
             UserTransactionManager atomikosTxManager = atomikosTransactionManager();
 
             JtaTransactionManager jtaTxManager = new JtaTransactionManager(userTx, atomikosTxManager);
-
-            // 1. 允许自定义隔离级别（XA事务必备，比如READ_COMMITTED）
             jtaTxManager.setAllowCustomIsolationLevels(true);
-
-            // 2. 事务同步模式配置（使用父类的常量）
             jtaTxManager.setTransactionSynchronization(AbstractPlatformTransactionManager.SYNCHRONIZATION_ALWAYS);
-
-            // 3. 可选：验证现有事务（排查问题用，生产可注释）
-            jtaTxManager.setValidateExistingTransaction(true);
-
-            // 4. 事务管理器名称（与atomikos配置一致）
             jtaTxManager.setTransactionManagerName("dynamic-xa-tm");
 
             return jtaTxManager;

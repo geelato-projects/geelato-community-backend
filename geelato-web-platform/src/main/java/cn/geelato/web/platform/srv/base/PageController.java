@@ -11,6 +11,8 @@ import cn.geelato.web.platform.utils.CacheUtil;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.AppPage;
 import cn.geelato.meta.AppPageLang;
+import cn.geelato.web.platform.event.UpgradePageEvent;
+import cn.geelato.web.common.event.EventPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -255,6 +257,24 @@ public class PageController extends BaseController {
         } catch (Exception e) {
             log.error("获取页面配置信息出错！", e);
             return ApiResult.fail("获取页面配置信息出错！" + e.getMessage());
+        }
+    }
+
+    /**
+     * 通知页面配置更新
+     * 由前端在保存完页面之后调用，通知所有客户端更新页面配置
+     *
+     * @param pageId 页面ID
+     * @return 操作结果
+     */
+    @RequestMapping(value = {"/notifyUpdate/{pageId}"}, method = {RequestMethod.GET,RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    public ApiResult notifyUpdate(@PathVariable String pageId) {
+        try {
+            EventPublisher.publish(new UpgradePageEvent(this, pageId));
+            return ApiResult.success("页面更新通知已发送");
+        } catch (Exception e) {
+            log.error("通知页面更新出错！", e);
+            return ApiResult.fail("通知页面更新出错！" + e.getMessage());
         }
     }
 

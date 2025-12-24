@@ -41,7 +41,7 @@ public class TransactionConfig {
     }
 
     @Bean(name = "dynamicDataSourceTransactionManager")
-    @DependsOn({"DynamicDataSourceUserTransaction", "atomikosTransactionManager"})
+    @DependsOn({"userTransaction", "atomikosTransactionManager"})
     public PlatformTransactionManager transactionManager() {
         try {
             UserTransaction userTx = userTransaction();

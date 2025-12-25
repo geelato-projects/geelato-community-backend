@@ -267,10 +267,10 @@ public class PageController extends BaseController {
      * @param pageId 页面ID
      * @return 操作结果
      */
-    @RequestMapping(value = {"/notifyUpdate/{pageId}"}, method = {RequestMethod.GET,RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult notifyUpdate(@PathVariable String pageId) {
+    @RequestMapping(value = {"/notifyUpdate/{pageId}/{extendId}"}, method = {RequestMethod.GET,RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    public ApiResult notifyUpdate(@PathVariable String pageId, @PathVariable String extendId) {
         try {
-            EventPublisher.publish(new UpgradePageEvent(this, pageId));
+            EventPublisher.publish(new UpgradePageEvent(this, pageId,extendId));
             return ApiResult.success("页面更新通知已发送");
         } catch (Exception e) {
             log.error("通知页面更新出错！", e);

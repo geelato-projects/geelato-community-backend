@@ -98,6 +98,14 @@ public class MetaController extends BaseController {
         return ApiMetaResult.fail("not found meta defined");
     }
 
+    @GeelatoTest(description = "元数据定义查询测试")
+    @RequestMapping(value = {"/fullDefined/{entity}"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    public ApiMetaResult<?> fullDefined(@PathVariable("entity") String entity) {
+        if (metaManager.containsEntity(entity)) {
+            return ApiMetaResult.success(metaManager.getByEntityName(entity));
+        }
+        return ApiMetaResult.fail("not found meta defined");
+    }
 
     /**
      * 获取实体名称列表

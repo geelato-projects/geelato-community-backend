@@ -113,7 +113,7 @@ public class EntityMeta {
         Collection<FieldMeta> nonSpecialFiledMetas = new ArrayList<>();
 
         for (FieldMeta fm : fieldMetas) {
-            fm.setEntityMeta(this);
+//            fm.setEntityMeta(this);
             switch (fm.getColumnName()) {
                 case "id":
                     idMeta = fm;

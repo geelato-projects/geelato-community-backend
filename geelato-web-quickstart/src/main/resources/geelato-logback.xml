@@ -10,7 +10,7 @@
     </appender>
 <!--    <appender name="custom" class="cn.geelato.logging.logback.SystemLoggingAppender">-->
 <!--    </appender>-->
-    <!--按天生成日志-->
+    <!--默认日志-->
     <appender name="logFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -21,6 +21,7 @@
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </layout>
     </appender>
+    <!--调度服务日志-->
     <appender name="scheduleLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -31,6 +32,7 @@
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </layout>
     </appender>
+    <!--认证服务日志-->
     <appender name="authLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -41,6 +43,7 @@
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </layout>
     </appender>
+    <!--消息服务日志-->
     <appender name="messageLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -51,6 +54,7 @@
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </layout>
     </appender>
+    <!--拦截器日志-->
     <appender name="interceptorLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -59,6 +63,17 @@
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </layout>
+    </appender>
+    <!--请求记录日志-->
+    <appender name="requestLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/request/%d{yyyy-MM-dd}.log</FileNamePattern>
+            <maxHistory>10</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{HH:mm:ss} - %msg%n</pattern>
         </layout>
     </appender>
     <logger name="cn.geelato.schedule" additivity="false">
@@ -75,6 +90,10 @@
     </logger>
     <logger name="cn.geelato.web.common.interceptor" additivity="false">
         <appender-ref ref="interceptorLogFile"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.web.platform.boot.interceptor" additivity="false">
+        <appender-ref ref="requestLogFile"/>
         <appender-ref ref="console"/>
     </logger>
 <!--    <logger name="handler.cn.geelato.web.platform.PlatformExceptionHandler" additivity="false">-->

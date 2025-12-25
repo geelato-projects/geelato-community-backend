@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.boot;
 
 import cn.geelato.web.common.interceptor.*;
+import cn.geelato.web.platform.boot.interceptor.ControllerInvokeLoggingInterceptor;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class InterceptorConfiguration extends BaseConfiguration implements WebMvcConfigurer {
     @Resource
     private OAuthConfigurationProperties oAuthConfigurationProperties;
+    @Resource
+    private ControllerInvokeLoggingInterceptor controllerInvokeLoggingInterceptor;
 
     private static final String urlPrefix = "/api";
 
@@ -53,5 +56,7 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/monitor/**")
                 .excludePathPatterns("/wx/validate/**")
         ;
+        registry.addInterceptor(controllerInvokeLoggingInterceptor)
+                .addPathPatterns("/**");
     }
 }

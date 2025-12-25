@@ -23,11 +23,9 @@ public class EntityMeta {
      * 对于基于java类解析的实体，则返回类名（不包括包名）
      * 对于基于页面配置的实体，则返回配置的实体名称
      */
-    // 实体的编码，如：user_info
     @Setter
     @Getter
     private String entityName;
-    // 实体的中文名称，如：用户信息
     @Setter
     @Getter
     private String entityTitle;
@@ -251,7 +249,7 @@ public class EntityMeta {
         return metas;
     }
 
-    /**
+    /**.
      * 过滤掉数据库表名等信息，用于对外发布元数据服务的字段信息
      */
     public Collection<SimpleFieldMeta> getAllSimpleFieldMetas() {

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <contextName>logback-geelato-es</contextName>
+
+    <property name="ELASTIC_HOST" value="${ELASTIC_HOST:http://localhost:9200}"/>
+    <property name="ELASTIC_USERNAME" value="${ELASTIC_USERNAME:}"/>
+    <property name="ELASTIC_PASSWORD" value="${ELASTIC_PASSWORD:}"/>
+    <property name="APP_NAME" value="${APP_NAME:geelato-web}"/>
+    <property name="ENV" value="${ENV:dev}"/>
+
+    <!-- index per category -->
+    
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- shared connection -->
+    <appender name="ELASTIC_ROOT" class="net.logstash.logback.appender.ElasticsearchAppender">
+        <index>geelato-app-%date{yyyy.MM.dd}</index>
+        <enableFormatMessageJson>true</enableFormatMessageJson>
+        <customFields>{"app":"${APP_NAME}","env":"${ENV}"}</customFields>
+        <delivery>
+            <timeout>3000</timeout>
+            <maxRetries>3</maxRetries>
+            <maxBackoffSeconds>60</maxBackoffSeconds>
+        </delivery>
+        <connection class="net.logstash.logback.appender.ElasticsearchHttp">
+            <httpHosts>
+                <httpHost>${ELASTIC_HOST}</httpHost>
+            </httpHosts>
+            <username>${ELASTIC_USERNAME}</username>
+            <password>${ELASTIC_PASSWORD}</password>
+        </connection>
+    </appender>
+    <appender name="ELASTIC_SCHEDULE" class="net.logstash.logback.appender.ElasticsearchAppender">
+        <index>geelato-schedule-%date{yyyy.MM.dd}</index>
+        <enableFormatMessageJson>true</enableFormatMessageJson>
+        <customFields>{"app":"${APP_NAME}","env":"${ENV}"}</customFields>
+        <delivery>
+            <timeout>3000</timeout>
+            <maxRetries>3</maxRetries>
+            <maxBackoffSeconds>60</maxBackoffSeconds>
+        </delivery>
+        <connection class="net.logstash.logback.appender.ElasticsearchHttp">
+            <httpHosts>
+                <httpHost>${ELASTIC_HOST}</httpHost>
+            </httpHosts>
+            <username>${ELASTIC_USERNAME}</username>
+            <password>${ELASTIC_PASSWORD}</password>
+        </connection>
+    </appender>
+    <appender name="ELASTIC_AUTH" class="net.logstash.logback.appender.ElasticsearchAppender">
+        <index>geelato-auth-%date{yyyy.MM.dd}</index>
+        <enableFormatMessageJson>true</enableFormatMessageJson>
+        <customFields>{"app":"${APP_NAME}","env":"${ENV}"}</customFields>
+        <delivery>
+            <timeout>3000</timeout>
+            <maxRetries>3</maxRetries>
+            <maxBackoffSeconds>60</maxBackoffSeconds>
+        </delivery>
+        <connection class="net.logstash.logback.appender.ElasticsearchHttp">
+            <httpHosts>
+                <httpHost>${ELASTIC_HOST}</httpHost>
+            </httpHosts>
+            <username>${ELASTIC_USERNAME}</username>
+            <password>${ELASTIC_PASSWORD}</password>
+        </connection>
+    </appender>
+    <appender name="ELASTIC_MESSAGE" class="net.logstash.logback.appender.ElasticsearchAppender">
+        <index>geelato-message-%date{yyyy.MM.dd}</index>
+        <enableFormatMessageJson>true</enableFormatMessageJson>
+        <customFields>{"app":"${APP_NAME}","env":"${ENV}"}</customFields>
+        <delivery>
+            <timeout>3000</timeout>
+            <maxRetries>3</maxRetries>
+            <maxBackoffSeconds>60</maxBackoffSeconds>
+        </delivery>
+        <connection class="net.logstash.logback.appender.ElasticsearchHttp">
+            <httpHosts>
+                <httpHost>${ELASTIC_HOST}</httpHost>
+            </httpHosts>
+            <username>${ELASTIC_USERNAME}</username>
+            <password>${ELASTIC_PASSWORD}</password>
+        </connection>
+    </appender>
+    <appender name="ELASTIC_INTERCEPTOR" class="net.logstash.logback.appender.ElasticsearchAppender">
+        <index>geelato-interceptor-%date{yyyy.MM.dd}</index>
+        <enableFormatMessageJson>true</enableFormatMessageJson>
+        <customFields>{"app":"${APP_NAME}","env":"${ENV}"}</customFields>
+        <delivery>
+            <timeout>3000</timeout>
+            <maxRetries>3</maxRetries>
+            <maxBackoffSeconds>60</maxBackoffSeconds>
+        </delivery>
+        <connection class="net.logstash.logback.appender.ElasticsearchHttp">
+            <httpHosts>
+                <httpHost>${ELASTIC_HOST}</httpHost>
+            </httpHosts>
+            <username>${ELASTIC_USERNAME}</username>
+            <password>${ELASTIC_PASSWORD}</password>
+        </connection>
+    </appender>
+    <appender name="ELASTIC_REQUEST" class="net.logstash.logback.appender.ElasticsearchAppender">
+        <index>geelato-request-%date{yyyy.MM.dd}</index>
+        <enableFormatMessageJson>true</enableFormatMessageJson>
+        <customFields>{"app":"${APP_NAME}","env":"${ENV}"}</customFields>
+        <delivery>
+            <timeout>3000</timeout>
+            <maxRetries>3</maxRetries>
+            <maxBackoffSeconds>60</maxBackoffSeconds>
+        </delivery>
+        <connection class="net.logstash.logback.appender.ElasticsearchHttp">
+            <httpHosts>
+                <httpHost>${ELASTIC_HOST}</httpHost>
+            </httpHosts>
+            <username>${ELASTIC_USERNAME}</username>
+            <password>${ELASTIC_PASSWORD}</password>
+        </connection>
+    </appender>
+
+    <!-- category loggers mirroring geelato-logback.xml -->
+    <logger name="cn.geelato.schedule" additivity="false">
+        <appender-ref ref="ELASTIC_SCHEDULE"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.auth" additivity="false">
+        <appender-ref ref="ELASTIC_AUTH"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.message" additivity="false">
+        <appender-ref ref="ELASTIC_MESSAGE"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.web.common.interceptor" additivity="false">
+        <appender-ref ref="ELASTIC_INTERCEPTOR"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.web.platform.boot.interceptor" additivity="false">
+        <appender-ref ref="ELASTIC_REQUEST"/>
+        <appender-ref ref="console"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="console"/>
+        <appender-ref ref="ELASTIC_ROOT"/>
+    </root>
+</configuration>

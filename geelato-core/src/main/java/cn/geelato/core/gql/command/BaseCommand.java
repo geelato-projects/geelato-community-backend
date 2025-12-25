@@ -15,10 +15,6 @@ import java.util.List;
 @Getter
 @SuppressWarnings("rawtypes")
 public class BaseCommand<E extends BaseCommand> {
-    /**
-     * TODO 客户端生成的唯一标识，用于缓存
-     */
-    private String cacheKey;
 
     protected BaseCommand<E> parentCommand;
 
@@ -59,7 +55,6 @@ public class BaseCommand<E extends BaseCommand> {
 
     /**
      * from中是否已join该表
-     *
      */
     public boolean hasNotJoin(String alias) {
         return this.from.indexOf(alias) == -1;

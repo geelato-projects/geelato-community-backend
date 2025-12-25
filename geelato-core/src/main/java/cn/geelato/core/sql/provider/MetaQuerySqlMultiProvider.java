@@ -16,7 +16,6 @@ import java.util.Map;
 /**
  * 多表查询
  *
- * @author liuwq
  */
 @Component
 @Slf4j

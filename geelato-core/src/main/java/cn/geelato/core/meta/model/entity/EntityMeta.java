@@ -12,9 +12,7 @@ import org.springframework.util.Assert;
 
 import java.util.*;
 
-/**
- * @author geelato
- */
+
 @SuppressWarnings("rawtypes")
 public class EntityMeta {
 
@@ -43,10 +41,7 @@ public class EntityMeta {
     @Setter
     @Getter
     private String catalog = "none";
-    /**
-     * -- GETTER --
-     * 基于@Id获取实体中的主键字段名
-     */
+
     @Getter
     private FieldMeta id;
     @Setter
@@ -55,6 +50,9 @@ public class EntityMeta {
     @Getter
     @Setter
     private String tableAlias;
+    @Setter
+    @Getter
+    private Boolean versionControl=false;
     @Getter
     private String[] fieldNames;
     @Getter
@@ -105,8 +103,10 @@ public class EntityMeta {
         FieldMeta nameMeta = null;
         FieldMeta createAtMeta = null;
         FieldMeta creatorMeta = null;
+        FieldMeta creatorNameMeta = null;
         FieldMeta updateAtMeta = null;
         FieldMeta updaterMeta = null;
+        FieldMeta updaterNameMeta = null;
         FieldMeta delStatusMeta = null;
         FieldMeta seqNoMeta = null;
         FieldMeta descriptionMeta = null;
@@ -139,11 +139,17 @@ public class EntityMeta {
                 case "creator":
                     creatorMeta = fm;
                     break;
+                case "creator_name":
+                    creatorNameMeta = fm;
+                    break;
                 case "update_at":
                     updateAtMeta = fm;
                     break;
                 case "updater":
                     updaterMeta = fm;
+                    break;
+                case "updater_name":
+                    updaterNameMeta = fm;
                     break;
                 default:
                     nonSpecialFiledMetas.add(fm);
@@ -177,8 +183,10 @@ public class EntityMeta {
         index = addToThisFieldMetasIfNotNull(delStatusMeta, index);
         index = addToThisFieldMetasIfNotNull(createAtMeta, index);
         index = addToThisFieldMetasIfNotNull(creatorMeta, index);
+        index = addToThisFieldMetasIfNotNull(creatorNameMeta, index);
         index = addToThisFieldMetasIfNotNull(updateAtMeta, index);
         index = addToThisFieldMetasIfNotNull(updaterMeta, index);
+        index = addToThisFieldMetasIfNotNull(updaterNameMeta, index);
     }
 
     private int addToThisFieldMetasIfNotNull(FieldMeta fm, int index) {

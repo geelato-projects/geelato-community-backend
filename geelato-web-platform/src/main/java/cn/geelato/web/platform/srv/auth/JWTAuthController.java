@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.srv.auth;
 
+import cn.geelato.core.GlobalContext;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
@@ -46,7 +47,7 @@ import java.util.stream.Collectors;
 public class JWTAuthController extends BaseController {
     protected AuthCodeService authCodeService;
     protected OrgService orgService;
-    private static final String anonymousFixedPassword = "H2k9ZpQ3@geElAto";
+    private static final String anonymousFixedPassword = GlobalContext.getAnonymousPwd();
 
     @Autowired
     public JWTAuthController(AuthCodeService authCodeService, OrgService orgService) {
@@ -66,6 +67,10 @@ public class JWTAuthController extends BaseController {
     }
 
     private ApiResult<LoginResult> doLogin(LoginParams loginParams, boolean anonymousMode) {
+
+        if(!GlobalContext.getAnonymousOption()){
+            return ApiResult.fail("不允许匿名登录");
+        }
         try {
             if (anonymousMode) {
                 if (!anonymousFixedPassword.equals(loginParams.getPassword())) {

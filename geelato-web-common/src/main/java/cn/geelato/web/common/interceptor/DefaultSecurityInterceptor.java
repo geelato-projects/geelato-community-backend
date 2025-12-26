@@ -1,5 +1,6 @@
 package cn.geelato.web.common.interceptor;
 
+import cn.geelato.core.GlobalContext;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.security.Tenant;
@@ -34,7 +35,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private static final String __JWTTokenTag__="JWTBearer ";
     private static final String __OAuthTokenTag__="Bearer ";
     private static final String __AnonymousTokenTag__="Anonymous ";
-    private static final String anonymousFixedPassword = "H2k9ZpQ3@geElAto";
+    private static final String anonymousFixedPassword = GlobalContext.getAnonymousPwd();
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
  
     public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();

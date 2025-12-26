@@ -1,5 +1,6 @@
 package cn.geelato.web.common.shiro;
 
+import cn.geelato.core.GlobalContext;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.meta.User;
 import org.apache.shiro.authc.AuthenticationException;
@@ -13,7 +14,7 @@ import org.apache.shiro.subject.PrincipalCollection;
 
 public class AnonymousRealm extends AuthorizingRealm {
 
-    private static final String ANONYMOUS_FIXED_PASSWORD = "H2k9ZpQ3@geElAto";
+    private static final String ANONYMOUS_FIXED_PASSWORD = GlobalContext.getAnonymousPwd();
 
     protected Dao dao;
 

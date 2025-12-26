@@ -89,8 +89,8 @@ public class JsonTextQueryParser extends JsonTextParser {
         FilterGroup fg = new FilterGroup();
         fg.addFilter("tenantCode", SessionCtx.getCurrentTenantCode());
 
-        if (SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName) != null) {
-            Permission dp = SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName);
+        if (!SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName).isEmpty()) {
+            List<Permission> dp = SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName);
             String rule = PermissionRuleUtils.replaceRuleVariable(dp,SessionCtx.getCurrentUser());
             command.setOriginalWhere(rule);
         } else {

@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 @Slf4j
 public class EnvManager  extends AbstractManager {
@@ -222,14 +223,26 @@ public class EnvManager  extends AbstractManager {
 
 
     private List<Permission> structDataPermission(String userId) {
-        String sql = "select t2.`object` as entity,t2.name as `name`,t2.rule as rule,t2.seq_no as weight, t3.weight as role_weight from platform_role_r_permission t1 \n" +
-                "left join platform_permission t2 on t1.permission_id =t2.id \n" +
-                "left join platform_role_r_user t4 on t4.role_id =t1.role_id \n" +
-                "left join platform_role t3 on t4.role_id =t3.id \n" +
-                "left join platform_user t5 on t5.id =t4.user_id \n" +
-                "where  t2.type='dp' and t1.del_status=0 and t2.del_status=0 and t3.del_status=0 and t3.enable_status = 1 and t4.del_status=0 and t5.id =?";
-        return jdbcTemplate.query(sql,
+        String rolePermissionSql = """
+                select t2.`object` as entity,t2.name as `name`,t2.rule as rule,t2.seq_no as weight, t3.weight as role_weight from platform_role_r_permission t1\s
+                left join platform_permission t2 on t1.permission_id =t2.id\s
+                left join platform_role_r_user t4 on t4.role_id =t1.role_id\s
+                left join platform_role t3 on t4.role_id =t3.id\s
+                left join platform_user t5 on t5.id =t4.user_id\s
+                where  t2.type='dp' and t1.del_status=0 and t2.del_status=0 and t3.del_status=0 and t3.enable_status = 1 and t4.del_status=0 and t5.id =?""";
+        List<Permission> rolePermission= jdbcTemplate.query(rolePermissionSql,
                 new BeanPropertyRowMapper<>(Permission.class), userId);
+
+        String userPermissionSql= """
+                select * from platform_user_r_permission t1\s
+                left join platform_permission t2 on t1.permission_id=t2.id
+                where t2.type='dp' and t1.del_status=0 and t2.del_status=0\s
+                and t1.user_id=?""";
+        List<Permission> userPermission= jdbcTemplate.query(userPermissionSql,
+                new BeanPropertyRowMapper<>(Permission.class), userId);
+        
+        return  Stream.concat(rolePermission.stream(), userPermission.stream())
+                .toList();
     }
 
 

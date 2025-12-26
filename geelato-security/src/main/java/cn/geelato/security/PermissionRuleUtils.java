@@ -3,6 +3,10 @@ package cn.geelato.security;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,6 +55,38 @@ public class PermissionRuleUtils {
         }
         
         return rule;
+    }
+    
+
+
+    public static String replaceRuleVariable(List<Permission> permissions, User user) {
+        if (permissions == null || permissions.isEmpty()) {
+            return "";
+        }
+        Set<String> uniqueRules = new LinkedHashSet<>();
+        for (Permission p : permissions) {
+            if (p == null) {
+                continue;
+            }
+            String r = replaceRuleVariable(p, user);
+            if (r == null) {
+                continue;
+            }
+            r = r.trim();
+            if (r.isEmpty()) {
+                continue;
+            }
+            r = r.replaceAll("\\s+", " ");
+            uniqueRules.add(r);
+        }
+        if (uniqueRules.isEmpty()) {
+            return "";
+        }
+        StringJoiner joiner = new StringJoiner(" OR ");
+        for (String r : uniqueRules) {
+            joiner.add("(" + r + ")");
+        }
+        return joiner.toString();
     }
     
     /**

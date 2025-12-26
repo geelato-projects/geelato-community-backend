@@ -2,6 +2,7 @@ package cn.geelato.core.meta.model.entity;
 
 
 import cn.geelato.core.meta.DictDataSource;
+import cn.geelato.core.meta.EntityCacheType;
 import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.SimpleFieldMeta;
@@ -41,7 +42,13 @@ public class EntityMeta {
     @Setter
     @Getter
     private String catalog = "none";
-
+    @Getter
+    @Setter
+    private EntityCacheType cacheType;
+    /**
+     * -- GETTER --
+     * 基于@Id获取实体中的主键字段名
+     */
     @Getter
     private FieldMeta id;
     @Setter

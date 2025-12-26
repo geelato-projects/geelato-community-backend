@@ -10,6 +10,9 @@ import java.util.Date;
 import java.util.Map;
 
 public class JsonTextParser {
+
+    protected final static String KEYWORD_FLAG = "@";
+    protected final static String FILTER_FLAG = "\\|";
     protected final String FN_UPDATE_AT = "updateAt";
     protected final String FN_UPDATER = "updater";
     protected final String FN_UPDATER_NAME = "updaterName";

@@ -6,6 +6,7 @@ import cn.geelato.core.gql.command.CommandType;
 import cn.geelato.core.gql.command.CommandValidator;
 import cn.geelato.core.gql.command.SaveCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.gql.parser.keyword.SaveKeyword;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
@@ -116,7 +117,6 @@ public class JsonTextSaveParser extends JsonTextParser {
     private final static String KW_BIZ = "@biz";
     private final static String Force_ID = "forceId";
 
-
     /**
      * 解析传入的JSON文本，并返回一个SaveCommand对象。
      * 该方法首先使用JSON.parseObject将传入的JSON文本解析为JSONObject对象。
@@ -189,7 +189,18 @@ public class JsonTextSaveParser extends JsonTextParser {
         Map<String, Object> params = new HashMap<>();
 
         jo.keySet().forEach(key -> {
-            if (key.startsWith(SUB_ENTITY_FLAG)) {
+            if (key.startsWith(KEYWORD_FLAG) && StringUtils.hasText(jo.getString(key))) {
+                String value = jo.getString(key);
+                SaveKeyword kw = SaveKeyword.fromKey(key);
+                if (kw != null) {
+                    kw.handle(jo, key, value, command, validator, null, commandName);
+                } else {
+                    validator.appendMessage("[");
+                    validator.appendMessage(key);
+                    validator.appendMessage("]");
+                    validator.appendMessage("不支持;");
+                }
+            } else if (key.startsWith(SUB_ENTITY_FLAG)) {
                 Object sub = jo.get(key);
                 CommandValidator subValidator = new CommandValidator();
                 if (sub instanceof JSONObject) {
@@ -290,12 +301,12 @@ public class JsonTextSaveParser extends JsonTextParser {
         command.setOriginValueMap(originValueMap);
         Map<String, Object> newValueMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : command.getValueMap().entrySet()) {
-          boolean isEncrypt= entityMeta.getFieldMeta(entry.getKey()).getColumnMeta().isEncrypted();
-          if(isEncrypt){
-              newValueMap.put(entry.getKey(), EncryptUtils.encrypt(entry.getValue().toString()));
-          }else {
-              newValueMap.put(entry.getKey(), entry.getValue());
-          }
+            boolean isEncrypt = entityMeta.getFieldMeta(entry.getKey()).getColumnMeta().isEncrypted();
+            if (isEncrypt && entry.getValue() != null) {
+                newValueMap.put(entry.getKey(), EncryptUtils.encrypt(entry.getValue().toString()));
+            } else {
+                newValueMap.put(entry.getKey(), entry.getValue());
+            }
         }
         command.setValueMap(newValueMap);
     }

@@ -5,15 +5,15 @@ import cn.geelato.core.gql.command.CommandType;
 import cn.geelato.core.gql.command.CommandValidator;
 import cn.geelato.core.gql.command.DeleteCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.gql.parser.keyword.DeleteKeyword;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author geelato
@@ -23,11 +23,7 @@ import java.util.Map;
 public class JsonTextDeleteParser extends JsonTextParser {
 
     private final static String KW_BIZ = "@biz";
-    private final static String KEYWORD_FLAG = "@";
-    private final static String FILTER_FLAG = "\\|";
     private final static String SUB_ENTITY_FLAG = "~";
-
-
 
     public DeleteCommand parse(String jsonText, SessionCtx sessionCtx) {
         JSONObject jo = JSON.parseObject(jsonText);
@@ -58,7 +54,16 @@ public class JsonTextDeleteParser extends JsonTextParser {
         command.setValueMap(params);
         jo.keySet().forEach(key -> {
             if (key.startsWith(KEYWORD_FLAG) && StringUtils.hasText(jo.getString(key))) {
-
+                String value = jo.getString(key);
+                DeleteKeyword kw = DeleteKeyword.fromKey(key);
+                if (kw != null) {
+                    kw.handle(jo, key, value, command, validator, fg, commandName);
+                } else {
+                    validator.appendMessage("[");
+                    validator.appendMessage(key);
+                    validator.appendMessage("]");
+                    validator.appendMessage("不支持;");
+                }
             } else if (key.startsWith(SUB_ENTITY_FLAG)) {
                 // 解析子实体
                 command.getCommands().add(parse(sessionCtx, key.substring(1), jo.getJSONObject(key), validator));
@@ -86,7 +91,6 @@ public class JsonTextDeleteParser extends JsonTextParser {
 
 
     protected void parseWhere(FilterGroup fg, String key, JSONObject jo, CommandValidator validator) {
-        // where子句过滤条件
         String[] ary = key.split(FILTER_FLAG);
         String field = ary[0];
         validator.validateField(field, "where");

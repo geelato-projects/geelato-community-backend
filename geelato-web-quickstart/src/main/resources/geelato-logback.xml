@@ -13,8 +13,9 @@
     <!--默认日志-->
     <appender name="logFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${LOG_DIR}/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}.log</FileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>200MB</maxFileSize>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -24,8 +25,9 @@
     <!--调度服务日志-->
     <appender name="scheduleLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${LOG_DIR}/schedule/%d{yyyy-MM-dd}.log</FileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/schedule/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>200MB</maxFileSize>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -35,8 +37,9 @@
     <!--认证服务日志-->
     <appender name="authLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${LOG_DIR}/auth/%d{yyyy-MM-dd}.log</FileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/auth/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>200MB</maxFileSize>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -46,8 +49,9 @@
     <!--消息服务日志-->
     <appender name="messageLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${LOG_DIR}/message/%d{yyyy-MM-dd}.log</FileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/message/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>200MB</maxFileSize>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -57,8 +61,9 @@
     <!--拦截器日志-->
     <appender name="interceptorLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${LOG_DIR}/interceptor/%d{yyyy-MM-dd}.log</FileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/interceptor/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>200MB</maxFileSize>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -68,8 +73,9 @@
     <!--请求记录日志-->
     <appender name="requestLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${LOG_DIR}/request/%d{yyyy-MM-dd}.log</FileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/request/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>200MB</maxFileSize>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">

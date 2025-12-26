@@ -4,6 +4,7 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.core.gql.command.CommandValidator;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.gql.parser.keyword.QueryKeyword;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
 import cn.geelato.security.Permission;
@@ -28,20 +29,12 @@ import java.util.Map;
 public class JsonTextQueryParser extends JsonTextParser {
 
     // page_num即offset，记录位置
-    private final static String KEYWORD_FLAG = "@";
-    private final static String FILTER_FLAG = "\\|";
+
     // 可对@fs中的字段进行重命名，字段原名+一到多个空格+字段重命名
-    private final static String ALIAS_FLAG = "\\s+";
     private final static String SUB_ENTITY_FLAG = "~";
-    private final static String KW_PAGE = "@p";
-    private final static String KW_FIELDS = "@fs";
-    private final static String KW_ORDER_BY = "@order";
-    private final static String KW_GROUP_BY = "@group";
-    private final static String KW_BRACKETS = "@b";
     private final static String KW_HAVING = "@having";
 
-
-    private static Map<String, String> orderMap = null;
+    public static Map<String, String> orderMap;
 
     static {
         orderMap = new HashMap<>(2);
@@ -101,87 +94,19 @@ public class JsonTextQueryParser extends JsonTextParser {
 
         jo.keySet().forEach(key -> {
             if (key.startsWith(KEYWORD_FLAG) && StringUtils.hasText(jo.getString(key))) {
-                String[] segments = jo.getString(key).split(",(?![^()]*\\))");
-                switch (key) {
-                    case KW_FIELDS:
-                        String[] fieldNames = new String[segments.length];
-                        for (int i = 0; i < segments.length; i++) {
-                            if (FunctionParser.isFunction(segments[i])) {
-                                fieldNames[i] = segments[i];
-                            } else {
-                                String[] ary = segments[i].split(ALIAS_FLAG);
-                                if (ary.length == 1) {
-                                    validator.validateField(ary[0], KW_FIELDS);
-                                    fieldNames[i] = ary[0];
-                                } else if (ary.length == 2) {
-                                    validator.validateField(ary[0], KW_FIELDS);
-                                    fieldNames[i] = ary[0];
-                                    command.getAlias().put(ary[0], ary[1]);
-                                } else {
-                                    validator.appendMessage(KW_FIELDS);
-                                    validator.appendMessage("的值格式有误，正确如：name userName,age,sex，其中userName为重命名。");
-                                }
-                            }
-                        }
-                        command.setFields(fieldNames);
-                        break;
-                    case KW_ORDER_BY:
-                        StringBuilder sb = new StringBuilder();
-                        for (String order : segments) {
-                            String[] splitCharacters = order.split(FILTER_FLAG);
-                            if (splitCharacters.length == 2 && orderMap.containsKey(splitCharacters[1])) {
-                                validator.validateField(splitCharacters[0], KW_ORDER_BY);
-                                sb.append(sb.isEmpty() ? "" : ",");
-                                sb.append(validator.getColumnName(splitCharacters[0]));
-                                sb.append(" ");
-                                sb.append(orderMap.get(splitCharacters[1]));
-                            } else {
-                                validator.appendMessage(KW_ORDER_BY);
-                                validator.appendMessage("的值格式有误，正确如：age|+,name|-。");
-                            }
-                        }
-                        if (!sb.isEmpty()) {
-                            command.setOrderBy(sb.toString());
-                        }
-                        break;
-                    case KW_GROUP_BY:
-                        validator.validateField(segments, KW_GROUP_BY);
-                        command.setGroupBy(jo.getString(key));
-                        break;
-                    case KW_BRACKETS:
-                        List<FilterGroup> childFilterGroup = parseKWBrackets(validator, jo);
-                        fg.setChildFilterGroup(childFilterGroup);
-                        break;
-                    case KW_PAGE:
-                        command.setQueryForList(true);
-                        String[] page = jo.getString(KW_PAGE).split("[ ]*,[ ]*");
-                        boolean isSuccess = true;
-                        if (page.length == 2 && org.apache.commons.lang3.StringUtils.isNumeric(page[0]) && org.apache.commons.lang3.StringUtils.isNumeric(page[1])) {
-                            command.setPageNum(Integer.parseInt(page[0]));
-                            command.setPageSize(Integer.parseInt(page[1]));
-                            if (command.getPageNum() <= 0 || command.getPageSize() <= 0) {
-                                isSuccess = false;
-                            }
-                        } else {
-                            isSuccess = false;
-                        }
-                        if (!isSuccess) {
-                            validator.appendMessage("[");
-                            validator.appendMessage(KW_PAGE);
-                            validator.appendMessage("]格式有误，正确格式为“第几页，每页记录数”，从第1页开始，如：1,10；");
-                        }
-                        break;
-                    default:
-                        validator.appendMessage("[");
-                        validator.appendMessage(key);
-                        validator.appendMessage("]");
-                        validator.appendMessage("不支持;");
+                String value = jo.getString(key);
+                QueryKeyword kw = QueryKeyword.fromKey(key);
+                if (kw != null) {
+                    kw.handle(jo, key, value, command, validator, fg, entityName);
+                } else {
+                    validator.appendMessage("[");
+                    validator.appendMessage(key);
+                    validator.appendMessage("]");
+                    validator.appendMessage("不支持;");
                 }
             } else if (key.startsWith(SUB_ENTITY_FLAG)) {
-                // 解析子实体
                 command.getCommands().add(parse(key.substring(1), jo.getJSONObject(key), validator));
             } else {
-                // where子句过滤条件
                 String[] ary = key.split(FILTER_FLAG);
                 String field = ary[0];
                 if (FunctionParser.isFunction((field))) {
@@ -209,61 +134,6 @@ public class JsonTextQueryParser extends JsonTextParser {
 
         Assert.isTrue(validator.isSuccess(), validator.getMessage());
         return command;
-    }
-
-    private List<FilterGroup> parseKWBrackets(CommandValidator validator, JSONObject jo) {
-        JSONArray bracketsJa = jo.getJSONArray(KW_BRACKETS);
-        List<FilterGroup> childFilterGroup = new ArrayList<>();
-        bracketsJa.forEach(k -> {
-            JSONObject bracket = (JSONObject) k;
-            FilterGroup filterGroup = parseKWBracket(validator, bracket);
-            childFilterGroup.add(filterGroup);
-        });
-        return childFilterGroup;
-    }
-
-    private FilterGroup parseKWBracket(CommandValidator validator, JSONObject bracket) {
-        JSONArray ja = null;
-        String currentLogic = "or";
-        if (bracket.get("or") != null) {
-            ja = (JSONArray) bracket.get("or");
-        } else if (bracket.get("and") != null) {
-            ja = (JSONArray) bracket.get("and");
-            currentLogic = "and";
-        }
-        FilterGroup filterGroup = new FilterGroup(FilterGroup.Logic.fromString(currentLogic));
-        List<FilterGroup> childFilterGroup = new ArrayList<>();
-        if (ja != null) {
-            for (Object o : ja) {
-                JSONObject jsonObject = (JSONObject) o;
-                jsonObject.keySet().forEach(x -> {
-                    if ("and".equals(x) || "or".equals(x)) {
-                        FilterGroup andChildGroup = parseKWBracket(validator, jsonObject);
-                        childFilterGroup.add(andChildGroup);
-                    } else {
-                        String[] ary = x.split(FILTER_FLAG);
-                        String field = ary[0];
-                        validator.validateField(field, "where");
-                        if (ary.length == 1) {
-                            filterGroup.addFilter(field, FilterGroup.Operator.eq, jsonObject.getString(x));
-                        } else if (ary.length == 2) {
-                            String fn = ary[1];
-                            if (!FilterGroup.Operator.contains(fn)) {
-                                validator.appendMessage(String.format("[%s]不支持%s,只支持%s", KW_BRACKETS, fn, FilterGroup.Operator.getOperatorStrings()));
-                            } else {
-                                FilterGroup.Operator operator = FilterGroup.Operator.fromString(fn);
-                                filterGroup.addFilter(field, operator, jsonObject.getString(x));
-                            }
-                        } else {
-                            throw new JsonParseException();
-                        }
-                    }
-
-                });
-            }
-        }
-        filterGroup.setChildFilterGroup(childFilterGroup);
-        return filterGroup;
     }
 
 }

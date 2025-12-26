@@ -8,7 +8,6 @@ import cn.geelato.core.gql.execute.BoundPageSql;
 import cn.geelato.core.gql.execute.BoundSql;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.gql.parser.PageQueryRequest;
-import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.meta.Ignore;
 import cn.geelato.lang.meta.IgnoreType;
@@ -117,25 +116,7 @@ public class Dao extends SqlKeyDao {
         return data;
     }
 
-    /**
-     * @param withMeta 是否需同时查询带出元数据
-     */
-    // todo rewrite
-    public ApiMultiPagedResult.PageData queryForMapListToPageData(BoundPageSql boundPageSql, boolean withMeta) {
-        QueryCommand command = (QueryCommand) boundPageSql.getBoundSql().getCommand();
-        log.info(boundPageSql.getBoundSql().getSql());
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(boundPageSql.getBoundSql().getSql(), boundPageSql.getBoundSql().getParams());
-        ApiMultiPagedResult.PageData result = new ApiMultiPagedResult.PageData();
-        result.setData(list);
-        result.setTotal(jdbcTemplate.queryForObject(boundPageSql.getCountSql(), boundPageSql.getBoundSql().getParams(), Long.class));
-        result.setPage(command.getPageNum());
-        result.setSize(command.getPageSize());
-        result.setDataSize(list.size());
-        if (withMeta) {
-            result.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
-        }
-        return result;
-    }
+ 
 
     public <T> List<T> queryForOneColumnList(BoundSql boundSql, Class<T> elementType) {
         try{

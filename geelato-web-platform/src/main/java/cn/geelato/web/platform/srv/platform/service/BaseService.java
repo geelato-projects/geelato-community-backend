@@ -83,7 +83,6 @@ public class BaseService {
         dao.setDefaultFilter(true, filterGroup);
         String orderBy = Strings.isNotBlank(request.getOrderBy()) ? request.getOrderBy() : BaseService.DEFAULT_ORDER_BY;
         request.setOrderBy(orderBy);
-        // dao查询
         return dao.pageQueryResult(entity, params, request);
     }
 

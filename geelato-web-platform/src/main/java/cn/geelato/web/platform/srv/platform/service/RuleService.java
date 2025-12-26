@@ -154,7 +154,18 @@ public class RuleService {
         List<QueryCommand> commandList = gqlManager.generateMultiQuerySql(gql);
         for (QueryCommand command : commandList) {
             BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
-            dataMap.put(command.getEntityName(), dao.queryForMapListToPageData(boundPageSql, withMeta));
+            List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
+            Long total = dao.queryTotal(boundPageSql);
+            ApiMultiPagedResult.PageData apiPd = new ApiMultiPagedResult.PageData();
+            apiPd.setData(list);
+            apiPd.setTotal(total != null ? total : 0);
+            apiPd.setPage(command.getPageNum());
+            apiPd.setSize(command.getPageSize());
+            apiPd.setDataSize(list != null ? list.size() : 0);
+            if (withMeta) {
+                apiPd.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
+            }
+            dataMap.put(command.getEntityName(), apiPd);
         }
         ApiMultiPagedResult result = new ApiMultiPagedResult();
         result.setData(dataMap);

@@ -1,6 +1,7 @@
 package cn.geelato.core.meta;
 
 public enum EntityCacheType {
+    None,
     BackEnd,
     FrontEnd,
     BackEndAndFrontEnd;

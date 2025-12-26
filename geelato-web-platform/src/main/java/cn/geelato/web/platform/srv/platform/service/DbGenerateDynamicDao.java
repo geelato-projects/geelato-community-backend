@@ -260,12 +260,7 @@ public class DbGenerateDynamicDao {
         map.put("tableSchema", tableMeta.getTableSchema());
         // 表字段 - 新增
         map.put("addList", addList);
-        addList.sort(new Comparator<JSONObject>() {
-            @Override
-            public int compare(JSONObject o1, JSONObject o2) {
-                return o1.getIntValue("ordinalPosition") - o2.getIntValue("ordinalPosition");
-            }
-        });
+        addList.sort(Comparator.comparingInt(o -> o.getIntValue("ordinalPosition")));
         // 表字段 - 更新
         map.put("modifyList", modifyList);
         map.put("changeList", changeList);

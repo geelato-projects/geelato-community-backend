@@ -68,7 +68,9 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "跨工作流")
     @Col(name = "across_workflow")
     private boolean acrossWorkflow = false;
-
+    @Title(title = "缓存类型")
+    @Col(name = "cache_type")
+    private String cacheType="none";
     public TableMeta() {
     }
 
@@ -80,7 +82,7 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         this.description = description;
     }
 
-    public TableMeta(Map map) {
+    public TableMeta(Map<String,Object> map) {
         this.appId = map.get("app_id") == null ? null : map.get("app_id").toString();
         this.title = map.get("title") == null ? null : map.get("title").toString();
         this.connectId = map.get("connect_id") == null ? null : map.get("connect_id").toString();
@@ -92,7 +94,7 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         this.tableComment = map.get("table_comment") == null ? null : map.get("table_comment").toString();
         Boolean enableStatus = map.get("enable_status") == null ? null : Boolean.parseBoolean(map.get("enable_status").toString());
         this.enableStatus = Boolean.TRUE.equals(enableStatus) ? 1 : 0;
-        this.linked = map.get("linked") == null ? null : Integer.parseInt(map.get("linked").toString());
+        this.linked = map.get("linked") == null ? 0 : Integer.parseInt(map.get("linked").toString());
         this.description = map.get("description") == null ? null : map.get("description").toString();
         this.synced = map.get("synced") != null && Boolean.parseBoolean(map.get("synced").toString());
         this.sourceType = map.get("source_type") == null ? null : map.get("source_type").toString();
@@ -100,6 +102,7 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         this.viewSql = map.get("view_sql") == null ? null : map.get("view_sql").toString();
         this.acrossApp = map.get("across_app") != null && Boolean.parseBoolean(map.get("across_app").toString());
         this.acrossWorkflow = map.get("across_workflow") != null && Boolean.parseBoolean(map.get("across_workflow").toString());
+        this.cacheType= map.get("cache_type") == null ? null : map.get("cache_type").toString();
     }
 
     public String dbTableName() {

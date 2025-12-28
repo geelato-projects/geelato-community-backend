@@ -11,6 +11,7 @@ import cn.geelato.web.platform.utils.CacheUtil;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.AppPage;
 import cn.geelato.meta.AppPageLang;
+import cn.geelato.meta.AppPageLog;
 import cn.geelato.web.platform.event.UpgradePageEvent;
 import cn.geelato.web.common.event.EventPublisher;
 import lombok.extern.slf4j.Slf4j;
@@ -278,4 +279,68 @@ public class PageController extends BaseController {
         }
     }
 
+    /**
+     * 保存页面配置
+     *
+     * @param appPage 页面配置对象
+     * @return 操作结果
+     */
+    @RequestMapping(value = {"/savePage"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    public ApiResult<AppPage> savePage(AppPage appPage) {
+        try {
+            // 获取当前登录用户
+            User user = SessionCtx.getCurrentUser();
+            if (user == null) {
+                return ApiResult.fail("用户未登录");
+            }
+
+            // 处理版本号，自增或初始化为1
+            if (appPage.getId() != null) {
+                // 从数据库获取当前版本号
+                AppPage existingPage = dao.queryForObject(AppPage.class, "id", appPage.getId(), "delStatus", "0");
+                if (existingPage != null) {
+                    appPage.setVersion(existingPage.getVersion() + 1);
+                } else {
+                    appPage.setVersion(1);
+                }
+            } else {
+                // 新页面，初始版本为1
+                appPage.setVersion(1);
+            }
+
+            // 保存页面
+            if (appPage.getId() != null) {
+                // 更新页面
+                dao.save(appPage);
+            } else {
+                // 新增页面
+                dao.save(appPage);
+            }
+
+            // 保存页面日志
+            AppPageLog pageLog = new AppPageLog();
+            pageLog.setAppId(appPage.getAppId());
+            pageLog.setPageId(appPage.getId());
+            pageLog.setCode(appPage.getCode());
+            pageLog.setLabel(appPage.getTitle());
+            pageLog.setExtendId(appPage.getExtendId());
+            pageLog.setDescription(appPage.getDescription());
+            pageLog.setSourceContent(appPage.getSourceContent());
+            dao.save(pageLog);
+
+            // 清除缓存
+            String pageKey = "platform_app_page_" + appPage.getId();
+            String extendKey = "platform_app_page_extend_" + appPage.getExtendId();
+            CacheUtil.remove(pageKey);
+            CacheUtil.remove(extendKey);
+
+            // 发布页面更新事件
+            EventPublisher.publish(new UpgradePageEvent(this, appPage.getId(),appPage.getExtendId()));
+
+            return ApiResult.success(appPage);
+        } catch (Exception e) {
+            log.error("保存页面配置出错！", e);
+            return ApiResult.fail("保存页面配置出错！" + e.getMessage());
+        }
+    }
 }

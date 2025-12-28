@@ -192,7 +192,7 @@ public class SqlManager extends AbstractManager {
         if (validator.hasKeyField("updaterName")) {
             params.put("updaterName", SessionCtx.getCurrentUser().getUserName());
         }
-        String[] updateFields = new String[params.keySet().size()];
+        String[] updateFields = new String[params.size()];
         params.keySet().toArray(updateFields);
         deleteCommand.setFields(updateFields);
         deleteCommand.setValueMap(params);

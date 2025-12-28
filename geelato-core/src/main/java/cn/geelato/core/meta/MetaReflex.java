@@ -306,7 +306,6 @@ public class MetaReflex {
                     fieldName = firstCharToLow(fieldName);
                     if (!map.containsKey(fieldName) && !transientProp.contains(fieldName)) {
                         if (field.getAnnotation(Transient.class) == null) {
-                            // 列，可能包括名为id的列
                             Col column = field.getAnnotation(Col.class);
                             Title cn = field.getAnnotation(Title.class);
                             String title = cn != null ? (Strings.isEmpty(cn.title()) ? fieldName : cn.title()) : fieldName;

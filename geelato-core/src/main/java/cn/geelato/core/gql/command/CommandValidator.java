@@ -2,9 +2,12 @@ package cn.geelato.core.gql.command;
 
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.entity.TableForeign;
 import org.springframework.util.Assert;
 
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author geemeta
@@ -25,8 +28,40 @@ public class CommandValidator {
         return true;
     }
 
-    public boolean validateField(String field, String fieldDescription) {
+    public void validateField(String field, String fieldDescription) {
         Assert.notNull(entityMeta, "需先validateEntity，确保已有实体信息，才能进一步验证字段。");
+        Matcher m = Pattern.compile("^ref\\(\\s*([^)]+)\\s*\\)$").matcher(field);
+        if (m.matches()) {
+            String inner = m.group(1).trim();
+            if (!entityMeta.containsField(inner)) {
+                message.append("[");
+                message.append(fieldDescription);
+                message.append("]");
+                message.append("不存在");
+                message.append(inner);
+                message.append("；");
+                return;
+            }
+            String col = entityMeta.getColumnName(inner);
+            boolean isForeign = false;
+            if (entityMeta.getTableForeigns() != null) {
+                for (TableForeign tf : entityMeta.getTableForeigns()) {
+                    if (tf.getEnableStatus() == 1 && col.equalsIgnoreCase(tf.getMainTableCol())) {
+                        isForeign = true;
+                        break;
+                    }
+                }
+            }
+            if (!isForeign) {
+                message.append("[");
+                message.append(fieldDescription);
+                message.append("]");
+                message.append(inner);
+                message.append("不是外键；");
+                return;
+            }
+            return;
+        }
         if (!entityMeta.containsField(field)&&!"*".equals(field)&&!"forceId".equals(field)) {
             message.append("[");
             message.append(fieldDescription);
@@ -34,18 +69,13 @@ public class CommandValidator {
             message.append("不存在");
             message.append(field);
             message.append("；");
-            return false;
         }
-        return true;
     }
 
     public void validateField(String[] fields, String fieldDescription) {
         Assert.notNull(fields, "待验证的字段数组不能为空。");
-        boolean isFail = false;
         for (String field : fields) {
-            if (!validateField(field, fieldDescription)) {
-                isFail = true;
-            }
+            validateField(field, fieldDescription);
         }
     }
 

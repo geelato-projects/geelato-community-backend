@@ -3,12 +3,14 @@ package cn.geelato.core.sql.provider;
 import cn.geelato.core.gql.command.QueryCommand;
 import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.util.StringUtils;
+import java.util.regex.Pattern;
 
 /**
  * @author geemeta
@@ -29,11 +31,22 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
     protected String buildOneSql(QueryCommand command) {
         StringBuilder sb = new StringBuilder();
         EntityMeta md = getEntityMeta(command);
+        String mainAlias = null;
+        if (command.getForeignFields() != null && command.getForeignFields().length > 0) {
+            mainAlias = buildTableAlias(md.getTableName());
+            md.setTableAlias(mainAlias);
+        }else{
+            md.setTableAlias(null);
+        }
         sb.append("select ");
         buildSelectFields(sb, md, command);
         sb.append(" from ");
         sb.append(md.getTableName());
-        // where
+        if (mainAlias != null) {
+            sb.append(" ");
+            sb.append(mainAlias);
+        }
+        buildJoins(sb, md, command);
         FilterGroup fg = command.getWhere();
         if (fg != null && fg.getFilters() != null && !fg.getFilters().isEmpty()) {
             sb.append(" where ");
@@ -41,32 +54,25 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
         if (command.getOriginalWhere() != null) {
             sb.append("  and  (");
-            if (!"1=1".equals(command.getOriginalWhere())) {
-                if (md.getTableAlias() != null) {
-                    sb.append(md.getTableAlias()).append(".");
-                }
-                sb.append(command.getOriginalWhere());
-            } else {
-                sb.append(command.getOriginalWhere());
+            String ow = command.getOriginalWhere();
+            if (!"1=1".equals(ow) && md.getTableAlias() != null) {
+                ow = decorateOriginalWhere(md, ow);
             }
+            sb.append(ow);
             sb.append("  )");
         }
-        // group by
         if (StringUtils.hasText(command.getGroupBy())) {
             sb.append(" group by ");
             sb.append(command.getGroupBy());
         }
-        // having
         if (command.getHaving() != null) {
             sb.append(" having ");
             sb.append(command.getHaving());
         }
-        // order by
         if (StringUtils.hasText(command.getOrderBy())) {
             sb.append(" order by ");
             sb.append(command.getOrderBy());
         }
-        // limit offset count
         if (command.isPagingQuery()) {
             sb.append(" limit ");
             sb.append((command.getPageNum() - 1) * command.getPageSize());
@@ -89,10 +95,18 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         EntityMeta md = getEntityMeta(command);
         sb.append("select count(*) from (");
         sb.append("select ");
-        // fields
         buildSelectFields(sb, md, command);
         sb.append(" from ");
         sb.append(md.getTableName());
+        if (command.getForeignFields() != null && command.getForeignFields().length > 0) {
+            String mainAlias = md.getTableAlias() != null ? md.getTableAlias() : buildTableAlias(md.getTableName());
+            md.setTableAlias(mainAlias);
+            sb.append(" ");
+            sb.append(mainAlias);
+        }else{
+            md.setTableAlias(null);
+        }
+        buildJoins(sb, md, command);
         // where
         FilterGroup fg = command.getWhere();
         if (fg != null && fg.getFilters() != null && !fg.getFilters().isEmpty()) {
@@ -101,14 +115,11 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
         if (command.getOriginalWhere() != null) {
             sb.append("  and  (");
-            if (!"1=1".equals(command.getOriginalWhere())) {
-                if (md.getTableAlias() != null) {
-                    sb.append(md.getTableAlias()).append(".");
-                }
-                sb.append(command.getOriginalWhere());
-            } else {
-                sb.append(command.getOriginalWhere());
+            String ow = command.getOriginalWhere();
+            if (!"1=1".equals(ow) && md.getTableAlias() != null) {
+                ow = decorateOriginalWhere(md, ow);
             }
+            sb.append(ow);
             sb.append(" )");
         }
         // group by
@@ -160,18 +171,36 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                 String afterRefaceExpression = FunctionParser.reconstruct(fieldName, md.getEntityName());
                 sb.append(new FunctionFieldValue(afterRefaceExpression).getMysqlFunction()).append(" ");
             } else {
+                if (command.getForeignFields() != null && ArrayUtils.contains(command.getForeignFields(), fieldName)) {
+                    TableForeign tf = findForeignByMainField(md, fieldName);
+                    if (tf != null) {
+                        String foreignAlias = buildTableAlias(tf.getForeignTable());
+                        EntityMeta foreignEm = metaManager.get(tf.getForeignTable());
+                        FieldMeta displayFm = chooseDisplayField(foreignEm);
+                        if (displayFm != null) {
+                            sb.append(foreignAlias);
+                            sb.append(".");
+                            tryAppendKeywords(sb, displayFm.getColumnName());
+                            sb.append(" ");
+                            Object aliasVal = command.getAlias().get(fieldName);
+                            String aliasName = aliasVal != null ? aliasVal.toString() : displayFm.getFieldName();
+                            tryAppendKeywords(sb, aliasName);
+                            sb.append(",");
+                            continue;
+                        }
+                    }
+                    // 若未找到外键或展示字段，回退为主表字段输出
+                }
                 FieldMeta fm = md.getFieldMeta(fieldName);
                 if (command.getAlias().containsKey(fieldName)) {
-                    // 有指定的重命名要求时
-                    tryAppendKeywords(sb, fm.getColumnName());
+                    tryAppendKeywords(md, sb, fm);
                     sb.append(" ");
                     tryAppendKeywords(sb, command.getAlias().get(fieldName).toString());
                 } else {
-                    // 无指定的重命名要求，将数据库的字段格式转成实体字段格式，如role_id to roleId
                     if (fm.isEquals()) {
-                        tryAppendKeywords(sb, fm.getColumnName());
+                        tryAppendKeywords(md, sb, fm);
                     } else {
-                        tryAppendKeywords(sb, fm.getColumnName());
+                        tryAppendKeywords(md, sb, fm);
                         sb.append(" ");
                         tryAppendKeywords(sb, fm.getFieldName());
                     }
@@ -182,4 +211,64 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         sb.deleteCharAt(sb.length() - 1);
     }
 
+    private void buildJoins(StringBuilder sb, EntityMeta md, QueryCommand command) {
+        if (command.getForeignFields() == null) {
+            return;
+        }
+        for (String fieldName : command.getForeignFields()) {
+            TableForeign tf = findForeignByMainField(md, fieldName);
+            if (tf != null && tf.getEnableStatus() == 1) {
+                String foreignAlias = buildTableAlias(tf.getForeignTable());
+                sb.append(" left join ");
+                sb.append(tf.getForeignTable());
+                sb.append(" ");
+                sb.append(foreignAlias);
+                sb.append(" on ");
+                sb.append(md.getTableAlias() != null ? md.getTableAlias() : md.getTableName());
+                sb.append(".");
+                tryAppendKeywords(sb, tf.getMainTableCol());
+                sb.append("=");
+                sb.append(foreignAlias);
+                sb.append(".");
+                tryAppendKeywords(sb, tf.getForeignTableCol());
+            }
+        }
+    }
+
+    private TableForeign findForeignByMainField(EntityMeta md, String fieldName) {
+        String mainCol = md.getColumnName(fieldName);
+        if (md.getTableForeigns() != null) {
+            for (TableForeign tf : md.getTableForeigns()) {
+                if (tf.getEnableStatus() == 1 && mainCol.equalsIgnoreCase(tf.getMainTableCol())) {
+                    return tf;
+                }
+            }
+        }
+        return null;
+    }
+
+    private FieldMeta chooseDisplayField(EntityMeta foreignEm) {
+        if (foreignEm == null) {
+            return null;
+        }
+        FieldMeta name = foreignEm.containsField("name") ? foreignEm.getFieldMeta("name") : null;
+        if (name != null) return name;
+        FieldMeta title = foreignEm.containsField("title") ? foreignEm.getFieldMeta("title") : null;
+        if (title != null) return title;
+        return foreignEm.getId();
+    }
+
+    private String decorateOriginalWhere(EntityMeta md, String originalWhere) {
+        String res = originalWhere;
+        String alias = md.getTableAlias();
+        if (alias == null) {
+            return res;
+        }
+        for (FieldMeta fm : md.getFieldMetas()) {
+            String col = fm.getColumnMeta().getName();
+            String pattern = "(?<!\\.)\\b" + Pattern.quote(col) + "\\b";
+            res = res.replaceAll(pattern, alias + "." + col);
+        }
+        return res;
+    }
 }

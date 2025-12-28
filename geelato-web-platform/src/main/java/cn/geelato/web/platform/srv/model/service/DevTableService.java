@@ -41,9 +41,6 @@ public class DevTableService extends BaseSortableService {
     protected DbGenerateDynamicDao dbGenerateDao;
     @Lazy
     @Autowired
-    private DevDbConnectService devDbConnectService;
-    @Lazy
-    @Autowired
     private DevTableColumnService devTableColumnService;
     @Lazy
     @Autowired

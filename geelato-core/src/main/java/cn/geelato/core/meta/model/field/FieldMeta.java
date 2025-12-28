@@ -13,9 +13,6 @@ import java.io.Serializable;
 @Getter
 @SuppressWarnings("rawtypes")
 public class FieldMeta implements Serializable {
-//
-//    @Setter
-//    private EntityMeta entityMeta;
 
     @Getter
     private final ColumnMeta columnMeta;

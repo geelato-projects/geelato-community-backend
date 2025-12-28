@@ -17,9 +17,7 @@ import java.util.List;
 public class BaseCommand<E extends BaseCommand> {
 
     protected BaseCommand<E> parentCommand;
-
     private Boolean execution;
-
     protected CommandType commandType;
     // 命令对应实体名称
     protected String entityName;
@@ -34,7 +32,8 @@ public class BaseCommand<E extends BaseCommand> {
     // 指定条件
     protected StringBuilder from = new StringBuilder();
     // 子命令
-    protected List<E> commands=new ArrayList<>();;
+    protected List<E> commands=new ArrayList<>();
+    protected String finalSql;
 
     public boolean hasCommands() {
         return commands != null && !commands.isEmpty();

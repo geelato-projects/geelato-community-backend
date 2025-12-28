@@ -4,10 +4,7 @@ package cn.geelato.meta;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
-import cn.geelato.lang.meta.Col;
-import cn.geelato.lang.meta.Entity;
-import cn.geelato.lang.meta.Title;
-import cn.geelato.lang.meta.Transient;
+import cn.geelato.lang.meta.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,7 +27,8 @@ public class User extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "性别")
     private int sex;
     @Title(title = "组织")
-    @Col(name = "org_id", refTables = "platform_org_r_user,platform_org", refColName = "platform_org.id")
+    @ForeignKey(fTable=Org.class)
+    @Col(name = "org_id", refTables = "platform_org", refColName = "platform_org.id")
     private String orgId;
     @Title(title = "密码")
     private String password;

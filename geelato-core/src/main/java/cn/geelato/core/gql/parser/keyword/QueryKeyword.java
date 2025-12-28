@@ -12,34 +12,52 @@ import com.alibaba.fastjson2.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-
+@SuppressWarnings("rawtypes")
 public enum QueryKeyword implements KeyWordHandler {
     FIELDS("@fs") {
         @Override
         public void handle(JSONObject jo, String key, String value, BaseCommand command, CommandValidator validator, FilterGroup fg, String entityName) {
             String[] segments = value.split(",(?![^()]*\\))");
             String[] fieldNames = new String[segments.length];
+            List<String> foreigns = new ArrayList<>();
+            java.util.regex.Pattern refPattern = java.util.regex.Pattern.compile("^ref\\(\\s*([^)]+)\\s*\\)\\s+(\\S+)$");
             for (int i = 0; i < segments.length; i++) {
                 if (FunctionParser.isFunction(segments[i])) {
                     fieldNames[i] = segments[i];
                 } else {
-                    String[] ary = segments[i].split("\\s+");
-                    if (ary.length == 1) {
-                        validator.validateField(ary[0], key);
-                        fieldNames[i] = ary[0];
-                    } else if (ary.length == 2) {
-                        validator.validateField(ary[0], key);
-                        fieldNames[i] = ary[0];
+                    String seg = segments[i].trim();
+                    java.util.regex.Matcher m = refPattern.matcher(seg);
+                    if (m.matches()) {
+                        String foreignField = m.group(1).trim();
+                        String alias = m.group(2).trim();
+                        validator.validateField("ref(" + foreignField + ")", key);
+                        fieldNames[i] = foreignField;
+                        foreigns.add(foreignField);
                         if (command instanceof QueryCommand qc) {
-                            qc.getAlias().put(ary[0], ary[1]);
+                            qc.getAlias().put(foreignField, alias);
                         }
                     } else {
-                        validator.appendMessage(key);
-                        validator.appendMessage("的值格式有误，正确如：name userName,age,sex，其中userName为重命名。");
+                        String[] ary = seg.split("\\s+");
+                        if (ary.length == 1) {
+                            validator.validateField(ary[0], key);
+                            fieldNames[i] = ary[0];
+                        } else if (ary.length == 2) {
+                            validator.validateField(ary[0], key);
+                            fieldNames[i] = ary[0];
+                            if (command instanceof QueryCommand qc) {
+                                qc.getAlias().put(ary[0], ary[1]);
+                            }
+                        } else {
+                            validator.appendMessage(key);
+                            validator.appendMessage("的值格式有误，正确如：name userName,age,sex，其中userName为重命名。");
+                        }
                     }
                 }
             }
             command.setFields(fieldNames);
+            if (command instanceof QueryCommand qc && !foreigns.isEmpty()) {
+                qc.setForeignFields(foreigns.toArray(new String[0]));
+            }
         }
     },
     ORDER("@order") {

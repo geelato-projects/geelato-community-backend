@@ -23,6 +23,8 @@ public class QueryCommand extends BaseCommand<QueryCommand> {
     private String orderBy;
     private FilterGroup having;
     private String ACL;
+
+    protected String[] foreignFields;
     public QueryCommand() {
         generateCacheKey();
         setCommandType(CommandType.Query);

@@ -18,10 +18,8 @@ import cn.geelato.core.sql.provider.MetaUpdateSqlProvider;
 public class EntityManager extends AbstractManager {
     private static EntityManager instance;
     private final EntitySaveParser entitySaveParser = new EntitySaveParser();
-    private final MetaQuerySqlProvider metaQuerySqlProvider = new MetaQuerySqlProvider();
     private final MetaInsertSqlProvider metaInsertSqlProvider = new MetaInsertSqlProvider();
     private final MetaUpdateSqlProvider metaUpdateSqlProvider = new MetaUpdateSqlProvider();
-    private final MetaDeleteSqlProvider metaDeleteSqlProvider = new MetaDeleteSqlProvider();
 
     public static EntityManager singleInstance() {
         lock.lock();

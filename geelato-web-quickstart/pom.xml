@@ -139,9 +139,15 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
                 <includes>
-                <include>branch.properties</include>
+                    <include>branch.properties</include>
                 </includes>
-                <targetPath>${project.build.outputDirectory}</targetPath>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>branch.properties</exclude>
+                </excludes>
             </resource>
         </resources>
     </build>

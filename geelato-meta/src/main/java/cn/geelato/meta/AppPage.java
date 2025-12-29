@@ -41,4 +41,17 @@ public class AppPage extends BaseSortableEntity {
     private String description;
     @Title(title = "版本")
     private int version;
+    @Title(title = "签入用户ID")
+    @Col(name = "check_user_id", nullable = true)
+    private String checkUserId;
+    
+    @Title(title = "签入用户名")
+    @Col(name = "check_user_name", nullable = true)
+    private String checkUserName;
+    @Title(title = "签入状态", description = "取值：unchecked（未签出）、checkedOut（已签出）")
+    @Col(name = "check_status", nullable = true)
+    private String checkStatus;
+    @Title(title = "签入时间")
+    @Col(name = "check_at", nullable = true)
+    private java.util.Date checkAt;
 }

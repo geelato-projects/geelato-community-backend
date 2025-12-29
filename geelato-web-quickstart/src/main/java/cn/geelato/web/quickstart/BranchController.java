@@ -1,5 +1,6 @@
 package cn.geelato.web.quickstart;
 
+import cn.geelato.lang.api.ApiResult;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
@@ -14,7 +15,7 @@ import java.util.Properties;
 @ApiRestController
 public class BranchController {
     @GetMapping("/branch")
-    public String branch() throws IOException {
+    public ApiResult<String> branch() throws IOException {
         Resource resource = new ClassPathResource("branch.properties");
         Properties properties = new Properties();
         try (InputStream in = resource.getInputStream()) {
@@ -22,9 +23,9 @@ public class BranchController {
         }
         String value = properties.getProperty("build.branch");
         if (!StringUtils.hasText(value)) {
-            return "master";
+            return ApiResult.success("default");
         }
-        return value;
+        return ApiResult.success(value);
     }
 }
 

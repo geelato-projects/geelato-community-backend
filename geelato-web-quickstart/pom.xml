@@ -11,6 +11,9 @@
     <artifactId>geelato-web-quickstart</artifactId>
     <packaging>jar</packaging>
     <name>geelato-web-quickstart</name>
+    <properties>
+        <branchName>${env.branchName}</branchName>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -125,13 +128,22 @@
                 <executions>
                     <execution>
                         <goals>
-                            <!--可以把依赖的包都打包到生成的Jar包中-->
                             <goal>repackage</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                <include>branch.properties</include>
+                </includes>
+                <targetPath>${project.build.outputDirectory}</targetPath>
+            </resource>
+        </resources>
     </build>
 <!--todo 区分web启动还是schedule启动-->
     <profiles>

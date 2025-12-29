@@ -44,6 +44,8 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns(urlPrefix + "/resources/json")
                 // 加载或下载文件
                 .excludePathPatterns(urlPrefix + "/resources/file")
+                // 分支识别
+                .excludePathPatterns(urlPrefix + "/branch")
                 // 微信回调接口
                 .excludePathPatterns("/wx/callback/hook")
                 // 微信登录接口

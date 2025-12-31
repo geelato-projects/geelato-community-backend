@@ -188,11 +188,6 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                             requestForeign = true;
                             break;
                         }
-                        int idx = ff.indexOf("->");
-                        if (idx >= 0 && mainField.equals(ff.substring(0, idx).trim())) {
-                            requestForeign = true;
-                            break;
-                        }
                     }
                 }
                 if (requestForeign) {

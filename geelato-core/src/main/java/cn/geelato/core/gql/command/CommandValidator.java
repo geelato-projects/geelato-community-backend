@@ -33,16 +33,21 @@ public class CommandValidator {
         Matcher m = Pattern.compile("^ref\\(\\s*([^)]+)\\s*\\)$").matcher(field);
         if (m.matches()) {
             String inner = m.group(1).trim();
-            if (!entityMeta.containsField(inner)) {
+            String main = inner;
+            int idx = inner.indexOf("->");
+            if (idx >= 0) {
+                main = inner.substring(0, idx).trim();
+            }
+            if (!entityMeta.containsField(main)) {
                 message.append("[");
                 message.append(fieldDescription);
                 message.append("]");
                 message.append("不存在");
-                message.append(inner);
+                message.append(main);
                 message.append("；");
                 return;
             }
-            String col = entityMeta.getColumnName(inner);
+            String col = entityMeta.getColumnName(main);
             boolean isForeign = false;
             if (entityMeta.getTableForeigns() != null) {
                 for (TableForeign tf : entityMeta.getTableForeigns()) {
@@ -56,7 +61,7 @@ public class CommandValidator {
                 message.append("[");
                 message.append(fieldDescription);
                 message.append("]");
-                message.append(inner);
+                message.append(main);
                 message.append("不是外键；");
                 return;
             }

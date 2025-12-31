@@ -20,7 +20,7 @@ public enum QueryKeyword implements KeyWordHandler {
             String[] segments = value.split(",(?![^()]*\\))");
             String[] fieldNames = new String[segments.length];
             List<String> foreigns = new ArrayList<>();
-            java.util.regex.Pattern refPattern = java.util.regex.Pattern.compile("^ref\\(\\s*([^)]+)\\s*\\)\\s+(\\S+)$");
+            java.util.regex.Pattern refPattern = java.util.regex.Pattern.compile("^ref\\(\\s*([A-Za-z_]\\w*(?:\\s*->\\s*[A-Za-z_]\\w*)?)\\s*\\)\\s+(\\S+)$");
             for (int i = 0; i < segments.length; i++) {
                 if (FunctionParser.isFunction(segments[i])) {
                     fieldNames[i] = segments[i];

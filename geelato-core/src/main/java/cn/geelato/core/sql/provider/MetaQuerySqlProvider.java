@@ -10,6 +10,8 @@ import cn.geelato.core.meta.model.parser.FunctionParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.util.StringUtils;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -171,19 +173,66 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                 String afterRefaceExpression = FunctionParser.reconstruct(fieldName, md.getEntityName());
                 sb.append(new FunctionFieldValue(afterRefaceExpression).getMysqlFunction()).append(" ");
             } else {
-                if (command.getForeignFields() != null && ArrayUtils.contains(command.getForeignFields(), fieldName)) {
-                    TableForeign tf = findForeignByMainField(md, fieldName);
+                String mainField = fieldName;
+                String remoteField = null;
+                int arrowIdx = fieldName.indexOf("->");
+                if (arrowIdx >= 0) {
+                    mainField = fieldName.substring(0, arrowIdx).trim();
+                    remoteField = fieldName.substring(arrowIdx + 2).trim();
+                }
+                boolean requestForeign = false;
+                if (command.getForeignFields() != null) {
+                    for (String ff : command.getForeignFields()) {
+                        if (ff == null) continue;
+                        if (ff.equals(fieldName)) {
+                            requestForeign = true;
+                            break;
+                        }
+                        int idx = ff.indexOf("->");
+                        if (idx >= 0 && mainField.equals(ff.substring(0, idx).trim())) {
+                            requestForeign = true;
+                            break;
+                        }
+                    }
+                }
+                if (requestForeign) {
+                    TableForeign tf = findForeignByMainField(md, mainField);
                     if (tf != null) {
                         String foreignAlias = buildTableAlias(tf.getForeignTable());
                         EntityMeta foreignEm = metaManager.get(tf.getForeignTable());
-                        FieldMeta displayFm = chooseDisplayField(foreignEm);
-                        if (displayFm != null) {
+                        FieldMeta selectedFm = null;
+                        if (StringUtils.hasText(remoteField)) {
+                            if (foreignEm.containsField(remoteField)) {
+                                selectedFm = foreignEm.getFieldMeta(remoteField);
+                            } else {
+                                try {
+                                    FieldMeta byColumn = foreignEm.getFieldMetaByColumn(remoteField);
+                                    if (byColumn != null) {
+                                        selectedFm = byColumn;
+                                    }
+                                } catch (Exception ignored) {}
+                            }
+                            if (selectedFm == null) {
+                                sb.append(foreignAlias);
+                                sb.append(".");
+                                tryAppendKeywords(sb, remoteField);
+                                sb.append(" ");
+                                Object aliasVal = command.getAlias().get(fieldName);
+                                String aliasName = aliasVal != null ? aliasVal.toString() : remoteField;
+                                tryAppendKeywords(sb, aliasName);
+                                sb.append(",");
+                                continue;
+                            }
+                        } else {
+                            selectedFm = chooseDisplayField(foreignEm);
+                        }
+                        if (selectedFm != null) {
                             sb.append(foreignAlias);
                             sb.append(".");
-                            tryAppendKeywords(sb, displayFm.getColumnName());
+                            tryAppendKeywords(sb, selectedFm.getColumnName());
                             sb.append(" ");
                             Object aliasVal = command.getAlias().get(fieldName);
-                            String aliasName = aliasVal != null ? aliasVal.toString() : displayFm.getFieldName();
+                            String aliasName = aliasVal != null ? aliasVal.toString() : selectedFm.getFieldName();
                             tryAppendKeywords(sb, aliasName);
                             sb.append(",");
                             continue;
@@ -215,23 +264,36 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         if (command.getForeignFields() == null) {
             return;
         }
+        LinkedHashMap<String, TableForeign> joinMap = new LinkedHashMap<>();
         for (String fieldName : command.getForeignFields()) {
-            TableForeign tf = findForeignByMainField(md, fieldName);
-            if (tf != null && tf.getEnableStatus() == 1) {
-                String foreignAlias = buildTableAlias(tf.getForeignTable());
-                sb.append(" left join ");
-                sb.append(tf.getForeignTable());
-                sb.append(" ");
-                sb.append(foreignAlias);
-                sb.append(" on ");
-                sb.append(md.getTableAlias() != null ? md.getTableAlias() : md.getTableName());
-                sb.append(".");
-                tryAppendKeywords(sb, tf.getMainTableCol());
-                sb.append("=");
-                sb.append(foreignAlias);
-                sb.append(".");
-                tryAppendKeywords(sb, tf.getForeignTableCol());
+            String mainField = fieldName;
+            int idx = fieldName.indexOf("->");
+            if (idx >= 0) {
+                mainField = fieldName.substring(0, idx).trim();
             }
+            TableForeign tf = findForeignByMainField(md, mainField);
+            if (tf != null && tf.getEnableStatus() == 1) {
+                String foreignTable = tf.getForeignTable();
+                if (!joinMap.containsKey(foreignTable)) {
+                    joinMap.put(foreignTable, tf);
+                }
+            }
+        }
+        for (Map.Entry<String, TableForeign> entry : joinMap.entrySet()) {
+            TableForeign tf = entry.getValue();
+            String foreignAlias = buildTableAlias(tf.getForeignTable());
+            sb.append(" left join ");
+            sb.append(tf.getForeignTable());
+            sb.append(" ");
+            sb.append(foreignAlias);
+            sb.append(" on ");
+            sb.append(md.getTableAlias() != null ? md.getTableAlias() : md.getTableName());
+            sb.append(".");
+            tryAppendKeywords(sb, tf.getMainTableCol());
+            sb.append("=");
+            sb.append(foreignAlias);
+            sb.append(".");
+            tryAppendKeywords(sb, tf.getForeignTableCol());
         }
     }
 

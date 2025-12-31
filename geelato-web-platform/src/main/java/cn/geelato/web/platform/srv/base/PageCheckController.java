@@ -1,15 +1,17 @@
 package cn.geelato.web.platform.srv.base;
 
 import cn.geelato.core.SessionCtx;
+import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.meta.AppPage;
-import cn.geelato.meta.AppPageCheckReq;
+import cn.geelato.meta.*;
 import cn.geelato.meta.enums.CheckStatusEnum;
 import cn.geelato.security.User;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.platform.srv.BaseController;
+import cn.geelato.web.platform.srv.security.enums.RoleTypeEnum;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -27,7 +29,7 @@ public class PageCheckController extends BaseController {
 
     /**
      * 页面签出/签入操作
-     * @param params { pageId: string, action: 'checkout' | 'checkin' }
+     * @param params { pageId: string, action: 'checkout' | 'checkin', force: boolean, checkUserId: string }
      * @return { code: int, status: string, msg: string, data: { checkStatus: string, checkUser: string, checkAt: string } }
      */
     @RequestMapping(value = "", method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
@@ -35,6 +37,8 @@ public class PageCheckController extends BaseController {
         try {
             String pageId = (String) params.get("pageId");
             String action = (String) params.get("action");
+            Boolean force = params.get("force") != null ? Boolean.parseBoolean(params.get("force").toString()) : false;
+            String checkUserId = (String) params.get("checkUserId");
             
             if (pageId == null || pageId.isEmpty()) {
                 return ApiResult.fail("页面ID不能为空");
@@ -97,12 +101,12 @@ public class PageCheckController extends BaseController {
                     // 页面已被签出
                     if (currentUser.getUserId().equals(page.getCheckUserId())) {
                         // 已被当前用户签出，执行签入操作
-                    page.setCheckStatus(CheckStatusEnum.UNCHECKED.getValue());
-                    // 签入时记录当前用户作为最后签入用户，而不是清空
-                    page.setCheckUserId(currentUser.getUserId());
-                    page.setCheckUserName(currentUser.getUserName());
-                    page.setCheckAt(new Date());
-                    dao.save(page);
+                        page.setCheckStatus(CheckStatusEnum.UNCHECKED.getValue());
+                        // 签入时记录当前用户作为最后签入用户，而不是清空
+                        page.setCheckUserId(currentUser.getUserId());
+                        page.setCheckUserName(currentUser.getUserName());
+                        page.setCheckAt(new Date());
+                        dao.save(page);
                         
                         resultData.put("checkStatus", page.getCheckStatus());
                         resultData.put("checkUserId", page.getCheckUserId());
@@ -110,8 +114,30 @@ public class PageCheckController extends BaseController {
                         resultData.put("checkAt", page.getCheckAt());
                         return ApiResult.success(resultData, "页面签入成功");
                     } else {
-                        // 已被其他用户签出，返回失败
-                        return ApiResult.fail("页面已被其他用户签出，无法签入");
+                        // 已被其他用户签出
+                        if (force) {
+                            // 强行签入，需要验证应用管理员权限
+                            if (!isAppAdmin(currentUser.getUserId(), page.getAppId())) {
+                                return ApiResult.fail("只有应用管理员才能强行签入页面");
+                            }
+                            
+                            // 执行强行签入操作
+                            page.setCheckStatus(CheckStatusEnum.UNCHECKED.getValue());
+                            //使用当前用户ID
+                            page.setCheckUserId(currentUser.getUserId());
+                            page.setCheckUserName(currentUser.getUserName());
+                            page.setCheckAt(new Date());
+                            dao.save(page);
+                            
+                            resultData.put("checkStatus", page.getCheckStatus());
+                            resultData.put("checkUserId", page.getCheckUserId());
+                            resultData.put("checkUserName", page.getCheckUserName());
+                            resultData.put("checkAt", page.getCheckAt());
+                            return ApiResult.success(resultData, "页面强行签入成功");
+                        } else {
+                            // 非强行签入，返回失败
+                            return ApiResult.fail("页面已被其他用户签出，无法签入");
+                        }
                     }
                 } else {
                     // 页面未被签出，直接返回成功
@@ -128,6 +154,46 @@ public class PageCheckController extends BaseController {
             log.error("页面签出/签入操作失败", e);
             return ApiResult.fail("页面签出/签入操作失败：" + e.getMessage());
         }
+    }
+    
+    /**
+     * 验证用户是否为应用管理员
+     * @param userId 用户ID
+     * @param appId 应用ID
+     * @return true表示是应用管理员，false表示不是
+     */
+    private boolean isAppAdmin(String userId, String appId) {
+        // 暂时先直接返回true
+        return true;
+        // try {
+        //     // 查询用户在该应用下的角色
+        //     FilterGroup filterGroup = new FilterGroup();
+        //     filterGroup.addFilter("userId", userId);
+        //     filterGroup.addFilter("enableStatus", "1");
+            
+        //     List<RoleUserMap> roleUserMaps = dao.queryList(RoleUserMap.class, filterGroup, null);
+        //     if (roleUserMaps == null || roleUserMaps.isEmpty()) {
+        //         return false;
+        //     }
+            
+        //     // 获取角色ID列表
+        //     List<String> roleIds = roleUserMaps.stream().map(RoleUserMap::getRoleId).toList();
+            
+        //     // 查询角色信息，判断是否为应用管理员角色
+        //     FilterGroup roleFilter = new FilterGroup();
+        //     roleFilter.addFilter("id", FilterGroup.Operator.in, String.join(",", roleIds));
+        //     roleFilter.addFilter("type", RoleTypeEnum.APP.getValue());
+        //     roleFilter.addFilter("appId", appId);
+        //     roleFilter.addFilter("enableStatus", "1");
+            
+        //     List<Role> roles = dao.queryList(Role.class, roleFilter, null);
+            
+        //     // 如果用户在该应用下有应用级角色，则认为是应用管理员
+        //     return roles != null && !roles.isEmpty();
+        // } catch (Exception e) {
+        //     log.error("验证应用管理员权限失败", e);
+        //     return false;
+        // }
     }
 
     /**

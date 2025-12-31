@@ -30,6 +30,9 @@ public class AppPageLog extends BaseEntity {
     @Title(title = "标题")
     private String label;
 
+    @Title(title = "类型", description = "如api|form|table")
+    private String type;
+
     @Title(title = "版本")
     private int version;
     

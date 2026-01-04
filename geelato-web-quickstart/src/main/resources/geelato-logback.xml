@@ -15,8 +15,8 @@
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <FileNamePattern>${LOG_DIR}/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
-            <maxFileSize>200MB</maxFileSize>
-            <maxHistory>10</maxHistory>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -27,8 +27,8 @@
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <FileNamePattern>${LOG_DIR}/schedule/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
-            <maxFileSize>200MB</maxFileSize>
-            <maxHistory>10</maxHistory>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -39,8 +39,8 @@
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <FileNamePattern>${LOG_DIR}/auth/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
-            <maxFileSize>200MB</maxFileSize>
-            <maxHistory>10</maxHistory>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -51,8 +51,8 @@
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <FileNamePattern>${LOG_DIR}/message/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
-            <maxFileSize>200MB</maxFileSize>
-            <maxHistory>10</maxHistory>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -63,8 +63,8 @@
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <FileNamePattern>${LOG_DIR}/interceptor/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
-            <maxFileSize>200MB</maxFileSize>
-            <maxHistory>10</maxHistory>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -75,8 +75,8 @@
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <FileNamePattern>${LOG_DIR}/request/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
-            <maxFileSize>200MB</maxFileSize>
-            <maxHistory>10</maxHistory>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>%d{HH:mm:ss} - %msg%n</pattern>

@@ -241,7 +241,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     protected void buildConditionSegment(StringBuilder sb, EntityMeta em, FilterGroup.Filter filter) {
         if (filter.getFilterFieldType() == FilterGroup.FilterFieldType.Function) {
             ConditionOperator.from(filter.getOperator())
-                    .appendFunction(this, sb, filter.getField(), filter);
+                    .appendFunction(this, sb, em, filter.getField(), filter);
         } else {
             FieldMeta fm = em.getFieldMeta(filter.getField());
             ConditionOperator.from(filter.getOperator())

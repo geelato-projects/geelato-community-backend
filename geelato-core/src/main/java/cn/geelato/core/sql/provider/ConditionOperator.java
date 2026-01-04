@@ -11,8 +11,17 @@ import java.util.regex.Pattern;
 enum ConditionOperator implements ConditionAppender {
     EQ {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             sb.append(MetaBaseSqlProvider.convertToSignString(filter.getOperator()));
             sb.append("?");
         }
@@ -29,8 +38,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     NEQ {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             sb.append(MetaBaseSqlProvider.convertToSignString(filter.getOperator()));
             sb.append("?");
         }
@@ -47,8 +65,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     LT {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             sb.append(MetaBaseSqlProvider.convertToSignString(filter.getOperator()));
             sb.append("?");
         }
@@ -65,8 +92,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     LTE {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             sb.append(MetaBaseSqlProvider.convertToSignString(filter.getOperator()));
             sb.append("?");
         }
@@ -83,8 +119,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     GT {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             sb.append(MetaBaseSqlProvider.convertToSignString(filter.getOperator()));
             sb.append("?");
         }
@@ -101,8 +146,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     GTE {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             sb.append(MetaBaseSqlProvider.convertToSignString(filter.getOperator()));
             sb.append("?");
         }
@@ -119,8 +173,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     START_WITH {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             sb.append(" like CONCAT('',?,'%')");
         }
         @Override
@@ -131,8 +194,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     END_WITH {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             sb.append(" like CONCAT('%',?,'')");
         }
         @Override
@@ -143,8 +215,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     CONTAINS {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             sb.append(" like CONCAT('%',?,'%')");
         }
         @Override
@@ -155,8 +236,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     IN {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             Object[] ary = filter.getValueAsArray();
             sb.append(" in(");
             sb.append(cn.geelato.utils.StringUtils.join(ary.length, "?", ","));
@@ -173,8 +263,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     NOTIN {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             Object[] ary = filter.getValueAsArray();
             sb.append(" not in(");
             sb.append(cn.geelato.utils.StringUtils.join(ary.length, "?", ","));
@@ -191,8 +290,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     NIL {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             if ("1".equals(filter.getValue())) {
                 sb.append(" is NULL");
             } else {
@@ -212,8 +320,17 @@ enum ConditionOperator implements ConditionAppender {
     },
     BT {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
-            provider.tryAppendKeywords(sb, fm);
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            FieldMeta fieldMeta = em.containsField(fm) ? em.getFieldMeta(fm) : null;
+            if (fieldMeta != null) {
+                provider.tryAppendKeywords(em, sb, fieldMeta);
+            } else {
+                if (em.getTableAlias() != null && !fm.contains(".")) {
+                    sb.append(em.getTableAlias());
+                    sb.append(".");
+                }
+                provider.tryAppendKeywords(sb, fm);
+            }
             JSONArray ja = JSONArray.parse(filter.getValue());
             String startTime = ja.get(0).toString();
             String endTime = ja.get(1).toString();
@@ -230,7 +347,7 @@ enum ConditionOperator implements ConditionAppender {
     },
     FIS {
         @Override
-        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, String fm, FilterGroup.Filter filter) {
+        public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
             throw new RuntimeException("未实现Operator：fis");
         }
         @Override

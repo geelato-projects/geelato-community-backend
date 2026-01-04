@@ -65,15 +65,23 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
         if (StringUtils.hasText(command.getGroupBy())) {
             sb.append(" group by ");
-            sb.append(command.getGroupBy());
+            String gb = command.getGroupBy();
+            if (md.getTableAlias() != null) {
+                gb = decorateOriginalWhere(md, gb);
+            }
+            sb.append(gb);
         }
         if (command.getHaving() != null) {
             sb.append(" having ");
-            sb.append(command.getHaving());
+            buildConditions(sb, md, command.getHaving());
         }
         if (StringUtils.hasText(command.getOrderBy())) {
             sb.append(" order by ");
-            sb.append(command.getOrderBy());
+            String ob = command.getOrderBy();
+            if (md.getTableAlias() != null) {
+                ob = decorateOriginalWhere(md, ob);
+            }
+            sb.append(ob);
         }
         if (command.isPagingQuery()) {
             sb.append(" limit ");
@@ -127,12 +135,16 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         // group by
         if (StringUtils.hasText(command.getGroupBy())) {
             sb.append(" group by ");
-            sb.append(command.getGroupBy());
+            String gb = command.getGroupBy();
+            if (md.getTableAlias() != null) {
+                gb = decorateOriginalWhere(md, gb);
+            }
+            sb.append(gb);
         }
         // having
         if (command.getHaving() != null) {
             sb.append(" having ");
-            sb.append(command.getHaving());
+            buildConditions(sb, md, command.getHaving());
         }
         sb.append(") t");
         return sb.toString();

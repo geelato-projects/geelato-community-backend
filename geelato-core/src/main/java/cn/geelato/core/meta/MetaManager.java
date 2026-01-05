@@ -177,7 +177,7 @@ public class MetaManager extends AbstractManager {
             List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
             List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and entity_name='%s' and connect_id='%s'", map.get("entity_name"), map.get("connect_id")));
             List<Map<String, Object>> checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
-            List<Map<String,Object>> foreignList=dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_FOREIGN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
+            List<Map<String,Object>> foreignList=dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_FOREIGN_LIST_BY_TABLE + " and main_table='%s'", map.get("table_name")));
             removeOne(entityName);
             parseTableEntity(map, columnList, viewList, checkList, foreignList);
         }

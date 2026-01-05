@@ -143,7 +143,7 @@ public class MetaReflex {
             em.setVersionControl(Boolean.parseBoolean(tmap.get("version_control").toString()));
         }
         if(tmap.get("cache_type")!=null) {
-            em.setCacheType(EntityCacheType.fromStringIgnoreCase(tmap.get("version_control").toString()));
+            em.setCacheType(EntityCacheType.fromStringIgnoreCase(tmap.get("cache_type").toString()));
         }
         if(columnList==null ||columnList.isEmpty()){
             throw new RuntimeException("column list is empty!");

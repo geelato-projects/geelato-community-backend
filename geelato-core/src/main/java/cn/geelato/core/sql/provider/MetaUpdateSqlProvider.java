@@ -84,6 +84,7 @@ public class MetaUpdateSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
     protected String buildOneSql(SaveCommand command) {
         StringBuilder sb = new StringBuilder();
         EntityMeta em = getEntityMeta(command);
+        em.setTableAlias(null);
         sb.append("update ");
         sb.append(em.getTableName());
         sb.append(" set ");

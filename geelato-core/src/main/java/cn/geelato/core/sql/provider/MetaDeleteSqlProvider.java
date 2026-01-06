@@ -79,6 +79,7 @@ public class MetaDeleteSqlProvider extends MetaBaseSqlProvider<DeleteCommand> {
     protected String buildOneSql(DeleteCommand command) {
         StringBuilder sb = new StringBuilder();
         EntityMeta em = getEntityMeta(command);
+        em.setTableAlias(null);
         if (!LogicDelete) {
             sb.append("delete from ");
             sb.append(em.getTableName());

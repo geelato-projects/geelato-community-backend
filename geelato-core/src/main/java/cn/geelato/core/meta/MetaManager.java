@@ -42,6 +42,8 @@ public class MetaManager extends AbstractManager {
      * 实体类名称和实体类对象的映射关系,key:entityName，value为实体类对象
      */
     private final HashMap<String, EntityMeta> entityMetadataMap = new HashMap<>();
+    private final HashMap<String, EntityMeta> entityMetadataMapFromClass = new HashMap<>();
+    private final HashMap<String, EntityMeta> entityMetadataMapFromDatabase = new HashMap<>();
     /**
      * 实体类名称和实体类对象的映射关系,key:tableName，value为实体类对象,已在数据库中创建的实体类
      */
@@ -53,7 +55,7 @@ public class MetaManager extends AbstractManager {
     /**
      * 实体类
      */
-    private final HashMap<String, Class> entityMetaClassMap = new HashMap<>();
+//    private final HashMap<String, Class> entityMetaClassMap = new HashMap<>();
     private Dao dao;
 
     private MetaManager() {
@@ -127,6 +129,8 @@ public class MetaManager extends AbstractManager {
             ).collect(Collectors.toList());
             parseTableEntity(map, columnList, viewList, checkList, foreignList);
             parseViewEntity(viewList);
+//            Map<String, Object> diffResult = compareEntitySourcesAll(entityName);
+//            MetaComapare.logDiffs(log, diffResult);
         }
     }
 
@@ -333,10 +337,12 @@ public class MetaManager extends AbstractManager {
         }
         log.info("parse meta from class :{}", clazz.getName());
         String entityName = MetaReflex.getEntityName(clazz);
+        EntityMeta entityMeta = MetaReflex.getEntityMeta(clazz);
+        if (Strings.isNotBlank(entityMeta.getEntityName())) {
+            entityMetadataMapFromClass.put(entityMeta.getEntityName(), entityMeta);
+        }
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
-            EntityMeta entityMeta = MetaReflex.getEntityMeta(clazz);
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
-            entityMetaClassMap.put(entityMeta.getTableName(), clazz);
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Class));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
             printEntityTree(entityMeta);
@@ -356,19 +362,19 @@ public class MetaManager extends AbstractManager {
 
     public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList, List<Map<String, Object>> checkList, List<Map<String, Object>> foreignList) {
         String entityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
+        EntityMeta entityMeta = null;
+        if (Strings.isNotBlank(entityName)) {
+            entityMeta = MetaReflex.getEntityMetaByTable(map, columnList, viewList, checkList, foreignList);
+            entityMetadataMapFromDatabase.put(entityName, entityMeta);
+        }
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
-            EntityMeta entityMeta = MetaReflex.getEntityMetaByTable(map, columnList, viewList, checkList, foreignList);
-            if (entityMetaClassMap.containsKey(entityName)) {
-                entityMeta.setClassType(entityMetaClassMap.get(entityName));
-                entityMeta.setEntityType(EntityType.Class);
-            }
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
             printEntityTree(entityMeta);
         } else if (entityMetadataMap.containsKey(entityName)) {
-            EntityMeta entityMeta = entityMetadataMap.get(entityName);
+            entityMeta = entityMetadataMap.get(entityName);
             if (entityMeta != null && entityMeta.getTableMeta() != null) {
                 entityMeta.setTableMeta(MetaReflex.getTableMeta(map));
             }
@@ -394,6 +400,22 @@ public class MetaManager extends AbstractManager {
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
             printEntityTree(entityMeta);
         }
+    }
+
+    public EntityMeta getClassSourceEntity(String entityName) {
+        return entityMetadataMapFromClass.get(entityName);
+    }
+
+    public EntityMeta getDatabaseSourceEntity(String entityName) {
+        return entityMetadataMapFromDatabase.get(entityName);
+    }
+
+    public Map<String, Object> compareEntitySources(String entityName) {
+        return MetaComapare.compareEntitySources(this, entityName);
+    }
+
+    public Map<String, Object> compareEntitySourcesAll(String entityName) {
+        return MetaComapare.compareEntitySourcesAll(this, entityName);
     }
 
     /**

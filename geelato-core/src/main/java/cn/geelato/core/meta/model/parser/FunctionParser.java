@@ -15,7 +15,9 @@ public class FunctionParser {
             return value.startsWith("increment")
                     || value.startsWith("gfn_increment")
                     || value.startsWith("findinset")
-                    || value.startsWith("gfn_findinset");
+                    || value.startsWith("gfn_findinset")
+                    || value.startsWith("fuzzymatch")
+                    || value.startsWith("gfn_fuzzymatch");
         }
     }
 }

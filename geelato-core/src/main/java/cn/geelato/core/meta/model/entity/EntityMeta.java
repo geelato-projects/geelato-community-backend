@@ -17,11 +17,6 @@ import java.util.*;
 @SuppressWarnings("rawtypes")
 public class EntityMeta {
 
-    /**
-     * -- GETTER --
-     * 对于基于java类解析的实体，则返回类名（不包括包名）
-     * 对于基于页面配置的实体，则返回配置的实体名称
-     */
     @Setter
     @Getter
     private String entityName;
@@ -31,24 +26,12 @@ public class EntityMeta {
     @Setter
     @Getter
     private Class classType;
-    /**
-     * -- GETTER --
-     * 对于基于java类解析的实体，则有具体的类类型
-     * 对于基于页面配置的实体，则返回值为空
-     */
     @Setter
     @Getter
     private EntityType entityType;
     @Setter
     @Getter
     private String catalog = "none";
-    @Getter
-    @Setter
-    private EntityCacheType cacheType;
-    /**
-     * -- GETTER --
-     * 基于@Id获取实体中的主键字段名
-     */
     @Getter
     private FieldMeta id;
     @Setter
@@ -57,9 +40,6 @@ public class EntityMeta {
     @Getter
     @Setter
     private String tableAlias;
-    @Setter
-    @Getter
-    private Boolean versionControl=false;
     @Getter
     private String[] fieldNames;
     @Getter
@@ -77,8 +57,6 @@ public class EntityMeta {
     private Map<String, DictDataSource> dictDataSourceMap;
     // 冗余，用于快速获取列信息
     private LinkedHashMap<String, FieldMeta> fieldMetaMap;
-    // 冗余，用于快速获取模型视图信息
-    private LinkedHashMap<String, ViewMeta> viewMetaMap;
     // 冗余，用于快速获取列元数据，json格式，用于对外展示，过滤掉了一些数据库字段
     private LinkedHashMap<String, SimpleFieldMeta> simpleFieldMetaMap;
     // 冗余，用于快速获取外键关系
@@ -87,6 +65,13 @@ public class EntityMeta {
     // 不更新的字段
     private final Map<String, Boolean> ignoreUpdateFieldMap;
 
+    @Setter
+    @Getter
+    private Boolean versionControl=false;
+
+    @Getter
+    @Setter
+    private EntityCacheType cacheType;
     public EntityMeta() {
         ignoreUpdateFieldMap = new HashMap<>();
         ignoreUpdateFieldMap.put("create_at", true);
@@ -120,7 +105,6 @@ public class EntityMeta {
         Collection<FieldMeta> nonSpecialFiledMetas = new ArrayList<>();
 
         for (FieldMeta fm : fieldMetas) {
-//            fm.setEntityMeta(this);
             switch (fm.getColumnName()) {
                 case "id":
                     idMeta = fm;

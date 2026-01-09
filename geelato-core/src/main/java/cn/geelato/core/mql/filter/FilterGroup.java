@@ -1,4 +1,4 @@
-package cn.geelato.core.gql.filter;
+package cn.geelato.core.mql.filter;
 
 
 import cn.geelato.core.meta.model.parser.FunctionParser;

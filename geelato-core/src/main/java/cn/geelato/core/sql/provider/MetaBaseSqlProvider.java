@@ -1,20 +1,18 @@
 package cn.geelato.core.sql.provider;
 
-import cn.geelato.core.gql.TypeConverter;
-import cn.geelato.core.gql.command.BaseCommand;
-import cn.geelato.core.gql.execute.BoundSql;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.TypeConverter;
+import cn.geelato.core.mql.command.BaseCommand;
+import cn.geelato.core.mql.execute.BoundSql;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import com.alibaba.fastjson2.JSONArray;
 import org.apache.commons.collections.map.HashedMap;
 import org.springframework.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author geemeta

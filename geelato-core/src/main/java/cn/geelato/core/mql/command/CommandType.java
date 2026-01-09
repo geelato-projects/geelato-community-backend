@@ -1,4 +1,4 @@
-package cn.geelato.core.gql.command;
+package cn.geelato.core.mql.command;
 
 /**
  * @author geemeta

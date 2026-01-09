@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.graal.service;
 
-import cn.geelato.core.gql.GqlManager;
-import cn.geelato.core.gql.command.QueryCommand;
+import cn.geelato.core.mql.GqlManager;
+import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.core.meta.MetaManager;

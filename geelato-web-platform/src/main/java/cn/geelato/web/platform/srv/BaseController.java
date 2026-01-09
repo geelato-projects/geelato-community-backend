@@ -1,8 +1,8 @@
 package cn.geelato.web.platform.srv;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.mql.filter.FilterGroup;
+import cn.geelato.core.mql.parser.PageQueryRequest;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.utils.DateUtils;

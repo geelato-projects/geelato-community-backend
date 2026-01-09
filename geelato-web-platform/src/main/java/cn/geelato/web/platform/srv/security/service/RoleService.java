@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.security.service;
 
 import cn.geelato.core.enums.EnableStatusEnum;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.meta.*;
 import cn.geelato.web.platform.srv.arco.enums.PermissionTypeEnum;

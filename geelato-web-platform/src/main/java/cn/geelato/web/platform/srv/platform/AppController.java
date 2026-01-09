@@ -2,8 +2,8 @@ package cn.geelato.web.platform.srv.platform;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.mql.filter.FilterGroup;
+import cn.geelato.core.mql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;

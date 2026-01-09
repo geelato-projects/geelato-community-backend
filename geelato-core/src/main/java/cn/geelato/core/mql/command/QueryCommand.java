@@ -1,6 +1,6 @@
-package cn.geelato.core.gql.command;
+package cn.geelato.core.mql.command;
 
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.filter.FilterGroup;
 import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
 import lombok.Setter;

@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.security.service;
 
 import cn.geelato.core.constants.ResourcesFiles;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.utils.JsonUtils;

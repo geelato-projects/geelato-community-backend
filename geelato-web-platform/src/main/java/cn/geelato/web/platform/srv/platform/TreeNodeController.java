@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.srv.platform;
 
-import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.mql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;

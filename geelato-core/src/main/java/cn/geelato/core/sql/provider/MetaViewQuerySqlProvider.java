@@ -1,8 +1,8 @@
 package cn.geelato.core.sql.provider;
 
 import cn.geelato.core.enums.ViewTypeEnum;
-import cn.geelato.core.gql.command.QueryViewCommand;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.command.QueryViewCommand;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.view.ViewMeta;

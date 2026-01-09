@@ -1,8 +1,8 @@
 package cn.geelato.core.sql.provider;
 
-import cn.geelato.core.gql.TypeConverter;
-import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.gql.command.SaveCommand;
+import cn.geelato.core.mql.TypeConverter;
+import cn.geelato.core.mql.filter.FilterGroup;
+import cn.geelato.core.mql.command.SaveCommand;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import lombok.extern.slf4j.Slf4j;

@@ -1,7 +1,7 @@
 package cn.geelato.core.sql.provider;
 
-import cn.geelato.core.gql.command.QueryCommand;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.command.QueryCommand;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.field.FieldMeta;

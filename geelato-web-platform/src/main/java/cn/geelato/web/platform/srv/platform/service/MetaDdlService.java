@@ -3,7 +3,7 @@ package cn.geelato.web.platform.srv.platform.service;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.TableSourceTypeEnum;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.connect.ConnectMeta;

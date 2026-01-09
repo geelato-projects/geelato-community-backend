@@ -1,6 +1,6 @@
 package cn.geelato.core.orm;
 
-import cn.geelato.core.gql.execute.BoundSql;
+import cn.geelato.core.mql.execute.BoundSql;
 import cn.geelato.core.meta.EntityManager;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.script.db.DbScriptManager;

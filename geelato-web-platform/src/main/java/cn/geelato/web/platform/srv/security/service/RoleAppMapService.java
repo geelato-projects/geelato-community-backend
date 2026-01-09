@@ -4,7 +4,7 @@ import cn.geelato.meta.Role;
 import cn.geelato.meta.RoleAppMap;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.meta.App;
 import cn.geelato.web.platform.srv.platform.service.AppService;
 import cn.geelato.web.platform.srv.platform.service.BaseService;

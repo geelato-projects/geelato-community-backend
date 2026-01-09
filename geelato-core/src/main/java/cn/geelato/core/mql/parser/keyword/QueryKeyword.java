@@ -1,11 +1,11 @@
-package cn.geelato.core.gql.parser.keyword;
+package cn.geelato.core.mql.parser.keyword;
 
-import cn.geelato.core.gql.command.BaseCommand;
-import cn.geelato.core.gql.command.CommandValidator;
-import cn.geelato.core.gql.command.QueryCommand;
-import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.gql.parser.JsonTextQueryParser;
-import cn.geelato.core.gql.parser.KeyWordHandler;
+import cn.geelato.core.mql.command.BaseCommand;
+import cn.geelato.core.mql.command.CommandValidator;
+import cn.geelato.core.mql.command.QueryCommand;
+import cn.geelato.core.mql.filter.FilterGroup;
+import cn.geelato.core.mql.parser.JsonTextQueryParser;
+import cn.geelato.core.mql.parser.KeyWordHandler;
 import cn.geelato.core.meta.model.parser.FunctionParser;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -193,7 +193,7 @@ public enum QueryKeyword implements KeyWordHandler {
                                 filterGroup.addFilter(field, operator, jsonObject.getString(x));
                             }
                         } else {
-                            throw new cn.geelato.core.gql.parser.JsonParseException();
+                            throw new cn.geelato.core.mql.parser.JsonParseException();
                         }
                     }
                 });

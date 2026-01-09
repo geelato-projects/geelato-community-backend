@@ -1,13 +1,13 @@
 package cn.geelato.core.orm;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.gql.command.QueryCommand;
-import cn.geelato.core.gql.command.QueryViewCommand;
-import cn.geelato.core.gql.command.SaveCommand;
-import cn.geelato.core.gql.execute.BoundPageSql;
-import cn.geelato.core.gql.execute.BoundSql;
-import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.mql.command.QueryCommand;
+import cn.geelato.core.mql.command.QueryViewCommand;
+import cn.geelato.core.mql.command.SaveCommand;
+import cn.geelato.core.mql.execute.BoundPageSql;
+import cn.geelato.core.mql.execute.BoundSql;
+import cn.geelato.core.mql.filter.FilterGroup;
+import cn.geelato.core.mql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.meta.Ignore;
 import cn.geelato.lang.meta.IgnoreType;

@@ -1,7 +1,7 @@
 package cn.geelato.datasource.interceptor;
 
-import cn.geelato.core.gql.execute.BoundPageSql;
-import cn.geelato.core.gql.execute.BoundSql;
+import cn.geelato.core.mql.execute.BoundPageSql;
+import cn.geelato.core.mql.execute.BoundSql;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.datasource.EntityDataSourceResolver;
 import cn.geelato.datasource.annotation.UseDynamicDataSource;
@@ -16,7 +16,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.lang.reflect.Method;
 

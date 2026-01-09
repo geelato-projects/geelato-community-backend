@@ -4,7 +4,7 @@ import cn.geelato.meta.Role;
 import cn.geelato.meta.RoleTreeNodeMap;
 import org.apache.logging.log4j.util.Strings;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.meta.TreeNode;
 import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.web.platform.srv.platform.service.TreeNodeService;

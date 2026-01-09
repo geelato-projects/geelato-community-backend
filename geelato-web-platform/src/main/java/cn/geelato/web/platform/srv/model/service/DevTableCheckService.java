@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.model.service;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
 import cn.geelato.core.meta.model.entity.TableCheck;

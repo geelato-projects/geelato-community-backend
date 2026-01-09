@@ -1,11 +1,7 @@
-package cn.geelato.core.gql.command;
+package cn.geelato.core.mql.command;
 
-import cn.geelato.core.gql.filter.FilterGroup;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.collections.map.HashedMap;
-
-import java.util.Map;
 
 @Setter
 @Getter

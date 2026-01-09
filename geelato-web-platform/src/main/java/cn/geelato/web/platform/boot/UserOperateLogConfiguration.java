@@ -6,9 +6,9 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.MethodSignature;
 
-import cn.geelato.core.gql.GqlManager;
-import cn.geelato.core.gql.command.CommandType;
-import cn.geelato.core.gql.command.SaveCommand;
+import cn.geelato.core.mql.GqlManager;
+import cn.geelato.core.mql.command.CommandType;
+import cn.geelato.core.mql.command.SaveCommand;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 

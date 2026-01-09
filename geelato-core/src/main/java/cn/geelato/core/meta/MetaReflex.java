@@ -3,7 +3,7 @@ package cn.geelato.core.meta;
 
 import cn.geelato.core.enums.MysqlDataTypeEnum;
 import cn.geelato.core.enums.MysqlToJavaEnum;
-import cn.geelato.core.gql.TypeConverter;
+import cn.geelato.core.mql.TypeConverter;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableForeign;
@@ -14,12 +14,10 @@ import cn.geelato.lang.meta.*;
 import cn.geelato.utils.DateUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 

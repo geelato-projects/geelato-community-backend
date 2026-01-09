@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.security.service;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.meta.SysConfig;
 import cn.geelato.web.platform.srv.platform.service.SysConfigService;

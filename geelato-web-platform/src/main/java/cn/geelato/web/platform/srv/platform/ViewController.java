@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.platform;
 
 import cn.geelato.web.common.constants.MediaTypes;
-import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.mql.parser.PageQueryRequest;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.ViewManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;

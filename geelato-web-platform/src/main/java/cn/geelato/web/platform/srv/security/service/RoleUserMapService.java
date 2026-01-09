@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.srv.security.service;
 
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.meta.Role;

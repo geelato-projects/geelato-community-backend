@@ -1,8 +1,8 @@
-package cn.geelato.core.gql.parser;
+package cn.geelato.core.mql.parser;
 
-import cn.geelato.core.gql.command.BaseCommand;
-import cn.geelato.core.gql.command.CommandValidator;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.command.BaseCommand;
+import cn.geelato.core.mql.command.CommandValidator;
+import cn.geelato.core.mql.filter.FilterGroup;
 import com.alibaba.fastjson2.JSONObject;
 
 public interface KeyWordHandler {

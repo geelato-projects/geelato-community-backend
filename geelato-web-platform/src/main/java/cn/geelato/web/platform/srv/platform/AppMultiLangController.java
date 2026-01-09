@@ -1,14 +1,13 @@
 package cn.geelato.web.platform.srv.platform;
 
-import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.mql.filter.FilterGroup;
+import cn.geelato.core.mql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.meta.AppMultiLang;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.handler.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.platform.enums.AppMultiLangPurposeEnum;
 import cn.geelato.web.platform.srv.platform.service.AppMultiLangService;

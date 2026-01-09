@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.srv;
 
-import cn.geelato.core.gql.parser.PageQueryRequest;
+import cn.geelato.core.mql.parser.PageQueryRequest;
 import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;

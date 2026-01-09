@@ -1,9 +1,9 @@
-package cn.geelato.core.gql.parser.keyword;
+package cn.geelato.core.mql.parser.keyword;
 
-import cn.geelato.core.gql.command.BaseCommand;
-import cn.geelato.core.gql.command.CommandValidator;
-import cn.geelato.core.gql.filter.FilterGroup;
-import cn.geelato.core.gql.parser.KeyWordHandler;
+import cn.geelato.core.mql.command.BaseCommand;
+import cn.geelato.core.mql.command.CommandValidator;
+import cn.geelato.core.mql.filter.FilterGroup;
+import cn.geelato.core.mql.parser.KeyWordHandler;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.Getter;
@@ -82,7 +82,7 @@ public enum DeleteKeyword implements KeyWordHandler {
                                 filterGroup.addFilter(field, operator, jsonObject.getString(x));
                             }
                         } else {
-                            throw new cn.geelato.core.gql.parser.JsonParseException();
+                            throw new cn.geelato.core.mql.parser.JsonParseException();
                         }
                     }
                 });

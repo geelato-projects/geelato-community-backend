@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.auth;
 
 import cn.geelato.core.GlobalContext;
-import cn.geelato.core.gql.filter.FilterGroup;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;

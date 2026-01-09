@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.srv.base;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.gql.filter.FilterGroup;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.meta.*;
@@ -9,9 +8,7 @@ import cn.geelato.meta.enums.CheckStatusEnum;
 import cn.geelato.security.User;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.srv.security.enums.RoleTypeEnum;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;

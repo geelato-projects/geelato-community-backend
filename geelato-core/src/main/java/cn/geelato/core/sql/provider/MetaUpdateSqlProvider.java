@@ -105,7 +105,9 @@ public class MetaUpdateSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
             tryAppendKeywords(sb, em.getColumnName(fieldName));
             var fieldValue= command.getValueMap().get(fieldName);
             if(fieldValue instanceof FunctionFieldValue fvm){
-                sb.append( String.format("=%s,",fvm.getMysqlFunction()));
+                String func = fvm.getMysqlFunction();
+                func = qualifyFunction(func);
+                sb.append(String.format("=%s,", func));
             }else{
                 sb.append("=?,");
             }

@@ -26,6 +26,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     protected MetaManager metaManager = MetaManager.singleInstance();
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final Map<String, String> tableAlias = new HashMap<>(8);
+    protected String functionSchema = "geelato";
 
     static {
         keywordsMap.put("index", true);
@@ -129,9 +130,13 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                 ||filter.getOperator().equals(FilterGroup.Operator.fis)) {
             // not do anything
         }else {
-            String fieldType=getEntityMeta(command).getFieldMeta(filter.getField()).getColumnMeta().getDataType();
-            Assert.isTrue(!"JSON".equals(fieldType), filter.getField() + "为JSON,不支持" + filter.getOperator());
-            list.add(filter.getValue());
+            if(filter.getFilterFieldType()== FilterGroup.FilterFieldType.Normal){
+                String fieldType=getEntityMeta(command).getFieldMeta(filter.getField()).getColumnMeta().getDataType();
+                Assert.isTrue(!"JSON".equals(fieldType), filter.getField() + "为JSON,不支持" + filter.getOperator());
+                list.add(filter.getValue());
+            }else {
+                list.add(filter.getValue());
+            }
         }
     }
 
@@ -288,5 +293,33 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
 
     public String getTableAlias(String tableName) {
         return this.tableAlias.get(tableName);
+    }
+
+    public String decorateExpressionWithAlias(EntityMeta md, String expr) {
+        String res = expr;
+        String alias = md.getTableAlias();
+        if (alias == null) {
+            return res;
+        }
+        for (FieldMeta fm : md.getFieldMetas()) {
+            String col = fm.getColumnMeta().getName();
+            String pattern = "(?<!\\.)\\b" + java.util.regex.Pattern.quote(col) + "\\b";
+            res = res.replaceAll(pattern, alias + "." + col);
+        }
+        return res;
+    }
+
+    public String qualifyFunction(String expr) {
+        if (expr == null) {
+            return null;
+        }
+        int idx = expr.indexOf("(");
+        if (idx > 0) {
+            String name = expr.substring(0, idx).trim();
+            if (name.startsWith("gfn_") && !name.contains(".")) {
+                return functionSchema + "." + expr;
+            }
+        }
+        return expr;
     }
 }

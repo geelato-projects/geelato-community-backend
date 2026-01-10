@@ -183,7 +183,13 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             }
             if (FunctionParser.isFunction(fieldName)) {
                 String afterRefaceExpression = FunctionParser.reconstruct(fieldName, md.getEntityName());
-                sb.append(new FunctionFieldValue(afterRefaceExpression).getMysqlFunction()).append(" ");
+                FunctionFieldValue ffv = new FunctionFieldValue(afterRefaceExpression);
+                String func = ffv.getMysqlFunction();
+                func = qualifyFunction(func);
+                if (md.getTableAlias() != null) {
+                    func = decorateExpressionWithAlias(md, func);
+                }
+                sb.append(func).append(" ");
             } else {
                 String mainField = fieldName;
                 String remoteField = null;

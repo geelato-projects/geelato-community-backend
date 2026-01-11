@@ -181,7 +181,9 @@ public enum QueryKeyword implements KeyWordHandler {
                     } else {
                         String[] ary = x.split("\\|");
                         String field = ary[0];
-                        validator.validateField(field, "where");
+                        if (!FunctionParser.isFunction(field)) {
+                            validator.validateField(field, "where");
+                        }
                         if (ary.length == 1) {
                             filterGroup.addFilter(field, FilterGroup.Operator.eq, jsonObject.getString(x));
                         } else if (ary.length == 2) {

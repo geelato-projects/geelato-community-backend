@@ -94,7 +94,7 @@ public class CommandValidator {
             sb.append("验证实体");
             sb.append(validateEntityName);
             sb.append("：");
-            sb.append(message.toString());
+            sb.append(message);
             return sb.toString();
         }
         return message.toString();

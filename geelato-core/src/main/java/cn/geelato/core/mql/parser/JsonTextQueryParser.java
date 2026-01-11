@@ -53,7 +53,11 @@ public class JsonTextQueryParser extends JsonTextParser {
             JSONObject jo = (JSONObject) obj;
             if (jo.size() != 1) {
                 validator.appendMessage("一个实体查询jsonText，有且只有一个根元素。");
-                Assert.isTrue(validator.isSuccess(), validator.getMessage());
+                if (!validator.isSuccess()) {
+                    IllegalArgumentException ex = new IllegalArgumentException(validator.getMessage());
+                    log.error("parseMulti validation failed", ex);
+                    throw ex;
+                }
             }
             String key = jo.keySet().iterator().next();
             list.add(parse(key, jo.getJSONObject(key), validator));
@@ -69,14 +73,22 @@ public class JsonTextQueryParser extends JsonTextParser {
         CommandValidator validator = new CommandValidator();
         if (jo.size() != 1) {
             validator.appendMessage("一个实体查询jsonText，有且只有一个根元素。");
-            Assert.isTrue(validator.isSuccess(), validator.getMessage());
+            if (!validator.isSuccess()) {
+                IllegalArgumentException ex = new IllegalArgumentException(validator.getMessage());
+                log.error("parse validation failed", ex);
+                throw ex;
+            }
         }
         String key = jo.keySet().iterator().next();
         return parse(key, jo.getJSONObject(key), validator);
     }
 
     private QueryCommand parse(String entityName, JSONObject jo, CommandValidator validator) {
-        Assert.isTrue(validator.validateEntity(entityName), validator.getMessage());
+        if (!validator.validateEntity(entityName)) {
+            IllegalArgumentException ex = new IllegalArgumentException(validator.getMessage());
+            log.error("validateEntity failed: {}", entityName, ex);
+            throw ex;
+        }
         QueryCommand command = new QueryCommand();
         command.setEntityName(entityName);
         FilterGroup fg = new FilterGroup();
@@ -131,7 +143,11 @@ public class JsonTextQueryParser extends JsonTextParser {
             }
         });
 
-        Assert.isTrue(validator.isSuccess(), validator.getMessage());
+        if (!validator.isSuccess()) {
+            IllegalArgumentException ex = new IllegalArgumentException(validator.getMessage());
+            log.error("final validation failed", ex);
+            throw ex;
+        }
         return command;
     }
 

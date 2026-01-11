@@ -36,7 +36,9 @@ public class JsonTextDeleteParser extends JsonTextParser {
 
     private DeleteCommand parse(SessionCtx sessionCtx, String commandName, JSONObject jo, CommandValidator validator) {
 
-        Assert.isTrue(validator.validateEntity(commandName), validator.getMessage());
+        if (!validator.validateEntity(commandName)) {
+            logAndThrow(validator.getMessage(), "validateEntity failed: {}", commandName);
+        }
 
         DeleteCommand command = new DeleteCommand();
         command.setEntityName(commandName);
@@ -71,7 +73,9 @@ public class JsonTextDeleteParser extends JsonTextParser {
             }
         });
 
-        Assert.isTrue(validator.isSuccess(), validator.getMessage());
+        if (!validator.isSuccess()) {
+            logAndThrow(validator.getMessage(), "final validation failed (delete)");
+        }
         return command;
     }
 

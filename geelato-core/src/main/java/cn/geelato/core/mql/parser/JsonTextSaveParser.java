@@ -182,7 +182,9 @@ public class JsonTextSaveParser extends JsonTextParser {
      * 递归解析保存操作命令，里面变更在执行期再解析，不在此解析
      */
     private SaveCommand parse(SessionCtx sessionCtx, String commandName, JSONObject jo, CommandValidator validator) {
-        Assert.isTrue(validator.validateEntity(commandName), validator.getMessage());
+        if (!validator.validateEntity(commandName)) {
+            logAndThrow(validator.getMessage(), "validateEntity failed: {}", commandName);
+        }
         SaveCommand command = new SaveCommand();
         command.setEntityName(commandName);
         EntityMeta entityMeta = metaManager.getByEntityName(commandName);
@@ -246,8 +248,9 @@ public class JsonTextSaveParser extends JsonTextParser {
                 }
             }
         });
-        Assert.isTrue(validator.isSuccess(), validator.getMessage());
-
+        if (!validator.isSuccess()) {
+            logAndThrow(validator.getMessage(), "final validation failed (save)");
+        }
         String[] fields = new String[params.size()];
         params.keySet().toArray(fields);
         String PK = validator.getPK();

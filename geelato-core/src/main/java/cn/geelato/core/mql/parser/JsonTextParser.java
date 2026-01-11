@@ -4,11 +4,13 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.core.mql.command.CommandValidator;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.utils.DateUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+@Slf4j
 public class JsonTextParser {
 
     protected final static String KEYWORD_FLAG = "@";
@@ -42,5 +44,16 @@ public class JsonTextParser {
         if (validator.hasKeyField(FN_UPDATER_NAME)) {
             params.put(FN_UPDATER_NAME,  SessionCtx.getUserName());
         }
+    }
+
+    protected void logAndThrow(String message, String format, Object... args) {
+        IllegalArgumentException ex = new IllegalArgumentException(message);
+        Object[] newArgs = new Object[(args == null ? 0 : args.length) + 1];
+        if (args != null && args.length > 0) {
+            System.arraycopy(args, 0, newArgs, 0, args.length);
+        }
+        newArgs[newArgs.length - 1] = ex;
+        log.error(format, newArgs);
+        throw ex;
     }
 }

@@ -28,11 +28,7 @@ import java.util.Map;
 @Slf4j
 public class JsonTextQueryParser extends JsonTextParser {
 
-    // page_num即offset，记录位置
-
-    // 可对@fs中的字段进行重命名，字段原名+一到多个空格+字段重命名
     private final static String SUB_ENTITY_FLAG = "~";
-    private final static String KW_HAVING = "@having";
 
     public static Map<String, String> orderMap;
 
@@ -54,9 +50,7 @@ public class JsonTextQueryParser extends JsonTextParser {
             if (jo.size() != 1) {
                 validator.appendMessage("一个实体查询jsonText，有且只有一个根元素。");
                 if (!validator.isSuccess()) {
-                    IllegalArgumentException ex = new IllegalArgumentException(validator.getMessage());
-                    log.error("parseMulti validation failed", ex);
-                    throw ex;
+                    logAndThrow(validator.getMessage(), "parseMulti validation failed");
                 }
             }
             String key = jo.keySet().iterator().next();
@@ -74,9 +68,7 @@ public class JsonTextQueryParser extends JsonTextParser {
         if (jo.size() != 1) {
             validator.appendMessage("一个实体查询jsonText，有且只有一个根元素。");
             if (!validator.isSuccess()) {
-                IllegalArgumentException ex = new IllegalArgumentException(validator.getMessage());
-                log.error("parse validation failed", ex);
-                throw ex;
+                logAndThrow(validator.getMessage(), "parse validation failed");
             }
         }
         String key = jo.keySet().iterator().next();
@@ -85,9 +77,7 @@ public class JsonTextQueryParser extends JsonTextParser {
 
     private QueryCommand parse(String entityName, JSONObject jo, CommandValidator validator) {
         if (!validator.validateEntity(entityName)) {
-            IllegalArgumentException ex = new IllegalArgumentException(validator.getMessage());
-            log.error("validateEntity failed: {}", entityName, ex);
-            throw ex;
+            logAndThrow(validator.getMessage(), "validateEntity failed: {}", entityName);
         }
         QueryCommand command = new QueryCommand();
         command.setEntityName(entityName);
@@ -144,9 +134,7 @@ public class JsonTextQueryParser extends JsonTextParser {
         });
 
         if (!validator.isSuccess()) {
-            IllegalArgumentException ex = new IllegalArgumentException(validator.getMessage());
-            log.error("final validation failed", ex);
-            throw ex;
+            logAndThrow(validator.getMessage(), "final validation failed");
         }
         return command;
     }

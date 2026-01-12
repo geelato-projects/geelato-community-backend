@@ -82,12 +82,20 @@ public class JsonTextDeleteParser extends JsonTextParser {
     private void putDeleteDefaultField(SessionCtx sessionCtx, Map<String, Object> params, CommandValidator validator) {
         String newDataString = simpleDateFormat.format(new Date());
         if (validator.hasKeyField("delStatus")) {
-            params.put("delStatus", 1);
+            params.put(FN_DEL_STATUS, 1);
         }
         if (validator.hasKeyField("deleteAt")) {
-            params.put("deleteAt", newDataString);
+            params.put(FN_DELETE_AT, newDataString);
         }
-        putBaseDefaultField(sessionCtx,params,validator);
+        if (validator.hasKeyField(FN_UPDATE_AT)) {
+            params.put(FN_UPDATE_AT, newDataString);
+        }
+        if (validator.hasKeyField(FN_UPDATER)) {
+            params.put(FN_UPDATER, SessionCtx.getUserId());
+        }
+        if (validator.hasKeyField(FN_UPDATER_NAME)) {
+            params.put(FN_UPDATER_NAME,  SessionCtx.getUserName());
+        }
     }
 
 

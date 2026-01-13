@@ -160,9 +160,27 @@ public class BizDataController extends BaseController {
                     setClauses.add(em.getColumnName("creatorName") + " = ?");
                     params.add(targetUser.getName());
                 }
+                    if (em.containsField("updater")) {
+                    setClauses.add(em.getColumnName("updater") + " = ?");
+                    params.add(targetUser.getId());
+                }
+                if (em.containsField("updaterName")) {
+                    setClauses.add(em.getColumnName("updaterName") + " = ?");
+                    params.add(targetUser.getName());
+                }
+                if (em.containsField("buId")) {
+                    setClauses.add(em.getColumnName("buId") + " = ?");
+                    String buVal = targetUser.getBuId();
+                    params.add(buVal);
+                }
+                if (em.containsField("deptId")) {
+                    setClauses.add(em.getColumnName("deptId") + " = ?");
+                    String deptVal = targetUser.getDeptId();
+                    params.add(deptVal);
+                }
 
                 if (setClauses.isEmpty()) {
-                    log.warn("实体不包含可更新字段(creator/creatorName)：{}", entityName);
+                    log.warn("实体不包含可更新字段：{}", entityName);
                     continue;
                 }
 

@@ -4,7 +4,7 @@ import cn.geelato.core.Fn;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.biz.rules.common.EntityValidateRule;
-import cn.geelato.core.mql.GqlManager;
+import cn.geelato.core.mql.MetaQLManager;
 import cn.geelato.core.mql.command.DeleteCommand;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.command.SaveCommand;
@@ -50,7 +50,7 @@ public class RuleService {
     @Autowired
     @Qualifier("dynamicDao")
     public Dao dao;
-    private final GqlManager gqlManager = GqlManager.singleInstance();
+    private final MetaQLManager gqlManager = MetaQLManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final BizMvelRuleManager bizMvelRuleManager = BizManagerFactory.getBizMvelRuleManager("mvelRule");

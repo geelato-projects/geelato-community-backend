@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.graal.service;
 
-import cn.geelato.core.mql.GqlManager;
+import cn.geelato.core.mql.MetaQLManager;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
@@ -184,7 +184,7 @@ public class FnService {
 
     @GraalFunction(example = "$gl.fn.queryForMapList({gql},{withMeta})", description = "执行GQL查询，返回带或不带元数据的分页结果")
     public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta) {
-        QueryCommand command = GqlManager.singleInstance().generateQuerySql(gql);
+        QueryCommand command = MetaQLManager.singleInstance().generateQuerySql(gql);
         switchDataSource(command.getEntityName());
         return ruleService.queryForMapList(gql, withMeta);
     }

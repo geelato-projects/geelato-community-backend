@@ -17,39 +17,30 @@ import java.util.List;
  * @author geemeta
  */
 @Slf4j
-public class GqlManager extends AbstractManager {
-    private static GqlManager instance;
+public class MetaQLManager extends AbstractManager {
+    private static MetaQLManager instance;
     private final JsonTextQueryParser jsonTextQueryParser = new JsonTextQueryParser();
     private final JsonTextSaveParser jsonTextSaveParser = new JsonTextSaveParser();
     private final JsonTextDeleteParser jsonTextDeleteParser = new JsonTextDeleteParser();
 
-    public static GqlManager singleInstance() {
+    public static MetaQLManager singleInstance() {
         lock.lock();
         if (instance == null) {
-            instance = new GqlManager();
+            instance = new MetaQLManager();
         }
         lock.unlock();
         return instance;
     }
 
-    private  GqlManager() {
-        log.info("GqlManager Instancing...");
+    private MetaQLManager() {
+        log.info("MetaQLManager Instancing...");
     }
-    //========================================================
-    //                  基于元数据  gql                      ==
-    //========================================================
     public QueryCommand generateQuerySql(String jsonText) {
         return jsonTextQueryParser.parse(jsonText);
     }
-
     public List<QueryCommand> generateMultiQuerySql(String jsonText) {
         return jsonTextQueryParser.parseMulti(jsonText);
     }
-
-    public QueryCommand generatePageQuerySql(String jsonText) {
-        return jsonTextQueryParser.parse(jsonText);
-    }
-
     public SaveCommand generateSaveSql(String jsonText, SessionCtx sessionCtx) {
         return jsonTextSaveParser.parse(jsonText, sessionCtx);
     }

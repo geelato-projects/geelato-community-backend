@@ -1,4 +1,4 @@
-package cn.geelato.core.mql.parser;
+package cn.geelato.core.mql.parser.keyword;
 
 import cn.geelato.core.mql.command.BaseCommand;
 import cn.geelato.core.mql.command.CommandValidator;

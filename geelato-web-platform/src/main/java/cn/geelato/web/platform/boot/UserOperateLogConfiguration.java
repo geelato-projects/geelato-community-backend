@@ -6,7 +6,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.MethodSignature;
 
-import cn.geelato.core.mql.GqlManager;
+import cn.geelato.core.mql.MetaQLManager;
 import cn.geelato.core.mql.command.CommandType;
 import cn.geelato.core.mql.command.SaveCommand;
 import cn.geelato.core.meta.MetaManager;
@@ -33,7 +33,7 @@ public class UserOperateLogConfiguration {
     @Qualifier("primaryDao")
     private Dao dao;
 
-    private final GqlManager gqlManager = GqlManager.singleInstance();
+    private final MetaQLManager gqlManager = MetaQLManager.singleInstance();
 
     @Around(value = "@annotation( cn.geelato.web.platform.annotation.UserOperateLog)")
     public Object around(ProceedingJoinPoint proceedingJoinPoint){

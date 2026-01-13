@@ -61,20 +61,6 @@ public class SqlManager extends AbstractManager {
         return boundPageSql;
     }
 
-//    public BoundPageSql generatePageQuerySql(QueryTreeCommand command) {
-//        BoundPageSql boundPageSql = new BoundPageSql();
-//        boundPageSql.setBoundSql(metaQueryTreeSqlProvider.generate(command));
-//        boundPageSql.setCountSql(metaQueryTreeSqlProvider.buildCountSql(command));
-//        return boundPageSql;
-//    }
-//
-//    public BoundPageSql generatePageQuerySqlMulti(QueryCommand command) {
-//        BoundPageSql boundPageSql = new BoundPageSql();
-//        boundPageSql.setBoundSql(metaQuerySqlMultiProvider.generate(command));
-//        boundPageSql.setCountSql(metaQuerySqlMultiProvider.buildCountSql(command));
-//        return boundPageSql;
-//    }
-
     public BoundSql generateSaveSql(SaveCommand command) {
         if (command.getCommandType() == CommandType.Update) {
             return metaUpdateSqlProvider.generate(command);

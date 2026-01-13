@@ -4,7 +4,7 @@ import cn.geelato.lang.exception.CoreException;
 
 public class JsonParseException extends CoreException {
     private static final int DEFAULT_CODE = 10008;
-    private static final String DEFAULT_MSG = "Gql json解析异常";
+    private static final String DEFAULT_MSG = "MQL json解析异常";
 
     public JsonParseException() {
         super(DEFAULT_CODE, DEFAULT_MSG);

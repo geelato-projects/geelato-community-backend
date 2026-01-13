@@ -1,5 +1,9 @@
 package cn.geelato.security;
 
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Locale;
+
 public class SecurityContext {
 
     private static final ThreadLocal<User> threadUser = new ThreadLocal<>();
@@ -37,5 +41,21 @@ public class SecurityContext {
     }
     public static App getCurrentApp() {
         return threadApp.get();
+    }
+
+    public static boolean isAdmin() {
+        User user = getCurrentUser();
+        if (user == null) {
+            return false;
+        }
+        List<UserRole> roles = user.getUserRoles();
+        if (roles == null || roles.isEmpty()) {
+            return false;
+        }
+        for (UserRole role : roles) {
+            if(role.getCode().contains("admin"))
+                return true;
+        }
+        return false;
     }
 }

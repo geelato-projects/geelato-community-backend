@@ -1,10 +1,12 @@
 package cn.geelato.web.platform.srv.platform;
 
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.meta.User;
+import cn.geelato.security.SecurityContext;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
@@ -60,6 +62,9 @@ public class BizDataController extends BaseController {
             }
 
             Map<String, Integer> result = new HashMap<>();
+            String currentUserId = SecurityContext.getCurrentUser().getUserId();
+            boolean isAdmin = SecurityContext.isAdmin();
+            StringBuilder denyMsg = new StringBuilder();
 
             for (Map.Entry<String, List<String>> entry : entityIdMap.entrySet()) {
                 String entityName = entry.getKey();
@@ -90,6 +95,59 @@ public class BizDataController extends BaseController {
                 String tableName = em.getTableMeta() != null ? em.getTableMeta().dbTableName() : em.getEntityName();
                 String pkColumn = em.getId() != null ? em.getId().getColumnName() : "id";
 
+                if (!isAdmin) {
+                    if (!em.containsField("creator")) {
+                        String msg = String.format("实体[%s]不包含creator字段，无法移交", entityName);
+                        log.warn(msg);
+                        if (!denyMsg.isEmpty()) {
+                            denyMsg.append("; ");
+                        }
+                        denyMsg.append(msg);
+                        continue;
+                    }
+                }
+
+                Set<String> allowedIds = new HashSet<>();
+                if (isAdmin) {
+                    allowedIds.addAll(pkList);
+                } else {
+                    String creatorColumn = em.getColumnName("creator");
+                    StringBuilder sel = new StringBuilder();
+                    sel.append("SELECT ").append(pkColumn).append(", ").append(creatorColumn)
+                            .append(" FROM ").append(tableName)
+                            .append(" WHERE ").append(pkColumn).append(" IN (")
+                            .append(String.join(",", Collections.nCopies(pkList.size(), "?")))
+                            .append(")");
+                    List<Map<String, Object>> rows = dynamicDao.getJdbcTemplate().queryForList(sel.toString(), pkList.toArray());
+                    Set<String> deniedIds = new HashSet<>();
+                    Set<String> requestedIds = new HashSet<>(pkList);
+                    for (Map<String, Object> row : rows) {
+                        Object idVal = row.get(pkColumn);
+                        Object creatorVal = row.get(creatorColumn);
+                        String idStr = idVal != null ? idVal.toString() : null;
+                        String creatorStr = creatorVal != null ? creatorVal.toString() : null;
+                        if (idStr != null && currentUserId.equals(creatorStr)) {
+                            allowedIds.add(idStr);
+                        } else if (idStr != null) {
+                            deniedIds.add(idStr);
+                        }
+                    }
+                    for (String rid : requestedIds) {
+                        if (!allowedIds.contains(rid)) {
+                            deniedIds.add(rid);
+                        }
+                    }
+                    if (!deniedIds.isEmpty()) {
+                        String msg = String.format("实体[%s]非所有者ID：%s", entityName, String.join(",", deniedIds));
+                        log.warn(msg);
+                        if (!denyMsg.isEmpty()) {
+                            denyMsg.append("; ");
+                        }
+                        denyMsg.append(msg);
+                        continue;
+                    }
+                }
+
                 // 仅更新实体中存在的字段
                 List<String> setClauses = new ArrayList<>();
                 List<Object> params = new ArrayList<>();
@@ -112,16 +170,20 @@ public class BizDataController extends BaseController {
                 sql.append("UPDATE ").append(tableName).append(" SET ")
                         .append(String.join(", ", setClauses))
                         .append(" WHERE ").append(pkColumn).append(" IN (");
-                String placeholders = String.join(",", Collections.nCopies(pkList.size(), "?"));
+                String placeholders = String.join(",", Collections.nCopies(allowedIds.size(), "?"));
                 sql.append(placeholders).append(")");
 
-                params.addAll(pkList);
+                params.addAll(allowedIds);
 
                 int updated = dynamicDao.getJdbcTemplate().update(sql.toString(), params.toArray());
                 result.put(entityName, updated);
             }
 
-            return ApiResult.success(result);
+            if (!denyMsg.isEmpty()) {
+                return ApiResult.fail("你不是数据所有者，无法移交：" + denyMsg);
+            } else {
+                return ApiResult.success(result);
+            }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

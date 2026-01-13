@@ -6,6 +6,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Org extends OrgCore {
-    private String code;
     private String type;
 }

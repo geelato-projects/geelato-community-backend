@@ -3,11 +3,8 @@ package cn.geelato.core.env;
 
 import cn.geelato.core.AbstractManager;
 import cn.geelato.core.env.entity.SysConfig;
-import cn.geelato.security.Permission;
-import cn.geelato.security.Tenant;
-import cn.geelato.security.User;
+import cn.geelato.security.*;
 
-import cn.geelato.security.UserOrg;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -176,6 +173,7 @@ public class EnvManager  extends AbstractManager {
 
             loadUserOrg(user);
             loadTenant(user);
+            loadUserRole(user);
 
             // 将用户基本信息放入缓存（不包含权限信息）
             userCache.put(cacheKey, new CachedUser(user));
@@ -185,6 +183,13 @@ public class EnvManager  extends AbstractManager {
             loadUserPermission(user);
         }
         return user;
+    }
+
+    private void loadUserRole(User user) {
+        List<UserRole> userRoles=jdbcTemplate.query(" select t3.id,t3.code,t3.`NAME`,t3.type,t3.tenant_code as tenantCode from platform_role_r_user t1 left join platform_user t2 on t1.user_id=t2.id\n" +
+                        "left join platform_role t3 on t3.id=t1.role_id where t2.id= ?",
+                new BeanPropertyRowMapper<>(UserRole.class), user.getUserId());
+        user.setUserRoles(userRoles);
     }
 
     private void loadUserOrg(User user) {

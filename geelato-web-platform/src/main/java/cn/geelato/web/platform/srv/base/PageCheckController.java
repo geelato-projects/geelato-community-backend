@@ -34,9 +34,8 @@ public class PageCheckController extends BaseController {
         try {
             String pageId = (String) params.get("pageId");
             String action = (String) params.get("action");
-            Boolean force = params.get("force") != null ? Boolean.parseBoolean(params.get("force").toString()) : false;
-            String checkUserId = (String) params.get("checkUserId");
-            
+            Boolean force = params.get("force") != null && Boolean.parseBoolean(params.get("force").toString());
+
             if (pageId == null || pageId.isEmpty()) {
                 return ApiResult.fail("页面ID不能为空");
             }

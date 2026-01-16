@@ -2,9 +2,7 @@ package cn.geelato.web.common.interceptor;
 
 import cn.geelato.core.GlobalContext;
 import cn.geelato.core.env.EnvManager;
-import cn.geelato.security.SecurityContext;
-import cn.geelato.security.Tenant;
-import cn.geelato.security.User;
+import cn.geelato.security.*;
 
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
@@ -37,11 +35,13 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private static final String __AnonymousTokenTag__="Anonymous ";
     private static final String anonymousFixedPassword = GlobalContext.getAnonymousPwd();
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
+    private final OrgProvider orgProvider;
  
     public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();
 
-    public DefaultSecurityInterceptor(OAuthConfigurationProperties config) {
+    public DefaultSecurityInterceptor(OAuthConfigurationProperties config, OrgProvider orgProvider) {
         oAuthConfigurationProperties = config;
+        this.orgProvider = orgProvider;
     }
 
     @Override
@@ -90,6 +90,8 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
             if (StringUtils.isNotEmpty(orgId)) {
                 currentUser.setOrgId(orgId);
+                currentUser.setDeptId(orgProvider.getDeptId(orgId));
+                currentUser.setBuId( orgProvider.getBuId(orgId));
             }
             SecurityContext.setCurrentUser(currentUser);
             SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
@@ -118,6 +120,8 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
             if (StringUtils.isNotEmpty(orgId)) {
                 currentUser.setOrgId(orgId);
+                currentUser.setDeptId(orgProvider.getDeptId(orgId));
+                currentUser.setBuId( orgProvider.getBuId(orgId));
             }
             SecurityContext.setCurrentUser(currentUser);
             SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));

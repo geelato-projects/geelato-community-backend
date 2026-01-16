@@ -1,9 +1,11 @@
 package cn.geelato.web.platform.boot;
 
+import cn.geelato.security.OrgProvider;
 import cn.geelato.web.common.interceptor.*;
 import cn.geelato.web.platform.boot.interceptor.ControllerInvokeLoggingInterceptor;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -19,11 +21,14 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     @Resource
     private ControllerInvokeLoggingInterceptor controllerInvokeLoggingInterceptor;
 
+    @Resource
+    private OrgProvider orgProvider;
+
     private static final String urlPrefix = "/api";
 
     @Override
     public void addInterceptors(@NotNull InterceptorRegistry registry) {
-        registry.addInterceptor(new DefaultSecurityInterceptor(oAuthConfigurationProperties))
+        registry.addInterceptor(new DefaultSecurityInterceptor(oAuthConfigurationProperties,orgProvider))
                 .addPathPatterns("/**")
                 // 以下为排除鉴权的路径
                 // 登录接口

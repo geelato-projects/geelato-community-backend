@@ -106,9 +106,9 @@ public class GraalManager extends AbstractManager {
                 if (!"cn.geelato.core.orm.Dao".equals(f.getType().getName())) {
                     continue;
                 }
-                if (!hasDynamicDsAnnotation(f)) {
-                    continue;
-                }
+//                if (!hasDynamicDsAnnotation(f)) {
+//                    continue;
+//                }
                 cn.geelato.core.orm.Dao daoBean = resolveSpringDaoBean();
                 if (daoBean != null) {
                     try {

@@ -12,13 +12,13 @@ call mvn clean install -U -D maven.test.skip=true
 cd ../geelato-utils
 call mvn clean install -U -D maven.test.skip=true
 
+cd ../geelato-security
+call mvn clean install -U -D maven.test.skip=true
+
 cd ../geelato-core
 call mvn clean install -U -D maven.test.skip=true
 
 cd ../geelato-meta
-call mvn clean install -U -D maven.test.skip=true
-
-cd ../geelato-security
 call mvn clean install -U -D maven.test.skip=true
 
 cd ../geelato-web-common

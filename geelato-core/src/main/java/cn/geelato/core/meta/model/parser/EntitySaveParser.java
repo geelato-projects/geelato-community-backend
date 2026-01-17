@@ -96,7 +96,7 @@ public class EntitySaveParser {
             entity.put("buId", SessionCtx.getCurrentUser().getBuId());
         }
         if (entity.containsKey("deptId")) {
-            entity.put("deptId", SessionCtx.getCurrentUser().getDefaultOrgId());
+            entity.put("deptId", SessionCtx.getCurrentUser().getOrgId());
         }
         if (entity.containsKey("deleteAt")) {
             entity.put("deleteAt", DateUtils.DEFAULT_DELETE_AT);

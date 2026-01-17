@@ -344,7 +344,7 @@ public class JsonTextSaveParser extends JsonTextParser {
             entity.put(FN_BU_ID, SessionCtx.getCurrentUser().getBuId());
         }
         if (entity.containsKey(FN_DEPT_ID)) {
-            entity.put(FN_DEPT_ID, SessionCtx.getCurrentUser().getDefaultOrgId());
+            entity.put(FN_DEPT_ID, SessionCtx.getCurrentUser().getOrgId());
         }
         if (entity.containsKey(FN_UPDATE_AT)) {
             entity.put(FN_UPDATE_AT, simpleDateFormat.format(new Date()));

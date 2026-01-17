@@ -47,7 +47,7 @@ public class BaseEntityMetaObjectHandler implements MetaObjectHandler {
             this.setFieldValByName("buId", SessionCtx.getCurrentUser().getBuId(), metaObject);
         }
         if (hasField(metaObject, "deptId") && SessionCtx.getCurrentUser() != null) {
-            this.setFieldValByName("deptId", SessionCtx.getCurrentUser().getDefaultOrgId(), metaObject);
+            this.setFieldValByName("deptId", SessionCtx.getCurrentUser().getOrgId(), metaObject);
         }
 
         // 填充更新相关字段（插入时也需要填充，与JsonTextSaveParser保持一致）

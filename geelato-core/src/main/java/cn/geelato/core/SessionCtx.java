@@ -15,6 +15,7 @@ public class SessionCtx extends HashMap<String,String> {
         public SessionCtx(){
         this.put("userId",getCurrentUser().getUserId());
         this.put("userName",getCurrentUser().getUserName());
+        this.put("orgId",getCurrentUser().getOrgId());
         this.put("defaultOrgId",getCurrentUser().getDefaultOrgId());
         this.put("tenantCode",getCurrentTenantCode());
     }

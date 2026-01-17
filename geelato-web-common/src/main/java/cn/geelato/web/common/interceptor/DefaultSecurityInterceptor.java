@@ -107,10 +107,12 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
 
     private boolean tryJwtAuthenticate(String rawToken) {
         String token = rawToken;
-        if (!token.startsWith(__JWTTokenTag__)) {
-            return false;
-        }
+//        if (!token.startsWith(__JWTTokenTag__)) {
+//            return false;
+//        }
         token = token.replace(__JWTTokenTag__, "");
+        //因为oauth2的令牌暂时没法切换身份所以增加支持Bearer前缀
+        token = token.replace(__OAuthTokenTag__, "");
         try {
             DecodedJWT verify = JWTUtil.verify(token);
             String loginName = verify.getClaim("loginName").asString();

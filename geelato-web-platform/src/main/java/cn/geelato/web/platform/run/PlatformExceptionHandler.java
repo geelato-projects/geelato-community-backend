@@ -64,14 +64,6 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
         return handleExceptionInternal(ex, apiResult, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(value = {SqlExecuteException.class})
-    public final ResponseEntity<?> handleException(SqlExecuteException ex, WebRequest request) {
-        ApiResult<SqlExecuteException> apiResult = ApiResult.fail(ex.getMessage());
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
-        return handleExceptionInternal(ex, apiResult, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);
-    }
-
     /**
      * 处理除以上问题之后的其它问题
      */

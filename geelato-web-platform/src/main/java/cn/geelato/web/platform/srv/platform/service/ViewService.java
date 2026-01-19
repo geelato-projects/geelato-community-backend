@@ -8,9 +8,9 @@ import java.util.Map;
 @Component
 public class ViewService extends  BaseService  {
 
-    public  List<Map<String,Object>> pageQueryModel(String entity,String view, int pageNum, int pageSize, Map<String, Object> params) {
-        return dao.queryListByView(entity,view, pageNum, pageSize, params);
-    }
+//    public  List<Map<String,Object>> pageQueryModel(String entity,String view, int pageNum, int pageSize, Map<String, Object> params) {
+//        return dao.queryListByView(entity,view, pageNum, pageSize, params);
+//    }
 
 
 }

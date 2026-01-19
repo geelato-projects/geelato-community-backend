@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * @author geemeta
@@ -33,9 +34,7 @@ public class MetaDeleteSqlProvider extends MetaBaseSqlProvider<DeleteCommand> {
         // 条件部分
         Object[] whereObjects = buildWhereParams(command);
         // 2、再加条件部分
-        for (Object object : whereObjects) {
-            objectList.add(object);
-        }
+        Collections.addAll(objectList, whereObjects);
         return objectList.toArray();
     }
 

@@ -1,5 +1,6 @@
 package cn.geelato.core.orm;
 
+import cn.geelato.lang.exception.CoreException;
 import lombok.Getter;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
@@ -9,7 +10,10 @@ import java.util.Arrays;
 import java.util.Objects;
 
 @Getter
-public class SqlExecuteException extends RuntimeException{
+public class SqlExecuteException extends CoreException {
+
+    private static final int DEFAULT_CODE = 10010;
+
     private final String sql;
     private final Object[] params;
     private final int dbErrorCode;
@@ -17,7 +21,7 @@ public class SqlExecuteException extends RuntimeException{
     private final SQLException originalSqlException;
     private final DataAccessException originalDataAccessException;
         public SqlExecuteException(DataAccessException dae, String sql, Object[] params) {
-        super(buildErrorMsg(dae, sql, params), dae);
+        super(DEFAULT_CODE,buildErrorMsg(dae, sql, params), dae);
         Throwable rootCause = NestedExceptionUtils.getRootCause(dae);
         SQLException sqlException = rootCause instanceof SQLException ? (SQLException) rootCause : null;
         this.sql = sql;
@@ -38,14 +42,12 @@ public class SqlExecuteException extends RuntimeException{
         int dbErrorCode = sqlException != null ? sqlException.getErrorCode() : -1;
         String sqlState = sqlException != null ? sqlException.getSQLState() : null;
         String ls = System.lineSeparator();
-        StringBuilder sb = new StringBuilder();
-        sb.append("SQL执行异常").append(ls)
-          .append("原因：").append(Objects.requireNonNullElse(dae.getMessage(), "")).append(ls)
-          .append("执行SQL：").append(Objects.requireNonNullElse(sql, "")).append(ls)
-          .append("参数：").append(params == null ? "[]" : Arrays.toString(params)).append(ls)
-          .append("数据库错误码：").append(dbErrorCode).append(ls)
-          .append("SQL状态码：").append(Objects.requireNonNullElse(sqlState, ""));
-        return sb.toString();
+        return "SQL执行异常" + ls +
+                "原因：" + Objects.requireNonNullElse(dae.getMessage(), "") + ls +
+                "执行SQL：" + Objects.requireNonNullElse(sql, "") + ls +
+                "参数：" + (params == null ? "[]" : Arrays.toString(params)) + ls +
+                "数据库错误码：" + dbErrorCode + ls +
+                "SQL状态码：" + Objects.requireNonNullElse(sqlState, "");
 
     }
 

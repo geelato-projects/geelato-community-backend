@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author geemeta
@@ -74,9 +75,13 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     public BoundSql generate(E command) {
         BoundSql boundSql = new BoundSql();
         boundSql.setName(command.getEntityName());
-        boundSql.setSql(buildOneSql(command));
-        command.setFinalSql(boundSql.getSql());
-        boundSql.setParams(buildParams(command));
+        String sql = buildOneSql(command);
+        sql = sanitizeSql(sql);
+        boundSql.setSql(sql);
+        command.setFinalSql(sql);
+        Object[] params = buildParams(command);
+        params = sanitizeParams(params);
+        boundSql.setParams(params);
         boundSql.setTypes(buildTypes(command));
         logger.info("final-sql: {}", command.getFinalSql());
         if (command.getCommands() != null) {
@@ -321,5 +326,39 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             }
         }
         return expr;
+    }
+    
+    private String sanitizeSql(String sql) {
+        if (sql == null) {
+            return null;
+        }
+        String res = sql.replaceAll("/\\*.*?\\*/", " ");
+        res = res.replaceAll("--.*?(\\r?\\n|$)", " ");
+        res = res.replace(";", " ");
+        return res;
+    }
+    
+    private Object[] sanitizeParams(Object[] params) {
+        if (params == null || params.length == 0) {
+            return params;
+        }
+        Object[] arr = new Object[params.length];
+        for (int i = 0; i < params.length; i++) {
+            Object v = params[i];
+            if (v instanceof String s) {
+                arr[i] = sanitizeStringParam(s);
+            } else {
+                arr[i] = v;
+            }
+        }
+        return arr;
+    }
+    
+    private String sanitizeStringParam(String s) {
+        String res = s;
+        res = res.replaceAll("/\\*.*?\\*/", "");
+        res = res.replaceAll("--.*?(\\r?\\n|$)", "");
+        res = res.replace(";", "");
+        return res;
     }
 }

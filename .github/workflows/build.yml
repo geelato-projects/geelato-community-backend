@@ -25,9 +25,12 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
         
+    - name: Install parent POM
+      run: mvn -B -q -DskipTests -f geelato-parent/pom.xml install
+      
     - name: Build with Maven
       run: mvn -B clean package -Dmaven.test.skip=true -DskipTests -Dautoconfig.skip
-
+      
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:

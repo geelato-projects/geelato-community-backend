@@ -10,6 +10,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>geelato-parent</module>
         <module>geelato-lang</module>
         <module>geelato-core</module>
         <module>geelato-meta</module>

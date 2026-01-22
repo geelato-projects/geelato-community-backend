@@ -332,10 +332,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         if (sql == null) {
             return null;
         }
-        String res = sql.replaceAll("/\\*.*?\\*/", " ");
-        res = res.replaceAll("--.*?(\\r?\\n|$)", " ");
-        res = res.replace(";", " ");
-        return res;
+        return sql.replaceAll("--.*?(\\r?\\n|$)", " ");
     }
     
     private Object[] sanitizeParams(Object[] params) {
@@ -356,9 +353,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     
     private String sanitizeStringParam(String s) {
         String res = s;
-        res = res.replaceAll("/\\*.*?\\*/", "");
         res = res.replaceAll("--.*?(\\r?\\n|$)", "");
-        res = res.replace(";", "");
         return res;
     }
 }

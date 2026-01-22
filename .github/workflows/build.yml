@@ -31,6 +31,21 @@ jobs:
     - name: Install plugin-all into local Maven repo
       run: mvn -B -q install:install-file -Dfile=libs/plugin-all-0.0.1-SNAPSHOT.jar -DgroupId=cn.geelato -DartifactId=plugin-all -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar -DgeneratePom=true
       
+    - name: Install geelato-web-oss into local Maven repo
+      run: mvn -B -q install:install-file -Dfile=libs/geelato-web-oss-0.0.1-SNAPSHOT.jar -DgroupId=cn.geelato -DartifactId=geelato-web-oss -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar -DgeneratePom=true
+      
+    - name: Install geelato-package into local Maven repo
+      run: mvn -B -q install:install-file -Dfile=libs/geelato-package-1.0.0-SNAPSHOT.jar -DgroupId=cn.geelato -DartifactId=geelato-package -Dversion=1.0.0-SNAPSHOT -Dpackaging=jar -DgeneratePom=true
+      
+    - name: Install geelato-message into local Maven repo
+      run: mvn -B -q install:install-file -Dfile=libs/geelato-message-0.0.1-SNAPSHOT.jar -DgroupId=cn.geelato -DartifactId=geelato-message -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar -DgeneratePom=true
+      
+    - name: Install aspose-words (jdk17) into local Maven repo
+      run: mvn -B -q install:install-file -Dfile=libs/aspose-words-21.1-jdk17.jar -DgroupId=com.aspose -DartifactId=aspose-words -Dversion=21.1 -Dpackaging=jar -Dclassifier=jdk17 -DgeneratePom=true
+      
+    - name: Install aspose-cells into local Maven repo
+      run: mvn -B -q install:install-file -Dfile=libs/aspose-cells-21.11.jar -DgroupId=com.aspose -DartifactId=aspose-cells -Dversion=21.11 -Dpackaging=jar -DgeneratePom=true
+      
     - name: Build with Maven
       run: mvn -B clean package -Dmaven.test.skip=true -DskipTests -Dautoconfig.skip
       

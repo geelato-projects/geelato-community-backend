@@ -28,6 +28,9 @@ jobs:
     - name: Install parent POM
       run: mvn -B -q -DskipTests -f geelato-parent/pom.xml install
       
+    - name: Install plugin-all into local Maven repo
+      run: mvn -B -q install:install-file -Dfile=libs/plugin-all-0.0.1-SNAPSHOT.jar -DgroupId=cn.geelato -DartifactId=plugin-all -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar -DgeneratePom=true
+      
     - name: Build with Maven
       run: mvn -B clean package -Dmaven.test.skip=true -DskipTests -Dautoconfig.skip
       

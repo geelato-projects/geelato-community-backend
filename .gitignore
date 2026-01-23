@@ -45,6 +45,7 @@ build/
 geelato-web-quickstart/dump.rdb
 
 .geelato/
+.trae/
 
 *.log
 *.lck

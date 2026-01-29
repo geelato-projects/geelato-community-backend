@@ -11,6 +11,7 @@ public class GlobalContext {
     protected final static Boolean __ApiEncrypt__ = __SecurityLevel__ > 1;
     protected final static String __Environment__ = "development";
     protected final static Boolean __CACHE__ = __Environment__.equals("product");
+    protected final static Boolean __LogStack__=false;
     protected final static Boolean __POLYGLOT_DEBUGGER__ =false;
     public static String getEnvironment() {
         return __Environment__;
@@ -29,5 +30,8 @@ public class GlobalContext {
 
     public static String getAnonymousPwd() {
         return "H2k9ZpQ3@geElAto";
+    }
+    public static Boolean getLogStack(){
+        return __LogStack__;
     }
 }

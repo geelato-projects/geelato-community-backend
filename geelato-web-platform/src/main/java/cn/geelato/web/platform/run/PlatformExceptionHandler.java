@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.run;
 
+import cn.geelato.core.GlobalContext;
 import cn.geelato.core.orm.SqlExecuteException;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
@@ -41,7 +42,7 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {CoreException.class})
     public final ResponseEntity<?> handleException(CoreException ex, WebRequest request) {
-        ApiResult<PlatformRuntimeException> apiResult = ApiResult.fail(coreException2PlatformException(ex), ex.getErrorMsg());
+        ApiResult<PlatformRuntimeException> apiResult = ApiResult.fail(coreException2PlatformException(ex), "系统异常");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
         return handleExceptionInternal(ex, apiResult, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);
@@ -53,6 +54,9 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
         String logMessage = "logTag=" + logTag + "|userId=" + platformRuntimeException.getOccurUserId() + "|occurTime=" + platformRuntimeException.getOccurTime();
         log.error(logMessage, coreException);
         platformRuntimeException.setLogTag(logTag);
+        if (!GlobalContext.getLogStack()) {
+            platformRuntimeException.setCoreException(null);
+        }
         return platformRuntimeException;
     }
 

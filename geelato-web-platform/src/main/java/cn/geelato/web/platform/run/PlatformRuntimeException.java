@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 public class PlatformRuntimeException {
 
+    @Setter
     private CoreException coreException;
     @Setter
     @Getter
@@ -42,6 +43,7 @@ public class PlatformRuntimeException {
     }
 
     public String getStackTraceDetail() {
+        if (coreException == null) return "";
         StringBuilder sb = new StringBuilder();
         for (StackTraceElement element : coreException.getStackTrace()) {
             sb.append("[").append(element.toString()).append("]").append("\n");

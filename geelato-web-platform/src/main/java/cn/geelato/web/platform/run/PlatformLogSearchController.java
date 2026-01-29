@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @ApiRestController("/run/log")
 public class PlatformLogSearchController {
@@ -26,5 +30,23 @@ public class PlatformLogSearchController {
                     return ApiResult.success(result);
                 })
                 .orElseGet(() -> ApiResult.fail("未找到匹配日志"));
+    }
+
+    @RequestMapping(value = "/searchByUserTime", method = RequestMethod.GET)
+    public ApiResult<?> searchByUserTime(@RequestParam(required = false) String userId,
+                                         @RequestParam(required = false) String from,
+                                         @RequestParam(required = false) String to) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        LocalDateTime fromTime = from != null && !from.isEmpty() ? LocalDateTime.parse(from, formatter) : LocalDateTime.now().minusDays(1);
+        LocalDateTime toTime = to != null && !to.isEmpty() ? LocalDateTime.parse(to, formatter) : LocalDateTime.now();
+        List<PlatformLogSearchService.LogHit> hits = logSearchService.findByUserAndTimeRange(userId, fromTime, toTime);
+        List<Map<String, Object>> list = hits.stream().map(hit -> {
+            Map<String, Object> result = new HashMap<>();
+            result.put("file", hit.getFile().toString());
+            result.put("lineNumber", hit.getLineNumber());
+            result.put("lines", hit.getLines());
+            return result;
+        }).collect(Collectors.toList());
+        return ApiResult.success(list);
     }
 }

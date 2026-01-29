@@ -1,183 +1,171 @@
 package cn.geelato.web.platform.run;
 
+import org.springframework.stereotype.Service;
+
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.rolling.RollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.*;
-import java.util.regex.Pattern;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
-@Slf4j
 public class PlatformLogSearchService {
-    @Autowired(required = false)
-    private Environment environment;
 
-    public Optional<LogHit> findFirstByLogTag(String logTag) {
-        Path errorDir = resolveErrorLogDir();
-        if (errorDir == null) {
-            log.warn("未能解析日志目录，无法搜索日志。");
-            return Optional.empty();
-        }
-        List<Path> files = listPlatformExceptionLogFiles(errorDir);
-        for (Path file : files) {
-            Optional<LogHit> hit = scanFileForTag(file, logTag);
-            if (hit.isPresent()) {
-                return hit;
-            }
-        }
-        return Optional.empty();
-    }
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-    public List<LogHit> findAllByLogTag(String logTag) {
-        Path errorDir = resolveErrorLogDir();
-        if (errorDir == null) {
-            log.warn("未能解析日志目录，无法搜索日志。");
-            return Collections.emptyList();
-        }
-        List<Path> files = listPlatformExceptionLogFiles(errorDir);
-        List<LogHit> results = new ArrayList<>();
-        for (Path file : files) {
-            scanFileForTag(file, logTag).ifPresent(results::add);
-        }
-        return results;
-    }
-
-    private Optional<LogHit> scanFileForTag(Path file, String logTag) {
-        try (Stream<String> lines = Files.lines(file, StandardCharsets.UTF_8)) {
-            List<String> all = lines.toList();
-            for (int i = 0; i < all.size(); i++) {
-                String line = all.get(i);
-                if (line.contains(logTag)) {
-                    int j = i + 1;
-                    while (j < all.size() && !isRecordStart(all.get(j))) {
-                        j++;
-                    }
-                    int end = Math.min(all.size(), j);
-                    List<String> block = all.subList(i, end);
-                    return Optional.of(new LogHit(file, i + 1, new ArrayList<>(block)));
-                }
-            }
-        } catch (IOException e) {
-            log.warn("读取日志文件失败：{}，原因：{}", file, e.getMessage());
-        }
-        return Optional.empty();
-    }
-
-    private List<Path> listPlatformExceptionLogFiles(Path errorDir) {
-        if (!Files.isDirectory(errorDir)) {
-            return Collections.emptyList();
-        }
-        try {
-            List<Path> files = new ArrayList<>();
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(errorDir, "platform-runtime-exception.*.log")) {
-                for (Path path : stream) {
-                    files.add(path);
-                }
-            }
-            files.sort(Comparator.comparingLong(this::safeLastModified).reversed());
-            return files;
-        } catch (IOException e) {
-            log.warn("列举日志目录失败：{}，原因：{}", errorDir, e.getMessage());
-            return Collections.emptyList();
-        }
-    }
-
-    private long safeLastModified(Path p) {
-        try {
-            return Files.getLastModifiedTime(p).toMillis();
-        } catch (IOException e) {
-            return 0L;
-        }
-    }
-
-    private Path resolveErrorLogDir() {
-        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-        if (context == null) {
-            return null;
-        }
-        String logDirProp = context.getProperty("LOG_DIR");
-        RollingFileAppender<ILoggingEvent> rfa = findPlatformExceptionAppender(context);
-        if (rfa == null) {
-            return null;
-        }
-        String file = rfa.getFile();
-        if (!isBlank(file)) {
-            Path p = Paths.get(file);
-            return p.getParent();
-        }
-        RollingPolicy rp = rfa.getRollingPolicy();
-        if (rp instanceof TimeBasedRollingPolicy<?> tbp) {
-            String pattern = tbp.getFileNamePattern();
-            if (isBlank(pattern)) {
-                return null;
-            }
-            String resolved = pattern;
-            if (resolved.contains("${LOG_DIR}") && !isBlank(logDirProp)) {
-                resolved = resolved.replace("${LOG_DIR}", logDirProp);
-            }
-            Path p = Paths.get(resolved);
-            return p.getParent();
-        }
-        return null;
-    }
-
-    private RollingFileAppender<ILoggingEvent> findPlatformExceptionAppender(LoggerContext context) {
-        Logger logger = context.getLogger("cn.geelato.web.platform.run.PlatformExceptionHandler");
-        if (logger != null) {
-            for (Iterator<Appender<ILoggingEvent>> it = logger.iteratorForAppenders(); it.hasNext(); ) {
-                Appender<ILoggingEvent> appender = it.next();
-                if (appender instanceof RollingFileAppender<?> r
-                        && "platformExceptionLogFile".equals(appender.getName())) {
-                    @SuppressWarnings("unchecked")
-                    RollingFileAppender<ILoggingEvent> casted = (RollingFileAppender<ILoggingEvent>) r;
-                    return casted;
-                }
-            }
-        }
-        for (Logger l : context.getLoggerList()) {
-            for (Iterator<Appender<ILoggingEvent>> it = l.iteratorForAppenders(); it.hasNext(); ) {
-                Appender<ILoggingEvent> appender = it.next();
-                if (appender instanceof RollingFileAppender<?> r
-                        && "platformExceptionLogFile".equals(appender.getName())) {
-                    @SuppressWarnings("unchecked")
-                    RollingFileAppender<ILoggingEvent> casted = (RollingFileAppender<ILoggingEvent>) r;
-                    return casted;
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean isBlank(String s) {
-        return s == null || s.trim().isEmpty();
-    }
-
-    private static final Pattern START = Pattern.compile("^\\d{2}:\\d{2}:\\d{2}\\s+\\[[^\\]]*\\]\\s+ERROR\\s+.*PlatformExceptionHandler\\s+-\\s+.*");
-    private boolean isRecordStart(String s) {
-        return s != null && START.matcher(s).matches();
-    }
-
-    @Data
-    @AllArgsConstructor
     public static class LogHit {
-        private Path file;
-        private int lineNumber;
-        private List<String> lines;
+        private final Path file;
+        private final int lineNumber;
+        private final List<String> lines;
+        public LogHit(Path file, int lineNumber, List<String> lines) {
+            this.file = file;
+            this.lineNumber = lineNumber;
+            this.lines = lines;
+        }
+        public Path getFile() { return file; }
+        public int getLineNumber() { return lineNumber; }
+        public List<String> getLines() { return lines; }
+    }
+
+    public Optional<LogHit> findFirstByLogTag(String tag) {
+        List<Path> files = listLogFiles();
+        for (Path file : files) {
+            try {
+                List<String> all = Files.readAllLines(file);
+                for (int i = 0; i < all.size(); i++) {
+                    String line = all.get(i);
+                    LogMeta meta = parseMeta(line);
+                    if (meta != null && tag != null && tag.equals(meta.logTag)) {
+                        return Optional.of(new LogHit(file, i + 1, extractFullLog(all, i)));
+                    }
+                }
+            } catch (IOException ignored) { }
+        }
+        return Optional.empty();
+    }
+
+    public List<LogHit> findByUserAndTimeRange(String userId, LocalDateTime from, LocalDateTime to) {
+        List<Path> files = listLogFiles();
+        List<LogHit> hits = new ArrayList<>();
+        for (Path file : files) {
+            try {
+                List<String> all = Files.readAllLines(file);
+                for (int i = 0; i < all.size(); i++) {
+                    String line = all.get(i);
+                    LogMeta meta = parseMeta(line);
+                    if (meta == null) continue;
+                    if (meta.occurTime == null) continue;
+                    if (meta.occurTime.isBefore(from) || meta.occurTime.isAfter(to)) continue;
+                    if (userId != null && !userId.isEmpty() && !userId.equals(meta.userId)) continue;
+                    hits.add(new LogHit(file, i + 1, extractFullLog(all, i)));
+                }
+            } catch (IOException ignored) { }
+        }
+        hits.sort(Comparator.comparing(LogHit::getFile).thenComparingInt(LogHit::getLineNumber));
+        return hits;
+    }
+
+    private List<Path> listLogFiles() {
+        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+        Logger logger = context.getLogger("cn.geelato.web.platform.run.PlatformExceptionHandler");
+        Appender<ILoggingEvent> appender = logger.getAppender("platformExceptionLogFile");
+
+        if (appender instanceof RollingFileAppender<ILoggingEvent> rfa) {
+            if (rfa.getRollingPolicy() instanceof TimeBasedRollingPolicy) {
+                TimeBasedRollingPolicy<ILoggingEvent> policy = (TimeBasedRollingPolicy<ILoggingEvent>) rfa.getRollingPolicy();
+                String fileNamePattern = policy.getFileNamePattern();
+                return findFilesByPattern(fileNamePattern);
+            }
+        }
+        return List.of();
+    }
+
+    private List<Path> findFilesByPattern(String pattern) {
+        if (pattern == null || pattern.isEmpty()) return List.of();
+
+        // Handle path separators
+        pattern = pattern.replace('\\', '/');
+
+        // Extract directory and filename prefix
+        int lastSlash = pattern.lastIndexOf('/');
+        String dirPath = lastSlash != -1 ? pattern.substring(0, lastSlash) : ".";
+        String namePattern = lastSlash != -1 ? pattern.substring(lastSlash + 1) : pattern;
+
+        // Simple prefix extraction: everything before the first '%'
+        String prefix = namePattern;
+        int percentIndex = namePattern.indexOf('%');
+        if (percentIndex != -1) {
+            prefix = namePattern.substring(0, percentIndex);
+        }
+
+        Path logsDir = Paths.get(dirPath);
+        if (!Files.exists(logsDir)) return List.of();
+
+        final String filePrefix = prefix;
+        try (Stream<Path> s = Files.list(logsDir)) {
+            return s.filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().startsWith(filePrefix))
+                    .sorted(Comparator.comparing(Path::toString))
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            return List.of();
+        }
+    }
+
+    private LogMeta parseMeta(String line) {
+        try {
+            if (line == null) return null;
+            int logTagIndex = line.indexOf("logTag=");
+            int userIdIndex = line.indexOf("|userId=");
+            int occurTimeIndex = line.indexOf("|occurTime=");
+            if (logTagIndex < 0 || userIdIndex < 0 || occurTimeIndex < 0) return null;
+            String logTag = line.substring(logTagIndex + 7, userIdIndex);
+            String userId = line.substring(userIdIndex + 8, occurTimeIndex);
+            String occurTimeText = line.substring(occurTimeIndex + 11);
+            LocalDateTime occurTime = LocalDateTime.parse(occurTimeText, FORMATTER);
+            return new LogMeta(logTag, userId, occurTime);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static class LogMeta {
+        private final String logTag;
+        private final String userId;
+        private final LocalDateTime occurTime;
+
+        private LogMeta(String logTag, String userId, LocalDateTime occurTime) {
+            this.logTag = logTag;
+            this.userId = userId;
+            this.occurTime = occurTime;
+        }
+    }
+
+    private List<String> extractFullLog(List<String> lines, int index) {
+        List<String> result = new ArrayList<>();
+        result.add(lines.get(index));
+        for (int i = index + 1; i < lines.size(); i++) {
+            String line = lines.get(i);
+            if (parseMeta(line) != null) {
+                break;
+            }
+            result.add(line);
+        }
+        return result;
     }
 }

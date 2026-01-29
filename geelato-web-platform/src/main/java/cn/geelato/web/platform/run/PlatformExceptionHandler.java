@@ -50,7 +50,8 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
     private PlatformRuntimeException coreException2PlatformException(CoreException coreException) {
         PlatformRuntimeException platformRuntimeException = new PlatformRuntimeException(coreException);
         String logTag = Long.toString(UIDGenerator.generate());
-        log.error(logTag, coreException);
+        String logMessage = "logTag=" + logTag + "|userId=" + platformRuntimeException.getOccurUserId() + "|occurTime=" + platformRuntimeException.getOccurTime();
+        log.error(logMessage, coreException);
         platformRuntimeException.setLogTag(logTag);
         return platformRuntimeException;
     }

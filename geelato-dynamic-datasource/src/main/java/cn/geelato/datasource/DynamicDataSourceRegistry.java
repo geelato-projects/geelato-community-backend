@@ -1,13 +1,11 @@
 package cn.geelato.datasource;
 
 import com.atomikos.jdbc.AtomikosDataSourceBean;
-import com.mysql.cj.jdbc.MysqlXADataSource;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.seata.rm.datasource.DataSourceProxy;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -82,6 +80,7 @@ public class DynamicDataSourceRegistry {
             HikariDataSource dataSource = new HikariDataSource();
             String commonParams = "useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true";
             String jdbcUrl = String.format("jdbc:mysql://%s:%s/%s?%s", serverHost, serverPort, dbName, commonParams);
+            dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
             dataSource.setJdbcUrl(jdbcUrl);
             dataSource.setUsername(dbUserName);
             dataSource.setPassword(dbPassWord);
@@ -103,37 +102,26 @@ public class DynamicDataSourceRegistry {
         String dbPassWord =dbConnectMap.get("db_password").toString();
         String dbName = dbConnectMap.get("db_name").toString();
         String dbId = dbConnectMap.get("id").toString();
-        AtomikosDataSourceBean ds = new AtomikosDataSourceBean();
-        ds.setUniqueResourceName(dbId);
-        
-        switch (dbType) {
-            case "mysql":
-                ds.setXaDataSourceClassName("com.mysql.cj.jdbc.MysqlXADataSource");
-                MysqlXADataSource xaDataSource = new MysqlXADataSource();
-                String commonParams = "useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true";
-                String jdbcUrl = String.format("jdbc:mysql://%s:%s/%s?%s", serverHost, serverPort, dbName, commonParams);
-                xaDataSource.setUrl(jdbcUrl);
-                xaDataSource.setUser(dbUserName);
-                xaDataSource.setPassword(dbPassWord);
-                xaDataSource.setAutoReconnect(true);
-                xaDataSource.setPinGlobalTxToPhysicalConnection(true);
-                ds.setXaDataSource(xaDataSource);
-                break;
-            case "sqlserver":
-                ds.setXaDataSourceClassName("com.microsoft.sqlserver.jdbc.SQLServerXADataSource");
-                // 注意：SQL Server XA数据源配置可能需要根据实际情况调整
-                break;
-            default:
-                throw new UnsupportedOperationException("不支持的数据库类型: " + dbType);
+        if ("mysql".equals(dbType)) {
+            HikariDataSource ds = new HikariDataSource();
+            ds.setPoolName(dbId);
+            String commonParams = "useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=60000&rewriteBatchedStatements=true&cachePrepStmts=true&prepStmtCacheSize=256&prepStmtCacheSqlLimit=2048&useServerPrepStmts=true";
+            String jdbcUrl = String.format("jdbc:mysql://%s:%s/%s?%s", serverHost, serverPort, dbName, commonParams);
+            ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
+            ds.setJdbcUrl(jdbcUrl);
+            ds.setUsername(dbUserName);
+            ds.setPassword(dbPassWord);
+            ds.setMinimumIdle(10);
+            ds.setMaximumPoolSize(100);
+            ds.setIdleTimeout(60000);
+            ds.setMaxLifetime(300000);
+            ds.setConnectionTimeout(3000);
+            ds.setValidationTimeout(3000);
+            ds.setConnectionTestQuery("SELECT 1");
+            return ds;
+        } else {
+            throw new UnsupportedOperationException("不支持的数据库类型: " + dbType);
         }
-        
-        // 设置连接池参数
-        ds.setMinPoolSize(10);
-        ds.setMaxPoolSize(50);
-        ds.setMaxIdleTime(60);
-        ds.setMaxLifetime(300000);
-        ds.setBorrowConnectionTimeout(30);
-        return ds;
     }
 
 
@@ -161,6 +149,13 @@ public class DynamicDataSourceRegistry {
         if (dataSource instanceof AtomikosDataSourceBean) {
             try {
                 ((AtomikosDataSourceBean) dataSource).close();
+                log.debug("数据源销毁成功: {}", key);
+            } catch (Exception e) {
+                log.error("数据源销毁失败: {}", key, e);
+            }
+        } else if (dataSource instanceof HikariDataSource) {
+            try {
+                ((HikariDataSource) dataSource).close();
                 log.debug("数据源销毁成功: {}", key);
             } catch (Exception e) {
                 log.error("数据源销毁失败: {}", key, e);

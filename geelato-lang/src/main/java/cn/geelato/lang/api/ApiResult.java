@@ -151,6 +151,11 @@ public class ApiResult<E> {
         return this;
     }
 
+    public ApiResult<E> setCache(Boolean cache) {
+        this.cache = cache;
+        return this;
+    }
+
     /**
      * 设置编码为ApiResultCode.SUCCESS
      * <p>此方法将当前对象的编码、状态和消息分别设置为 ResultCode.RC200 对应的值，并返回当前对象。</p>

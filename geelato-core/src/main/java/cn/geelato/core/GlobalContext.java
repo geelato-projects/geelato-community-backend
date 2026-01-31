@@ -13,6 +13,7 @@ public class GlobalContext {
     protected final static Boolean __CACHE__ = __Environment__.equals("product");
     protected final static Boolean __LogStack__=false;
     protected final static Boolean __POLYGLOT_DEBUGGER__ =false;
+    protected final static Boolean __MetaQueryCache__ = false;
     public static String getEnvironment() {
         return __Environment__;
     }
@@ -33,5 +34,8 @@ public class GlobalContext {
     }
     public static Boolean getLogStack(){
         return __LogStack__;
+    }
+    public static Boolean getMetaQueryCacheOption() {
+        return __MetaQueryCache__;
     }
 }

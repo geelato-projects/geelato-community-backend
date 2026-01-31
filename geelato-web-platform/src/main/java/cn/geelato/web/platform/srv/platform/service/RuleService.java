@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.srv.platform.service;
 
 import cn.geelato.core.Fn;
+import cn.geelato.core.GlobalContext;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.biz.rules.common.EntityValidateRule;
@@ -24,6 +25,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.utils.CacheUtil;
+import cn.geelato.web.platform.cache.MetaCacheProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.HashedMap;
 import org.jeasy.rules.api.Facts;
@@ -59,20 +61,49 @@ public class RuleService {
     private final static String VARS_CTX = "$ctx";
     // $fn.now.
     private final static String VARS_FN = "$fn";
+    private final MetaCacheProvider<Object> metaCache = new MetaCacheProvider<>();
 
 
     public Map<String, Object> queryForMap(String gql) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         processQueryCommandFunctions(command);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
-        return dao.queryForMap(boundSql);
+        if (!GlobalContext.getMetaQueryCacheOption()) {
+            return dao.queryForMap(boundSql);
+        }
+        String key = "query:" + command.getEntityName() + ":" + command.getCacheKey() + ":map";
+        if (metaCache.exists(key)) {
+            Object cached = metaCache.getCache(key);
+            if (cached instanceof Map) {
+                return (Map<String, Object>) cached;
+            }
+        }
+        Map<String, Object> result = dao.queryForMap(boundSql);
+        metaCache.putCache(key, result);
+        return result;
     }
 
     public <T> T queryForObject(String gql, Class<T> requiredType) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         processQueryCommandFunctions(command);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
-        return dao.queryForObject(boundSql, requiredType);
+        if (!GlobalContext.getMetaQueryCacheOption()) {
+            return dao.queryForObject(boundSql, requiredType);
+        }
+        String key = "query:" + command.getEntityName() + ":" + command.getCacheKey() + ":obj:" + requiredType.getSimpleName();
+        if (metaCache.exists(key)) {
+            Object cached = metaCache.getCache(key);
+            try{
+                return (T) cached;
+            }catch (ClassCastException e){
+                // fall through to query
+            }
+        }
+        T result = dao.queryForObject(boundSql, requiredType);
+        if (requiredType == String.class || Number.class.isAssignableFrom(requiredType) || requiredType == Boolean.class) {
+            metaCache.putCache(key, result);
+        }
+        return result;
     }
 
 
@@ -80,9 +111,31 @@ public class RuleService {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         processQueryCommandFunctions(command);
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
-        List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
-        Long total = dao.queryTotal(boundPageSql);
-        ApiPagedResult<List<Map<String, Object>>> result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list.size(), total);
+        if (!GlobalContext.getMetaQueryCacheOption()) {
+            List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
+            Long total = dao.queryTotal(boundPageSql);
+            ApiPagedResult<List<Map<String, Object>>> result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list != null ? list.size() : 0, total != null ? total : 0);
+            if (withMeta) {
+                result.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
+            }
+            return result;
+        }
+        String prefix = "query:" + command.getEntityName() + ":" + command.getCacheKey();
+        String kList = prefix + ":list";
+        String kTotal = prefix + ":total";
+        ApiPagedResult<List<Map<String, Object>>> result;
+        if (metaCache.exists(kList) && metaCache.exists(kTotal)) {
+            List<Map<String, Object>> cachedList = (List<Map<String, Object>>) metaCache.getCache(kList);
+            Long cachedTotal = (Long) metaCache.getCache(kTotal);
+            result = ApiPagedResult.success(cachedList, command.getPageNum(), command.getPageSize(), cachedList != null ? cachedList.size() : 0, cachedTotal != null ? cachedTotal : 0);
+            result.setCache(true);
+        } else {
+            List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
+            Long total = dao.queryTotal(boundPageSql);
+            metaCache.putCache(kList, list);
+            metaCache.putCache(kTotal, total);
+            result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list != null ? list.size() : 0, total != null ? total : 0);
+        }
         if (withMeta) {
             result.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
         }
@@ -149,10 +202,26 @@ public class RuleService {
     public ApiMultiPagedResult queryForMultiMapList(String gql, boolean withMeta) {
         Map<String, ApiMultiPagedResult.PageData> dataMap = new HashMap<>();
         List<QueryCommand> commandList = gqlManager.generateMultiQuerySql(gql);
+        boolean allCached = GlobalContext.getMetaQueryCacheOption();
         for (QueryCommand command : commandList) {
             BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
-            List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
-            Long total = dao.queryTotal(boundPageSql);
+            String prefix = "query:" + command.getEntityName() + ":" + command.getCacheKey();
+            String kList = prefix + ":list";
+            String kTotal = prefix + ":total";
+            List<Map<String, Object>> list;
+            Long total;
+            if (GlobalContext.getMetaQueryCacheOption() && metaCache.exists(kList) && metaCache.exists(kTotal)) {
+                list = (List<Map<String, Object>>) metaCache.getCache(kList);
+                total = (Long) metaCache.getCache(kTotal);
+            } else {
+                allCached = false;
+                list = dao.queryForMapList(boundPageSql);
+                total = dao.queryTotal(boundPageSql);
+                if (GlobalContext.getMetaQueryCacheOption()) {
+                    metaCache.putCache(kList, list);
+                    metaCache.putCache(kTotal, total);
+                }
+            }
             ApiMultiPagedResult.PageData apiPd = new ApiMultiPagedResult.PageData();
             apiPd.setData(list);
             apiPd.setTotal(total != null ? total : 0);
@@ -166,14 +235,33 @@ public class RuleService {
         }
         ApiMultiPagedResult result = new ApiMultiPagedResult();
         result.setData(dataMap);
+        if (allCached) {
+            result.setCache(true);
+        }
         return result;
     }
+
+    // 值适配已在 MetaCacheProvider 统一处理
 
     public <T> List<T> queryForOneColumnList(String gql, Class<T> elementType) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         processQueryCommandFunctions(command);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
-        return dao.queryForOneColumnList(boundSql, elementType);
+        if (!GlobalContext.getMetaQueryCacheOption()) {
+            return dao.queryForOneColumnList(boundSql, elementType);
+        }
+        String key = "query:" + command.getEntityName() + ":" + command.getCacheKey() + ":col:" + elementType.getSimpleName();
+        if (metaCache.exists(key)) {
+            Object cached = metaCache.getCache(key);
+            try{
+                return (List<T>) cached;
+            }catch (ClassCastException e){
+                // fall through to query
+            }
+        }
+        List<T> result = dao.queryForOneColumnList(boundSql, elementType);
+        metaCache.putCache(key, result);
+        return result;
     }
 
     /**

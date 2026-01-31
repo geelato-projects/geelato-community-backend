@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds" debug="false">
-    <contextName>logback-geelato-es</contextName>
+    <contextName>geelato-logback-es</contextName>
 
-    <property name="ELASTIC_HOST" value="${ELASTIC_HOST:http://localhost:9200}"/>
-    <property name="ELASTIC_USERNAME" value="${ELASTIC_USERNAME:}"/>
-    <property name="ELASTIC_PASSWORD" value="${ELASTIC_PASSWORD:}"/>
+    <property name="ELASTIC_HOST" value="${ELASTIC_HOST:http://es.geelato.cn/}"/>
+    <property name="ELASTIC_USERNAME" value="${ELASTIC_USERNAME:elastic}"/>
+    <property name="ELASTIC_PASSWORD" value="${ELASTIC_PASSWORD:geelatoEs}"/>
     <property name="APP_NAME" value="${APP_NAME:geelato-web}"/>
     <property name="ENV" value="${ENV:dev}"/>
 

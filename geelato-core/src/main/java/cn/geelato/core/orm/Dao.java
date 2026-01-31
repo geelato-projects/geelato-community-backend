@@ -1,9 +1,14 @@
 package cn.geelato.core.orm;
 
 import cn.geelato.core.SessionCtx;
+import cn.geelato.core.orm.event.DeleteEventContext;
+import cn.geelato.core.orm.event.DeleteEventManager;
+import cn.geelato.core.orm.event.SaveEventContext;
+import cn.geelato.core.orm.event.SaveEventManager;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.command.QueryViewCommand;
 import cn.geelato.core.mql.command.SaveCommand;
+import cn.geelato.core.mql.command.DeleteCommand;
 import cn.geelato.core.mql.execute.BoundPageSql;
 import cn.geelato.core.mql.execute.BoundSql;
 import cn.geelato.core.mql.filter.FilterGroup;
@@ -135,11 +140,16 @@ public class Dao extends SqlKeyDao {
 
     public String save(BoundSql boundSql) {
         SaveCommand command = (SaveCommand) boundSql.getCommand();
+        SessionCtx sessionCtx = new SessionCtx();
+        SaveEventContext context = new SaveEventContext(this, sessionCtx, null, boundSql, command);
+        SaveEventManager.fireBefore(context);
         try {
-            jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
+            jdbcTemplate.update(context.getBoundSql().getSql(), context.getBoundSql().getParams());
+            context.setResultValueMap(command.getValueMap());
+            SaveEventManager.fireAfter(context);
             return command.getPK();
         } catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
+            throw new SqlExecuteException(dataAccessException, context.getBoundSql().getSql(), context.getBoundSql().getParams());
         }
     }
 
@@ -188,11 +198,32 @@ public class Dao extends SqlKeyDao {
      * @return 删除的记录数据
      */
     public int delete(BoundSql boundSql) {
+        DeleteCommand command = (DeleteCommand) boundSql.getCommand();
+        SessionCtx sessionCtx = new SessionCtx();
+        DeleteEventContext context = new DeleteEventContext(this, sessionCtx, boundSql, command);
+        DeleteEventManager.fireBefore(context);
         try {
-            return jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
+            int n = jdbcTemplate.update(context.getBoundSql().getSql(), context.getBoundSql().getParams());
+            context.setAffectedRows(n);
+            DeleteEventManager.fireAfter(context);
+            return n;
+        } catch (DataAccessException dataAccessException) {
+            throw new SqlExecuteException(dataAccessException, context.getBoundSql().getSql(), context.getBoundSql().getParams());
+        }
+    }
+
+    public void executeUpdate(BoundSql boundSql) {
+        try {
+            jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
         } catch (DataAccessException dataAccessException) {
             throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
         }
+    }
+
+    public Map<String, Object> queryByEntityNameAndPK(String entityName, Object pkValue) {
+        EntityMeta meta = metaManager.getByEntityName(entityName);
+        String idFieldName = meta.getId().getFieldName();
+        return queryForMap(meta.getClassType(), idFieldName, pkValue);
     }
 
 
@@ -330,14 +361,20 @@ public class Dao extends SqlKeyDao {
 
 
     public <E extends IdEntity> Map save(E entity) {
-        BoundSql boundSql = entityManager.generateSaveSql(entity, new SessionCtx());
-        try{
-            jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
+        SessionCtx sessionCtx = new SessionCtx();
+        BoundSql boundSql = entityManager.generateSaveSql(entity, sessionCtx);
         SaveCommand command = (SaveCommand) boundSql.getCommand();
-        return command.getValueMap();
+        SaveEventContext context = new SaveEventContext(this, sessionCtx, entity, boundSql, command);
+        SaveEventManager.fireBefore(context);
+        try{
+            jdbcTemplate.update(context.getBoundSql().getSql(), context.getBoundSql().getParams());
+        }catch (DataAccessException dataAccessException){
+            throw new SqlExecuteException(dataAccessException, context.getBoundSql().getSql(), context.getBoundSql().getParams());
+        }
+        Map<String, Object> valueMap = command.getValueMap();
+        context.setResultValueMap(valueMap);
+        SaveEventManager.fireAfter(context);
+        return valueMap;
     }
 
 
@@ -478,10 +515,17 @@ public class Dao extends SqlKeyDao {
     public int delete(Class entityType, String fieldName, Object value) {
         FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
         BoundSql boundSql = sqlManager.generateDeleteSql(entityType, filterGroup);
+        DeleteCommand command = (DeleteCommand) boundSql.getCommand();
+        SessionCtx sessionCtx = new SessionCtx();
+        DeleteEventContext context = new DeleteEventContext(this, sessionCtx, boundSql, command);
+        DeleteEventManager.fireBefore(context);
         try{
-            return jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
+            int n = jdbcTemplate.update(context.getBoundSql().getSql(), context.getBoundSql().getParams());
+            context.setAffectedRows(n);
+            DeleteEventManager.fireAfter(context);
+            return n;
         }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
+            throw new SqlExecuteException(dataAccessException, context.getBoundSql().getSql(), context.getBoundSql().getParams());
         }
     }
 

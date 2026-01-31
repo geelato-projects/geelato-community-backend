@@ -15,6 +15,7 @@ public class ApiResult<E> {
     @Setter
     private String status = ResultCode.RC200.getStatus();
     private E data;
+    private Boolean cache;
 
     public ApiResult() {
 

@@ -5,21 +5,16 @@ import cn.geelato.core.orm.event.AfterSaveEventListener;
 import cn.geelato.web.platform.run.SpringContextHolder;
 import org.springframework.core.env.Environment;
 import cn.geelato.web.platform.boot.properties.EsConfigurationProperties;
-import com.alibaba.fastjson2.JSONObject;
+import cn.geelato.core.meta.MetaManager;
+import cn.geelato.core.meta.model.entity.EntityMeta;
+import org.springframework.jdbc.core.JdbcTemplate;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.message.BasicHeader;
-import org.elasticsearch.client.RestClient;
-import java.net.URI;
-import java.util.Base64;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
+@Slf4j
 public class EsSyncSaveListener implements AfterSaveEventListener {
     private volatile ElasticsearchClient client;
 
@@ -39,25 +34,32 @@ public class EsSyncSaveListener implements AfterSaveEventListener {
     public void afterSave(SaveEventContext context) {
         String entityName = context.getCommand().getEntityName();
         String pk = context.getCommand().getPK();
-        Map<String, Object> data = context.getDao().queryByEntityNameAndPK(entityName, pk);
         String indexPrefix = getProps().getIndexPrefix();
         String baseIndex = entityName == null ? "default" : entityName.toLowerCase();
         String index = (indexPrefix == null || indexPrefix.isEmpty()) ? baseIndex : (indexPrefix + baseIndex);
         try {
+            if (log.isInfoEnabled()) {
+                log.info("es-sync start, eventId={}, index={}", context.getEventId(), index);
+            }
             ElasticsearchClient c = getClient();
+            EntityMeta em = MetaManager.singleInstance().getByEntityName(entityName);
+            String table = em.getTableName();
+            JdbcTemplate jt = context.getDao().getJdbcTemplate();
+            Map<String, Object> row = jt.queryForMap("select * from " + table + " where id = ?", pk);
             IndexRequest<Map<String, Object>> req = IndexRequest.of(b -> b
                     .index(index)
                     .id(pk)
-                    .document(data)
+                    .document(row)
             );
             c.index(req);
+            if (log.isInfoEnabled()) {
+                log.info("es-sync done, eventId={}, index={}", context.getEventId(), index);
+            }
         } catch (Exception ignored) {
+            log.error("es-sync error, eventId={}, index={}", context.getEventId(), index, ignored);
         }
     }
 
-    private Environment getEnv() {
-        return SpringContextHolder.getBean(Environment.class);
-    }
     private ElasticsearchClient getClient() {
         if (client != null) return client;
         synchronized (this) {

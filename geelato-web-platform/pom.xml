@@ -271,6 +271,16 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <version>8.12.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-client</artifactId>
+            <version>8.12.2</version>
+        </dependency>
     </dependencies>
 
     <!--该工程打包成普通的jar，以便发布到仓库共其它应用模块使用，不采用spring-boot-maven-plugin打成fat jar

@@ -294,7 +294,7 @@ public class JWTAuthController extends BaseController {
     }
 
     @RequestMapping(value = "/avatar/{userId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult<NullResult> uploadAvatar(@PathVariable(required = true) String userId, @RequestParam("file") MultipartFile file) {
+    public ApiResult<NullResult> uploadAvatar(@PathVariable() String userId, @RequestParam("file") MultipartFile file) {
         try {
             // 用户信息
             if (Strings.isBlank(userId)) {

@@ -10,6 +10,7 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import org.springframework.jdbc.core.JdbcTemplate;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.UpdateRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
@@ -46,12 +47,13 @@ public class EsSyncSaveListener implements AfterSaveEventListener {
             String table = em.getTableName();
             JdbcTemplate jt = context.getDao().getJdbcTemplate();
             Map<String, Object> row = jt.queryForMap("select * from " + table + " where id = ?", pk);
-            IndexRequest<Map<String, Object>> req = IndexRequest.of(b -> b
+            UpdateRequest<Map<String, Object>, Map<String, Object>> req = UpdateRequest.of(b -> b
                     .index(index)
                     .id(pk)
-                    .document(row)
+                    .doc(row)
+                    .docAsUpsert(true)
             );
-            c.index(req);
+            c.update(req, Map.class);
             if (log.isInfoEnabled()) {
                 log.info("es-sync done, eventId={}, index={}", context.getEventId(), index);
             }

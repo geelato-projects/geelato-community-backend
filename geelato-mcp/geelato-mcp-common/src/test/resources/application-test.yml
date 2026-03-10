@@ -1,0 +1,30 @@
+# 测试环境配置
+server:
+  port: 0  # 随机端口
+
+spring:
+  application:
+    name: geelato-mcp-test
+  
+  ai:
+    mcp:
+      server:
+        enabled: true
+        type: SYNC
+        annotation-scanner:
+          enabled: true
+
+geelato:
+  mcp:
+    security:
+      auth-type: api-key
+      api-key:
+        keys: test-api-key-123456
+      jwt:
+        sign-key: test-jwt-sign-key-for-unit-tests-32ch
+
+# 日志配置
+logging:
+  level:
+    cn.geelato.mcp: DEBUG
+    io.modelcontextprotocol: DEBUG

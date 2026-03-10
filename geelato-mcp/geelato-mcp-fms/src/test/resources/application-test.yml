@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: geelato-mcp-fms
+  
+  main:
+    allow-circular-references: true
+    allow-bean-definition-overriding: true
+  
+  # 禁用自动配置以简化测试
+  autoconfigure:
+    exclude:
+      - com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.sql.init.SqlInitializationAutoConfiguration
+
+  ai:
+    mcp:
+      server:
+        enabled: true
+        type: SYNC
+        name: geelato-mcp-fms
+        version: 1.0.0-SNAPSHOT
+        sse-message-endpoint: /mcp/fms/message
+        annotation-scanner:
+          enabled: true
+
+server:
+  port: 0
+
+geelato:
+  mcp:
+    enabled: true
+    server-name: geelato-mcp-fms
+    description: Geelato Fleet Management System Test
+    security:
+      auth-type: api-key
+      api-key:
+        header-name: X-API-Key
+        keys:
+          - test-api-key-123456
+        enabled: true
+        use-database: false
+      jwt:
+        enabled: false
+        sign-key: test-jwt-sign-key-for-unit-tests-32ch
+
+logging:
+  level:
+    cn.geelato.mcp: DEBUG
+    cn.geelato.mcp.fms: DEBUG

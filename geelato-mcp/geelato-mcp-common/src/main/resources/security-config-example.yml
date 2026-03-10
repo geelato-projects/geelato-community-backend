@@ -1,0 +1,37 @@
+# MCP 安全配置示例
+# 复制此配置到您的应用配置文件中，并根据需要修改
+
+geelato:
+  mcp:
+    security:
+      # 认证类型：api-key, jwt, hybrid(同时支持)
+      auth-type: hybrid
+      
+      # API Key 配置
+      api-key:
+        # API Key 在 Header 中的名称
+        header-name: X-API-Key
+        # 有效的 API Keys 列表 (生产环境请修改为实际的密钥)
+        keys:
+          - your-api-key-1
+          - your-api-key-2
+        # 是否启用 API Key 认证
+        enabled: true
+      
+      # JWT 配置
+      jwt:
+        # JWT Token 在 Header 中的名称
+        header-name: Authorization
+        # JWT Token 前缀
+        prefix: "Bearer "
+        # 签名密钥 (必须通过环境变量配置，禁止硬编码)
+        # 生产环境必须设置 MCP_JWT_SIGN_KEY 环境变量
+        sign-key: ${MCP_JWT_SIGN_KEY:}
+        # 是否启用 JWT 认证
+        enabled: true
+
+# 环境变量使用示例 (生产环境必须配置)
+# export MCP_JWT_SIGN_KEY="your-production-sign-key-at-least-32-chars"
+# export MCP_API_KEY_1="prod-key-1"
+# export MCP_API_KEY_2="prod-key-2"
+# export MCP_AUTH_TYPE="hybrid"

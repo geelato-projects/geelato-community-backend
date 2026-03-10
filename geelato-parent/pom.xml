@@ -18,7 +18,7 @@
         <java.version>17</java.version>
         <springframework.version>6.0.0</springframework.version>
         <spring-boot.version>3.0.0</spring-boot.version>
-        <lomok.version>1.18.28</lomok.version>
+        <lomok.version>1.18.30</lomok.version>
         <easy-rules.version>3.2.0</easy-rules.version>
         <fastjson2.version>2.0.19</fastjson2.version>
         <jackson.version>2.14.1</jackson.version>
@@ -205,6 +205,31 @@
             <dependency>
                 <groupId>cn.geelato</groupId>
                 <artifactId>geelato-plugin-manager</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-mcp</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-mcp-common</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-mcp-platform</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-mcp-order</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-mcp-logistics</artifactId>
                 <version>${geelato.version}</version>
             </dependency>
             <dependency>

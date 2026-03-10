@@ -24,6 +24,7 @@
         <module>geelato-web-quickstart</module>
         <module>geelato-plugin-manager</module>
         <module>geelato-test</module>
+        <module>geelato-mcp</module>
     </modules>
     <dependencies>
         <dependency>

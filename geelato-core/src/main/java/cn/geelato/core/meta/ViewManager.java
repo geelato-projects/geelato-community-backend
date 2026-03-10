@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -43,6 +44,12 @@ public class ViewManager {
         }
     }
 
+    public Set<String> getAllViewNames() {
+        return viewMetadataMap.keySet();
+    }
 
+    public java.util.Collection<ViewMeta> getAllViewMetas() {
+        return viewMetadataMap.values();
+    }
 
 }

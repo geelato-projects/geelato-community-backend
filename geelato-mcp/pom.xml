@@ -18,6 +18,7 @@
     <modules>
         <module>geelato-mcp-common</module>
         <module>geelato-mcp-fms</module>
+        <module>geelato-mcp-platform</module>
     </modules>
 
     <properties>

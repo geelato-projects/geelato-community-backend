@@ -18,18 +18,17 @@ import javax.sql.DataSource;
 @Configuration
 public class DataSourceConfig {
 
-    @Value("${spring.datasource.primary.jdbc-url:}")
+    @Value("${spring.datasource.primary.jdbc-url:${GEELATO_PRIMARY_JDBCURL:}}")
     private String jdbcUrl;
 
-    @Value("${spring.datasource.primary.username:}")
+    @Value("${spring.datasource.primary.username:${GEELATO_PRIMARY_JDBCUSER:}}")
     private String username;
 
-    @Value("${spring.datasource.primary.password:}")
+    @Value("${spring.datasource.primary.password:${GEELATO_PRIMARY_JDBCPASSWORD:}}")
     private String password;
 
     @Value("${spring.datasource.primary.driver-class-name:com.mysql.cj.jdbc.Driver}")
     private String driverClassName;
-
     @Bean(name = "primaryDataSource")
     @Qualifier("primaryDataSource")
     public DataSource primaryDataSource() {

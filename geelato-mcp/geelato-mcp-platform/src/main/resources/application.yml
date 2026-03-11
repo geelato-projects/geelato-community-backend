@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: geelato-mcp-platform
+  main:
+    allow-circular-references: true
+    allow-bean-definition-overriding: true
+  datasource:
+    primary:
+      name: primary
+      jdbc-url: ${GEELATO_PRIMARY_JDBCURL:jdbc:mysql://localhost:3306/geelato?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true}
+      username: ${GEELATO_PRIMARY_JDBCUSER:root}
+      password: ${GEELATO_PRIMARY_JDBCPASSWORD:}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      validationQuery: select 1
+      initialSize: 5
+      minIdle: 10
+      maxActive: 1000
+      maxWait: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+
+server:
+  port: 8081
+
+geelato:
+  mcp:
+    security:
+      auth-type: ${MCP_AUTH_TYPE:hybrid}
+      api-key:
+        header-name: X-API-Key
+        keys:
+          - ${MCP_API_KEY_1:}
+          - ${MCP_API_KEY_2:}
+        enabled: ${MCP_API_KEY_ENABLED:true}
+        use-database: ${MCP_API_KEY_USE_DATABASE:true}
+      jwt:
+        header-name: Authorization
+        prefix: "Bearer "
+        sign-key: ${MCP_JWT_SIGN_KEY:}
+        enabled: ${MCP_JWT_ENABLED:true}
+
+spring.ai:
+  mcp:
+    server:
+      name: geelato-platform-mcp
+      version: 1.0.0

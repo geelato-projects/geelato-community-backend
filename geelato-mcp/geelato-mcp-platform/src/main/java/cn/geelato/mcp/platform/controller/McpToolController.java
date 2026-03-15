@@ -7,7 +7,6 @@ import cn.geelato.mcp.platform.tool.system.SystemInfoTool;
 import cn.geelato.mcp.platform.tool.user.UserQueryTool;
 import cn.geelato.mcp.platform.tool.view.ViewQueryTool;
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -70,56 +69,57 @@ public class McpToolController {
 
         // SystemInfoTool
         Map<String, Object> systemTools = new HashMap<>();
-        systemTools.put("getSystemInfo", "获取系统基本信息");
-        systemTools.put("getMemoryInfo", "获取JVM内存使用情况");
-        systemTools.put("getCpuInfo", "获取CPU信息");
-        systemTools.put("getEnvironmentVariables", "获取环境变量列表");
-        systemTools.put("getSystemProperties", "获取系统属性列表");
+        systemTools.put("system_get_info", "系统：获取系统基本信息");
+        systemTools.put("system_get_memory_info", "系统：获取JVM内存使用情况");
+        systemTools.put("system_get_cpu_info", "系统：获取CPU信息");
+        systemTools.put("system_get_env", "系统：获取环境变量列表");
+        systemTools.put("system_get_props", "系统：获取系统属性列表");
         tools.put("SystemInfoTool", systemTools);
 
         // UserQueryTool
         Map<String, Object> userTools = new HashMap<>();
-        userTools.put("listAllUsers", "获取所有用户列表");
-        userTools.put("getUserById", "根据用户ID查询用户信息");
-        userTools.put("getUserByUsername", "根据用户名查询用户信息");
-        userTools.put("listAllRoles", "获取所有角色列表");
-        userTools.put("getUserRoles", "获取用户角色");
-        userTools.put("checkUserPermission", "检查用户权限");
+        userTools.put("user_list_all", "用户：获取所有用户列表");
+        userTools.put("user_get_by_id", "用户：根据ID查询用户信息");
+        userTools.put("user_get_by_username", "用户：根据用户名查询用户信息");
+        userTools.put("user_list_roles", "用户：获取所有角色列表");
+        userTools.put("user_get_roles", "用户：获取用户角色");
+        userTools.put("user_get_role_perms", "用户：根据角色编码查询权限");
+        userTools.put("user_check_permission", "用户：检查用户权限");
         tools.put("UserQueryTool", userTools);
 
         // DictQueryTool
         Map<String, Object> dictTools = new HashMap<>();
-        dictTools.put("listAllDictTypes", "获取所有字典类型");
-        dictTools.put("getDictItems", "获取字典项列表");
-        dictTools.put("getDictFullInfo", "获取字典完整信息");
-        dictTools.put("getDictItemDetail", "获取字典项详情");
-        dictTools.put("checkDictExists", "检查字典是否存在");
+        dictTools.put("dict_list_types", "字典：获取所有字典类型");
+        dictTools.put("dict_list_items", "字典：获取字典项列表");
+        dictTools.put("dict_list_all", "字典：获取字典完整信息");
+        dictTools.put("dict_get_detail", "字典：获取字典项详情");
+        dictTools.put("dict_exists", "字典：检查字典是否存在");
         tools.put("DictQueryTool", dictTools);
 
         // PageConfigTool
         Map<String, Object> pageTools = new HashMap<>();
-        pageTools.put("listAllPages", "获取所有页面配置");
-        pageTools.put("getPageConfig", "获取页面配置详情");
-        pageTools.put("getPagesByEntity", "获取实体关联页面");
+        pageTools.put("page_list_all", "页面：获取所有页面配置");
+        pageTools.put("page_get_detail_by_id", "页面：获取页面配置详情");
+        pageTools.put("page_get_detail_by_code", "页面：根据编码获取页面配置详情");
+        pageTools.put("page_list_by_app", "页面：根据应用获取页面列表");
+        pageTools.put("page_list_by_entity", "页面：获取实体关联页面");
         tools.put("PageConfigTool", pageTools);
 
         // ViewQueryTool
         Map<String, Object> viewTools = new HashMap<>();
-        viewTools.put("listAllViewNames", "获取所有视图名称");
-        viewTools.put("getViewMeta", "获取视图元数据");
-        viewTools.put("getViewColumns", "获取视图列配置");
-        viewTools.put("getViewsByEntity", "获取实体关联视图");
+        viewTools.put("view_list_names_all", "视图：获取所有视图名称");
+        viewTools.put("view_list_lite_all", "视图：获取所有视图精简信息");
+        viewTools.put("view_get_detail", "视图：获取视图元数据");
+        viewTools.put("view_list_by_entity", "视图：获取实体关联视图");
         tools.put("ViewQueryTool", viewTools);
 
         // MetaModelTool
         Map<String, Object> metaTools = new HashMap<>();
-        metaTools.put("listAllEntityNames", "获取所有实体名称");
-        metaTools.put("listAllEntityLiteMetas", "获取所有实体精简信息");
-        metaTools.put("getEntityMeta", "获取实体元数据");
-        metaTools.put("getEntityFields", "获取实体字段信息");
-        metaTools.put("getEntityFullMeta", "获取实体完整元数据");
-        metaTools.put("checkEntityExists", "检查实体是否存在");
-        metaTools.put("getMetaStatistics", "获取元数据统计");
+        metaTools.put("meta_list_names_all", "元数据：获取所有实体名称");
+        metaTools.put("meta_list_lite_all", "元数据：获取所有实体精简信息");
+        metaTools.put("meta_get_detail", "元数据：获取实体详情");
+        metaTools.put("meta_check_exists", "元数据：检查实体是否存在");
+        metaTools.put("meta_get_statistics", "元数据：获取统计信息");
         tools.put("MetaModelTool", metaTools);
 
         result.put("code", 200);
@@ -149,15 +149,15 @@ public class McpToolController {
 
     private Object executeSystemInfoTool(String methodName) throws Exception {
         switch (methodName) {
-            case "getSystemInfo":
+            case "system_get_info":
                 return JSON.parse(systemInfoTool.getSystemInfo());
-            case "getMemoryInfo":
+            case "system_get_memory_info":
                 return JSON.parse(systemInfoTool.getMemoryInfo());
-            case "getCpuInfo":
+            case "system_get_cpu_info":
                 return JSON.parse(systemInfoTool.getCpuInfo());
-            case "getEnvironmentVariables":
+            case "system_get_env":
                 return JSON.parse(systemInfoTool.getEnvironmentVariables());
-            case "getSystemProperties":
+            case "system_get_props":
                 return JSON.parse(systemInfoTool.getSystemProperties());
             default:
                 throw new IllegalArgumentException("Unknown method: " + methodName);
@@ -166,20 +166,23 @@ public class McpToolController {
 
     private Object executeUserQueryTool(String methodName, Map<String, Object> params) throws Exception {
         switch (methodName) {
-            case "listAllUsers":
+            case "user_list_all":
                 return JSON.parse(userQueryTool.listAllUsers());
-            case "getUserById":
+            case "user_get_by_id":
                 String userId = params != null ? (String) params.get("userId") : null;
                 return JSON.parse(userQueryTool.getUserById(userId));
-            case "getUserByUsername":
+            case "user_get_by_username":
                 String username = params != null ? (String) params.get("username") : null;
                 return JSON.parse(userQueryTool.getUserByUsername(username));
-            case "listAllRoles":
+            case "user_list_roles":
                 return JSON.parse(userQueryTool.listAllRoles());
-            case "getUserRoles":
+            case "user_get_roles":
                 String uid = params != null ? (String) params.get("userId") : null;
                 return JSON.parse(userQueryTool.getUserRoles(uid));
-            case "checkUserPermission":
+            case "user_get_role_perms":
+                String roleCode = params != null ? (String) params.get("roleCode") : null;
+                return JSON.parse(userQueryTool.getRolePermissions(roleCode));
+            case "user_check_permission":
                 String checkUid = params != null ? (String) params.get("userId") : null;
                 String permission = params != null ? (String) params.get("permission") : null;
                 return JSON.parse(userQueryTool.checkUserPermission(checkUid, permission));
@@ -190,19 +193,19 @@ public class McpToolController {
 
     private Object executeDictQueryTool(String methodName, Map<String, Object> params) throws Exception {
         switch (methodName) {
-            case "listAllDictTypes":
+            case "dict_list_types":
                 return JSON.parse(dictQueryTool.listAllDictTypes());
-            case "getDictItems":
+            case "dict_list_items":
                 String dictCode = params != null ? (String) params.get("dictCode") : null;
                 return JSON.parse(dictQueryTool.getDictItems(dictCode));
-            case "getDictFullInfo":
+            case "dict_list_all":
                 String fullDictCode = params != null ? (String) params.get("dictCode") : null;
                 return JSON.parse(dictQueryTool.getDictFullInfo(fullDictCode));
-            case "getDictItemDetail":
+            case "dict_get_detail":
                 String itemDictCode = params != null ? (String) params.get("dictCode") : null;
                 String itemCode = params != null ? (String) params.get("itemCode") : null;
                 return JSON.parse(dictQueryTool.getDictItemDetail(itemDictCode, itemCode));
-            case "checkDictExists":
+            case "dict_exists":
                 String checkDictCode = params != null ? (String) params.get("dictCode") : null;
                 return JSON.parse(dictQueryTool.checkDictExists(checkDictCode));
             default:
@@ -212,12 +215,18 @@ public class McpToolController {
 
     private Object executePageConfigTool(String methodName, Map<String, Object> params) throws Exception {
         switch (methodName) {
-            case "listAllPages":
+            case "page_list_all":
                 return JSON.parse(pageConfigTool.listAllPages());
-            case "getPageConfig":
+            case "page_get_detail_by_id":
                 String pageId = params != null ? (String) params.get("pageId") : null;
                 return JSON.parse(pageConfigTool.getPageConfig(pageId));
-            case "getPagesByEntity":
+            case "page_get_detail_by_code":
+                String pageCode = params != null ? (String) params.get("code") : null;
+                return JSON.parse(pageConfigTool.getPageByCode(pageCode));
+            case "page_list_by_app":
+                String appId = params != null ? (String) params.get("appId") : null;
+                return JSON.parse(pageConfigTool.getPagesByApp(appId));
+            case "page_list_by_entity":
                 String entityName = params != null ? (String) params.get("entityName") : null;
                 return JSON.parse(pageConfigTool.getPagesByEntity(entityName));
             default:
@@ -227,15 +236,14 @@ public class McpToolController {
 
     private Object executeViewQueryTool(String methodName, Map<String, Object> params) throws Exception {
         switch (methodName) {
-            case "listAllViewNames":
+            case "view_list_names_all":
                 return JSON.parse(viewQueryTool.listAllViewNames());
-            case "getViewMeta":
+            case "view_list_lite_all":
+                return JSON.parse(viewQueryTool.listAllViewLiteMetas());
+            case "view_get_detail":
                 String viewName = params != null ? (String) params.get("viewName") : null;
                 return JSON.parse(viewQueryTool.getViewMeta(viewName));
-            case "getViewColumns":
-                String colViewName = params != null ? (String) params.get("viewName") : null;
-                return JSON.parse(viewQueryTool.getViewColumns(colViewName));
-            case "getViewsByEntity":
+            case "view_list_by_entity":
                 String entityName = params != null ? (String) params.get("entityName") : null;
                 return JSON.parse(viewQueryTool.getViewsByEntity(entityName));
             default:
@@ -245,23 +253,17 @@ public class McpToolController {
 
     private Object executeMetaModelTool(String methodName, Map<String, Object> params) throws Exception {
         switch (methodName) {
-            case "listAllEntityNames":
+            case "meta_list_names_all":
                 return JSON.parse(metaModelTool.listAllEntityNames());
-            case "listAllEntityLiteMetas":
+            case "meta_list_lite_all":
                 return JSON.parse(metaModelTool.listAllEntityLiteMetas());
-            case "getEntityMeta":
+            case "meta_get_detail":
                 String entityName = params != null ? (String) params.get("entityName") : null;
                 return JSON.parse(metaModelTool.getEntityMeta(entityName));
-            case "getEntityFields":
-                String fieldEntityName = params != null ? (String) params.get("entityName") : null;
-                return JSON.parse(metaModelTool.getEntityFields(fieldEntityName));
-            case "getEntityFullMeta":
-                String fullEntityName = params != null ? (String) params.get("entityName") : null;
-                return JSON.parse(metaModelTool.getEntityFullMeta(fullEntityName));
-            case "checkEntityExists":
+            case "meta_check_exists":
                 String checkEntityName = params != null ? (String) params.get("entityName") : null;
                 return JSON.parse(metaModelTool.checkEntityExists(checkEntityName));
-            case "getMetaStatistics":
+            case "meta_get_statistics":
                 return JSON.parse(metaModelTool.getMetaStatistics());
             default:
                 throw new IllegalArgumentException("Unknown method: " + methodName);

@@ -35,7 +35,6 @@ public class UserQueryTool extends BaseMcpTool {
         return response;
     }
 
-    @Tool(description = "获取所有用户列表")
     public String listAllUsers() {
         logToolExecution("listAllUsers");
         try {
@@ -80,7 +79,6 @@ public class UserQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据用户ID查询用户信息")
     public String getUserById(String userId) {
         logToolExecution("getUserById", userId);
         try {
@@ -130,7 +128,6 @@ public class UserQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据用户名查询用户信息")
     public String getUserByUsername(String username) {
         logToolExecution("getUserByUsername", username);
         try {
@@ -176,7 +173,6 @@ public class UserQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "获取所有角色列表")
     public String listAllRoles() {
         logToolExecution("listAllRoles");
         try {
@@ -206,7 +202,6 @@ public class UserQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据用户ID查询用户的角色列表")
     public String getUserRoles(String userId) {
         logToolExecution("getUserRoles", userId);
         try {
@@ -238,7 +233,6 @@ public class UserQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据角色编码查询角色的权限列表")
     public String getRolePermissions(String roleCode) {
         logToolExecution("getRolePermissions", roleCode);
         try {
@@ -276,7 +270,6 @@ public class UserQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "检查用户是否有指定权限")
     public String checkUserPermission(String userId, String permission) {
         logToolExecution("checkUserPermission", userId, permission);
         try {
@@ -306,5 +299,40 @@ public class UserQueryTool extends BaseMcpTool {
             logToolError("checkUserPermission", e);
             return JSON.toJSONString(createErrorResponse("查询失败: " + e.getMessage()));
         }
+    }
+
+    @Tool(description = "用户：获取全部用户")
+    public String user_list_all() {
+        return listAllUsers();
+    }
+
+    @Tool(description = "用户：按ID获取用户详情")
+    public String user_get_by_id(String userId) {
+        return getUserById(userId);
+    }
+
+    @Tool(description = "用户：按用户名获取用户详情")
+    public String user_get_by_username(String username) {
+        return getUserByUsername(username);
+    }
+
+    @Tool(description = "用户：获取全部角色")
+    public String user_list_roles() {
+        return listAllRoles();
+    }
+
+    @Tool(description = "用户：获取用户角色")
+    public String user_get_roles(String userId) {
+        return getUserRoles(userId);
+    }
+
+    @Tool(description = "用户：按角色编码获取权限列表")
+    public String user_get_role_perms(String roleCode) {
+        return getRolePermissions(roleCode);
+    }
+
+    @Tool(description = "用户：检查用户权限")
+    public String user_check_permission(String userId, String permission) {
+        return checkUserPermission(userId, permission);
     }
 }

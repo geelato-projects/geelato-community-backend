@@ -35,7 +35,6 @@ public class PageConfigTool extends BaseMcpTool {
         return response;
     }
 
-    @Tool(description = "获取所有页面配置列表")
     public String listAllPages() {
         logToolExecution("listAllPages");
         try {
@@ -67,7 +66,6 @@ public class PageConfigTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据页面ID查询页面配置信息")
     public String getPageConfig(String pageId) {
         logToolExecution("getPageConfig", pageId);
         try {
@@ -103,7 +101,6 @@ public class PageConfigTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据页面编码查询页面配置信息")
     public String getPageByCode(String code) {
         logToolExecution("getPageByCode", code);
         try {
@@ -139,7 +136,6 @@ public class PageConfigTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据应用ID查询该应用下的所有页面")
     public String getPagesByApp(String appId) {
         logToolExecution("getPagesByApp", appId);
         try {
@@ -171,7 +167,6 @@ public class PageConfigTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据实体名称查询该实体关联的页面列表")
     public String getPagesByEntity(String entityName) {
         logToolExecution("getPagesByEntity", entityName);
         try {
@@ -202,5 +197,30 @@ public class PageConfigTool extends BaseMcpTool {
             logToolError("getPagesByEntity", e);
             return JSON.toJSONString(createErrorResponse("查询失败: " + e.getMessage()));
         }
+    }
+
+    @Tool(description = "页面：获取全部页面")
+    public String page_list_all() {
+        return listAllPages();
+    }
+
+    @Tool(description = "页面：按ID获取页面详情")
+    public String page_get_detail_by_id(String pageId) {
+        return getPageConfig(pageId);
+    }
+
+    @Tool(description = "页面：按编码获取页面详情")
+    public String page_get_detail_by_code(String code) {
+        return getPageByCode(code);
+    }
+
+    @Tool(description = "页面：按应用获取页面列表")
+    public String page_list_by_app(String appId) {
+        return getPagesByApp(appId);
+    }
+
+    @Tool(description = "页面：按实体获取页面列表")
+    public String page_list_by_entity(String entityName) {
+        return getPagesByEntity(entityName);
     }
 }

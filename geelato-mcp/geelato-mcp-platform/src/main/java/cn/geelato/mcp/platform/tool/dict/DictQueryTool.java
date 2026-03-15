@@ -35,7 +35,6 @@ public class DictQueryTool extends BaseMcpTool {
         return response;
     }
 
-    @Tool(description = "获取所有数据字典类型列表")
     public String listAllDictTypes() {
         logToolExecution("listAllDictTypes");
         try {
@@ -66,7 +65,6 @@ public class DictQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据字典编码查询字典项列表")
     public String getDictItems(String dictCode) {
         logToolExecution("getDictItems", dictCode);
         try {
@@ -110,7 +108,6 @@ public class DictQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据字典编码和字典项编码查询字典项详细信息")
     public String getDictItemDetail(String dictCode, String itemCode) {
         logToolExecution("getDictItemDetail", dictCode, itemCode);
         try {
@@ -155,7 +152,6 @@ public class DictQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据字典编码查询字典的完整信息，包括字典类型和所有字典项")
     public String getDictFullInfo(String dictCode) {
         logToolExecution("getDictFullInfo", dictCode);
         try {
@@ -195,7 +191,6 @@ public class DictQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "检查字典是否存在")
     public String checkDictExists(String dictCode) {
         logToolExecution("checkDictExists", dictCode);
         try {
@@ -218,5 +213,30 @@ public class DictQueryTool extends BaseMcpTool {
             logToolError("checkDictExists", e);
             return JSON.toJSONString(createErrorResponse("查询失败: " + e.getMessage()));
         }
+    }
+
+    @Tool(description = "字典：获取全部字典类型")
+    public String dict_list_types() {
+        return listAllDictTypes();
+    }
+
+    @Tool(description = "字典：按编码获取字典项列表")
+    public String dict_list_items(String dictCode) {
+        return getDictItems(dictCode);
+    }
+
+    @Tool(description = "字典：按编码获取字典项详情")
+    public String dict_get_detail(String dictCode, String itemCode) {
+        return getDictItemDetail(dictCode, itemCode);
+    }
+
+    @Tool(description = "字典：获取字典完整信息")
+    public String dict_list_all(String dictCode) {
+        return getDictFullInfo(dictCode);
+    }
+
+    @Tool(description = "字典：检查字典是否存在")
+    public String dict_exists(String dictCode) {
+        return checkDictExists(dictCode);
     }
 }

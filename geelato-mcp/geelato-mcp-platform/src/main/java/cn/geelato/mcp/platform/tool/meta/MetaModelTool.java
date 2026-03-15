@@ -35,7 +35,6 @@ public class MetaModelTool extends BaseMcpTool {
         return response;
     }
 
-    @Tool(description = "获取所有实体名称列表")
     public String listAllEntityNames() {
         logToolExecution("listAllEntityNames");
         try {
@@ -57,7 +56,6 @@ public class MetaModelTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "获取所有实体模型的精简信息列表")
     public String listAllEntityLiteMetas() {
         logToolExecution("listAllEntityLiteMetas");
         try {
@@ -89,7 +87,6 @@ public class MetaModelTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据实体名称查询实体的详细信息，包括字段列表")
     public String getEntityMeta(String entityName) {
         logToolExecution("getEntityMeta", entityName);
         try {
@@ -119,7 +116,7 @@ public class MetaModelTool extends BaseMcpTool {
             result.put("fields", fields);
 
             String jsonResult = JSON.toJSONString(createSuccessResponse(result));
-            logToolResult("getEntityMeta", "返回实体 " + entityName + " 的元数据，包含 " + fields.size() + " 个字段");
+            logToolResult("getEntityMeta", "返回实体 " + entityName + " 详情（含 " + fields.size() + " 个字段）");
             return jsonResult;
         } catch (Exception e) {
             logToolError("getEntityMeta", e);
@@ -151,46 +148,6 @@ public class MetaModelTool extends BaseMcpTool {
         return fieldInfo;
     }
 
-    @Tool(description = "根据实体名称查询实体的所有字段信息")
-    public String getEntityFields(String entityName) {
-        logToolExecution("getEntityFields", entityName);
-        try {
-            EntityMeta entityMeta = metaManager.getByEntityName(entityName);
-
-            if (entityMeta == null) {
-                return JSON.toJSONString(createErrorResponse("实体不存在: " + entityName));
-            }
-
-            List<Map<String, Object>> fields = new ArrayList<>();
-            if (entityMeta.getFieldMetas() != null) {
-                for (FieldMeta fieldMeta : entityMeta.getFieldMetas()) {
-                    Map<String, Object> fieldInfo = new HashMap<>();
-                    fieldInfo.put("fieldName", fieldMeta.getFieldName());
-                    fieldInfo.put("fieldTitle", fieldMeta.getTitle());
-                    fieldInfo.put("dataType", fieldMeta.getColumnMeta().getDataType());
-                    fieldInfo.put("columnName", fieldMeta.getColumnName());
-                    fieldInfo.put("isNullable", fieldMeta.getColumnMeta().isNullable());
-                    fieldInfo.put("isId", fieldMeta.getColumnMeta().isKey());
-                    fields.add(fieldInfo);
-                }
-            }
-
-            String jsonResult = JSON.toJSONString(createSuccessResponse(fields));
-            logToolResult("getEntityFields", "返回实体 " + entityName + " 的 " + fields.size() + " 个字段");
-            return jsonResult;
-        } catch (Exception e) {
-            logToolError("getEntityFields", e);
-            return JSON.toJSONString(createErrorResponse("查询失败: " + e.getMessage()));
-        }
-    }
-
-    @Tool(description = "根据实体名称查询实体的完整元数据信息（已废弃，请使用 getEntityMeta）")
-    @Deprecated
-    public String getEntityFullMeta(String entityName) {
-        return getEntityMeta(entityName);
-    }
-
-    @Tool(description = "检查实体是否存在")
     public String checkEntityExists(String entityName) {
         logToolExecution("checkEntityExists", entityName);
         try {
@@ -210,7 +167,6 @@ public class MetaModelTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "获取实体的统计信息")
     public String getMetaStatistics() {
         logToolExecution("getMetaStatistics");
         try {
@@ -239,5 +195,30 @@ public class MetaModelTool extends BaseMcpTool {
             logToolError("getMetaStatistics", e);
             return JSON.toJSONString(createErrorResponse("查询失败: " + e.getMessage()));
         }
+    }
+
+    @Tool(description = "元数据：获取全部实体名称")
+    public String meta_list_names_all() {
+        return listAllEntityNames();
+    }
+
+    @Tool(description = "元数据：获取全部实体精简信息")
+    public String meta_list_lite_all() {
+        return listAllEntityLiteMetas();
+    }
+
+    @Tool(description = "元数据：获取实体详情")
+    public String meta_get_detail(String entityName) {
+        return getEntityMeta(entityName);
+    }
+
+    @Tool(description = "元数据：检查实体是否存在")
+    public String meta_check_exists(String entityName) {
+        return checkEntityExists(entityName);
+    }
+
+    @Tool(description = "元数据：获取统计信息")
+    public String meta_get_statistics() {
+        return getMetaStatistics();
     }
 }

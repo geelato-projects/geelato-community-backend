@@ -34,7 +34,6 @@ public class ViewQueryTool extends BaseMcpTool {
         return response;
     }
 
-    @Tool(description = "获取所有视图名称列表")
     public String listAllViewNames() {
         logToolExecution("listAllViewNames");
         try {
@@ -56,7 +55,6 @@ public class ViewQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据视图名称查询视图的详细信息")
     public String getViewMeta(String viewName) {
         logToolExecution("getViewMeta", viewName);
         try {
@@ -86,7 +84,7 @@ public class ViewQueryTool extends BaseMcpTool {
             }
 
             String jsonResult = JSON.toJSONString(createSuccessResponse(result));
-            logToolResult("getViewMeta", "返回视图 " + viewName + " 的元数据");
+            logToolResult("getViewMeta", "返回视图 " + viewName + " 详情（含列配置）");
             return jsonResult;
         } catch (Exception e) {
             logToolError("getViewMeta", e);
@@ -94,42 +92,6 @@ public class ViewQueryTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "根据视图名称查询视图的列配置信息")
-    public String getViewColumns(String viewName) {
-        logToolExecution("getViewColumns", viewName);
-        try {
-            ViewMeta viewMeta = viewManager.getByViewName(viewName);
-
-            if (viewMeta == null) {
-                return JSON.toJSONString(createErrorResponse("视图不存在：" + viewName));
-            }
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("viewName", viewMeta.getViewName());
-            
-            // 解析 viewColumn 为 JSON 对象
-            Object viewColumnObj = viewMeta.getViewColumn();
-            if (viewColumnObj instanceof String) {
-                try {
-                    Object parsedColumns = JSON.parse((String) viewColumnObj);
-                    result.put("viewColumn", parsedColumns);
-                } catch (Exception e) {
-                    result.put("viewColumn", viewColumnObj);
-                }
-            } else {
-                result.put("viewColumn", viewColumnObj);
-            }
-
-            String jsonResult = JSON.toJSONString(createSuccessResponse(result));
-            logToolResult("getViewColumns", "返回视图 " + viewName + " 的列配置");
-            return jsonResult;
-        } catch (Exception e) {
-            logToolError("getViewColumns", e);
-            return JSON.toJSONString(createErrorResponse("查询失败：" + e.getMessage()));
-        }
-    }
-
-    @Tool(description = "根据实体名称查询该实体关联的所有视图")
     public String getViewsByEntity(String entityName) {
         logToolExecution("getViewsByEntity", entityName);
         try {
@@ -158,5 +120,55 @@ public class ViewQueryTool extends BaseMcpTool {
             logToolError("getViewsByEntity", e);
             return JSON.toJSONString(createErrorResponse("查询失败: " + e.getMessage()));
         }
+    }
+
+    public String listAllViewLiteMetas() {
+        logToolExecution("listAllViewLiteMetas");
+        try {
+            Set<String> allViewNames = viewManager.getAllViewNames();
+
+            if (allViewNames == null || allViewNames.isEmpty()) {
+                return JSON.toJSONString(createErrorResponse("暂无可用的视图元数据"));
+            }
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (String viewName : allViewNames) {
+                ViewMeta viewMeta = viewManager.getByViewName(viewName);
+                if (viewMeta != null) {
+                    Map<String, Object> viewInfo = new HashMap<>();
+                    viewInfo.put("viewName", viewMeta.getViewName());
+                    viewInfo.put("viewType", viewMeta.getViewType());
+                    viewInfo.put("subjectEntity", viewMeta.getSubjectEntity());
+                    result.add(viewInfo);
+                }
+            }
+
+            String jsonResult = JSON.toJSONString(createSuccessResponse(result));
+            logToolResult("listAllViewLiteMetas", "返回 " + result.size() + " 个视图精简信息");
+            return jsonResult;
+        } catch (Exception e) {
+            logToolError("listAllViewLiteMetas", e);
+            return JSON.toJSONString(createErrorResponse("查询失败: " + e.getMessage()));
+        }
+    }
+
+    @Tool(description = "视图：获取全部视图名称")
+    public String view_list_names_all() {
+        return listAllViewNames();
+    }
+
+    @Tool(description = "视图：获取全部视图精简信息")
+    public String view_list_lite_all() {
+        return listAllViewLiteMetas();
+    }
+
+    @Tool(description = "视图：获取视图详情")
+    public String view_get_detail(String viewName) {
+        return getViewMeta(viewName);
+    }
+
+    @Tool(description = "视图：按实体获取视图列表")
+    public String view_list_by_entity(String entityName) {
+        return getViewsByEntity(entityName);
     }
 }

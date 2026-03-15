@@ -33,7 +33,6 @@ public class SystemInfoTool extends BaseMcpTool {
         return response;
     }
 
-    @Tool(description = "获取系统基本信息，包括应用名称、版本、运行时间等")
     public String getSystemInfo() {
         logToolExecution("getSystemInfo");
         try {
@@ -69,7 +68,6 @@ public class SystemInfoTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "获取 JVM 内存使用情况")
     public String getMemoryInfo() {
         logToolExecution("getMemoryInfo");
         try {
@@ -98,7 +96,6 @@ public class SystemInfoTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "获取 CPU 信息")
     public String getCpuInfo() {
         logToolExecution("getCpuInfo");
         try {
@@ -119,7 +116,6 @@ public class SystemInfoTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "获取系统环境变量列表")
     public String getEnvironmentVariables() {
         logToolExecution("getEnvironmentVariables");
         try {
@@ -146,7 +142,6 @@ public class SystemInfoTool extends BaseMcpTool {
         }
     }
 
-    @Tool(description = "获取系统属性列表")
     public String getSystemProperties() {
         logToolExecution("getSystemProperties");
         try {
@@ -170,6 +165,31 @@ public class SystemInfoTool extends BaseMcpTool {
             logToolError("getSystemProperties", e);
             return JSON.toJSONString(createErrorResponse("查询失败: " + e.getMessage()));
         }
+    }
+
+    @Tool(description = "系统：获取系统基础信息")
+    public String system_get_info() {
+        return getSystemInfo();
+    }
+
+    @Tool(description = "系统：获取内存信息")
+    public String system_get_memory_info() {
+        return getMemoryInfo();
+    }
+
+    @Tool(description = "系统：获取CPU信息")
+    public String system_get_cpu_info() {
+        return getCpuInfo();
+    }
+
+    @Tool(description = "系统：获取环境变量")
+    public String system_get_env() {
+        return getEnvironmentVariables();
+    }
+
+    @Tool(description = "系统：获取系统属性")
+    public String system_get_props() {
+        return getSystemProperties();
     }
 
     private String formatUptime(long uptime) {

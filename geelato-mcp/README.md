@@ -8,7 +8,7 @@
 geelato-mcp/
 ├── geelato-mcp-common/      # 公共模块 (安全、工具基类等)
 ├── geelato-mcp-platform/    # 平台 MCP 服务 (核心)
-├── geelato-mcp-fms/         # 国际物流管理系统 (订单 + 物流)
+├── geelato-mcp-fms/         # 国际物流管理系统 (订单 + 物流，需单独构建)
 ├── mcp-test-site/           # 前端测试站点 (Nuxt 4)
 └── scripts/                 # 启动和管理脚本
 ```
@@ -34,11 +34,19 @@ geelato-mcp/
 **端口**: 8081  
 **端点**: `/mcp/platform/message`
 
-### 3. geelato-mcp-fms
+### 3. geelato-mcp-fms (已移除)
+> **注意**: FMS 模块已从默认构建中移除，如需使用请单独构建。
+
 车队管理系统 (订单 + 物流合并),提供:
 - 订单查询工具
 - 集装箱查询工具
 - 物流跟踪工具
+
+**单独构建**:
+```bash
+cd geelato-mcp-fms
+mvn clean package
+```
 
 **端口**: 8084  
 **端点**: `/mcp/fms/message`

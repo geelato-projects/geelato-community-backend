@@ -34,19 +34,13 @@ geelato-mcp/
 **端口**: 8081  
 **端点**: `/mcp/platform/message`
 
-### 3. geelato-mcp-fms (已移除)
-> **注意**: FMS 模块已从默认构建中移除，如需使用请单独构建。
+### 3. geelato-mcp-fms
+> **注意**: FMS 模块目前处于开发阶段，返回静态测试数据。
 
 车队管理系统 (订单 + 物流合并),提供:
 - 订单查询工具
 - 集装箱查询工具
 - 物流跟踪工具
-
-**单独构建**:
-```bash
-cd geelato-mcp-fms
-mvn clean package
-```
 
 **端口**: 8084  
 **端点**: `/mcp/fms/message`

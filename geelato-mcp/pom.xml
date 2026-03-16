@@ -17,7 +17,7 @@
 
     <modules>
         <module>geelato-mcp-common</module>
-        <!-- <module>geelato-mcp-fms</module> FMS 模块已移除，如需使用请单独构建 -->
+        <module>geelato-mcp-fms</module>
         <module>geelato-mcp-platform</module>
     </modules>
 

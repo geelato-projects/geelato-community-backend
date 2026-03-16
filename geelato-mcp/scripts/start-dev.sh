@@ -186,7 +186,7 @@ start_frontend() {
 }
 
 # 1. 启动 geelato-mcp-platform 服务
-echo -e "${BLUE}[1/2] 启动 MCP Platform 服务${NC}"
+echo -e "${BLUE}[1/3] 启动 MCP Platform 服务${NC}"
 
 # 数据库配置 (从环境变量读取，如未设置则使用默认值)
 # 生产环境请设置以下环境变量：
@@ -208,8 +208,19 @@ PLATFORM_ARGS="--geelato.mcp.security.auth-type=hybrid \
 start_service "geelato-mcp-platform" "$PROJECT_ROOT/geelato-mcp-platform" 8081 "$PLATFORM_ARGS"
 echo ""
 
-# 2. 启动前端服务
-echo -e "${BLUE}[2/2] 启动 MCP 测试站点${NC}"
+# 2. 启动 geelato-mcp-fms 服务
+echo -e "${BLUE}[2/3] 启动 MCP FMS 服务${NC}"
+
+# FMS 也使用相同的数据库配置 (环境变量已在上文设置)
+FMS_ARGS="--geelato.mcp.security.auth-type=hybrid \
+    --geelato.mcp.security.api-key.keys=${MCP_API_KEYS:-test-api-key-123456} \
+    --geelato.mcp.security.jwt.sign-key=\"$JWT_SIGN_KEY\""
+
+start_service "geelato-mcp-fms" "$PROJECT_ROOT/geelato-mcp-fms" 8084 "$FMS_ARGS"
+echo ""
+
+# 3. 启动前端服务
+echo -e "${BLUE}[3/3] 启动 MCP 测试站点${NC}"
 
 # 3. 启动 mcp-test-site 前端 (如果存在)
 if [ -d "$PROJECT_ROOT/mcp-test-site" ]; then

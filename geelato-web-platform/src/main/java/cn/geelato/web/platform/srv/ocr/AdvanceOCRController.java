@@ -65,7 +65,7 @@ public class AdvanceOCRController extends BaseController {
         log.info("Config: {}", config);
 
         try {
-            if (file == null || file.isEmpty()) {
+            if (file.isEmpty()) {
                 log.error("File is null or empty");
                 return ApiResult.fail("File is required");
             }
@@ -131,7 +131,7 @@ public class AdvanceOCRController extends BaseController {
             log.debug("Prompt is empty, using default");
         }
 
-        String systemPrompt = "你是一个文本提取工具，你需要按照我的描述，从markdown格式的原始内容文本内容，精准提取我需要的内容，原始内容是：\n\n" + fullMdContent + "\n\n请将结果以JSON格式返回给我。";
+        String systemPrompt = "你是一个文本提取工具，你需要按照我的描述，从markdown格式的原始内容文本内容，精准提取我需要的内容，原始内容是：\n\n" + fullMdContent + "\n\n请严格按照以下要求返回结果：\n1. 仅返回 JSON 格式数据，不添加任何额外文字、注释、Markdown 代码块（```json/```）；\n2. JSON 内容需保证语法正确，可直接被程序解析；\n3. 返回内容示例：{\"订舱号\": \"xxx\", \"托运人\": \"xxx\"}";
 
         log.debug("System prompt length: {}, user prompt: {}", systemPrompt.length(), prompt);
 

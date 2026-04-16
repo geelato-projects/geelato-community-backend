@@ -38,8 +38,7 @@ public class DynamicRoutingDataSource extends AbstractRoutingDataSource {
                 DataSource dataSource = dynamicDataSourceRegistry.getDataSource(dataSourceKey);
                 if (dataSource != null) {
                     targetDataSourcesMap.put(dataSourceKey, dataSource);
-                    setTargetDataSources(new HashMap<>(targetDataSourcesMap));
-                    afterPropertiesSet();
+                    applyTargetDataSources();
                     log.info("动态创建并添加数据源到路由映射: {}", dataSourceKey);
                 } else {
                     log.warn("无法从DynamicDataSourceRegistry获取数据源: {}", dataSourceKey);
@@ -48,5 +47,32 @@ public class DynamicRoutingDataSource extends AbstractRoutingDataSource {
                 log.error("创建或初始化数据源失败: {}", dataSourceKey, e);
             }
         }
+    }
+
+    public synchronized void refreshDataSource(String dataSourceKey) {
+        if (dataSourceKey == null || dataSourceKey.trim().isEmpty() || "primary".equalsIgnoreCase(dataSourceKey)) {
+            return;
+        }
+        targetDataSourcesMap.remove(dataSourceKey);
+        DataSource dataSource = dynamicDataSourceRegistry.getDataSource(dataSourceKey);
+        if (dataSource != null) {
+            targetDataSourcesMap.put(dataSourceKey, dataSource);
+        }
+        applyTargetDataSources();
+    }
+
+    public synchronized void refreshAllDataSources() {
+        targetDataSourcesMap.clear();
+        targetDataSourcesMap.putAll(dynamicDataSourceRegistry.getAllDataSources());
+        applyTargetDataSources();
+    }
+
+    private void applyTargetDataSources() {
+        Map<Object, Object> targetDataSources = new HashMap<>();
+        targetDataSources.put("primary", dynamicDataSourceRegistry.getPrimaryDataSource());
+        targetDataSources.putAll(targetDataSourcesMap);
+        setTargetDataSources(targetDataSources);
+        setDefaultTargetDataSource(dynamicDataSourceRegistry.getPrimaryDataSource());
+        afterPropertiesSet();
     }
 }

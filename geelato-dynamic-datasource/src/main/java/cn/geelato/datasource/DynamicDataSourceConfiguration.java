@@ -10,7 +10,6 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 
@@ -31,20 +30,10 @@ public class DynamicDataSourceConfiguration {
      * 动态数据源
      */
     @Bean(name = "dynamicDataSource")
-    public DataSource dynamicDataSource() {
+    public DynamicRoutingDataSource dynamicDataSource() {
         DynamicRoutingDataSource dynamicDataSource = new DynamicRoutingDataSource();
         dynamicDataSource.setDynamicDataSourceRegistry(dataSourceRegistry);
-        // 设置目标数据源映射
-        Map<Object, Object> targetDataSources = new HashMap<>();
-        targetDataSources.put("primary", dataSourceRegistry.getPrimaryDataSource());
-        
-        // 添加注册器中的所有数据源
-        Map<String, DataSource> registryDataSources = dataSourceRegistry.getAllDataSources();
-        targetDataSources.putAll(registryDataSources);
-        
-        dynamicDataSource.setTargetDataSources(targetDataSources);
-        dynamicDataSource.setDefaultTargetDataSource(targetDataSources.get("primary"));
-        
+        dynamicDataSource.refreshAllDataSources();
         return dynamicDataSource;
     }
 

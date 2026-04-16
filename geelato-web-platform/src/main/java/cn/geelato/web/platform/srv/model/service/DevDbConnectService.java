@@ -6,9 +6,13 @@ import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.util.ConnectUtils;
+import cn.geelato.datasource.DynamicDataSourceRegistry;
+import cn.geelato.datasource.DynamicRoutingDataSource;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.srv.platform.service.BaseService;
 import com.alibaba.fastjson2.JSON;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,6 +23,13 @@ import java.util.Map;
  */
 @Component
 public class DevDbConnectService extends BaseService {
+
+    @Autowired(required = false)
+    private DynamicDataSourceRegistry dynamicDataSourceRegistry;
+
+    @Autowired(required = false)
+    @Qualifier("dynamicDataSource")
+    private DynamicRoutingDataSource dynamicRoutingDataSource;
 
     /**
      * 检查数据库连接是否存在
@@ -92,6 +103,18 @@ public class DevDbConnectService extends BaseService {
         }
     }
 
+    public ConnectMeta createAndRefresh(ConnectMeta model) {
+        ConnectMeta created = super.createModel(model);
+        if (created == null || StringUtils.isBlank(created.getId())) {
+            throw new RuntimeException("数据库连接创建成功，但未获取到连接ID");
+        }
+        boolean refreshed = refreshDataSource(created.getId());
+        if (!refreshed) {
+            throw new RuntimeException("数据库连接创建成功，但刷新数据源失败");
+        }
+        return created;
+    }
+
     public ConnectMeta updateModel(ConnectMeta model) {
         // 源数据
         ConnectMeta source = this.getModel(ConnectMeta.class, model.getId());
@@ -123,5 +146,26 @@ public class DevDbConnectService extends BaseService {
             throw new RuntimeException("该数据库连接已被关联，无法删除！");
         }
         super.isDeleteModel(model);
+    }
+
+    public boolean refreshDataSource(String connectId) {
+        if (dynamicDataSourceRegistry == null || dynamicRoutingDataSource == null) {
+            throw new RuntimeException("动态数据源能力未启用");
+        }
+        boolean refreshed = dynamicDataSourceRegistry.refreshDataSource(connectId);
+        if (!refreshed) {
+            return false;
+        }
+        dynamicRoutingDataSource.refreshDataSource(connectId);
+        return true;
+    }
+
+    public int refreshAllDataSources() {
+        if (dynamicDataSourceRegistry == null || dynamicRoutingDataSource == null) {
+            throw new RuntimeException("动态数据源能力未启用");
+        }
+        int count = dynamicDataSourceRegistry.refreshAllDataSources();
+        dynamicRoutingDataSource.refreshAllDataSources();
+        return count;
     }
 }

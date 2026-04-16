@@ -82,7 +82,7 @@ public class DevDbConnectController extends BaseController {
             if (Strings.isNotBlank(form.getId())) {
                 return ApiResult.success(devDbConnectService.updateModel(form));
             } else {
-                return ApiResult.success(devDbConnectService.createModel(form));
+                return ApiResult.success(devDbConnectService.createAndRefresh(form));
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -130,6 +130,30 @@ public class DevDbConnectController extends BaseController {
             }
             devDbConnectService.batchCreate(appId, connectIds, userName, password);
             return ApiResult.successNoResult();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/refresh/{id}", method = RequestMethod.POST)
+    public ApiResult<Boolean> refresh(@PathVariable String id) {
+        try {
+            boolean refreshed = devDbConnectService.refreshDataSource(id);
+            if (!refreshed) {
+                return ApiResult.fail("未找到数据库连接：" + id);
+            }
+            return ApiResult.success(true);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/refreshAll", method = RequestMethod.POST)
+    public ApiResult<Integer> refreshAll() {
+        try {
+            return ApiResult.success(devDbConnectService.refreshAllDataSources());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

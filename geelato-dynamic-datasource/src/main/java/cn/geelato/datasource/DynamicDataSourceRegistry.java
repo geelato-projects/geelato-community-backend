@@ -12,8 +12,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import javax.sql.DataSource;
 import javax.sql.XADataSource;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -51,20 +53,32 @@ public class DynamicDataSourceRegistry {
      * 从数据库加载数据源配置
      */
     public void loadDataSourcesFromDatabase() {
+        refreshAllDataSources();
+    }
+
+    /**
+     * 全量刷新数据源配置
+     */
+    public synchronized int refreshAllDataSources() {
         String sql = "SELECT * FROM platform_dev_db_connect";
         List<Map<String, Object>> dbConnectMaps = primaryJdbcTemplate.queryForList(sql);
+        Set<String> latestKeys = new HashSet<>();
         for (Map<String, Object> dbConnectMap : dbConnectMaps) {
             try {
                 String key = dbConnectMap.get("id").toString();
-                dataSourceConfigMap.put(key, new HashMap<>(dbConnectMap));
-
-                if(!delayLoadDataSource) dataSourceMap.put(key,buildDataSource(dbConnectMap));
-
+                latestKeys.add(key);
+                registerDataSource(key, dbConnectMap);
                 log.info("dynamic data source config : {}", key);
             } catch (Exception e) {
                 log.error("dynamic data source config failed : {}", dbConnectMap.get("db_name"), e);
             }
         }
+        Set<String> removedKeys = new HashSet<>(dataSourceConfigMap.keySet());
+        removedKeys.removeAll(latestKeys);
+        for (String removedKey : removedKeys) {
+            removeDataSource(removedKey);
+        }
+        return latestKeys.size();
     }
 
     //seata处理，待定
@@ -129,16 +143,23 @@ public class DynamicDataSourceRegistry {
     /**
      * 刷新数据源
      */
-    public void refreshDataSource(String key) {
-        try {
-            String sql = "SELECT * FROM platform_dev_db_connect WHERE db_name = ?";
-            Map<String, Object> dbConnectMap = primaryJdbcTemplate.queryForMap(sql, key);
-            destroyDataSource(key);
-            dataSourceConfigMap.put(key, new HashMap<>(dbConnectMap));
-            log.info("dynamic data source refresh : {}", key);
-        } catch (Exception e) {
-            log.error("dynamic data source refresh failed: {}", key, e);
+    public synchronized boolean refreshDataSource(String key) {
+        String sql = "SELECT * FROM platform_dev_db_connect WHERE id = ?";
+        List<Map<String, Object>> dbConnectMaps = primaryJdbcTemplate.queryForList(sql, key);
+        if (dbConnectMaps == null || dbConnectMaps.isEmpty()) {
+            return false;
         }
+        registerDataSource(key, dbConnectMaps.get(0));
+        log.info("dynamic data source refresh : {}", key);
+        return true;
+    }
+
+    /**
+     * 移除数据源
+     */
+    public synchronized void removeDataSource(String key) {
+        destroyDataSource(key);
+        dataSourceConfigMap.remove(key);
     }
 
     /**
@@ -205,5 +226,13 @@ public class DynamicDataSourceRegistry {
             }
         }
         return dataSourceMap.containsKey(key);
+    }
+
+    private void registerDataSource(String key, Map<String, Object> dbConnectMap) {
+        destroyDataSource(key);
+        dataSourceConfigMap.put(key, new HashMap<>(dbConnectMap));
+        if (!delayLoadDataSource) {
+            dataSourceMap.put(key, buildDataSource(dbConnectMap));
+        }
     }
 }

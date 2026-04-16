@@ -11,6 +11,7 @@ import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.utils.GqlUtil;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 @ApiRestController("/meta")
@@ -32,8 +34,8 @@ public class MetaController extends BaseController {
     @GeelatoTest(description = "元数据列表查询测试")
     @RequestMapping(value = {"/list", "list/*"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiPagedResult<?> list(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
-        String gql = getGql();
-        return ruleService.queryForMapList(gql, withMeta);
+        QueryPayload payload = resolveQueryPayload();
+        return ruleService.queryForMapList(payload.gql(), withMeta, payload.paramsByEntity());
     }
 
     /**
@@ -42,8 +44,8 @@ public class MetaController extends BaseController {
     @GeelatoTest(description = "元数据多列表查询测试")
     @RequestMapping(value = {"/multiList"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMultiPagedResult<?> multiList(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
-        String gql = getGql();
-        return ruleService.queryForMultiMapList(gql, withMeta);
+        QueryPayload payload = resolveQueryPayload();
+        return ruleService.queryForMultiMapList(payload.gql(), withMeta, payload.paramsByEntity());
     }
 
     /**
@@ -141,6 +143,46 @@ public class MetaController extends BaseController {
 
     private String getGql() {
         return GqlUtil.resolveGql(this.request);
+    }
+
+    private QueryPayload resolveQueryPayload() {
+        String gql = getGql();
+        if (Strings.isBlank(gql)) {
+            return new QueryPayload(gql, new HashMap<>());
+        }
+        Map<String, Map<String, Object>> paramsByEntity = new HashMap<>();
+        String trimmed = gql.trim();
+        if (trimmed.startsWith("[")) {
+            JSONArray root = JSON.parseArray(gql);
+            for (int i = 0; i < root.size(); i++) {
+                JSONObject item = root.getJSONObject(i);
+                extractPf(item, paramsByEntity);
+            }
+            return new QueryPayload(JSON.toJSONString(root), paramsByEntity);
+        } else {
+            JSONObject root = JSON.parseObject(gql);
+            extractPf(root, paramsByEntity);
+            return new QueryPayload(JSON.toJSONString(root), paramsByEntity);
+        }
+    }
+
+    private void extractPf(JSONObject root, Map<String, Map<String, Object>> paramsByEntity) {
+        if (root == null || root.isEmpty()) {
+            return;
+        }
+        root.forEach((entityName, value) -> {
+            if (!(value instanceof JSONObject entityBody)) {
+                return;
+            }
+            JSONObject pf = entityBody.getJSONObject("@pf");
+            if (pf != null) {
+                paramsByEntity.put(entityName, new HashMap<>(pf));
+                entityBody.remove("@pf");
+            }
+        });
+    }
+
+    private record QueryPayload(String gql, Map<String, Map<String, Object>> paramsByEntity) {
     }
 
     /**

@@ -177,6 +177,11 @@ public class MetaReflex {
         em.setEntityName(viewName);
         em.setEntityTitle(map.get("title").toString());
         em.setEntityType(EntityType.View);
+        ViewMeta viewMeta = buildViewMeta(map);
+        if (viewMeta != null) {
+            em.setViewMetas(Collections.singletonList(viewMeta));
+            ViewManager.singleInstance().addViewMeta(viewMeta.getViewName(), viewMeta);
+        }
         String columnDataStr = map.get("view_column").toString();
         if (StringUtils.hasText(columnDataStr)) {
             List<Map<String, Object>> list = new ArrayList<>();
@@ -190,6 +195,18 @@ public class MetaReflex {
             em.setId(getPrimaryKey(columnMap));
         }
         return em;
+    }
+
+    private static ViewMeta buildViewMeta(Map<String, Object> map) {
+        String viewName = map.get("view_name") == null ? null : map.get("view_name").toString();
+        if (Strings.isBlank(viewName)) {
+            return null;
+        }
+        String viewConstruct = map.get("view_construct") == null ? null : map.get("view_construct").toString();
+        String viewColumn = map.get("view_column") == null ? null : map.get("view_column").toString();
+        String viewType = map.get("view_type") == null ? null : map.get("view_type").toString();
+        String entityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
+        return new ViewMeta(viewName, viewType, viewConstruct, viewColumn, entityName);
     }
 
 

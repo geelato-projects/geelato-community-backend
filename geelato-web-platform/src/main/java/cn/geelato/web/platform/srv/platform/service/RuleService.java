@@ -5,6 +5,8 @@ import cn.geelato.core.GlobalContext;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.biz.rules.common.EntityValidateRule;
+import cn.geelato.core.enums.TableTypeEnum;
+import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.mql.MetaQLManager;
 import cn.geelato.core.mql.command.DeleteCommand;
 import cn.geelato.core.mql.command.QueryCommand;
@@ -108,7 +110,12 @@ public class RuleService {
 
 
     public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta) {
+        return queryForMapList(gql, withMeta, Collections.emptyMap());
+    }
+
+    public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta, Map<String, Map<String, Object>> queryParamsByEntity) {
         QueryCommand command = gqlManager.generateQuerySql(gql);
+        applyViewTemplateParams(command, queryParamsByEntity);
         processQueryCommandFunctions(command);
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
         if (!GlobalContext.getMetaQueryCacheOption()) {
@@ -200,10 +207,15 @@ public class RuleService {
     }
 
     public ApiMultiPagedResult queryForMultiMapList(String gql, boolean withMeta) {
+        return queryForMultiMapList(gql, withMeta, Collections.emptyMap());
+    }
+
+    public ApiMultiPagedResult queryForMultiMapList(String gql, boolean withMeta, Map<String, Map<String, Object>> queryParamsByEntity) {
         Map<String, ApiMultiPagedResult.PageData> dataMap = new HashMap<>();
         List<QueryCommand> commandList = gqlManager.generateMultiQuerySql(gql);
         boolean allCached = GlobalContext.getMetaQueryCacheOption();
         for (QueryCommand command : commandList) {
+            applyViewTemplateParams(command, queryParamsByEntity);
             BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
             String prefix = "query:" + command.getEntityName() + ":" + command.getCacheKey();
             String kList = prefix + ":list";
@@ -239,6 +251,24 @@ public class RuleService {
             result.setCache(true);
         }
         return result;
+    }
+
+    private void applyViewTemplateParams(QueryCommand command, Map<String, Map<String, Object>> queryParamsByEntity) {
+        if (command == null || queryParamsByEntity == null || queryParamsByEntity.isEmpty()) {
+            return;
+        }
+        EntityMeta entityMeta = metaManager.getByEntityName(command.getEntityName());
+        if (entityMeta == null || entityMeta.getTableMeta() == null) {
+            return;
+        }
+        EntityType entityType = entityMeta.getEntityType();
+        if (EntityType.View != entityType) {
+            return;
+        }
+        Map<String, Object> params = queryParamsByEntity.get(command.getEntityName());
+        if (params != null && !params.isEmpty()) {
+            command.setViewTemplateParams(params);
+        }
     }
 
     // 值适配已在 MetaCacheProvider 统一处理

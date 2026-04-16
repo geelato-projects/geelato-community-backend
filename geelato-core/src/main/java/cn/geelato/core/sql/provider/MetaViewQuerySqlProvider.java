@@ -10,12 +10,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Component
 @Slf4j
 public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewCommand> {
+    private static final Pattern TEMPLATE_SEGMENT_PATTERN = Pattern.compile("#([\\s\\S]*?)#");
+    private static final Pattern TEMPLATE_PARAM_PATTERN = Pattern.compile("\\{([A-Za-z0-9_]+)}");
 
     @Override
     protected Object[] buildParams(QueryViewCommand command) {
@@ -36,7 +41,7 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         ViewMeta vm = md.getViewMeta(command.getViewName());
         if (vm.getViewType().equals(ViewTypeEnum.DEFAULT.getCode())) {
             sb.append("(");
-            sb.append(vm.getViewConstruct());
+            sb.append(renderViewConstruct(vm.getViewConstruct(), command.getViewTemplateParams()));
             sb.append(") as vt");
         } else {
             sb.append(vm.getViewName());
@@ -156,6 +161,54 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
             sb.append(",");
         }
         sb.deleteCharAt(sb.length() - 1);
+    }
+
+    private String renderViewConstruct(String viewConstruct, Map<String, Object> params) {
+        if (!StringUtils.hasText(viewConstruct)) {
+            return viewConstruct;
+        }
+        Map<String, Object> safeParams = params == null ? Collections.emptyMap() : params;
+        Matcher segmentMatcher = TEMPLATE_SEGMENT_PATTERN.matcher(viewConstruct);
+        StringBuilder sb = new StringBuilder();
+        while (segmentMatcher.find()) {
+            String segmentContent = segmentMatcher.group(1);
+            String rendered = renderSegment(segmentContent, safeParams);
+            segmentMatcher.appendReplacement(sb, Matcher.quoteReplacement(rendered));
+        }
+        segmentMatcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    private String renderSegment(String segment, Map<String, Object> params) {
+        Matcher paramMatcher = TEMPLATE_PARAM_PATTERN.matcher(segment);
+        StringBuilder segmentBuffer = new StringBuilder();
+        boolean hasPlaceholder = false;
+        while (paramMatcher.find()) {
+            hasPlaceholder = true;
+            String key = paramMatcher.group(1);
+            Object value = params.get(key);
+            if (isBlankValue(value)) {
+                return "";
+            }
+            paramMatcher.appendReplacement(segmentBuffer, Matcher.quoteReplacement(formatTemplateValue(value)));
+        }
+        if (!hasPlaceholder) {
+            return segment;
+        }
+        paramMatcher.appendTail(segmentBuffer);
+        return segmentBuffer.toString();
+    }
+
+    private String formatTemplateValue(Object value) {
+        if (value instanceof Number || value instanceof Boolean) {
+            return value.toString();
+        }
+        String text = value.toString().replace("'", "''");
+        return "'" + text + "'";
+    }
+
+    private boolean isBlankValue(Object value) {
+        return value == null || !StringUtils.hasText(value.toString());
     }
 
 }

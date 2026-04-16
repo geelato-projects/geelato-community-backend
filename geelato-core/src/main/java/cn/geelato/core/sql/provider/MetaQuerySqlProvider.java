@@ -1,5 +1,6 @@
 package cn.geelato.core.sql.provider;
 
+import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
@@ -7,11 +8,14 @@ import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
+import cn.geelato.core.meta.model.view.ViewMeta;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.util.StringUtils;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -19,6 +23,8 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
+    private static final Pattern TEMPLATE_SEGMENT_PATTERN = Pattern.compile("#([\\s\\S]*?)#");
+    private static final Pattern TEMPLATE_PARAM_PATTERN = Pattern.compile("\\{([A-Za-z0-9_]+)}");
     @Override
     protected Object[] buildParams(QueryCommand command) {
         return buildWhereParams(command);
@@ -43,10 +49,11 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         sb.append("select ");
         buildSelectFields(sb, md, command);
         sb.append(" from ");
-        sb.append(md.getTableName());
-        if (mainAlias != null) {
+        sb.append(buildFromSql(md, command));
+        String fromAlias = resolveFromAlias(md, mainAlias);
+        if (fromAlias != null) {
             sb.append(" ");
-            sb.append(mainAlias);
+            sb.append(fromAlias);
         }
         buildJoins(sb, md, command);
         FilterGroup fg = command.getWhere();
@@ -103,18 +110,22 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
     public String buildCountSql(QueryCommand command) {
         StringBuilder sb = new StringBuilder();
         EntityMeta md = getEntityMeta(command);
+        String mainAlias = null;
+        if (command.getForeignFields() != null && command.getForeignFields().length > 0) {
+            mainAlias = md.getTableAlias() != null ? md.getTableAlias() : buildTableAlias(md.getTableName());
+            md.setTableAlias(mainAlias);
+        } else {
+            md.setTableAlias(null);
+        }
         sb.append("select count(*) from (");
         sb.append("select ");
         buildSelectFields(sb, md, command);
         sb.append(" from ");
-        sb.append(md.getTableName());
-        if (command.getForeignFields() != null && command.getForeignFields().length > 0) {
-            String mainAlias = md.getTableAlias() != null ? md.getTableAlias() : buildTableAlias(md.getTableName());
-            md.setTableAlias(mainAlias);
+        sb.append(buildFromSql(md, command));
+        String fromAlias = resolveFromAlias(md, mainAlias);
+        if (fromAlias != null) {
             sb.append(" ");
-            sb.append(mainAlias);
-        }else{
-            md.setTableAlias(null);
+            sb.append(fromAlias);
         }
         buildJoins(sb, md, command);
         // where
@@ -345,5 +356,87 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             res = res.replaceAll(pattern, alias + "." + col);
         }
         return res;
+    }
+
+    private String buildFromSql(EntityMeta md, QueryCommand command) {
+        if (md.getTableMeta() == null) {
+            return md.getTableName();
+        }
+        EntityType entityType = md.getEntityType();
+        String viewSql = resolveViewSql(md);
+        if (EntityType.View == entityType && StringUtils.hasText(viewSql)) {
+            return "(" + renderViewConstruct(viewSql, command.getViewTemplateParams()) + ")";
+        }
+        return md.getTableName();
+    }
+
+    private String resolveFromAlias(EntityMeta md, String preferredAlias) {
+        if (preferredAlias != null) {
+            return preferredAlias;
+        }
+        return isViewDerivedTable(md) ? "vt" : null;
+    }
+
+    private boolean isViewDerivedTable(EntityMeta md) {
+        return md != null && EntityType.View == md.getEntityType() && StringUtils.hasText(resolveViewSql(md));
+    }
+
+    private String resolveViewSql(EntityMeta md) {
+        if (md == null) {
+            return null;
+        }
+        ViewMeta viewMeta = md.getViewMeta(md.getTableName());
+        if (viewMeta != null && StringUtils.hasText(viewMeta.getViewConstruct())) {
+            return viewMeta.getViewConstruct();
+        }
+        return md.getTableMeta() == null ? null : md.getTableMeta().getViewSql();
+    }
+
+    private String renderViewConstruct(String viewConstruct, Map<String, Object> params) {
+        if (!StringUtils.hasText(viewConstruct)) {
+            return viewConstruct;
+        }
+        Map<String, Object> safeParams = params == null ? Collections.emptyMap() : params;
+        Matcher segmentMatcher = TEMPLATE_SEGMENT_PATTERN.matcher(viewConstruct);
+        StringBuffer sb = new StringBuffer();
+        while (segmentMatcher.find()) {
+            String segmentContent = segmentMatcher.group(1);
+            String rendered = renderSegment(segmentContent, safeParams);
+            segmentMatcher.appendReplacement(sb, Matcher.quoteReplacement(rendered));
+        }
+        segmentMatcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    private String renderSegment(String segment, Map<String, Object> params) {
+        Matcher paramMatcher = TEMPLATE_PARAM_PATTERN.matcher(segment);
+        StringBuffer segmentBuffer = new StringBuffer();
+        boolean hasPlaceholder = false;
+        while (paramMatcher.find()) {
+            hasPlaceholder = true;
+            String key = paramMatcher.group(1);
+            Object value = params.get(key);
+            if (isBlankValue(value)) {
+                return "";
+            }
+            paramMatcher.appendReplacement(segmentBuffer, Matcher.quoteReplacement(formatTemplateValue(value)));
+        }
+        if (!hasPlaceholder) {
+            return segment;
+        }
+        paramMatcher.appendTail(segmentBuffer);
+        return segmentBuffer.toString();
+    }
+
+    private String formatTemplateValue(Object value) {
+        if (value instanceof Number || value instanceof Boolean) {
+            return value.toString();
+        }
+        String text = value.toString().replace("'", "''");
+        return "'" + text + "'";
+    }
+
+    private boolean isBlankValue(Object value) {
+        return value == null || !StringUtils.hasText(value.toString());
     }
 }

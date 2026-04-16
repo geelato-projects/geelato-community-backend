@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections.map.HashedMap;
 
+import java.util.Map;
 import java.util.Objects;
 
 @Setter
@@ -23,6 +24,7 @@ public class QueryCommand extends BaseCommand<QueryCommand> {
     private String orderBy;
     private FilterGroup having;
     private String ACL;
+    private Map<String, Object> viewTemplateParams;
 
     protected String[] foreignFields;
     public QueryCommand() {

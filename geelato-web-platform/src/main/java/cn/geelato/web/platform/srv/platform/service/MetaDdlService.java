@@ -3,7 +3,7 @@ package cn.geelato.web.platform.srv.platform.service;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.TableSourceTypeEnum;
-import cn.geelato.core.mql.filter.FilterGroup;
+import cn.geelato.core.enums.ViewTypeEnum;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
@@ -14,6 +14,7 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.meta.schema.SchemaCheck;
 import cn.geelato.core.meta.schema.SchemaIndex;
+import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.lang.api.ApiMetaResult;
@@ -234,6 +235,10 @@ public class MetaDdlService {
             }
             String currentConnect = "";
             for (TableView viewMeta : viewMetas) {
+                if (ViewTypeEnum.VIRTUAL.getCode().equals(viewMeta.getViewType())) {
+                    tableResult.put(viewMeta.getViewName(), "虚拟视图，无需创建");
+                    continue;
+                }
                 Optional<ConnectMeta> connectMetaResult = connectMetas.stream().filter(c -> c.getId().equals(viewMeta.getConnectId())).findFirst();
                 if (connectMetaResult.isEmpty()) {
                     tableResult.put(viewMeta.getViewName(), "不存在可以关联的数据库链接");
@@ -282,6 +287,9 @@ public class MetaDdlService {
             // 视图信息
             TableView viewMeta = viewService.getModel(TableView.class, viewId);
             Assert.notNull(viewMeta, "视图信息查询失败");
+            if (ViewTypeEnum.VIRTUAL.getCode().equals(viewMeta.getViewType())) {
+                throw new RuntimeException("虚拟视图无需创建");
+            }
             // 视图所属模型信息
             Map<String, Object> tableParams = new HashMap<>();
             tableParams.put("connectId", viewMeta.getConnectId());
@@ -349,6 +357,9 @@ public class MetaDdlService {
         if (Strings.isBlank(viewMeta.getConnectId())) {
             throw new RuntimeException("数据库连接不存在");
         }
+        if (ViewTypeEnum.VIRTUAL.getCode().equals(viewMeta.getViewType())) {
+            throw new RuntimeException("虚拟视图无需创建");
+        }
     }
 
     private void handleValidateViewSql(ConnectMeta meta, String sql) {
@@ -380,6 +391,9 @@ public class MetaDdlService {
             return result;
         }
         for (TableView viewMeta : viewMetas) {
+            if (ViewTypeEnum.VIRTUAL.getCode().equals(viewMeta.getViewType())) {
+                continue;
+            }
             if (Strings.isNotBlank(viewMeta.getConnectId()) && Strings.isNotBlank(viewMeta.getViewConstruct())) {
                 try {
                     boolean isValid = validateViewSql(viewMeta.getConnectId(), viewMeta.getViewConstruct());

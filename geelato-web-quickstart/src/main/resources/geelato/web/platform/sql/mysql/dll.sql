@@ -59,9 +59,16 @@ SELECT t.* FROM
 
 -- 创建表
 -- @sql mysql_createTable
-@for i in $.delCheckList
-    ALTER TABLE $.delCheckList[i].tableName DROP CHECK $.delCheckList[i].constraintName;
-@/for
+@if $.delCheckList.length>0
+  ALTER TABLE $.delCheckList[0].tableName
+  @for i in $.delCheckList
+    DROP CHECK $.delCheckList[i].constraintName
+    @if i<$.delCheckList.length-1
+      ,
+    @/if
+  @/for
+  , ALGORITHM=INPLACE, LOCK=NONE;
+@/if
 CREATE TABLE IF NOT EXISTS $.tableName (
   @for i in $.addList
     `$.addList[i].name` $.addList[i].type
@@ -112,100 +119,154 @@ CREATE TABLE IF NOT EXISTS $.tableName (
      ,
     @/if
   @/for
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '$.tableTitle';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '$.tableTitle' ROW_FORMAT=COMPRESSED KEY_BLOCK_SIZE=8;
 
 -- 更新表
 -- @sql mysql_upgradeTable
 @if $.tableTitle!='' && $.tableTitle!=null
-  ALTER TABLE $.tableName COMMENT = '$.tableTitle';
+  ALTER TABLE $.tableName COMMENT = '$.tableTitle', ALGORITHM = INPLACE, LOCK = NONE;
 @/if
-@for i in $.addList
-  alter table $.tableName add $.addList[i].name $.addList[i].type
-  @if !$.addList[i].nullable
-    not null
-  @/if
-  @if $.addList[i].defaultValue!='' && $.addList[i].defaultValue!=null
-    @if $.addList[i].dataType=='BIT'
-      DEFAULT $.addList[i].defaultValue
+-- 批量添加字段
+@if $.addList.length>0
+  ALTER TABLE $.tableName
+  @for i in $.addList
+    ADD `$.addList[i].name` $.addList[i].type
+    @if !$.addList[i].nullable
+      NOT NULL
     @/if
-    @if $.addList[i].dataType!='BIT'
-      DEFAULT '$.addList[i].defaultValue'
+    @if $.addList[i].defaultValue!='' && $.addList[i].defaultValue!=null
+      @if $.addList[i].dataType=='BIT'
+        DEFAULT $.addList[i].defaultValue
+      @/if
+      @if $.addList[i].dataType!='BIT'
+        DEFAULT '$.addList[i].defaultValue'
+      @/if
     @/if
-  @/if
-  @if $.addList[i].autoIncrement
-     AUTO_INCREMENT
-  @/if
-  @if $.addList[i].comment!='' && $.addList[i].comment!=null
-    COMMENT '$.addList[i].comment'
-  @/if
-  ;
-@/for
-@for i in $.changeList
-alter table $.tableName CHANGE `$.changeList[i].befColName` `$.changeList[i].name` $.changeList[i].type
+    @if $.addList[i].autoIncrement
+      AUTO_INCREMENT
+    @/if
+    @if $.addList[i].comment!='' && $.addList[i].comment!=null
+      COMMENT '$.addList[i].comment'
+    @/if
+    @if i<$.addList.length-1
+      ,
+    @/if
+  @/for
+  , ALGORITHM=INPLACE, LOCK=NONE;
+@/if
+-- 批量修改字段名
+@if $.changeList.length>0
+  ALTER TABLE $.tableName
+  @for i in $.changeList
+    CHANGE `$.changeList[i].befColName` `$.changeList[i].name` $.changeList[i].type
     @if !$.changeList[i].nullable
-    not null
+      NOT NULL
     @/if
     @if $.changeList[i].defaultValue!='' && $.changeList[i].defaultValue!=null
-    @if $.changeList[i].dataType=='BIT'
-    DEFAULT $.changeList[i].defaultValue
-    @/if
-    @if $.changeList[i].dataType!='BIT'
-    DEFAULT '$.changeList[i].defaultValue'
-    @/if
+      @if $.changeList[i].dataType=='BIT'
+        DEFAULT $.changeList[i].defaultValue
+      @/if
+      @if $.changeList[i].dataType!='BIT'
+        DEFAULT '$.changeList[i].defaultValue'
+      @/if
     @/if
     @if $.changeList[i].autoIncrement
-    AUTO_INCREMENT
+      AUTO_INCREMENT
     @/if
     @if $.changeList[i].comment!='' && $.changeList[i].comment!=null
-    COMMENT '$.changeList[i].comment'
+      COMMENT '$.changeList[i].comment'
     @/if
+    @if i<$.changeList.length-1
+      ,
+    @/if
+  @/for
 ;
-@/for
-@for i in $.modifyList
-  alter table $.tableName modify `$.modifyList[i].name` $.modifyList[i].type
-  @if !$.modifyList[i].nullable
-    not null
-  @/if
-  @if $.modifyList[i].defaultValue!='' && $.modifyList[i].defaultValue!=null
-    @if $.modifyList[i].dataType=='BIT'
-      DEFAULT $.modifyList[i].defaultValue
-    @/if
-    @if $.modifyList[i].dataType!='BIT'
-      DEFAULT '$.modifyList[i].defaultValue'
-    @/if
-  @/if
-  @if $.modifyList[i].autoIncrement
-    AUTO_INCREMENT
-  @/if
-  @if $.modifyList[i].comment!='' && $.modifyList[i].comment!=null
-    COMMENT '$.modifyList[i].comment'
-  @/if
-  ;
-@/for
-@for i in $.indexList
-  alter table $.tableName drop index `$.indexList[i].keyName`;
-@/for
-@if $.primaryKey!='' && $.primaryKey!=null
- ALTER TABLE $.tableName DROP PRIMARY KEY,ADD PRIMARY KEY ($.primaryKey);
 @/if
-@for i in $.uniqueList
+-- 批量修改字段属性
+@if $.modifyList.length>0
+  ALTER TABLE $.tableName
+  @for i in $.modifyList
+    MODIFY `$.modifyList[i].name` $.modifyList[i].type
+    @if !$.modifyList[i].nullable
+      NOT NULL
+    @/if
+    @if $.modifyList[i].defaultValue!='' && $.modifyList[i].defaultValue!=null
+      @if $.modifyList[i].dataType=='BIT'
+        DEFAULT $.modifyList[i].defaultValue
+      @/if
+      @if $.modifyList[i].dataType!='BIT'
+        DEFAULT '$.modifyList[i].defaultValue'
+      @/if
+    @/if
+    @if $.modifyList[i].autoIncrement
+      AUTO_INCREMENT
+    @/if
+    @if $.modifyList[i].comment!='' && $.modifyList[i].comment!=null
+      COMMENT '$.modifyList[i].comment'
+    @/if
+    @if i<$.modifyList.length-1
+      ,
+    @/if
+  @/for
+;
+@/if
+-- 批量删除索引
+@if $.indexList.length>0
+  ALTER TABLE $.tableName
+  @for i in $.indexList
+    DROP INDEX `$.indexList[i].keyName`
+    @if i<$.indexList.length-1
+      ,
+    @/if
+  @/for
+  , ALGORITHM=INPLACE, LOCK=NONE;
+@/if
+-- 更新主键
+@if $.primaryKey!='' && $.primaryKey!=null
+  ALTER TABLE $.tableName DROP PRIMARY KEY, ADD PRIMARY KEY ($.primaryKey), ALGORITHM=INPLACE, LOCK=NONE;
+@/if
+-- 批量添加唯一索引
+@if $.uniqueList.length>0
+  ALTER TABLE $.tableName
+  @for i in $.uniqueList
     @if $.hasDelStatus
-ALTER TABLE $.tableName ADD UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`, `del_status`, `delete_at`) USING BTREE;
+      ADD UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`, `del_status`, `delete_at`) USING BTREE
     @/if
     @if !$.hasDelStatus
-ALTER TABLE $.tableName ADD UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`) USING BTREE;
+      ADD UNIQUE INDEX `$.uniqueList[i].name`(`$.uniqueList[i].name`) USING BTREE
     @/if
-@/for
-@for i in $.delCheckList
-    ALTER TABLE $.delCheckList[i].tableName DROP CHECK $.delCheckList[i].constraintName;
-@/for
-@for i in $.checkList
-  ALTER TABLE $.checkList[i].tableName ADD CONSTRAINT `$.checkList[i].code` CHECK ($.checkList[i].checkClause);
-@/for
+    @if i<$.uniqueList.length-1
+      ,
+    @/if
+  @/for
+  , ALGORITHM=INPLACE, LOCK=NONE;
+@/if
+-- 批量删除检查约束
+@if $.delCheckList.length>0
+  ALTER TABLE $.delCheckList[0].tableName
+  @for i in $.delCheckList
+    DROP CHECK $.delCheckList[i].constraintName
+    @if i<$.delCheckList.length-1
+      ,
+    @/if
+  @/for
+  , ALGORITHM=INPLACE, LOCK=NONE;
+@/if
+-- 批量添加检查约束
+@if $.checkList.length>0
+  ALTER TABLE $.checkList[0].tableName
+  @for i in $.checkList
+    ADD CONSTRAINT `$.checkList[i].code` CHECK ($.checkList[i].checkClause)
+    @if i<$.checkList.length-1
+      ,
+    @/if
+  @/for
+  , ALGORITHM=INPLACE, LOCK=NONE;
+@/if
 
 -- 模型变更，表名变更，表重命名
 -- @sql mysql_renameTable
-ALTER TABLE $.entityName COMMENT = '$.newComment';
+ALTER TABLE $.entityName COMMENT = '$.newComment', ALGORITHM = INPLACE, LOCK = NONE;
 RENAME TABLE $.entityName TO $.newEntityName;
 
 -- 字段变更，删除字段时,更新时

@@ -36,6 +36,7 @@ public class EncodingService extends BaseService {
     private static final String ENCODING_LOCK_PREFIX = "ENCODING_LOCK";
     private static final String ENCODING_LIST_PREFIX = "ENCODING_LIST";
     private static final String ENCODING_ITEM_PREFIX = "ENCODING_ITEM_";
+    private static final String ENCODING_SERIAL_MAX_PREFIX = "ENCODING_SERIAL_MAX_";
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
     @Autowired
@@ -51,10 +52,14 @@ public class EncodingService extends BaseService {
     public void redisTemplateEncodingDelete(Encoding encoding) {
         encoding.afterSet();
         String redisItemKey = ENCODING_ITEM_PREFIX + encoding.getId();
+        String maxKey = ENCODING_SERIAL_MAX_PREFIX + redisItemKey;
+        String setKey = redisItemKey + "_SET";
         List<Object> redisItemKeys = redisTemplate.opsForList().range(ENCODING_LIST_PREFIX, 0, -1);
         // 清理
         if (redisItemKeys != null && redisItemKeys.contains(redisItemKey)) {
             redisTemplate.delete(redisItemKey);
+            redisTemplate.delete(maxKey);
+            redisTemplate.delete(setKey);
             redisTemplate.opsForList().remove(ENCODING_LIST_PREFIX, 1, redisItemKey);
         }
     }
@@ -69,6 +74,8 @@ public class EncodingService extends BaseService {
     public void redisTemplateEncodingUpdate(Encoding encoding) {
         encoding.afterSet();
         String redisItemKey = ENCODING_ITEM_PREFIX + encoding.getId();
+        String maxKey = ENCODING_SERIAL_MAX_PREFIX + redisItemKey;
+        String setKey = redisItemKey + "_SET";
         List<Object> redisItemKeys = redisTemplate.opsForList().range(ENCODING_LIST_PREFIX, 0, -1);
         // 设置缓存
         if (redisItemKeys == null || redisItemKeys.isEmpty()) {
@@ -77,6 +84,8 @@ public class EncodingService extends BaseService {
         // 清理
         if (redisItemKeys.contains(redisItemKey)) {
             redisTemplate.delete(redisItemKey);
+            redisTemplate.delete(maxKey);
+            redisTemplate.delete(setKey);
             redisTemplate.opsForList().remove(ENCODING_LIST_PREFIX, 1, redisItemKey);
         }
         // 重新获取
@@ -86,16 +95,26 @@ public class EncodingService extends BaseService {
     /**
      * 设置缓存
      * <p>
-     * 将指定的编码对象及其对应的流水号列表存储到Redis缓存中，并设置缓存的过期时间。
+     * 将指定的编码对象存储到Redis缓存中，初始化顺序号最大值，并设置缓存的过期时间。
      *
      * @param encoding 编码对象，包含编码的ID和日期类型等信息
      */
     private void redisTemplateEncodingItem(Encoding encoding) {
         String redisItemKey = ENCODING_ITEM_PREFIX + encoding.getId();
-        List<Object> serials = querySerialsByEncodingLog(encoding);
-        log.info("{} 流水号：{}", redisItemKey, JSON.toJSONString(serials));
-        redisTemplateListRightPush(redisItemKey, serials);
-        redisTemplate.expire(redisItemKey, DateUtils.timeInterval(encoding.getDateType()), TimeUnit.SECONDS);
+        String maxKey = ENCODING_SERIAL_MAX_PREFIX + redisItemKey;
+        // 初始化顺序号最大值（如果不存在）
+        Boolean exists = redisTemplate.hasKey(maxKey);
+        if (exists == null || !exists) {
+            List<Object> serials = querySerialsByEncodingLog(encoding);
+            log.info("{} 流水号：{}", redisItemKey, JSON.toJSONString(serials));
+            if (serials != null && !serials.isEmpty()) {
+                serials = formatSerialList(serials);
+                long dbMax = Long.parseLong(String.valueOf(serials.get(serials.size() - 1)));
+                redisTemplate.opsForValue().set(maxKey, String.valueOf(dbMax), DateUtils.timeInterval(encoding.getDateType()), TimeUnit.SECONDS);
+            } else {
+                redisTemplate.opsForValue().set(maxKey, "0", DateUtils.timeInterval(encoding.getDateType()), TimeUnit.SECONDS);
+            }
+        }
     }
 
     /**
@@ -170,7 +189,6 @@ public class EncodingService extends BaseService {
      * @return 返回生成的编码实例字符串
      */
     public String generate(Encoding form, Map<String, Object> argument) {
-        redisTemplateEncoding();
         if (Strings.isBlank(form.getTemplate())) {
             return null;
         }
@@ -180,6 +198,12 @@ public class EncodingService extends BaseService {
         }
         form.afterSet();
         String redisItemKey = ENCODING_ITEM_PREFIX + form.getId();
+        // 按需初始化缓存
+        String maxKey = ENCODING_SERIAL_MAX_PREFIX + redisItemKey;
+        Boolean maxExists = redisTemplate.hasKey(maxKey);
+        if (maxExists == null || !maxExists) {
+            redisTemplateEncodingItem(form);
+        }
         // 记录
         EncodingLog encodingLog = new EncodingLog();
         encodingLog.setEncodingId(form.getId());
@@ -211,7 +235,7 @@ public class EncodingService extends BaseService {
                 }
             } else if (EncodingItemTypeEnum.SERIAL.getValue().equals(item.getItemType())) {
                 // 序列号
-                String serial = getSerialByRedisLock(redisItemKey, item);
+                String serial = getSerial(redisItemKey, item);
                 if (Strings.isBlank(serial)) {
                     throw new RuntimeException(ApiErrorMsg.SERIAL_USE_UP);
                 }
@@ -237,60 +261,33 @@ public class EncodingService extends BaseService {
             encodingLog.setTenantCode(getSessionTenantCode());
         }
         dao.save(encodingLog);
-        if (Strings.isNotBlank(encodingLog.getExampleSerial())) {
-            redisTemplate.opsForList().rightPush(redisItemKey, encodingLog.getExampleSerial());
-        }
 
         return encodingLog.getExample();
     }
 
     /**
-     * 通过Redis锁获取流水号
+     * 获取流水号
      * <p>
-     * 根据提供的Redis项键和编码项信息，通过Redis锁机制安全地获取流水号。
+     * 根据提供的Redis项键和编码项信息获取流水号。
+     * 顺序号使用Redis原子自增，无需锁；随机号使用Redis Set去重。
      *
      * @param redisItemKey Redis项键，用于标识需要获取流水号的Redis项
      * @param item         编码项信息，包含流水号的类型和位数等信息
      * @return 返回生成的流水号字符串，如果获取失败则返回null
      */
-    private String getSerialByRedisLock(String redisItemKey, EncodingItem item) {
-        // 获取锁 加上uuid防止误删除锁
-        String uuid = System.currentTimeMillis() + UUID.randomUUID().toString().replaceAll("-", "");
-        Boolean lock = redisTemplate.opsForValue().setIfAbsent(ENCODING_LOCK_PREFIX, uuid, 10, TimeUnit.SECONDS);
-        // 如果获取到锁执行步骤 最后释放锁
-        String serial = null;
-        if (lock) {
-            if (EncodingSerialTypeEnum.ORDER.getValue().equals(item.getSerialType())) {
-                // 顺序
-                serial = getOrderSerial(redisItemKey, item.getSerialDigit(), item.isCoverPos());
-            } else if (EncodingSerialTypeEnum.RANDOM.getValue().equals(item.getSerialType())) {
-                // 随机
-                serial = getRandomSerial(redisItemKey, item.getSerialDigit(), item.getRandomRange());
-            }
-            // 在极端情况下仍然会误删除锁
-            // 因此使用lua脚本的方式来防止误删除
-            String script = "if redis.call(\"get\",KEYS[1]) == ARGV[1]\n" + "then\n" + "    return redis.call(\"del\",KEYS[1])\n" + "else\n" + "    return 0\n" + "end";
-            DefaultRedisScript defaultRedisScript = new DefaultRedisScript();
-            defaultRedisScript.setScriptText(script);
-            defaultRedisScript.setResultType(Long.class);
-            redisTemplate.execute(defaultRedisScript, List.of(ENCODING_LOCK_PREFIX), uuid);
-        } else {
-            // 如果没有获取到锁 重试
-            try {
-                Thread.sleep(100);
-                serial = getSerialByRedisLock(redisItemKey, item);
-            } catch (InterruptedException e) {
-                log.error("redisLockError", e);
-            }
+    private String getSerial(String redisItemKey, EncodingItem item) {
+        if (EncodingSerialTypeEnum.ORDER.getValue().equals(item.getSerialType())) {
+            return getOrderSerial(redisItemKey, item.getSerialDigit(), item.isCoverPos());
+        } else if (EncodingSerialTypeEnum.RANDOM.getValue().equals(item.getSerialType())) {
+            return getRandomSerial(redisItemKey, item.getSerialDigit(), item.getRandomRange());
         }
-
-        return serial;
+        return null;
     }
 
     /**
      * 获取顺序流水号
      * <p>
-     * 根据提供的Redis键、流水号位数和是否覆盖前导零的参数，获取下一个顺序流水号。
+     * 使用Redis原子自增保证唯一性，无需锁，根据提供的Redis键、流水号位数和是否覆盖前导零的参数，获取下一个顺序流水号。
      *
      * @param redisItemKey Redis键，用于在Redis中存储流水号信息
      * @param serialDigit  流水号的位数
@@ -298,20 +295,22 @@ public class EncodingService extends BaseService {
      * @return 返回下一个顺序流水号字符串
      */
     private String getOrderSerial(String redisItemKey, int serialDigit, boolean coverPos) {
-        List<Object> redisSerials = redisTemplate.opsForList().range(redisItemKey, 0, -1);
-        if (redisSerials == null || redisSerials.isEmpty()) {
-            return coverPos ? String.format("%0" + serialDigit + "d", 1) : String.valueOf(1);
+        String maxKey = ENCODING_SERIAL_MAX_PREFIX + redisItemKey;
+        Long maxSerial = redisTemplate.opsForValue().increment(maxKey, 1);
+        if (maxSerial == null) {
+            maxSerial = 1L;
         }
-        redisSerials = formatSerialList(redisSerials);
-        long max = Long.parseLong(String.valueOf(redisSerials.get(redisSerials.size() - 1)));
-        long radius = Long.parseLong(UUIDUtils.generateFixation(serialDigit, 9));
-        return radius > max ? (coverPos ? String.format("%0" + serialDigit + "d", max + 1) : String.valueOf((max + 1))) : null;
+        long radius = (long) Math.pow(10, serialDigit) - 1;
+        if (maxSerial > radius) {
+            return null;
+        }
+        return coverPos ? String.format("%0" + serialDigit + "d", maxSerial) : String.valueOf(maxSerial);
     }
 
     /**
      * 生成随机流水号
      * <p>
-     * 根据提供的Redis键、流水号位数和可选的字符范围，生成一个随机的流水号。
+     * 使用Redis Set结构保证原子性和O(1)查重，根据提供的Redis键、流水号位数和可选的字符范围，生成一个随机的流水号。
      *
      * @param redisItemKey Redis中的键，用于检查生成的流水号是否已经存在
      * @param serialDigit  流水号的位数
@@ -320,17 +319,17 @@ public class EncodingService extends BaseService {
      */
     private String getRandomSerial(String redisItemKey, int serialDigit, String range) {
         range = Strings.isBlank(range) ? "0123456789" : range;
-        List<Object> redisSerials = redisTemplate.opsForList().range(redisItemKey, 0, -1);
-        String serial = null;
-        long radius = Long.parseLong(UUIDUtils.generateFixation(serialDigit, range.length() - 1));
-        for (int i = 0; i < radius; i++) {
-            serial = UUIDUtils.generate(serialDigit, range);
-            if (redisSerials != null && Strings.isNotBlank(serial) && !redisSerials.contains(serial)) {
-                break;
+        String setKey = redisItemKey + "_SET";
+        int maxAttempts = 100;
+        for (int i = 0; i < maxAttempts; i++) {
+            String serial = UUIDUtils.generate(serialDigit, range);
+            Long result = redisTemplate.opsForSet().add(setKey, serial);
+            if (result != null && result == 1) {
+                redisTemplate.expire(setKey, DateUtils.timeInterval("yyyy-MM-dd"), TimeUnit.SECONDS);
+                return serial;
             }
-            serial = null;
         }
-        return serial;
+        return null;
     }
 
     /**

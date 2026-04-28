@@ -83,7 +83,7 @@ public class DateUtils {
             calendar.set(Calendar.DAY_OF_MONTH, 1); // 将天数设置为1,表示下个月的第一天
             calendar.set(Calendar.HOUR_OF_DAY, 0); // 将小时数设置为0,表示当天的零点
             calendar.set(Calendar.MINUTE, 0); // 将分钟数设置为0
-        } else if (Arrays.asList(new String[]{"yyyyMM", "yyMM"}).contains(dateType)) {
+        } else if (Arrays.asList(new String[]{"yyyyMM", "yyMM", "yyyyM", "yyM"}).contains(dateType)) {
             calendar.add(Calendar.MONTH, 1); // 将当前时间加上一个月
             calendar.set(Calendar.DAY_OF_MONTH, 1); // 将天数设置为1,表示下个月的第一天
             calendar.set(Calendar.HOUR_OF_DAY, 0); // 将小时数设置为0,表示当天的零点
@@ -91,7 +91,7 @@ public class DateUtils {
         } else if (Arrays.asList(new String[]{"yyyyMMdd", "yyMMdd"}).contains(dateType)) {
             calendar.add(Calendar.HOUR_OF_DAY, 24); // 将当前时间加上一天
         } else {
-            return -1;
+            calendar.add(Calendar.HOUR_OF_DAY, 24); // 将当前时间加上一天
         }
 
         Date tonight = calendar.getTime(); // 获取今天晚上的时间
@@ -244,5 +244,22 @@ public class DateUtils {
 
     public static Date defaultDeleteAt() {
         return parse(DateUtils.DEFAULT_DELETE_AT, DateUtils.DATETIME);
+    }
+
+    public static String hexMonth(int month) {
+        Map<Integer, String> HEX_MONTH = new HashMap<>();
+        HEX_MONTH.put(1, "1");
+        HEX_MONTH.put(2, "2");
+        HEX_MONTH.put(3, "3");
+        HEX_MONTH.put(4, "4");
+        HEX_MONTH.put(5, "5");
+        HEX_MONTH.put(6, "6");
+        HEX_MONTH.put(7, "7");
+        HEX_MONTH.put(8, "8");
+        HEX_MONTH.put(9, "9");
+        HEX_MONTH.put(10, "A");
+        HEX_MONTH.put(11, "B");
+        HEX_MONTH.put(12, "C");
+        return HEX_MONTH.get(month);
     }
 }

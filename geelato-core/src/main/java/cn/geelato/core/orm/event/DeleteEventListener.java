@@ -4,9 +4,9 @@ public interface DeleteEventListener {
     void beforeDelete(DeleteEventContext context);
     void afterDelete(DeleteEventContext context);
     default boolean supports(DeleteEventContext context) {
-        return true;
+        return false;
     }
     default boolean enabled(DeleteEventContext context) {
-        return true;
+        return false;
     }
 }

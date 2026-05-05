@@ -8,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ReadonlyShadowTableListener implements AfterSaveEventListener {
+    private static final boolean READONLY_EVENT_ENABLED = false;
     private static final Pattern P_INSERT = Pattern.compile("(?is)^\\s*(insert\\s+into\\s+)(`?)([a-zA-Z0-9_]+)(`?)\\s*\\(", Pattern.CASE_INSENSITIVE);
     private static final Pattern P_UPDATE = Pattern.compile("(?is)^\\s*(update\\s+)(`?)([a-zA-Z0-9_]+)(`?)\\s+set\\b", Pattern.CASE_INSENSITIVE);
 
@@ -31,6 +32,10 @@ public class ReadonlyShadowTableListener implements AfterSaveEventListener {
     public boolean supports(SaveEventContext context) {
         String sql = context.getBoundSql().getSql();
         return sql != null && (sql.trim().toLowerCase().startsWith("insert") || sql.trim().toLowerCase().startsWith("update"));
+    }
+    @Override
+    public boolean enabled(SaveEventContext context) {
+        return READONLY_EVENT_ENABLED;
     }
 
     private String transform(String sql) {

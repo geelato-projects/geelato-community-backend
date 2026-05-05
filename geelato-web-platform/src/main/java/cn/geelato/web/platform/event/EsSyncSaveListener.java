@@ -3,13 +3,10 @@ package cn.geelato.web.platform.event;
 import cn.geelato.core.orm.event.SaveEventContext;
 import cn.geelato.core.orm.event.AfterSaveEventListener;
 import cn.geelato.web.platform.run.SpringContextHolder;
-import org.springframework.core.env.Environment;
-import cn.geelato.web.platform.boot.properties.EsConfigurationProperties;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import org.springframework.jdbc.core.JdbcTemplate;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.UpdateRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,6 +14,8 @@ import java.util.Map;
 
 @Slf4j
 public class EsSyncSaveListener implements AfterSaveEventListener {
+    private static final boolean ES_SYNC_ENABLED = false;
+    private static final String ES_INDEX_PREFIX = "";
     private volatile ElasticsearchClient client;
 
     @Override
@@ -25,7 +24,7 @@ public class EsSyncSaveListener implements AfterSaveEventListener {
     }
     @Override
     public boolean enabled(SaveEventContext context) {
-        return getClient() != null;
+        return ES_SYNC_ENABLED && getClient() != null;
     }
 
     @Override
@@ -35,9 +34,8 @@ public class EsSyncSaveListener implements AfterSaveEventListener {
     public void afterSave(SaveEventContext context) {
         String entityName = context.getCommand().getEntityName();
         String pk = context.getCommand().getPK();
-        String indexPrefix = getProps().getIndexPrefix();
         String baseIndex = entityName == null ? "default" : entityName.toLowerCase();
-        String index = (indexPrefix == null || indexPrefix.isEmpty()) ? baseIndex : (indexPrefix + baseIndex);
+        String index = (ES_INDEX_PREFIX == null || ES_INDEX_PREFIX.isEmpty()) ? baseIndex : (ES_INDEX_PREFIX + baseIndex);
         try {
             if (log.isInfoEnabled()) {
                 log.info("es-sync start, eventId={}, index={}", context.getEventId(), index);
@@ -75,7 +73,4 @@ public class EsSyncSaveListener implements AfterSaveEventListener {
         }
     }
 
-    private EsConfigurationProperties getProps() {
-        return SpringContextHolder.getBean(EsConfigurationProperties.class);
-    }
 }

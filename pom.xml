@@ -20,7 +20,6 @@
         <module>geelato-dynamic-datasource</module>
         <module>geelato-web-platform</module>
         <module>geelato-web-common</module>
-        <module>geelato-reactor-platform</module>
         <module>geelato-web-quickstart</module>
         <module>geelato-plugin-manager</module>
         <module>geelato-test</module>

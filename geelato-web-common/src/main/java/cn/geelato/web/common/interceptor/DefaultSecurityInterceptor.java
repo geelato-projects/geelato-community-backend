@@ -8,6 +8,8 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
 import cn.geelato.web.common.shiro.OAuth2Token;
+import cn.geelato.web.common.shiro.WeixinUnionIdToken;
+import cn.geelato.web.common.shiro.WeixinWorkUserIdToken;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -33,15 +35,20 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private static final String __JWTTokenTag__="JWTBearer ";
     private static final String __OAuthTokenTag__="Bearer ";
     private static final String __AnonymousTokenTag__="Anonymous ";
+    private static final String __WeixinUnionIdTokenTag__ = "WeixinUnionId ";
+    private static final String __WeixinWorkUserIdTokenTag__ = "WeixinWorkUserId ";
     private static final String anonymousFixedPassword = GlobalContext.getAnonymousPwd();
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
     private final OrgProvider orgProvider;
+    private final UserProvider userProvider;
  
     public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();
 
-    public DefaultSecurityInterceptor(OAuthConfigurationProperties config, OrgProvider orgProvider) {
+
+    public DefaultSecurityInterceptor(OAuthConfigurationProperties config, OrgProvider orgProvider, UserProvider userProvider) {
         oAuthConfigurationProperties = config;
         this.orgProvider = orgProvider;
+        this.userProvider = userProvider;
     }
 
     @Override
@@ -62,6 +69,9 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
         if (!authenticated) {
             authenticated = tryJwtAuthenticate(token);
+        }
+        if (!authenticated) {
+            authenticated = tryExtendKeyAuthenticate(token);
         }
         if (!authenticated) {
             authenticated = tryOAuth2Authenticate(token);
@@ -107,30 +117,64 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
 
     private boolean tryJwtAuthenticate(String rawToken) {
         String token = rawToken;
-//        if (!token.startsWith(__JWTTokenTag__)) {
-//            return false;
-//        }
+        if (!token.startsWith(__JWTTokenTag__)) {
+            return false;
+        }
         token = token.replace(__JWTTokenTag__, "");
-        //因为oauth2的令牌暂时没法切换身份所以增加支持Bearer前缀
-        token = token.replace(__OAuthTokenTag__, "");
         try {
             DecodedJWT verify = JWTUtil.verify(token);
             String loginName = verify.getClaim("loginName").asString();
             String passWord = verify.getClaim("passWord").asString();
             String orgId = verify.getClaim("orgId").asString();
             String tenantCode = verify.getClaim("tenantCode").asString();
-            User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
-            if (StringUtils.isNotEmpty(orgId)) {
-                currentUser.setOrgId(orgId);
-                currentUser.setDeptId(orgProvider.getDeptId(orgId));
-                currentUser.setBuId( orgProvider.getBuId(orgId));
+            if (StringUtils.isEmpty(loginName)) {
+                return false;
             }
+            User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
+            setupOrgInfo(currentUser, orgId);
             SecurityContext.setCurrentUser(currentUser);
             SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
             SecurityContext.setCurrentPassword(passWord);
             UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
             Subject subject = SecurityUtils.getSubject();
             subject.login(userToken);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean tryExtendKeyAuthenticate(String rawToken) {
+        if (userProvider == null) {
+            return false;
+        }
+        String extendKey = null;
+        String extendType = null;
+        Subject subject = SecurityUtils.getSubject();
+        if (rawToken.startsWith(__WeixinUnionIdTokenTag__)) {
+            extendKey = rawToken.replace(__WeixinUnionIdTokenTag__, "");
+            extendType = "weixinUnionId";
+        } else if (rawToken.startsWith(__WeixinWorkUserIdTokenTag__)) {
+            extendKey = rawToken.replace(__WeixinWorkUserIdTokenTag__, "");
+            extendType = "weixinWorkUserId";
+        }
+        if (StringUtils.isEmpty(extendKey) || StringUtils.isEmpty(extendType)) {
+            return false;
+        }
+        try {
+            User currentUser = userProvider.getUserByExtendKey(extendKey, extendType);
+            if (currentUser == null || StringUtils.isEmpty(currentUser.getLoginName())) {
+                return false;
+            }
+            currentUser.setupOrgInfo(orgProvider);
+            SecurityContext.setCurrentUser(currentUser);
+            SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
+            SecurityContext.setCurrentPassword(anonymousFixedPassword);
+            if ("weixinUnionId".equals(extendType)) {
+                subject.login(new WeixinUnionIdToken(extendKey));
+            } else {
+                subject.login(new WeixinWorkUserIdToken(extendKey));
+            }
             return true;
         } catch (Exception e) {
             return false;
@@ -159,6 +203,31 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             return false;
         }
         return false;
+    }
+
+    private void setupOrgInfo(User currentUser, String orgId) {
+        if (currentUser == null) {
+            return;
+        }
+        if (StringUtils.isNotEmpty(orgId)) {
+            currentUser.setOrgId(orgId);
+            currentUser.setDeptId(orgProvider.getDeptId(orgId));
+            currentUser.setBuId(orgProvider.getBuId(orgId));
+        }
+    }
+
+    private User resolveLocalUser(String weixinUnionId, String weixinWorkUserId) {
+        if (userProvider == null) {
+            return null;
+        }
+        User user = null;
+        if (StringUtils.isNotEmpty(weixinUnionId)) {
+            user = userProvider.getUserByExtendKey(weixinUnionId, "weixinUnionId");
+        }
+        if (user == null && StringUtils.isNotEmpty(weixinWorkUserId)) {
+            user = userProvider.getUserByExtendKey(weixinWorkUserId, "weixinWorkUserId");
+        }
+        return user;
     }
 
     /**

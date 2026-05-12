@@ -2,9 +2,7 @@ package cn.geelato.web.platform.boot;
 
 
 import cn.geelato.core.orm.Dao;
-import cn.geelato.web.common.shiro.DbRealm;
-import cn.geelato.web.common.shiro.AnonymousRealm;
-import cn.geelato.web.common.shiro.OAuth2Realm;
+import cn.geelato.web.common.shiro.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
@@ -40,6 +38,7 @@ public class ShiroConfiguration extends BaseConfiguration {
         authorizationAttributeSourceAdvisor.setSecurityManager(securityManager);
         return authorizationAttributeSourceAdvisor;
     }
+
     @Bean
     public EhCacheManager getEhCacheManager() {
         EhCacheManager em = new EhCacheManager();
@@ -68,29 +67,46 @@ public class ShiroConfiguration extends BaseConfiguration {
         realm.setCacheManager(cacheManager);
         return realm;
     }
+
     @Bean(name = "anonymousRealm")
     public AnonymousRealm anonymousRealm(@Qualifier("primaryDao") Dao dao, EhCacheManager cacheManager) {
         AnonymousRealm realm = new AnonymousRealm(dao);
         realm.setCacheManager(cacheManager);
         return realm;
     }
+
     @Bean(name = "oauth2Realm")
     public OAuth2Realm oauth2Realm(EhCacheManager cacheManager) {
         OAuth2Realm realm = new OAuth2Realm();
         realm.setCacheManager(cacheManager);
         return realm;
     }
+
+    @Bean(name = "weixinUnionIdRealm")
+    public WeixinUnionIdRealm weixinUnionIdRealm(@Qualifier("primaryDao") Dao dao, EhCacheManager cacheManager) {
+        WeixinUnionIdRealm realm = new WeixinUnionIdRealm(dao);
+        realm.setCacheManager(cacheManager);
+        return realm;
+    }
+
+    @Bean(name = "weixinWorkUserIdRealm")
+    public WeixinWorkUserIdRealm weixinWorkUserIdRealm(@Qualifier("primaryDao") Dao dao, EhCacheManager cacheManager) {
+        WeixinWorkUserIdRealm realm = new WeixinWorkUserIdRealm(dao);
+        realm.setCacheManager(cacheManager);
+        return realm;
+    }
+
     @Bean(name = "defaultSecurityManager")
     public DefaultWebSecurityManager defaultSecurityManager(
             @Qualifier("anonymousRealm") AnonymousRealm anonymousRealm,
             @Qualifier("oauth2Realm") OAuth2Realm oAuth2Realm,
+            @Qualifier("weixinUnionIdRealm") WeixinUnionIdRealm weixinUnionIdRealm,
+            @Qualifier("weixinWorkUserIdRealm") WeixinWorkUserIdRealm weixinWorkUserIdRealm,
             @Qualifier("dbShiroRealm") DbRealm dbRealm) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
-        defaultWebSecurityManager.setRealms(Arrays.asList(anonymousRealm, oAuth2Realm, dbRealm));
+        defaultWebSecurityManager.setRealms(Arrays.asList(anonymousRealm, weixinUnionIdRealm, weixinWorkUserIdRealm, oAuth2Realm, dbRealm));
         defaultWebSecurityManager.setCacheManager(getEhCacheManager());
         ThreadContext.bind(defaultWebSecurityManager);
         return defaultWebSecurityManager;
     }
-
-
 }

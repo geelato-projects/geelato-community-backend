@@ -12,9 +12,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DefaultUserProvider extends UserProvider {
     private final JdbcTemplate platformJdbcTemplate;
     private final Map<String, Map<String, User>> extendUserPool = new ConcurrentHashMap<>();
+    private final OrgProvider orgProvider;
 
-    public DefaultUserProvider(@Qualifier("primaryJdbcTemplate") JdbcTemplate platformJdbcTemplate) {
+    public DefaultUserProvider(@Qualifier("primaryJdbcTemplate") JdbcTemplate platformJdbcTemplate, OrgProvider orgProvider) {
         this.platformJdbcTemplate = platformJdbcTemplate;
+        this.orgProvider = orgProvider;
         loadData(null);
     }
 
@@ -60,7 +62,7 @@ public class DefaultUserProvider extends UserProvider {
             list.add(ur);
         }
         List<Map<String, Object>> orgMapList = platformJdbcTemplate.queryForList(
-                "select user_id, org_id, org_name from platform_org_r_user where del_status = 0"
+                "select user_id, org_id, org_name, default_org from platform_org_r_user where del_status = 0"
         );
         for (Map<String, Object> om : orgMapList) {
             String userId = String.valueOf(om.get("user_id"));
@@ -72,9 +74,19 @@ public class DefaultUserProvider extends UserProvider {
                 user.setUserOrgs(orgs);
             }
             UserOrg uo = new UserOrg();
-            uo.setOrgId(String.valueOf(om.get("org_id")));
+            String orgId = String.valueOf(om.get("org_id"));
+            uo.setOrgId(orgId);
             uo.setName(String.valueOf(om.get("org_name")));
             orgs.add(uo);
+            Object defaultOrg = om.get("default_org");
+            boolean isDefaultOrg = "1".equals(String.valueOf(defaultOrg)) || Boolean.TRUE.equals(defaultOrg);
+            if (isDefaultOrg && orgId != null && !orgId.isEmpty()) {
+                user.setOrgId(orgId);
+                user.setDefaultOrgId(orgId);
+            }
+            if (orgProvider != null) {
+                user.setupOrgInfo(orgProvider);
+            }
         }
     }
 

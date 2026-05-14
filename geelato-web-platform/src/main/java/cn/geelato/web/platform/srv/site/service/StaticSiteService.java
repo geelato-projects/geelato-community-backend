@@ -16,6 +16,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -27,11 +28,18 @@ public class StaticSiteService extends BaseService {
 
     // 添加静态初始化块加载7z库
     static {
-        try {
-            SevenZip.initSevenZipFromPlatformJAR();
-        } catch (SevenZipNativeInitializationException e) {
-            throw new RuntimeException("初始化7-Zip库失败", e);
+        if (!isMacOs()) {
+            try {
+                SevenZip.initSevenZipFromPlatformJAR();
+            } catch (SevenZipNativeInitializationException e) {
+                throw new RuntimeException("初始化7-Zip库失败", e);
+            }
         }
+    }
+
+    private static boolean isMacOs() {
+        String osName = System.getProperty("os.name", "");
+        return osName.toLowerCase(Locale.ROOT).contains("mac");
     }
 
     public StaticSite createModel(StaticSite model, String baseFolderPath) {

@@ -2,7 +2,7 @@ package cn.geelato.web.platform.srv.weixin;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.meta.Company;
-import cn.geelato.security.SecurityContext;
+import cn.geelato.security.*;
 import cn.geelato.utils.HttpUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.meta.User;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.nio.file.attribute.UserPrincipal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,9 @@ import java.util.Map;
 public class WeixinWorkController extends BaseController {
     @Autowired
     private WeixinWorkMapper weixinWorkMapper;
+
+    @Autowired
+    private UserProvider userProvider;
 
     @Autowired
     private WeixinWorkConfigurationProperties weixinWorkConfig;
@@ -88,10 +92,14 @@ public class WeixinWorkController extends BaseController {
     @RequestMapping(value = "/queryGroup", method = RequestMethod.GET)
     public ApiResult<?> queryGroup(@RequestParam(required = false) String userId) {
         try {
+            String companyId;
             if (userId == null || userId.isEmpty()) {
                 userId = SecurityContext.getCurrentUser().getUserId();
+                companyId = SecurityContext.getCurrentUser().getCompanyId();
+            }else{
+                companyId=userProvider.getUserById(userId).getCompanyId();
             }
-            String companyId = SecurityContext.getCurrentUser().getCompanyId();
+
             String weixinWorkUserId = weixinWorkMapper.getWeixinWorkUserIdByUserId(userId);
             if (weixinWorkUserId == null || weixinWorkUserId.isEmpty()) {
                 return ApiResult.fail("用户未绑定企业微信账号");

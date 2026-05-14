@@ -128,7 +128,8 @@ public class DownloadService {
         response.setCharacterEncoding("UTF-8");
         // 在线查看图片、pdf
         if (isPreview && Strings.isNotBlank(mineType) && (mineType.startsWith("image/") || mineType.equalsIgnoreCase(MediaTypes.APPLICATION_PDF))) {
-            //  file = downloadService.copyToFile(file, name);
+            disposition = disposition.replaceFirst("attachment", "inline");
+            response.setHeader("Content-Disposition", disposition);
         } else {
             response.setHeader("Content-Disposition", disposition);
         }

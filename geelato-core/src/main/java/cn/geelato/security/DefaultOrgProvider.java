@@ -13,11 +13,12 @@ public class DefaultOrgProvider extends OrgProvider {
 
     public DefaultOrgProvider(@Qualifier("primaryJdbcTemplate") JdbcTemplate platformJdbcTemplate) {
         this.platformJdbcTemplate = platformJdbcTemplate;
-        loadData(null);
+        loadData();
     }
 
     @Override
-    public void loadData(Object orgData) {
+    public void loadData() {
+        orgDataMap.clear();
         List<Org> list = platformJdbcTemplate.query(
                 "select * from platform_org where del_status = 0",
                 (rs, rowNum) -> {

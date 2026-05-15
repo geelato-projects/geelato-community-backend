@@ -84,5 +84,10 @@ public abstract class OrgProvider {
     public String getBuId(String orgId){
         return getCompanyId(orgId);
     }
-    public abstract void loadData(Object orgData);
+
+    public void refresh() {
+        loadData();
+    }
+
+    public abstract void loadData();
 }

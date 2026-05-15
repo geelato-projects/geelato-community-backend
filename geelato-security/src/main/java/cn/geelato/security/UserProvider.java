@@ -91,5 +91,9 @@ public abstract class UserProvider {
         return type;
     }
 
-    public abstract void loadData(Object userData);
+    public void refresh() {
+        loadData();
+    }
+
+    public abstract void loadData();
 }

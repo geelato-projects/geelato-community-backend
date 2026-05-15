@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.nio.file.attribute.UserPrincipal;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,13 +92,13 @@ public class WeixinWorkController extends BaseController {
     public ApiResult<?> queryGroup(@RequestParam(required = false) String userId) {
         try {
             String companyId;
-            boolean filterByOwner;
+            boolean filter;
             if (userId == null || userId.isEmpty()) {
-                filterByOwner = false;
+                filter = !SecurityContext.isAdmin();
                 userId = SecurityContext.getCurrentUser().getUserId();
                 companyId = SecurityContext.getCurrentUser().getCompanyId();
             }else{
-                filterByOwner = true;
+                filter = true;
                 companyId=userProvider.getUserById(userId).getCompanyId();
             }
 
@@ -130,7 +129,7 @@ public class WeixinWorkController extends BaseController {
             
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("status_filter", 0);
-            if (filterByOwner) {
+            if (filter) {
                 requestBody.put("owner_filter", new HashMap<String, Object>() {{
                     put("userid_list", new String[]{weixinWorkUserId});
                 }});
@@ -149,21 +148,48 @@ public class WeixinWorkController extends BaseController {
                 log.error("获取客户群组列表失败: {} - {}", errcode, errmsg);
                 return ApiResult.fail("获取客户群组列表失败: " + errmsg);
             }
-            JsonNode groupChatList = root.path("group_chat_list");
-            List<Map<String, Object>> groupDetails = new ArrayList<>();
-            
-            for (JsonNode groupChat : groupChatList) {
-                String chatId = groupChat.path("chat_id").asText();
-                if (chatId != null && !chatId.isEmpty()) {
-                    Map<String, Object> groupDetail = getGroupChatDetail(chatId, corpId, corpSecret);
-                    groupDetails.add(groupDetail);
-                }
-            }
-            
-            return ApiResult.success(groupDetails);
+
+            return ApiResult.success(root.path("group_chat_list"));
         } catch (Exception e) {
             log.error("获取客户群组列表异常", e);
             return ApiResult.fail("获取客户群组列表异常: " + e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/getGroupDetail", method = RequestMethod.GET)
+    public ApiResult<?> getGroupDetail(@RequestParam String chatId,
+                                       @RequestParam(required = false) String userId) {
+        try {
+            if (chatId == null || chatId.isEmpty()) {
+                return ApiResult.fail("群组Id不能为空");
+            }
+
+            String companyId;
+            if (userId == null || userId.isEmpty()) {
+                companyId = SecurityContext.getCurrentUser().getCompanyId();
+            } else {
+                companyId = userProvider.getUserById(userId).getCompanyId();
+            }
+
+            String weixinWorkInfo = weixinWorkMapper.getCompanyWeixinWorkInfo(companyId);
+            if (weixinWorkInfo == null || weixinWorkInfo.isEmpty()) {
+                log.error("未找到公司的企业微信配置信息, companyId: {}", companyId);
+                return ApiResult.fail("未找到公司的企业微信配置信息");
+            }
+
+            JsonNode weixinWorkConfig = objectMapper.readTree(weixinWorkInfo);
+            String corpId = weixinWorkConfig.path("corpId").asText();
+            String corpSecret = weixinWorkConfig.path("corpSecret").asText();
+
+            if (corpId == null || corpId.isEmpty() || corpSecret == null || corpSecret.isEmpty()) {
+                log.error("企业微信配置信息不完整, corpId或corpSecret为空, companyId: {}", companyId);
+                return ApiResult.fail("企业微信配置信息不完整");
+            }
+
+            return ApiResult.success(getGroupChatDetail(chatId, corpId, corpSecret));
+        } catch (Exception e) {
+            log.error("获取客户群组详情异常 chatId={}", chatId, e);
+            return ApiResult.fail("获取客户群组详情异常: " + e.getMessage());
         }
     }
     
@@ -188,34 +214,24 @@ public class WeixinWorkController extends BaseController {
             JsonNode root = objectMapper.readTree(responseBody);
             int errcode = root.path("errcode").asInt();
             
+            Map<String, Object> result = new HashMap<>();
+            result.put("errcode", errcode);
+            result.put("errmsg", root.path("errmsg").asText());
+
             if (errcode == 0) {
-                JsonNode groupChat = root.path("group_chat");
-                Map<String, Object> result = new HashMap<>();
-                result.put("chat_id", chatId);
-                result.put("name", groupChat.path("name").asText());
-                result.put("owner", groupChat.path("owner").asText());
-                result.put("create_time", groupChat.path("create_time").asLong());
-                result.put("notice", groupChat.path("notice").asText());
-                result.put("member_count", groupChat.path("member_list").size());
-                
+                result.put("group_chat", objectMapper.convertValue(root.path("group_chat"), Map.class));
                 return result;
             } else {
                 String errmsg = root.path("errmsg").asText();
                 log.warn("获取群组详情失败 chatId={}: {} - {}", chatId, errcode, errmsg);
-                
-                // 即使获取详情失败，也返回基本信息
-                Map<String, Object> result = new HashMap<>();
-                result.put("chat_id", chatId);
-                result.put("name", "获取群名失败");
                 return result;
             }
         } catch (Exception e) {
             log.error("获取群组详情异常 chatId={}", chatId, e);
-            
-            // 异常情况下返回基本信息
+
             Map<String, Object> result = new HashMap<>();
-            result.put("chat_id", chatId);
-            result.put("name", "获取群名异常");
+            result.put("errcode", -1);
+            result.put("errmsg", "获取群组详情异常: " + e.getMessage());
             return result;
         }
     }

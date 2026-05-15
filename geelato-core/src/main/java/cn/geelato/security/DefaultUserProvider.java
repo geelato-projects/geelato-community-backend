@@ -17,11 +17,11 @@ public class DefaultUserProvider extends UserProvider {
     public DefaultUserProvider(@Qualifier("primaryJdbcTemplate") JdbcTemplate platformJdbcTemplate, OrgProvider orgProvider) {
         this.platformJdbcTemplate = platformJdbcTemplate;
         this.orgProvider = orgProvider;
-        loadData(null);
+        loadData();
     }
 
     @Override
-    public void loadData(Object userData) {
+    public void loadData() {
         userDataMap.clear();
         extendUserPool.clear();
 

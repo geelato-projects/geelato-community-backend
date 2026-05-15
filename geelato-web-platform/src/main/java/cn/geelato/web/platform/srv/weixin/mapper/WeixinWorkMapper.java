@@ -25,7 +25,8 @@ public interface WeixinWorkMapper {
             "  UNION ALL\n" +
             "  SELECT o.id FROM platform_org o JOIN org_tree ot ON o.pid = ot.id\n" +
             ")\n" +
-            "SELECT u.* FROM platform_user u WHERE u.org_id IN (SELECT id FROM org_tree)")
+            "SELECT u.* FROM platform_user u WHERE u.org_id IN (SELECT id FROM org_tree) " +
+            "AND u.del_status = 0 AND u.enable_status = 1")
     List<User> findUsersByOrgId(@Param("orgId") String orgId);
 
     @Select("SELECT weixin_work_userId FROM platform_user WHERE id = #{userId}")

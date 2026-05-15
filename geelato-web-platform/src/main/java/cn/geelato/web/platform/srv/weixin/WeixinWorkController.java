@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.nio.file.attribute.UserPrincipal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,7 +150,31 @@ public class WeixinWorkController extends BaseController {
                 return ApiResult.fail("获取客户群组列表失败: " + errmsg);
             }
 
-            return ApiResult.success(root.path("group_chat_list"));
+            JsonNode groupChatList = root.path("group_chat_list");
+            List<Map<String, Object>> groupList = new ArrayList<>();
+            for (JsonNode groupChat : groupChatList) {
+                String chatId = groupChat.path("chat_id").asText();
+                if (chatId == null || chatId.isEmpty()) {
+                    continue;
+                }
+
+                Map<String, Object> groupDetailResult = getGroupChatDetail(chatId, corpId, corpSecret);
+                Map<String, Object> groupSummary = new HashMap<>();
+                groupSummary.put("chat_id", chatId);
+
+                Object groupChatDetail = groupDetailResult.get("group_chat");
+                if (groupChatDetail instanceof Map) {
+                    Map<?, ?> groupChatMap = (Map<?, ?>) groupChatDetail;
+                    groupSummary.put("name", groupChatMap.get("name"));
+                    groupSummary.put("owner", groupChatMap.get("owner"));
+                } else {
+                    groupSummary.put("name", null);
+                    groupSummary.put("owner", null);
+                }
+                groupList.add(groupSummary);
+            }
+
+            return ApiResult.success(groupList);
         } catch (Exception e) {
             log.error("获取客户群组列表异常", e);
             return ApiResult.fail("获取客户群组列表异常: " + e.getMessage());

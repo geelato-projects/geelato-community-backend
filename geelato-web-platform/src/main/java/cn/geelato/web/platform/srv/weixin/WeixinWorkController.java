@@ -93,10 +93,13 @@ public class WeixinWorkController extends BaseController {
     public ApiResult<?> queryGroup(@RequestParam(required = false) String userId) {
         try {
             String companyId;
+            boolean filterByOwner;
             if (userId == null || userId.isEmpty()) {
+                filterByOwner = false;
                 userId = SecurityContext.getCurrentUser().getUserId();
                 companyId = SecurityContext.getCurrentUser().getCompanyId();
             }else{
+                filterByOwner = true;
                 companyId=userProvider.getUserById(userId).getCompanyId();
             }
 
@@ -127,9 +130,11 @@ public class WeixinWorkController extends BaseController {
             
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("status_filter", 0);
-            requestBody.put("owner_filter", new HashMap<String, Object>() {{
-                put("userid_list", new String[]{weixinWorkUserId});
-            }});
+            if (filterByOwner) {
+                requestBody.put("owner_filter", new HashMap<String, Object>() {{
+                    put("userid_list", new String[]{weixinWorkUserId});
+                }});
+            }
             requestBody.put("offset", 0);
             requestBody.put("limit", 1000);
             

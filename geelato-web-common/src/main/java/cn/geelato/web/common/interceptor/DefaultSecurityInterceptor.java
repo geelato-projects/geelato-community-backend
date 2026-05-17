@@ -164,7 +164,8 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             return false;
         }
         try {
-            User currentUser = userProvider.getUserByExtendKey(extendKey, extendType);
+            User user = userProvider.getUserByExtendKey(extendKey, extendType);
+            User currentUser = EnvManager.singleInstance().InitCurrentUser(user.getLoginName(), user.getTenantCode());
             if (currentUser == null || StringUtils.isEmpty(currentUser.getLoginName())) {
                 return false;
             }

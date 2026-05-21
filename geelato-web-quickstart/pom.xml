@@ -144,12 +144,12 @@
         <dependency>
             <groupId>io.sentry</groupId>
             <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
-            <version>8.38.0</version>
+            <version>8.37.0</version>
         </dependency>
         <dependency>
             <groupId>io.sentry</groupId>
             <artifactId>sentry-async-profiler</artifactId>
-            <version>8.38.0</version>
+            <version>8.37.0</version>
         </dependency>
     </dependencies>
 

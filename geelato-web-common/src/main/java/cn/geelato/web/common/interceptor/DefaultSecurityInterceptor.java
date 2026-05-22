@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import org.apache.shiro.authc.AuthenticationToken;
+
 import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,12 +70,14 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         final User user;
         final Tenant tenant;
         final String password;
+        final AuthenticationToken authToken;
         final long expireAt;
 
-        UserContextCacheEntry(User user, Tenant tenant, String password) {
+        UserContextCacheEntry(User user, Tenant tenant, String password, AuthenticationToken authToken) {
             this.user = user;
             this.tenant = tenant;
             this.password = password;
+            this.authToken = authToken;
             this.expireAt = System.currentTimeMillis() + CACHE_TTL_MILLIS;
         }
 
@@ -135,11 +139,13 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         SecurityContext.setCurrentUser(entry.user);
         SecurityContext.setCurrentTenant(entry.tenant);
         SecurityContext.setCurrentPassword(entry.password);
+        Subject subject = SecurityUtils.getSubject();
+        subject.login(entry.authToken);
         return true;
     }
 
-    private void cacheUserContext(String rawToken, User user, String password) {
-        tokenContextCache.put(rawToken, new UserContextCacheEntry(user, SecurityContext.getCurrentTenant(), password));
+    private void cacheUserContext(String rawToken, User user, String password, AuthenticationToken authToken) {
+        tokenContextCache.put(rawToken, new UserContextCacheEntry(user, SecurityContext.getCurrentTenant(), password, authToken));
     }
 
     private boolean tryAnonymousAuthenticate(String rawToken) {
@@ -170,7 +176,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, anonymousFixedPassword);
             Subject subject = SecurityUtils.getSubject();
             subject.login(userToken);
-            cacheUserContext(rawToken, currentUser, anonymousFixedPassword);
+            cacheUserContext(rawToken, currentUser, anonymousFixedPassword, userToken);
             return true;
         } catch (Exception e) {
             return false;
@@ -201,7 +207,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
             Subject subject = SecurityUtils.getSubject();
             subject.login(userToken);
-            cacheUserContext(rawToken, currentUser, passWord);
+            cacheUserContext(rawToken, currentUser, passWord, userToken);
             return true;
         } catch (Exception e) {
             return false;
@@ -235,12 +241,14 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             SecurityContext.setCurrentUser(currentUser);
             SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
             SecurityContext.setCurrentPassword(anonymousFixedPassword);
+            AuthenticationToken authToken;
             if ("weixinUnionId".equals(extendType)) {
-                subject.login(new WeixinUnionIdToken(extendKey));
+                authToken = new WeixinUnionIdToken(extendKey);
             } else {
-                subject.login(new WeixinWorkUserIdToken(extendKey));
+                authToken = new WeixinWorkUserIdToken(extendKey);
             }
-            cacheUserContext(rawToken, currentUser, anonymousFixedPassword);
+            subject.login(authToken);
+            cacheUserContext(rawToken, currentUser, anonymousFixedPassword, authToken);
             return true;
         } catch (Exception e) {
             return false;
@@ -260,7 +268,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             SecurityContext.setCurrentTenant(cachedEntry.tenant);
             SecurityContext.setCurrentPassword(cachedEntry.password);
             Subject subject = SecurityUtils.getSubject();
-            subject.login(new OAuth2Token(token));
+            subject.login(cachedEntry.authToken);
             return true;
         }
         if (cachedEntry != null) {
@@ -455,6 +463,6 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         OAuth2Token oauth2Token = new OAuth2Token(accessToken);
         Subject subject = SecurityUtils.getSubject();
         subject.login(oauth2Token);
-        cacheUserContext(rawToken, currentUser, anonymousFixedPassword);
+        cacheUserContext(rawToken, currentUser, anonymousFixedPassword, oauth2Token);
     }
 }

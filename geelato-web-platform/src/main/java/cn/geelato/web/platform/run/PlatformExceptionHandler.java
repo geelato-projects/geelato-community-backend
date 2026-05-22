@@ -42,7 +42,8 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {CoreException.class})
     public final ResponseEntity<?> handleException(CoreException ex, WebRequest request) {
-        ApiResult<PlatformRuntimeException> apiResult = ApiResult.fail(coreException2PlatformException(ex), "系统异常");
+        ApiResult<PlatformRuntimeException> apiResult = ApiResult.fail(coreException2PlatformException(ex),
+                ex.getErrorMsg() != null ? ex.getErrorMsg() : "系统异常");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
         return handleExceptionInternal(ex, apiResult, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);

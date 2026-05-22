@@ -38,12 +38,49 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private static final String __WeixinUnionIdTokenTag__ = "WeixinUnionId ";
     private static final String __WeixinWorkUserIdTokenTag__ = "WeixinWorkUserId ";
     private static final String anonymousFixedPassword = GlobalContext.getAnonymousPwd();
+    private static final long CACHE_TTL_MILLIS = 30 * 60 * 1000L;
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
     private final OrgProvider orgProvider;
     private final UserProvider userProvider;
- 
+
     public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();
 
+    private static final ConcurrentHashMap<String, UserContextCacheEntry> tokenContextCache = new ConcurrentHashMap<>();
+
+    static {
+        Thread cleanupThread = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    Thread.sleep(5 * 60 * 1000);
+                    long now = System.currentTimeMillis();
+                    tokenContextCache.entrySet().removeIf(e -> e.getValue().isExpired(now));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }, "SecurityInterceptor-CacheCleanup");
+        cleanupThread.setDaemon(true);
+        cleanupThread.start();
+    }
+
+    private static class UserContextCacheEntry {
+        final User user;
+        final Tenant tenant;
+        final String password;
+        final long expireAt;
+
+        UserContextCacheEntry(User user, Tenant tenant, String password) {
+            this.user = user;
+            this.tenant = tenant;
+            this.password = password;
+            this.expireAt = System.currentTimeMillis() + CACHE_TTL_MILLIS;
+        }
+
+        boolean isExpired(long now) {
+            return now > expireAt;
+        }
+    }
 
     public DefaultSecurityInterceptor(OAuthConfigurationProperties config, OrgProvider orgProvider, UserProvider userProvider) {
         oAuthConfigurationProperties = config;
@@ -63,6 +100,11 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             throw new UnauthorizedException();
         }
         log.info("handle token:{}",token);
+
+        if (tryRestoreFromCache(token)) {
+            return true;
+        }
+
         boolean authenticated = false;
         if (!authenticated) {
             authenticated = tryAnonymousAuthenticate(token);
@@ -80,6 +122,24 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             throw new UnauthorizedException("未授权访问");
         }
         return true;
+    }
+
+    private boolean tryRestoreFromCache(String rawToken) {
+        UserContextCacheEntry entry = tokenContextCache.get(rawToken);
+        if (entry == null || entry.isExpired(System.currentTimeMillis())) {
+            if (entry != null) {
+                tokenContextCache.remove(rawToken, entry);
+            }
+            return false;
+        }
+        SecurityContext.setCurrentUser(entry.user);
+        SecurityContext.setCurrentTenant(entry.tenant);
+        SecurityContext.setCurrentPassword(entry.password);
+        return true;
+    }
+
+    private void cacheUserContext(String rawToken, User user, String password) {
+        tokenContextCache.put(rawToken, new UserContextCacheEntry(user, SecurityContext.getCurrentTenant(), password));
     }
 
     private boolean tryAnonymousAuthenticate(String rawToken) {
@@ -110,6 +170,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, anonymousFixedPassword);
             Subject subject = SecurityUtils.getSubject();
             subject.login(userToken);
+            cacheUserContext(rawToken, currentUser, anonymousFixedPassword);
             return true;
         } catch (Exception e) {
             return false;
@@ -140,6 +201,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
             Subject subject = SecurityUtils.getSubject();
             subject.login(userToken);
+            cacheUserContext(rawToken, currentUser, passWord);
             return true;
         } catch (Exception e) {
             return false;
@@ -178,6 +240,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             } else {
                 subject.login(new WeixinWorkUserIdToken(extendKey));
             }
+            cacheUserContext(rawToken, currentUser, anonymousFixedPassword);
             return true;
         } catch (Exception e) {
             return false;
@@ -190,16 +253,30 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             return false;
         }
         token = token.replace(__OAuthTokenTag__, "");
+
+        UserContextCacheEntry cachedEntry = tokenContextCache.get(rawToken);
+        if (cachedEntry != null && !cachedEntry.isExpired(System.currentTimeMillis())) {
+            SecurityContext.setCurrentUser(cachedEntry.user);
+            SecurityContext.setCurrentTenant(cachedEntry.tenant);
+            SecurityContext.setCurrentPassword(cachedEntry.password);
+            Subject subject = SecurityUtils.getSubject();
+            subject.login(new OAuth2Token(token));
+            return true;
+        }
+        if (cachedEntry != null) {
+            tokenContextCache.remove(rawToken, cachedEntry);
+        }
+
         cn.geelato.meta.User user = tokenUserCache.get(token);
         if (user != null) {
-            performOAuth2Login(user, token);
+            performOAuth2Login(user, token, rawToken);
             return true;
         }
         try {
             user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
             if (user != null) {
                 tokenUserCache.put(token, user);
-                performOAuth2Login(user, token);
+                performOAuth2Login(user, token, rawToken);
                 return true;
             }
         } catch (Exception e) {
@@ -366,6 +443,10 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
      * @param accessToken 访问令牌
      */
     private void performOAuth2Login(cn.geelato.meta.User user, String accessToken) {
+        performOAuth2Login(user, accessToken, __OAuthTokenTag__ + accessToken);
+    }
+
+    private void performOAuth2Login(cn.geelato.meta.User user, String accessToken, String rawToken) {
         String loginName = user.getLoginName();
         User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, "geelato");
         currentUser.setupOrgInfo(orgProvider);
@@ -374,5 +455,6 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         OAuth2Token oauth2Token = new OAuth2Token(accessToken);
         Subject subject = SecurityUtils.getSubject();
         subject.login(oauth2Token);
+        cacheUserContext(rawToken, currentUser, anonymousFixedPassword);
     }
 }

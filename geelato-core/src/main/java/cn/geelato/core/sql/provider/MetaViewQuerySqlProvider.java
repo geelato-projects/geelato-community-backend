@@ -39,12 +39,11 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         sb.append("select  * ");
         sb.append(" from ");
         ViewMeta vm = md.getViewMeta(command.getViewName());
-        if (vm.getViewType().equals(ViewTypeEnum.DEFAULT.getCode())) {
-            sb.append("(");
-            sb.append(renderViewConstruct(vm.getViewConstruct(), command.getViewTemplateParams()));
-            sb.append(") as vt");
-        } else {
-            sb.append(vm.getViewName());
+        sb.append(resolveViewFromSql(vm, command));
+        String fromAlias = resolveViewFromAlias(vm);
+        if (StringUtils.hasText(fromAlias)) {
+            sb.append(" ");
+            sb.append(fromAlias);
         }
         // where
         FilterGroup fg = command.getWhere();
@@ -88,12 +87,18 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
     public String buildCountSql(QueryViewCommand command) {
         StringBuilder sb = new StringBuilder();
         EntityMeta md = getEntityMeta(command);
+        ViewMeta vm = md.getViewMeta(command.getViewName());
         sb.append("select count(*) from (");
         sb.append("select ");
         // fields
         buildSelectFields(sb, md, command.getFields(), command.getAlias());
         sb.append(" from ");
-        sb.append(md.getTableName());
+        sb.append(resolveViewFromSql(vm, command));
+        String fromAlias = resolveViewFromAlias(vm);
+        if (StringUtils.hasText(fromAlias)) {
+            sb.append(" ");
+            sb.append(fromAlias);
+        }
         // where
         FilterGroup fg = command.getWhere();
         if (fg != null && fg.getFilters() != null && !fg.getFilters().isEmpty()) {
@@ -112,6 +117,35 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         }
         sb.append(") t");
         return sb.toString();
+    }
+
+    private String resolveViewFromSql(ViewMeta viewMeta, QueryViewCommand command) {
+        if (viewMeta == null) {
+            return "";
+        }
+        if (isComplexView(viewMeta)) {
+            return resolveComplexViewName(viewMeta);
+        }
+        if (isDefaultView(viewMeta)) {
+            return "(" + renderViewConstruct(viewMeta.getViewConstruct(), command.getViewTemplateParams()) + ")";
+        }
+        return viewMeta.getViewName();
+    }
+
+    private String resolveViewFromAlias(ViewMeta viewMeta) {
+        return isDefaultView(viewMeta) ? "vt" : null;
+    }
+
+    private boolean isDefaultView(ViewMeta viewMeta) {
+        return viewMeta != null && ViewTypeEnum.DEFAULT.getCode().equalsIgnoreCase(viewMeta.getViewType());
+    }
+
+    private boolean isComplexView(ViewMeta viewMeta) {
+        return viewMeta != null && ViewTypeEnum.COMPLEX.getCode().equalsIgnoreCase(viewMeta.getViewType());
+    }
+
+    private String resolveComplexViewName(ViewMeta viewMeta) {
+        return viewMeta.getViewName() + "_complex";
     }
 
     private void buildSelectCountField(StringBuilder sb, EntityMeta md, String[] fields) {

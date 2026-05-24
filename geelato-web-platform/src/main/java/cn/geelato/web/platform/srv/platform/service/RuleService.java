@@ -5,7 +5,7 @@ import cn.geelato.core.GlobalContext;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.biz.rules.common.EntityValidateRule;
-import cn.geelato.core.enums.TableTypeEnum;
+import cn.geelato.core.enums.ViewTypeEnum;
 import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.mql.MetaQLManager;
 import cn.geelato.core.mql.command.DeleteCommand;
@@ -17,6 +17,7 @@ import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
+import cn.geelato.core.meta.model.view.ViewMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.script.rule.BizMvelRuleManager;
@@ -263,6 +264,12 @@ public class RuleService {
         }
         EntityType entityType = entityMeta.getEntityType();
         if (EntityType.View != entityType) {
+            return;
+        }
+        ViewMeta viewMeta = entityMeta.getViewMeta(entityMeta.getTableName());
+        if (viewMeta != null
+                && StringUtils.isNotEmpty(viewMeta.getViewType())
+                && !ViewTypeEnum.DEFAULT.getCode().equalsIgnoreCase(viewMeta.getViewType())) {
             return;
         }
         Map<String, Object> params = queryParamsByEntity.get(command.getEntityName());

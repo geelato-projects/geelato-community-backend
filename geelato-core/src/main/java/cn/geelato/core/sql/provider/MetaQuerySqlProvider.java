@@ -1,5 +1,6 @@
 package cn.geelato.core.sql.provider;
 
+import cn.geelato.core.enums.ViewTypeEnum;
 import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.filter.FilterGroup;
@@ -362,9 +363,15 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         if (md.getTableMeta() == null) {
             return md.getTableName();
         }
-        EntityType entityType = md.getEntityType();
+        if (EntityType.View != md.getEntityType()) {
+            return md.getTableName();
+        }
+        ViewMeta viewMeta = resolveViewMeta(md);
+        if (isComplexView(viewMeta)) {
+            return resolveComplexViewName(viewMeta, md);
+        }
         String viewSql = resolveViewSql(md);
-        if (EntityType.View == entityType && StringUtils.hasText(viewSql)) {
+        if (StringUtils.hasText(viewSql)) {
             return "(" + renderViewConstruct(viewSql, command.getViewTemplateParams()) + ")";
         }
         return md.getTableName();
@@ -378,14 +385,45 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
     }
 
     private boolean isViewDerivedTable(EntityMeta md) {
-        return md != null && EntityType.View == md.getEntityType() && StringUtils.hasText(resolveViewSql(md));
+        if (md == null || EntityType.View != md.getEntityType()) {
+            return false;
+        }
+        ViewMeta viewMeta = resolveViewMeta(md);
+        return !isComplexView(viewMeta) && StringUtils.hasText(resolveViewSql(md));
+    }
+
+    private ViewMeta resolveViewMeta(EntityMeta md) {
+        if (md == null) {
+            return null;
+        }
+        return md.getViewMeta(md.getTableName());
+    }
+
+    private boolean isDefaultView(ViewMeta viewMeta) {
+        return viewMeta == null
+                || !StringUtils.hasText(viewMeta.getViewType())
+                || ViewTypeEnum.DEFAULT.getCode().equalsIgnoreCase(viewMeta.getViewType());
+    }
+
+    private boolean isComplexView(ViewMeta viewMeta) {
+        return viewMeta != null && ViewTypeEnum.COMPLEX.getCode().equalsIgnoreCase(viewMeta.getViewType());
+    }
+
+    private String resolveComplexViewName(ViewMeta viewMeta, EntityMeta md) {
+        String viewName = viewMeta != null && StringUtils.hasText(viewMeta.getViewName())
+                ? viewMeta.getViewName()
+                : md.getTableName();
+        return viewName + "_complex";
     }
 
     private String resolveViewSql(EntityMeta md) {
         if (md == null) {
             return null;
         }
-        ViewMeta viewMeta = md.getViewMeta(md.getTableName());
+        ViewMeta viewMeta = resolveViewMeta(md);
+        if (isComplexView(viewMeta)) {
+            return null;
+        }
         if (viewMeta != null && StringUtils.hasText(viewMeta.getViewConstruct())) {
             return viewMeta.getViewConstruct();
         }

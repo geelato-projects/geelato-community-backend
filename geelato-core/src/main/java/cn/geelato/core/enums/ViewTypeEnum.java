@@ -9,6 +9,7 @@ import lombok.Getter;
 @Getter
 public enum ViewTypeEnum {
     DEFAULT("default", "默认视图"),
+    COMPLEX("complex", "复杂视图"),
     CUSTOM("custom", "自定义视图"),
     VIRTUAL("virtual", "虚拟视图");
 

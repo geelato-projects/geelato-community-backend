@@ -15,7 +15,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableConfigurationProperties
 //@MapperScan("cn.geelato.workflow.*.mapper")
 @EnableCaching
-@EnableAsync
+@EnableAsync(proxyTargetClass = true)
 @Slf4j
 public class QuickStartApplication extends BootApplication {
 

@@ -2,9 +2,11 @@ package cn.geelato.web.common.interceptor;
 
 import cn.geelato.core.GlobalContext;
 import cn.geelato.core.env.EnvManager;
+import cn.geelato.core.util.BeansUtils;
 import cn.geelato.security.*;
 
 import cn.geelato.utils.StringUtils;
+import cn.geelato.web.common.online.OnlineUserTracker;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
 import cn.geelato.web.common.shiro.OAuth2Token;
@@ -105,22 +107,22 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
         log.info("handle token:{}",token);
 
-        if (tryRestoreFromCache(token)) {
+        if (tryRestoreFromCache(token, request)) {
             return true;
         }
 
         boolean authenticated = false;
         if (!authenticated) {
-            authenticated = tryAnonymousAuthenticate(token);
+            authenticated = tryAnonymousAuthenticate(token, request);
         }
         if (!authenticated) {
-            authenticated = tryJwtAuthenticate(token);
+            authenticated = tryJwtAuthenticate(token, request);
         }
         if (!authenticated) {
-            authenticated = tryExtendKeyAuthenticate(token);
+            authenticated = tryExtendKeyAuthenticate(token, request);
         }
         if (!authenticated) {
-            authenticated = tryOAuth2Authenticate(token);
+            authenticated = tryOAuth2Authenticate(token, request);
         }
         if (!authenticated) {
             throw new UnauthorizedException("未授权访问");
@@ -128,7 +130,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    private boolean tryRestoreFromCache(String rawToken) {
+    private boolean tryRestoreFromCache(String rawToken, HttpServletRequest request) {
         UserContextCacheEntry entry = tokenContextCache.get(rawToken);
         if (entry == null || entry.isExpired(System.currentTimeMillis())) {
             if (entry != null) {
@@ -141,6 +143,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         SecurityContext.setCurrentPassword(entry.password);
         Subject subject = SecurityUtils.getSubject();
         subject.login(entry.authToken);
+        touchOnline(entry.user, request);
         return true;
     }
 
@@ -148,7 +151,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         tokenContextCache.put(rawToken, new UserContextCacheEntry(user, SecurityContext.getCurrentTenant(), password, authToken));
     }
 
-    private boolean tryAnonymousAuthenticate(String rawToken) {
+    private boolean tryAnonymousAuthenticate(String rawToken, HttpServletRequest request) {
         String token = rawToken;
         if (!token.startsWith(__AnonymousTokenTag__)) {
             return false;
@@ -177,13 +180,14 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             Subject subject = SecurityUtils.getSubject();
             subject.login(userToken);
             cacheUserContext(rawToken, currentUser, anonymousFixedPassword, userToken);
+            touchOnline(currentUser, request);
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    private boolean tryJwtAuthenticate(String rawToken) {
+    private boolean tryJwtAuthenticate(String rawToken, HttpServletRequest request) {
         String token = rawToken;
         if (!token.startsWith(__JWTTokenTag__)) {
             return false;
@@ -208,13 +212,14 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             Subject subject = SecurityUtils.getSubject();
             subject.login(userToken);
             cacheUserContext(rawToken, currentUser, passWord, userToken);
+            touchOnline(currentUser, request);
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    private boolean tryExtendKeyAuthenticate(String rawToken) {
+    private boolean tryExtendKeyAuthenticate(String rawToken, HttpServletRequest request) {
         if (userProvider == null) {
             return false;
         }
@@ -249,13 +254,14 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             }
             subject.login(authToken);
             cacheUserContext(rawToken, currentUser, anonymousFixedPassword, authToken);
+            touchOnline(currentUser, request);
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    private boolean tryOAuth2Authenticate(String rawToken) {
+    private boolean tryOAuth2Authenticate(String rawToken, HttpServletRequest request) {
         String token = rawToken;
         if (!token.startsWith(__OAuthTokenTag__)) {
             return false;
@@ -277,14 +283,16 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
 
         cn.geelato.meta.User user = tokenUserCache.get(token);
         if (user != null) {
-            performOAuth2Login(user, token, rawToken);
+            User currentUser = performOAuth2Login(user, token, rawToken);
+            touchOnline(currentUser, request);
             return true;
         }
         try {
             user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
             if (user != null) {
                 tokenUserCache.put(token, user);
-                performOAuth2Login(user, token, rawToken);
+                User currentUser = performOAuth2Login(user, token, rawToken);
+                touchOnline(currentUser, request);
                 return true;
             }
         } catch (Exception e) {
@@ -454,7 +462,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         performOAuth2Login(user, accessToken, __OAuthTokenTag__ + accessToken);
     }
 
-    private void performOAuth2Login(cn.geelato.meta.User user, String accessToken, String rawToken) {
+    private User performOAuth2Login(cn.geelato.meta.User user, String accessToken, String rawToken) {
         String loginName = user.getLoginName();
         User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, "geelato");
         currentUser.setupOrgInfo(orgProvider);
@@ -464,5 +472,19 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         Subject subject = SecurityUtils.getSubject();
         subject.login(oauth2Token);
         cacheUserContext(rawToken, currentUser, anonymousFixedPassword, oauth2Token);
+        return currentUser;
+    }
+
+    private void touchOnline(User user, HttpServletRequest request) {
+        if (user == null || request == null) {
+            return;
+        }
+        try {
+            OnlineUserTracker tracker = BeansUtils.getBean(OnlineUserTracker.class);
+            if (tracker != null) {
+                tracker.touch(user, request);
+            }
+        } catch (Exception ignored) {
+        }
     }
 }

@@ -26,4 +26,21 @@ public class EventAsyncConfiguration {
         executor.initialize();
         return executor;
     }
+
+    @Bean(name = "onlineUserExecutor")
+    public Executor onlineUserExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(2);
+        executor.setQueueCapacity(1000);
+        executor.setKeepAliveSeconds(60);
+        executor.setThreadNamePrefix("OnlineUser-");
+        executor.setRejectedExecutionHandler((runnable, executor1) -> {
+            if (!executor1.isShutdown()) {
+                runnable.run();
+            }
+        });
+        executor.initialize();
+        return executor;
+    }
 }

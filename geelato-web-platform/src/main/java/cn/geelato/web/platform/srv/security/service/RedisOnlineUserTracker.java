@@ -2,14 +2,11 @@ package cn.geelato.web.platform.srv.security.service;
 
 import cn.geelato.security.User;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.common.online.OnlineUserTracker;
 import cn.geelato.web.platform.srv.security.entity.OnlineUserInfo;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -17,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
-public class RedisOnlineUserTracker implements OnlineUserTracker {
+public class RedisOnlineUserTracker {
     private static final String DEFAULT_PREFIX = "geelato:online";
     private static final int DEFAULT_WINDOW_MINUTES = 10;
     private static final int DEFAULT_MAX_RETURN = 2000;
@@ -31,9 +28,7 @@ public class RedisOnlineUserTracker implements OnlineUserTracker {
         this.environment = environment;
     }
 
-    @Override
-    @Async("eventExecutor")
-    public void touch(User user, HttpServletRequest request) {
+    public void touch(User user) {
         if (user == null || StringUtils.isEmpty(user.getTenantCode()) || StringUtils.isEmpty(user.getUserId())) {
             return;
         }

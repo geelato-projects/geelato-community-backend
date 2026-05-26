@@ -26,6 +26,8 @@ import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.lang.api.ApiMultiPagedResult;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.orm.PageResult;
+import cn.geelato.orm.executor.MetaCommandExecutor;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.utils.CacheUtil;
 import cn.geelato.web.platform.cache.MetaCacheProvider;
@@ -55,6 +57,8 @@ public class RuleService {
     @Autowired
     @Qualifier("dynamicDao")
     public Dao dao;
+    @Autowired
+    private MetaCommandExecutor metaCommandExecutor;
     private final MetaQLManager gqlManager = MetaQLManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
     private final MetaManager metaManager = MetaManager.singleInstance();
@@ -69,10 +73,8 @@ public class RuleService {
 
     public Map<String, Object> queryForMap(String gql) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
-        processQueryCommandFunctions(command);
-        BoundSql boundSql = sqlManager.generateQuerySql(command);
         if (!GlobalContext.getMetaQueryCacheOption()) {
-            return dao.queryForMap(boundSql);
+            return metaCommandExecutor.queryForMap(command);
         }
         String key = "query:" + command.getEntityName() + ":" + command.getCacheKey() + ":map";
         if (metaCache.exists(key)) {
@@ -81,17 +83,15 @@ public class RuleService {
                 return (Map<String, Object>) cached;
             }
         }
-        Map<String, Object> result = dao.queryForMap(boundSql);
+        Map<String, Object> result = metaCommandExecutor.queryForMap(command);
         metaCache.putCache(key, result);
         return result;
     }
 
     public <T> T queryForObject(String gql, Class<T> requiredType) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
-        processQueryCommandFunctions(command);
-        BoundSql boundSql = sqlManager.generateQuerySql(command);
         if (!GlobalContext.getMetaQueryCacheOption()) {
-            return dao.queryForObject(boundSql, requiredType);
+            return metaCommandExecutor.queryForObject(command, requiredType);
         }
         String key = "query:" + command.getEntityName() + ":" + command.getCacheKey() + ":obj:" + requiredType.getSimpleName();
         if (metaCache.exists(key)) {
@@ -102,7 +102,7 @@ public class RuleService {
                 // fall through to query
             }
         }
-        T result = dao.queryForObject(boundSql, requiredType);
+        T result = metaCommandExecutor.queryForObject(command, requiredType);
         if (requiredType == String.class || Number.class.isAssignableFrom(requiredType) || requiredType == Boolean.class) {
             metaCache.putCache(key, result);
         }
@@ -117,12 +117,10 @@ public class RuleService {
     public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta, Map<String, Map<String, Object>> queryParamsByEntity) {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         applyViewTemplateParams(command, queryParamsByEntity);
-        processQueryCommandFunctions(command);
-        BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
         if (!GlobalContext.getMetaQueryCacheOption()) {
-            List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
-            Long total = dao.queryTotal(boundPageSql);
-            ApiPagedResult<List<Map<String, Object>>> result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list != null ? list.size() : 0, total != null ? total : 0);
+            PageResult<Map<String, Object>> pageResult = metaCommandExecutor.queryForPage(command);
+            List<Map<String, Object>> list = pageResult.getRecords();
+            ApiPagedResult<List<Map<String, Object>>> result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list != null ? list.size() : 0, pageResult.getTotal());
             if (withMeta) {
                 result.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
             }
@@ -138,8 +136,9 @@ public class RuleService {
             result = ApiPagedResult.success(cachedList, command.getPageNum(), command.getPageSize(), cachedList != null ? cachedList.size() : 0, cachedTotal != null ? cachedTotal : 0);
             result.setCache(true);
         } else {
-            List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
-            Long total = dao.queryTotal(boundPageSql);
+            PageResult<Map<String, Object>> pageResult = metaCommandExecutor.queryForPage(command);
+            List<Map<String, Object>> list = pageResult.getRecords();
+            Long total = pageResult.getTotal();
             metaCache.putCache(kList, list);
             metaCache.putCache(kTotal, total);
             result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list != null ? list.size() : 0, total != null ? total : 0);
@@ -217,7 +216,6 @@ public class RuleService {
         boolean allCached = GlobalContext.getMetaQueryCacheOption();
         for (QueryCommand command : commandList) {
             applyViewTemplateParams(command, queryParamsByEntity);
-            BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
             String prefix = "query:" + command.getEntityName() + ":" + command.getCacheKey();
             String kList = prefix + ":list";
             String kTotal = prefix + ":total";
@@ -228,8 +226,9 @@ public class RuleService {
                 total = (Long) metaCache.getCache(kTotal);
             } else {
                 allCached = false;
-                list = dao.queryForMapList(boundPageSql);
-                total = dao.queryTotal(boundPageSql);
+                PageResult<Map<String, Object>> pageResult = metaCommandExecutor.queryForPage(command);
+                list = pageResult.getRecords();
+                total = pageResult.getTotal();
                 if (GlobalContext.getMetaQueryCacheOption()) {
                     metaCache.putCache(kList, list);
                     metaCache.putCache(kTotal, total);
@@ -282,10 +281,8 @@ public class RuleService {
 
     public <T> List<T> queryForOneColumnList(String gql, Class<T> elementType) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
-        processQueryCommandFunctions(command);
-        BoundSql boundSql = sqlManager.generateQuerySql(command);
         if (!GlobalContext.getMetaQueryCacheOption()) {
-            return dao.queryForOneColumnList(boundSql, elementType);
+            return metaCommandExecutor.queryForOneColumnList(command, elementType);
         }
         String key = "query:" + command.getEntityName() + ":" + command.getCacheKey() + ":col:" + elementType.getSimpleName();
         if (metaCache.exists(key)) {
@@ -296,7 +293,7 @@ public class RuleService {
                 // fall through to query
             }
         }
-        List<T> result = dao.queryForOneColumnList(boundSql, elementType);
+        List<T> result = metaCommandExecutor.queryForOneColumnList(command, elementType);
         metaCache.putCache(key, result);
         return result;
     }
@@ -346,44 +343,18 @@ public class RuleService {
         bizMvelRuleManager.getRule(biz);
         rules.register(new EntityValidateRule());
         rulesEngine.fire(rules, facts);
-        return recursiveSave(command);
+        return metaCommandExecutor.save(command);
     }
 
     public Object batchSave(String gql, Boolean transaction) {
-        List<String> returnPks = new ArrayList<>();
         List<SaveCommand> commandList = gqlManager.generateBatchSaveSql(gql, getSessionCtx());
-        if (transaction) {
-            DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager(dao.getJdbcTemplate().getDataSource());
-            TransactionStatus transactionStatus = TransactionHelper.beginTransaction(dataSourceTransactionManager);
-            for (SaveCommand saveCommand : commandList) {
-                String pkValue = recursiveBatchSave(saveCommand, dataSourceTransactionManager, transactionStatus);
-                if ("saveFail".equals(pkValue)) {
-                    TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
-                    break;
-                } else {
-                    returnPks.add(pkValue);
-                }
-            }
-            TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
-        } else {
-            for (SaveCommand saveCommand : commandList) {
-                BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
-                String pkValue = dao.save(boundSql);
-                if ("saveFail".equals(pkValue)) {
-                    continue;
-                } else {
-                    returnPks.add(pkValue);
-                }
-            }
-        }
-        return returnPks;
+        return metaCommandExecutor.batchSave(commandList, Boolean.TRUE.equals(transaction));
     }
 
 
     public Object multiSave(String gql) {
         List<SaveCommand> commandList = gqlManager.generateMultiSaveSql(gql, getSessionCtx());
-        List<BoundSql> boundSqlList = sqlManager.generateBatchSaveSql(commandList);
-        return dao.multiSave(boundSqlList);
+        return metaCommandExecutor.multiSave(commandList);
     }
 
     /**
@@ -561,8 +532,7 @@ public class RuleService {
 
     public int deleteByGql(String biz, String gql) {
         DeleteCommand command = gqlManager.generateDeleteSql(gql, getSessionCtx());
-        BoundSql boundSql = sqlManager.generateDeleteSql(command);
-        return dao.delete(boundSql);
+        return metaCommandExecutor.delete(command);
     }
 
     /**

@@ -54,7 +54,7 @@ public class MetaFactory {
      * @return MetaQuery查询构建器
      */
     public static MetaQuery query(Class<?> entityClass) {
-        return new MetaQuery(entityClass.getSimpleName());
+        return new MetaQuery(entityClass);
     }
     
     /**
@@ -64,8 +64,7 @@ public class MetaFactory {
      * @return MetaQuery查询构建器
      */
     public static MetaQuery query(Class<?> entityClass, boolean useFullName) {
-        String entityName = useFullName ? entityClass.getName() : entityClass.getSimpleName();
-        return new MetaQuery(entityName);
+        return useFullName ? new MetaQuery(entityClass.getName()) : new MetaQuery(entityClass);
     }
     
     /**
@@ -83,7 +82,7 @@ public class MetaFactory {
      * @return MetaInsert插入构建器
      */
     public static MetaInsert insert(Class<?> entityClass) {
-        return new MetaInsert(entityClass.getSimpleName());
+        return new MetaInsert(entityClass);
     }
     
     /**
@@ -101,7 +100,7 @@ public class MetaFactory {
      * @return MetaUpdate更新构建器
      */
     public static MetaUpdate update(Class<?> entityClass) {
-        return new MetaUpdate(entityClass.getSimpleName());
+        return new MetaUpdate(entityClass);
     }
     
     /**
@@ -119,6 +118,6 @@ public class MetaFactory {
      * @return MetaDelete删除构建器
      */
     public static MetaDelete delete(Class<?> entityClass) {
-        return new MetaDelete(entityClass.getSimpleName());
+        return new MetaDelete(entityClass);
     }
 }

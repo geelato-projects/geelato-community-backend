@@ -1,25 +1,34 @@
 package cn.geelato.orm.query;
 
-import cn.geelato.orm.Filter;
+import cn.geelato.core.sql.SqlManager;
+import cn.geelato.orm.support.SaveCommandAdapter;
 import lombok.Getter;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * 元数据插入构建器
  * 提供流式API构建SQL插入语句
  */
 @Getter
-public class MetaInsert extends MetaOperate {
+public class MetaInsert extends MetaOperate<MetaInsert> {
+    private final Map<String, Object> valueMap = new LinkedHashMap<>();
+    private final List<MetaInsert> children = new ArrayList<>();
+    private final SqlManager sqlManager = SqlManager.singleInstance();
     private String[] columns;
-    private Object[] values;
+
     public MetaInsert(String entityName) {
         this.entityName = entityName;
     }
-    
+
+    public MetaInsert(Class<?> entityClass) {
+        this.entityClass = entityClass;
+    }
+
     /**
      * 设置插入的字段
      * @param columns 字段数组
@@ -29,89 +38,66 @@ public class MetaInsert extends MetaOperate {
         this.columns = columns;
         return this;
     }
-    
+
     /**
      * 设置插入的值
      * @param values 值数组
      * @return MetaInsert对象，支持链式调用
      */
     public MetaInsert values(Object[] values) {
-        this.values = values;
-        return this;
-    }
-    
-    /**
-     * 添加过滤条件（用于INSERT ... SELECT语句）
-     * @param filter 过滤条件
-     * @return MetaInsert对象，支持链式调用
-     */
-    public MetaInsert where(Filter filter) {
-        this.filters.add(filter);
-        return this;
-    }
-    
-    /**
-     * 添加多个过滤条件
-     * @param filters 过滤条件数组
-     * @return MetaInsert对象，支持链式调用
-     */
-    public MetaInsert where(Filter... filters) {
-        this.filters.addAll(Arrays.asList(filters));
-        return this;
-    }
-    
-    /**
-     * 构建插入SQL语句
-     * @return 完整的SQL插入语句
-     */
-    public String toSql() {
-        StringBuilder sql = new StringBuilder();
-        
-        // INSERT INTO子句
-        sql.append("INSERT INTO ").append(entityName);
-        
-        // 字段列表
-        if (columns != null && columns.length > 0) {
-            sql.append(" (").append(String.join(", ", columns)).append(")");
+        if (columns == null || columns.length != values.length) {
+            throw new IllegalArgumentException("column 与 values 数量不匹配。");
         }
-        
-        // VALUES子句
-        if (values != null && values.length > 0) {
-            sql.append(" VALUES (");
-            StringJoiner valueJoiner = new StringJoiner(", ");
-            for (Object value : values) {
-                if (value instanceof String) {
-                    valueJoiner.add("'" + value + "'");
-                } else {
-                    valueJoiner.add(String.valueOf(value));
-                }
-            }
-            sql.append(valueJoiner.toString()).append(")");
+        for (int i = 0; i < columns.length; i++) {
+            this.valueMap.put(columns[i], values[i]);
         }
-        
-        return sql.toString();
-    }
-    
-    /**
-     * 执行插入操作，返回影响行数
-     * @return 影响行数
-     */
-    public int execute() {
-        // 这里应该调用实际的数据库执行器来执行插入操作
-        // 为了演示，这里返回一个模拟值
-        String insertSql = toSql();
-        System.out.println("执行插入SQL: " + insertSql);
-        
-        // 模拟返回影响行数
-        return 1; // 实际应该执行SQL并返回真实结果
-    }
-    
-    // Getters
-    public String getEntityName() {
-        return entityName;
+        return this;
     }
 
-    public List<Filter> getFilters() {
-        return filters;
+    public MetaInsert value(String field, Object value) {
+        this.valueMap.put(field, value);
+        return this;
+    }
+
+    public MetaInsert values(Map<String, Object> values) {
+        if (values != null) {
+            this.valueMap.putAll(values);
+        }
+        return this;
+    }
+
+    public MetaInsert child(String entity, Consumer<MetaInsert> consumer) {
+        MetaInsert child = new MetaInsert(entity);
+        consumer.accept(child);
+        child.setParent(this);
+        this.children.add(child);
+        return this;
+    }
+
+    public List<String> batch(List<Map<String, Object>> payloads) {
+        List<cn.geelato.core.mql.command.SaveCommand> commands = new ArrayList<>();
+        if (payloads != null) {
+            for (Map<String, Object> payload : payloads) {
+                MetaInsert insert = new MetaInsert(resolveEntityName()).values(payload).useDataSource(getConnectId());
+                commands.add(SaveCommandAdapter.fromInsert(insert));
+            }
+        }
+        return executor().batchSave(commands, true, getConnectId());
+    }
+
+    public String toSql() {
+        return sqlManager.generateSaveSql(SaveCommandAdapter.fromInsert(this)).getSql();
+    }
+
+    public String save() {
+        return executor().save(SaveCommandAdapter.fromInsert(this), getConnectId());
+    }
+
+    public String execute() {
+        return save();
+    }
+
+    public void setParent(MetaInsert parent) {
+        // 仅用于让链路表达更完整，当前 parent 关系在适配阶段通过递归重建。
     }
 }

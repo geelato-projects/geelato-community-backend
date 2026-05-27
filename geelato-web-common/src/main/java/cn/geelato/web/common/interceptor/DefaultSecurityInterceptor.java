@@ -2,7 +2,6 @@ package cn.geelato.web.common.interceptor;
 
 import cn.geelato.core.GlobalContext;
 import cn.geelato.core.env.EnvManager;
-import cn.geelato.core.util.BeansUtils;
 import cn.geelato.security.*;
 
 import cn.geelato.utils.StringUtils;
@@ -19,6 +18,7 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
@@ -46,6 +46,8 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
     private final OrgProvider orgProvider;
     private final UserProvider userProvider;
+    @Setter
+    private OnlineUserTracker onlineUserTracker;
 
     public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();
 
@@ -88,11 +90,16 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
     }
 
+    public DefaultSecurityInterceptor(OAuthConfigurationProperties config, OrgProvider orgProvider) {
+        this(config, orgProvider, null);
+    }
+
     public DefaultSecurityInterceptor(OAuthConfigurationProperties config, OrgProvider orgProvider, UserProvider userProvider) {
         oAuthConfigurationProperties = config;
         this.orgProvider = orgProvider;
         this.userProvider = userProvider;
     }
+
 
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) {
@@ -476,14 +483,11 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     }
 
     private void touchOnline(User user, HttpServletRequest request) {
-        if (user == null || request == null) {
+        if (onlineUserTracker == null || user == null || request == null) {
             return;
         }
         try {
-            OnlineUserTracker tracker = BeansUtils.getBean(OnlineUserTracker.class);
-            if (tracker != null) {
-                tracker.touch(user, request);
-            }
+            onlineUserTracker.touch(user, request);
         } catch (Exception ignored) {
         }
     }

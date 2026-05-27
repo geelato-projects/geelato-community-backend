@@ -1,13 +1,12 @@
 package cn.geelato.web.platform.boot;
 
-import cn.geelato.security.OrgProvider;
 import cn.geelato.web.common.interceptor.*;
+import cn.geelato.web.common.online.OnlineUserTracker;
 import cn.geelato.web.platform.boot.interceptor.ControllerInvokeLoggingInterceptor;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -29,11 +28,19 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     @Autowired
     @Qualifier("defaultUserProvider")
     private cn.geelato.security.UserProvider userProvider;
+
+    @Autowired(required = false)
+    @Qualifier("asyncOnlineUserTracker")
+    private OnlineUserTracker onlineUserTracker;
+
     private static final String urlPrefix = "/api";
 
     @Override
     public void addInterceptors(@NotNull InterceptorRegistry registry) {
-        registry.addInterceptor(new DefaultSecurityInterceptor(oAuthConfigurationProperties,orgProvider,userProvider))
+        DefaultSecurityInterceptor securityInterceptor = new DefaultSecurityInterceptor(oAuthConfigurationProperties, orgProvider, userProvider);
+        securityInterceptor.setOnlineUserTracker(onlineUserTracker);
+
+        registry.addInterceptor(securityInterceptor)
                 .addPathPatterns("/**")
                 // 以下为排除鉴权的路径
                 // 登录接口

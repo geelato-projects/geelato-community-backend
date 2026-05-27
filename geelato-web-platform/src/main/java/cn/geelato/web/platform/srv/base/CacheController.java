@@ -171,18 +171,21 @@ public class CacheController extends BaseController {
         List<Map<String, Object>> list = new ArrayList<>();
         try {
             CacheChannel channel = J2Cache.getChannel();
-            List<String> regions = getRegions();
+            List<String> regions = getRegionsFromChannel();
             for (String region : regions) {
                 String reg = regionNameOf(region);
-                Collection<String> keys = channel.keys(reg);
-                if (keys == null) keys = List.of();
-                for (String k : keys) {
-                    if (k == null) continue;
-                    if (StringUtils.isNotBlank(keyword) && !k.toLowerCase().contains(keyword.toLowerCase())) continue;
-                    CacheObject obj = channel.get(reg, k);
-                    if (obj != null && obj.getValue() != null && obj.getLevel() == 1) {
-                        list.add(buildInfo(k, obj, "L1", reg));
+                try {
+                    Collection<String> keys = channel.keys(reg);
+                    if (keys == null) keys = List.of();
+                    for (String k : keys) {
+                        if (k == null) continue;
+                        if (StringUtils.isNotBlank(keyword) && !k.toLowerCase().contains(keyword.toLowerCase())) continue;
+                        CacheObject obj = channel.get(reg, k);
+                        if (obj != null && obj.getValue() != null && obj.getLevel() == 1) {
+                            list.add(buildInfo(k, obj, "L1", reg));
+                        }
                     }
+                } catch (Exception ignored) {
                 }
             }
         } catch (Exception ex) {
@@ -261,11 +264,28 @@ public class CacheController extends BaseController {
     }
 
     @RequestMapping(value = {"/get/{key}"}, method = {RequestMethod.GET})
-    public ApiResult<?> get(@PathVariable("key") String key) {
+    public ApiResult<?> get(@PathVariable("key") String key,
+                            @RequestParam(value = "region", required = false) String region) {
         if (Strings.isEmpty(key)) {
             return ApiResult.fail("Key is empty");
         }
-        Object value = getCacheValue(key);
+        String reg = regionNameOf(region);
+        String realKey = key;
+        if (Strings.isEmpty(region) && key.contains(":")) {
+            int idx = key.indexOf(':');
+            if (idx > 0 && idx + 1 < key.length()) {
+                reg = key.substring(0, idx);
+                realKey = key.substring(idx + 1);
+            }
+        }
+        Object value = null;
+        try {
+            CacheChannel channel = J2Cache.getChannel();
+            CacheObject obj = channel.get(reg, realKey);
+            value = obj != null ? obj.getValue() : null;
+        } catch (Exception ex) {
+            log.error("get cache value error", ex);
+        }
         return ApiResult.success(value);
     }
 
@@ -554,24 +574,24 @@ public class CacheController extends BaseController {
         }
     }
 
-    private Object getCacheValue(String key) {
+    private List<String> getRegionsFromChannel() {
         try {
-            Method m = null;
-            String[] candidates = new String[]{"get", "getValue"};
-            for (String name : candidates) {
-                try {
-                    m = CacheUtil.class.getMethod(name, String.class);
-                    break;
-                } catch (NoSuchMethodException ignored) {
+            CacheChannel channel = J2Cache.getChannel();
+            try {
+                Method m = channel.getClass().getMethod("regions");
+                Object res = m.invoke(channel);
+                List<String> list = new ArrayList<>();
+                if (res instanceof Collection) {
+                    for (Object o : (Collection<?>) res) {
+                        if (o != null) list.add(String.valueOf(o));
+                    }
                 }
+                if (!list.isEmpty()) return list;
+            } catch (Exception ignored) {
             }
-            if (m != null) {
-                return m.invoke(null, key);
-            }
-        } catch (Exception ex) {
-            log.error("get cache value error", ex);
+        } catch (Exception ignored) {
         }
-        return null;
+        return List.of("default");
     }
 
     private void clearAllCaches() {
@@ -584,7 +604,7 @@ public class CacheController extends BaseController {
         boolean clearedByRegion = false;
         if (channel != null) {
             try {
-                List<String> regions = getRegions();
+                List<String> regions = getRegionsFromChannel();
                 for (String region : regions) {
                     String reg = regionNameOf(region);
                     if (Strings.isEmpty(reg)) continue;

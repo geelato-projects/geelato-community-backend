@@ -18,8 +18,6 @@ import net.oschina.j2cache.CacheChannel;
 import net.oschina.j2cache.J2Cache;
 import net.oschina.j2cache.CacheObject;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.ScanParams;
-import redis.clients.jedis.ScanResult;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.io.InputStream;
@@ -171,21 +169,18 @@ public class CacheController extends BaseController {
         List<Map<String, Object>> list = new ArrayList<>();
         try {
             CacheChannel channel = J2Cache.getChannel();
-            List<String> regions = getRegionsFromChannel();
+            List<String> regions = getRegions();
             for (String region : regions) {
                 String reg = regionNameOf(region);
-                try {
-                    Collection<String> keys = channel.keys(reg);
-                    if (keys == null) keys = List.of();
-                    for (String k : keys) {
-                        if (k == null) continue;
-                        if (StringUtils.isNotBlank(keyword) && !k.toLowerCase().contains(keyword.toLowerCase())) continue;
-                        CacheObject obj = channel.get(reg, k);
-                        if (obj != null && obj.getValue() != null && obj.getLevel() == 1) {
-                            list.add(buildInfo(k, obj, "L1", reg));
-                        }
+                Collection<String> keys = channel.keys(reg);
+                if (keys == null) keys = List.of();
+                for (String k : keys) {
+                    if (k == null) continue;
+                    if (StringUtils.isNotBlank(keyword) && !k.toLowerCase().contains(keyword.toLowerCase())) continue;
+                    CacheObject obj = channel.get(reg, k);
+                    if (obj != null && obj.getValue() != null && obj.getLevel() == 1) {
+                        list.add(buildInfo(k, obj, "L1", reg));
                     }
-                } catch (Exception ignored) {
                 }
             }
         } catch (Exception ex) {
@@ -197,95 +192,33 @@ public class CacheController extends BaseController {
     @RequestMapping(value = {"/list/l2"}, method = {RequestMethod.GET})
     public ApiResult<?> listL2(@RequestParam(value = "keyword", required = false) String keyword) {
         List<Map<String, Object>> list = new ArrayList<>();
-        Jedis jedis = null;
         try {
-            jedis = newJedis();
-            if (jedis == null) {
-                return ApiResult.success(list);
-            }
-            String nsPrefix = redisNamespacePrefix();
-            String storage = p("redis.storage");
-            if (Strings.isEmpty(storage)) storage = "generic";
-
-            if ("hash".equalsIgnoreCase(storage)) {
-                List<String> regions = getRegionsFromRedisHash(jedis, nsPrefix);
-                for (String region : regions) {
-                    String hashKey = nsPrefix + region;
-                    Set<String> fields = jedis.hkeys(hashKey);
-                    if (fields == null) fields = Set.of();
-                    Long ttl = jedis.ttl(hashKey);
-                    Long expireAt = ttl != null && ttl >= 0 ? Instant.now().toEpochMilli() + ttl * 1000 : null;
-                    for (String k : fields) {
-                        if (k == null) continue;
-                        if (StringUtils.isNotBlank(keyword) && !k.toLowerCase().contains(keyword.toLowerCase())) continue;
-                        Long size = null;
-                        try {
-                            byte[] v = jedis.hget(hashKey.getBytes(StandardCharsets.UTF_8), k.getBytes(StandardCharsets.UTF_8));
-                            if (v != null) size = (long) v.length;
-                        } catch (Exception ignored) {
-                        }
-                        list.add(buildRedisInfo(k, "L2", region, size, expireAt));
-                    }
-                }
-            } else {
-                List<String> regions = getRegionsFromRedisGeneric(jedis, nsPrefix);
-                for (String region : regions) {
-                    String prefix = nsPrefix + region + ":";
-                    for (String redisKey : scanKeys(jedis, prefix + "*")) {
-                        if (redisKey == null || !redisKey.startsWith(prefix)) continue;
-                        String k = redisKey.substring(prefix.length());
-                        if (StringUtils.isNotBlank(keyword) && (k.isEmpty() || !k.toLowerCase().contains(keyword.toLowerCase()))) continue;
-                        Long size = null;
-                        try {
-                            size = jedis.strlen(redisKey);
-                        } catch (Exception ignored) {
-                        }
-                        Long ttl = null;
-                        try {
-                            ttl = jedis.ttl(redisKey);
-                        } catch (Exception ignored) {
-                        }
-                        Long expireAt = ttl != null && ttl >= 0 ? Instant.now().toEpochMilli() + ttl * 1000 : null;
-                        list.add(buildRedisInfo(k, "L2", region, size, expireAt));
+            CacheChannel channel = J2Cache.getChannel();
+            List<String> regions = getRegions();
+            for (String region : regions) {
+                String reg = regionNameOf(region);
+                Collection<String> keys = channel.keys(reg);
+                if (keys == null) keys = List.of();
+                for (String k : keys) {
+                    if (StringUtils.isNotBlank(keyword) && (k == null || !k.toLowerCase().contains(keyword.toLowerCase()))) continue;
+                    CacheObject obj = channel.get(reg, k);
+                    if (obj != null && obj.getValue() != null && obj.getLevel() == 2) {
+                        list.add(buildInfo(k, obj, "L2", reg));
                     }
                 }
             }
         } catch (Exception ex) {
             log.error("list l2 keys error", ex);
-        } finally {
-            if (jedis != null) {
-                try {
-                    jedis.close();
-                } catch (Exception ignored) {
-                }
-            }
         }
         return ApiResult.success(list);
     }
 
     @RequestMapping(value = {"/get/{key}"}, method = {RequestMethod.GET})
-    public ApiResult<?> get(@PathVariable("key") String key,
-                            @RequestParam(value = "region", required = false) String region) {
+    public ApiResult<?> get(@PathVariable("key") String key) {
         if (Strings.isEmpty(key)) {
             return ApiResult.fail("Key is empty");
         }
-        String reg = regionNameOf(region);
-        String realKey = key;
-        if (Strings.isEmpty(region) && key.contains(":")) {
-            int idx = key.indexOf(':');
-            if (idx > 0 && idx + 1 < key.length()) {
-                reg = key.substring(0, idx);
-                realKey = key.substring(idx + 1);
-            }
-        }
-        Object value = null;
-        try {
-            CacheChannel channel = J2Cache.getChannel();
-            CacheObject obj = channel.get(reg, realKey);
-            value = obj != null ? obj.getValue() : null;
-        } catch (Exception ex) {
-            log.error("get cache value error", ex);
-        }
+        Object value = getCacheValue(key);
         return ApiResult.success(value);
     }
 
@@ -401,22 +334,19 @@ public class CacheController extends BaseController {
                 Jedis jedis = new Jedis(host, port);
                 if (password != null && !password.isEmpty()) jedis.auth(password);
                 if (db > 0) jedis.select(db);
-                String storage = p("redis.storage");
-                if (Strings.isEmpty(storage)) storage = "generic";
-                String pattern;
-                if ("hash".equalsIgnoreCase(storage)) {
-                    pattern = (namespace != null && !namespace.isEmpty() ? namespace + ":" : "") + "*";
-                } else {
-                    pattern = (namespace != null && !namespace.isEmpty() ? namespace + ":" : "") + "*:*";
-                }
+                String pattern = (namespace != null && !namespace.isEmpty() ? namespace + ":" : "") + "*:*";
                 Set<String> keys = jedis.keys(pattern);
                 jedis.close();
                 List<String> regions = new ArrayList<>();
                 if (keys != null) {
                     for (String k : keys) {
                         if (k == null) continue;
-                        String region = extractRegionFromRedisKey(k, namespace, storage);
-                        if (Strings.isEmpty(region)) continue;
+                        int first = k.indexOf(':');
+                        if (first < 0) continue;
+                        String rest = k.substring(first + 1);
+                        int second = rest.indexOf(':');
+                        if (second < 0) continue;
+                        String region = rest.substring(0, second);
                         if (!regions.contains(region)) regions.add(region);
                     }
                 }
@@ -440,193 +370,40 @@ public class CacheController extends BaseController {
         return s;
     }
 
-    private Map<String, Object> buildRedisInfo(String key, String type, String region, Long sizeBytes, Long expireAt) {
-        Map<String, Object> info = new HashMap<>();
-        info.put("key", key);
-        info.put("type", type);
-        info.put("region", region);
-        info.put("size", sizeBytes);
-        info.put("createTime", null);
-        info.put("expireTime", expireAt);
-        return info;
-    }
-
-    private Jedis newJedis() {
+    private Object getCacheValue(String key) {
         try {
-            String mode = p("redis.mode");
-            if (!"single".equalsIgnoreCase(mode)) return null;
-            String hosts = p("redis.hosts");
-            if (hosts == null || hosts.isEmpty()) return null;
-            String[] hp = hosts.split(",")[0].split(":");
-            String host = hp[0];
-            int port = hp.length > 1 ? Integer.parseInt(hp[1]) : 6379;
-            String password = p("redis.password");
-            String dbStr = p("redis.database");
-            int db = 0;
-            try { if (dbStr != null && !dbStr.isEmpty()) db = Integer.parseInt(dbStr); } catch (Exception ignored) {}
-            Jedis jedis = new Jedis(host, port);
-            if (password != null && !password.isEmpty()) jedis.auth(password);
-            if (db > 0) jedis.select(db);
-            return jedis;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private String redisNamespacePrefix() {
-        String namespace = p("redis.namespace");
-        return namespace != null && !namespace.isEmpty() ? namespace + ":" : "";
-    }
-
-    private List<String> scanKeys(Jedis jedis, String pattern) {
-        if (jedis == null || pattern == null || pattern.isEmpty()) return List.of();
-        List<String> keys = new ArrayList<>();
-        String cursor = ScanParams.SCAN_POINTER_START;
-        ScanParams params = new ScanParams();
-        params.match(pattern);
-        params.count(1000);
-        while (true) {
-            ScanResult<String> res = jedis.scan(cursor, params);
-            if (res != null && res.getResult() != null) {
-                keys.addAll(res.getResult());
-            }
-            cursor = res != null ? res.getStringCursor() : ScanParams.SCAN_POINTER_START;
-            if (ScanParams.SCAN_POINTER_START.equals(cursor)) break;
-        }
-        return keys;
-    }
-
-    private List<String> getRegionsFromRedisGeneric(Jedis jedis, String nsPrefix) {
-        Set<String> regions = new LinkedHashSet<>();
-        List<String> keys = scanKeys(jedis, (nsPrefix != null ? nsPrefix : "") + "*:*");
-        String namespace = p("redis.namespace");
-        for (String redisKey : keys) {
-            if (redisKey == null) continue;
-            String region = extractRegionFromRedisKey(redisKey, namespace, "generic");
-            if (Strings.isNotEmpty(region)) regions.add(region);
-        }
-        if (regions.isEmpty()) regions.add("default");
-        return new ArrayList<>(regions);
-    }
-
-    private List<String> getRegionsFromRedisHash(Jedis jedis, String nsPrefix) {
-        Set<String> regions = new LinkedHashSet<>();
-        List<String> keys = scanKeys(jedis, (nsPrefix != null ? nsPrefix : "") + "*");
-        String namespace = p("redis.namespace");
-        for (String hk : keys) {
-            if (hk == null) continue;
-            String region = extractRegionFromRedisKey(hk, namespace, "hash");
-            if (Strings.isNotEmpty(region)) regions.add(region);
-        }
-        if (regions.isEmpty()) regions.add("default");
-        return new ArrayList<>(regions);
-    }
-
-    private String extractRegionFromRedisKey(String redisKey, String namespace, String storage) {
-        if (redisKey == null) return null;
-        boolean hasNamespace = namespace != null && !namespace.isEmpty();
-        if ("hash".equalsIgnoreCase(storage)) {
-            if (!hasNamespace) return redisKey;
-            String prefix = namespace + ":";
-            if (!redisKey.startsWith(prefix)) return null;
-            String rest = redisKey.substring(prefix.length());
-            return rest.isEmpty() ? null : rest;
-        }
-        if (!hasNamespace) {
-            int c = redisKey.indexOf(':');
-            if (c <= 0) return null;
-            return redisKey.substring(0, c);
-        }
-        String prefix = namespace + ":";
-        if (!redisKey.startsWith(prefix)) return null;
-        String rest = redisKey.substring(prefix.length());
-        int c = rest.indexOf(':');
-        if (c <= 0) return null;
-        return rest.substring(0, c);
-    }
-
-    private void clearRedisByNamespace() {
-        Jedis jedis = null;
-        try {
-            jedis = newJedis();
-            if (jedis == null) return;
-            String nsPrefix = redisNamespacePrefix();
-            if (Strings.isEmpty(nsPrefix)) return;
-            String storage = p("redis.storage");
-            if (Strings.isEmpty(storage)) storage = "generic";
-            if ("hash".equalsIgnoreCase(storage)) {
-                for (String hk : scanKeys(jedis, nsPrefix + "*")) {
-                    if (hk != null) jedis.del(hk);
-                }
-            } else {
-                for (String k : scanKeys(jedis, nsPrefix + "*:*")) {
-                    if (k != null) jedis.del(k);
-                }
-            }
-        } catch (Exception ignored) {
-        } finally {
-            if (jedis != null) {
+            Method m = null;
+            String[] candidates = new String[]{"get", "getValue"};
+            for (String name : candidates) {
                 try {
-                    jedis.close();
-                } catch (Exception ignored) {
+                    m = CacheUtil.class.getMethod(name, String.class);
+                    break;
+                } catch (NoSuchMethodException ignored) {
                 }
             }
-        }
-    }
-
-    private List<String> getRegionsFromChannel() {
-        try {
-            CacheChannel channel = J2Cache.getChannel();
-            try {
-                Method m = channel.getClass().getMethod("regions");
-                Object res = m.invoke(channel);
-                List<String> list = new ArrayList<>();
-                if (res instanceof Collection) {
-                    for (Object o : (Collection<?>) res) {
-                        if (o != null) list.add(String.valueOf(o));
-                    }
-                }
-                if (!list.isEmpty()) return list;
-            } catch (Exception ignored) {
+            if (m != null) {
+                return m.invoke(null, key);
             }
-        } catch (Exception ignored) {
+        } catch (Exception ex) {
+            log.error("get cache value error", ex);
         }
-        return List.of("default");
+        return null;
     }
 
     private void clearAllCaches() {
-        CacheChannel channel = null;
         try {
-            channel = J2Cache.getChannel();
+            CacheChannel channel = J2Cache.getChannel();
+            channel.clear("default");
+            return;
         } catch (Exception ex) {
             log.error("clear all cache error", ex);
         }
-        boolean clearedByRegion = false;
-        if (channel != null) {
-            try {
-                List<String> regions = getRegionsFromChannel();
-                for (String region : regions) {
-                    String reg = regionNameOf(region);
-                    if (Strings.isEmpty(reg)) continue;
-                    try {
-                        channel.clear(reg);
-                        clearedByRegion = true;
-                    } catch (Exception ignored) {
-                    }
-                }
-            } catch (Exception ex) {
-                log.error("clear all cache error", ex);
+        List<String> keys = getAllCacheKeys();
+        for (String k : keys) {
+            if (StringUtils.isNotBlank(k)) {
+                CacheUtil.remove(k);
             }
         }
-        if (!clearedByRegion) {
-            List<String> keys = getAllCacheKeys();
-            for (String k : keys) {
-                if (StringUtils.isNotBlank(k)) {
-                    CacheUtil.remove(k);
-                }
-            }
-        }
-        clearRedisByNamespace();
     }
 
 }

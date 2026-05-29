@@ -43,6 +43,13 @@ build/
 /.idea/
 
 geelato-web-quickstart/dump.rdb
+**/dump.rdb
+
+### Environment & Secrets ###
+.env
+.env.local
+.env.*.local
+**/bin/.env
 
 .geelato/
 .trae/

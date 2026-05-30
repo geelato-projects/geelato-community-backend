@@ -35,7 +35,9 @@ int affected = MetaFactory.delete("User")
 - 支持分页、单条、单列、包装结果
 - 支持新增、更新、删除、批量保存
 - 支持动态数据源、视图模板参数、`ValueRefs.ctx/fn/parent`
+- 支持保存前默认字段自动填充，默认行为与当前 MQL 规则对齐
 
 ## 说明
 - 调试可使用 `toSql()` / `toCountSql()` 查看内核生成语句
+- 默认字段填充通过 `SaveDefaultValueFiller` 扩展点实现，框架内置默认 Bean，业务侧可覆盖
 - 更完整的使用说明见 `docs/orm/backend-fluent-dsl-guide.md`

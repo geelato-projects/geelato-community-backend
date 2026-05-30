@@ -80,6 +80,11 @@ String userId = MetaFactory.insert("User")
         .save();
 ```
 
+- 默认字段会在保存前自动补齐：
+  - 新增场景默认对齐 MQL 规则，自动补 `createAt / creator / creatorName / tenantCode / buId / deptId / updateAt / updater / updaterName / deleteAt`
+  - 更新场景默认自动补 `updateAt / updater / updaterName`
+  - 这些规则来自 DSL 内置的默认字段 filler，业务侧可通过覆盖 `SaveDefaultValueFiller` Bean 自定义
+
 - 更新：
 
 ```java
@@ -140,8 +145,39 @@ String parentId = MetaFactory.insert("App")
 - 当前 Fluent DSL 的过滤表达仍以简单 `Filter` 组合为主，复杂跨组逻辑建议继续走 MQL。
 - `update()` 推荐显式传 `id` 或显式 `where(...)`，避免更新条件不清晰。
 - `toSql()` 与 `toCountSql()` 用于排障和调试，不建议把其输出当成业务主流程接口。
-- 写入链路仍复用平台既有默认字段填充逻辑，如 `createAt / creator / updateAt / updater`。
+- DSL 写入链路在生成 `SaveCommand` 后、生成 SQL 前执行默认字段填充。
+- 框架提供一份与当前 MQL 规则对齐的默认实现；若业务需要差异化规则，可覆盖 `SaveDefaultValueFiller` Bean。
 
 ## 迁移建议
 - 原来后端手写 MQL JSON 的场景，可优先迁移到 `MetaFactory.query/insert/update/delete`。
 - 原来仅依赖具体实体类的 `BaseService` 场景，无需强制迁移；只有在需要元数据统一能力时再切换。
+
+## P1 替代样板
+- `QueryWrapper.like/eq/orderByDesc` 可直接映射为 `MetaFactory.query(...).where(...).order(...)`。
+- `BaseMapper.insert/updateById` 可映射为 `MetaFactory.insert/update`，实体转 `Map` 后仅保留非空业务字段，审计字段交给 DSL 默认 filler 补齐。
+- 查询结果默认返回 `Map<String, Object>`；若接口仍对外暴露实体对象，可用 `wrapperResult(...)` 或服务层统一做 `Map -> Entity` 转换。
+
+```java
+List<Tenant> tenants = MetaFactory.query(Tenant.class)
+        .where(
+                Filter.like("code", code),
+                Filter.eq("delStatus", 0)
+        )
+        .order(Order.desc("createAt"))
+        .wrapperResult(row -> JSON.parseObject(JSON.toJSONString(row), Tenant.class))
+        .list();
+```
+
+```java
+String noticeId = MetaFactory.update(Notice.class)
+        .where(
+                Filter.eq("id", id),
+                Filter.eq("delStatus", 0)
+        )
+        .value("status", "read")
+        .save();
+```
+
+## 保留 MyBatis 的场景
+- 多表 join、递归 CTE、复杂聚合统计，继续保留原生 SQL / MyBatis。
+- 结果映射高度依赖手写 `resultMap` 的场景，优先保持现状，避免在 P1 阶段引入行为偏差。

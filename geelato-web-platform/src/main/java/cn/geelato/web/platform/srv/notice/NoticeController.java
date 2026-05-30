@@ -7,8 +7,7 @@ import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Notice;
-import cn.geelato.web.platform.mapper.NoticeMapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import cn.geelato.web.platform.srv.notice.service.NoticeOrmService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,8 +21,12 @@ import java.util.List;
 @Slf4j
 public class NoticeController extends BaseController {
 
+    private final NoticeOrmService noticeOrmService;
+
     @Autowired
-    private NoticeMapper noticeMapper;
+    public NoticeController(NoticeOrmService noticeOrmService) {
+        this.noticeOrmService = noticeOrmService;
+    }
 
     /**
      * 查询通知列表
@@ -34,19 +37,7 @@ public class NoticeController extends BaseController {
             @RequestParam(required = false) String noticeTitle,
             @RequestParam(required = false) String status) {
         try {
-            QueryWrapper<Notice> queryWrapper = new QueryWrapper<>();
-            if (StringUtils.hasText(receiver)) {
-                queryWrapper.like("receiver", receiver);
-            }
-            if (StringUtils.hasText(noticeTitle)) {
-                queryWrapper.like("notice_title", noticeTitle);
-            }
-            if (StringUtils.hasText(status)) {
-                queryWrapper.eq("status", status);
-            }
-            queryWrapper.eq("del_status", 0);
-            queryWrapper.orderByDesc("create_at");
-            List<Notice> notices = noticeMapper.selectList(queryWrapper);
+            List<Notice> notices = noticeOrmService.queryNoticeList(receiver, noticeTitle, status);
             return ApiResult.success(notices);
         } catch (Exception e) {
             log.error("查询通知列表失败", e);
@@ -64,7 +55,7 @@ public class NoticeController extends BaseController {
             if (!StringUtils.hasText(id)) {
                 return ApiResult.fail("通知ID不能为空");
             }
-            Notice notice = noticeMapper.selectById(id);
+            Notice notice = noticeOrmService.getById(id);
             if (notice == null) {
                 return ApiResult.fail("通知不存在");
             }
@@ -86,7 +77,7 @@ public class NoticeController extends BaseController {
             if (!StringUtils.hasText(userId)) {
                 return ApiResult.fail("用户未登录");
             }
-            List<Notice> notices = noticeMapper.selectUserNotices(userId, limit);
+            List<Notice> notices = noticeOrmService.queryUserNotices(userId, limit);
             return ApiResult.success(notices);
         } catch (Exception e) {
             log.error("查询用户通知失败", e);
@@ -108,12 +99,12 @@ public class NoticeController extends BaseController {
             if (!StringUtils.hasText(userId)) {
                 return ApiResult.fail("用户未登录");
             }
-            int result = noticeMapper.markAsRead(id, userId);
-            if (result > 0) {
-                return ApiResult.success(true);
-            } else {
-                return ApiResult.fail("标记已读失败");
+            Notice notice = noticeOrmService.getById(id);
+            if (notice == null || notice.getDelStatus() == 1) {
+                return ApiResult.fail("通知不存在");
             }
+            noticeOrmService.markAsRead(id, userId);
+            return ApiResult.success(true);
         } catch (Exception e) {
             log.error("标记通知已读失败", e);
             return ApiResult.fail("标记通知已读失败: " + e.getMessage());
@@ -130,8 +121,12 @@ public class NoticeController extends BaseController {
             if (!StringUtils.hasText(userId)) {
                 return ApiResult.fail("用户未登录");
             }
-            int result = noticeMapper.markAllAsRead(userId, userId);
-            return ApiResult.success(result > 0);
+            long unreadCount = noticeOrmService.countUnreadByReceiver(userId);
+            if (unreadCount == 0) {
+                return ApiResult.success(false);
+            }
+            noticeOrmService.markAllAsRead(userId, userId);
+            return ApiResult.success(true);
         } catch (Exception e) {
             log.error("标记所有通知已读失败", e);
             return ApiResult.fail("标记所有通知已读失败: " + e.getMessage());
@@ -173,12 +168,8 @@ public class NoticeController extends BaseController {
             notice.setUpdateAt(new Date());
 
             // 保存通知
-            int result = noticeMapper.insert(notice);
-            if (result > 0) {
-                return ApiResult.success(notice);
-            } else {
-                return ApiResult.fail("创建通知失败");
-            }
+            noticeOrmService.create(notice);
+            return ApiResult.success(notice);
         } catch (Exception e) {
             log.error("创建通知失败", e);
             return ApiResult.fail("创建通知失败: " + e.getMessage());
@@ -196,7 +187,7 @@ public class NoticeController extends BaseController {
                 return ApiResult.fail("通知ID不能为空");
             }
 
-            Notice notice = noticeMapper.selectById(id);
+            Notice notice = noticeOrmService.getById(id);
             if (notice == null) {
                 return ApiResult.fail("通知不存在");
             }
@@ -208,12 +199,8 @@ public class NoticeController extends BaseController {
             notice.setUpdater(SecurityContext.getCurrentUser().getUserId());
             notice.setUpdaterName(SecurityContext.getCurrentUser().getUserName());
 
-            int result = noticeMapper.updateById(notice);
-            if (result > 0) {
-                return ApiResult.success(true);
-            } else {
-                return ApiResult.fail("删除通知失败");
-            }
+            noticeOrmService.logicalDelete(id, notice.getUpdater(), notice.getUpdaterName());
+            return ApiResult.success(true);
         } catch (Exception e) {
             log.error("删除通知失败", e);
             return ApiResult.fail("删除通知失败: " + e.getMessage());

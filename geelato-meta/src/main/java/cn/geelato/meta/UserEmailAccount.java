@@ -1,6 +1,7 @@
 package cn.geelato.meta;
 
 import cn.geelato.core.constants.ColumnDefault;
+import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.lang.meta.Col;
@@ -15,7 +16,7 @@ import lombok.Setter;
 @Entity(name = "platform_user_email_account", catalog = "platform")
 @TableName("platform_user_email_account")
 @Title(title = "用户邮箱账号")
-public class UserEmailAccount extends BaseSortableEntity implements EntityEnableAble {
+public class UserEmailAccount extends BaseEntity implements EntityEnableAble {
     @Title(title = "用户ID")
     @Col(name = "user_id", nullable = false)
     private String userId;
@@ -29,8 +30,8 @@ public class UserEmailAccount extends BaseSortableEntity implements EntityEnable
     private String displayName;
 
     @Title(title = "默认邮箱", description = "0否，1是")
-    @Col(name = "is_default")
-    private int isDefault;
+    @Col(name = "default_flag")
+    private int defaultFlag;
 
     @Title(title = "IMAP Host")
     @Col(name = "imap_host")

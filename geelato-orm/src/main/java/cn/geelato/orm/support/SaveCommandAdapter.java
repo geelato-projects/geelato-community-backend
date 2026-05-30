@@ -1,18 +1,19 @@
 package cn.geelato.orm.support;
 
-import cn.geelato.core.SessionCtx;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.mql.command.CommandType;
 import cn.geelato.core.mql.command.SaveCommand;
 import cn.geelato.core.mql.filter.FilterGroup;
+import cn.geelato.core.util.BeansUtils;
+import cn.geelato.orm.fill.DefaultSaveDefaultValueFiller;
+import cn.geelato.orm.fill.SaveDefaultValueContext;
+import cn.geelato.orm.fill.SaveDefaultValueFiller;
 import cn.geelato.orm.query.MetaInsert;
 import cn.geelato.orm.query.MetaUpdate;
 import cn.geelato.orm.value.ValueRef;
-import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,14 +22,8 @@ import java.util.Map;
  */
 public final class SaveCommandAdapter {
 
-    private static final String FN_UPDATE_AT = "updateAt";
-    private static final String FN_UPDATER = "updater";
-    private static final String FN_UPDATER_NAME = "updaterName";
-    private static final String FN_CREATE_AT = "createAt";
-    private static final String FN_CREATOR = "creator";
-    private static final String FN_CREATOR_NAME = "creatorName";
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(DateUtils.DATETIME);
     private static final MetaManager META_MANAGER = MetaManager.singleInstance();
+    private static final SaveDefaultValueFiller FALLBACK_FILLER = new DefaultSaveDefaultValueFiller();
 
     private SaveCommandAdapter() {
     }
@@ -48,7 +43,8 @@ public final class SaveCommandAdapter {
         }
         entityMap.put(pkField, stringifyValue(pkValue));
         insert.getValueMap().forEach((key, value) -> entityMap.put(key, stringifyValue(value)));
-        putInsertDefaultField(entityMap);
+        defaultValueFiller().fill(new SaveDefaultValueContext(entityName, CommandType.Insert, entityMeta,
+                META_MANAGER.newDefaultEntityMap(entityName), entityMap));
 
         String[] fields = entityMap.keySet().toArray(new String[0]);
         command.setFields(fields);
@@ -92,7 +88,8 @@ public final class SaveCommandAdapter {
                     .orElse(null);
         }
         params.remove(pkField);
-        putUpdateDefaultField(META_MANAGER.newDefaultEntityMap(entityName), params);
+        defaultValueFiller().fill(new SaveDefaultValueContext(entityName, CommandType.Update, entityMeta,
+                META_MANAGER.newDefaultEntityMap(entityName), params));
 
         command.setWhere(where);
         command.setFields(params.keySet().toArray(new String[0]));
@@ -120,27 +117,11 @@ public final class SaveCommandAdapter {
         return value;
     }
 
-    private static void putInsertDefaultField(Map<String, Object> entity) {
-        if (entity.containsKey(FN_CREATE_AT)) {
-            entity.put(FN_CREATE_AT, SIMPLE_DATE_FORMAT.format(new java.util.Date()));
-        }
-        if (entity.containsKey(FN_CREATOR)) {
-            entity.put(FN_CREATOR, SessionCtx.getUserId());
-        }
-        if (entity.containsKey(FN_CREATOR_NAME)) {
-            entity.put(FN_CREATOR_NAME, SessionCtx.getUserName());
-        }
-    }
-
-    private static void putUpdateDefaultField(Map<String, Object> entityDefaults, Map<String, Object> params) {
-        if (entityDefaults.containsKey(FN_UPDATE_AT)) {
-            params.put(FN_UPDATE_AT, SIMPLE_DATE_FORMAT.format(new java.util.Date()));
-        }
-        if (entityDefaults.containsKey(FN_UPDATER)) {
-            params.put(FN_UPDATER, SessionCtx.getUserId());
-        }
-        if (entityDefaults.containsKey(FN_UPDATER_NAME)) {
-            params.put(FN_UPDATER_NAME, SessionCtx.getUserName());
+    private static SaveDefaultValueFiller defaultValueFiller() {
+        try {
+            return BeansUtils.getBean(SaveDefaultValueFiller.class);
+        } catch (Exception ex) {
+            return FALLBACK_FILLER;
         }
     }
 }

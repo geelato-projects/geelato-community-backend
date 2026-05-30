@@ -11,7 +11,7 @@ public class UserEmailAccountDto {
     private String id;
     private String emailAddress;
     private String displayName;
-    private Integer isDefault;
+    private Integer defaultFlag;
     private String imapHost;
     private Integer imapPort;
     private Integer imapSsl;

@@ -7,9 +7,8 @@ import cn.geelato.utils.DateUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Tenant;
-import cn.geelato.web.platform.mapper.TenantMapper;
+import cn.geelato.web.platform.srv.tenant.service.TenantOrmService;
 import cn.geelato.web.platform.srv.tenant.service.TenantService;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +24,12 @@ import java.util.Map;
 public class TenantController extends BaseController {
     private static final Class<Tenant> CLAZZ = Tenant.class;
     private final TenantService tenantService;
-    private final TenantMapper tenantMapper;
+    private final TenantOrmService tenantOrmService;
 
     @Autowired
-    public TenantController(TenantService tenantService, TenantMapper tenantMapper) {
+    public TenantController(TenantService tenantService, TenantOrmService tenantOrmService) {
         this.tenantService = tenantService;
-        this.tenantMapper = tenantMapper;
+        this.tenantOrmService = tenantOrmService;
     }
 
     /**
@@ -42,19 +41,7 @@ public class TenantController extends BaseController {
             @RequestParam(required = false) String companyName,
             @RequestParam(required = false) String corpId) {
         try {
-            QueryWrapper<Tenant> queryWrapper = new QueryWrapper<>();
-            if (StringUtils.hasText(code)) {
-                queryWrapper.like("code", code);
-            }
-            if (StringUtils.hasText(companyName)) {
-                queryWrapper.like("company_name", companyName);
-            }
-            if (StringUtils.hasText(corpId)) {
-                queryWrapper.eq("corp_id", corpId);
-            }
-            queryWrapper.eq("del_status", 0);
-            queryWrapper.orderByDesc("create_at");
-            List<Tenant> tenants = tenantMapper.selectList(queryWrapper);
+            List<Tenant> tenants = tenantOrmService.queryTenantList(code, companyName, corpId);
             return ApiResult.success(tenants);
         } catch (Exception e) {
             log.error("查询租户列表失败", e);
@@ -72,7 +59,7 @@ public class TenantController extends BaseController {
             if (!StringUtils.hasText(id)) {
                 return ApiResult.fail("租户ID不能为空");
             }
-            Tenant tenant = tenantMapper.selectById(id);
+            Tenant tenant = tenantOrmService.getById(id);
             if (tenant == null) {
                 return ApiResult.fail("租户不存在");
             }
@@ -93,7 +80,7 @@ public class TenantController extends BaseController {
             if (!StringUtils.hasText(code)) {
                 return ApiResult.fail("租户编码不能为空");
             }
-            Tenant tenant = tenantMapper.selectByCode(code);
+            Tenant tenant = tenantOrmService.getByCode(code);
             if (tenant == null) {
                 return ApiResult.fail("租户不存在");
             }
@@ -118,7 +105,7 @@ public class TenantController extends BaseController {
             }
 
             // 查找租户
-            Tenant tenant = tenantMapper.selectByCode(code);
+            Tenant tenant = tenantOrmService.getByCode(code);
             if (tenant == null) {
                 return ApiResult.fail("租户不存在");
             }
@@ -131,12 +118,9 @@ public class TenantController extends BaseController {
             // 执行租户初始化逻辑，创建租户站点、组织、用户、角色等
             Map<String, String> initResult = tenantService.afterCreate(tenant);
 
-            // 更新租户状态或其他初始化标记
-            tenant.setUpdateAt(new java.util.Date());
-
-            int result = tenantMapper.updateById(tenant);
-
-            if (result > 0) {
+            tenantOrmService.touchById(tenant.getId());
+            tenant = tenantOrmService.getById(tenant.getId());
+            if (tenant != null) {
                 // 直接返回包含租户信息和初始化结果（用户名和密码）的Map
                 Map<String, Object> responseData = new HashMap<>();
                 responseData.put("tenant", tenant);
@@ -183,7 +167,7 @@ public class TenantController extends BaseController {
             }
 
             // 检查租户是否存在
-            Tenant existingTenant = tenantMapper.selectById(id);
+            Tenant existingTenant = tenantOrmService.getById(id);
             if (existingTenant == null) {
                 return ApiResult.fail("租户不存在");
             }
@@ -194,8 +178,8 @@ public class TenantController extends BaseController {
             tenant.setUpdaterName(updaterName);
 
             // 更新租户
-            int result = tenantMapper.updateById(tenant);
-            return result > 0 ? ApiResult.success(true, "更新成功") : ApiResult.fail("更新失败");
+            tenantOrmService.updateById(tenant);
+            return ApiResult.success(true, "更新成功");
         } catch (IllegalArgumentException e) {
             log.warn("更新租户参数错误: {}", e.getMessage());
             return ApiResult.fail(e.getMessage());
@@ -232,7 +216,7 @@ public class TenantController extends BaseController {
             }
 
             // 检查租户编码是否已存在
-            Tenant existingTenant = tenantMapper.selectByCode(tenant.getCode());
+            Tenant existingTenant = tenantOrmService.getByCode(tenant.getCode());
             if (existingTenant != null) {
                 return ApiResult.fail("租户编码已存在");
             }
@@ -256,10 +240,7 @@ public class TenantController extends BaseController {
             tenant.setDeleteAt(DateUtils.defaultDeleteAt());
 
             // 创建租户
-            int result = tenantMapper.insert(tenant);
-            if (result <= 0) {
-                return ApiResult.fail("创建租户失败");
-            }
+            tenantOrmService.create(tenant);
 
             // 直接返回租户信息
             return ApiResult.success(tenant, "租户创建成功");
@@ -289,7 +270,7 @@ public class TenantController extends BaseController {
             String tenantCode = emailPrefix + "_" + System.currentTimeMillis() % 10000;
 
             // 检查租户编码是否已存在
-            Tenant existingTenant = tenantMapper.selectByCode(tenantCode);
+            Tenant existingTenant = tenantOrmService.getByCode(tenantCode);
             if (existingTenant != null) {
                 // 如果已存在，添加随机后缀
                 tenantCode = tenantCode + "_" + (int) (Math.random() * 1000);
@@ -317,10 +298,7 @@ public class TenantController extends BaseController {
             tenant.setDelStatus(0);
 
             // 创建租户
-            int result = tenantMapper.insert(tenant);
-            if (result <= 0) {
-                return ApiResult.fail("邀请租户失败");
-            }
+            tenantOrmService.create(tenant);
 
             // TODO: 发送邀请邮件给用户，包含完善信息的链接
 

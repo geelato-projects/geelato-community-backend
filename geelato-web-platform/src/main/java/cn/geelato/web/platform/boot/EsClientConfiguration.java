@@ -1,6 +1,7 @@
-package cn.geelato.web.platform.boot.event;
+package cn.geelato.web.platform.boot;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.JsonpMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -13,36 +14,50 @@ import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.net.URI;
 import java.util.Base64;
 
 @Configuration
 public class EsClientConfiguration {
-    private static final String ES_URL = "http://es.geelato.cn/";
-    private static final String ES_USERNAME = "elastic";
-    private static final String ES_PASSWORD = "geelatoEs";
+    @Value("${geelato.es.url:}")
+    private String esUrl;
+
+    @Value("${geelato.es.username:}")
+    private String esUsername;
+
+    @Value("${geelato.es.password:}")
+    private String esPassword;
 
     @Bean
-    public ElasticsearchClient esClient() {
-        if (ES_URL == null || ES_URL.isEmpty()) {
+    public JsonpMapper esJsonpMapper() {
+        ObjectMapper om = new ObjectMapper();
+        om.registerModule(new JavaTimeModule());
+        om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return new JacksonJsonpMapper(om);
+    }
+
+    @Bean
+    public ElasticsearchClient esClient(JsonpMapper esJsonpMapper) {
+        String url = esUrl == null ? null : esUrl.trim();
+        if (url == null || url.isEmpty()) {
             return null;
         }
-        URI uri = URI.create(ES_URL);
+        URI uri = URI.create(url);
         String scheme = uri.getScheme() == null ? "http" : uri.getScheme();
         int port = uri.getPort() == -1 ? ("https".equalsIgnoreCase(scheme) ? 443 : 80) : uri.getPort();
         HttpHost host = new HttpHost(uri.getHost(), port, scheme);
         org.elasticsearch.client.RestClientBuilder builder = RestClient.builder(host);
-        if (ES_USERNAME != null && !ES_USERNAME.isEmpty()) {
-            String token = Base64.getEncoder().encodeToString((ES_USERNAME + ":" + ES_PASSWORD).getBytes());
+        String username = esUsername == null ? null : esUsername.trim();
+        String password = esPassword == null ? null : esPassword.trim();
+        if (username != null && !username.isEmpty()) {
+            String token = Base64.getEncoder().encodeToString((username + ":" + (password == null ? "" : password)).getBytes());
             Header[] headers = new Header[]{new BasicHeader("Authorization", "Basic " + token)};
             builder.setDefaultHeaders(headers);
         }
         RestClient restClient = builder.build();
-        ObjectMapper om = new ObjectMapper();
-        om.registerModule(new JavaTimeModule());
-        om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper(om));
+        ElasticsearchTransport transport = new RestClientTransport(restClient, esJsonpMapper);
         return new ElasticsearchClient(transport);
     }
 }

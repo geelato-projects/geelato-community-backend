@@ -1,7 +1,6 @@
 package cn.geelato.core.util;
 
 import cn.geelato.utils.SM4Utils;
-import jdk.dynalink.beans.StaticClass;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

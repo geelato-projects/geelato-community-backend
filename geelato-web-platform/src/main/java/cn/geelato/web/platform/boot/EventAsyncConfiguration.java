@@ -43,4 +43,21 @@ public class EventAsyncConfiguration {
         executor.initialize();
         return executor;
     }
+
+    @Bean(name = "resolveExecutor")
+    public Executor resolveExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(3);
+        executor.setMaxPoolSize(6);
+        executor.setQueueCapacity(100);
+        executor.setKeepAliveSeconds(60);
+        executor.setThreadNamePrefix("Resolve-");
+        executor.setRejectedExecutionHandler((runnable, executor1) -> {
+            if (!executor1.isShutdown()) {
+                runnable.run();
+            }
+        });
+        executor.initialize();
+        return executor;
+    }
 }

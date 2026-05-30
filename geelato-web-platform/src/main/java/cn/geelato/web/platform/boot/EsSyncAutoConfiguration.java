@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.boot.event;
+package cn.geelato.web.platform.boot;
 
 import cn.geelato.core.orm.event.SaveEventManager;
 import cn.geelato.web.platform.event.EsSyncSaveListener;

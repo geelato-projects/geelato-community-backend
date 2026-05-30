@@ -26,6 +26,14 @@ public class SaveCommandAdapterTest extends OrmTestSupport {
         Assert.assertNotNull(command.getPK());
         Assert.assertEquals("Alice", command.getValueMap().get("name"));
         Assert.assertEquals("U1001", command.getValueMap().get("creator"));
+        Assert.assertEquals("orm-tester", command.getValueMap().get("creatorName"));
+        Assert.assertEquals("geelato", command.getValueMap().get("tenantCode"));
+        Assert.assertEquals("BU1", command.getValueMap().get("buId"));
+        Assert.assertEquals("ORG1", command.getValueMap().get("deptId"));
+        Assert.assertEquals("U1001", command.getValueMap().get("updater"));
+        Assert.assertNotNull(command.getValueMap().get("createAt"));
+        Assert.assertNotNull(command.getValueMap().get("updateAt"));
+        Assert.assertNotNull(command.getValueMap().get("deleteAt"));
         Assert.assertEquals(1, command.getCommands().size());
         Assert.assertEquals("$parent.id", command.getCommands().get(0).getValueMap().get("userId"));
     }
@@ -43,5 +51,9 @@ public class SaveCommandAdapterTest extends OrmTestSupport {
         Assert.assertNotNull(command.getWhere());
         Assert.assertEquals("Bob", command.getValueMap().get("name"));
         Assert.assertEquals("U1001", command.getValueMap().get("updater"));
+        Assert.assertEquals("orm-tester", command.getValueMap().get("updaterName"));
+        Assert.assertNotNull(command.getValueMap().get("updateAt"));
+        Assert.assertNull(command.getValueMap().get("creator"));
+        Assert.assertNull(command.getValueMap().get("tenantCode"));
     }
 }

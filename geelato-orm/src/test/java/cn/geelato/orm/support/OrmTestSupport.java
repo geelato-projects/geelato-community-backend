@@ -16,6 +16,7 @@ public abstract class OrmTestSupport {
         User user = new User();
         user.setUserId("U1001");
         user.setUserName("orm-tester");
+        user.setBuId("BU1");
         user.setOrgId("ORG1");
         user.setDefaultOrgId("ORG1");
         SecurityContext.setCurrentUser(user);

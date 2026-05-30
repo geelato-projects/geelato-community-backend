@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.logging.es;
 
+import cn.geelato.web.platform.boot.es.EsOperations;
 import cn.geelato.web.platform.boot.properties.EsConfigurationProperties;
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,13 +17,13 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 public class EsLogDrainService {
-    private final ElasticsearchClient elasticsearchClient;
+    private final EsOperations es;
     private final EsConfigurationProperties esProperties;
     private final EsLogIndexRouter indexRouter = new EsLogIndexRouter();
     private ScheduledExecutorService scheduler;
 
-    public EsLogDrainService(ElasticsearchClient elasticsearchClient, EsConfigurationProperties esProperties) {
-        this.elasticsearchClient = elasticsearchClient;
+    public EsLogDrainService(EsOperations es, EsConfigurationProperties esProperties) {
+        this.es = es;
         this.esProperties = esProperties;
     }
 
@@ -52,7 +52,7 @@ public class EsLogDrainService {
     }
 
     private void drain() {
-        if (elasticsearchClient == null || !Boolean.TRUE.equals(esProperties.getLogEnabled())) {
+        if (es == null || es.client() == null || !Boolean.TRUE.equals(esProperties.getLogEnabled())) {
             return;
         }
         List<EsLogEvent> batch = EsLogBuffer.pollBatch(esProperties.getLogBulkSize());
@@ -72,7 +72,7 @@ public class EsLogDrainService {
                     Map<String, Object> document = event.toDocument(esProperties.getLogAppName(), esProperties.getLogEnv());
                     builder.operations(op -> op.index(idx -> idx.index(index).document(document)));
                 }
-                elasticsearchClient.bulk(builder.build());
+                es.bulk(builder.build());
                 return;
             } catch (Exception e) {
                 retry++;

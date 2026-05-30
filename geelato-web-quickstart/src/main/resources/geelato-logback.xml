@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds" debug="false">
     <contextName>geelato-logback</contextName>
-    <property name="LOG_DIR" value="/log"/>
+    <property name="LOG_DIR" value="${LOG_DIR:-/log}"/>
+    <property name="ROOT_LOG_LEVEL" value="${ROOT_LOG_LEVEL:-DEBUG}"/>
+    <property name="FILE_LOG_LEVEL" value="${FILE_LOG_LEVEL:-DEBUG}"/>
+    <property name="CONSOLE_LOG_LEVEL" value="${CONSOLE_LOG_LEVEL:-${ROOT_LOG_LEVEL}}"/>
+    <property name="LOG_PATTERN" value="${LOG_PATTERN:-%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n}"/>
     <!--输出到控制台-->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${CONSOLE_LOG_LEVEL}</level>
+        </filter>
         <encoder>
-            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
     <appender name="errorLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -16,12 +23,10 @@
             <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </layout>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${ERROR_FILE_LOG_LEVEL:-ERROR}</level>
         </filter>
     </appender>
     <appender name="infoLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -32,12 +37,10 @@
             <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </layout>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>INFO</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${FILE_LOG_LEVEL}</level>
         </filter>
     </appender>
     <appender name="platformExceptionLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -48,12 +51,10 @@
             <maxHistory>7</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </layout>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${PLATFORM_EXCEPTION_FILE_LEVEL:-ERROR}</level>
         </filter>
     </appender>
 <!--    <appender name="custom" class="cn.geelato.logging.logback.SystemLoggingAppender">-->
@@ -67,7 +68,7 @@
             <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </layout>
     </appender>
     <!--调度服务日志-->
@@ -79,7 +80,7 @@
             <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </layout>
     </appender>
     <!--认证服务日志-->
@@ -91,7 +92,7 @@
             <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </layout>
     </appender>
     <!--消息服务日志-->
@@ -103,7 +104,7 @@
             <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </layout>
     </appender>
     <!--拦截器日志-->
@@ -115,7 +116,7 @@
             <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </layout>
     </appender>
     <!--请求记录日志-->
@@ -150,14 +151,14 @@
         <appender-ref ref="requestLogFile"/>
         <appender-ref ref="console"/>
     </logger>
-    <logger name="cn.geelato.web.platform.run.PlatformExceptionHandler" level="ERROR" additivity="false">
+    <logger name="cn.geelato.web.platform.run.PlatformExceptionHandler" level="${PLATFORM_EXCEPTION_LOG_LEVEL:-ERROR}" additivity="false">
         <appender-ref ref="platformExceptionLogFile"/>
         <appender-ref ref="console"/>
     </logger>
 <!--    <logger name="handler.cn.geelato.web.platform.PlatformExceptionHandler" additivity="false">-->
 <!--        <appender-ref ref="custom"/>-->
 <!--    </logger>-->
-    <root level="INFO">
+    <root level="${ROOT_LOG_LEVEL}">
         <appender-ref ref="console"/>
         <appender-ref ref="infoLogFile"/>
         <appender-ref ref="errorLogFile"/>

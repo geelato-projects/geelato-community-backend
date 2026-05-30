@@ -34,12 +34,10 @@ public class EmailAccountController extends BaseController {
             if (Strings.isBlank(userId)) {
                 return ApiPagedResult.fail("用户未登录");
             }
-            String tenantCode = getTenantCode();
 
             int[] page = parsePage(requestMap);
 
             List<Filter> filters = new ArrayList<>();
-            filters.add(Filter.eq("tenantCode", tenantCode));
             filters.add(Filter.eq("userId", userId));
             filters.add(Filter.eq("delStatus", 0));
 
@@ -67,8 +65,8 @@ public class EmailAccountController extends BaseController {
                 filters.add(Filter.eq("defaultFlag", defaultFlag));
             }
 
-            log.debug("emailAccount pageQuery, tenantCode={}, userId={}, emailAddress={}, enableStatus={}, defaultFlag={}, pageNum={}, pageSize={}",
-                    tenantCode, userId, emailAddress, enableStatus, defaultFlag, page[0], page[1]);
+            log.debug("emailAccount pageQuery, userId={}, emailAddress={}, enableStatus={}, defaultFlag={}, pageNum={}, pageSize={}",
+                    userId, emailAddress, enableStatus, defaultFlag, page[0], page[1]);
             PageResult<Map<String, Object>> raw = MetaFactory.query(UserEmailAccount.class)
                     .where(filters.toArray(new Filter[0]))
                     .order(Order.desc("defaultFlag"), Order.desc("createAt"))
@@ -76,7 +74,7 @@ public class EmailAccountController extends BaseController {
                     .page();
 
             List<UserEmailAccountDto> dtos = raw.getRecords().stream().map(this::toDto).toList();
-            log.debug("emailAccount pageQuery done, tenantCode={}, userId={}, dataSize={}, total={}", tenantCode, userId, dtos.size(), raw.getTotal());
+            log.debug("emailAccount pageQuery done, userId={}, dataSize={}, total={}", userId, dtos.size(), raw.getTotal());
             return ApiPagedResult.success(dtos, raw.getCurrent(), (int) raw.getSize(), dtos.size(), raw.getTotal());
         } catch (Exception e) {
             log.error("pageQuery email account failed", e);
@@ -91,13 +89,11 @@ public class EmailAccountController extends BaseController {
             if (Strings.isBlank(userId)) {
                 return ApiResult.fail("用户未登录");
             }
-            String tenantCode = getTenantCode();
 
-            log.debug("emailAccount get, tenantCode={}, userId={}, id={}", tenantCode, userId, id);
+            log.debug("emailAccount get, userId={}, id={}", userId, id);
             Map<String, Object> row = MetaFactory.query(UserEmailAccount.class)
                     .where(
                             Filter.eq("id", id),
-                            Filter.eq("tenantCode", tenantCode),
                             Filter.eq("userId", userId),
                             Filter.eq("delStatus", 0)
                     )
@@ -120,7 +116,6 @@ public class EmailAccountController extends BaseController {
             if (Strings.isBlank(userId)) {
                 return ApiResult.fail("用户未登录");
             }
-            String tenantCode = getTenantCode();
 
             if (req == null) {
                 return ApiResult.fail("参数不能为空");
@@ -139,8 +134,8 @@ public class EmailAccountController extends BaseController {
             Integer imapPort = req.getImapPort() != null ? req.getImapPort() : (imapSsl == 1 ? 993 : 143);
             String authUser = Strings.isNotBlank(req.getAuthUser()) ? req.getAuthUser() : req.getEmailAddress();
 
-            log.debug("emailAccount createOrUpdate request, tenantCode={}, userId={}, id={}, emailAddress={}, authType={}, enableStatus={}, defaultFlag={}, imapHost={}, imapPort={}, imapSsl={}, imapFolderDefault={}, authUser={}",
-                    tenantCode, userId, req.getId(), maskEmail(req.getEmailAddress()), authType, enableStatus, defaultFlag, req.getImapHost(), imapPort, imapSsl, req.getImapFolderDefault(), maskEmail(authUser));
+            log.debug("emailAccount createOrUpdate request, userId={}, id={}, emailAddress={}, authType={}, enableStatus={}, defaultFlag={}, imapHost={}, imapPort={}, imapSsl={}, imapFolderDefault={}, authUser={}",
+                    userId, req.getId(), maskEmail(req.getEmailAddress()), authType, enableStatus, defaultFlag, req.getImapHost(), imapPort, imapSsl, req.getImapFolderDefault(), maskEmail(authUser));
             String encryptedSecret = null;
             if (!"oauth2".equalsIgnoreCase(authType) && Strings.isNotBlank(req.getAuthSecret())) {
                 encryptedSecret = EncryptUtils.encrypt(req.getAuthSecret());
@@ -149,7 +144,6 @@ public class EmailAccountController extends BaseController {
             String id = Strings.isNotBlank(req.getId()) ? req.getId() : null;
             if (id == null) {
                 id = MetaFactory.insert(UserEmailAccount.class)
-                        .value("tenantCode", tenantCode)
                         .value("userId", userId)
                         .value("emailAddress", req.getEmailAddress())
                         .value("displayName", req.getDisplayName())
@@ -168,7 +162,6 @@ public class EmailAccountController extends BaseController {
                 Map<String, Object> exists = MetaFactory.query(UserEmailAccount.class)
                         .where(
                                 Filter.eq("id", id),
-                                Filter.eq("tenantCode", tenantCode),
                                 Filter.eq("userId", userId),
                                 Filter.eq("delStatus", 0)
                         )
@@ -180,7 +173,6 @@ public class EmailAccountController extends BaseController {
                 var update = MetaFactory.update(UserEmailAccount.class)
                         .where(
                                 Filter.eq("id", id),
-                                Filter.eq("tenantCode", tenantCode),
                                 Filter.eq("userId", userId),
                                 Filter.eq("delStatus", 0)
                         )
@@ -206,10 +198,10 @@ public class EmailAccountController extends BaseController {
             }
 
             if (defaultFlag == 1) {
-                setDefaultInternal(tenantCode, userId, id);
+                setDefaultInternal(userId, id);
             }
 
-            log.debug("emailAccount createOrUpdate done, tenantCode={}, userId={}, id={}, defaultFlag={}", tenantCode, userId, id, defaultFlag);
+            log.debug("emailAccount createOrUpdate done, userId={}, id={}, defaultFlag={}", userId, id, defaultFlag);
             return ApiResult.success(id);
         } catch (Exception e) {
             log.error("createOrUpdate email account failed", e);
@@ -225,13 +217,11 @@ public class EmailAccountController extends BaseController {
             if (Strings.isBlank(userId)) {
                 return ApiResult.fail("用户未登录");
             }
-            String tenantCode = getTenantCode();
 
-            log.debug("emailAccount setDefault request, tenantCode={}, userId={}, id={}", tenantCode, userId, id);
+            log.debug("emailAccount setDefault request, userId={}, id={}", userId, id);
             Map<String, Object> exists = MetaFactory.query(UserEmailAccount.class)
                     .where(
                             Filter.eq("id", id),
-                            Filter.eq("tenantCode", tenantCode),
                             Filter.eq("userId", userId),
                             Filter.eq("delStatus", 0)
                     )
@@ -240,8 +230,8 @@ public class EmailAccountController extends BaseController {
                 return ApiResult.fail("邮箱账号不存在或无权限");
             }
 
-            setDefaultInternal(tenantCode, userId, id);
-            log.debug("emailAccount setDefault done, tenantCode={}, userId={}, id={}", tenantCode, userId, id);
+            setDefaultInternal(userId, id);
+            log.debug("emailAccount setDefault done, userId={}, id={}", userId, id);
             return ApiResult.success(true);
         } catch (Exception e) {
             log.error("set default email account failed", e);
@@ -257,20 +247,18 @@ public class EmailAccountController extends BaseController {
             if (Strings.isBlank(userId)) {
                 return ApiResult.fail("用户未登录");
             }
-            String tenantCode = getTenantCode();
 
-            log.debug("emailAccount delete request, tenantCode={}, userId={}, id={}", tenantCode, userId, id);
+            log.debug("emailAccount delete request, userId={}, id={}", userId, id);
             MetaFactory.update(UserEmailAccount.class)
                     .where(
                             Filter.eq("id", id),
-                            Filter.eq("tenantCode", tenantCode),
                             Filter.eq("userId", userId),
                             Filter.eq("delStatus", 0)
                     )
                     .value("delStatus", 1)
                     .value("deleteAt", new java.util.Date())
                     .save();
-            log.debug("emailAccount delete done, tenantCode={}, userId={}, id={}", tenantCode, userId, id);
+            log.debug("emailAccount delete done, userId={}, id={}", userId, id);
             return ApiResult.success(true);
         } catch (Exception e) {
             log.error("delete email account failed", e);
@@ -278,11 +266,10 @@ public class EmailAccountController extends BaseController {
         }
     }
 
-    private void setDefaultInternal(String tenantCode, String userId, String targetId) {
-        log.debug("emailAccount setDefaultInternal start, tenantCode={}, userId={}, targetId={}", tenantCode, userId, targetId);
+    private void setDefaultInternal(String userId, String targetId) {
+        log.debug("emailAccount setDefaultInternal start, userId={}, targetId={}", userId, targetId);
         MetaFactory.update(UserEmailAccount.class)
                 .where(
-                        Filter.eq("tenantCode", tenantCode),
                         Filter.eq("userId", userId),
                         Filter.eq("delStatus", 0),
                         Filter.eq("defaultFlag", 1)
@@ -293,13 +280,12 @@ public class EmailAccountController extends BaseController {
         MetaFactory.update(UserEmailAccount.class)
                 .where(
                         Filter.eq("id", targetId),
-                        Filter.eq("tenantCode", tenantCode),
                         Filter.eq("userId", userId),
                         Filter.eq("delStatus", 0)
                 )
                 .value("defaultFlag", 1)
                 .save();
-        log.debug("emailAccount setDefaultInternal done, tenantCode={}, userId={}, targetId={}", tenantCode, userId, targetId);
+        log.debug("emailAccount setDefaultInternal done, userId={}, targetId={}", userId, targetId);
     }
 
     private UserEmailAccountDto toDto(Map<String, Object> row) {

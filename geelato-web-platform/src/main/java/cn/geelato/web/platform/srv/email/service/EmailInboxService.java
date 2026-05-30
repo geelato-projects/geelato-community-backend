@@ -12,7 +12,10 @@ import cn.geelato.web.platform.srv.email.dto.EmailFolderDto;
 import cn.geelato.web.platform.srv.email.dto.EmailMessageDetailDto;
 import cn.geelato.web.platform.srv.email.dto.EmailMessageListItemDto;
 import com.sun.mail.imap.IMAPFolder;
+import com.sun.mail.imap.SortTerm;
 import jakarta.mail.*;
+import jakarta.mail.search.FlagTerm;
+import jakarta.mail.search.SearchTerm;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
@@ -21,6 +24,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -35,19 +39,19 @@ public class EmailInboxService {
     public record PageResult<T>(List<T> data, long total) {
     }
 
-    public List<EmailFolderDto> listFolders(String tenantCode, String userId, String emailAccountId, String pattern) throws Exception {
-        EmailAccountConfig config = getEmailAccountConfig(tenantCode, userId, emailAccountId);
+    public List<EmailFolderDto> listFolders(String userId, String emailAccountId, String pattern) throws Exception {
+        EmailAccountConfig config = getEmailAccountConfig(userId, emailAccountId);
         String p = Strings.isNotBlank(pattern) ? pattern : "*";
 
         Store store = null;
         Folder root = null;
         try {
-            log.debug("imap listFolders start, tenantCode={}, userId={}, emailAccountId={}, pattern={}", tenantCode, userId, config.id(), p);
+            log.debug("imap listFolders start, userId={}, emailAccountId={}, pattern={}", userId, config.id(), p);
             store = connect(config);
             root = store.getDefaultFolder();
             Folder[] folders = root.list(p);
             if (folders == null || folders.length == 0) {
-                log.debug("imap listFolders empty, tenantCode={}, userId={}, emailAccountId={}, pattern={}", tenantCode, userId, config.id(), p);
+                log.debug("imap listFolders empty, userId={}, emailAccountId={}, pattern={}", userId, config.id(), p);
                 return Collections.emptyList();
             }
             List<EmailFolderDto> list = new ArrayList<>(folders.length);
@@ -68,7 +72,7 @@ public class EmailInboxService {
                 dto.setHoldsFolders((type & Folder.HOLDS_FOLDERS) != 0);
                 list.add(dto);
             }
-            log.debug("imap listFolders done, tenantCode={}, userId={}, emailAccountId={}, size={}", tenantCode, userId, config.id(), list.size());
+            log.debug("imap listFolders done, userId={}, emailAccountId={}, size={}", userId, config.id(), list.size());
             return list;
         } finally {
             closeQuietly(root);
@@ -76,48 +80,90 @@ public class EmailInboxService {
         }
     }
 
-    public PageResult<EmailMessageListItemDto> pageQuery(String tenantCode, String userId, String emailAccountId, String folderName, int pageNum, int pageSize, Boolean unreadOnly) throws Exception {
-        EmailAccountConfig config = getEmailAccountConfig(tenantCode, userId, emailAccountId);
+    public PageResult<EmailMessageListItemDto> pageQuery(String userId, String emailAccountId, String folderName, int pageNum, int pageSize, Boolean unreadOnly) throws Exception {
+        EmailAccountConfig config = getEmailAccountConfig(userId, emailAccountId);
         String folder = Strings.isNotBlank(folderName) ? folderName : config.defaultFolder();
 
         Store store = null;
         Folder imapFolder = null;
         try {
-            log.debug("imap pageQuery start, tenantCode={}, userId={}, emailAccountId={}, folder={}, pageNum={}, pageSize={}, unreadOnly={}",
-                    tenantCode, userId, config.id(), folder, pageNum, pageSize, unreadOnly);
+            log.debug("imap pageQuery start, userId={}, emailAccountId={}, folder={}, pageNum={}, pageSize={}, unreadOnly={}",
+                    userId, config.id(), folder, pageNum, pageSize, unreadOnly);
             store = connect(config);
             imapFolder = store.getFolder(folder);
             imapFolder.open(Folder.READ_ONLY);
 
-            int total = imapFolder.getMessageCount();
-            if (total <= 0) {
-                log.debug("imap pageQuery empty, tenantCode={}, userId={}, emailAccountId={}, folder={}", tenantCode, userId, config.id(), folder);
-                return new PageResult<>(Collections.emptyList(), 0);
-            }
-
             int safePageNum = Math.max(1, pageNum);
             int safePageSize = Math.max(1, pageSize);
-            int end = total - (safePageNum - 1) * safePageSize;
-            int start = Math.max(1, end - safePageSize + 1);
-            if (end < 1) {
-                log.debug("imap pageQuery out-of-range, tenantCode={}, userId={}, emailAccountId={}, folder={}, total={}, pageNum={}, pageSize={}",
-                        tenantCode, userId, config.id(), folder, total, pageNum, pageSize);
-                return new PageResult<>(Collections.emptyList(), total);
-            }
-            if (end > total) {
-                end = total;
-            }
-
-            Message[] messages = imapFolder.getMessages(start, end);
             long uidValidity = resolveUidValidity(imapFolder);
-            log.debug("imap pageQuery loaded, tenantCode={}, userId={}, emailAccountId={}, folder={}, total={}, range=[{},{}], uidValidity={}",
-                    tenantCode, userId, config.id(), folder, total, start, end, uidValidity);
 
             record SortableMessage(long uid, Date sortDate, EmailMessageListItemDto dto) {
             }
 
+            Message[] slice;
+            long total;
+            if (imapFolder instanceof IMAPFolder imap) {
+                try {
+                    SortTerm[] terms = new SortTerm[]{SortTerm.REVERSE, SortTerm.ARRIVAL};
+                    SearchTerm searchTerm = Boolean.TRUE.equals(unreadOnly) ? new FlagTerm(new Flags(Flags.Flag.SEEN), false) : null;
+                    Message[] sorted = searchTerm != null ? imap.getSortedMessages(terms, searchTerm) : imap.getSortedMessages(terms);
+                    total = sorted != null ? sorted.length : 0;
+                    int offset = (safePageNum - 1) * safePageSize;
+                    if (offset >= total) {
+                        log.debug("imap pageQuery out-of-range, userId={}, emailAccountId={}, folder={}, total={}, pageNum={}, pageSize={}",
+                                userId, config.id(), folder, total, pageNum, pageSize);
+                        return new PageResult<>(Collections.emptyList(), total);
+                    }
+                    int to = (int) Math.min((long) offset + safePageSize, total);
+                    slice = Arrays.copyOfRange(sorted, offset, to);
+                    log.debug("imap pageQuery loaded(sorted), userId={}, emailAccountId={}, folder={}, total={}, range=[{},{}), uidValidity={}",
+                            userId, config.id(), folder, total, offset, to, uidValidity);
+                } catch (Exception sortEx) {
+                    int mc = imapFolder.getMessageCount();
+                    if (mc <= 0) {
+                        log.debug("imap pageQuery empty, userId={}, emailAccountId={}, folder={}", userId, config.id(), folder);
+                        return new PageResult<>(Collections.emptyList(), 0);
+                    }
+                    int end = mc - (safePageNum - 1) * safePageSize;
+                    int start = Math.max(1, end - safePageSize + 1);
+                    if (end < 1) {
+                        log.debug("imap pageQuery out-of-range, userId={}, emailAccountId={}, folder={}, total={}, pageNum={}, pageSize={}",
+                                userId, config.id(), folder, mc, pageNum, pageSize);
+                        return new PageResult<>(Collections.emptyList(), mc);
+                    }
+                    if (end > mc) {
+                        end = mc;
+                    }
+                    Message[] messages = imapFolder.getMessages(start, end);
+                    total = mc;
+                    slice = messages;
+                    log.debug("imap pageQuery loaded(fallback), userId={}, emailAccountId={}, folder={}, total={}, range=[{},{}], uidValidity={}, reason={}",
+                            userId, config.id(), folder, mc, start, end, uidValidity, sortEx.toString());
+                }
+            } else {
+                int mc = imapFolder.getMessageCount();
+                if (mc <= 0) {
+                    log.debug("imap pageQuery empty, userId={}, emailAccountId={}, folder={}", userId, config.id(), folder);
+                    return new PageResult<>(Collections.emptyList(), 0);
+                }
+                int end = mc - (safePageNum - 1) * safePageSize;
+                int start = Math.max(1, end - safePageSize + 1);
+                if (end < 1) {
+                    log.debug("imap pageQuery out-of-range, userId={}, emailAccountId={}, folder={}, total={}, pageNum={}, pageSize={}",
+                            userId, config.id(), folder, mc, pageNum, pageSize);
+                    return new PageResult<>(Collections.emptyList(), mc);
+                }
+                if (end > mc) {
+                    end = mc;
+                }
+                slice = imapFolder.getMessages(start, end);
+                total = mc;
+                log.debug("imap pageQuery loaded, userId={}, emailAccountId={}, folder={}, total={}, range=[{},{}], uidValidity={}",
+                        userId, config.id(), folder, mc, start, end, uidValidity);
+            }
+
             List<SortableMessage> tmp = new ArrayList<>();
-            for (Message msg : messages) {
+            for (Message msg : slice) {
                 boolean unread = !msg.isSet(Flags.Flag.SEEN);
                 if (Boolean.TRUE.equals(unreadOnly) && !unread) {
                     continue;
@@ -153,8 +199,8 @@ public class EmailInboxService {
             });
 
             List<EmailMessageListItemDto> items = tmp.stream().map(SortableMessage::dto).toList();
-            log.debug("imap pageQuery done, tenantCode={}, userId={}, emailAccountId={}, folder={}, returned={}, total={}",
-                    tenantCode, userId, config.id(), folder, items.size(), total);
+            log.debug("imap pageQuery done, userId={}, emailAccountId={}, folder={}, returned={}, total={}",
+                    userId, config.id(), folder, items.size(), total);
             return new PageResult<>(items, total);
         } finally {
             closeQuietly(imapFolder);
@@ -162,15 +208,15 @@ public class EmailInboxService {
         }
     }
 
-    public EmailMessageDetailDto getMessageDetail(String tenantCode, String userId, String mailId) throws Exception {
+    public EmailMessageDetailDto getMessageDetail(String userId, String mailId) throws Exception {
         MailIdCodec.MailKey key = MailIdCodec.decode(mailId);
-        EmailAccountConfig config = getEmailAccountConfig(tenantCode, userId, key.emailAccountId());
+        EmailAccountConfig config = getEmailAccountConfig(userId, key.emailAccountId());
 
         Store store = null;
         Folder imapFolder = null;
         try {
-            log.debug("imap getMessageDetail start, tenantCode={}, userId={}, emailAccountId={}, folder={}, uid={}",
-                    tenantCode, userId, config.id(), key.folder(), key.uid());
+            log.debug("imap getMessageDetail start, userId={}, emailAccountId={}, folder={}, uid={}",
+                    userId, config.id(), key.folder(), key.uid());
             store = connect(config);
             imapFolder = store.getFolder(key.folder());
             imapFolder.open(Folder.READ_ONLY);
@@ -198,9 +244,39 @@ public class EmailInboxService {
             dto.setTextBody(content.textBody);
             dto.setHtmlBody(content.htmlBody);
             dto.setAttachments(toAttachmentDtos(content.attachments, mailId));
-            log.debug("imap getMessageDetail done, tenantCode={}, userId={}, emailAccountId={}, folder={}, uid={}, attachments={}",
-                    tenantCode, userId, config.id(), key.folder(), key.uid(), dto.getAttachments() != null ? dto.getAttachments().size() : 0);
+            log.debug("imap getMessageDetail done, userId={}, emailAccountId={}, folder={}, uid={}, attachments={}",
+                    userId, config.id(), key.folder(), key.uid(), dto.getAttachments() != null ? dto.getAttachments().size() : 0);
             return dto;
+        } finally {
+            closeQuietly(imapFolder);
+            closeQuietly(store);
+        }
+    }
+
+    public List<EmailAttachmentDto> getAttachments(String userId, String mailId) throws Exception {
+        MailIdCodec.MailKey key = MailIdCodec.decode(mailId);
+        EmailAccountConfig config = getEmailAccountConfig(userId, key.emailAccountId());
+
+        Store store = null;
+        Folder imapFolder = null;
+        try {
+            log.debug("imap getAttachments start, userId={}, emailAccountId={}, folder={}, uid={}",
+                    userId, config.id(), key.folder(), key.uid());
+            store = connect(config);
+            imapFolder = store.getFolder(key.folder());
+            imapFolder.open(Folder.READ_ONLY);
+
+            Message msg = resolveMessageByUid(imapFolder, key.uid());
+            if (msg == null) {
+                throw new IllegalArgumentException("mail not found");
+            }
+
+            MessageContent content = new MessageContent();
+            parsePart(msg, content);
+            List<EmailAttachmentDto> list = toAttachmentDtos(content.attachments, mailId);
+            log.debug("imap getAttachments done, userId={}, emailAccountId={}, folder={}, uid={}, attachments={}",
+                    userId, config.id(), key.folder(), key.uid(), list != null ? list.size() : 0);
+            return list;
         } finally {
             closeQuietly(imapFolder);
             closeQuietly(store);
@@ -210,15 +286,15 @@ public class EmailInboxService {
     public record DownloadAttachment(String fileName, String contentType, InputStream inputStream) {
     }
 
-    public DownloadAttachment openAttachmentStream(String tenantCode, String userId, String mailId, String partId) throws Exception {
+    public DownloadAttachment openAttachmentStream(String userId, String mailId, String partId) throws Exception {
         MailIdCodec.MailKey key = MailIdCodec.decode(mailId);
-        EmailAccountConfig config = getEmailAccountConfig(tenantCode, userId, key.emailAccountId());
+        EmailAccountConfig config = getEmailAccountConfig(userId, key.emailAccountId());
 
         Store store = connect(config);
         Folder imapFolder = null;
         try {
-            log.debug("imap openAttachmentStream start, tenantCode={}, userId={}, emailAccountId={}, folder={}, uid={}, partId={}",
-                    tenantCode, userId, config.id(), key.folder(), key.uid(), partId);
+            log.debug("imap openAttachmentStream start, userId={}, emailAccountId={}, folder={}, uid={}, partId={}",
+                    userId, config.id(), key.folder(), key.uid(), partId);
             imapFolder = store.getFolder(key.folder());
             imapFolder.open(Folder.READ_ONLY);
 
@@ -233,8 +309,8 @@ public class EmailInboxService {
             String fileName = part.getFileName();
             String contentType = safeContentType(part.getContentType());
             InputStream is = part.getInputStream();
-            log.debug("imap openAttachmentStream ready, tenantCode={}, userId={}, emailAccountId={}, folder={}, uid={}, partId={}, fileName={}, contentType={}",
-                    tenantCode, userId, config.id(), key.folder(), key.uid(), partId, fileName, contentType);
+            log.debug("imap openAttachmentStream ready, userId={}, emailAccountId={}, folder={}, uid={}, partId={}, fileName={}, contentType={}",
+                    userId, config.id(), key.folder(), key.uid(), partId, fileName, contentType);
             return new DownloadAttachment(fileName, contentType, new StoreBoundInputStream(is, imapFolder, store));
         } catch (Exception ex) {
             closeQuietly(imapFolder);
@@ -280,13 +356,12 @@ public class EmailInboxService {
         }
     }
 
-    private EmailAccountConfig getEmailAccountConfig(String tenantCode, String userId, String emailAccountId) {
+    private EmailAccountConfig getEmailAccountConfig(String userId, String emailAccountId) {
         Map<String, Object> row;
         if (Strings.isNotBlank(emailAccountId)) {
             row = MetaFactory.query(UserEmailAccount.class)
                     .where(
                             Filter.eq("id", emailAccountId),
-                            Filter.eq("tenantCode", tenantCode),
                             Filter.eq("userId", userId),
                             Filter.eq("delStatus", 0),
                             Filter.eq("enableStatus", 1)
@@ -295,7 +370,6 @@ public class EmailInboxService {
         } else {
             row = MetaFactory.query(UserEmailAccount.class)
                     .where(
-                            Filter.eq("tenantCode", tenantCode),
                             Filter.eq("userId", userId),
                             Filter.eq("delStatus", 0),
                             Filter.eq("enableStatus", 1)

@@ -9,6 +9,7 @@ import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.handler.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.email.dto.EmailFolderDto;
+import cn.geelato.web.platform.srv.email.dto.EmailAttachmentDto;
 import cn.geelato.web.platform.srv.email.dto.EmailMessageDetailDto;
 import cn.geelato.web.platform.srv.email.dto.EmailMessageListItemDto;
 import cn.geelato.web.platform.srv.email.dto.SaveEmailAttachmentRequest;
@@ -47,9 +48,9 @@ public class EmailInboxController extends BaseController {
             if (Strings.isBlank(userId)) {
                 return ApiResult.fail("用户未登录");
             }
-            log.debug("listFolders request, tenantCode={}, userId={}, emailAccountId={}, pattern={}", getTenantCode(), userId, emailAccountId, pattern);
-            List<EmailFolderDto> folders = emailInboxService.listFolders(getTenantCode(), userId, emailAccountId, pattern);
-            log.debug("listFolders response, tenantCode={}, userId={}, emailAccountId={}, size={}", getTenantCode(), userId, emailAccountId, folders != null ? folders.size() : 0);
+            log.debug("listFolders request, userId={}, emailAccountId={}, pattern={}", userId, emailAccountId, pattern);
+            List<EmailFolderDto> folders = emailInboxService.listFolders(userId, emailAccountId, pattern);
+            log.debug("listFolders response, userId={}, emailAccountId={}, size={}", userId, emailAccountId, folders != null ? folders.size() : 0);
             return ApiResult.success(folders);
         } catch (IllegalArgumentException ex) {
             return ApiResult.fail(ex.getMessage());
@@ -66,17 +67,15 @@ public class EmailInboxController extends BaseController {
             if (Strings.isBlank(userId)) {
                 return ApiPagedResult.fail("用户未登录");
             }
-            String tenantCode = getTenantCode();
             Map<String, Object> rm = requestMap != null ? requestMap : java.util.Collections.emptyMap();
             String emailAccountId = Objects.toString(rm.get("emailAccountId"), null);
             String folder = Objects.toString(rm.get("folder"), null);
             Boolean unread = parseBoolean(rm.get("unread"));
 
             int[] page = parsePage(rm);
-            log.debug("pageQuery request, tenantCode={}, userId={}, emailAccountId={}, folder={}, pageNum={}, pageSize={}, unread={}",
-                    tenantCode, userId, emailAccountId, folder, page[0], page[1], unread);
+            log.debug("pageQuery request, userId={}, emailAccountId={}, folder={}, pageNum={}, pageSize={}, unread={}",
+                    userId, emailAccountId, folder, page[0], page[1], unread);
             EmailInboxService.PageResult<EmailMessageListItemDto> result = emailInboxService.pageQuery(
-                    tenantCode,
                     userId,
                     emailAccountId,
                     folder,
@@ -85,8 +84,8 @@ public class EmailInboxController extends BaseController {
                     unread
             );
             List<EmailMessageListItemDto> list = result.data();
-            log.debug("pageQuery response, tenantCode={}, userId={}, emailAccountId={}, folder={}, dataSize={}, total={}",
-                    tenantCode, userId, emailAccountId, folder, list != null ? list.size() : 0, result.total());
+            log.debug("pageQuery response, userId={}, emailAccountId={}, folder={}, dataSize={}, total={}",
+                    userId, emailAccountId, folder, list != null ? list.size() : 0, result.total());
             return ApiPagedResult.success(list, page[0], page[1], list != null ? list.size() : 0, result.total());
         } catch (IllegalArgumentException ex) {
             return ApiPagedResult.fail(ex.getMessage());
@@ -103,16 +102,35 @@ public class EmailInboxController extends BaseController {
             if (Strings.isBlank(userId)) {
                 return ApiResult.fail("用户未登录");
             }
-            log.debug("getDetail request, tenantCode={}, userId={}, mailId={}", getTenantCode(), userId, id);
-            EmailMessageDetailDto dto = emailInboxService.getMessageDetail(getTenantCode(), userId, id);
-            log.debug("getDetail response, tenantCode={}, userId={}, mailId={}, attachments={}",
-                    getTenantCode(), userId, id, dto != null && dto.getAttachments() != null ? dto.getAttachments().size() : 0);
+            log.debug("getDetail request, userId={}, mailId={}", userId, id);
+            EmailMessageDetailDto dto = emailInboxService.getMessageDetail(userId, id);
+            log.debug("getDetail response, userId={}, mailId={}, attachments={}",
+                    userId, id, dto != null && dto.getAttachments() != null ? dto.getAttachments().size() : 0);
             return ApiResult.success(dto);
         } catch (IllegalArgumentException ex) {
             return ApiResult.fail(ex.getMessage());
         } catch (Exception e) {
             log.error("get email detail failed", e);
             return ApiResult.fail("获取邮件详情失败: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/message/{id}/attachments")
+    public ApiResult<List<EmailAttachmentDto>> getAttachments(@PathVariable("id") String id) {
+        try {
+            String userId = SecurityContext.getCurrentUser().getUserId();
+            if (Strings.isBlank(userId)) {
+                return ApiResult.fail("用户未登录");
+            }
+            log.debug("getAttachments request, userId={}, mailId={}", userId, id);
+            List<EmailAttachmentDto> list = emailInboxService.getAttachments(userId, id);
+            log.debug("getAttachments response, userId={}, mailId={}, size={}", userId, id, list != null ? list.size() : 0);
+            return ApiResult.success(list);
+        } catch (IllegalArgumentException ex) {
+            return ApiResult.fail(ex.getMessage());
+        } catch (Exception e) {
+            log.error("get email attachments failed", e);
+            return ApiResult.fail("获取附件列表失败: " + e.getMessage());
         }
     }
 
@@ -124,15 +142,15 @@ public class EmailInboxController extends BaseController {
                 response.setStatus(401);
                 return;
             }
-            log.debug("downloadAttachment request, tenantCode={}, userId={}, mailId={}, partId={}", getTenantCode(), userId, id, partId);
-            EmailInboxService.DownloadAttachment da = emailInboxService.openAttachmentStream(getTenantCode(), userId, id, partId);
+            log.debug("downloadAttachment request, userId={}, mailId={}, partId={}", userId, id, partId);
+            EmailInboxService.DownloadAttachment da = emailInboxService.openAttachmentStream(userId, id, partId);
             response.setContentType(da.contentType());
             String fileName = Strings.isNotBlank(da.fileName()) ? da.fileName() : "attachment";
             response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
             try (InputStream is = da.inputStream(); OutputStream os = response.getOutputStream()) {
                 copy(is, os);
             }
-            log.debug("downloadAttachment done, tenantCode={}, userId={}, mailId={}, partId={}, fileName={}", getTenantCode(), userId, id, partId, fileName);
+            log.debug("downloadAttachment done, userId={}, mailId={}, partId={}, fileName={}", userId, id, partId, fileName);
         } catch (IllegalArgumentException ex) {
             try {
                 response.setStatus(400);
@@ -164,7 +182,7 @@ public class EmailInboxController extends BaseController {
 
             log.debug("saveAttachment request, tenantCode={}, userId={}, mailId={}, partId={}, serviceType={}, sourceType={}, objectId={}, appId={}",
                     tenantCode, userId, id, partId, serviceType, sourceType, objectId, appId);
-            EmailInboxService.DownloadAttachment da = emailInboxService.openAttachmentStream(tenantCode, userId, id, partId);
+            EmailInboxService.DownloadAttachment da = emailInboxService.openAttachmentStream(userId, id, partId);
             String fileName = Strings.isNotBlank(da.fileName()) ? da.fileName() : ("attachment-" + partId);
             String fileExt = FileUtils.getFileExtension(fileName);
 

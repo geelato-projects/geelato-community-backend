@@ -13,6 +13,7 @@ import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.email.dto.UserEmailAccountDto;
 import cn.geelato.web.platform.srv.email.dto.UserEmailAccountUpsertRequest;
+import jakarta.validation.constraints.Null;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,6 +80,31 @@ public class EmailAccountController extends BaseController {
         } catch (Exception e) {
             log.error("pageQuery email account failed", e);
             return ApiPagedResult.fail("获取邮箱账号列表失败: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/list")
+    public ApiResult<List<UserEmailAccountDto>> list() {
+        try {
+            String userId = SecurityContext.getCurrentUser().getUserId();
+            if (Strings.isBlank(userId)) {
+                return ApiResult.fail("用户未登录");
+            }
+
+            log.debug("emailAccount list, userId={}", userId);
+            List<UserEmailAccountDto> list = MetaFactory.query(UserEmailAccount.class)
+                    .where(
+                            Filter.eq("userId", userId),
+                            Filter.eq("delStatus", 0)
+                    )
+                    .order(Order.desc("defaultFlag"), Order.desc("createAt"))
+                    .wrapperResult(this::toDto)
+                    .list();
+            log.debug("emailAccount list done, userId={}, size={}", userId, list != null ? list.size() : 0);
+            return ApiResult.success(list);
+        } catch (Exception e) {
+            log.error("list email account failed", e);
+            return ApiResult.fail("获取邮箱账号列表失败: " + e.getMessage());
         }
     }
 

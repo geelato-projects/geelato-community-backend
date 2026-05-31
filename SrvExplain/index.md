@@ -6,9 +6,8 @@
 
 ## 模块列表
 
-<!--
-生成器会在此处按模块输出：
-- 模块名
-  - Controller 列表（带 basePath）
--->
+- [geelato-plugin-manager](geelato-plugin-manager/README.md)
+- [geelato-test](geelato-test/README.md)
+- [geelato-web-platform](geelato-web-platform/README.md)
+- [geelato-web-quickstart](geelato-web-quickstart/README.md)
 

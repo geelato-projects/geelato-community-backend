@@ -24,6 +24,7 @@
         <module>geelato-plugin-manager</module>
         <module>geelato-test</module>
         <module>geelato-mcp</module>
+        <module>geelato-srvexplain-generator</module>
     </modules>
     <dependencies>
         <dependency>

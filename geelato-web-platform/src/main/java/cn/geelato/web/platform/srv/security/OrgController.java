@@ -7,6 +7,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
+import cn.geelato.security.OrgProvider;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.meta.Org;
 import cn.geelato.web.platform.srv.BaseController;
@@ -31,10 +32,12 @@ import java.util.Map;
 public class OrgController extends BaseController {
     private static final Class<Org> CLAZZ = Org.class;
     private final OrgService orgService;
+    private final OrgProvider orgProvider;
 
     @Autowired
-    public OrgController(OrgService orgService) {
+    public OrgController(OrgService orgService, OrgProvider orgProvider) {
         this.orgService = orgService;
+        this.orgProvider = orgProvider;
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
@@ -153,6 +156,20 @@ public class OrgController extends BaseController {
     public ApiResult getDepartment(@PathVariable(required = true) String id) {
         try {
             return ApiResult.success(orgService.getDepartment(id));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/reloadProvider", method = RequestMethod.POST)
+    public ApiResult<NullResult> reloadProvider() {
+        try {
+            if (orgProvider == null) {
+                return ApiResult.fail("OrgProvider is null");
+            }
+            orgProvider.refresh();
+            return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

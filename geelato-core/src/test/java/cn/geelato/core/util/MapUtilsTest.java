@@ -1,12 +1,12 @@
 package cn.geelato.core.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MapUtilsTest {
 
@@ -39,12 +39,6 @@ public class MapUtilsTest {
         Map<String, Object> map = new HashMap<>();
         map.put("age", "notNumber");
 
-        try {
-            MapUtils.getOrDefaultInt(map, "age", 0);
-            fail();
-        } catch (NumberFormatException ex) {
-            assertEquals(NumberFormatException.class, ex.getClass());
-        }
+        assertThrows(NumberFormatException.class, () -> MapUtils.getOrDefaultInt(map, "age", 0));
     }
 }
-

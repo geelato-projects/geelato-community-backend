@@ -6,7 +6,6 @@
 - BasePath：/message/uni
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/message/MessageController.java#L18-L66
 
 ## 接口列表
 
@@ -23,7 +22,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/message/MessageController.java#L31-L65
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/message/MessageController.java#L31-L65
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

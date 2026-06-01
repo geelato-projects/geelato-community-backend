@@ -6,7 +6,6 @@
 - BasePath：/security/role/permission
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L28-L178
 
 ## 接口列表
 
@@ -33,7 +32,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L76-L84
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L76-L84
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -73,7 +72,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L162-L177
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L162-L177
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -113,7 +112,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L134-L143
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L134-L143
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -153,7 +152,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L145-L160
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L145-L160
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -193,7 +192,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L97-L108
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L97-L108
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -232,7 +231,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L39-L50
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L39-L50
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -269,7 +268,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L52-L62
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L52-L62
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -306,7 +305,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L64-L74
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L64-L74
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -343,7 +342,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L122-L132
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L122-L132
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -387,7 +386,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L110-L120
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L110-L120
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -431,7 +430,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L86-L95
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RolePermissionMapController.java#L86-L95
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

@@ -2,8 +2,10 @@ package cn.geelato.orm;
 
 import cn.geelato.orm.support.OrmTestSupport;
 import cn.geelato.orm.support.TestUserEntity;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SimpleQueryTest extends OrmTestSupport {
 
@@ -16,10 +18,10 @@ public class SimpleQueryTest extends OrmTestSupport {
                 .page(1, 10)
                 .toSql();
 
-        Assert.assertNotNull(sql);
-        Assert.assertTrue(sql.toLowerCase().contains("select"));
-        Assert.assertTrue(sql.toLowerCase().contains("test_user"));
-        Assert.assertTrue(sql.toLowerCase().contains("order by"));
+        assertNotNull(sql);
+        assertTrue(sql.toLowerCase().contains("select"));
+        assertTrue(sql.toLowerCase().contains("test_user"));
+        assertTrue(sql.toLowerCase().contains("order by"));
     }
 
     @Test
@@ -31,10 +33,10 @@ public class SimpleQueryTest extends OrmTestSupport {
                 .where(Filter.eq("id", "1001"))
                 .toSql();
 
-        Assert.assertNotNull(insertSql);
-        Assert.assertTrue(insertSql.toLowerCase().contains("insert into"));
-        Assert.assertTrue(insertSql.toLowerCase().contains("test_user"));
-        Assert.assertNotNull(deleteSql);
-        Assert.assertTrue(deleteSql.toLowerCase().contains("update"));
+        assertNotNull(insertSql);
+        assertTrue(insertSql.toLowerCase().contains("insert into"));
+        assertTrue(insertSql.toLowerCase().contains("test_user"));
+        assertNotNull(deleteSql);
+        assertTrue(deleteSql.toLowerCase().contains("update"));
     }
 }

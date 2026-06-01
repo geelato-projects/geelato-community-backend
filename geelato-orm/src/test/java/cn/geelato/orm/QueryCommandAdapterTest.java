@@ -4,10 +4,13 @@ import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.orm.support.OrmTestSupport;
 import cn.geelato.orm.support.QueryCommandAdapter;
 import cn.geelato.orm.support.TestUserEntity;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class QueryCommandAdapterTest extends OrmTestSupport {
 
@@ -22,12 +25,12 @@ public class QueryCommandAdapterTest extends OrmTestSupport {
                         .viewParams(Map.of("tenantCode", "geelato"))
         );
 
-        Assert.assertEquals("TestUser", command.getEntityName());
-        Assert.assertArrayEquals(new String[]{"id", "name"}, command.getFields());
-        Assert.assertEquals("updateAt DESC", command.getOrderBy());
-        Assert.assertEquals(1, command.getPageNum());
-        Assert.assertEquals(20, command.getPageSize());
-        Assert.assertNotNull(command.getWhere());
-        Assert.assertEquals("geelato", command.getViewTemplateParams().get("tenantCode"));
+        assertEquals("TestUser", command.getEntityName());
+        assertArrayEquals(new String[]{"id", "name"}, command.getFields());
+        assertEquals("updateAt DESC", command.getOrderBy());
+        assertEquals(1, command.getPageNum());
+        assertEquals(20, command.getPageSize());
+        assertNotNull(command.getWhere());
+        assertEquals("geelato", command.getViewTemplateParams().get("tenantCode"));
     }
 }

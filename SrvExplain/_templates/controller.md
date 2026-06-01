@@ -6,7 +6,6 @@
 - BasePath：{{basePaths}}
 - 条件装配：{{conditional}}
 - 分类：{{category}}
-- 源码：{{sourceLink}}
 
 ## 接口列表
 

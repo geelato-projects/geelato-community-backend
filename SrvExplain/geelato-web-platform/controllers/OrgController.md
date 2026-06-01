@@ -6,7 +6,6 @@
 - BasePath：/security/org
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L29-L161
 
 ## 接口列表
 
@@ -21,6 +20,7 @@
 | query | GET | `/security/org/query` |
 | query | POST | `/security/org/queryByParams` |
 | queryTree | GET | `/security/org/queryTree` |
+| reloadProvider | POST | `/security/org/reloadProvider` |
 | validate | POST | `/security/org/validate` |
 
 ## 接口详情
@@ -32,7 +32,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L101-L113
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L104-L116
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -72,7 +72,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L91-L99
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L94-L102
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -111,7 +111,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L142-L150
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L145-L153
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -150,7 +150,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L152-L160
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L155-L163
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -189,7 +189,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L115-L126
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L118-L129
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -228,7 +228,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L40-L51
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L43-L54
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -265,7 +265,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L53-L63
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L56-L66
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -302,7 +302,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L65-L78
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L68-L81
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -342,7 +342,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L80-L89
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L83-L92
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -372,6 +372,43 @@ curl -X GET \
   -H "Authorization: {{authorization}}" \
 ```
 
+### reloadProvider
+
+- Method：POST
+- Path：`/security/org/reloadProvider`
+- Produces：
+- Consumes：
+- 鉴权：需要 Authorization
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L165-L177
+
+#### Header
+| 名称 | Java 类型 | 必填 | 默认值 | 说明 |
+|---|---|---|---|---|
+| App-Id | String | 否 |  |  |
+| Tenant-Code | String | 否 |  |  |
+| Authorization | String | 否 |  |  |
+
+#### Path 参数
+无
+
+#### Query 参数
+无
+
+#### Body
+无
+
+#### Response
+- Java 返回类型：ApiResult<NullResult>
+
+#### curl 示例
+```bash
+curl -X POST \
+  "{{baseUrl}}/security/org/reloadProvider" \
+  -H "App-Id: {{appId}}" \
+  -H "Tenant-Code: {{tenantCode}}" \
+  -H "Authorization: {{authorization}}" \
+```
+
 ### validate
 
 - Method：POST
@@ -379,7 +416,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L128-L140
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/OrgController.java#L131-L143
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

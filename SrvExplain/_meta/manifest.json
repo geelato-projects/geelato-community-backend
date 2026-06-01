@@ -1,7 +1,7 @@
 {
-  "generatedAt" : "2026-06-01T00:53:19.604321600+08:00",
+  "generatedAt" : "2026-06-01T12:53:17.482466200+08:00",
   "controllerCount" : 91,
-  "endpointCount" : 480,
+  "endpointCount" : 482,
   "missingSummaryEndpointCount" : 0,
   "uncertainBodyEndpointCount" : 37
 }

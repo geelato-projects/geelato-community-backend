@@ -6,7 +6,6 @@
 - BasePath：/zxing/barcode
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L35-L184
 
 ## 接口列表
 
@@ -31,7 +30,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L84-L98
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L84-L98
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -71,7 +70,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L128-L139
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L128-L139
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -112,7 +111,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L141-L151
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L141-L151
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -155,7 +154,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L74-L82
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L74-L82
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -194,7 +193,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L165-L183
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L165-L183
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -231,7 +230,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L100-L111
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L100-L111
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -270,7 +269,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L49-L60
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L49-L60
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -307,7 +306,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L62-L72
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L62-L72
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -344,7 +343,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L113-L126
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/zxing/BarcodeController.java#L113-L126
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

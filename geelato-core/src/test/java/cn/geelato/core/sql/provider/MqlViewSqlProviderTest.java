@@ -13,18 +13,18 @@ import cn.geelato.security.Tenant;
 import cn.geelato.security.User;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MqlViewSqlProviderTest {
     private static final String DEFAULT_VIEW_NAME = "v_test_default_mql";
@@ -34,7 +34,7 @@ public class MqlViewSqlProviderTest {
     private final MetaQLManager metaQLManager = MetaQLManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         metaManager.removeOne(DEFAULT_VIEW_NAME);
         metaManager.removeOne(COMPLEX_VIEW_NAME);
@@ -54,7 +54,7 @@ public class MqlViewSqlProviderTest {
                 "select id,creator,tenant_code,profit_amount_multi,status from raw_profit where 1=1 # and profit_amount_multi={profitAmountMulti}#"));
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         metaManager.removeOne(DEFAULT_VIEW_NAME);
         metaManager.removeOne(COMPLEX_VIEW_NAME);

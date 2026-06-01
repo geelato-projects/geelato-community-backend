@@ -6,7 +6,6 @@
 - BasePath：/dictionary
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/DictionaryController.java#L18-L145
 
 ## 接口列表
 
@@ -25,7 +24,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/DictionaryController.java#L98-L115
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/DictionaryController.java#L98-L115
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -64,7 +63,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/DictionaryController.java#L85-L90
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/DictionaryController.java#L85-L90
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -103,7 +102,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/DictionaryController.java#L41-L77
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/DictionaryController.java#L41-L77
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

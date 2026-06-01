@@ -14,6 +14,6 @@ public class OnlineUserInfo {
     private String orgName;
     private String deptId;
     private String buId;
+    private String trafficTag;
     private Long lastSeen;
 }
-

@@ -6,7 +6,6 @@
 - BasePath：/meta/ddl
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L22-L131
 
 ## 接口列表
 
@@ -30,7 +29,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L121-L130
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L121-L130
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -70,7 +69,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L38-L47
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L38-L47
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -109,7 +108,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L55-L59
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L55-L59
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -148,7 +147,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L92-L101
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L92-L101
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -190,7 +189,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L103-L112
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L103-L112
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -230,7 +229,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L79-L82
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L79-L82
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -272,7 +271,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L67-L70
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L67-L70
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -311,7 +310,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L61-L65
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaDdlController.java#L61-L65
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

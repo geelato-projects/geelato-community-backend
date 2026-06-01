@@ -6,7 +6,6 @@
 - BasePath：/page/check
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L23-L509
 
 ## 接口列表
 
@@ -29,7 +28,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L32-L153
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L32-L153
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -69,7 +68,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L200-L233
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L200-L233
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -108,7 +107,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L274-L338
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L274-L338
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -148,7 +147,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L463-L508
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L463-L508
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -188,7 +187,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L346-L367
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L346-L367
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -228,7 +227,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L374-L456
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L374-L456
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -268,7 +267,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L240-L267
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/PageCheckController.java#L240-L267
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

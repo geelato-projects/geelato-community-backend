@@ -2,6 +2,8 @@ package cn.geelato.web.platform.boot;
 
 import cn.geelato.web.common.interceptor.*;
 import cn.geelato.web.common.online.OnlineUserTracker;
+import cn.geelato.web.common.traffic.TrafficColoringProperties;
+import cn.geelato.traffic.TrafficTagStrategy;
 import cn.geelato.web.platform.boot.interceptor.ControllerInvokeLoggingInterceptor;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +35,20 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     @Qualifier("asyncOnlineUserTracker")
     private OnlineUserTracker onlineUserTracker;
 
+    @Autowired(required = false)
+    private TrafficColoringProperties trafficColoringProperties;
+
+    @Autowired(required = false)
+    private TrafficTagStrategy trafficTagStrategy;
+
     private static final String urlPrefix = "/api";
 
     @Override
     public void addInterceptors(@NotNull InterceptorRegistry registry) {
         DefaultSecurityInterceptor securityInterceptor = new DefaultSecurityInterceptor(oAuthConfigurationProperties, orgProvider, userProvider);
         securityInterceptor.setOnlineUserTracker(onlineUserTracker);
+        securityInterceptor.setTrafficColoringProperties(trafficColoringProperties);
+        securityInterceptor.setTrafficTagStrategy(trafficTagStrategy);
 
         registry.addInterceptor(securityInterceptor)
                 .addPathPatterns("/**")

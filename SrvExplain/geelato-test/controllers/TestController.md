@@ -6,7 +6,6 @@
 - BasePath：/api/test
 - 条件装配：
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L18-L102
 
 ## 接口列表
 
@@ -28,7 +27,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L85-L89
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L85-L89
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -65,7 +64,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L97-L101
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L97-L101
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -104,7 +103,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L39-L43
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L39-L43
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -144,7 +143,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L74-L78
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L74-L78
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -181,7 +180,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L51-L55
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L51-L55
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -220,7 +219,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L63-L67
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-test/src/main/java/cn/geelato/test/controller/TestController.java#L63-L67
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

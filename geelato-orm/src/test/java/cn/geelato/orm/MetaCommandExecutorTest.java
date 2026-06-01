@@ -10,12 +10,14 @@ import cn.geelato.orm.support.SaveCommandAdapter;
 import cn.geelato.orm.support.TestUserEntity;
 import cn.geelato.orm.value.ValueRefs;
 import cn.geelato.core.orm.Dao;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class MetaCommandExecutorTest extends OrmTestSupport {
 
@@ -36,10 +38,10 @@ public class MetaCommandExecutorTest extends OrmTestSupport {
 
         PageResult<Map<String, Object>> result = executor.queryForPage(command, "portal");
 
-        Assert.assertEquals(1L, result.getTotal());
-        Assert.assertEquals(1, result.getRecords().size());
-        Assert.assertEquals("Alice", result.getRecords().get(0).get("name"));
-        Assert.assertNull(DynamicDataSourceHolder.getDataSourceKey());
+        assertEquals(1L, result.getTotal());
+        assertEquals(1, result.getRecords().size());
+        assertEquals("Alice", result.getRecords().get(0).get("name"));
+        assertNull(DynamicDataSourceHolder.getDataSourceKey());
     }
 
 //    @Test
@@ -59,11 +61,11 @@ public class MetaCommandExecutorTest extends OrmTestSupport {
 
         String savedId = executor.save(command, "portal");
 
-        Assert.assertEquals("PK-1", savedId);
-        Assert.assertEquals(1, command.getCommands().size());
-        Assert.assertEquals("U1001", command.getValueMap().get("creator"));
-        Assert.assertEquals(command.getPK(), command.getCommands().get(0).getValueMap().get("userId"));
+        assertEquals("PK-1", savedId);
+        assertEquals(1, command.getCommands().size());
+        assertEquals("U1001", command.getValueMap().get("creator"));
+        assertEquals(command.getPK(), command.getCommands().get(0).getValueMap().get("userId"));
 //        Mockito.verify(dao, Mockito.times(2)).save(Mockito.any());
-        Assert.assertNull(DynamicDataSourceHolder.getDataSourceKey());
+        assertNull(DynamicDataSourceHolder.getDataSourceKey());
     }
 }

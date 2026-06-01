@@ -6,7 +6,6 @@
 - BasePath：/cache
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L31-L409
 
 ## 接口列表
 
@@ -28,7 +27,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L225-L229
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L225-L229
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -65,7 +64,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L54-L124
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L54-L124
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -102,7 +101,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L216-L223
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L216-L223
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -141,7 +140,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L167-L190
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L167-L190
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -180,7 +179,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L192-L214
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L192-L214
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -219,7 +218,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L41-L52
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/base/CacheController.java#L41-L52
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

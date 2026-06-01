@@ -6,11 +6,14 @@ import cn.geelato.orm.fill.DefaultSaveDefaultValueFiller;
 import cn.geelato.orm.fill.SaveDefaultValueContext;
 import cn.geelato.orm.support.OrmTestSupport;
 import cn.geelato.orm.support.TestUserEntity;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class DefaultSaveDefaultValueFillerTest extends OrmTestSupport {
 
@@ -27,16 +30,16 @@ public class DefaultSaveDefaultValueFillerTest extends OrmTestSupport {
                 values
         ));
 
-        Assert.assertEquals("U1001", values.get("creator"));
-        Assert.assertEquals("orm-tester", values.get("creatorName"));
-        Assert.assertEquals("geelato", values.get("tenantCode"));
-        Assert.assertEquals("BU1", values.get("buId"));
-        Assert.assertEquals("ORG1", values.get("deptId"));
-        Assert.assertEquals("U1001", values.get("updater"));
-        Assert.assertEquals("orm-tester", values.get("updaterName"));
-        Assert.assertNotNull(values.get("createAt"));
-        Assert.assertNotNull(values.get("updateAt"));
-        Assert.assertNotNull(values.get("deleteAt"));
+        assertEquals("U1001", values.get("creator"));
+        assertEquals("orm-tester", values.get("creatorName"));
+        assertEquals("geelato", values.get("tenantCode"));
+        assertEquals("BU1", values.get("buId"));
+        assertEquals("ORG1", values.get("deptId"));
+        assertEquals("U1001", values.get("updater"));
+        assertEquals("orm-tester", values.get("updaterName"));
+        assertNotNull(values.get("createAt"));
+        assertNotNull(values.get("updateAt"));
+        assertNotNull(values.get("deleteAt"));
     }
 
     @Test
@@ -52,10 +55,10 @@ public class DefaultSaveDefaultValueFillerTest extends OrmTestSupport {
                 values
         ));
 
-        Assert.assertNull(values.get("creator"));
-        Assert.assertNull(values.get("tenantCode"));
-        Assert.assertEquals("U1001", values.get("updater"));
-        Assert.assertEquals("orm-tester", values.get("updaterName"));
-        Assert.assertNotNull(values.get("updateAt"));
+        assertNull(values.get("creator"));
+        assertNull(values.get("tenantCode"));
+        assertEquals("U1001", values.get("updater"));
+        assertEquals("orm-tester", values.get("updaterName"));
+        assertNotNull(values.get("updateAt"));
     }
 }

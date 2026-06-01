@@ -29,6 +29,10 @@ public class RedisOnlineUserTracker {
     }
 
     public void touch(User user) {
+        touch(user, null);
+    }
+
+    public void touch(User user, String trafficTag) {
         if (user == null || StringUtils.isEmpty(user.getTenantCode()) || StringUtils.isEmpty(user.getUserId())) {
             return;
         }
@@ -53,6 +57,7 @@ public class RedisOnlineUserTracker {
             redisTemplate.opsForHash().put(userKey, "orgName", nullToEmpty(user.getOrgName()));
             redisTemplate.opsForHash().put(userKey, "deptId", nullToEmpty(user.getDeptId()));
             redisTemplate.opsForHash().put(userKey, "buId", nullToEmpty(user.getBuId()));
+            redisTemplate.opsForHash().put(userKey, "trafficTag", nullToEmpty(trafficTag));
             redisTemplate.opsForHash().put(userKey, "lastSeen", String.valueOf(now));
 
             int ttlMinutes = Math.max(getWindowMinutes(null) * 2, 1);
@@ -102,6 +107,7 @@ public class RedisOnlineUserTracker {
                 info.setOrgName(stringValue(map.get("orgName"), null));
                 info.setDeptId(stringValue(map.get("deptId"), null));
                 info.setBuId(stringValue(map.get("buId"), null));
+                info.setTrafficTag(stringValue(map.get("trafficTag"), null));
                 info.setLastSeen(longValue(map.get("lastSeen")));
                 result.add(info);
             }

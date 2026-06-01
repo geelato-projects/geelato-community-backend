@@ -6,7 +6,6 @@
 - BasePath：/app/settings/message
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/settings/SettingMessageController.java#L22-L68
 
 ## 接口列表
 
@@ -25,7 +24,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/settings/SettingMessageController.java#L34-L45
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/settings/SettingMessageController.java#L34-L45
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -62,7 +61,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/settings/SettingMessageController.java#L47-L57
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/settings/SettingMessageController.java#L47-L57
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -99,7 +98,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/settings/SettingMessageController.java#L59-L67
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/settings/SettingMessageController.java#L59-L67
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

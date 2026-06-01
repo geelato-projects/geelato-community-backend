@@ -17,13 +17,15 @@ import jakarta.mail.*;
 import jakarta.mail.search.FlagTerm;
 import jakarta.mail.search.SearchTerm;
 import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeUtility;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -302,13 +304,23 @@ public class EmailInboxService {
             if (msg == null) {
                 throw new IllegalArgumentException("mail not found");
             }
-            MimeBodyPart part = findAttachmentPart(msg, partId);
+            List<Part> parts = listAttachmentParts(msg);
+            log.debug("imap openAttachmentStream scanned, userId={}, emailAccountId={}, folder={}, uid={}, attachments={}",
+                    userId, config.id(), key.folder(), key.uid(), parts.size());
+            Part part = findAttachmentPart(parts, partId);
             if (part == null) {
                 throw new IllegalArgumentException("attachment not found");
             }
-            String fileName = part.getFileName();
+            String fileName = resolveFileName(part);
             String contentType = safeContentType(part.getContentType());
-            InputStream is = part.getInputStream();
+            InputStream is;
+            try {
+                is = part.getInputStream();
+            } catch (Exception ex) {
+                log.debug("imap openAttachmentStream getInputStream failed, userId={}, emailAccountId={}, folder={}, uid={}, partId={}, fileName={}, contentType={}, disposition={}",
+                        userId, config.id(), key.folder(), key.uid(), partId, fileName, contentType, part.getDisposition());
+                throw ex;
+            }
             log.debug("imap openAttachmentStream ready, userId={}, emailAccountId={}, folder={}, uid={}, partId={}, fileName={}, contentType={}",
                     userId, config.id(), key.folder(), key.uid(), partId, fileName, contentType);
             return new DownloadAttachment(fileName, contentType, new StoreBoundInputStream(is, imapFolder, store));
@@ -487,8 +499,7 @@ public class EmailInboxService {
 
     private static boolean guessHasAttachments(Message msg) {
         try {
-            String ct = msg.getContentType();
-            return ct != null && ct.toLowerCase().contains("multipart");
+            return !listAttachmentParts(msg).isEmpty();
         } catch (Exception ex) {
             return false;
         }
@@ -578,10 +589,15 @@ public class EmailInboxService {
     private static class MessageContent {
         private String textBody;
         private String htmlBody;
-        private final List<MimeBodyPart> attachments = new ArrayList<>();
+        private final List<Part> attachments = new ArrayList<>();
     }
 
     private static void parsePart(Part part, MessageContent out) throws Exception {
+        if (isAttachment(part)) {
+            out.attachments.add(part);
+            return;
+        }
+
         if (part.isMimeType("multipart/*")) {
             Object content = part.getContent();
             if (content instanceof Multipart mp) {
@@ -597,13 +613,6 @@ public class EmailInboxService {
             Object content = part.getContent();
             if (content instanceof Part) {
                 parsePart((Part) content, out);
-            }
-            return;
-        }
-
-        if (isAttachment(part)) {
-            if (part instanceof MimeBodyPart mbp) {
-                out.attachments.add(mbp);
             }
             return;
         }
@@ -625,27 +634,105 @@ public class EmailInboxService {
 
     private static boolean isAttachment(Part part) throws Exception {
         String disposition = part.getDisposition();
-        String fileName = part.getFileName();
+        String fileName = resolveFileName(part);
         if (Strings.isNotBlank(fileName)) {
+            if (Part.INLINE.equalsIgnoreCase(disposition) && isInlineImage(part)) {
+                return false;
+            }
             return true;
         }
         if (Strings.isBlank(disposition)) {
             return false;
         }
-        return Part.ATTACHMENT.equalsIgnoreCase(disposition) || Part.INLINE.equalsIgnoreCase(disposition);
+        return Part.ATTACHMENT.equalsIgnoreCase(disposition);
     }
 
-    private static List<EmailAttachmentDto> toAttachmentDtos(List<MimeBodyPart> parts, String mailId) throws Exception {
+    private static boolean isInlineImage(Part part) {
+        try {
+            String ct = safeContentType(part.getContentType());
+            if (ct == null || !ct.toLowerCase().startsWith("image/")) {
+                return false;
+            }
+            String cid = extractHeader(part, "Content-ID");
+            return Strings.isNotBlank(cid);
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private static String resolveFileName(Part part) {
+        if (part == null) {
+            return null;
+        }
+        try {
+            String fileName = decodeMimeText(part.getFileName());
+            if (Strings.isNotBlank(fileName)) {
+                return fileName;
+            }
+            String cd = extractHeader(part, "Content-Disposition");
+            fileName = decodeMimeText(parseHeaderParam(cd, "filename*"));
+            if (Strings.isNotBlank(fileName)) {
+                return decodeRfc5987(fileName);
+            }
+            fileName = decodeMimeText(parseHeaderParam(cd, "filename"));
+            if (Strings.isNotBlank(fileName)) {
+                return fileName;
+            }
+            String ct = extractHeader(part, "Content-Type");
+            fileName = decodeMimeText(parseHeaderParam(ct, "name"));
+            return fileName;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private static String decodeRfc5987(String v) {
+        if (Strings.isBlank(v)) {
+            return v;
+        }
+        int idx = v.indexOf("''");
+        if (idx < 0) {
+            return v;
+        }
+        String enc = v.substring(idx + 2);
+        try {
+            return URLDecoder.decode(enc, StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            return v;
+        }
+    }
+
+    private static String parseHeaderParam(String header, String key) {
+        if (Strings.isBlank(header) || Strings.isBlank(key)) {
+            return null;
+        }
+        String lower = header.toLowerCase();
+        String k = key.toLowerCase() + "=";
+        int idx = lower.indexOf(k);
+        if (idx < 0) {
+            return null;
+        }
+        int start = idx + k.length();
+        int end = header.indexOf(';', start);
+        String raw = end >= 0 ? header.substring(start, end) : header.substring(start);
+        String val = raw.trim();
+        if (val.startsWith("\"") && val.endsWith("\"") && val.length() >= 2) {
+            val = val.substring(1, val.length() - 1);
+        }
+        return val;
+    }
+
+    private static List<EmailAttachmentDto> toAttachmentDtos(List<Part> parts, String mailId) throws Exception {
         if (parts.isEmpty()) {
             return Collections.emptyList();
         }
         List<EmailAttachmentDto> list = new ArrayList<>(parts.size());
         for (int i = 0; i < parts.size(); i++) {
-            MimeBodyPart p = parts.get(i);
+            Part p = parts.get(i);
             EmailAttachmentDto dto = new EmailAttachmentDto();
             String partId = String.valueOf(i + 1);
             dto.setPartId(partId);
-            dto.setFileName(p.getFileName());
+            dto.setFileName(resolveFileName(p));
             dto.setContentType(safeContentType(p.getContentType()));
             dto.setSize(extractBodyPartSize(p));
             dto.setInline(Part.INLINE.equalsIgnoreCase(p.getDisposition()));
@@ -657,7 +744,7 @@ public class EmailInboxService {
         return list;
     }
 
-    private static Long extractBodyPartSize(MimeBodyPart part) {
+    private static Long extractBodyPartSize(Part part) {
         try {
             int size = part.getSize();
             return size >= 0 ? (long) size : null;
@@ -674,7 +761,13 @@ public class EmailInboxService {
         return hs[0];
     }
 
-    private static MimeBodyPart findAttachmentPart(Part root, String partId) throws Exception {
+    private static List<Part> listAttachmentParts(Part root) throws Exception {
+        MessageContent content = new MessageContent();
+        parsePart(root, content);
+        return content.attachments;
+    }
+
+    private static Part findAttachmentPart(List<Part> parts, String partId) {
         int target;
         try {
             target = Integer.parseInt(partId);
@@ -684,15 +777,17 @@ public class EmailInboxService {
         if (target <= 0) {
             return null;
         }
-        List<MimeBodyPart> parts = new ArrayList<>();
-        collectAttachmentParts(root, parts);
         if (target > parts.size()) {
             return null;
         }
         return parts.get(target - 1);
     }
 
-    private static void collectAttachmentParts(Part part, List<MimeBodyPart> out) throws Exception {
+    private static void collectAttachmentParts(Part part, List<Part> out) throws Exception {
+        if (isAttachment(part)) {
+            out.add(part);
+            return;
+        }
         if (part.isMimeType("multipart/*")) {
             Object content = part.getContent();
             if (content instanceof Multipart mp) {
@@ -708,10 +803,6 @@ public class EmailInboxService {
             if (content instanceof Part) {
                 collectAttachmentParts((Part) content, out);
             }
-            return;
-        }
-        if (isAttachment(part) && part instanceof MimeBodyPart mbp) {
-            out.add(mbp);
         }
     }
 
@@ -736,6 +827,17 @@ public class EmailInboxService {
     private static int intVal0(Object o) {
         Integer v = intVal(o);
         return v != null ? v : 0;
+    }
+
+    private static String decodeMimeText(String raw) {
+        if (Strings.isBlank(raw)) {
+            return raw;
+        }
+        try {
+            return MimeUtility.decodeText(raw);
+        } catch (Exception ex) {
+            return raw;
+        }
     }
 
     private static String maskEmail(String raw) {

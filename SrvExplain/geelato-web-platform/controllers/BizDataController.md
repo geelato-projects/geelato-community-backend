@@ -6,7 +6,6 @@
 - BasePath：/bizData
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/BizDataController.java#L26-L210
 
 ## 接口列表
 
@@ -23,7 +22,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/BizDataController.java#L48-L209
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/BizDataController.java#L48-L209
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

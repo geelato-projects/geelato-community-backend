@@ -5,12 +5,17 @@ import cn.geelato.core.env.EnvManager;
 import cn.geelato.security.*;
 
 import cn.geelato.utils.StringUtils;
+import cn.geelato.utils.logging.LogContext;
 import cn.geelato.web.common.online.OnlineUserTracker;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
 import cn.geelato.web.common.shiro.OAuth2Token;
 import cn.geelato.web.common.shiro.WeixinUnionIdToken;
 import cn.geelato.web.common.shiro.WeixinWorkUserIdToken;
+import cn.geelato.web.common.traffic.TrafficColoringProperties;
+import cn.geelato.web.common.traffic.TrafficTagContext;
+import cn.geelato.web.common.traffic.TrafficTagResolver;
+import cn.geelato.traffic.TrafficTagStrategy;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -18,7 +23,6 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
@@ -46,8 +50,10 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
     private final OrgProvider orgProvider;
     private final UserProvider userProvider;
-    @Setter
     private OnlineUserTracker onlineUserTracker;
+    private TrafficColoringProperties trafficColoringProperties;
+    private TrafficTagResolver trafficTagResolver;
+    private TrafficTagStrategy trafficTagStrategy;
 
     public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();
 
@@ -100,9 +106,31 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         this.userProvider = userProvider;
     }
 
+    public DefaultSecurityInterceptor(OAuthConfigurationProperties config,
+                                      OrgProvider orgProvider,
+                                      UserProvider userProvider,
+                                      OnlineUserTracker onlineUserTracker) {
+        this(config, orgProvider, userProvider);
+        this.onlineUserTracker = onlineUserTracker;
+    }
+
+    public void setOnlineUserTracker(OnlineUserTracker onlineUserTracker) {
+        this.onlineUserTracker = onlineUserTracker;
+    }
+
+    public void setTrafficColoringProperties(TrafficColoringProperties trafficColoringProperties) {
+        this.trafficColoringProperties = trafficColoringProperties;
+        rebuildTrafficTagResolver();
+    }
+
+    public void setTrafficTagStrategy(TrafficTagStrategy trafficTagStrategy) {
+        this.trafficTagStrategy = trafficTagStrategy;
+        rebuildTrafficTagResolver();
+    }
 
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) {
+        applyTrafficTag(request, response);
         if (!(handler instanceof HandlerMethod handlerMethod)
         ||handlerMethod.getMethod().isAnnotationPresent(IgnoreVerify.class)) {
             return true;
@@ -114,22 +142,22 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
         log.info("handle token:{}",token);
 
-        if (tryRestoreFromCache(token, request)) {
+        if (tryRestoreFromCache(token, request, response)) {
             return true;
         }
 
         boolean authenticated = false;
         if (!authenticated) {
-            authenticated = tryAnonymousAuthenticate(token, request);
+            authenticated = tryAnonymousAuthenticate(token, request, response);
         }
         if (!authenticated) {
-            authenticated = tryJwtAuthenticate(token, request);
+            authenticated = tryJwtAuthenticate(token, request, response);
         }
         if (!authenticated) {
-            authenticated = tryExtendKeyAuthenticate(token, request);
+            authenticated = tryExtendKeyAuthenticate(token, request, response);
         }
         if (!authenticated) {
-            authenticated = tryOAuth2Authenticate(token, request);
+            authenticated = tryOAuth2Authenticate(token, request, response);
         }
         if (!authenticated) {
             throw new UnauthorizedException("未授权访问");
@@ -137,7 +165,47 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    private boolean tryRestoreFromCache(String rawToken, HttpServletRequest request) {
+    @Override
+    public void afterCompletion(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler, Exception ex) {
+        try {
+            if (trafficColoringProperties != null) {
+                LogContext.remove(trafficColoringProperties.getMdcKey());
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            TrafficTagContext.clear();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void applyTrafficTag(HttpServletRequest request, HttpServletResponse response) {
+        if (trafficTagResolver == null) {
+            return;
+        }
+        try {
+            trafficTagResolver.resolveAndApply(request, response);
+        } catch (Exception e) {
+            log.debug("apply traffic tag failed", e);
+        }
+    }
+
+    private void applyTrafficTagAfterAuthenticated(User user, HttpServletRequest request, HttpServletResponse response) {
+        if (trafficTagResolver == null || user == null) {
+            return;
+        }
+        try {
+            trafficTagResolver.applyAfterAuthenticated(user, request, response);
+        } catch (Exception e) {
+            log.debug("apply traffic tag after authenticated failed", e);
+        }
+    }
+
+    private void rebuildTrafficTagResolver() {
+        this.trafficTagResolver = trafficColoringProperties == null ? null : new TrafficTagResolver(trafficColoringProperties, trafficTagStrategy);
+    }
+
+    private boolean tryRestoreFromCache(String rawToken, HttpServletRequest request, HttpServletResponse response) {
         UserContextCacheEntry entry = tokenContextCache.get(rawToken);
         if (entry == null || entry.isExpired(System.currentTimeMillis())) {
             if (entry != null) {
@@ -150,6 +218,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         SecurityContext.setCurrentPassword(entry.password);
         Subject subject = SecurityUtils.getSubject();
         subject.login(entry.authToken);
+        applyTrafficTagAfterAuthenticated(entry.user, request, response);
         touchOnline(entry.user, request);
         return true;
     }
@@ -158,7 +227,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         tokenContextCache.put(rawToken, new UserContextCacheEntry(user, SecurityContext.getCurrentTenant(), password, authToken));
     }
 
-    private boolean tryAnonymousAuthenticate(String rawToken, HttpServletRequest request) {
+    private boolean tryAnonymousAuthenticate(String rawToken, HttpServletRequest request, HttpServletResponse response) {
         String token = rawToken;
         if (!token.startsWith(__AnonymousTokenTag__)) {
             return false;
@@ -187,6 +256,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             Subject subject = SecurityUtils.getSubject();
             subject.login(userToken);
             cacheUserContext(rawToken, currentUser, anonymousFixedPassword, userToken);
+            applyTrafficTagAfterAuthenticated(currentUser, request, response);
             touchOnline(currentUser, request);
             return true;
         } catch (Exception e) {
@@ -194,7 +264,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
     }
 
-    private boolean tryJwtAuthenticate(String rawToken, HttpServletRequest request) {
+    private boolean tryJwtAuthenticate(String rawToken, HttpServletRequest request, HttpServletResponse response) {
         String token = rawToken;
         if (!token.startsWith(__JWTTokenTag__)) {
             return false;
@@ -219,6 +289,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             Subject subject = SecurityUtils.getSubject();
             subject.login(userToken);
             cacheUserContext(rawToken, currentUser, passWord, userToken);
+            applyTrafficTagAfterAuthenticated(currentUser, request, response);
             touchOnline(currentUser, request);
             return true;
         } catch (Exception e) {
@@ -226,7 +297,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
     }
 
-    private boolean tryExtendKeyAuthenticate(String rawToken, HttpServletRequest request) {
+    private boolean tryExtendKeyAuthenticate(String rawToken, HttpServletRequest request, HttpServletResponse response) {
         if (userProvider == null) {
             return false;
         }
@@ -261,6 +332,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             }
             subject.login(authToken);
             cacheUserContext(rawToken, currentUser, anonymousFixedPassword, authToken);
+            applyTrafficTagAfterAuthenticated(currentUser, request, response);
             touchOnline(currentUser, request);
             return true;
         } catch (Exception e) {
@@ -268,7 +340,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
     }
 
-    private boolean tryOAuth2Authenticate(String rawToken, HttpServletRequest request) {
+    private boolean tryOAuth2Authenticate(String rawToken, HttpServletRequest request, HttpServletResponse response) {
         String token = rawToken;
         if (!token.startsWith(__OAuthTokenTag__)) {
             return false;
@@ -282,6 +354,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             SecurityContext.setCurrentPassword(cachedEntry.password);
             Subject subject = SecurityUtils.getSubject();
             subject.login(cachedEntry.authToken);
+            applyTrafficTagAfterAuthenticated(cachedEntry.user, request, response);
             return true;
         }
         if (cachedEntry != null) {
@@ -291,6 +364,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         cn.geelato.meta.User user = tokenUserCache.get(token);
         if (user != null) {
             User currentUser = performOAuth2Login(user, token, rawToken);
+            applyTrafficTagAfterAuthenticated(currentUser, request, response);
             touchOnline(currentUser, request);
             return true;
         }
@@ -299,6 +373,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             if (user != null) {
                 tokenUserCache.put(token, user);
                 User currentUser = performOAuth2Login(user, token, rawToken);
+                applyTrafficTagAfterAuthenticated(currentUser, request, response);
                 touchOnline(currentUser, request);
                 return true;
             }

@@ -4,11 +4,11 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.security.Tenant;
 import cn.geelato.security.User;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 public abstract class OrmTestSupport {
 
-    @Before
+    @BeforeEach
     public void setUpOrmMetadata() {
         MetaManager.singleInstance().parseOne(TestUserEntity.class);
         MetaManager.singleInstance().parseOne(TestOrderEntity.class);

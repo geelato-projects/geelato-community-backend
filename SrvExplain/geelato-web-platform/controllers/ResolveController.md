@@ -6,7 +6,6 @@
 - BasePath：/resolve
 - 条件装配：designtime（@ApiRestController）
 - 分类：
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L13-L45
 
 ## 接口列表
 
@@ -25,7 +24,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L21-L29
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L21-L29
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -69,7 +68,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L31-L39
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L31-L39
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -113,7 +112,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L41-L44
+- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L41-L44
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

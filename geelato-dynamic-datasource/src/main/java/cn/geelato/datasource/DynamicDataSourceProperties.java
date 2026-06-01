@@ -15,6 +15,8 @@ public class DynamicDataSourceProperties {
     private Long maxLifetimeMs = 1800000L;
     private Long connectionTimeoutMs = 5000L;
     private Long validationTimeoutMs = 3000L;
+    private Long keepaliveTimeMs = 300000L;
+    private Long initializationFailTimeoutMs = 0L;
     private String connectionTestQuery = "SELECT 1";
 
     public void setDelayLoadDataSource(boolean delayLoadDataSource) {

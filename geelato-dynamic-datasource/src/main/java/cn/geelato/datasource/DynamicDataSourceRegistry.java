@@ -1,5 +1,6 @@
 package cn.geelato.datasource;
 
+import cn.geelato.core.util.EncryptUtils;
 import com.atomikos.jdbc.AtomikosDataSourceBean;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.SneakyThrows;
@@ -10,7 +11,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
-import javax.sql.XADataSource;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,19 +26,23 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class DynamicDataSourceRegistry {
 
-    private static final boolean delayLoadDataSource = false;
-
-    private JdbcTemplate primaryJdbcTemplate;
+    private final JdbcTemplate primaryJdbcTemplate;
     private final Map<String, DataSource> dataSourceMap = new ConcurrentHashMap<>();
     private final Map<String, Map<String, Object>> dataSourceConfigMap = new ConcurrentHashMap<>();
+    private final DbHostMapFileLoader dbHostMapFileLoader;
+    private final DynamicDataSourceProperties dynamicDataSourceProperties;
     
     /**
      * 动态数据源注册器Bean
      * 程序启动时自动加载数据源配置
      */
-    public DynamicDataSourceRegistry(@Qualifier("primaryJdbcTemplate") JdbcTemplate primaryJdbcTemplate) {
+    public DynamicDataSourceRegistry(@Qualifier("primaryJdbcTemplate") JdbcTemplate primaryJdbcTemplate,
+                                     DbHostMapFileLoader dbHostMapFileLoader,
+                                     DynamicDataSourceProperties dynamicDataSourceProperties) {
+        this.primaryJdbcTemplate= primaryJdbcTemplate;
+        this.dbHostMapFileLoader = dbHostMapFileLoader;
+        this.dynamicDataSourceProperties = dynamicDataSourceProperties == null ? new DynamicDataSourceProperties() : dynamicDataSourceProperties;
         try {
-            this.primaryJdbcTemplate= primaryJdbcTemplate;
             loadDataSourcesFromDatabase();
             log.info("For dynamic data sources has been search completed, with a total of {} data sources searched", dataSourceConfigMap.size());
         } catch (Exception e) {
@@ -86,10 +90,17 @@ public class DynamicDataSourceRegistry {
         String dbType = dbConnectMap.get("db_type").toString().toLowerCase();
         if(dbType.equals("mysql")){
             String serverHost = dbConnectMap.get("db_hostname_ip").toString();
-            String serverPort = dbConnectMap.get("db_port").toString();
+            int serverPort = Integer.parseInt(dbConnectMap.get("db_port").toString());
             String dbUserName = dbConnectMap.get("db_user_name").toString();
-            String dbPassWord =dbConnectMap.get("db_password").toString();
+            String dbPassWord = decryptDbPassword(dbConnectMap.get("db_password"));
             String dbName = dbConnectMap.get("db_name").toString();
+            DbHostMapFileLoader.HostPort mapped = dbHostMapFileLoader == null ? null : dbHostMapFileLoader.resolve(serverHost, serverPort);
+            if (mapped != null && mapped.host() != null && !mapped.host().trim().isEmpty()) {
+                serverHost = mapped.host();
+                if (mapped.port() != null) {
+                    serverPort = mapped.port();
+                }
+            }
 
             HikariDataSource dataSource = new HikariDataSource();
             String commonParams = "useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true";
@@ -98,6 +109,15 @@ public class DynamicDataSourceRegistry {
             dataSource.setJdbcUrl(jdbcUrl);
             dataSource.setUsername(dbUserName);
             dataSource.setPassword(dbPassWord);
+            dataSource.setMinimumIdle(dynamicDataSourceProperties.getMinimumIdle());
+            dataSource.setMaximumPoolSize(dynamicDataSourceProperties.getMaximumPoolSize());
+            dataSource.setIdleTimeout(dynamicDataSourceProperties.getIdleTimeoutMs());
+            dataSource.setMaxLifetime(dynamicDataSourceProperties.getMaxLifetimeMs());
+            dataSource.setConnectionTimeout(dynamicDataSourceProperties.getConnectionTimeoutMs());
+            dataSource.setValidationTimeout(dynamicDataSourceProperties.getValidationTimeoutMs());
+            dataSource.setKeepaliveTime(dynamicDataSourceProperties.getKeepaliveTimeMs());
+            dataSource.setInitializationFailTimeout(dynamicDataSourceProperties.getInitializationFailTimeoutMs());
+            dataSource.setConnectionTestQuery(dynamicDataSourceProperties.getConnectionTestQuery());
             return new DataSourceProxy(dataSource);
         }else{
             return null;
@@ -111,11 +131,18 @@ public class DynamicDataSourceRegistry {
     public DataSource buildDataSource(Map<String, Object> dbConnectMap) {
         String dbType = dbConnectMap.get("db_type").toString().toLowerCase();
         String serverHost = dbConnectMap.get("db_hostname_ip").toString();
-        String serverPort = dbConnectMap.get("db_port").toString();
+        int serverPort = Integer.parseInt(dbConnectMap.get("db_port").toString());
         String dbUserName = dbConnectMap.get("db_user_name").toString();
-        String dbPassWord =dbConnectMap.get("db_password").toString();
+        String dbPassWord = decryptDbPassword(dbConnectMap.get("db_password"));
         String dbName = dbConnectMap.get("db_name").toString();
         String dbId = dbConnectMap.get("id").toString();
+        DbHostMapFileLoader.HostPort mapped = dbHostMapFileLoader == null ? null : dbHostMapFileLoader.resolve(serverHost, serverPort);
+        if (mapped != null && mapped.host() != null && !mapped.host().trim().isEmpty()) {
+            serverHost = mapped.host();
+            if (mapped.port() != null) {
+                serverPort = mapped.port();
+            }
+        }
         if ("mysql".equals(dbType)) {
             HikariDataSource ds = new HikariDataSource();
             ds.setPoolName(dbId);
@@ -125,13 +152,15 @@ public class DynamicDataSourceRegistry {
             ds.setJdbcUrl(jdbcUrl);
             ds.setUsername(dbUserName);
             ds.setPassword(dbPassWord);
-            ds.setMinimumIdle(10);
-            ds.setMaximumPoolSize(100);
-            ds.setIdleTimeout(60000);
-            ds.setMaxLifetime(300000);
-            ds.setConnectionTimeout(3000);
-            ds.setValidationTimeout(3000);
-            ds.setConnectionTestQuery("SELECT 1");
+            ds.setMinimumIdle(dynamicDataSourceProperties.getMinimumIdle());
+            ds.setMaximumPoolSize(dynamicDataSourceProperties.getMaximumPoolSize());
+            ds.setIdleTimeout(dynamicDataSourceProperties.getIdleTimeoutMs());
+            ds.setMaxLifetime(dynamicDataSourceProperties.getMaxLifetimeMs());
+            ds.setConnectionTimeout(dynamicDataSourceProperties.getConnectionTimeoutMs());
+            ds.setValidationTimeout(dynamicDataSourceProperties.getValidationTimeoutMs());
+            ds.setKeepaliveTime(dynamicDataSourceProperties.getKeepaliveTimeMs());
+            ds.setInitializationFailTimeout(dynamicDataSourceProperties.getInitializationFailTimeoutMs());
+            ds.setConnectionTestQuery(dynamicDataSourceProperties.getConnectionTestQuery());
             return ds;
         } else {
             throw new UnsupportedOperationException("不支持的数据库类型: " + dbType);
@@ -220,19 +249,27 @@ public class DynamicDataSourceRegistry {
      * 检查数据源是否存在
      */
     public boolean containsDataSource(String key) {
-        if(!dataSourceMap.containsKey(key)){
-            if(dataSourceConfigMap.containsKey(key)){
-                dataSourceMap.put(key,getDataSource(key));
-            }
+        if (key == null || key.trim().isEmpty()) {
+            return false;
         }
-        return dataSourceMap.containsKey(key);
+        if ("primary".equalsIgnoreCase(key)) {
+            return true;
+        }
+        return dataSourceMap.containsKey(key) || dataSourceConfigMap.containsKey(key);
     }
 
     private void registerDataSource(String key, Map<String, Object> dbConnectMap) {
         destroyDataSource(key);
         dataSourceConfigMap.put(key, new HashMap<>(dbConnectMap));
-        if (!delayLoadDataSource) {
+        if (!dynamicDataSourceProperties.isDelayLoadDataSource()) {
             dataSourceMap.put(key, buildDataSource(dbConnectMap));
         }
+    }
+
+    private String decryptDbPassword(Object dbPasswordValue) {
+        if (dbPasswordValue == null) {
+            return null;
+        }
+        return EncryptUtils.decrypt(String.valueOf(dbPasswordValue));
     }
 }

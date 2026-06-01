@@ -4,7 +4,7 @@ import cn.geelato.web.common.interceptor.*;
 import cn.geelato.web.common.online.OnlineUserTracker;
 import cn.geelato.web.common.traffic.TrafficColoringProperties;
 import cn.geelato.traffic.TrafficTagStrategy;
-import cn.geelato.web.platform.boot.interceptor.ControllerInvokeLoggingInterceptor;
+import cn.geelato.web.platform.logging.web.ApiRestControllerInvokeLogging;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     @Resource
     private OAuthConfigurationProperties oAuthConfigurationProperties;
     @Resource
-    private ControllerInvokeLoggingInterceptor controllerInvokeLoggingInterceptor;
+    private ApiRestControllerInvokeLogging apiRestControllerInvokeLogging;
 
     @Autowired
     @Qualifier("defaultOrgProvider")
@@ -85,7 +85,7 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 .excludePathPatterns("/monitor/**")
                 .excludePathPatterns("/wx/validate/**")
         ;
-        registry.addInterceptor(controllerInvokeLoggingInterceptor)
+        registry.addInterceptor(apiRestControllerInvokeLogging)
                 .addPathPatterns("/**");
     }
 }

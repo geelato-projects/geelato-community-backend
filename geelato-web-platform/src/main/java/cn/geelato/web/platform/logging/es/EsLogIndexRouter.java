@@ -9,7 +9,8 @@ public class EsLogIndexRouter {
     public String route(String loggerName, String prefix) {
         String category = "app";
         if (loggerName != null) {
-            if (loggerName.startsWith("cn.geelato.web.platform.boot.interceptor")) {
+            if (loggerName.startsWith("cn.geelato.web.platform.boot.interceptor")
+                    || loggerName.startsWith("cn.geelato.web.platform.logging.web")) {
                 category = "request";
             } else if (loggerName.startsWith("cn.geelato.web.common.interceptor")) {
                 category = "interceptor";

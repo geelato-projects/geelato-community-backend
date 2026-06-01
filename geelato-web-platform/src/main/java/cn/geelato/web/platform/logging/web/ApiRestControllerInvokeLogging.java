@@ -19,17 +19,20 @@ import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
+import org.slf4j.MDC;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
 @Slf4j
+@Component
 @RestControllerAdvice
 public class ApiRestControllerInvokeLogging implements HandlerInterceptor, ResponseBodyAdvice<Object> {
     private static final String ATTR_ENABLED = "srvLog.enabled";
@@ -146,6 +149,7 @@ public class ApiRestControllerInvokeLogging implements HandlerInterceptor, Respo
         r.setApiStatus(apiStatus);
         r.setApiMsg(apiMsg);
         r.setDurationMs(durationMs);
+        r.setTraceId(resolveTraceId(request));
         if (serviceFailure) {
             r.setErrorType("service");
             if (ex != null) {
@@ -184,6 +188,9 @@ public class ApiRestControllerInvokeLogging implements HandlerInterceptor, Respo
         }
         requestLog.put("durationMs", durationMs);
         requestLog.put("status", status);
+        if (r.getTraceId() != null && !r.getTraceId().isBlank()) {
+            requestLog.put("traceId", r.getTraceId());
+        }
 
         try {
             log.info(objectMapper.writeValueAsString(requestLog));
@@ -217,7 +224,7 @@ public class ApiRestControllerInvokeLogging implements HandlerInterceptor, Respo
             } catch (Exception e) {
                 json = String.valueOf(body);
             }
-            req.setAttribute(ATTR_RESPONSE, truncate(json, 10000));
+            req.setAttribute(ATTR_RESPONSE, truncateForLog(json));
 
             if (body instanceof ApiResult<?> ar) {
                 req.setAttribute(ATTR_API_CODE, ar.getCode());
@@ -283,6 +290,21 @@ public class ApiRestControllerInvokeLogging implements HandlerInterceptor, Respo
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    private String resolveTraceId(HttpServletRequest request) {
+        String traceId = attrString(request, "traceId");
+        if (traceId == null || traceId.isBlank()) {
+            traceId = request.getHeader("X-Trace-Id");
+        }
+        if (traceId == null || traceId.isBlank()) {
+            traceId = MDC.get("traceId");
+        }
+        return traceId;
+    }
+
+    private String truncateForLog(String s) {
+        return truncate(s, 10000);
     }
 
     private String truncate(String s, int maxLen) {

@@ -17,6 +17,7 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.HandlerMethod;
@@ -52,7 +53,7 @@ public class ApiRestControllerInvokeLogging implements HandlerInterceptor, Respo
     }
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
         if (!(handler instanceof HandlerMethod hm)) {
             return true;
         }
@@ -88,7 +89,7 @@ public class ApiRestControllerInvokeLogging implements HandlerInterceptor, Respo
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) {
+    public void afterCompletion(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, @Nullable Exception ex) {
         Object enabled = request.getAttribute(ATTR_ENABLED);
         if (!Boolean.TRUE.equals(enabled)) {
             return;
@@ -151,7 +152,7 @@ public class ApiRestControllerInvokeLogging implements HandlerInterceptor, Respo
                 r.setExceptionClass(ex.getClass().getName());
                 r.setExceptionMessage(ex.getMessage());
                 r.setStackTrace(stackTrace(ex));
-            } else if (status != 200) {
+            } else {
                 r.setExceptionClass("HttpStatusException");
                 r.setExceptionMessage("HTTP status=" + status);
             }
@@ -160,7 +161,7 @@ public class ApiRestControllerInvokeLogging implements HandlerInterceptor, Respo
             r.setExceptionClass("FunctionException");
             if (apiMsg != null && !apiMsg.isBlank()) {
                 r.setExceptionMessage(apiMsg);
-            } else if (apiCode != null) {
+            } else {
                 r.setExceptionMessage("apiCode=" + apiCode);
             }
         }

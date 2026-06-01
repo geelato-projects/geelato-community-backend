@@ -67,7 +67,6 @@ public class ApiRestControllerSrvLogRegistry {
         return methodKeyToHandlerSignature.get(methodKey);
     }
 
-    @SuppressWarnings("deprecation")
     private Set<String> resolvePatterns(RequestMappingInfo info) {
         if (info.getPathPatternsCondition() != null) {
             return info.getPathPatternsCondition().getPatternValues();

@@ -23,6 +23,7 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
@@ -50,6 +51,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
     private final OrgProvider orgProvider;
     private final UserProvider userProvider;
+    @Setter
     private OnlineUserTracker onlineUserTracker;
     private TrafficColoringProperties trafficColoringProperties;
     private TrafficTagResolver trafficTagResolver;
@@ -114,10 +116,6 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         this.onlineUserTracker = onlineUserTracker;
     }
 
-    public void setOnlineUserTracker(OnlineUserTracker onlineUserTracker) {
-        this.onlineUserTracker = onlineUserTracker;
-    }
-
     public void setTrafficColoringProperties(TrafficColoringProperties trafficColoringProperties) {
         this.trafficColoringProperties = trafficColoringProperties;
         rebuildTrafficTagResolver();
@@ -146,10 +144,8 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        boolean authenticated = false;
-        if (!authenticated) {
-            authenticated = tryAnonymousAuthenticate(token, request, response);
-        }
+        boolean authenticated;
+        authenticated = tryAnonymousAuthenticate(token, request, response);
         if (!authenticated) {
             authenticated = tryJwtAuthenticate(token, request, response);
         }

@@ -278,7 +278,6 @@ public class RuleService {
         }
     }
 
-    // 值适配已在 MetaCacheProvider 统一处理
 
     public <T> List<T> queryForOneColumnList(String gql, Class<T> elementType) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
@@ -341,7 +340,6 @@ public class RuleService {
         SaveCommand command = gqlManager.generateSaveSql(gql, getSessionCtx());
         Facts facts = new Facts();
         facts.put("saveCommand", command);
-        // TODO 通过biz获取业务规则，包括：内置的规则（实体检查），自定义规则（script脚本）
         Rules rules = new Rules();
         bizMvelRuleManager.getRule(biz);
         rules.register(new EntityValidateRule());

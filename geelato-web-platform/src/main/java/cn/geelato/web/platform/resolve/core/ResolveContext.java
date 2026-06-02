@@ -13,6 +13,7 @@ import java.util.Map;
 @Data
 public class ResolveContext {
     private String taskId;
+    private String fileId;
     private File sourceFile;
     private String sourceFileName;
     private String sourceExt;

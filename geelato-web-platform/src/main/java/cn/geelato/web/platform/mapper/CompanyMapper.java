@@ -2,8 +2,8 @@ package cn.geelato.web.platform.mapper;
 
 import cn.geelato.meta.Company;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.springframework.stereotype.Component;
+import org.apache.ibatis.annotations.Mapper;
 
-@Component
+@Mapper
 public interface CompanyMapper extends BaseMapper<Company> {
 }

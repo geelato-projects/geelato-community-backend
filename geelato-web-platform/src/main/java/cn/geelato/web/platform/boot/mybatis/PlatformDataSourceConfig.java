@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.apache.ibatis.annotations.Mapper;
 
 import javax.sql.DataSource;
 
@@ -22,7 +23,11 @@ import javax.sql.DataSource;
  * 参照MarketDataSourceConfig配置MyBatis SqlSessionFactory
  */
 @Configuration
-@MapperScan(basePackages = "cn.geelato.web,cn.geelato.meta", sqlSessionFactoryRef = "platformSqlSessionFactory")
+@MapperScan(
+        basePackages = {"cn.geelato.web.platform.mapper", "cn.geelato.web.platform.srv.weixin.mapper"},
+        annotationClass = Mapper.class,
+        sqlSessionFactoryRef = "platformSqlSessionFactory"
+)
 public class PlatformDataSourceConfig {
 
     /**

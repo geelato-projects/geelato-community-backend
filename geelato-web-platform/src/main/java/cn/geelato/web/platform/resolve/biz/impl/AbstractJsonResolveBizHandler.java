@@ -19,8 +19,7 @@ public abstract class AbstractJsonResolveBizHandler implements ResolveBizHandler
     public ExtractedStructuredData extract(ResolveContext ctx, JSONObject config) {
         Object result = ctx == null ? null : ctx.getResult();
         List<ExtractedField> fields = new ArrayList<>();
-        if (result instanceof JSONObject) {
-            JSONObject json = (JSONObject) result;
+        if (result instanceof JSONObject json) {
             for (String key : json.keySet()) {
                 ExtractedField f = new ExtractedField();
                 f.setKey(key);
@@ -29,8 +28,7 @@ public abstract class AbstractJsonResolveBizHandler implements ResolveBizHandler
                 f.setValue(v == null ? null : v.toString());
                 fields.add(f);
             }
-        } else if (result instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>) result;
+        } else if (result instanceof Map<?, ?> map) {
             for (Map.Entry<?, ?> e : map.entrySet()) {
                 String key = e.getKey() == null ? null : e.getKey().toString();
                 if (Strings.isBlank(key)) {

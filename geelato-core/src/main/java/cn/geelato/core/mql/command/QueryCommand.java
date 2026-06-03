@@ -9,6 +9,8 @@ import org.apache.commons.collections.map.HashedMap;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -23,8 +25,12 @@ public class QueryCommand extends BaseCommand<QueryCommand> {
     private String groupBy;
     private String orderBy;
     private FilterGroup having;
+    private String havingSql;
     private String ACL;
     private Map<String, Object> viewTemplateParams;
+    private String tableAlias;
+    private List<QueryJoin> joins = new ArrayList<>();
+    private List<QuerySelectExpr> selectExprs = new ArrayList<>();
 
     protected String[] foreignFields;
     public QueryCommand() {

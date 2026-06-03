@@ -4,6 +4,8 @@ import cn.geelato.web.platform.boot.es.EsOperations;
 import cn.geelato.web.platform.boot.properties.EsConfigurationProperties;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
@@ -16,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "geelato.es", name = "enabled", havingValue = "true")
+@ConditionalOnBean(EsOperations.class)
 public class EsLogDrainService {
     private final EsOperations es;
     private final EsConfigurationProperties esProperties;

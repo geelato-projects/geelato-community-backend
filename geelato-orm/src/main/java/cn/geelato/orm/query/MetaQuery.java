@@ -10,9 +10,12 @@ import cn.geelato.orm.support.QueryCommandAdapter;
 import lombok.Getter;
 
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -23,6 +26,13 @@ import java.util.stream.Collectors;
 public class MetaQuery extends MetaOperate<MetaQuery> {
     private String[] selectFields;
     private final List<Order> orders = new java.util.ArrayList<>();
+    private final List<String> refFields = new ArrayList<>();
+    private final Map<String, String> selectAliases = new LinkedHashMap<>();
+    private final List<SelectExpr> selectExprs = new ArrayList<>();
+    private final List<JoinClause> joins = new ArrayList<>();
+    private String[] groupByFields;
+    private String havingSql;
+    private String tableAlias;
     private Integer pageNum;
     private Integer pageSize;
     private WrapperResultFunction<?, ?> wrapperFunction;
@@ -44,6 +54,24 @@ public class MetaQuery extends MetaOperate<MetaQuery> {
      */
     public MetaQuery select(String[] fields) {
         this.selectFields = fields;
+        return this;
+    }
+
+    public MetaQuery selectRef(String foreignField) {
+        this.refFields.add(foreignField);
+        return this;
+    }
+
+    public MetaQuery selectRef(String foreignField, String alias) {
+        this.refFields.add(foreignField);
+        if (alias != null && !alias.isBlank()) {
+            this.selectAliases.put(foreignField, alias);
+        }
+        return this;
+    }
+
+    public MetaQuery selectExpr(String expression, String alias) {
+        this.selectExprs.add(new SelectExpr(expression, alias));
         return this;
     }
     
@@ -85,6 +113,63 @@ public class MetaQuery extends MetaOperate<MetaQuery> {
     public MetaQuery order(Order... orders) {
         this.orders.addAll(Arrays.asList(orders));
         return this;
+    }
+
+    public MetaQuery as(String alias) {
+        this.tableAlias = alias;
+        return this;
+    }
+
+    public MetaQuery groupBy(String... fields) {
+        this.groupByFields = fields;
+        return this;
+    }
+
+    public MetaQuery havingSql(String sql) {
+        this.havingSql = sql;
+        return this;
+    }
+
+    public MetaQuery join(String entityName, String alias, JoinType type, Consumer<JoinOn> consumer) {
+        JoinOn joinOn = new JoinOn();
+        if (consumer != null) {
+            consumer.accept(joinOn);
+        }
+        JoinClause joinClause = new JoinClause();
+        joinClause.setEntityName(entityName);
+        joinClause.setAlias(alias);
+        joinClause.setJoinType(type);
+        joinClause.setConditions(new ArrayList<>(joinOn.getConditions()));
+        this.joins.add(joinClause);
+        return this;
+    }
+
+    public MetaQuery join(Class<?> entityClass, String alias, JoinType type, Consumer<JoinOn> consumer) {
+        return join(metaManager.get(entityClass).getEntityName(), alias, type, consumer);
+    }
+
+    public MetaQuery leftJoin(String entityName, String alias, Consumer<JoinOn> consumer) {
+        return join(entityName, alias, JoinType.LEFT, consumer);
+    }
+
+    public MetaQuery leftJoin(Class<?> entityClass, String alias, Consumer<JoinOn> consumer) {
+        return join(entityClass, alias, JoinType.LEFT, consumer);
+    }
+
+    public MetaQuery innerJoin(String entityName, String alias, Consumer<JoinOn> consumer) {
+        return join(entityName, alias, JoinType.INNER, consumer);
+    }
+
+    public MetaQuery innerJoin(Class<?> entityClass, String alias, Consumer<JoinOn> consumer) {
+        return join(entityClass, alias, JoinType.INNER, consumer);
+    }
+
+    public MetaQuery rightJoin(String entityName, String alias, Consumer<JoinOn> consumer) {
+        return join(entityName, alias, JoinType.RIGHT, consumer);
+    }
+
+    public MetaQuery rightJoin(Class<?> entityClass, String alias, Consumer<JoinOn> consumer) {
+        return join(entityClass, alias, JoinType.RIGHT, consumer);
     }
 
     /**
@@ -176,10 +261,14 @@ public class MetaQuery extends MetaOperate<MetaQuery> {
     }
 
     public String[] resolveSelectFields() {
+        List<String> resolved = new ArrayList<>();
         if (selectFields != null && selectFields.length > 0) {
-            return selectFields;
+            resolved.addAll(Arrays.asList(selectFields));
+        } else {
+            resolved.addAll(Arrays.asList(metaManager.getByEntityName(resolveEntityName()).getFieldNames()));
         }
-        return metaManager.getByEntityName(resolveEntityName()).getFieldNames();
+        resolved.addAll(refFields);
+        return resolved.toArray(new String[0]);
     }
 
     public String debug() {

@@ -16,6 +16,8 @@ import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -27,6 +29,8 @@ import java.util.Comparator;
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(prefix = "geelato.es", name = "enabled", havingValue = "true")
+@ConditionalOnBean(EsOperations.class)
 public class EsSrvLogStore implements SrvLogStore {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 

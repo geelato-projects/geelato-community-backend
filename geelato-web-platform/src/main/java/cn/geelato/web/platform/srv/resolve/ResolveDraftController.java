@@ -20,6 +20,9 @@ public class ResolveDraftController extends BaseController {
         this.draftFacade = draftFacade;
     }
 
+    /**
+     * 创建解析草稿，返回标准化字段、匹配建议与步骤明细。
+     */
     @RequestMapping(method = RequestMethod.POST)
     public ApiResult<?> create(
             @RequestParam(value = "fileId", required = false) String fileId,
@@ -30,19 +33,27 @@ public class ResolveDraftController extends BaseController {
         return draftFacade.createDraft(fileId, file, biztag, config, getAppId(), getTenantCode());
     }
 
+    /**
+     * 按 draftId 查询已生成的解析草稿。
+     */
     @RequestMapping(value = "/{draftId}", method = RequestMethod.GET)
     public ApiResult<?> get(@PathVariable String draftId) {
         return draftFacade.getDraft(draftId);
     }
 
+    /**
+     * 更新草稿中允许人工修正的字段和值。
+     */
     @RequestMapping(value = "/{draftId}", method = RequestMethod.PUT)
     public ApiResult<?> update(@PathVariable String draftId, @RequestBody ResolveDraftUpdateRequest req) {
         return draftFacade.updateDraft(draftId, req);
     }
 
+    /**
+     * 确认草稿并触发后续持久化处理。
+     */
     @RequestMapping(value = "/{draftId}/confirm", method = RequestMethod.POST)
     public ApiResult<?> confirm(@PathVariable String draftId) {
         return draftFacade.confirm(draftId);
     }
 }
-

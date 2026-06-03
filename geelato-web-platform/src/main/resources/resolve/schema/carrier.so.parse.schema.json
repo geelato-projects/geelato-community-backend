@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://geelato.cn/resolve/schema/carrier.so.parse/v1",
+  "type": "object",
+  "required": ["biztag", "schemaId", "data", "extracted"],
+  "properties": {
+    "biztag": { "const": "carrier.so.parse" },
+    "schemaId": { "const": "https://geelato.cn/resolve/schema/carrier.so.parse/v1" },
+    "data": {
+      "type": "object",
+      "required": ["carrierCode", "bookingNo", "soNo", "polName", "podName", "containers"],
+      "properties": {
+        "carrierCode": { "type": ["string", "null"] },
+        "carrierName": { "type": ["string", "null"] },
+        "bookingNo": { "type": ["string", "null"] },
+        "soNo": { "type": ["string", "null"] },
+        "shipperName": { "type": ["string", "null"] },
+        "consigneeName": { "type": ["string", "null"] },
+        "notifyParty": { "type": ["string", "null"] },
+        "vesselName": { "type": ["string", "null"] },
+        "voyageNo": { "type": ["string", "null"] },
+        "polCode": { "type": ["string", "null"] },
+        "polName": { "type": ["string", "null"] },
+        "podCode": { "type": ["string", "null"] },
+        "podName": { "type": ["string", "null"] },
+        "finalDestination": { "type": ["string", "null"] },
+        "placeOfReceipt": { "type": ["string", "null"] },
+        "placeOfDelivery": { "type": ["string", "null"] },
+        "etd": { "type": ["string", "null"] },
+        "eta": { "type": ["string", "null"] },
+        "cargoDescription": { "type": ["string", "null"] },
+        "packageQty": { "type": ["string", "null"] },
+        "packageUnit": { "type": ["string", "null"] },
+        "grossWeight": { "type": ["string", "number", "null"] },
+        "weightUnit": { "type": ["string", "null"] },
+        "measurement": { "type": ["string", "number", "null"] },
+        "measurementUnit": { "type": ["string", "null"] },
+        "paymentTerm": { "type": ["string", "null"] },
+        "serviceType": { "type": ["string", "null"] },
+        "contractNo": { "type": ["string", "null"] },
+        "customerRefNo": { "type": ["string", "null"] },
+        "containers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "containerType": { "type": ["string", "null"] },
+              "containerQty": { "type": ["string", "number", "integer", "null"] },
+              "socCoc": { "type": ["string", "null"] },
+              "isDangerous": { "type": ["boolean", "null"] },
+              "isReefer": { "type": ["boolean", "null"] },
+              "temperature": { "type": ["string", "number", "null"] },
+              "remarks": { "type": ["string", "null"] }
+            },
+            "additionalProperties": true
+          }
+        },
+        "remarks": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "extracted": {
+      "type": "object",
+      "required": ["fields"],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["key"],
+            "properties": {
+              "key": { "type": "string", "minLength": 1, "pattern": "^[a-zA-Z0-9_.-]+$" },
+              "label": { "type": ["string", "null"] },
+              "value": { "type": ["string", "number", "integer", "boolean", "object", "array", "null"] },
+              "page": { "type": ["integer", "null"] },
+              "bbox": { "type": ["object", "array", "string", "null"] },
+              "confidence": { "type": ["number", "null"] }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

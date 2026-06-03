@@ -86,6 +86,48 @@ public class Dao extends SqlKeyDao {
         return result;
     }
 
+    public List<Map<String, Object>> callForMapList(String callSql, Object[] params) {
+        try {
+            return jdbcTemplate.query(callSql, params, new DecryptingRowMapper());
+        } catch (DataAccessException dataAccessException) {
+            throw new SqlExecuteException(dataAccessException, callSql, params);
+        }
+    }
+
+    public Map<String, Object> callForMap(String callSql, Object[] params) {
+        List<Map<String, Object>> rows = callForMapList(callSql, params);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public List<Map<String, Object>> nativeQueryForMapList(String sql, Object[] params) {
+        try {
+            return jdbcTemplate.query(sql, params, new DecryptingRowMapper());
+        } catch (DataAccessException dataAccessException) {
+            throw new SqlExecuteException(dataAccessException, sql, params);
+        }
+    }
+
+    public Map<String, Object> nativeQueryForMap(String sql, Object[] params) {
+        List<Map<String, Object>> rows = nativeQueryForMapList(sql, params);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public <T> T nativeQueryForObject(String sql, Object[] params, Class<T> requiredType) {
+        try {
+            return jdbcTemplate.queryForObject(sql, params, requiredType);
+        } catch (DataAccessException dataAccessException) {
+            throw new SqlExecuteException(dataAccessException, sql, params);
+        }
+    }
+
+    public int nativeExecute(String sql, Object[] params) {
+        try {
+            return jdbcTemplate.update(sql, params);
+        } catch (DataAccessException dataAccessException) {
+            throw new SqlExecuteException(dataAccessException, sql, params);
+        }
+    }
+
     public Long queryTotal(BoundPageSql boundPageSql) {
         BoundSql boundSql = boundPageSql.getBoundSql();
         Object[] sqlParams = boundSql.getParams();

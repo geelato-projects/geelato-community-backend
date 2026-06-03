@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://geelato.cn/resolve/schema/quote.sheet.parse/v1",
+  "type": "object",
+  "required": ["biztag", "schemaId", "data", "extracted"],
+  "properties": {
+    "biztag": { "const": "quote.sheet.parse" },
+    "schemaId": { "const": "https://geelato.cn/resolve/schema/quote.sheet.parse/v1" },
+    "data": { "type": "object" },
+    "extracted": {
+      "type": "object",
+      "required": ["fields"],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["key"],
+            "properties": {
+              "key": { "type": "string", "minLength": 1, "pattern": "^[a-zA-Z0-9_.-]+$" },
+              "label": { "type": ["string", "null"] },
+              "value": { "type": ["string", "number", "integer", "boolean", "object", "array", "null"] },
+              "page": { "type": ["integer", "null"] },
+              "bbox": { "type": ["object", "array", "string", "null"] },
+              "confidence": { "type": ["number", "null"] }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

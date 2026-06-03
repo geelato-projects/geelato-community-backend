@@ -18,6 +18,9 @@ public class ResolveController extends BaseController {
         this.resolveFacade = resolveFacade;
     }
 
+    /**
+     * 同步执行解析，并直接返回解析结果与步骤明细。
+     */
     @RequestMapping(method = RequestMethod.POST)
     public ApiResult<?> resolve(
             @RequestParam(value = "fileId", required = false) String fileId,
@@ -28,6 +31,9 @@ public class ResolveController extends BaseController {
         return resolveFacade.resolve(fileId, file, biztag, config, getAppId(), getTenantCode());
     }
 
+    /**
+     * 异步提交解析任务，并返回 taskId 供后续轮询。
+     */
     @RequestMapping(value = "/submit", method = RequestMethod.POST)
     public ApiResult<?> submit(
             @RequestParam(value = "fileId", required = false) String fileId,
@@ -38,6 +44,9 @@ public class ResolveController extends BaseController {
         return resolveFacade.submit(fileId, file, biztag, config, getAppId(), getTenantCode());
     }
 
+    /**
+     * 查询异步解析任务状态、步骤与最终结果。
+     */
     @RequestMapping(value = "/task/{taskId}", method = RequestMethod.GET)
     public ApiResult<?> task(@PathVariable String taskId) {
         return resolveFacade.task(taskId);

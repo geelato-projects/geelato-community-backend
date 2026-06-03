@@ -13,6 +13,8 @@ import co.elastic.clients.json.JsonpMapper;
 import co.elastic.clients.json.JsonpSerializable;
 import jakarta.json.stream.JsonGenerator;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +22,8 @@ import java.io.StringWriter;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "geelato.es", name = "enabled", havingValue = "true")
+@ConditionalOnBean(ElasticsearchClient.class)
 public class EsOperations {
     private final ElasticsearchClient client;
     private final JsonpMapper jsonpMapper;

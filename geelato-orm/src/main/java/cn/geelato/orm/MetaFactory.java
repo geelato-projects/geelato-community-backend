@@ -4,6 +4,8 @@ import cn.geelato.orm.query.MetaQuery;
 import cn.geelato.orm.query.MetaInsert;
 import cn.geelato.orm.query.MetaUpdate;
 import cn.geelato.orm.query.MetaDelete;
+import cn.geelato.orm.query.MetaNativeSql;
+import cn.geelato.orm.query.MetaProcedure;
 
 /**
  * 元数据操作工厂类
@@ -119,5 +121,23 @@ public class MetaFactory {
      */
     public static MetaDelete delete(Class<?> entityClass) {
         return new MetaDelete(entityClass);
+    }
+
+    /**
+     * 创建存储过程执行构建器
+     * @param procedureName 存储过程名称
+     * @return MetaProcedure存储过程执行构建器
+     */
+    public static MetaProcedure procedure(String procedureName) {
+        return new MetaProcedure(procedureName);
+    }
+
+    /**
+     * 创建原生 SQL 直通执行构建器
+     * @param sql 完整 SQL 语句
+     * @return MetaNativeSql 原生 SQL 执行构建器
+     */
+    public static MetaNativeSql sql(String sql) {
+        return new MetaNativeSql(sql);
     }
 }

@@ -17,7 +17,9 @@ import java.util.Base64;
 
 public class SM4Utils {
     static {
-        Security.addProvider(new BouncyCastleProvider());
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
     }
 
     private static final String ALGORITHM_NAME = "SM4";

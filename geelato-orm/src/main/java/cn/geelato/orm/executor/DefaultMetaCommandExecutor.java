@@ -55,6 +55,26 @@ public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
     }
 
     @Override
+    public Map<String, Object> callForMap(String callSql, Object[] params) {
+        return callForMap(callSql, params, null);
+    }
+
+    @Override
+    public Map<String, Object> callForMap(String callSql, Object[] params, String connectIdOverride) {
+        return withDataSource(connectIdOverride, () -> dao.callForMap(callSql, params));
+    }
+
+    @Override
+    public Map<String, Object> nativeQueryForMap(String sql, Object[] params) {
+        return nativeQueryForMap(sql, params, null);
+    }
+
+    @Override
+    public Map<String, Object> nativeQueryForMap(String sql, Object[] params, String connectIdOverride) {
+        return withDataSource(connectIdOverride, () -> dao.nativeQueryForMap(sql, params));
+    }
+
+    @Override
     public <T> T queryForObject(QueryCommand command, Class<T> requiredType) {
         return queryForObject(command, requiredType, null);
     }
@@ -79,6 +99,46 @@ public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
             QueryCommand prepared = prepareQueryCommand(command);
             return dao.queryForMapList(sqlManager.generatePageQuerySql(prepared));
         });
+    }
+
+    @Override
+    public List<Map<String, Object>> callForMapList(String callSql, Object[] params) {
+        return callForMapList(callSql, params, null);
+    }
+
+    @Override
+    public List<Map<String, Object>> callForMapList(String callSql, Object[] params, String connectIdOverride) {
+        return withDataSource(connectIdOverride, () -> dao.callForMapList(callSql, params));
+    }
+
+    @Override
+    public List<Map<String, Object>> nativeQueryForMapList(String sql, Object[] params) {
+        return nativeQueryForMapList(sql, params, null);
+    }
+
+    @Override
+    public List<Map<String, Object>> nativeQueryForMapList(String sql, Object[] params, String connectIdOverride) {
+        return withDataSource(connectIdOverride, () -> dao.nativeQueryForMapList(sql, params));
+    }
+
+    @Override
+    public <T> T nativeQueryForObject(String sql, Object[] params, Class<T> requiredType) {
+        return nativeQueryForObject(sql, params, requiredType, null);
+    }
+
+    @Override
+    public <T> T nativeQueryForObject(String sql, Object[] params, Class<T> requiredType, String connectIdOverride) {
+        return withDataSource(connectIdOverride, () -> dao.nativeQueryForObject(sql, params, requiredType));
+    }
+
+    @Override
+    public int nativeExecute(String sql, Object[] params) {
+        return nativeExecute(sql, params, null);
+    }
+
+    @Override
+    public int nativeExecute(String sql, Object[] params, String connectIdOverride) {
+        return withDataSource(connectIdOverride, () -> dao.nativeExecute(sql, params));
     }
 
     @Override

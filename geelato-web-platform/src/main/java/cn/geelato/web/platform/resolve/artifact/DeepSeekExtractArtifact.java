@@ -5,10 +5,12 @@ import cn.geelato.web.platform.resolve.core.ResolveArtifact;
 import cn.geelato.web.platform.resolve.core.ResolveContext;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class DeepSeekExtractArtifact implements ResolveArtifact {
     private final DeepSeekClient deepSeekClient;
 
@@ -27,11 +29,21 @@ public class DeepSeekExtractArtifact implements ResolveArtifact {
         return fullMd != null && Strings.isNotBlank(fullMd.toString());
     }
 
+    /**
+     * 调用 DeepSeek 对 markdown 内容做结构化抽取，并尽量将返回结果解析为 JSON 对象。
+     */
     @Override
     public Object execute(ResolveContext ctx) throws Exception {
         String fullMd = ctx.getArtifactData("mineru.fullMd").toString();
         JSONObject params = ctx.getParams();
         String prompt = params == null ? null : params.getString("prompt");
+        if (log.isDebugEnabled()) {
+            log.debug("Submitting AI extraction: biztag={}, sourceFileName={}, markdownLength={}, promptLength={}",
+                    ctx == null ? null : ctx.getBiztag(),
+                    ctx == null ? null : ctx.getSourceFileName(),
+                    fullMd == null ? 0 : fullMd.length(),
+                    prompt == null ? 0 : prompt.length());
+        }
         String aiText = deepSeekClient.extract(prompt, fullMd);
 
         Object parsed = aiText;
@@ -39,11 +51,20 @@ public class DeepSeekExtractArtifact implements ResolveArtifact {
             try {
                 parsed = JSON.parse(aiText);
             } catch (Exception ignored) {
+                log.debug("AI extraction response is not valid JSON: biztag={}, responseLength={}",
+                        ctx == null ? null : ctx.getBiztag(),
+                        aiText.length());
             }
         }
 
         ctx.putArtifactData("ai.response", parsed);
         ctx.setResult(parsed);
+        if (log.isDebugEnabled()) {
+            log.debug("AI extraction finished: biztag={}, parsedType={}, responseLength={}",
+                    ctx == null ? null : ctx.getBiztag(),
+                    parsed == null ? null : parsed.getClass().getSimpleName(),
+                    aiText == null ? 0 : aiText.length());
+        }
         return parsed;
     }
 }

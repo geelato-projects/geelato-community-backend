@@ -25,7 +25,9 @@ public class SM2Utils {
         通过调用Security.addProvider并传入BouncyCastleProvider对象，你可以注册Bouncy Castle提供的安全服务和算法到Java的安全框架中。
         这样一来，你就可以在你的应用程序中使用Bouncy Castle所提供的加密算法、密钥生成和管理等功能。*/
     static {
-        Security.addProvider(new BouncyCastleProvider());
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
     }
 
     /**

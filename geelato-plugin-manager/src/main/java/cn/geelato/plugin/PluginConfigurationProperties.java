@@ -8,6 +8,6 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "geelato.plugin")
 public class PluginConfigurationProperties {
-    private String pluginDirectory;
-    private String pluginRepository;
+    private String pluginDirectory = "plugins";
+    private String pluginRepository = "plugins/repository";
 }

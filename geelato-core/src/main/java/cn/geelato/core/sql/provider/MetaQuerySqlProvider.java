@@ -3,6 +3,9 @@ package cn.geelato.core.sql.provider;
 import cn.geelato.core.enums.ViewTypeEnum;
 import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.mql.command.QueryCommand;
+import cn.geelato.core.mql.command.QueryJoin;
+import cn.geelato.core.mql.command.QueryJoinCondition;
+import cn.geelato.core.mql.command.QuerySelectExpr;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
@@ -15,6 +18,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.util.StringUtils;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,13 +44,8 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
     protected String buildOneSql(QueryCommand command) {
         StringBuilder sb = new StringBuilder();
         EntityMeta md = getEntityMeta(command);
-        String mainAlias = null;
-        if (command.getForeignFields() != null && command.getForeignFields().length > 0) {
-            mainAlias = buildTableAlias(md.getTableName());
-            md.setTableAlias(mainAlias);
-        }else{
-            md.setTableAlias(null);
-        }
+        String mainAlias = resolveMainAlias(md, command);
+        md.setTableAlias(mainAlias);
         sb.append("select ");
         buildSelectFields(sb, md, command);
         sb.append(" from ");
@@ -82,6 +81,9 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         if (command.getHaving() != null) {
             sb.append(" having ");
             buildConditions(sb, md, command.getHaving());
+        } else if (StringUtils.hasText(command.getHavingSql())) {
+            sb.append(" having ");
+            sb.append(command.getHavingSql());
         }
         if (StringUtils.hasText(command.getOrderBy())) {
             sb.append(" order by ");
@@ -111,13 +113,8 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
     public String buildCountSql(QueryCommand command) {
         StringBuilder sb = new StringBuilder();
         EntityMeta md = getEntityMeta(command);
-        String mainAlias = null;
-        if (command.getForeignFields() != null && command.getForeignFields().length > 0) {
-            mainAlias = md.getTableAlias() != null ? md.getTableAlias() : buildTableAlias(md.getTableName());
-            md.setTableAlias(mainAlias);
-        } else {
-            md.setTableAlias(null);
-        }
+        String mainAlias = resolveMainAlias(md, command);
+        md.setTableAlias(mainAlias);
         sb.append("select count(*) from (");
         sb.append("select ");
         buildSelectFields(sb, md, command);
@@ -157,6 +154,9 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         if (command.getHaving() != null) {
             sb.append(" having ");
             buildConditions(sb, md, command.getHaving());
+        } else if (StringUtils.hasText(command.getHavingSql())) {
+            sb.append(" having ");
+            sb.append(command.getHavingSql());
         }
         sb.append(") t");
         return sb.toString();
@@ -179,113 +179,139 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
     }
 
     private void buildSelectFields(StringBuilder sb, EntityMeta md, QueryCommand command) {
-
-        if (command.getFields() == null || command.getFields().length == 0) {
+        boolean hasFields = command.getFields() != null && command.getFields().length > 0;
+        boolean hasExprs = command.getSelectExprs() != null && !command.getSelectExprs().isEmpty();
+        if (!hasFields && !hasExprs) {
             sb.append("*");
             return;
-        } else if (command.getFields().length == 1 && "*".equals(command.getFields()[0])) {
+        } else if (hasFields && command.getFields().length == 1 && "*".equals(command.getFields()[0]) && !hasExprs) {
             sb.append("*");
             return;
         }
 
-        for (String fieldName : command.getFields()) {
-            // 忽略的字段不查询
-            if (ArrayUtils.contains(command.getIgnoreFields(), fieldName)) {
-                continue;
-            }
-            if (FunctionParser.isFunction(fieldName)) {
-                String afterRefaceExpression = FunctionParser.reconstruct(fieldName, md.getEntityName());
-                FunctionFieldValue ffv = new FunctionFieldValue(afterRefaceExpression);
-                String func = ffv.getMysqlFunction();
-                func = qualifyFunction(func);
-                if (md.getTableAlias() != null) {
-                    func = decorateExpressionWithAlias(md, func);
+        if (hasFields) {
+            for (String fieldName : command.getFields()) {
+                // 忽略的字段不查询
+                if (ArrayUtils.contains(command.getIgnoreFields(), fieldName)) {
+                    continue;
                 }
-                sb.append(func).append(" ");
-            } else {
-                String mainField = fieldName;
-                String remoteField = null;
-                int arrowIdx = fieldName.indexOf("->");
-                if (arrowIdx >= 0) {
-                    mainField = fieldName.substring(0, arrowIdx).trim();
-                    remoteField = fieldName.substring(arrowIdx + 2).trim();
-                }
-                boolean requestForeign = false;
-                if (command.getForeignFields() != null) {
-                    for (String ff : command.getForeignFields()) {
-                        if (ff == null) continue;
-                        if (ff.equals(fieldName)) {
-                            requestForeign = true;
-                            break;
+                if (FunctionParser.isFunction(fieldName)) {
+                    String afterRefaceExpression = FunctionParser.reconstruct(fieldName, md.getEntityName());
+                    FunctionFieldValue ffv = new FunctionFieldValue(afterRefaceExpression);
+                    String func = ffv.getMysqlFunction();
+                    func = qualifyFunction(func);
+                    if (md.getTableAlias() != null) {
+                        func = decorateExpressionWithAlias(md, func);
+                    }
+                    sb.append(func).append(" ");
+                } else {
+                    String mainField = fieldName;
+                    String remoteField = null;
+                    int arrowIdx = fieldName.indexOf("->");
+                    if (arrowIdx >= 0) {
+                        mainField = fieldName.substring(0, arrowIdx).trim();
+                        remoteField = fieldName.substring(arrowIdx + 2).trim();
+                    }
+                    boolean requestForeign = false;
+                    if (command.getForeignFields() != null) {
+                        for (String ff : command.getForeignFields()) {
+                            if (ff == null) continue;
+                            if (ff.equals(fieldName)) {
+                                requestForeign = true;
+                                break;
+                            }
                         }
                     }
-                }
-                if (requestForeign) {
-                    TableForeign tf = findForeignByMainField(md, mainField);
-                    if (tf != null) {
-                        String foreignAlias = buildTableAlias(tf.getForeignTable());
-                        EntityMeta foreignEm = metaManager.get(tf.getForeignTable());
-                        FieldMeta selectedFm = null;
-                        if (StringUtils.hasText(remoteField)) {
-                            if (foreignEm.containsField(remoteField)) {
-                                selectedFm = foreignEm.getFieldMeta(remoteField);
+                    if (requestForeign) {
+                        TableForeign tf = findForeignByMainField(md, mainField);
+                        if (tf != null) {
+                            EntityMeta foreignEm = metaManager.getByEntityName(tf.getForeignTable());
+                        String foreignAlias = buildTableAlias(foreignEm.getTableName());
+                            FieldMeta selectedFm = null;
+                            if (StringUtils.hasText(remoteField)) {
+                                if (foreignEm.containsField(remoteField)) {
+                                    selectedFm = foreignEm.getFieldMeta(remoteField);
+                                } else {
+                                    try {
+                                        FieldMeta byColumn = foreignEm.getFieldMetaByColumn(remoteField);
+                                        if (byColumn != null) {
+                                            selectedFm = byColumn;
+                                        }
+                                    } catch (Exception ignored) {}
+                                }
+                                if (selectedFm == null) {
+                                    sb.append(foreignAlias);
+                                    sb.append(".");
+                                    tryAppendKeywords(sb, remoteField);
+                                    sb.append(" ");
+                                    Object aliasVal = command.getAlias().get(fieldName);
+                                    String aliasName = aliasVal != null ? aliasVal.toString() : remoteField;
+                                    tryAppendKeywords(sb, aliasName);
+                                    sb.append(",");
+                                    continue;
+                                }
                             } else {
-                                try {
-                                    FieldMeta byColumn = foreignEm.getFieldMetaByColumn(remoteField);
-                                    if (byColumn != null) {
-                                        selectedFm = byColumn;
-                                    }
-                                } catch (Exception ignored) {}
+                                selectedFm = chooseDisplayField(foreignEm);
                             }
-                            if (selectedFm == null) {
+                            if (selectedFm != null) {
                                 sb.append(foreignAlias);
                                 sb.append(".");
-                                tryAppendKeywords(sb, remoteField);
+                                tryAppendKeywords(sb, selectedFm.getColumnName());
                                 sb.append(" ");
                                 Object aliasVal = command.getAlias().get(fieldName);
-                                String aliasName = aliasVal != null ? aliasVal.toString() : remoteField;
+                                String aliasName = aliasVal != null ? aliasVal.toString() : selectedFm.getFieldName();
                                 tryAppendKeywords(sb, aliasName);
                                 sb.append(",");
                                 continue;
                             }
-                        } else {
-                            selectedFm = chooseDisplayField(foreignEm);
                         }
-                        if (selectedFm != null) {
-                            sb.append(foreignAlias);
-                            sb.append(".");
-                            tryAppendKeywords(sb, selectedFm.getColumnName());
+                        // 若未找到外键或展示字段，回退为主表字段输出
+                    }
+                    FieldMeta fm = md.containsField(fieldName) ? md.getFieldMeta(fieldName) : null;
+                    if (fm != null) {
+                        if (command.getAlias().containsKey(fieldName)) {
+                            tryAppendKeywords(md, sb, fm);
                             sb.append(" ");
-                            Object aliasVal = command.getAlias().get(fieldName);
-                            String aliasName = aliasVal != null ? aliasVal.toString() : selectedFm.getFieldName();
-                            tryAppendKeywords(sb, aliasName);
-                            sb.append(",");
-                            continue;
+                            tryAppendKeywords(sb, command.getAlias().get(fieldName).toString());
+                        } else {
+                            if (fm.isEquals()) {
+                                tryAppendKeywords(md, sb, fm);
+                            } else {
+                                tryAppendKeywords(md, sb, fm);
+                                sb.append(" ");
+                                tryAppendKeywords(sb, fm.getFieldName());
+                            }
+                        }
+                    } else {
+                        sb.append(fieldName);
+                        if (command.getAlias().containsKey(fieldName)) {
+                            sb.append(" ");
+                            tryAppendKeywords(sb, command.getAlias().get(fieldName).toString());
                         }
                     }
-                    // 若未找到外键或展示字段，回退为主表字段输出
                 }
-                FieldMeta fm = md.getFieldMeta(fieldName);
-                if (command.getAlias().containsKey(fieldName)) {
-                    tryAppendKeywords(md, sb, fm);
-                    sb.append(" ");
-                    tryAppendKeywords(sb, command.getAlias().get(fieldName).toString());
-                } else {
-                    if (fm.isEquals()) {
-                        tryAppendKeywords(md, sb, fm);
-                    } else {
-                        tryAppendKeywords(md, sb, fm);
-                        sb.append(" ");
-                        tryAppendKeywords(sb, fm.getFieldName());
-                    }
-                }
+                sb.append(",");
             }
-            sb.append(",");
+        }
+        if (hasExprs) {
+            for (QuerySelectExpr selectExpr : command.getSelectExprs()) {
+                sb.append(selectExpr.getExpression());
+                if (StringUtils.hasText(selectExpr.getAlias())) {
+                    sb.append(" ");
+                    tryAppendKeywords(sb, selectExpr.getAlias());
+                }
+                sb.append(",");
+            }
         }
         sb.deleteCharAt(sb.length() - 1);
     }
 
     private void buildJoins(StringBuilder sb, EntityMeta md, QueryCommand command) {
+        buildForeignJoins(sb, md, command);
+        buildCustomJoins(sb, md, command);
+    }
+
+    private void buildForeignJoins(StringBuilder sb, EntityMeta md, QueryCommand command) {
         if (command.getForeignFields() == null) {
             return;
         }
@@ -306,9 +332,10 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
         for (Map.Entry<String, TableForeign> entry : joinMap.entrySet()) {
             TableForeign tf = entry.getValue();
-            String foreignAlias = buildTableAlias(tf.getForeignTable());
+            EntityMeta foreignEm = metaManager.getByEntityName(tf.getForeignTable());
+            String foreignAlias = buildTableAlias(foreignEm.getTableName());
             sb.append(" left join ");
-            sb.append(tf.getForeignTable());
+            sb.append(foreignEm.getTableName());
             sb.append(" ");
             sb.append(foreignAlias);
             sb.append(" on ");
@@ -319,6 +346,29 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             sb.append(foreignAlias);
             sb.append(".");
             tryAppendKeywords(sb, tf.getForeignTableCol());
+        }
+    }
+
+    private void buildCustomJoins(StringBuilder sb, EntityMeta md, QueryCommand command) {
+        if (command.getJoins() == null || command.getJoins().isEmpty()) {
+            return;
+        }
+        for (QueryJoin join : command.getJoins()) {
+            EntityMeta joinMeta = metaManager.getByEntityName(join.getEntityName());
+            sb.append(" ");
+            sb.append(join.getJoinType());
+            sb.append(" ");
+            sb.append(joinMeta.getTableName());
+            sb.append(" ");
+            sb.append(join.getAlias());
+            sb.append(" on ");
+            List<QueryJoinCondition> conditions = join.getConditions();
+            for (int i = 0; i < conditions.size(); i++) {
+                if (i > 0) {
+                    sb.append(" and ");
+                }
+                buildJoinCondition(sb, md, joinMeta, command, join, conditions.get(i));
+            }
         }
     }
 
@@ -382,6 +432,17 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             return preferredAlias;
         }
         return isViewDerivedTable(md) ? "vt" : null;
+    }
+
+    private String resolveMainAlias(EntityMeta md, QueryCommand command) {
+        if (StringUtils.hasText(command.getTableAlias())) {
+            return command.getTableAlias();
+        }
+        if ((command.getForeignFields() != null && command.getForeignFields().length > 0)
+                || (command.getJoins() != null && !command.getJoins().isEmpty())) {
+            return buildTableAlias(md.getTableName());
+        }
+        return null;
     }
 
     private boolean isViewDerivedTable(EntityMeta md) {
@@ -476,5 +537,61 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
 
     private boolean isBlankValue(Object value) {
         return value == null || !StringUtils.hasText(value.toString());
+    }
+
+    private void buildJoinCondition(StringBuilder sb, EntityMeta mainMeta, EntityMeta joinMeta, QueryCommand command, QueryJoin join, QueryJoinCondition condition) {
+        if (StringUtils.hasText(condition.getRawExpression())) {
+            sb.append(condition.getRawExpression());
+            return;
+        }
+        appendQualifiedReference(sb, mainMeta, joinMeta, command, join, condition.getLeftField());
+        sb.append(StringUtils.hasText(condition.getOperator()) ? condition.getOperator() : "=");
+        appendQualifiedReference(sb, mainMeta, joinMeta, command, join, condition.getRightField());
+    }
+
+    private void appendQualifiedReference(StringBuilder sb, EntityMeta mainMeta, EntityMeta joinMeta, QueryCommand command, QueryJoin join, String reference) {
+        if (!StringUtils.hasText(reference)) {
+            return;
+        }
+        if (reference.contains(".")) {
+            String[] parts = reference.split("\\.", 2);
+            String alias = parts[0];
+            String field = parts[1];
+            if (alias.equals(command.getTableAlias()) || alias.equals(mainMeta.getTableAlias())) {
+                appendQualifiedColumn(sb, alias, resolveColumn(mainMeta, field));
+                return;
+            }
+            if (alias.equals(join.getAlias())) {
+                appendQualifiedColumn(sb, alias, resolveColumn(joinMeta, field));
+                return;
+            }
+            appendQualifiedColumn(sb, alias, field);
+            return;
+        }
+        if (mainMeta.containsField(reference)) {
+            appendQualifiedColumn(sb, mainMeta.getTableAlias() != null ? mainMeta.getTableAlias() : mainMeta.getTableName(), resolveColumn(mainMeta, reference));
+            return;
+        }
+        appendQualifiedColumn(sb, join.getAlias(), resolveColumn(joinMeta, reference));
+    }
+
+    private void appendQualifiedColumn(StringBuilder sb, String alias, String column) {
+        sb.append(alias);
+        sb.append(".");
+        tryAppendKeywords(sb, column);
+    }
+
+    private String resolveColumn(EntityMeta entityMeta, String fieldOrColumn) {
+        if (entityMeta.containsField(fieldOrColumn)) {
+            return entityMeta.getFieldMeta(fieldOrColumn).getColumnName();
+        }
+        try {
+            FieldMeta fieldMeta = entityMeta.getFieldMetaByColumn(fieldOrColumn);
+            if (fieldMeta != null) {
+                return fieldMeta.getColumnName();
+            }
+        } catch (Exception ignored) {
+        }
+        return fieldOrColumn;
     }
 }

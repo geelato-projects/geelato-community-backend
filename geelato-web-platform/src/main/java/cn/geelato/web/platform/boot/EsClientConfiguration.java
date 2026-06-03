@@ -12,6 +12,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,7 @@ import java.net.URI;
 import java.util.Base64;
 
 @Configuration
+@ConditionalOnProperty(prefix = "geelato.es", name = "enabled", havingValue = "true")
 public class EsClientConfiguration {
     @Value("${geelato.es.url:}")
     private String esUrl;

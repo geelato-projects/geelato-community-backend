@@ -43,6 +43,7 @@
         <commons-codec.version>1.15</commons-codec.version>
         <commons-lang3.version>3.17.0</commons-lang3.version>
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
+        <bouncycastle.version>1.84</bouncycastle.version>
         <apache.poi.version>5.2.3</apache.poi.version>
         <dingtalk.sdk.version>1.5.10</dingtalk.sdk.version>
         <javax.servlet.version>4.0.1</javax.servlet.version>

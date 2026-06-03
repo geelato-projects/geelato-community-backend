@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -23,9 +24,8 @@ public class PluginConfiguration {
 //    private UpdateManager updateManager;
     @Bean
     public SpringPluginManager pluginManager(PluginConfigurationProperties pluginConfigurationProperties) {
-        SpringPluginManager spm=new SpringPluginManager(
-                Paths.get(pluginConfigurationProperties.getPluginDirectory())
-        );
+        Path pluginDirectory = normalizeDirectory(pluginConfigurationProperties.getPluginDirectory(), "plugins");
+        SpringPluginManager spm = new SpringPluginManager(pluginDirectory);
         springPluginManager=spm;
         return spm;
     }
@@ -33,8 +33,8 @@ public class PluginConfiguration {
     @Bean
     @DependsOn("pluginManager")
     public UpdateManager updateManager(PluginConfigurationProperties pluginConfigurationProperties){
-        UpdateManager um = new UpdateManager(springPluginManager,
-                Paths.get(pluginConfigurationProperties.getPluginRepository()));
+        Path pluginRepository = normalizeDirectory(pluginConfigurationProperties.getPluginRepository(), "plugins/repository");
+        UpdateManager um = new UpdateManager(springPluginManager, pluginRepository);
         List<UpdateRepository> pluginRepositories=um.getRepositories();
         return um;
     }
@@ -46,5 +46,16 @@ public class PluginConfiguration {
 
     public SpringPluginManager getSpringPluginManager() {
         return springPluginManager;
+    }
+
+    private Path normalizeDirectory(String pathValue, String defaultPath) {
+        String candidate = (pathValue == null || pathValue.trim().isEmpty()) ? defaultPath : pathValue.trim();
+        Path path = Paths.get(candidate);
+        try {
+            Files.createDirectories(path);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to initialize plugin path: " + path, e);
+        }
+        return path;
     }
 }

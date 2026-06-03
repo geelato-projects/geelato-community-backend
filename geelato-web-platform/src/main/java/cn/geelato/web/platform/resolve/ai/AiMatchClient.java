@@ -85,7 +85,7 @@ public class AiMatchClient {
                     log.debug("AI match request failed: biztag={}, fieldKey={}, httpCode={}",
                             biztag,
                             fieldKey,
-                            response == null ? null : response.code());
+                            response.code());
                     return null;
                 }
                 String resp = response.body().string();
@@ -95,7 +95,7 @@ public class AiMatchClient {
                     log.debug("AI match returned empty suggestion: biztag={}, fieldKey={}, responseLength={}",
                             biztag,
                             fieldKey,
-                            resp == null ? 0 : resp.length());
+                            resp.length());
                     return null;
                 }
                 AiSuggestion suggestion = new AiSuggestion();

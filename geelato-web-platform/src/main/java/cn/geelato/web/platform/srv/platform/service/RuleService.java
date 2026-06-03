@@ -3,8 +3,6 @@ package cn.geelato.web.platform.srv.platform.service;
 import cn.geelato.core.Fn;
 import cn.geelato.core.GlobalContext;
 import cn.geelato.core.SessionCtx;
-import cn.geelato.core.biz.rules.BizManagerFactory;
-import cn.geelato.core.biz.rules.common.EntityValidateRule;
 import cn.geelato.core.enums.ViewTypeEnum;
 import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.mql.MetaQLManager;
@@ -58,7 +56,6 @@ public class RuleService {
     private final MetaQLManager gqlManager = MetaQLManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
     private final MetaManager metaManager = MetaManager.singleInstance();
-    private final BizMvelRuleManager bizMvelRuleManager = BizManagerFactory.getBizMvelRuleManager("mvelRule");
     private final RulesEngine rulesEngine = new DefaultRulesEngine();
     private final static String VARS_PARENT = "$parent";
     private final static String VARS_CTX = "$ctx";
@@ -338,12 +335,6 @@ public class RuleService {
 //    )
     public String save(String biz, String gql) {
         SaveCommand command = gqlManager.generateSaveSql(gql, getSessionCtx());
-        Facts facts = new Facts();
-        facts.put("saveCommand", command);
-        Rules rules = new Rules();
-        bizMvelRuleManager.getRule(biz);
-        rules.register(new EntityValidateRule());
-        rulesEngine.fire(rules, facts);
         return recursiveSave(command);
     }
 

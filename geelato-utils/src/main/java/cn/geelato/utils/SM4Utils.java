@@ -21,6 +21,7 @@ public class SM4Utils {
             if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
                 Security.insertProviderAt(new BouncyCastleProvider(), 1);
             }
+            printBcProviderDiagnostics("after-register");
         } catch (Exception e) {
             throw new RuntimeException("BouncyCastle注册失败", e);
         }
@@ -45,10 +46,18 @@ public class SM4Utils {
         byte[] encryptedBytes = Base64.getDecoder().decode(encryptedData);
         byte[] key = keyStr.getBytes(StandardCharsets.UTF_8);
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, ALGORITHM_NAME);
+        printBcProviderDiagnostics("before-decrypt-cipher");
         Cipher cipher = Cipher.getInstance(ALGORITHM_MODE, "BC");
         cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);
         byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
         return new String(decryptedBytes, StandardCharsets.UTF_8);
+    }
+
+    private static void printBcProviderDiagnostics(String stage) {
+        java.security.Provider provider = Security.getProvider("BC");
+        System.out.println("[SM4Utils] " + stage + " BC provider = " + provider);
+        System.out.println("[SM4Utils] " + stage + " BC classLoader = " + (provider == null ? null : provider.getClass().getClassLoader()));
+        System.out.println("[SM4Utils] " + stage + " BC codeSource = " + (provider == null ? null : provider.getClass().getProtectionDomain().getCodeSource()));
     }
 
 

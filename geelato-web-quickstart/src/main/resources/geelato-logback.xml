@@ -5,6 +5,7 @@
     <property name="ROOT_LOG_LEVEL" value="${ROOT_LOG_LEVEL:-DEBUG}"/>
     <property name="FILE_LOG_LEVEL" value="${FILE_LOG_LEVEL:-DEBUG}"/>
     <property name="CONSOLE_LOG_LEVEL" value="${CONSOLE_LOG_LEVEL:-${ROOT_LOG_LEVEL}}"/>
+    <property name="RESOLVE_LOG_LEVEL" value="${RESOLVE_LOG_LEVEL:-DEBUG}"/>
     <property name="LOG_PATTERN" value="${LOG_PATTERN:-%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n}"/>
     <!--输出到控制台-->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
@@ -131,6 +132,21 @@
             <pattern>%d{HH:mm:ss} - %msg%n</pattern>
         </layout>
     </appender>
+    <!--解析接口日志-->
+    <appender name="resolveLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/resolve/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN}</pattern>
+        </layout>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${RESOLVE_LOG_LEVEL}</level>
+        </filter>
+    </appender>
     <logger name="cn.geelato.schedule" additivity="false">
         <appender-ref ref="scheduleLogFile"/>
         <appender-ref ref="console"/>
@@ -150,6 +166,12 @@
     <logger name="cn.geelato.web.platform.boot.interceptor" additivity="false">
         <appender-ref ref="requestLogFile"/>
         <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.web.platform.resolve" level="${RESOLVE_LOG_LEVEL}" additivity="false">
+        <appender-ref ref="resolveLogFile"/>
+    </logger>
+    <logger name="cn.geelato.web.platform.srv.resolve" level="${RESOLVE_LOG_LEVEL}" additivity="false">
+        <appender-ref ref="resolveLogFile"/>
     </logger>
     <logger name="cn.geelato.web.platform.run.PlatformExceptionHandler" level="${PLATFORM_EXCEPTION_LOG_LEVEL:-ERROR}" additivity="false">
         <appender-ref ref="platformExceptionLogFile"/>

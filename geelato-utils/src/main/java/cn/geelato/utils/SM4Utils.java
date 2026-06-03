@@ -17,8 +17,12 @@ import java.util.Base64;
 
 public class SM4Utils {
     static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
+        try {
+            if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+                Security.insertProviderAt(new BouncyCastleProvider(), 1);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("BouncyCastle注册失败", e);
         }
     }
 

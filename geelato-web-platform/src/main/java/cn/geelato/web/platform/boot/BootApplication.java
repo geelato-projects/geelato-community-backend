@@ -1,6 +1,5 @@
 package cn.geelato.web.platform.boot;
 
-import cn.geelato.core.biz.rules.BizManagerFactory;
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.core.graal.GraalManager;
@@ -73,10 +72,6 @@ public class BootApplication implements CommandLineRunner {
         String path = Objects.requireNonNull(this.getClass().getClassLoader().getResource("//")).getPath();
         path = path.replace("test-classes", "classes");
         SqlScriptManagerFactory.get("sql").loadFiles(path + "/geelato/web/platform/sql/");
-        BizManagerFactory.getBizRuleScriptManager("rule").setDao(dao);
-        BizManagerFactory.getBizRuleScriptManager("rule").loadFiles(path + "/geelato/web/platform/rule/");
-        BizManagerFactory.getBizMvelRuleManager("mvelRule").setDao(dao);
-        BizManagerFactory.getBizMvelRuleManager("mvelRule").loadDb();
 
         DbScriptManagerFactory.get("db").setDao(dao);
         DbScriptManagerFactory.get("db").loadDb();
@@ -88,11 +83,6 @@ public class BootApplication implements CommandLineRunner {
      */
     protected void initFromFatJar() {
         SqlScriptManagerFactory.get("sql").loadResource("/geelato/web/platform/sql/**/*.sql");
-        BizManagerFactory.getBizRuleScriptManager("rule").setDao(dao);
-        BizManagerFactory.getBizRuleScriptManager("rule").loadResource("/geelato/web/platform/rule/**/*.js");
-        BizManagerFactory.getBizMvelRuleManager("mvelRule").setDao(dao);
-        BizManagerFactory.getBizMvelRuleManager("mvelRule").loadDb();
-
         DbScriptManagerFactory.get("db").setDao(dao);
         DbScriptManagerFactory.get("db").loadDb();
     }

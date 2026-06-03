@@ -152,6 +152,20 @@
                 <configuration>
                     <!-- 指定该Main Class为全局的唯一入口 -->
                     <mainClass>cn.geelato.web.quickstart.QuickStartApplication</mainClass>
+                    <requiresUnpack>
+                        <dependency>
+                            <groupId>org.bouncycastle</groupId>
+                            <artifactId>bcprov-jdk18on</artifactId>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.bouncycastle</groupId>
+                            <artifactId>bcpkix-jdk18on</artifactId>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.bouncycastle</groupId>
+                            <artifactId>bcutil-jdk18on</artifactId>
+                        </dependency>
+                    </requiresUnpack>
                 </configuration>
                 <executions>
                     <execution>

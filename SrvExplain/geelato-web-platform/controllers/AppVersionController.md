@@ -27,7 +27,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L118-L131
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L118-L131
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -67,7 +67,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L74-L83
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L74-L83
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -106,7 +106,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L61-L72
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L61-L72
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -145,7 +145,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L85-L116
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L85-L116
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -184,7 +184,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L48-L59
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L48-L59
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -221,7 +221,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L133-L146
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/AppVersionController.java#L133-L146
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

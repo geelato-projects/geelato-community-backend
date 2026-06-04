@@ -20,6 +20,7 @@
 - [ArcoController](controllers/ArcoController.md)（/arco）
 - [AttachController](controllers/AttachController.md)（/attach）
 - [AuthCodeController](controllers/AuthCodeController.md)（/code）
+- [AuxiliarySuiteHealthController](controllers/AuxiliarySuiteHealthController.md)（/system/monitor/auxiliary-suites）
 - [BarcodeController](controllers/BarcodeController.md)（/zxing/barcode）
 - [BizDataController](controllers/BizDataController.md)（/bizData）
 - [CacheController](controllers/CacheController.md)（/cache）
@@ -38,6 +39,9 @@
 - [DictionaryController](controllers/DictionaryController.md)（/dictionary）
 - [DownloadController](controllers/DownloadController.md)（/resources）
 - [EmailAccountController](controllers/EmailAccountController.md)（/email/account）
+- [EmailComposeController](controllers/EmailComposeController.md)（/email）
+- [EmailContactController](controllers/EmailContactController.md)（/email/contact）
+- [EmailDraftController](controllers/EmailDraftController.md)（/email/draft）
 - [EmailInboxController](controllers/EmailInboxController.md)（/email）
 - [EncodingController](controllers/EncodingController.md)（/encoding）
 - [ExportExcelController](controllers/ExportExcelController.md)（/export/file）
@@ -64,9 +68,8 @@
 - [PageController](controllers/PageController.md)（/page）
 - [PermissionController](controllers/PermissionController.md)（/security/permission）
 - [PlatformLogSearchController](controllers/PlatformLogSearchController.md)（/run/log）
-- [PluginController](controllers/PluginController.md)（/plugin）
-- [PluginRuntimeController](controllers/PluginRuntimeController.md)（/plugin）
 - [ResolveController](controllers/ResolveController.md)（/resolve）
+- [ResolveDraftController](controllers/ResolveDraftController.md)（/resolve/draft）
 - [RoleAppMapController](controllers/RoleAppMapController.md)（/security/role/app）
 - [RoleController](controllers/RoleController.md)（/security/role）
 - [RolePermissionMapController](controllers/RolePermissionMapController.md)（/security/role/permission）

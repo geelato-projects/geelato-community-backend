@@ -34,7 +34,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L169-L185
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L169-L185
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -74,7 +74,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L240-L257
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L240-L257
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -114,7 +114,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L85-L98
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L85-L98
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -154,7 +154,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L187-L199
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L187-L199
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -194,7 +194,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L75-L83
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L75-L83
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -233,7 +233,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L100-L112
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L100-L112
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -272,7 +272,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L50-L61
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L50-L61
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -309,7 +309,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L63-L73
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L63-L73
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -346,7 +346,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L152-L167
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L152-L167
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -386,7 +386,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L130-L150
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L130-L150
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -426,7 +426,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L221-L238
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L221-L238
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -466,7 +466,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L201-L219
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L201-L219
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -509,7 +509,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L114-L127
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/site/StaticSiteController.java#L114-L127
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

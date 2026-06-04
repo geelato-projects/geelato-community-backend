@@ -31,7 +31,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L98-L112
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L98-L112
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -71,7 +71,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L141-L150
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L141-L150
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -115,7 +115,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L86-L96
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L86-L96
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -154,7 +154,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L164-L178
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L164-L178
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -195,7 +195,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L114-L125
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L114-L125
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -234,7 +234,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L42-L53
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L42-L53
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -271,7 +271,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L55-L65
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L55-L65
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -308,7 +308,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L67-L84
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L67-L84
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -345,7 +345,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L152-L162
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L152-L162
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -385,7 +385,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L127-L139
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/PermissionController.java#L127-L139
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

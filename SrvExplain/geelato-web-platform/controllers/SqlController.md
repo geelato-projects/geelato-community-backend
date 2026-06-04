@@ -29,7 +29,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L88-L103
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L88-L103
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -69,7 +69,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L77-L86
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L77-L86
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -108,7 +108,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L105-L116
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L105-L116
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -147,7 +147,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L51-L62
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L51-L62
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -184,7 +184,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L64-L75
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L64-L75
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -221,7 +221,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L145-L174
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L145-L174
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -260,7 +260,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L134-L143
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L134-L143
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -299,7 +299,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L118-L132
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SqlController.java#L118-L132
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

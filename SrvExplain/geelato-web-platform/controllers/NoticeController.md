@@ -28,7 +28,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L139-L177
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L139-L177
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -68,7 +68,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L34-L46
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L34-L46
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -109,7 +109,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L117-L134
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L117-L134
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -146,7 +146,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L91-L112
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L91-L112
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -185,7 +185,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L72-L86
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L72-L86
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -224,7 +224,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L182-L208
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L182-L208
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -263,7 +263,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L51-L67
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/notice/NoticeController.java#L51-L67
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

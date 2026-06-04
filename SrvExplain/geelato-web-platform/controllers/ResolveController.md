@@ -11,20 +11,20 @@
 
 | Summary | Method | Path |
 |---|---|---|
-| resolve | POST | `/resolve/` |
-| submit | POST | `/resolve/submit` |
-| task | GET | `/resolve/task/{taskId}` |
+| 同步执行解析，并直接返回解析结果与步骤明细。 | POST | `/resolve/` |
+| 异步提交解析任务，并返回 taskId 供后续轮询。 | POST | `/resolve/submit` |
+| 查询异步解析任务状态、步骤与最终结果。 | GET | `/resolve/task/{taskId}` |
 
 ## 接口详情
 
-### resolve
+### 同步执行解析，并直接返回解析结果与步骤明细。
 
 - Method：POST
 - Path：`/resolve/`
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L21-L29
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L24-L32
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -61,14 +61,14 @@ curl -X POST \
   --data '{{body}}'
 ```
 
-### submit
+### 异步提交解析任务，并返回 taskId 供后续轮询。
 
 - Method：POST
 - Path：`/resolve/submit`
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L31-L39
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L37-L45
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -105,14 +105,14 @@ curl -X POST \
   --data '{{body}}'
 ```
 
-### task
+### 查询异步解析任务状态、步骤与最终结果。
 
 - Method：GET
 - Path：`/resolve/task/{taskId}`
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L41-L44
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/resolve/ResolveController.java#L50-L53
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

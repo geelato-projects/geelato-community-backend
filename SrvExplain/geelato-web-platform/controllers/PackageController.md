@@ -26,7 +26,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/PackageController.java#L264-L308
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/PackageController.java#L264-L308
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -65,7 +65,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/PackageController.java#L226-L243
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/PackageController.java#L226-L243
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -104,7 +104,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/PackageController.java#L160-L186
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/PackageController.java#L160-L186
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -145,7 +145,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/PackageController.java#L97-L158
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/PackageController.java#L97-L158
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -188,7 +188,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/PackageController.java#L248-L259
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/pack/PackageController.java#L248-L259
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

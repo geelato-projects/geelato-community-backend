@@ -28,7 +28,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L87-L99
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L87-L99
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -68,7 +68,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L77-L85
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L77-L85
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -107,7 +107,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L101-L112
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L101-L112
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -146,7 +146,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L40-L51
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L40-L51
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -183,7 +183,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L53-L63
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L53-L63
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -220,7 +220,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L65-L75
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L65-L75
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -257,7 +257,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L114-L127
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleController.java#L114-L127
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

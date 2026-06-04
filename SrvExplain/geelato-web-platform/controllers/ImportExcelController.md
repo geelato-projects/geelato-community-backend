@@ -24,7 +24,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/excel/ImportExcelController.java#L60-L69
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/excel/ImportExcelController.java#L60-L69
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -69,7 +69,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/excel/ImportExcelController.java#L80-L89
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/excel/ImportExcelController.java#L80-L89
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -113,7 +113,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/excel/ImportExcelController.java#L40-L48
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/excel/ImportExcelController.java#L40-L48
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

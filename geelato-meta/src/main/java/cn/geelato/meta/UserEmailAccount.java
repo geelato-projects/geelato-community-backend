@@ -29,6 +29,10 @@ public class UserEmailAccount extends BaseEntity implements EntityEnableAble {
     @Col(name = "display_name")
     private String displayName;
 
+    @Title(title = "邮箱厂商", description = "qq/163/126/gmail/outlook/other")
+    @Col(name = "provider_code")
+    private String providerCode;
+
     @Title(title = "默认邮箱", description = "0否，1是")
     @Col(name = "default_flag")
     private int defaultFlag;
@@ -65,8 +69,39 @@ public class UserEmailAccount extends BaseEntity implements EntityEnableAble {
     @Col(name = "oauth2_json")
     private String oauth2Json;
 
+    @Title(title = "SMTP Host")
+    @Col(name = "smtp_host")
+    private String smtpHost;
+
+    @Title(title = "SMTP 端口")
+    @Col(name = "smtp_port")
+    private Integer smtpPort;
+
+    @Title(title = "SMTP SSL", description = "0否，1是")
+    @Col(name = "smtp_ssl")
+    private int smtpSsl;
+
+    @Title(title = "SMTP STARTTLS", description = "0否，1是")
+    @Col(name = "smtp_starttls")
+    private int smtpStarttls;
+
+    @Title(title = "SMTP 认证用户名")
+    @Col(name = "smtp_auth_user")
+    private String smtpAuthUser;
+
+    @Title(title = "SMTP 认证密文", description = "授权码/密码密文")
+    @Col(name = "smtp_auth_secret")
+    private String smtpAuthSecret;
+
+    @Title(title = "发件显示名称")
+    @Col(name = "smtp_from_name")
+    private String smtpFromName;
+
+    @Title(title = "邮件签名", description = "HTML")
+    @Col(name = "signature_html")
+    private String signatureHtml;
+
     @Title(title = "启用状态", description = "1启用，0不启用")
     @Col(name = "enable_status")
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
 }
-

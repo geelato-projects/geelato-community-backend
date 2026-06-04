@@ -27,7 +27,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L87-L101
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L87-L101
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -67,7 +67,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L77-L85
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L77-L85
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -106,7 +106,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L103-L114
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L103-L114
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -145,7 +145,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L39-L50
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L39-L50
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -182,7 +182,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L52-L62
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L52-L62
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -219,7 +219,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L64-L75
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/AppSqlMapController.java#L64-L75
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

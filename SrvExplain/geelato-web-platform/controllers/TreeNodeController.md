@@ -23,7 +23,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/TreeNodeController.java#L47-L58
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/TreeNodeController.java#L47-L58
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -62,7 +62,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/TreeNodeController.java#L35-L45
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/TreeNodeController.java#L35-L45
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

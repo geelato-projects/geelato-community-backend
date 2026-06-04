@@ -28,7 +28,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L77-L95
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L77-L95
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -68,7 +68,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L66-L75
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L66-L75
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -107,7 +107,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L97-L108
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L97-L108
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -146,7 +146,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L40-L51
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L40-L51
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -183,7 +183,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L53-L64
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L53-L64
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -220,7 +220,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L126-L138
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L126-L138
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -260,7 +260,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L110-L124
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/ScheduleController.java#L110-L124
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

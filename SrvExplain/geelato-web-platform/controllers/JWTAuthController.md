@@ -34,7 +34,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L296-L316
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L296-L316
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -75,7 +75,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L507-L546
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L507-L546
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -115,7 +115,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L440-L465
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L440-L465
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -155,7 +155,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L409-L438
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L409-L438
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -195,7 +195,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L156-L208
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L156-L208
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -232,7 +232,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：无需 Authorization（@IgnoreVerify）
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L58-L62
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L58-L62
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -270,7 +270,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L64-L67
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L64-L67
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -310,7 +310,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L280-L290
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L280-L290
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -347,7 +347,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L353-L383
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L353-L383
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -387,7 +387,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L394-L407
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L394-L407
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -426,7 +426,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L132-L154
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L132-L154
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -467,7 +467,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L318-L342
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L318-L342
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -509,7 +509,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L467-L505
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/auth/JWTAuthController.java#L467-L505
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

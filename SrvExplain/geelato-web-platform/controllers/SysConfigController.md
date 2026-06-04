@@ -28,7 +28,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L96-L114
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L96-L114
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -68,7 +68,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L80-L94
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L80-L94
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -111,7 +111,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L145-L160
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L145-L160
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -150,7 +150,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L116-L128
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L116-L128
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -189,7 +189,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L51-L65
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L51-L65
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -226,7 +226,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L67-L78
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L67-L78
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -263,7 +263,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L130-L143
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/SysConfigController.java#L130-L143
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

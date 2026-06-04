@@ -35,7 +35,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L62-L67
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L62-L67
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -72,7 +72,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L94-L101
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L94-L101
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -111,7 +111,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L76-L80
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L76-L80
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -151,7 +151,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L82-L87
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L82-L87
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -190,7 +190,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L124-L128
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L124-L128
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -227,7 +227,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L115-L119
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L115-L119
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -264,7 +264,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L103-L110
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L103-L110
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -303,7 +303,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L34-L39
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L34-L39
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -342,7 +342,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L34-L39
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L34-L39
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -381,7 +381,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L44-L49
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L44-L49
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -420,7 +420,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L69-L74
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L69-L74
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -457,7 +457,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L55-L60
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L55-L60
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -496,7 +496,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L137-L141
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L137-L141
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -538,7 +538,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L191-L213
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/meta/MetaController.java#L191-L213
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

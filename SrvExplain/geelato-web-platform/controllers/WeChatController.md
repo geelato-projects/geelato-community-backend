@@ -23,7 +23,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/WeChatController.java#L58-L79
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/WeChatController.java#L58-L79
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -66,7 +66,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/WeChatController.java#L48-L55
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/WeChatController.java#L48-L55
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

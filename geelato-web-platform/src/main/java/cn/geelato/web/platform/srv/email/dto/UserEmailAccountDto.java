@@ -11,6 +11,7 @@ public class UserEmailAccountDto {
     private String id;
     private String emailAddress;
     private String displayName;
+    private String providerCode;
     private Integer defaultFlag;
     private String imapHost;
     private Integer imapPort;
@@ -18,8 +19,14 @@ public class UserEmailAccountDto {
     private String imapFolderDefault;
     private String authType;
     private String authUser;
+    private String smtpHost;
+    private Integer smtpPort;
+    private Integer smtpSsl;
+    private Integer smtpStarttls;
+    private String smtpAuthUser;
+    private String smtpFromName;
+    private String signatureHtml;
     private Integer enableStatus;
     private Date createAt;
     private Date updateAt;
 }
-

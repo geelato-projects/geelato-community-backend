@@ -27,7 +27,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L83-L104
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L83-L104
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -67,7 +67,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L71-L81
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L71-L81
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -106,7 +106,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L106-L122
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L106-L122
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -145,7 +145,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L46-L57
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L46-L57
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -182,7 +182,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L59-L69
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L59-L69
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -219,7 +219,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L124-L138
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevViewController.java#L124-L138
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

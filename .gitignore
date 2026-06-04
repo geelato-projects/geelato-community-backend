@@ -57,3 +57,4 @@ geelato-web-quickstart/dump.rdb
 *.log
 *.lck
 
+/geelato-it-support/

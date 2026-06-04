@@ -10,6 +10,7 @@ public class UserEmailAccountUpsertRequest {
     private String id;
     private String emailAddress;
     private String displayName;
+    private String providerCode;
     @JsonAlias({"isDefault", "default", "default_flag"})
     private Integer defaultFlag;
     private String imapHost;
@@ -20,6 +21,14 @@ public class UserEmailAccountUpsertRequest {
     private String authUser;
     private String authSecret;
     private String oauth2Json;
+    private String smtpHost;
+    private Integer smtpPort;
+    private Integer smtpSsl;
+    private Integer smtpStarttls;
+    private String smtpAuthUser;
+    private String smtpAuthSecret;
+    private String smtpFromName;
+    private String signatureHtml;
     private Integer enableStatus;
 }
 

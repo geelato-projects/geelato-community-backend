@@ -26,7 +26,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevTableForeignController.java#L74-L86
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevTableForeignController.java#L74-L86
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -66,7 +66,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevTableForeignController.java#L64-L72
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevTableForeignController.java#L64-L72
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -105,7 +105,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevTableForeignController.java#L88-L100
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevTableForeignController.java#L88-L100
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -144,7 +144,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevTableForeignController.java#L39-L50
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevTableForeignController.java#L39-L50
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -181,7 +181,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevTableForeignController.java#L52-L62
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevTableForeignController.java#L52-L62
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

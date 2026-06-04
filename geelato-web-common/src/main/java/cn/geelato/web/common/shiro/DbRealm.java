@@ -18,17 +18,19 @@
  */
 package cn.geelato.web.common.shiro;
 
+import cn.geelato.core.enums.DeleteStatusEnum;
+import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.utils.Encodes;
 import cn.geelato.meta.User;
+import cn.geelato.utils.Encodes;
 import jakarta.annotation.PostConstruct;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.lang.util.ByteSource;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.util.ByteSource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +49,11 @@ public class DbRealm extends AuthorizingRealm {
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authToken) throws AuthenticationException {
         UsernamePasswordToken token = (UsernamePasswordToken) authToken;
-        User user = dao.queryForObject(User.class, "loginName", token.getUsername());
+        User example = new User();
+        example.setLoginName(token.getUsername());
+        example.setEnableStatus(EnableStatusEnum.ENABLED.getValue());
+        example.setDelStatus(DeleteStatusEnum.NO.getValue());
+        User user = dao.queryForObject(User.class, example);
         if (user != null) {
             byte[] salt = Encodes.decodeHex(user.getSalt());
             return new SimpleAuthenticationInfo(

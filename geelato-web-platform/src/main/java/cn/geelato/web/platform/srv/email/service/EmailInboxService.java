@@ -41,6 +41,9 @@ public class EmailInboxService {
     public record PageResult<T>(List<T> data, long total) {
     }
 
+    public record ContactAddressRecord(EmailAddressDto address, Date sentAt, Date receivedAt) {
+    }
+
     public List<EmailFolderDto> listFolders(String userId, String emailAccountId, String pattern) throws Exception {
         EmailAccountConfig config = getEmailAccountConfig(userId, emailAccountId);
         String p = Strings.isNotBlank(pattern) ? pattern : "*";
@@ -281,6 +284,62 @@ public class EmailInboxService {
             return list;
         } finally {
             closeQuietly(imapFolder);
+            closeQuietly(store);
+        }
+    }
+
+    public List<ContactAddressRecord> collectContactAddresses(String userId, String emailAccountId, List<String> folders,
+                                                              int messageLimit, boolean includeTo, boolean includeCc, boolean includeFrom) throws Exception {
+        EmailAccountConfig config = getEmailAccountConfig(userId, emailAccountId);
+        List<String> targets = folders == null || folders.isEmpty() ? List.of(config.defaultFolder()) : folders;
+        int remaining = Math.max(1, messageLimit);
+        List<ContactAddressRecord> list = new ArrayList<>();
+
+        Store store = null;
+        try {
+            store = connect(config);
+            for (String folderName : targets) {
+                if (remaining <= 0 || Strings.isBlank(folderName)) {
+                    break;
+                }
+                Folder folder = null;
+                try {
+                    folder = store.getFolder(folderName);
+                    if (folder == null || !folder.exists()) {
+                        continue;
+                    }
+                    folder.open(Folder.READ_ONLY);
+                    int total = folder.getMessageCount();
+                    if (total <= 0) {
+                        continue;
+                    }
+                    int scanCount = Math.min(total, remaining);
+                    int start = Math.max(1, total - scanCount + 1);
+                    Message[] messages = folder.getMessages(start, total);
+                    for (int i = messages.length - 1; i >= 0 && remaining > 0; i--) {
+                        Message msg = messages[i];
+                        Date sentAt = extractSentDate(msg);
+                        Date receivedAt = extractReceivedDate(msg);
+                        if (includeFrom) {
+                            EmailAddressDto from = firstAddress(msg.getFrom());
+                            if (from != null && Strings.isNotBlank(from.getAddress())) {
+                                list.add(new ContactAddressRecord(from, null, receivedAt != null ? receivedAt : sentAt));
+                            }
+                        }
+                        if (includeTo) {
+                            appendContactAddresses(list, addressList(msg.getRecipients(Message.RecipientType.TO)), sentAt, null);
+                        }
+                        if (includeCc) {
+                            appendContactAddresses(list, addressList(msg.getRecipients(Message.RecipientType.CC)), sentAt, null);
+                        }
+                        remaining--;
+                    }
+                } finally {
+                    closeQuietly(folder);
+                }
+            }
+            return list;
+        } finally {
             closeQuietly(store);
         }
     }
@@ -549,6 +608,18 @@ public class EmailInboxService {
             return dto;
         }
         return null;
+    }
+
+    private static void appendContactAddresses(List<ContactAddressRecord> out, List<EmailAddressDto> addresses, Date sentAt, Date receivedAt) {
+        if (addresses == null || addresses.isEmpty()) {
+            return;
+        }
+        for (EmailAddressDto address : addresses) {
+            if (address == null || Strings.isBlank(address.getAddress())) {
+                continue;
+            }
+            out.add(new ContactAddressRecord(address, sentAt, receivedAt));
+        }
     }
 
     private static String safeContentType(String contentType) {

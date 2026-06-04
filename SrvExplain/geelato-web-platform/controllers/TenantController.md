@@ -29,7 +29,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L76-L92
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L76-L92
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -68,7 +68,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L206-L254
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L206-L254
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -108,7 +108,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L98-L140
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L98-L140
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -147,7 +147,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L259-L314
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L259-L314
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -186,7 +186,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L38-L50
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L38-L50
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -227,7 +227,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L192-L201
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L192-L201
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -266,7 +266,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L55-L71
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L55-L71
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -305,7 +305,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L145-L190
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/tenant/TenantController.java#L145-L190
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

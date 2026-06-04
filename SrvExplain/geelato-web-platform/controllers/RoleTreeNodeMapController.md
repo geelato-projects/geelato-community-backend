@@ -28,7 +28,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L87-L96
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L87-L96
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -68,7 +68,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L77-L85
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L77-L85
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -108,7 +108,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L98-L109
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L98-L109
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -147,7 +147,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L111-L131
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L111-L131
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -187,7 +187,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L40-L51
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L40-L51
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -224,7 +224,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L53-L63
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L53-L63
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -261,7 +261,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L65-L75
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/security/RoleTreeNodeMapController.java#L65-L75
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

@@ -23,7 +23,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/run/PlatformLogSearchController.java#L22-L33
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/run/PlatformLogSearchController.java#L22-L33
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -62,7 +62,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/run/PlatformLogSearchController.java#L35-L51
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/run/PlatformLogSearchController.java#L35-L51
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

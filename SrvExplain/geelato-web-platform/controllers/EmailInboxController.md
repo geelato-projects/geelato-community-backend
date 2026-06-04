@@ -27,7 +27,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L43-L61
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L43-L61
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -67,7 +67,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L63-L96
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L63-L96
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -107,7 +107,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L98-L116
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L98-L116
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -146,7 +146,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L137-L166
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L137-L166
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -186,7 +186,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L168-L227
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L168-L227
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -229,7 +229,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L118-L135
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/email/EmailInboxController.java#L118-L135
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

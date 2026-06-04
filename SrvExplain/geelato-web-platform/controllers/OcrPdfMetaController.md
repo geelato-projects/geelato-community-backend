@@ -27,7 +27,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L70-L83
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L70-L83
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -67,7 +67,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L60-L68
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L60-L68
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -106,7 +106,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L85-L96
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L85-L96
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -145,7 +145,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L35-L46
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L35-L46
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -182,7 +182,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L48-L58
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L48-L58
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -219,7 +219,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L98-L107
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/ocr/OcrPdfMetaController.java#L98-L107
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

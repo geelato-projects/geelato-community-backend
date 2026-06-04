@@ -31,7 +31,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L103-L113
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L103-L113
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -71,7 +71,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L188-L216
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L188-L216
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -111,7 +111,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L85-L101
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L85-L101
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -151,7 +151,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L75-L83
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L75-L83
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -190,7 +190,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L115-L128
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L115-L128
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -229,7 +229,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L50-L61
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L50-L61
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -266,7 +266,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L63-L73
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L63-L73
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -303,7 +303,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L130-L150
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L130-L150
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -342,7 +342,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L218-L244
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L218-L244
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -381,7 +381,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L172-L186
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/platform/DictItemController.java#L172-L186
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

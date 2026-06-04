@@ -152,19 +152,33 @@ public class EmailAccountController extends BaseController {
             if (Strings.isBlank(req.getImapHost())) {
                 return ApiResult.fail("IMAP Host不能为空");
             }
+            if (Strings.isBlank(req.getSmtpHost())) {
+                return ApiResult.fail("SMTP Host不能为空");
+            }
 
+            String providerCode = Strings.isNotBlank(req.getProviderCode()) ? req.getProviderCode().trim().toLowerCase() : "other";
             String authType = Strings.isNotBlank(req.getAuthType()) ? req.getAuthType() : "auth_code";
             Integer enableStatus = req.getEnableStatus() != null ? req.getEnableStatus() : 1;
             Integer defaultFlag = req.getDefaultFlag() != null ? req.getDefaultFlag() : 0;
             Integer imapSsl = req.getImapSsl() != null ? req.getImapSsl() : 1;
             Integer imapPort = req.getImapPort() != null ? req.getImapPort() : (imapSsl == 1 ? 993 : 143);
             String authUser = Strings.isNotBlank(req.getAuthUser()) ? req.getAuthUser() : req.getEmailAddress();
+            Integer smtpSsl = req.getSmtpSsl() != null ? req.getSmtpSsl() : 1;
+            Integer smtpStarttls = req.getSmtpStarttls() != null ? req.getSmtpStarttls() : (smtpSsl == 1 ? 0 : 1);
+            Integer smtpPort = req.getSmtpPort() != null ? req.getSmtpPort() : (smtpSsl == 1 ? 465 : 587);
+            String smtpAuthUser = Strings.isNotBlank(req.getSmtpAuthUser()) ? req.getSmtpAuthUser() : authUser;
+            String smtpFromName = Strings.isNotBlank(req.getSmtpFromName()) ? req.getSmtpFromName() : req.getDisplayName();
 
-            log.debug("emailAccount createOrUpdate request, userId={}, id={}, emailAddress={}, authType={}, enableStatus={}, defaultFlag={}, imapHost={}, imapPort={}, imapSsl={}, imapFolderDefault={}, authUser={}",
-                    userId, req.getId(), maskEmail(req.getEmailAddress()), authType, enableStatus, defaultFlag, req.getImapHost(), imapPort, imapSsl, req.getImapFolderDefault(), maskEmail(authUser));
+            log.debug("emailAccount createOrUpdate request, userId={}, id={}, providerCode={}, emailAddress={}, authType={}, enableStatus={}, defaultFlag={}, imapHost={}, imapPort={}, imapSsl={}, imapFolderDefault={}, authUser={}, smtpHost={}, smtpPort={}, smtpSsl={}, smtpStarttls={}, smtpAuthUser={}",
+                    userId, req.getId(), providerCode, maskEmail(req.getEmailAddress()), authType, enableStatus, defaultFlag, req.getImapHost(), imapPort, imapSsl, req.getImapFolderDefault(), maskEmail(authUser),
+                    req.getSmtpHost(), smtpPort, smtpSsl, smtpStarttls, maskEmail(smtpAuthUser));
             String encryptedSecret = null;
             if (!"oauth2".equalsIgnoreCase(authType) && Strings.isNotBlank(req.getAuthSecret())) {
                 encryptedSecret = EncryptUtils.encrypt(req.getAuthSecret());
+            }
+            String encryptedSmtpSecret = null;
+            if (!"oauth2".equalsIgnoreCase(authType) && Strings.isNotBlank(req.getSmtpAuthSecret())) {
+                encryptedSmtpSecret = EncryptUtils.encrypt(req.getSmtpAuthSecret());
             }
 
             String id = Strings.isNotBlank(req.getId()) ? req.getId() : null;
@@ -173,6 +187,7 @@ public class EmailAccountController extends BaseController {
                         .value("userId", userId)
                         .value("emailAddress", req.getEmailAddress())
                         .value("displayName", req.getDisplayName())
+                        .value("providerCode", providerCode)
                         .value("defaultFlag", defaultFlag)
                         .value("imapHost", req.getImapHost())
                         .value("imapPort", imapPort)
@@ -182,6 +197,14 @@ public class EmailAccountController extends BaseController {
                         .value("authUser", authUser)
                         .value("authSecret", encryptedSecret)
                         .value("oauth2Json", req.getOauth2Json())
+                        .value("smtpHost", req.getSmtpHost())
+                        .value("smtpPort", smtpPort)
+                        .value("smtpSsl", smtpSsl)
+                        .value("smtpStarttls", smtpStarttls)
+                        .value("smtpAuthUser", smtpAuthUser)
+                        .value("smtpAuthSecret", encryptedSmtpSecret)
+                        .value("smtpFromName", smtpFromName)
+                        .value("signatureHtml", req.getSignatureHtml())
                         .value("enableStatus", enableStatus)
                         .save();
             } else {
@@ -204,6 +227,7 @@ public class EmailAccountController extends BaseController {
                         )
                         .value("emailAddress", req.getEmailAddress())
                         .value("displayName", req.getDisplayName())
+                        .value("providerCode", providerCode)
                         .value("defaultFlag", defaultFlag)
                         .value("imapHost", req.getImapHost())
                         .value("imapPort", imapPort)
@@ -211,10 +235,20 @@ public class EmailAccountController extends BaseController {
                         .value("imapFolderDefault", req.getImapFolderDefault())
                         .value("authType", authType)
                         .value("authUser", authUser)
+                        .value("smtpHost", req.getSmtpHost())
+                        .value("smtpPort", smtpPort)
+                        .value("smtpSsl", smtpSsl)
+                        .value("smtpStarttls", smtpStarttls)
+                        .value("smtpAuthUser", smtpAuthUser)
+                        .value("smtpFromName", smtpFromName)
+                        .value("signatureHtml", req.getSignatureHtml())
                         .value("enableStatus", enableStatus);
 
                 if (encryptedSecret != null) {
                     update.value("authSecret", encryptedSecret);
+                }
+                if (encryptedSmtpSecret != null) {
+                    update.value("smtpAuthSecret", encryptedSmtpSecret);
                 }
                 if (req.getOauth2Json() != null) {
                     update.value("oauth2Json", req.getOauth2Json());
@@ -319,6 +353,7 @@ public class EmailAccountController extends BaseController {
         dto.setId(Objects.toString(row.get("id"), null));
         dto.setEmailAddress(Objects.toString(row.get("emailAddress"), null));
         dto.setDisplayName(Objects.toString(row.get("displayName"), null));
+        dto.setProviderCode(Objects.toString(row.get("providerCode"), null));
         dto.setDefaultFlag(intVal(row.get("defaultFlag")));
         dto.setImapHost(Objects.toString(row.get("imapHost"), null));
         dto.setImapPort(intVal(row.get("imapPort")));
@@ -326,6 +361,13 @@ public class EmailAccountController extends BaseController {
         dto.setImapFolderDefault(Objects.toString(row.get("imapFolderDefault"), null));
         dto.setAuthType(Objects.toString(row.get("authType"), null));
         dto.setAuthUser(Objects.toString(row.get("authUser"), null));
+        dto.setSmtpHost(Objects.toString(row.get("smtpHost"), null));
+        dto.setSmtpPort(intVal(row.get("smtpPort")));
+        dto.setSmtpSsl(intVal(row.get("smtpSsl")));
+        dto.setSmtpStarttls(intVal(row.get("smtpStarttls")));
+        dto.setSmtpAuthUser(Objects.toString(row.get("smtpAuthUser"), null));
+        dto.setSmtpFromName(Objects.toString(row.get("smtpFromName"), null));
+        dto.setSignatureHtml(Objects.toString(row.get("signatureHtml"), null));
         dto.setEnableStatus(intVal(row.get("enableStatus")));
         dto.setCreateAt(dateVal(row.get("createAt")));
         dto.setUpdateAt(dateVal(row.get("updateAt")));

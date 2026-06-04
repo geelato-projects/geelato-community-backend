@@ -35,7 +35,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L288-L303
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L288-L303
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -74,7 +74,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L57-L91
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L57-L91
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -116,7 +116,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L130-L134
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L130-L134
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -155,7 +155,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L136-L142
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L136-L142
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -194,7 +194,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L270-L274
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L270-L274
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -234,7 +234,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L276-L286
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L276-L286
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -274,7 +274,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L100-L128
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L100-L128
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -316,7 +316,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L305-L309
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L305-L309
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -359,7 +359,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L311-L338
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L311-L338
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -402,7 +402,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L152-L172
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L152-L172
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -445,7 +445,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L211-L268
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L211-L268
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -487,7 +487,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L347-L383
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L347-L383
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -526,7 +526,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L144-L150
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L144-L150
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -568,7 +568,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L174-L209
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/file/AttachController.java#L174-L209
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

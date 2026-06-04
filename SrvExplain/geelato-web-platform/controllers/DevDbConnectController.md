@@ -30,7 +30,7 @@
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L118-L137
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L118-L137
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -70,7 +70,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L76-L91
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L76-L91
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -110,7 +110,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L66-L74
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L66-L74
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -149,7 +149,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L93-L105
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L93-L105
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -188,7 +188,7 @@ curl -X DELETE \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L107-L116
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L107-L116
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -228,7 +228,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L41-L52
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L41-L52
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -265,7 +265,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L54-L64
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L54-L64
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -302,7 +302,7 @@ curl -X GET \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L139-L151
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L139-L151
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |
@@ -341,7 +341,7 @@ curl -X POST \
 - Produces：
 - Consumes：
 - 鉴权：需要 Authorization
-- 源码：file:///d:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L153-L161
+- 源码：file:///D:/geelato/geelato-enterprise/geelato-community/geelato-web-platform/src/main/java/cn/geelato/web/platform/srv/model/DevDbConnectController.java#L153-L161
 
 #### Header
 | 名称 | Java 类型 | 必填 | 默认值 | 说明 |

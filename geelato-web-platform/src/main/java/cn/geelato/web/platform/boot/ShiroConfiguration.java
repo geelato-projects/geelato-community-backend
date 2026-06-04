@@ -8,7 +8,6 @@ import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
-import org.apache.shiro.util.ThreadContext;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,6 +26,7 @@ public class ShiroConfiguration extends BaseConfiguration {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
         Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
+        filterChainDefinitionMap.put("/**", "anon");
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
         return shiroFilterFactoryBean;
     }
@@ -102,11 +102,11 @@ public class ShiroConfiguration extends BaseConfiguration {
             @Qualifier("oauth2Realm") OAuth2Realm oAuth2Realm,
             @Qualifier("weixinUnionIdRealm") WeixinUnionIdRealm weixinUnionIdRealm,
             @Qualifier("weixinWorkUserIdRealm") WeixinWorkUserIdRealm weixinWorkUserIdRealm,
-            @Qualifier("dbShiroRealm") DbRealm dbRealm) {
+            @Qualifier("dbShiroRealm") DbRealm dbRealm,
+            EhCacheManager cacheManager) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
         defaultWebSecurityManager.setRealms(Arrays.asList(anonymousRealm, weixinUnionIdRealm, weixinWorkUserIdRealm, oAuth2Realm, dbRealm));
-        defaultWebSecurityManager.setCacheManager(getEhCacheManager());
-        ThreadContext.bind(defaultWebSecurityManager);
+        defaultWebSecurityManager.setCacheManager(cacheManager);
         return defaultWebSecurityManager;
     }
 }

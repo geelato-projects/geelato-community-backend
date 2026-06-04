@@ -46,6 +46,10 @@ public class FileHelper {
         return fileObjectSrvProvider.getFile(objectName);
     }
 
+    public OSSResult getBucketStats() {
+        return fileObjectSrvProvider.getBucketStats();
+    }
+
     private String generateFilePrefix() {
         return SessionCtx.getCurrentTenantCode() + "/";
     }

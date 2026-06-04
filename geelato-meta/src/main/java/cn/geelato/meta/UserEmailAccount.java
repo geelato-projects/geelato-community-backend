@@ -2,7 +2,6 @@ package cn.geelato.meta;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.model.entity.BaseEntity;
-import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;

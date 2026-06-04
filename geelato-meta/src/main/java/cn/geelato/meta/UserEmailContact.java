@@ -1,8 +1,5 @@
 package cn.geelato.meta;
-
-import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.model.entity.BaseEntity;
-import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
@@ -17,7 +14,7 @@ import java.util.Date;
 @Entity(name = "platform_user_email_contact")
 @TableName("platform_user_email_contact")
 @Title(title = "用户邮件联系人")
-public class UserEmailContact extends BaseEntity implements EntityEnableAble {
+public class UserEmailContact extends BaseEntity {
     @Title(title = "用户ID")
     @Col(name = "user_id", nullable = false)
     private String userId;
@@ -67,8 +64,4 @@ public class UserEmailContact extends BaseEntity implements EntityEnableAble {
     @Title(title = "联系次数")
     @Col(name = "contact_count")
     private int contactCount;
-
-    @Title(title = "启用状态", description = "1启用，0不启用")
-    @Col(name = "enable_status")
-    private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
 }

@@ -8,7 +8,6 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.datasource.annotation.UseDynamicDataSource;
-import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.srv.excel.exception.FileException;
 import cn.geelato.meta.Dict;
@@ -856,7 +855,7 @@ public class ExcelCommonUtils {
                         columnNames.add(ruleData.getGoal());
                         columnNames.addAll(ruleData.getQueryRuleColumn());
                         String ggl = String.format(gglFormat, ruleData.getQueryRuleTable(), String.join(",", columnNames));
-                        ApiPagedResult<List<Map<String, Object>>> page = ruleService.queryForMapList(ggl, false);
+                        Map<String, Object> page = ruleService.queryForMapList(ggl, false);
                         Map<String, Object> redisValue = pagedResultToMap(page, ruleData.getGoal(), ruleData.getQueryRuleColumn());
                         redisTemplate.opsForValue().set(key, redisValue, REDIS_TIME_OUT, TimeUnit.MINUTES);
                         primaryKeys.add(key);
@@ -1011,7 +1010,7 @@ public class ExcelCommonUtils {
                         columnNames.add(meta.getGoalName());
                         columnNames.addAll(meta.getColumnNames());
                         String ggl = String.format(gglFormat, meta.getTableName(), String.join(",", columnNames));
-                        ApiPagedResult<List<Map<String, Object>>> page = ruleService.queryForMapList(ggl, false);
+                        Map<String, Object> page = ruleService.queryForMapList(ggl, false);
                         Map<String, Object> redisValue = pagedResultToMap(page, meta.getGoalName(), meta.getColumnNames());
                         redisTemplate.opsForValue().set(key, redisValue, REDIS_TIME_OUT, TimeUnit.MINUTES);
                         primaryKeys.add(key);
@@ -1028,17 +1027,17 @@ public class ExcelCommonUtils {
     /**
      * 将分页查询结果转换为映射
      * <p>
-     * 将ApiPagedResult对象中的查询结果转换为Map<String, Object>类型，其中键为查询字段的值，值为目标字段的值。
+     * 将分页查询结果转换为Map<String, Object>类型，其中键为查询字段的值，值为目标字段的值。
      *
-     * @param page        分页查询结果对象
+     * @param page        分页查询结果
      * @param goalName    目标字段名称，用于从查询结果中提取对应的值
      * @param columnNames 查询字段名称列表，用于构建映射的键
      * @return 返回转换后的映射，键为查询字段的值，值为目标字段的值
      */
-    private Map<String, Object> pagedResultToMap(ApiPagedResult<?> page, String goalName, List<String> columnNames) {
+    private Map<String, Object> pagedResultToMap(Map<String, Object> page, String goalName, List<String> columnNames) {
         Map<String, Object> redisMap = new HashMap<>();
-        if (page != null && page.getData() != null && page.getTotal() > 0) {
-            List<Map<String, Object>> mapList = (List<Map<String, Object>>) page.getData();
+        List<Map<String, Object>> mapList = getPageData(page);
+        if (mapList != null && !mapList.isEmpty() && getPageTotal(page) > 0) {
             for (Map<String, Object> map : mapList) {
                 Object goalValue = map.get(goalName);
                 if (goalValue != null) {
@@ -1103,7 +1102,7 @@ public class ExcelCommonUtils {
         try {
             if (Strings.isNotBlank(tableName) && !uniqueColumns.isEmpty()) {
                 String ggl = String.format(gglFormat, tableName, String.join(",", uniqueColumns));
-                ApiPagedResult<List<Map<String, Object>>> page = ruleService.queryForMapList(ggl, false);
+                Map<String, Object> page = ruleService.queryForMapList(ggl, false);
                 Map<String, Set<Object>> redisValue = pageResultToMap(page, uniqueColumns);
                 redisTemplate.opsForValue().set(key, redisValue, REDIS_TIME_OUT, TimeUnit.MINUTES);
             }
@@ -1114,10 +1113,10 @@ public class ExcelCommonUtils {
         return uniqueKeys;
     }
 
-    private Map<String, Set<Object>> pageResultToMap(ApiPagedResult<?> page, Set<String> uniqueColumns) {
+    private Map<String, Set<Object>> pageResultToMap(Map<String, Object> page, Set<String> uniqueColumns) {
         Map<String, Set<Object>> redisValue = new HashMap<>();
-        if (page != null && page.getData() != null && page.getTotal() > 0) {
-            List<Map<String, Object>> mapList = (List<Map<String, Object>>) page.getData();
+        List<Map<String, Object>> mapList = getPageData(page);
+        if (mapList != null && !mapList.isEmpty() && getPageTotal(page) > 0) {
             for (String fieldName : uniqueColumns) {
                 Set<Object> values = new LinkedHashSet<>();
                 for (Map<String, Object> map : mapList) {
@@ -1131,6 +1130,23 @@ public class ExcelCommonUtils {
         }
 
         return redisValue;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> getPageData(Map<String, Object> page) {
+        if (page == null) {
+            return Collections.emptyList();
+        }
+        Object data = page.get("data");
+        return data instanceof List ? (List<Map<String, Object>>) data : Collections.emptyList();
+    }
+
+    private long getPageTotal(Map<String, Object> page) {
+        if (page == null) {
+            return 0L;
+        }
+        Object total = page.get("total");
+        return total instanceof Number number ? number.longValue() : 0L;
     }
 
     /**

@@ -20,9 +20,6 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.sql.SqlManager;
 import cn.geelato.datasource.DynamicDataSourceHolder;
-import cn.geelato.lang.api.ApiMultiPagedResult;
-import cn.geelato.lang.api.ApiPagedResult;
-import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.utils.CacheUtil;
 import cn.geelato.web.platform.cache.MetaCacheProvider;
@@ -104,69 +101,55 @@ public class RuleService {
     }
 
 
-    public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta) {
+    public Map<String, Object> queryForMapList(String gql, boolean withMeta) {
         return queryForMapList(gql, withMeta, Collections.emptyMap());
     }
 
-    public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta, Map<String, Map<String, Object>> queryParamsByEntity) {
+    public Map<String, Object> queryForMapList(String gql, boolean withMeta, Map<String, Map<String, Object>> queryParamsByEntity) {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         applyViewTemplateParams(command, queryParamsByEntity);
         processQueryCommandFunctions(command);
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
+        Object meta = withMeta ? metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()) : null;
         if (!GlobalContext.getMetaQueryCacheOption()) {
             List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
             Long total = dao.queryTotal(boundPageSql);
-            ApiPagedResult<List<Map<String, Object>>> result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list != null ? list.size() : 0, total != null ? total : 0);
-            if (withMeta) {
-                result.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
-            }
-            return result;
+            return createPageResult(list, command.getPageNum(), command.getPageSize(), total, meta, false);
         }
         String prefix = "query:" + command.getEntityName() + ":" + command.getCacheKey();
         String kList = prefix + ":list";
         String kTotal = prefix + ":total";
-        ApiPagedResult<List<Map<String, Object>>> result;
         if (metaCache.exists(kList) && metaCache.exists(kTotal)) {
             List<Map<String, Object>> cachedList = (List<Map<String, Object>>) metaCache.getCache(kList);
             Long cachedTotal = (Long) metaCache.getCache(kTotal);
-            result = ApiPagedResult.success(cachedList, command.getPageNum(), command.getPageSize(), cachedList != null ? cachedList.size() : 0, cachedTotal != null ? cachedTotal : 0);
-            result.setCache(true);
-        } else {
-            List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
-            Long total = dao.queryTotal(boundPageSql);
-            metaCache.putCache(kList, list);
-            metaCache.putCache(kTotal, total);
-            result = ApiPagedResult.success(list, command.getPageNum(), command.getPageSize(), list != null ? list.size() : 0, total != null ? total : 0);
+            return createPageResult(cachedList, command.getPageNum(), command.getPageSize(), cachedTotal, meta, true);
         }
-        if (withMeta) {
-            result.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
-        }
-        return result;
+        List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
+        Long total = dao.queryTotal(boundPageSql);
+        metaCache.putCache(kList, list);
+        metaCache.putCache(kTotal, total);
+        return createPageResult(list, command.getPageNum(), command.getPageSize(), total, meta, false);
     }
 
     /**
      * @param entity 与platform_tree_node 关联的业务实体带有tree_node_id字段
      */
-    public ApiResult<List<Map>> queryForTreeNodeList(String entity, Long treeId) {
+    public List<Map> queryForTreeNodeList(String entity, Long treeId) {
         if (!metaManager.containsEntity(entity)) {
-            return ApiResult.fail("不存在该实体");
+            throw new IllegalArgumentException("不存在该实体");
         }
         Map params = new HashedMap();
         EntityMeta entityMeta = metaManager.getByEntityName(entity);
         params.put("tableName", entityMeta.getTableName());
         params.put("treeId", treeId);
-        return ApiResult.success(dao.queryForMapList("select_tree_node_left_join", params));
+        return dao.queryForMapList("select_tree_node_left_join", params);
     }
 
     /**
      * @param entity 与platform_tree_node 关联的业务实体带有tree_node_id字段
      */
-    public ApiResult queryForTree(String entity, long treeId, String childrenKey) {
-        ApiResult<List<Map>> result = queryForTreeNodeList(entity, treeId);
-        if (!result.isSuccess()) {
-            return result;
-        }
-        return ApiResult.success(toTree(result.getData(), treeId, childrenKey));
+    public List<Map> queryForTree(String entity, long treeId, String childrenKey) {
+        return toTree(queryForTreeNodeList(entity, treeId), treeId, childrenKey);
     }
 
     /**
@@ -201,12 +184,12 @@ public class RuleService {
         return resultList;
     }
 
-    public ApiMultiPagedResult queryForMultiMapList(String gql, boolean withMeta) {
+    public Map<String, Object> queryForMultiMapList(String gql, boolean withMeta) {
         return queryForMultiMapList(gql, withMeta, Collections.emptyMap());
     }
 
-    public ApiMultiPagedResult queryForMultiMapList(String gql, boolean withMeta, Map<String, Map<String, Object>> queryParamsByEntity) {
-        Map<String, ApiMultiPagedResult.PageData> dataMap = new HashMap<>();
+    public Map<String, Object> queryForMultiMapList(String gql, boolean withMeta, Map<String, Map<String, Object>> queryParamsByEntity) {
+        Map<String, Map<String, Object>> dataMap = new HashMap<>();
         List<QueryCommand> commandList = gqlManager.generateMultiQuerySql(gql);
         boolean allCached = GlobalContext.getMetaQueryCacheOption();
         for (QueryCommand command : commandList) {
@@ -229,21 +212,29 @@ public class RuleService {
                     metaCache.putCache(kTotal, total);
                 }
             }
-            ApiMultiPagedResult.PageData apiPd = new ApiMultiPagedResult.PageData();
-            apiPd.setData(list);
-            apiPd.setTotal(total != null ? total : 0);
-            apiPd.setPage(command.getPageNum());
-            apiPd.setSize(command.getPageSize());
-            apiPd.setDataSize(list != null ? list.size() : 0);
-            if (withMeta) {
-                apiPd.setMeta(metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()));
-            }
-            dataMap.put(command.getEntityName(), apiPd);
+            Object meta = withMeta ? metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()) : null;
+            dataMap.put(command.getEntityName(), createPageResult(list, command.getPageNum(), command.getPageSize(), total, meta, false));
         }
-        ApiMultiPagedResult result = new ApiMultiPagedResult();
-        result.setData(dataMap);
+        Map<String, Object> result = new HashMap<>();
+        result.put("data", dataMap);
         if (allCached) {
-            result.setCache(true);
+            result.put("cache", true);
+        }
+        return result;
+    }
+
+    private Map<String, Object> createPageResult(List<Map<String, Object>> list, long page, int size, Long total, Object meta, boolean cache) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("data", list);
+        result.put("page", page);
+        result.put("size", size);
+        result.put("dataSize", list != null ? list.size() : 0);
+        result.put("total", total != null ? total : 0L);
+        if (meta != null) {
+            result.put("meta", meta);
+        }
+        if (cache) {
+            result.put("cache", true);
         }
         return result;
     }

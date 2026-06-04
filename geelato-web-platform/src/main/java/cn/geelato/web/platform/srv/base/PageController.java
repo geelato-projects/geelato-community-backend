@@ -4,7 +4,6 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.security.User;
 import cn.geelato.web.common.constants.MediaTypes;
-import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.utils.CacheUtil;
@@ -217,9 +216,10 @@ public class PageController extends BaseController {
                     if (!CacheUtil.exists(pageCustomKey) || CacheUtil.get(pageCustomKey) == null) {
                         //todo 线程池问题临时处理方法
                         DynamicDataSourceHolder.setDataSourceKey("primary");
-                        ApiPagedResult<List<Map<String, Object>>> apiPagedResult = ruleService.queryForMapList("{\"platform_my_page_custom\":{\"@fs\":\"id,cfg,pageId\",\"creator|eq\":\"" + user.getUserId() + "\",\"pageId|eq\":\"" + page.getId() + "\",\"delStatus|eq\":0,\"@p\":\"1,1\"}}", false);
-                        if (apiPagedResult.getDataSize() > 0) {
-                            CacheUtil.put(pageCustomKey, ((List<?>) apiPagedResult.getData()).get(0));
+                        Map<String, Object> pageResult = ruleService.queryForMapList("{\"platform_my_page_custom\":{\"@fs\":\"id,cfg,pageId\",\"creator|eq\":\"" + user.getUserId() + "\",\"pageId|eq\":\"" + page.getId() + "\",\"delStatus|eq\":0,\"@p\":\"1,1\"}}", false);
+                        Object dataSize = pageResult.get("dataSize");
+                        if (dataSize instanceof Number number && number.intValue() > 0) {
+                            CacheUtil.put(pageCustomKey, ((List<?>) pageResult.get("data")).get(0));
                         }
                     }
                     pageMap.put("pageCustom", CacheUtil.get(pageCustomKey));

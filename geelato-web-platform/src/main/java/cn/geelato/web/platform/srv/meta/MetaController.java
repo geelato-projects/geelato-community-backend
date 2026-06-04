@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +36,7 @@ public class MetaController extends BaseController {
     @RequestMapping(value = {"/list", "list/*"}, method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiPagedResult<?> list(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
         QueryPayload payload = resolveQueryPayload();
-        return ruleService.queryForMapList(payload.gql(), withMeta, payload.paramsByEntity());
+        return toApiPagedResult(ruleService.queryForMapList(payload.gql(), withMeta, payload.paramsByEntity()));
     }
 
     /**
@@ -45,7 +46,7 @@ public class MetaController extends BaseController {
     @RequestMapping(value = {"/multiList"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMultiPagedResult<?> multiList(@RequestParam(value = "withMeta", defaultValue = "true") boolean withMeta) {
         QueryPayload payload = resolveQueryPayload();
-        return ruleService.queryForMultiMapList(payload.gql(), withMeta, payload.paramsByEntity());
+        return toApiMultiPagedResult(ruleService.queryForMultiMapList(payload.gql(), withMeta, payload.paramsByEntity()));
     }
 
     /**
@@ -137,7 +138,11 @@ public class MetaController extends BaseController {
     @GeelatoTest(description = "通用树数据查询测试")
     @RequestMapping(value = {"/tree/{biz}"}, method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> treeNodeList(@RequestParam String entity, @RequestParam Long treeId, @PathVariable String biz) {
-        return ruleService.queryForTreeNodeList(entity, treeId);
+        try {
+            return ApiResult.success(ruleService.queryForTreeNodeList(entity, treeId));
+        } catch (IllegalArgumentException ex) {
+            return ApiResult.fail(ex.getMessage());
+        }
     }
 
 
@@ -204,12 +209,70 @@ public class MetaController extends BaseController {
             }
             gql = JSON.toJSONString(jo);
         }
-        ApiPagedResult<List<Map<String, Object>>> page = ruleService.queryForMapList(gql, false);
-        if (page.isSuccess()) {
-            return ApiResult.success(page.getTotal() == 0);
-        } else {
-            return ApiResult.fail(page.getMsg());
+        Map<String, Object> page = ruleService.queryForMapList(gql, false);
+        return ApiResult.success(getLong(page, "total") == 0);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ApiPagedResult<List<Map<String, Object>>> toApiPagedResult(Map<String, Object> pageData) {
+        List<Map<String, Object>> data = pageData == null ? Collections.emptyList() : (List<Map<String, Object>>) pageData.getOrDefault("data", Collections.emptyList());
+        ApiPagedResult<List<Map<String, Object>>> result = ApiPagedResult.success(
+                data,
+                getLong(pageData, "page"),
+                getInt(pageData, "size"),
+                getInt(pageData, "dataSize"),
+                getLong(pageData, "total")
+        );
+        if (pageData != null && pageData.containsKey("meta")) {
+            result.setMeta(pageData.get("meta"));
         }
+        if (Boolean.TRUE.equals(pageData.get("cache"))) {
+            result.setCache(true);
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private ApiMultiPagedResult<List<Map<String, Object>>> toApiMultiPagedResult(Map<String, Object> multiPageData) {
+        ApiMultiPagedResult<List<Map<String, Object>>> result = new ApiMultiPagedResult<>();
+        Map<String, Map<String, Object>> dataMap = multiPageData == null
+                ? Collections.emptyMap()
+                : (Map<String, Map<String, Object>>) multiPageData.getOrDefault("data", Collections.emptyMap());
+        Map<String, ApiMultiPagedResult.PageData<List<Map<String, Object>>>> apiDataMap = new HashMap<>();
+        for (Map.Entry<String, Map<String, Object>> entry : dataMap.entrySet()) {
+            Map<String, Object> pageData = entry.getValue();
+            ApiMultiPagedResult.PageData<List<Map<String, Object>>> apiPd = new ApiMultiPagedResult.PageData<>();
+            apiPd.setData(pageData == null ? Collections.emptyList() : (List<Map<String, Object>>) pageData.getOrDefault("data", Collections.emptyList()));
+            apiPd.setTotal(getLong(pageData, "total"));
+            apiPd.setPage(getLong(pageData, "page"));
+            apiPd.setSize(getInt(pageData, "size"));
+            apiPd.setDataSize(getInt(pageData, "dataSize"));
+            if (pageData != null && pageData.containsKey("meta")) {
+                apiPd.setMeta(pageData.get("meta"));
+            }
+            apiDataMap.put(entry.getKey(), apiPd);
+        }
+        result.setData(apiDataMap);
+        if (multiPageData != null && Boolean.TRUE.equals(multiPageData.get("cache"))) {
+            result.setCache(true);
+        }
+        return result;
+    }
+
+    private long getLong(Map<String, Object> data, String key) {
+        if (data == null) {
+            return 0L;
+        }
+        Object value = data.get(key);
+        return value instanceof Number number ? number.longValue() : 0L;
+    }
+
+    private int getInt(Map<String, Object> data, String key) {
+        if (data == null) {
+            return 0;
+        }
+        Object value = data.get(key);
+        return value instanceof Number number ? number.intValue() : 0;
     }
 
 }

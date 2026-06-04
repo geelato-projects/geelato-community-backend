@@ -1,6 +1,5 @@
 package cn.geelato.meta;
 
-import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
@@ -88,7 +87,4 @@ public class UserEmailDraft extends BaseEntity {
     @Col(name = "send_status")
     private String sendStatus;
 
-    @Title(title = "启用状态", description = "1启用，0不启用")
-    @Col(name = "enable_status")
-    private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
 }

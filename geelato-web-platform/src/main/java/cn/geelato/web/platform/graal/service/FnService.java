@@ -179,14 +179,49 @@ public class FnService {
         entity.append("}}");
         // 切换数据链接，执行查询
         switchDataSource(entityReader.getEntity());
-        return ruleService.queryForMapList(entity.toString(), true);
+        return toApiPagedResult(ruleService.queryForMapList(entity.toString(), true));
     }
 
     @GraalFunction(example = "$gl.fn.queryForMapList({gql},{withMeta})", description = "执行GQL查询，返回带或不带元数据的分页结果")
     public ApiPagedResult<List<Map<String, Object>>> queryForMapList(String gql, boolean withMeta) {
         QueryCommand command = MetaQLManager.singleInstance().generateQuerySql(gql);
         switchDataSource(command.getEntityName());
-        return ruleService.queryForMapList(gql, withMeta);
+        return toApiPagedResult(ruleService.queryForMapList(gql, withMeta));
+    }
+
+    @SuppressWarnings("unchecked")
+    private ApiPagedResult<List<Map<String, Object>>> toApiPagedResult(Map<String, Object> pageData) {
+        List<Map<String, Object>> data = pageData == null ? Collections.emptyList() : (List<Map<String, Object>>) pageData.getOrDefault("data", Collections.emptyList());
+        ApiPagedResult<List<Map<String, Object>>> result = ApiPagedResult.success(
+                data,
+                getLong(pageData, "page"),
+                getInt(pageData, "size"),
+                getInt(pageData, "dataSize"),
+                getLong(pageData, "total")
+        );
+        if (pageData != null && pageData.containsKey("meta")) {
+            result.setMeta(pageData.get("meta"));
+        }
+        if (pageData != null && Boolean.TRUE.equals(pageData.get("cache"))) {
+            result.setCache(true);
+        }
+        return result;
+    }
+
+    private long getLong(Map<String, Object> data, String key) {
+        if (data == null) {
+            return 0L;
+        }
+        Object value = data.get(key);
+        return value instanceof Number number ? number.longValue() : 0L;
+    }
+
+    private int getInt(Map<String, Object> data, String key) {
+        if (data == null) {
+            return 0;
+        }
+        Object value = data.get(key);
+        return value instanceof Number number ? number.intValue() : 0;
     }
 
     private void switchDataSource(String entityName) {

@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.srv.security.service;
 
 import cn.geelato.core.orm.Dao;
-import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.srv.platform.service.RuleService;
 import cn.geelato.meta.User;
 import cn.geelato.web.platform.utils.EncryptUtil;
@@ -69,8 +68,7 @@ public class AccountService {
         List<Map<String, Object>> moduleList = dao.queryForMapList(Module.class);
         for (Map module : moduleList) {
             long id = Long.parseLong(module.get("id").toString());
-            ApiResult<List<Map>> result = ruleService.queryForTree("platform_menu_item", id, "items");
-            List<Map> menuItemList = result.getData();
+            List<Map> menuItemList = ruleService.queryForTree("platform_menu_item", id, "items");
             module.put("tree", menuItemList);
         }
         map.put("modules", moduleList);

@@ -13,7 +13,7 @@ import java.util.Date;
 
 @Getter
 @Setter
-@Entity(name = "platform_user_email_draft", catalog = "platform")
+@Entity(name = "platform_user_email_draft")
 @TableName("platform_user_email_draft")
 @Title(title = "用户邮件草稿")
 public class UserEmailDraft extends BaseEntity {

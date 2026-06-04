@@ -13,7 +13,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(name = "platform_user_email_account", catalog = "platform")
+@Entity(name = "platform_user_email_account")
 @TableName("platform_user_email_account")
 @Title(title = "用户邮箱账号")
 public class UserEmailAccount extends BaseEntity implements EntityEnableAble {

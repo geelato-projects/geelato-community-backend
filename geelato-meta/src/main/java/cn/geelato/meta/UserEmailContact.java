@@ -14,7 +14,7 @@ import java.util.Date;
 
 @Getter
 @Setter
-@Entity(name = "platform_user_email_contact", catalog = "platform")
+@Entity(name = "platform_user_email_contact")
 @TableName("platform_user_email_contact")
 @Title(title = "用户邮件联系人")
 public class UserEmailContact extends BaseEntity implements EntityEnableAble {

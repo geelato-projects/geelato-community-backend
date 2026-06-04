@@ -31,6 +31,8 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -302,6 +304,34 @@ public class Dao extends SqlKeyDao {
     }
 
     /**
+     * 依据实体对象中的有效属性查询单个实体
+     *
+     * @param entityType 实体类型
+     * @param example    查询样例对象
+     * @return 单个实体
+     */
+    public <T extends IdEntity> T queryForObject(Class<T> entityType, T example) {
+        if (example == null) {
+            throw new IllegalArgumentException("example不能为空");
+        }
+        EntityMeta entityMeta = metaManager.get(entityType);
+        FilterGroup filterGroup = new FilterGroup();
+        for (String fieldName : entityMeta.getFieldNames()) {
+            Object value = getFieldValue(entityType, example, fieldName);
+            addExampleFilter(filterGroup, fieldName, value);
+        }
+        if (filterGroup.getFilters().isEmpty() && filterGroup.getChildFilterGroup().isEmpty()) {
+            throw new IllegalArgumentException("example中没有有效的查询条件");
+        }
+        BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, null);
+        try{
+            return jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<>());
+        }catch (DataAccessException dataAccessException){
+            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
+        }
+    }
+
+    /**
      * 依据两个条件查询实体
      *
      * @param entityType 实体类型
@@ -533,6 +563,72 @@ public class Dao extends SqlKeyDao {
             }
         }
         return filterGroup;
+    }
+
+    private void addExampleFilter(FilterGroup filterGroup, String fieldName, Object value) {
+        if (value == null) {
+            return;
+        }
+        if ("delStatus".equals(fieldName)) {
+            if (isZeroNumber(value)) {
+                FilterGroup delStatusGroup = new FilterGroup(FilterGroup.Logic.or);
+                delStatusGroup.addFilter(fieldName, FilterGroup.Operator.neq, String.valueOf(cn.geelato.core.enums.DeleteStatusEnum.IS.getValue()));
+                delStatusGroup.addFilter(fieldName, FilterGroup.Operator.nil, "true");
+                filterGroup.getChildFilterGroup().add(delStatusGroup);
+                return;
+            }
+            filterGroup.addFilter(fieldName, String.valueOf(value));
+            return;
+        }
+        if (value instanceof String str) {
+            if (Strings.isBlank(str)) {
+                return;
+            }
+            filterGroup.addFilter(fieldName, str);
+            return;
+        }
+        if (value instanceof Number && isZeroNumber(value)) {
+            return;
+        }
+        filterGroup.addFilter(fieldName, String.valueOf(value));
+    }
+
+    private Object getFieldValue(Class<?> entityType, Object target, String fieldName) {
+        Field field = getField(entityType, fieldName);
+        if (field == null) {
+            return null;
+        }
+        try {
+            field.setAccessible(true);
+            return field.get(target);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("读取字段值失败: " + fieldName, e);
+        }
+    }
+
+    private Field getField(Class<?> entityType, String fieldName) {
+        Class<?> currentType = entityType;
+        while (currentType != null) {
+            try {
+                return currentType.getDeclaredField(fieldName);
+            } catch (NoSuchFieldException e) {
+                currentType = currentType.getSuperclass();
+            }
+        }
+        return null;
+    }
+
+    private boolean isZeroNumber(Object value) {
+        if (!(value instanceof Number number)) {
+            return false;
+        }
+        if (number instanceof BigDecimal bigDecimal) {
+            return BigDecimal.ZERO.compareTo(bigDecimal) == 0;
+        }
+        if (number instanceof BigInteger bigInteger) {
+            return BigInteger.ZERO.compareTo(bigInteger) == 0;
+        }
+        return number.doubleValue() == 0D;
     }
 
     public List<Map<String, Object>> queryListByView(String entityName, String viewName, int pageNum, int pageSize, Map<String, Object> params) {

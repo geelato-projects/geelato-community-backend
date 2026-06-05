@@ -57,6 +57,13 @@ public class FileHelper {
         return fileObjectSrvProvider.objectExists(objectName);
     }
 
+    /**
+     * 删除 OSS 对象
+     */
+    public OSSResult removeFile(String objectName) {
+        return fileObjectSrvProvider.removeFile(objectName);
+    }
+
     private String generateFilePrefix() {
         return SessionCtx.getCurrentTenantCode() + "/";
     }

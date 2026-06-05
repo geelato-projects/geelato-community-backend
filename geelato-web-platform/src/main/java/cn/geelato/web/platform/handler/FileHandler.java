@@ -323,16 +323,31 @@ public class FileHandler extends BaseHandler {
     }
 
     /**
-     * 压缩附件列表
+     * 删除附件，支持联动删除 OSS 文件
      *
-     * @param attachmentIds 附件ID字符串，多个ID以逗号分隔
-     * @param batchNos      批次号字符串，多个ID以逗号分隔
-     * @param fileName      压缩文件的名称
-     * @param maxNumber     每个压缩包中允许的最大附件数量，如果为null则使用默认数量
-     * @param param         文件参数对象，包含服务类型、来源类型、文件类型、失效时间、租户代码、应用ID等信息
-     * @return 压缩后的附件列表
-     * @throws IOException 如果在文件操作中发生I/O异常
+     * @param id        附件ID
+     * @param isRemoved 是否真正从数据库中删除附件
+     * @param deleteOss 是否联动删除 OSS 文件
      */
+    public void delete(String id, Boolean isRemoved, boolean deleteOss) {
+        if (deleteOss) {
+            Attachment attachment = accessoryHandler.getAttachment(id, false);
+            if (attachment != null && Strings.isNotBlank(attachment.getObjectId()) && Strings.isNotBlank(attachment.getPath())) {
+                try {
+                    OSSResult ossResult = fileHelper.removeFile(attachment.getPath());
+                    if (ossResult.getSuccess() != null && ossResult.getSuccess()) {
+                        log.info("已删除 OSS 文件: path={}", attachment.getPath());
+                    } else {
+                        log.warn("删除 OSS 文件失败: path={}, message={}", attachment.getPath(), ossResult.getMessage());
+                    }
+                } catch (Exception e) {
+                    log.error("删除 OSS 文件异常: path={}", attachment.getPath(), e);
+                }
+            }
+        }
+        super.delete(id, isRemoved);
+    }
+
     public List<Attachment> compress(String attachmentIds, String batchNos, String fileName, Integer maxNumber, FileParam param) throws IOException {
         List<Attachment> attachments = new ArrayList<>();
         // 参数验证

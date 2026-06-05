@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.File;
 import java.io.IOException;
@@ -313,8 +314,8 @@ public class AttachController extends BaseController {
     }
 
     @RequestMapping(value = "/remove/{id}", method = RequestMethod.DELETE)
-    public ApiResult<NullResult> remove(@PathVariable String id, Boolean isRemoved) {
-        fileHandler.delete(id, isRemoved);
+    public ApiResult<NullResult> remove(@PathVariable String id, Boolean isRemoved, @RequestParam(required = false, defaultValue = "false") Boolean deleteOss) {
+        fileHandler.delete(id, isRemoved, Boolean.TRUE.equals(deleteOss));
         return ApiResult.successNoResult();
     }
 

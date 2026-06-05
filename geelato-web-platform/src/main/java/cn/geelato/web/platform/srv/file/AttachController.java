@@ -282,13 +282,23 @@ public class AttachController extends BaseController {
         requestMap.put("startNum", (page - 1) * size);
         List<Attachment> attachments = fileHandler.getAttachments(requestMap);
         long total = fileHandler.countAttachments(requestMap);
-        return ApiPagedResult.success(attachments, page, size, size, total);
+        return ApiPagedResult.success(new DataItems<>(attachments, total), page, size, size, total);
     }
 
     @RequestMapping(value = "/column/{type}", method = RequestMethod.GET)
     public ApiResult<?> columnType(@PathVariable String type) {
         List<String> typeValues = new ArrayList<>();
-        if (List.of("type", "resolution").contains(type)) {
+        if ("source".equalsIgnoreCase(type)) {
+            // source 为枚举值，直接返回
+            for (AttachmentSourceEnum e : AttachmentSourceEnum.values()) {
+                typeValues.add(e.getValue());
+            }
+        } else if ("storageType".equalsIgnoreCase(type)) {
+            // storageType 为枚举值
+            for (AttachmentServiceEnum e : AttachmentServiceEnum.values()) {
+                typeValues.add(e.getValue());
+            }
+        } else if (List.of("type", "resolution").contains(type)) {
             List<Map<String, Object>> data = dao.queryForMapList("platform_attachment_query_" + type, new HashMap<>());
             if (data != null && !data.isEmpty()) {
                 for (Map<String, Object> map : data) {

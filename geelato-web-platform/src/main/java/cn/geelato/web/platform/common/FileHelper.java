@@ -50,6 +50,13 @@ public class FileHelper {
         return fileObjectSrvProvider.getBucketStats();
     }
 
+    /**
+     * 检查 OSS 对象是否存在
+     */
+    public boolean objectExists(String objectName) {
+        return fileObjectSrvProvider.objectExists(objectName);
+    }
+
     private String generateFilePrefix() {
         return SessionCtx.getCurrentTenantCode() + "/";
     }

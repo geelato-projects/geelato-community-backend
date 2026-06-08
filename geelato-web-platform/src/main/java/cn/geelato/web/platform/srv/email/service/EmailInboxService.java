@@ -31,9 +31,11 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -47,42 +49,136 @@ public class EmailInboxService {
 
     public List<EmailFolderDto> listFolders(String userId, String emailAccountId, String pattern) throws Exception {
         EmailAccountConfig config = getEmailAccountConfig(userId, emailAccountId);
-        String p = Strings.isNotBlank(pattern) ? pattern : "*";
-
         Store store = null;
         Folder root = null;
         try {
-            log.debug("imap listFolders start, userId={}, emailAccountId={}, pattern={}", userId, config.id(), p);
+            log.debug("imap listFolders start, userId={}, emailAccountId={}, pattern={}", userId, config.id(), pattern);
             store = connect(config);
             root = store.getDefaultFolder();
-            Folder[] folders = root.list(p);
-            if (folders == null || folders.length == 0) {
-                log.debug("imap listFolders empty, userId={}, emailAccountId={}, pattern={}", userId, config.id(), p);
-                return Collections.emptyList();
-            }
-            List<EmailFolderDto> list = new ArrayList<>(folders.length);
-            for (Folder f : folders) {
-                if (f == null) {
-                    continue;
+            List<EmailFolderDto> tree;
+            if (Strings.isNotBlank(pattern) && !isHierarchyWildcard(pattern)) {
+                Folder folder = store.getFolder(pattern);
+                if (folder == null || !folder.exists()) {
+                    log.debug("imap listFolders target folder missing, userId={}, emailAccountId={}, pattern={}", userId, config.id(), pattern);
+                    return Collections.emptyList();
                 }
-                int type;
-                try {
-                    type = f.getType();
-                } catch (Exception ex) {
-                    type = 0;
-                }
-                EmailFolderDto dto = new EmailFolderDto();
-                dto.setName(f.getName());
-                dto.setFullName(f.getFullName());
-                dto.setHoldsMessages((type & Folder.HOLDS_MESSAGES) != 0);
-                dto.setHoldsFolders((type & Folder.HOLDS_FOLDERS) != 0);
-                list.add(dto);
+                tree = Collections.singletonList(buildFolderNode(folder, resolveParentFullName(folder), new HashSet<>()));
+            } else {
+                tree = buildFolderTree(root, null, new HashSet<>());
             }
-            log.debug("imap listFolders done, userId={}, emailAccountId={}, size={}", userId, config.id(), list.size());
-            return list;
+            if (tree.isEmpty()) {
+                log.debug("imap listFolders empty, userId={}, emailAccountId={}, pattern={}", userId, config.id(), pattern);
+            }
+            log.debug("imap listFolders done, userId={}, emailAccountId={}, size={}", userId, config.id(), countFolderNodes(tree));
+            return tree;
         } finally {
             closeQuietly(root);
             closeQuietly(store);
+        }
+    }
+
+    private List<EmailFolderDto> buildFolderTree(Folder parentFolder, String parentFullName, Set<String> visited) throws Exception {
+        Folder[] folders = listDirectChildren(parentFolder);
+        if (folders == null || folders.length == 0) {
+            return Collections.emptyList();
+        }
+        List<EmailFolderDto> list = new ArrayList<>(folders.length);
+        for (Folder folder : folders) {
+            EmailFolderDto dto = buildFolderNode(folder, parentFullName, visited);
+            if (dto != null) {
+                list.add(dto);
+            }
+        }
+        return list;
+    }
+
+    private EmailFolderDto buildFolderNode(Folder folder, String parentFullName, Set<String> visited) throws Exception {
+        if (folder == null) {
+            return null;
+        }
+        String fullName = folder.getFullName();
+        String folderKey = Strings.isNotBlank(fullName) ? fullName : folder.getName();
+        if (Strings.isBlank(folderKey) || !visited.add(folderKey)) {
+            return null;
+        }
+        int type = safeFolderType(folder);
+        EmailFolderDto dto = new EmailFolderDto();
+        dto.setName(folder.getName());
+        dto.setFullName(fullName);
+        dto.setParentFullName(parentFullName);
+        dto.setHoldsMessages((type & Folder.HOLDS_MESSAGES) != 0);
+        dto.setHoldsFolders((type & Folder.HOLDS_FOLDERS) != 0);
+        if (dto.getHoldsFolders()) {
+            dto.setChildren(buildFolderTree(folder, fullName, visited));
+        } else {
+            dto.setChildren(Collections.emptyList());
+        }
+        return dto;
+    }
+
+    private Folder[] listDirectChildren(Folder folder) throws Exception {
+        if (folder == null) {
+            return new Folder[0];
+        }
+        Folder[] folders = folder.list("%");
+        if ((folders == null || folders.length == 0) && isDefaultRootFolder(folder)) {
+            folders = folder.list("*");
+        }
+        return folders != null ? folders : new Folder[0];
+    }
+
+    private static boolean isDefaultRootFolder(Folder folder) {
+        try {
+            return folder != null && Strings.isBlank(folder.getFullName());
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private static boolean isHierarchyWildcard(String pattern) {
+        return "*".equals(pattern) || "%".equals(pattern);
+    }
+
+    private static int safeFolderType(Folder folder) {
+        try {
+            return folder.getType();
+        } catch (Exception ex) {
+            return 0;
+        }
+    }
+
+    private static int countFolderNodes(List<EmailFolderDto> folders) {
+        if (folders == null || folders.isEmpty()) {
+            return 0;
+        }
+        int count = 0;
+        for (EmailFolderDto folder : folders) {
+            if (folder == null) {
+                continue;
+            }
+            count++;
+            count += countFolderNodes(folder.getChildren());
+        }
+        return count;
+    }
+
+    private static String resolveParentFullName(Folder folder) {
+        if (folder == null) {
+            return null;
+        }
+        try {
+            String fullName = folder.getFullName();
+            char separator = folder.getSeparator();
+            if (Strings.isBlank(fullName) || separator == 0) {
+                return null;
+            }
+            int idx = fullName.lastIndexOf(separator);
+            if (idx <= 0) {
+                return null;
+            }
+            return fullName.substring(0, idx);
+        } catch (Exception ex) {
+            return null;
         }
     }
 

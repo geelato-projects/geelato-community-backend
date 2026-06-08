@@ -147,22 +147,3 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: release-assets/geelato-community-app.jar
-
-      - name: Checkout docker repo
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ vars.DOCKER_REPO_SLUG }}
-          token: ${{ secrets.DOCKER_REPO_TOKEN }}
-          path: docker-repo
-
-      - name: Build docker image from release JAR
-        env:
-          COMMUNITY_REPO_SLUG: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
-          RELEASE_ASSET_NAME: geelato-community-app.jar
-          GITHUB_TOKEN: ${{ secrets.COMMUNITY_RELEASE_DOWNLOAD_TOKEN }}
-          SKIP_FRONTEND_BUILD: 'true'
-        run: |
-          chmod +x docker-repo/scripts/fetch-release-jar.sh docker-repo/scripts/build.sh
-          cd docker-repo
-          ./scripts/build.sh

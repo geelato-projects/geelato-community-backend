@@ -26,7 +26,6 @@ public class ServiceController extends BaseController {
 
     @RequestMapping(value = "/exec/{scriptId}", method = RequestMethod.POST)
     @ResponseBody
-    @SuppressWarnings("rawtypes")
     public ApiResult<?> exec(@PathVariable("scriptId") String scriptId) throws IOException {
         String parameter = resolveBody(this.request);
         try {

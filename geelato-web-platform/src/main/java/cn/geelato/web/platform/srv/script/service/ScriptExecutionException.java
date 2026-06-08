@@ -1,7 +1,9 @@
 package cn.geelato.web.platform.srv.script.service;
 
 import cn.geelato.meta.Api;
+import lombok.Getter;
 
+@Getter
 public class ScriptExecutionException extends RuntimeException {
     private final Api api;
     private final boolean retryable;
@@ -12,11 +14,4 @@ public class ScriptExecutionException extends RuntimeException {
         this.retryable = retryable;
     }
 
-    public Api getApi() {
-        return api;
-    }
-
-    public boolean isRetryable() {
-        return retryable;
-    }
 }

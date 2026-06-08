@@ -16,5 +16,4 @@ public class GraalUse {
                 })""";
 
     public static final String CUSTOM_CONTENT_TAG="#scriptContent#";
-    public static final String BASE_SCRIPT_JS_FILE="graal.mjs";
 }

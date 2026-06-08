@@ -13,8 +13,9 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.SourceSection;
-import org.springframework.beans.factory.annotation.Value;
+import org.graalvm.polyglot.Value;
 import org.springframework.stereotype.Service;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,10 +29,10 @@ public class ScriptExecutionService {
     private final GraalManager graalManager = GraalManager.singleInstance();
     private final ApiService apiService;
 
-    @Value("${geelato.script.ext.max-retries:2}")
+    @org.springframework.beans.factory.annotation.Value("${geelato.script.ext.max-retries:2}")
     private int extMaxRetries;
 
-    @Value("${geelato.script.ext.retry-interval-ms:0}")
+    @org.springframework.beans.factory.annotation.Value("${geelato.script.ext.retry-interval-ms:0}")
     private long extRetryIntervalMs;
 
     public ScriptExecutionService(ApiService apiService) {
@@ -106,8 +107,11 @@ public class ScriptExecutionService {
             context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_EXECUTOR, new GraalExecutor(this));
 
             Source source = Source.newBuilder(GraalUse.Language_JS, scriptContent, buildSourceName(api)).build();
-            Map<?, ?> result = context.eval(source).execute(resolvedParameter.getParsedParameter()).as(Map.class);
-            return result.get("result");
+            Value executionResult = context.eval(source).execute(resolvedParameter.getParsedParameter());
+            Object rawResult = executionResult.hasMembers() && executionResult.hasMember("result")
+                    ? executionResult.getMember("result")
+                    : null;
+            return unwrapPolyglotValue(rawResult);
         }
     }
 
@@ -318,6 +322,74 @@ public class ScriptExecutionService {
             return "";
         }
         return message.replace("\r", " ").replace("\n", " ").trim();
+    }
+
+    private Object unwrapPolyglotValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Value polyglotValue) {
+            return unwrapValue(polyglotValue);
+        }
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> javaMap = new HashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                javaMap.put(String.valueOf(entry.getKey()), unwrapPolyglotValue(entry.getValue()));
+            }
+            return javaMap;
+        }
+        if (value instanceof List<?> list) {
+            List<Object> javaList = new ArrayList<>();
+            for (Object item : list) {
+                javaList.add(unwrapPolyglotValue(item));
+            }
+            return javaList;
+        }
+        return value;
+    }
+
+    private Object unwrapValue(Value value) {
+        if (value == null || value.isNull()) {
+            return null;
+        }
+        if (value.isBoolean()) {
+            return value.asBoolean();
+        }
+        if (value.isString()) {
+            return value.asString();
+        }
+        if (value.fitsInInt()) {
+            return value.asInt();
+        }
+        if (value.fitsInLong()) {
+            return value.asLong();
+        }
+        if (value.fitsInFloat()) {
+            return value.asFloat();
+        }
+        if (value.fitsInDouble()) {
+            return value.asDouble();
+        }
+        if (value.hasArrayElements()) {
+            List<Object> javaList = new ArrayList<>();
+            long size = value.getArraySize();
+            for (long index = 0; index < size; index++) {
+                javaList.add(unwrapValue(value.getArrayElement(index)));
+            }
+            return javaList;
+        }
+        if (value.hasMembers()) {
+            Map<String, Object> javaMap = new HashMap<>();
+            for (String memberKey : value.getMemberKeys()) {
+                javaMap.put(memberKey, unwrapValue(value.getMember(memberKey)));
+            }
+            return javaMap;
+        }
+        if (value.isHostObject()) {
+            Object hostObject = value.asHostObject();
+            return unwrapPolyglotValue(hostObject);
+        }
+        return value.toString();
     }
 
     private void sleepBeforeRetry() {

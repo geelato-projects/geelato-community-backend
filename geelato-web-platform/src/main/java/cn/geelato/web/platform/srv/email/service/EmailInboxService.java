@@ -12,6 +12,7 @@ import cn.geelato.web.platform.srv.email.dto.EmailFolderDto;
 import cn.geelato.web.platform.srv.email.dto.EmailMessageDetailDto;
 import cn.geelato.web.platform.srv.email.dto.EmailMessageListItemDto;
 import com.sun.mail.imap.IMAPFolder;
+import com.sun.mail.imap.IMAPStore;
 import com.sun.mail.imap.SortTerm;
 import jakarta.mail.*;
 import jakarta.mail.search.FlagTerm;
@@ -462,16 +463,7 @@ public class EmailInboxService {
                     .where(filters.toArray(new Filter[0]))
                     .one();
         } else {
-            List<Filter> filters = new ArrayList<>();
-            filters.add(Filter.eq("userId", userId));
-            filters.add(Filter.eq("delStatus", 0));
-            if (enabledOnly) {
-                filters.add(Filter.eq("enableStatus", 1));
-            }
-            row = MetaFactory.query(UserEmailAccount.class)
-                    .where(filters.toArray(new Filter[0]))
-                    .order(Order.desc("defaultFlag"), Order.desc("createAt"))
-                    .one();
+            row = findFirstEmailAccountRow(userId, enabledOnly);
         }
 
         if (row == null || row.isEmpty()) {
@@ -513,6 +505,42 @@ public class EmailInboxService {
         );
     }
 
+    private Map<String, Object> findFirstEmailAccountRow(String userId, boolean enabledOnly) {
+        List<Filter> defaultFilters = new ArrayList<>();
+        defaultFilters.add(Filter.eq("userId", userId));
+        defaultFilters.add(Filter.eq("delStatus", 0));
+        defaultFilters.add(Filter.eq("defaultFlag", 1));
+        if (enabledOnly) {
+            defaultFilters.add(Filter.eq("enableStatus", 1));
+        }
+
+        cn.geelato.orm.PageResult<Map<String, Object>> defaultPage = MetaFactory.query(UserEmailAccount.class)
+                .where(defaultFilters.toArray(new Filter[0]))
+                .order(Order.desc("createAt"))
+                .page(1, 1)
+                .page();
+        if (defaultPage != null && defaultPage.getRecords() != null && !defaultPage.getRecords().isEmpty()) {
+            return defaultPage.getRecords().get(0);
+        }
+
+        List<Filter> fallbackFilters = new ArrayList<>();
+        fallbackFilters.add(Filter.eq("userId", userId));
+        fallbackFilters.add(Filter.eq("delStatus", 0));
+        if (enabledOnly) {
+            fallbackFilters.add(Filter.eq("enableStatus", 1));
+        }
+
+        cn.geelato.orm.PageResult<Map<String, Object>> fallbackPage = MetaFactory.query(UserEmailAccount.class)
+                .where(fallbackFilters.toArray(new Filter[0]))
+                .order(Order.desc("defaultFlag"), Order.desc("createAt"))
+                .page(1, 1)
+                .page();
+        if (fallbackPage == null || fallbackPage.getRecords() == null || fallbackPage.getRecords().isEmpty()) {
+            return null;
+        }
+        return fallbackPage.getRecords().get(0);
+    }
+
     private Store connect(EmailAccountConfig config) throws Exception {
         if (Strings.isBlank(config.host()) || config.port() <= 0 || Strings.isBlank(config.authUser()) || Strings.isBlank(config.authSecret())) {
             throw new IllegalArgumentException("email account config invalid");
@@ -533,7 +561,24 @@ public class EmailInboxService {
         Session session = Session.getInstance(props);
         Store store = session.getStore(protocol);
         store.connect(config.host(), config.port(), config.authUser(), config.authSecret());
+        applyImapId(store, config.id());
         return store;
+    }
+
+    private void applyImapId(Store store, String emailAccountId) {
+        try {
+            if (!(store instanceof IMAPStore imapStore)) {
+                log.debug("imap id skipped, emailAccountId={}, storeClass={}", emailAccountId, store != null ? store.getClass().getName() : null);
+                return;
+            }
+            // Send IMAP ID to reduce the chance of provider-side security interception.
+            Map<String, String> idInfo = new java.util.HashMap<>();
+            idInfo.put("name", "Geelato Platform");
+            imapStore.id(idInfo);
+            log.debug("imap id applied, emailAccountId={}, name={}", emailAccountId, idInfo.get("name"));
+        } catch (Exception ex) {
+            log.warn("imap id apply failed, emailAccountId={}", emailAccountId, ex);
+        }
     }
 
     private static Message resolveMessageByUid(Folder folder, long uid) throws Exception {

@@ -1,25 +1,19 @@
 package cn.geelato.web.platform.srv.script;
 
-import cn.geelato.core.graal.GraalManager;
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.utils.JsonUtils;
-import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
-import cn.geelato.web.platform.graal.GraalContext;
-import cn.geelato.web.platform.graal.GraalExecutor;
 import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.platform.service.RuleService;
-import cn.geelato.meta.Api;
-import cn.geelato.web.platform.srv.script.service.ApiService;
+import cn.geelato.web.platform.srv.script.service.ScriptExecutionException;
+import cn.geelato.web.platform.srv.script.service.ScriptExecutionResult;
+import cn.geelato.web.platform.srv.script.service.ScriptExecutionService;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Source;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,21 +22,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @ApiRestController("/ext")
 @Slf4j
 public class ExtServiceController extends BaseController {
-    private final GraalManager graalManager = GraalManager.singleInstance();
-    private final ApiService apiService;
     private final RuleService ruleService;
+    private final ScriptExecutionService scriptExecutionService;
 
     @Autowired
-    public ExtServiceController(ApiService apiService, RuleService ruleService) {
-        this.apiService = apiService;
+    public ExtServiceController(RuleService ruleService, ScriptExecutionService scriptExecutionService) {
         this.ruleService = ruleService;
+        this.scriptExecutionService = scriptExecutionService;
     }
 
     @IgnoreVerify
@@ -51,55 +41,19 @@ public class ExtServiceController extends BaseController {
     @SuppressWarnings("rawtypes")
     public Object exec(@PathVariable("outside_url") String outside_url) {
         String parameter = resolveBody(this.request);
-        Api api = null;
-        Map<String, Object> params = new HashMap<>();
-        params.put("outsideUrl", "/" + outside_url);
-        List<Api> apiList = apiService.queryModel(Api.class, params);
-        if (apiList != null && !apiList.isEmpty()) {
-            api = apiList.get(0);
-        }
-        if (api != null) {
-            String scriptContent = getScriptContent(api.getReleaseContent());
-            try {
-                Object parsedParameter = JsonUtils.safeParse(parameter);
-                try (Context context = GraalContext.getContext()) {
-                    Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
-                    Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
-                    Map<String, Object> globalGraalVariableMap = new HashMap<>(graalManager.getGlobalGraalVariableMap());
-                    globalGraalVariableMap.remove("ctx");
-
-                    if (!StringUtils.isEmpty(parameter)) {
-                        Map<String, Object> ctxMap = Map.of("parameter", parsedParameter);
-                        globalGraalVariableMap.put("ctx", ctxMap);
-                    }
-                    context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
-                    for (Map.Entry entry : graalServiceMap.entrySet()) {
-                        context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
-                    }
-                    for (Map.Entry entry : graalVariableMap.entrySet()) {
-                        context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
-                    }
-
-                    context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_EXECUTOR, new GraalExecutor(apiService));
-
-                    Source source = Source.newBuilder(GraalUse.Language_JS, scriptContent, GraalUse.BASE_SCRIPT_JS_FILE).build();
-                    Map result = context.eval(source).execute(parsedParameter).as(Map.class);
-                    // 记录日志
-                    createApiLogByLevel(api.getLogLevel(), "info", api.getAppId(), api.getCode(), parameter, null, null, null, JSONObject.toJSONString(result.get("result")));
-                    // 返回结果
-                    if (api.getResponseFormat() != null && "custom".equalsIgnoreCase(api.getResponseFormat())) {
-                        return JSONObject.toJSONString(result.get("result"));
-                    } else {
-                        return ApiResult.success(result.get("result"));
-                    }
-                }
-            } catch (Exception e) {
-                createApiLogByLevel(api.getLogLevel(), "error", api.getAppId(), api.getCode(), parameter, null, null, null, e.getMessage());
-                log.error("script error:{}", e.getMessage());
-                return ApiResult.fail(e.getMessage());
+        try {
+            ScriptExecutionResult result = scriptExecutionService.executeExternalByOutsideUrl(outside_url, parameter);
+            createApiLogByLevel(result.getApi().getLogLevel(), "info", result.getApi().getAppId(), result.getApi().getCode(), parameter, null, null, null, JSONObject.toJSONString(result.getResult()));
+            if (result.getApi().getResponseFormat() != null && "custom".equalsIgnoreCase(result.getApi().getResponseFormat())) {
+                return JSONObject.toJSONString(result.getResult());
             }
-        } else {
-            return ApiResult.fail("not found script");
+            return ApiResult.success(result.getResult());
+        } catch (ScriptExecutionException ex) {
+            if (ex.getApi() != null) {
+                createApiLogByLevel(ex.getApi().getLogLevel(), "error", ex.getApi().getAppId(), ex.getApi().getCode(), parameter, null, null, null, ex.getMessage());
+            }
+            log.error("script error:{}", ex.getMessage(), ex);
+            return ApiResult.fail(ex.getMessage());
         }
     }
 
@@ -136,10 +90,6 @@ public class ExtServiceController extends BaseController {
         gql.deleteCharAt(gql.length() - 1);
         gql.append("}}");
         ruleService.save("0", gql.toString());
-    }
-
-    private String getScriptContent(String customContent) {
-        return GraalUse.BASE_SCRIPT_CONTENT.replace(GraalUse.CUSTOM_CONTENT_TAG, customContent);
     }
 
     private String resolveBody(HttpServletRequest request) {

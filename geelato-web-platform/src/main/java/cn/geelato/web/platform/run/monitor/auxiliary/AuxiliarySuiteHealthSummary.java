@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 public class AuxiliarySuiteHealthSummary {
     private Long checkedAt;
+    private Integer pollIntervalSeconds;
     private Integer suiteCount = 0;
     private Integer healthyCount = 0;
     private Integer abnormalCount = 0;

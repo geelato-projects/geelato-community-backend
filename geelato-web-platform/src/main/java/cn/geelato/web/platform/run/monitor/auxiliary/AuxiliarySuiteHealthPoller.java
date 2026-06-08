@@ -24,7 +24,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AuxiliarySuiteHealthPoller {
     private final AuxiliarySuiteHealthProperties properties;
     private final List<AuxiliarySuiteHealthParser> parsers;
-    private final AtomicReference<AuxiliarySuiteHealthSummary> latestSummaryRef = new AtomicReference<>(new AuxiliarySuiteHealthSummary());
+    private final AtomicReference<AuxiliarySuiteHealthSummary> latestSummaryRef =
+        new AtomicReference<>(new AuxiliarySuiteHealthSummary());
     private final AtomicReference<String> latestErrorRef = new AtomicReference<>(null);
     private ScheduledExecutorService scheduler;
 
@@ -58,7 +59,7 @@ public class AuxiliarySuiteHealthPoller {
     }
 
     public AuxiliarySuiteHealthSummary getLatestSummary() {
-        return latestSummaryRef.get();
+        return fillSummaryMetadata(latestSummaryRef.get());
     }
 
     public synchronized AuxiliarySuiteHealthSummary refreshNow() {
@@ -75,9 +76,7 @@ public class AuxiliarySuiteHealthPoller {
         } catch (Exception e) {
             log.error("auxiliary suite health polling failed", e);
             AuxiliarySuiteHealthSummary summary = latestSummaryRef.get();
-            if (summary == null) {
-                summary = new AuxiliarySuiteHealthSummary();
-            }
+            summary = fillSummaryMetadata(summary);
             summary.setLastError(e.getMessage());
             summary.setCheckedAt(System.currentTimeMillis());
             latestSummaryRef.set(summary);
@@ -85,7 +84,7 @@ public class AuxiliarySuiteHealthPoller {
     }
 
     private AuxiliarySuiteHealthSummary buildSummary() {
-        AuxiliarySuiteHealthSummary summary = new AuxiliarySuiteHealthSummary();
+        AuxiliarySuiteHealthSummary summary = fillSummaryMetadata(new AuxiliarySuiteHealthSummary());
         summary.setCheckedAt(System.currentTimeMillis());
         latestErrorRef.set(null);
 
@@ -115,6 +114,13 @@ public class AuxiliarySuiteHealthPoller {
         }
         summary.setHasFailure(summary.getAbnormalCount() > 0);
         return summary;
+    }
+
+    private AuxiliarySuiteHealthSummary fillSummaryMetadata(AuxiliarySuiteHealthSummary summary) {
+        AuxiliarySuiteHealthSummary target = summary == null ? new AuxiliarySuiteHealthSummary() : summary;
+        Integer interval = properties == null ? null : properties.getPollIntervalSeconds();
+        target.setPollIntervalSeconds((int) sanitizeInterval(interval));
+        return target;
     }
 
     private List<AuxiliarySuiteDefinition> parseDefinitions() {

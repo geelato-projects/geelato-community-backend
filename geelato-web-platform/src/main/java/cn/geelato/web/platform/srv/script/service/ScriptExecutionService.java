@@ -7,6 +7,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.graal.GraalContext;
 import cn.geelato.web.platform.graal.GraalExecutor;
 import cn.geelato.web.platform.srv.script.GraalUse;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
@@ -169,44 +170,99 @@ public class ScriptExecutionService {
     }
 
     private String buildErrorMessage(Api api, Exception ex, String scriptContent, int attempt, int totalAttempts) {
-        StringBuilder builder = new StringBuilder("script execute failed");
+        List<String> lines = new ArrayList<>();
+        lines.add(buildHeader(api, attempt, totalAttempts));
+
+        String location = buildSourceLocation(ex);
+        if (!StringUtils.isEmpty(location)) {
+            lines.add("位置：" + location);
+        }
+
+        String readableReason = buildReadableReason(ex);
+        if (!StringUtils.isEmpty(readableReason)) {
+            lines.add("原因：" + readableReason);
+        }
+
+        String scriptSnippet = buildScriptSnippet(ex, scriptContent);
+        if (!StringUtils.isEmpty(scriptSnippet)) {
+            lines.add("代码：\n" + scriptSnippet);
+        }
+
+        String rawDetail = buildRawDetail(ex);
+        if (!StringUtils.isEmpty(rawDetail)) {
+            lines.add("原始异常：" + rawDetail);
+        }
+        return String.join("\n", lines);
+    }
+
+    private String buildHeader(Api api, int attempt, int totalAttempts) {
+        StringBuilder builder = new StringBuilder("脚本执行失败");
         if (api != null && !StringUtils.isEmpty(api.getCode())) {
-            builder.append(", code=").append(api.getCode());
+            builder.append("，脚本编码：").append(api.getCode());
         }
-        builder.append(", attempt=").append(attempt).append("/").append(totalAttempts);
-
-        if (ex instanceof PolyglotException polyglotException) {
-            if (polyglotException.isSyntaxError()) {
-                builder.append(", type=syntax");
-            } else if (polyglotException.isGuestException()) {
-                builder.append(", type=guest");
-            } else if (polyglotException.isHostException()) {
-                builder.append(", type=host");
-            }
-            appendSourceLocation(builder, polyglotException);
-            appendGuestStack(builder, polyglotException);
-            builder.append(", message=").append(safeMessage(polyglotException.getMessage()));
-        } else if (ex != null) {
-            builder.append(", message=").append(safeMessage(ex.getMessage()));
-        }
-
-        appendScriptSnippet(builder, ex, scriptContent);
+        builder.append("，执行次数：").append(attempt).append("/").append(totalAttempts);
         return builder.toString();
     }
 
-    private void appendSourceLocation(StringBuilder builder, PolyglotException ex) {
-        SourceSection sourceLocation = ex.getSourceLocation();
-        if (sourceLocation == null) {
-            return;
+    private String buildSourceLocation(Exception ex) {
+        if (!(ex instanceof PolyglotException polyglotException)) {
+            return "";
         }
-        builder.append(", file=").append(sourceLocation.getSource().getName());
-        builder.append(", line=").append(sourceLocation.getStartLine());
-        builder.append(", column=").append(sourceLocation.getStartColumn());
-        builder.append(", endLine=").append(sourceLocation.getEndLine());
-        builder.append(", endColumn=").append(sourceLocation.getEndColumn());
+        SourceSection sourceLocation = polyglotException.getSourceLocation();
+        if (sourceLocation == null) {
+            return "";
+        }
+        return String.format("%s 第%s行，第%s列", sourceLocation.getSource().getName(), sourceLocation.getStartLine(), sourceLocation.getStartColumn());
     }
 
-    private void appendGuestStack(StringBuilder builder, PolyglotException ex) {
+    private String buildReadableReason(Exception ex) {
+        if (!(ex instanceof PolyglotException polyglotException)) {
+            return ex == null ? "" : safeMessage(ex.getMessage());
+        }
+        String rawMessage = safeMessage(polyglotException.getMessage());
+        if (polyglotException.isSyntaxError()) {
+            return "JavaScript 语法错误：" + rawMessage;
+        }
+        if (polyglotException.isGuestException()) {
+            return rawMessage;
+        }
+        if (polyglotException.isHostException()) {
+            return "脚本调用 Java 服务时报错：" + rawMessage;
+        }
+        return rawMessage;
+    }
+
+    private String buildRawDetail(Exception ex) {
+        if (ex == null) {
+            return "";
+        }
+        if (ex instanceof PolyglotException polyglotException) {
+            List<String> details = new ArrayList<>();
+            String type = "";
+            if (polyglotException.isSyntaxError()) {
+                type = "syntax";
+            } else if (polyglotException.isGuestException()) {
+                type = "guest";
+            } else if (polyglotException.isHostException()) {
+                type = "host";
+            }
+            if (!StringUtils.isEmpty(type)) {
+                details.add("type=" + type);
+            }
+            String rawMessage = safeMessage(polyglotException.getMessage());
+            if (!StringUtils.isEmpty(rawMessage)) {
+                details.add("message=" + rawMessage);
+            }
+            String guestStack = buildGuestStack(polyglotException);
+            if (!StringUtils.isEmpty(guestStack)) {
+                details.add("guestStack=" + guestStack);
+            }
+            return String.join(", ", details);
+        }
+        return safeMessage(ex.getMessage());
+    }
+
+    private String buildGuestStack(PolyglotException ex) {
         List<String> frames = new ArrayList<>();
         for (PolyglotException.StackFrame stackFrame : ex.getPolyglotStackTrace()) {
             if (stackFrame.isGuestFrame()) {
@@ -216,36 +272,45 @@ public class ScriptExecutionService {
                 break;
             }
         }
-        if (!frames.isEmpty()) {
-            builder.append(", guestStack=").append(String.join(" | ", frames));
-        }
+        return frames.isEmpty() ? "" : String.join(" | ", frames);
     }
 
-    private void appendScriptSnippet(StringBuilder builder, Exception ex, String scriptContent) {
+    private String buildScriptSnippet(Exception ex, String scriptContent) {
         if (!(ex instanceof PolyglotException polyglotException)) {
-            return;
+            return "";
         }
         SourceSection sourceLocation = polyglotException.getSourceLocation();
         if (sourceLocation == null) {
-            return;
+            return "";
         }
         String[] lines = scriptContent.split("\\R", -1);
         int targetLine = sourceLocation.getStartLine();
         if (targetLine <= 0 || targetLine > lines.length) {
-            return;
+            return "";
         }
         int startLine = Math.max(1, targetLine - 2);
         int endLine = Math.min(lines.length, targetLine + 2);
-        builder.append(", snippet=");
+        List<String> snippetLines = new ArrayList<>();
         for (int lineIndex = startLine; lineIndex <= endLine; lineIndex++) {
-            if (lineIndex > startLine) {
-                builder.append(" || ");
-            }
+            String prefix = lineIndex == targetLine ? ">> " : "   ";
+            String linePrefix = prefix + lineIndex + " | ";
+            snippetLines.add(linePrefix + lines[lineIndex - 1]);
             if (lineIndex == targetLine) {
-                builder.append(">>");
+                snippetLines.add(buildPointerLine(linePrefix.length(), sourceLocation.getStartColumn(), sourceLocation.getEndColumn()));
             }
-            builder.append(lineIndex).append(": ").append(lines[lineIndex - 1].trim());
         }
+        return String.join("\n", snippetLines);
+    }
+
+    private String buildPointerLine(int prefixLength, int startColumn, int endColumn) {
+        int safeStart = Math.max(startColumn, 1);
+        int safeEnd = Math.max(endColumn, safeStart);
+        StringBuilder builder = new StringBuilder();
+        builder.append(" ".repeat(Math.max(0, prefixLength)));
+        builder.append(" ".repeat(safeStart - 1));
+        int markLength = Math.max(1, safeEnd - safeStart + 1);
+        builder.append("^".repeat(markLength));
+        return builder.toString();
     }
 
     private String safeMessage(String message) {
@@ -267,16 +332,13 @@ public class ScriptExecutionService {
     }
 
     private static class ResolvedParameter {
+        @Getter
         private final Object parsedParameter;
         private final boolean hasParameter;
 
         private ResolvedParameter(Object parsedParameter, boolean hasParameter) {
             this.parsedParameter = parsedParameter;
             this.hasParameter = hasParameter;
-        }
-
-        public Object getParsedParameter() {
-            return parsedParameter;
         }
 
         public boolean hasParameter() {

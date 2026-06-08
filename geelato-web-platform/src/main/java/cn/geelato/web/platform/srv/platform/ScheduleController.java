@@ -64,7 +64,7 @@ public class ScheduleController extends BaseController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public ApiResult<Schedule> get(@PathVariable(required = true) String id) {
+    public ApiResult<Schedule> get(@PathVariable() String id) {
         try {
             Schedule model = scheduleService.getModel(CLAZZ, id);
             return ApiResult.success(model);

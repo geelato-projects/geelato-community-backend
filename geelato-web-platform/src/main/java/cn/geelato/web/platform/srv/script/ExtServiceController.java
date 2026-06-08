@@ -6,6 +6,7 @@ import cn.geelato.utils.JsonUtils;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
+import cn.geelato.web.platform.graal.GraalContext;
 import cn.geelato.web.platform.graal.GraalExecutor;
 import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.srv.BaseController;
@@ -39,8 +40,6 @@ public class ExtServiceController extends BaseController {
     private final RuleService ruleService;
 
     @Autowired
-    Context GraalContext;
-    @Autowired
     public ExtServiceController(ApiService apiService, RuleService ruleService) {
         this.apiService = apiService;
         this.ruleService = ruleService;
@@ -62,34 +61,37 @@ public class ExtServiceController extends BaseController {
         if (api != null) {
             String scriptContent = getScriptContent(api.getReleaseContent());
             try {
-                Context context = GraalContext;
-                Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
-                Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
-                Map<String, Object> globalGraalVariableMap = graalManager.getGlobalGraalVariableMap();
+                Object parsedParameter = JsonUtils.safeParse(parameter);
+                try (Context context = GraalContext.getContext()) {
+                    Map<String, Object> graalServiceMap = graalManager.getGraalServiceMap();
+                    Map<String, Object> graalVariableMap = graalManager.getGraalVariableMap();
+                    Map<String, Object> globalGraalVariableMap = new HashMap<>(graalManager.getGlobalGraalVariableMap());
+                    globalGraalVariableMap.remove("ctx");
 
-                if(!StringUtils.isEmpty(parameter)){
-                    Map<String, Object> ctxMap = Map.of("parameter", JsonUtils.safeParse(parameter));
-                    globalGraalVariableMap.put("ctx",ctxMap);
-                }
-                context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
-                for (Map.Entry entry : graalServiceMap.entrySet()) {
-                    context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
-                }
-                for (Map.Entry entry : graalVariableMap.entrySet()) {
-                    context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
-                }
+                    if (!StringUtils.isEmpty(parameter)) {
+                        Map<String, Object> ctxMap = Map.of("parameter", parsedParameter);
+                        globalGraalVariableMap.put("ctx", ctxMap);
+                    }
+                    context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
+                    for (Map.Entry entry : graalServiceMap.entrySet()) {
+                        context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
+                    }
+                    for (Map.Entry entry : graalVariableMap.entrySet()) {
+                        context.getBindings(GraalUse.Language_JS).putMember(entry.getKey().toString(), entry.getValue());
+                    }
 
-                context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_EXECUTOR, new GraalExecutor(apiService));
+                    context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_EXECUTOR, new GraalExecutor(apiService));
 
-                Source source = Source.newBuilder(GraalUse.Language_JS, scriptContent, GraalUse.BASE_SCRIPT_JS_FILE).build();
-                Map result = context.eval(source).execute(JsonUtils.safeParse(parameter)).as(Map.class);
-                // 记录日志
-                createApiLogByLevel(api.getLogLevel(), "info", api.getAppId(), api.getCode(), parameter, null, null, null, JSONObject.toJSONString(result.get("result")));
-                // 返回结果
-                if (api.getResponseFormat() != null && "custom".equalsIgnoreCase(api.getResponseFormat())) {
-                    return JSONObject.toJSONString(result.get("result"));
-                } else {
-                    return ApiResult.success(result.get("result"));
+                    Source source = Source.newBuilder(GraalUse.Language_JS, scriptContent, GraalUse.BASE_SCRIPT_JS_FILE).build();
+                    Map result = context.eval(source).execute(parsedParameter).as(Map.class);
+                    // 记录日志
+                    createApiLogByLevel(api.getLogLevel(), "info", api.getAppId(), api.getCode(), parameter, null, null, null, JSONObject.toJSONString(result.get("result")));
+                    // 返回结果
+                    if (api.getResponseFormat() != null && "custom".equalsIgnoreCase(api.getResponseFormat())) {
+                        return JSONObject.toJSONString(result.get("result"));
+                    } else {
+                        return ApiResult.success(result.get("result"));
+                    }
                 }
             } catch (Exception e) {
                 createApiLogByLevel(api.getLogLevel(), "error", api.getAppId(), api.getCode(), parameter, null, null, null, e.getMessage());

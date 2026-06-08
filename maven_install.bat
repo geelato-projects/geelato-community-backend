@@ -30,9 +30,6 @@ call mvn clean install -U -D maven.test.skip=true
 cd ../geelato-dynamic-datasource
 call mvn clean install -U -D maven.test.skip=true
 
-cd ../geelato-plugin-manager
-call mvn clean install -U -D maven.test.skip=true
-
 cd ../geelato-reactor-platform
 call mvn clean install -U -D maven.test.skip=true
 

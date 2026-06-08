@@ -211,11 +211,6 @@
             </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
-                <artifactId>geelato-plugin-manager</artifactId>
-                <version>${geelato.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>cn.geelato</groupId>
                 <artifactId>geelato-mcp</artifactId>
                 <version>${geelato.version}</version>
             </dependency>

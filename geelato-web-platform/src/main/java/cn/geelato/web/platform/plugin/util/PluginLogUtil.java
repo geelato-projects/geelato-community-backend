@@ -1,4 +1,4 @@
-package cn.geelato.plugin.util;
+package cn.geelato.web.platform.plugin.util;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -19,27 +19,23 @@ public class PluginLogUtil {
 
     /**
      * 记录插件日志
+     *
      * @param pluginId 插件ID
      * @param message 日志消息
      */
     public static void log(String pluginId, String message) {
         try {
-            // 确保日志目录存在
             Path logDir = Paths.get(PLUGINS_LOG_DIR);
             if (!Files.exists(logDir)) {
                 Files.createDirectories(logDir);
             }
 
-            // 构建日志文件路径
             Path logFilePath = Paths.get(PLUGINS_LOG_DIR, pluginId + ".log");
             File logFile = logFilePath.toFile();
-
-            // 创建日志文件（如果不存在）
             if (!logFile.exists()) {
                 logFile.createNewFile();
             }
 
-            // 写入日志
             try (FileWriter writer = new FileWriter(logFile, true)) {
                 String timestamp = DATE_FORMAT.format(new Date());
                 writer.write(String.format("[%s] %s\n", timestamp, message));
@@ -52,6 +48,7 @@ public class PluginLogUtil {
 
     /**
      * 清除插件日志
+     *
      * @param pluginId 插件ID
      * @return 是否成功清除
      */
@@ -59,7 +56,6 @@ public class PluginLogUtil {
         try {
             Path logFilePath = Paths.get(PLUGINS_LOG_DIR, pluginId + ".log");
             File logFile = logFilePath.toFile();
-            
             if (logFile.exists()) {
                 return logFile.delete();
             }

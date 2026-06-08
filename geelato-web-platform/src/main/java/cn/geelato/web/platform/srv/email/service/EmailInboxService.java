@@ -344,6 +344,23 @@ public class EmailInboxService {
         }
     }
 
+    public boolean validateAccount(String userId, String emailAccountId) throws Exception {
+        EmailAccountConfig config = getEmailAccountConfig(userId, emailAccountId, false);
+        Store store = null;
+        Folder root = null;
+        try {
+            log.debug("imap validateAccount start, userId={}, emailAccountId={}", userId, config.id());
+            store = connect(config);
+            root = store.getDefaultFolder();
+            root.list("*");
+            log.debug("imap validateAccount done, userId={}, emailAccountId={}", userId, config.id());
+            return true;
+        } finally {
+            closeQuietly(root);
+            closeQuietly(store);
+        }
+    }
+
     public record DownloadAttachment(String fileName, String contentType, InputStream inputStream) {
     }
 
@@ -428,23 +445,31 @@ public class EmailInboxService {
     }
 
     private EmailAccountConfig getEmailAccountConfig(String userId, String emailAccountId) {
+        return getEmailAccountConfig(userId, emailAccountId, true);
+    }
+
+    private EmailAccountConfig getEmailAccountConfig(String userId, String emailAccountId, boolean enabledOnly) {
         Map<String, Object> row;
         if (Strings.isNotBlank(emailAccountId)) {
+            List<Filter> filters = new ArrayList<>();
+            filters.add(Filter.eq("id", emailAccountId));
+            filters.add(Filter.eq("userId", userId));
+            filters.add(Filter.eq("delStatus", 0));
+            if (enabledOnly) {
+                filters.add(Filter.eq("enableStatus", 1));
+            }
             row = MetaFactory.query(UserEmailAccount.class)
-                    .where(
-                            Filter.eq("id", emailAccountId),
-                            Filter.eq("userId", userId),
-                            Filter.eq("delStatus", 0),
-                            Filter.eq("enableStatus", 1)
-                    )
+                    .where(filters.toArray(new Filter[0]))
                     .one();
         } else {
+            List<Filter> filters = new ArrayList<>();
+            filters.add(Filter.eq("userId", userId));
+            filters.add(Filter.eq("delStatus", 0));
+            if (enabledOnly) {
+                filters.add(Filter.eq("enableStatus", 1));
+            }
             row = MetaFactory.query(UserEmailAccount.class)
-                    .where(
-                            Filter.eq("userId", userId),
-                            Filter.eq("delStatus", 0),
-                            Filter.eq("enableStatus", 1)
-                    )
+                    .where(filters.toArray(new Filter[0]))
                     .order(Order.desc("defaultFlag"), Order.desc("createAt"))
                     .one();
         }

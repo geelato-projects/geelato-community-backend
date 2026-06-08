@@ -15,9 +15,6 @@ mvn install -Dmaven.test.skip=true
 cd ../../geelato-plugins/geelato-plugin-all
 mvn install -Dmaven.test.skip=true
 
-cd ../../geelato-community/geelato-plugin-manager
-mvn install -Dmaven.test.skip=true
-
 cd ../geelato-web-platform
 mvn install -Dmaven.test.skip=true
 

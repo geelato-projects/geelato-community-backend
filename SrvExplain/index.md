@@ -6,8 +6,6 @@
 
 ## 模块列表
 
-- [geelato-plugin-manager](geelato-plugin-manager/README.md)
 - [geelato-test](geelato-test/README.md)
 - [geelato-web-platform](geelato-web-platform/README.md)
 - [geelato-web-quickstart](geelato-web-quickstart/README.md)
-

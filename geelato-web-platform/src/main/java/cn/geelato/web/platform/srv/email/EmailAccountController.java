@@ -11,11 +11,14 @@ import cn.geelato.orm.PageResult;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
+import cn.geelato.web.platform.srv.email.dto.EmailFolderDto;
 import cn.geelato.web.platform.srv.email.dto.UserEmailAccountDto;
 import cn.geelato.web.platform.srv.email.dto.UserEmailAccountUpsertRequest;
+import cn.geelato.web.platform.srv.email.service.EmailInboxService;
 import jakarta.validation.constraints.Null;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +30,9 @@ import java.util.Objects;
 @ApiRestController("/email/account")
 @Slf4j
 public class EmailAccountController extends BaseController {
+
+    @Autowired
+    private EmailInboxService emailInboxService;
 
     @PostMapping("/pageQuery")
     public ApiPagedResult<List<UserEmailAccountDto>> pageQuery(@RequestBody Map<String, Object> requestMap) {
@@ -266,6 +272,25 @@ public class EmailAccountController extends BaseController {
         } catch (Exception e) {
             log.error("createOrUpdate email account failed", e);
             return ApiResult.fail("保存邮箱账号失败: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/validate/{id}")
+    public ApiResult<Boolean> validate(@PathVariable("id") String id) {
+        try {
+            String userId = SecurityContext.getCurrentUser().getUserId();
+            if (Strings.isBlank(userId)) {
+                return ApiResult.fail("用户未登录");
+            }
+            log.debug("emailAccount validate request, userId={}, id={}", userId, id);
+            boolean valid = emailInboxService.validateAccount(userId, id);
+            log.debug("emailAccount validate done, userId={}, id={}, valid={}", userId, id, valid);
+            return ApiResult.success(valid);
+        } catch (IllegalArgumentException ex) {
+            return ApiResult.fail(ex.getMessage());
+        } catch (Exception e) {
+            log.error("emailAccount validate failed", e);
+            return ApiResult.fail("邮箱连通测试失败: " + e.getMessage());
         }
     }
 

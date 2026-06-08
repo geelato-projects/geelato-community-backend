@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.ocr;
 
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.plugin.PluginBeanProvider;
+import cn.geelato.web.platform.plugin.PluginBeanProvider;
 import cn.geelato.plugin.ocr.*;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.FileUtils;

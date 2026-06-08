@@ -6,7 +6,7 @@ import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.exception.CoreException;
 import cn.geelato.lang.exception.UnSupportedVersionException;
-import cn.geelato.plugin.UnFoundPluginException;
+import cn.geelato.web.platform.plugin.UnFoundPluginException;
 import cn.geelato.utils.BeanValidators;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson.JSON;

@@ -21,7 +21,6 @@
         <module>geelato-web-platform</module>
         <module>geelato-web-common</module>
         <module>geelato-web-quickstart</module>
-        <module>geelato-plugin-manager</module>
         <module>geelato-test</module>
         <module>geelato-mcp</module>
         <module>geelato-srvexplain-generator</module>

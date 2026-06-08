@@ -77,9 +77,6 @@ call mvn clean install -U -D maven.test.skip=true
 @echo Phase 3: Community Upper Modules
 @echo ========================================
 
-cd ../geelato-community-backend/geelato-plugin-manager
-call mvn clean install -U -D maven.test.skip=true
-
 cd ../geelato-web-platform
 call mvn clean install -U -D maven.test.skip=true
 

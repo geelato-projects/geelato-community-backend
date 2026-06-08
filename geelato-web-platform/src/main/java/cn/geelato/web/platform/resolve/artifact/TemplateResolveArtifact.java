@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.resolve.artifact;
 
-import cn.geelato.plugin.PluginBeanProvider;
+import cn.geelato.web.platform.plugin.PluginBeanProvider;
 import cn.geelato.plugin.ocr.OCRService;
 import cn.geelato.plugin.ocr.PDFAnnotationMeta;
 import cn.geelato.plugin.ocr.PDFResolveData;

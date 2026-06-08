@@ -25,29 +25,30 @@ jobs:
 
       - name: Generate Maven settings
         env:
-          ALIYUN_MAVEN_REPO_ID: ${{ secrets.ALIYUN_MAVEN_REPO_ID }}
-          ALIYUN_MAVEN_REPO_URL: ${{ secrets.ALIYUN_MAVEN_REPO_URL }}
-          ALIYUN_MAVEN_USERNAME: ${{ secrets.ALIYUN_MAVEN_USERNAME }}
-          ALIYUN_MAVEN_PASSWORD: ${{ secrets.ALIYUN_MAVEN_PASSWORD }}
+          ALIYUN_MAVEN_RELEASE_ID: ${{ secrets.ALIYUN_MAVEN_RELEASE_ID }}
+          ALIYUN_MAVEN_RELEASE_URL: ${{ secrets.ALIYUN_MAVEN_RELEASE_URL }}
+          ALIYUN_MAVEN_RELEASE_USERNAME: ${{ secrets.ALIYUN_MAVEN_RELEASE_USERNAME }}
+          ALIYUN_MAVEN_RELEASE_PASSWORD: ${{ secrets.ALIYUN_MAVEN_RELEASE_PASSWORD }}
+          ALIYUN_MAVEN_SNAPSHOT_ID: ${{ secrets.ALIYUN_MAVEN_SNAPSHOT_ID }}
+          ALIYUN_MAVEN_SNAPSHOT_URL: ${{ secrets.ALIYUN_MAVEN_SNAPSHOT_URL }}
+          ALIYUN_MAVEN_SNAPSHOT_USERNAME: ${{ secrets.ALIYUN_MAVEN_SNAPSHOT_USERNAME }}
+          ALIYUN_MAVEN_SNAPSHOT_PASSWORD: ${{ secrets.ALIYUN_MAVEN_SNAPSHOT_PASSWORD }}
         run: |
           mkdir -p "$HOME/.m2"
           cat <<EOF > "$HOME/.m2/settings.xml"
           <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                     xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
-            <mirrors>
-              <mirror>
-                <id>aliyun-public</id>
-                <mirrorOf>central</mirrorOf>
-                <name>Aliyun Maven Public Mirror</name>
-                <url>https://maven.aliyun.com/repository/public</url>
-              </mirror>
-            </mirrors>
             <servers>
               <server>
-                <id>${ALIYUN_MAVEN_REPO_ID}</id>
-                <username>${ALIYUN_MAVEN_USERNAME}</username>
-                <password>${ALIYUN_MAVEN_PASSWORD}</password>
+                <id>${ALIYUN_MAVEN_RELEASE_ID}</id>
+                <username>${ALIYUN_MAVEN_RELEASE_USERNAME}</username>
+                <password>${ALIYUN_MAVEN_RELEASE_PASSWORD}</password>
+              </server>
+              <server>
+                <id>${ALIYUN_MAVEN_SNAPSHOT_ID}</id>
+                <username>${ALIYUN_MAVEN_SNAPSHOT_USERNAME}</username>
+                <password>${ALIYUN_MAVEN_SNAPSHOT_PASSWORD}</password>
               </server>
             </servers>
             <profiles>
@@ -55,10 +56,30 @@ jobs:
                 <id>aliyun-private</id>
                 <repositories>
                   <repository>
-                    <id>${ALIYUN_MAVEN_REPO_ID}</id>
-                    <url>${ALIYUN_MAVEN_REPO_URL}</url>
+                    <id>central</id>
+                    <url>https://repo1.maven.org/maven2/</url>
                     <releases>
                       <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                      <enabled>false</enabled>
+                    </snapshots>
+                  </repository>
+                  <repository>
+                    <id>${ALIYUN_MAVEN_RELEASE_ID}</id>
+                    <url>${ALIYUN_MAVEN_RELEASE_URL}</url>
+                    <releases>
+                      <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                      <enabled>false</enabled>
+                    </snapshots>
+                  </repository>
+                  <repository>
+                    <id>${ALIYUN_MAVEN_SNAPSHOT_ID}</id>
+                    <url>${ALIYUN_MAVEN_SNAPSHOT_URL}</url>
+                    <releases>
+                      <enabled>false</enabled>
                     </releases>
                     <snapshots>
                       <enabled>true</enabled>
@@ -67,10 +88,30 @@ jobs:
                 </repositories>
                 <pluginRepositories>
                   <pluginRepository>
-                    <id>${ALIYUN_MAVEN_REPO_ID}</id>
-                    <url>${ALIYUN_MAVEN_REPO_URL}</url>
+                    <id>central</id>
+                    <url>https://repo1.maven.org/maven2/</url>
                     <releases>
                       <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                      <enabled>false</enabled>
+                    </snapshots>
+                  </pluginRepository>
+                  <pluginRepository>
+                    <id>${ALIYUN_MAVEN_RELEASE_ID}</id>
+                    <url>${ALIYUN_MAVEN_RELEASE_URL}</url>
+                    <releases>
+                      <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                      <enabled>false</enabled>
+                    </snapshots>
+                  </pluginRepository>
+                  <pluginRepository>
+                    <id>${ALIYUN_MAVEN_SNAPSHOT_ID}</id>
+                    <url>${ALIYUN_MAVEN_SNAPSHOT_URL}</url>
+                    <releases>
+                      <enabled>false</enabled>
                     </releases>
                     <snapshots>
                       <enabled>true</enabled>

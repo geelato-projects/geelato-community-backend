@@ -1,0 +1,168 @@
+name: Release Docker JAR
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout community code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+          cache-dependency-path: '**/pom.xml'
+
+      - name: Generate Maven settings
+        env:
+          ALIYUN_MAVEN_RELEASE_ID: ${{ secrets.ALIYUN_MAVEN_RELEASE_ID }}
+          ALIYUN_MAVEN_RELEASE_URL: ${{ secrets.ALIYUN_MAVEN_RELEASE_URL }}
+          ALIYUN_MAVEN_RELEASE_USERNAME: ${{ secrets.ALIYUN_MAVEN_RELEASE_USERNAME }}
+          ALIYUN_MAVEN_RELEASE_PASSWORD: ${{ secrets.ALIYUN_MAVEN_RELEASE_PASSWORD }}
+          ALIYUN_MAVEN_SNAPSHOT_ID: ${{ secrets.ALIYUN_MAVEN_SNAPSHOT_ID }}
+          ALIYUN_MAVEN_SNAPSHOT_URL: ${{ secrets.ALIYUN_MAVEN_SNAPSHOT_URL }}
+          ALIYUN_MAVEN_SNAPSHOT_USERNAME: ${{ secrets.ALIYUN_MAVEN_SNAPSHOT_USERNAME }}
+          ALIYUN_MAVEN_SNAPSHOT_PASSWORD: ${{ secrets.ALIYUN_MAVEN_SNAPSHOT_PASSWORD }}
+        run: |
+          mkdir -p "$HOME/.m2"
+          cat <<EOF > "$HOME/.m2/settings.xml"
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <servers>
+              <server>
+                <id>${ALIYUN_MAVEN_RELEASE_ID}</id>
+                <username>${ALIYUN_MAVEN_RELEASE_USERNAME}</username>
+                <password>${ALIYUN_MAVEN_RELEASE_PASSWORD}</password>
+              </server>
+              <server>
+                <id>${ALIYUN_MAVEN_SNAPSHOT_ID}</id>
+                <username>${ALIYUN_MAVEN_SNAPSHOT_USERNAME}</username>
+                <password>${ALIYUN_MAVEN_SNAPSHOT_PASSWORD}</password>
+              </server>
+            </servers>
+            <profiles>
+              <profile>
+                <id>aliyun-private</id>
+                <repositories>
+                  <repository>
+                    <id>central</id>
+                    <url>https://repo1.maven.org/maven2/</url>
+                    <releases>
+                      <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                      <enabled>false</enabled>
+                    </snapshots>
+                  </repository>
+                  <repository>
+                    <id>${ALIYUN_MAVEN_RELEASE_ID}</id>
+                    <url>${ALIYUN_MAVEN_RELEASE_URL}</url>
+                    <releases>
+                      <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                      <enabled>false</enabled>
+                    </snapshots>
+                  </repository>
+                  <repository>
+                    <id>${ALIYUN_MAVEN_SNAPSHOT_ID}</id>
+                    <url>${ALIYUN_MAVEN_SNAPSHOT_URL}</url>
+                    <releases>
+                      <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                      <enabled>true</enabled>
+                    </snapshots>
+                  </repository>
+                </repositories>
+                <pluginRepositories>
+                  <pluginRepository>
+                    <id>central</id>
+                    <url>https://repo1.maven.org/maven2/</url>
+                    <releases>
+                      <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                      <enabled>false</enabled>
+                    </snapshots>
+                  </pluginRepository>
+                  <pluginRepository>
+                    <id>${ALIYUN_MAVEN_RELEASE_ID}</id>
+                    <url>${ALIYUN_MAVEN_RELEASE_URL}</url>
+                    <releases>
+                      <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                      <enabled>false</enabled>
+                    </snapshots>
+                  </pluginRepository>
+                  <pluginRepository>
+                    <id>${ALIYUN_MAVEN_SNAPSHOT_ID}</id>
+                    <url>${ALIYUN_MAVEN_SNAPSHOT_URL}</url>
+                    <releases>
+                      <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                      <enabled>true</enabled>
+                    </snapshots>
+                  </pluginRepository>
+                </pluginRepositories>
+              </profile>
+            </profiles>
+            <activeProfiles>
+              <activeProfile>aliyun-private</activeProfile>
+            </activeProfiles>
+          </settings>
+          EOF
+
+      - name: Build release JAR
+        run: |
+          mvn -B -U -s "$HOME/.m2/settings.xml" -DskipTests -f geelato-parent/pom.xml install
+          mvn -B -U -s "$HOME/.m2/settings.xml" -pl geelato-web-quickstart -am clean package -DskipTests -Dmaven.test.skip=true -Dautoconfig.skip=true
+
+      - name: Prepare release asset
+        run: |
+          mkdir -p release-assets
+          jar_path=$(find geelato-web-quickstart/target -maxdepth 1 -type f -name 'geelato-web-quickstart-*.jar' ! -name '*.original' | head -n 1)
+          if [ -z "$jar_path" ]; then
+            echo "[ERROR] 未找到 geelato-web-quickstart 可执行 JAR" >&2
+            exit 1
+          fi
+          cp "$jar_path" release-assets/geelato-community-app.jar
+          echo "[INFO] Release JAR: $jar_path -> release-assets/geelato-community-app.jar"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/geelato-community-app.jar
+
+      - name: Checkout docker repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.DOCKER_REPO_SLUG }}
+          token: ${{ secrets.DOCKER_REPO_TOKEN }}
+          path: docker-repo
+
+      - name: Build docker image from release JAR
+        env:
+          COMMUNITY_REPO_SLUG: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_ASSET_NAME: geelato-community-app.jar
+          GITHUB_TOKEN: ${{ secrets.COMMUNITY_RELEASE_DOWNLOAD_TOKEN }}
+          SKIP_FRONTEND_BUILD: 'true'
+        run: |
+          chmod +x docker-repo/scripts/fetch-release-jar.sh docker-repo/scripts/build.sh
+          cd docker-repo
+          ./scripts/build.sh

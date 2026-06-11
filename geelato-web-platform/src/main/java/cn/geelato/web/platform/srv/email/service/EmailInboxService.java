@@ -127,7 +127,7 @@ public class EmailInboxService {
         return folders != null ? folders : new Folder[0];
     }
 
-    private static boolean isDefaultRootFolder(Folder folder) {
+    static boolean isDefaultRootFolder(Folder folder) {
         try {
             return folder != null && Strings.isBlank(folder.getFullName());
         } catch (Exception ex) {
@@ -135,11 +135,11 @@ public class EmailInboxService {
         }
     }
 
-    private static boolean isHierarchyWildcard(String pattern) {
+    static boolean isHierarchyWildcard(String pattern) {
         return "*".equals(pattern) || "%".equals(pattern);
     }
 
-    private static int safeFolderType(Folder folder) {
+    static int safeFolderType(Folder folder) {
         try {
             return folder.getType();
         } catch (Exception ex) {
@@ -147,7 +147,7 @@ public class EmailInboxService {
         }
     }
 
-    private static int countFolderNodes(List<EmailFolderDto> folders) {
+    static int countFolderNodes(List<EmailFolderDto> folders) {
         if (folders == null || folders.isEmpty()) {
             return 0;
         }
@@ -162,7 +162,7 @@ public class EmailInboxService {
         return count;
     }
 
-    private static String resolveParentFullName(Folder folder) {
+    static String resolveParentFullName(Folder folder) {
         if (folder == null) {
             return null;
         }
@@ -541,11 +541,11 @@ public class EmailInboxService {
         }
     }
 
-    private EmailAccountConfig getEmailAccountConfig(String userId, String emailAccountId) {
+    EmailAccountConfig getEmailAccountConfig(String userId, String emailAccountId) {
         return getEmailAccountConfig(userId, emailAccountId, true);
     }
 
-    private EmailAccountConfig getEmailAccountConfig(String userId, String emailAccountId, boolean enabledOnly) {
+    EmailAccountConfig getEmailAccountConfig(String userId, String emailAccountId, boolean enabledOnly) {
         Map<String, Object> row;
         if (Strings.isNotBlank(emailAccountId)) {
             List<Filter> filters = new ArrayList<>();
@@ -601,7 +601,7 @@ public class EmailInboxService {
         );
     }
 
-    private Map<String, Object> findFirstEmailAccountRow(String userId, boolean enabledOnly) {
+    Map<String, Object> findFirstEmailAccountRow(String userId, boolean enabledOnly) {
         List<Filter> defaultFilters = new ArrayList<>();
         defaultFilters.add(Filter.eq("userId", userId));
         defaultFilters.add(Filter.eq("delStatus", 0));
@@ -637,7 +637,7 @@ public class EmailInboxService {
         return fallbackPage.getRecords().get(0);
     }
 
-    private Store connect(EmailAccountConfig config) throws Exception {
+    Store connect(EmailAccountConfig config) throws Exception {
         if (Strings.isBlank(config.host()) || config.port() <= 0 || Strings.isBlank(config.authUser()) || Strings.isBlank(config.authSecret())) {
             throw new IllegalArgumentException("email account config invalid");
         }
@@ -661,7 +661,7 @@ public class EmailInboxService {
         return store;
     }
 
-    private void applyImapId(Store store, String emailAccountId) {
+    void applyImapId(Store store, String emailAccountId) {
         try {
             if (!(store instanceof IMAPStore imapStore)) {
                 log.debug("imap id skipped, emailAccountId={}, storeClass={}", emailAccountId, store != null ? store.getClass().getName() : null);
@@ -677,28 +677,28 @@ public class EmailInboxService {
         }
     }
 
-    private static Message resolveMessageByUid(Folder folder, long uid) throws Exception {
+    static Message resolveMessageByUid(Folder folder, long uid) throws Exception {
         if (folder instanceof UIDFolder uidFolder) {
             return uidFolder.getMessageByUID(uid);
         }
         return null;
     }
 
-    private static long resolveUid(Folder folder, Message msg) throws Exception {
+    static long resolveUid(Folder folder, Message msg) throws Exception {
         if (folder instanceof UIDFolder uidFolder) {
             return uidFolder.getUID(msg);
         }
         return msg.getMessageNumber();
     }
 
-    private static long resolveUidValidity(Folder folder) throws MessagingException {
+    static long resolveUidValidity(Folder folder) throws MessagingException {
         if (folder instanceof IMAPFolder imapFolder) {
             return imapFolder.getUIDValidity();
         }
         return 0;
     }
 
-    private static Date extractSentDate(Message msg) throws Exception {
+    static Date extractSentDate(Message msg) throws Exception {
         Date d = msg.getSentDate();
         if (d != null) {
             return d;
@@ -709,11 +709,11 @@ public class EmailInboxService {
         return null;
     }
 
-    private static Date extractReceivedDate(Message msg) throws Exception {
+    static Date extractReceivedDate(Message msg) throws Exception {
         return msg.getReceivedDate();
     }
 
-    private static Long extractSize(Message msg) {
+    static Long extractSize(Message msg) {
         try {
             int size = msg.getSize();
             return size >= 0 ? (long) size : null;
@@ -722,7 +722,7 @@ public class EmailInboxService {
         }
     }
 
-    private static boolean guessHasAttachments(Message msg) {
+    static boolean guessHasAttachments(Message msg) {
         try {
             return !listAttachmentParts(msg).isEmpty();
         } catch (Exception ex) {
@@ -730,7 +730,7 @@ public class EmailInboxService {
         }
     }
 
-    private static String extractMessageId(Message msg) {
+    static String extractMessageId(Message msg) {
         if (msg instanceof MimeMessage mm) {
             try {
                 return mm.getMessageID();
@@ -740,14 +740,14 @@ public class EmailInboxService {
         return null;
     }
 
-    private static EmailAddressDto firstAddress(Address[] addresses) {
+    static EmailAddressDto firstAddress(Address[] addresses) {
         if (addresses == null || addresses.length == 0) {
             return null;
         }
         return toEmailAddress(addresses[0]);
     }
 
-    private static List<EmailAddressDto> addressList(Address[] addresses) {
+    static List<EmailAddressDto> addressList(Address[] addresses) {
         if (addresses == null || addresses.length == 0) {
             return Collections.emptyList();
         }
@@ -761,7 +761,7 @@ public class EmailInboxService {
         return list;
     }
 
-    private static EmailAddressDto toEmailAddress(Address address) {
+    static EmailAddressDto toEmailAddress(Address address) {
         if (address instanceof InternetAddress ia) {
             EmailAddressDto dto = new EmailAddressDto();
             dto.setName(ia.getPersonal());
@@ -776,7 +776,7 @@ public class EmailInboxService {
         return null;
     }
 
-    private static void appendContactAddresses(List<ContactAddressRecord> out, List<EmailAddressDto> addresses, Date sentAt, Date receivedAt) {
+    static void appendContactAddresses(List<ContactAddressRecord> out, List<EmailAddressDto> addresses, Date sentAt, Date receivedAt) {
         if (addresses == null || addresses.isEmpty()) {
             return;
         }
@@ -788,7 +788,7 @@ public class EmailInboxService {
         }
     }
 
-    private static String safeContentType(String contentType) {
+    static String safeContentType(String contentType) {
         if (contentType == null) {
             return "application/octet-stream";
         }
@@ -799,7 +799,7 @@ public class EmailInboxService {
         return contentType.trim();
     }
 
-    private static void closeQuietly(Folder folder) {
+    static void closeQuietly(Folder folder) {
         if (folder == null) {
             return;
         }
@@ -811,7 +811,7 @@ public class EmailInboxService {
         }
     }
 
-    private static void closeQuietly(Store store) {
+    static void closeQuietly(Store store) {
         if (store == null) {
             return;
         }
@@ -823,13 +823,25 @@ public class EmailInboxService {
         }
     }
 
-    private static class MessageContent {
+    static class MessageContent {
         private String textBody;
         private String htmlBody;
         private final List<Part> attachments = new ArrayList<>();
+
+        public String getTextBody() {
+            return textBody;
+        }
+
+        public String getHtmlBody() {
+            return htmlBody;
+        }
+
+        public List<Part> getAttachments() {
+            return attachments;
+        }
     }
 
-    private static void parsePart(Part part, MessageContent out) throws Exception {
+    static void parsePart(Part part, MessageContent out) throws Exception {
         if (isAttachment(part)) {
             out.attachments.add(part);
             return;
@@ -869,7 +881,7 @@ public class EmailInboxService {
         }
     }
 
-    private static boolean isAttachment(Part part) throws Exception {
+    static boolean isAttachment(Part part) throws Exception {
         String disposition = part.getDisposition();
         String fileName = resolveFileName(part);
         if (Strings.isNotBlank(fileName)) {
@@ -884,7 +896,7 @@ public class EmailInboxService {
         return Part.ATTACHMENT.equalsIgnoreCase(disposition);
     }
 
-    private static boolean isInlineImage(Part part) {
+    static boolean isInlineImage(Part part) {
         try {
             String ct = safeContentType(part.getContentType());
             if (ct == null || !ct.toLowerCase().startsWith("image/")) {
@@ -897,7 +909,7 @@ public class EmailInboxService {
         }
     }
 
-    private static String resolveFileName(Part part) {
+    static String resolveFileName(Part part) {
         if (part == null) {
             return null;
         }
@@ -923,7 +935,7 @@ public class EmailInboxService {
         }
     }
 
-    private static String decodeRfc5987(String v) {
+    static String decodeRfc5987(String v) {
         if (Strings.isBlank(v)) {
             return v;
         }
@@ -939,7 +951,7 @@ public class EmailInboxService {
         }
     }
 
-    private static String parseHeaderParam(String header, String key) {
+    static String parseHeaderParam(String header, String key) {
         if (Strings.isBlank(header) || Strings.isBlank(key)) {
             return null;
         }
@@ -959,7 +971,7 @@ public class EmailInboxService {
         return val;
     }
 
-    private static List<EmailAttachmentDto> toAttachmentDtos(List<Part> parts, String mailId) throws Exception {
+    static List<EmailAttachmentDto> toAttachmentDtos(List<Part> parts, String mailId) throws Exception {
         if (parts.isEmpty()) {
             return Collections.emptyList();
         }
@@ -981,7 +993,7 @@ public class EmailInboxService {
         return list;
     }
 
-    private static Long extractBodyPartSize(Part part) {
+    static Long extractBodyPartSize(Part part) {
         try {
             int size = part.getSize();
             return size >= 0 ? (long) size : null;
@@ -990,7 +1002,7 @@ public class EmailInboxService {
         }
     }
 
-    private static String extractHeader(Part part, String headerName) throws Exception {
+    static String extractHeader(Part part, String headerName) throws Exception {
         String[] hs = part.getHeader(headerName);
         if (hs == null || hs.length == 0) {
             return null;
@@ -998,13 +1010,13 @@ public class EmailInboxService {
         return hs[0];
     }
 
-    private static List<Part> listAttachmentParts(Part root) throws Exception {
+    static List<Part> listAttachmentParts(Part root) throws Exception {
         MessageContent content = new MessageContent();
         parsePart(root, content);
         return content.attachments;
     }
 
-    private static Part findAttachmentPart(List<Part> parts, String partId) {
+    static Part findAttachmentPart(List<Part> parts, String partId) {
         int target;
         try {
             target = Integer.parseInt(partId);
@@ -1020,7 +1032,7 @@ public class EmailInboxService {
         return parts.get(target - 1);
     }
 
-    private static void collectAttachmentParts(Part part, List<Part> out) throws Exception {
+    static void collectAttachmentParts(Part part, List<Part> out) throws Exception {
         if (isAttachment(part)) {
             out.add(part);
             return;
@@ -1043,11 +1055,11 @@ public class EmailInboxService {
         }
     }
 
-    private static String stringVal(Object o) {
+    static String stringVal(Object o) {
         return o == null ? null : String.valueOf(o);
     }
 
-    private static Integer intVal(Object o) {
+    static Integer intVal(Object o) {
         if (o == null) {
             return null;
         }
@@ -1061,12 +1073,12 @@ public class EmailInboxService {
         }
     }
 
-    private static int intVal0(Object o) {
+    static int intVal0(Object o) {
         Integer v = intVal(o);
         return v != null ? v : 0;
     }
 
-    private static String decodeMimeText(String raw) {
+    static String decodeMimeText(String raw) {
         if (Strings.isBlank(raw)) {
             return raw;
         }
@@ -1077,7 +1089,7 @@ public class EmailInboxService {
         }
     }
 
-    private static String maskEmail(String raw) {
+    static String maskEmail(String raw) {
         if (Strings.isBlank(raw)) {
             return raw;
         }
@@ -1093,7 +1105,7 @@ public class EmailInboxService {
         return local.charAt(0) + "***" + local.charAt(local.length() - 1) + domain;
     }
 
-    private record EmailAccountConfig(
+    record EmailAccountConfig(
             String id,
             String host,
             int port,

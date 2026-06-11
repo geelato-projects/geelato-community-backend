@@ -394,6 +394,10 @@ public class EmailAccountController extends BaseController {
         dto.setSmtpFromName(Objects.toString(row.get("smtpFromName"), null));
         dto.setSignatureHtml(Objects.toString(row.get("signatureHtml"), null));
         dto.setEnableStatus(intVal(row.get("enableStatus")));
+        dto.setSyncEnabled(intVal(row.get("syncEnabled")));
+        dto.setSyncIntervalMinutes(intVal(row.get("syncIntervalMinutes")));
+        dto.setLastSyncAt(dateVal(row.get("lastSyncAt")));
+        dto.setSyncStatus(Objects.toString(row.get("syncStatus"), null));
         dto.setCreateAt(dateVal(row.get("createAt")));
         dto.setUpdateAt(dateVal(row.get("updateAt")));
         return dto;

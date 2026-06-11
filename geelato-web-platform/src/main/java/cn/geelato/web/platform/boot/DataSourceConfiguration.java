@@ -17,6 +17,7 @@ import java.util.Map;
 /**
  * @author geelato
  */
+@SuppressWarnings("ConfigurationProperties")
 @Configuration
 public class DataSourceConfiguration extends BaseConfiguration {
 
@@ -32,6 +33,22 @@ public class DataSourceConfiguration extends BaseConfiguration {
     }
     @Bean(name = "primaryDao")
     public Dao primaryDao(@Qualifier("primaryJdbcTemplate") JdbcTemplate jdbcTemplate) {
+        return new Dao(jdbcTemplate);
+    }
+
+
+    @Bean(name = "secondaryDataSource")
+    @Qualifier("secondaryDataSource")
+    @ConfigurationProperties(prefix = "spring.datasource.secondary")
+    public DataSource secondaryDataSource() {
+        return DataSourceBuilder.create().build();
+    }
+    @Bean(name = "secondaryJdbcTemplate")
+    public JdbcTemplate secondaryJdbcTemplate(@Qualifier("secondaryDataSource") DataSource dataSource) {
+        return new JdbcTemplate(dataSource);
+    }
+    @Bean(name = "secondaryDao")
+    public Dao secondaryDao(@Qualifier("secondaryJdbcTemplate") JdbcTemplate jdbcTemplate) {
         return new Dao(jdbcTemplate);
     }
 

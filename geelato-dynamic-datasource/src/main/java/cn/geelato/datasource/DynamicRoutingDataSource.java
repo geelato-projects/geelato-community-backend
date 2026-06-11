@@ -70,6 +70,7 @@ public class DynamicRoutingDataSource extends AbstractRoutingDataSource {
     private void applyTargetDataSources() {
         Map<Object, Object> targetDataSources = new HashMap<>();
         targetDataSources.put("primary", dynamicDataSourceRegistry.getPrimaryDataSource());
+        targetDataSources.put("secondary", dynamicDataSourceRegistry.getSecondaryDataSource());
         targetDataSources.putAll(targetDataSourcesMap);
         setTargetDataSources(targetDataSources);
         setDefaultTargetDataSource(dynamicDataSourceRegistry.getPrimaryDataSource());

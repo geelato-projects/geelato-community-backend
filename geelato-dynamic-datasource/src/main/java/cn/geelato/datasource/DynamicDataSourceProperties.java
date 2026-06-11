@@ -18,8 +18,4 @@ public class DynamicDataSourceProperties {
     private Long keepaliveTimeMs = 300000L;
     private Long initializationFailTimeoutMs = 0L;
     private String connectionTestQuery = "SELECT 1";
-
-    public void setDelayLoadDataSource(boolean delayLoadDataSource) {
-        this.delayLoadDataSource = true;
-    }
 }

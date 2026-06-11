@@ -1,6 +1,5 @@
 package cn.geelato.datasource.aspect;
 
-import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.annotation.UseTransactional;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -9,19 +8,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
  * 事务切面
- * 处理@UseTransactional注解，为标记的Dao字段的方法自动添加事务支持
+ * <p>处理 @UseTransactional 注解，为标记的 Dao 字段的方法自动添加事务支持。</p>
+ * <p><strong>当前状态：未激活。</strong>
+ * aroundDaoMethod 的 @Around 注解已移除，切面不会拦截任何方法调用。
+ * 如需启用，请为 aroundDaoMethod 方法添加合适的 @Around 注解。</p>
  */
 @Aspect
 @Component
@@ -32,30 +32,19 @@ public class TransactionalAspect {
     @Autowired
     @Qualifier("dynamicDataSourceTransactionManager")
     private PlatformTransactionManager transactionManager;
-    @Autowired
-    private ApplicationContext applicationContext;
+
     /**
-     * 拦截所有Dao方法的调用
-     * 检查调用方是否有@UseTransactional注解的字段
+     * 拦截 Dao 方法的调用，为其添加事务支持
+     * <p>当前未激活：需添加 @Around 注解才能生效</p>
      */
-//    @Around("execution(* cn.geelato.core.orm.Dao.*(..))")
-//    @Around("execution(* cn.geelato.web.platform.m.base.service.RuleService.save(..))")
     public Object aroundDaoMethod(ProceedingJoinPoint joinPoint) throws Throwable {
         Object target = joinPoint.getTarget();
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
-        Field field =  target.getClass().getField("dao");
-        field.setAccessible(true);
 
-        Dao dynamicDao = (Dao) applicationContext.getBean("dynamicDao");
-        field.set(target, dynamicDao);
-        // 检查是否需要事务支持
-//        UseTransactional useTransactional = findUseTransactionalAnnotation(target);
-//        if (useTransactional == null) {
-//            return joinPoint.proceed();
-//        }
         if (method.isAnnotationPresent(org.springframework.transaction.annotation.Transactional.class)) {
             return joinPoint.proceed();
         }
+
         DefaultTransactionDefinition transactionDefinition = createTransactionDefinition();
         TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
         try {
@@ -64,114 +53,16 @@ public class TransactionalAspect {
             transactionManager.commit(transactionStatus);
             logger.debug("提交事务: {}.{}", target.getClass().getSimpleName(), method.getName());
             return result;
-            
         } catch (Exception e) {
-            if (true) {
-                transactionManager.rollback(transactionStatus);
-                logger.debug("回滚事务: {}.{}, 异常: {}", target.getClass().getSimpleName(), method.getName(), e.getMessage());
-            } else {
-                transactionManager.commit(transactionStatus);
-                logger.debug("提交事务(忽略异常): {}.{}, 异常: {}", target.getClass().getSimpleName(), method.getName(), e.getMessage());
-            }
+            transactionManager.rollback(transactionStatus);
+            logger.debug("回滚事务: {}.{}, 异常: {}", target.getClass().getSimpleName(), method.getName(), e.getMessage());
             throw e;
         }
     }
-    
-    /**
-     * 查找@UseTransactional注解
-     * 通过反射检查调用栈中是否有标记了@UseTransactional的字段
-     */
-    private UseTransactional findUseTransactionalAnnotation(Object daoTarget) {
-        try {
-            // 获取当前线程的调用栈
-            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-            
-            for (StackTraceElement element : stackTrace) {
-                try {
-                    Class<?> callerClass = Class.forName(element.getClassName());
-                    
-                    // 检查调用类的所有字段
-                    for (Field field : callerClass.getDeclaredFields()) {
-                        if (field.isAnnotationPresent(UseTransactional.class)) {
-                            // 检查字段类型是否与当前Dao匹配
-                            if (field.getType().isAssignableFrom(daoTarget.getClass())) {
-                                return field.getAnnotation(UseTransactional.class);
-                            }
-                        }
-                    }
-                } catch (ClassNotFoundException e) {
-                    // 忽略无法加载的类
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("查找@UseTransactional注解时发生错误: {}", e.getMessage());
-        }
-        
-        return null;
-    }
-    
-    /**
-     * 创建事务定义
-     */
-    private DefaultTransactionDefinition createTransactionDefinition(UseTransactional useTransactional) {
-        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-        
-        // 设置传播行为
-        switch (useTransactional.propagation()) {
-            case "REQUIRED":
-                definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-                break;
-            case "REQUIRES_NEW":
-                definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-                break;
-            case "SUPPORTS":
-                definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_SUPPORTS);
-                break;
-            case "NOT_SUPPORTED":
-                definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_NOT_SUPPORTED);
-                break;
-            case "NEVER":
-                definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_NEVER);
-                break;
-            case "MANDATORY":
-                definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_MANDATORY);
-                break;
-            case "NESTED":
-                definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_NESTED);
-                break;
-            default:
-                definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-        }
-        
-        // 设置隔离级别
-        switch (useTransactional.isolation()) {
-            case "READ_UNCOMMITTED":
-                definition.setIsolationLevel(TransactionDefinition.ISOLATION_READ_UNCOMMITTED);
-                break;
-            case "READ_COMMITTED":
-                definition.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
-                break;
-            case "REPEATABLE_READ":
-                definition.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-                break;
-            case "SERIALIZABLE":
-                definition.setIsolationLevel(TransactionDefinition.ISOLATION_SERIALIZABLE);
-                break;
-            default:
-                definition.setIsolationLevel(TransactionDefinition.ISOLATION_DEFAULT);
-        }
-        
-        // 设置超时时间
-        if (useTransactional.timeout() > 0) {
-            definition.setTimeout(useTransactional.timeout());
-        }
-        
-        // 设置只读
-        definition.setReadOnly(useTransactional.readOnly());
-        
-        return definition;
-    }
 
+    /**
+     * 创建默认事务定义
+     */
     private DefaultTransactionDefinition createTransactionDefinition() {
         DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
         definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
@@ -179,51 +70,5 @@ public class TransactionalAspect {
         definition.setTimeout(30000);
         definition.setReadOnly(true);
         return definition;
-    }
-    
-    /**
-     * 判断是否应该回滚事务
-     */
-    private boolean shouldRollback(Exception exception, UseTransactional useTransactional) {
-        // 检查rollbackFor
-        for (Class<? extends Throwable> rollbackClass : useTransactional.rollbackFor()) {
-            if (rollbackClass.isAssignableFrom(exception.getClass())) {
-                return true;
-            }
-        }
-        
-        // 检查rollbackForClassName
-        for (String className : useTransactional.rollbackForClassName()) {
-            try {
-                Class<?> rollbackClass = Class.forName(className);
-                if (rollbackClass.isAssignableFrom(exception.getClass())) {
-                    return true;
-                }
-            } catch (ClassNotFoundException e) {
-                // 忽略无法加载的类
-            }
-        }
-        
-        // 检查noRollbackFor
-        for (Class<? extends Throwable> noRollbackClass : useTransactional.noRollbackFor()) {
-            if (noRollbackClass.isAssignableFrom(exception.getClass())) {
-                return false;
-            }
-        }
-        
-        // 检查noRollbackForClassName
-        for (String className : useTransactional.noRollbackForClassName()) {
-            try {
-                Class<?> noRollbackClass = Class.forName(className);
-                if (noRollbackClass.isAssignableFrom(exception.getClass())) {
-                    return false;
-                }
-            } catch (ClassNotFoundException e) {
-                // 忽略无法加载的类
-            }
-        }
-        
-        // 默认情况：RuntimeException和Error会回滚
-        return (exception instanceof RuntimeException);
     }
 }

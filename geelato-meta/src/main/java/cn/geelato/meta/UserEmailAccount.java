@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @Entity(name = "platform_user_email_account")
@@ -103,4 +105,20 @@ public class UserEmailAccount extends BaseEntity implements EntityEnableAble {
     @Title(title = "启用状态", description = "1启用，0不启用")
     @Col(name = "enable_status")
     private int enableStatus = ColumnDefault.ENABLE_STATUS_VALUE;
+
+    @Title(title = "同步开关", description = "0关，1开")
+    @Col(name = "sync_enabled")
+    private int syncEnabled;
+
+    @Title(title = "同步间隔(分钟)", description = "默认5分钟")
+    @Col(name = "sync_interval_minutes")
+    private Integer syncIntervalMinutes;
+
+    @Title(title = "上次同步时间")
+    @Col(name = "last_sync_at")
+    private Date lastSyncAt;
+
+    @Title(title = "同步状态", description = "idle/syncing/error")
+    @Col(name = "sync_status")
+    private String syncStatus;
 }

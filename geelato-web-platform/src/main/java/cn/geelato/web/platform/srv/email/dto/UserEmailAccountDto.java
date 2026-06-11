@@ -27,6 +27,10 @@ public class UserEmailAccountDto {
     private String smtpFromName;
     private String signatureHtml;
     private Integer enableStatus;
+    private Integer syncEnabled;
+    private Integer syncIntervalMinutes;
+    private Date lastSyncAt;
+    private String syncStatus;
     private Date createAt;
     private Date updateAt;
 }

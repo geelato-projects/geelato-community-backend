@@ -8,6 +8,7 @@ import cn.geelato.core.script.db.DbScriptManagerFactory;
 import cn.geelato.datasource.DynamicDataSourceRegistry;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.PropertySource;
@@ -24,9 +25,11 @@ import java.util.*;
 public class SystemInitController {
 
     private final ConfigurableEnvironment environment;
+    private final ApplicationContext applicationContext;
 
-    public SystemInitController(ConfigurableEnvironment environment) {
+    public SystemInitController(ConfigurableEnvironment environment, ApplicationContext applicationContext) {
         this.environment = environment;
+        this.applicationContext = applicationContext;
     }
 
     @RequestMapping(value = {"/properties"}, method = {RequestMethod.GET})
@@ -65,35 +68,22 @@ public class SystemInitController {
     public ApiResult<?> datasource() {
         Map<String, Map<String, String>> dynamicMerge = new LinkedHashMap<>();
         try {
+            for (Map.Entry<String, DataSource> entry : getSpringManagedDataSources().entrySet()) {
+                mergeDataSourceInfo(dynamicMerge, entry.getKey(), entry.getValue(), true);
+            }
             if (dynamicDataSourceRegistry != null) {
-                DataSource primary = dynamicDataSourceRegistry.getPrimaryDataSource();
-                if (primary != null) {
-                    Map<String, String> info = new LinkedHashMap<>();
-                    info.put("key", "primary");
-                    info.put("class", primary.getClass().getName());
-                    Map<String, String> props = extractDataSourceProps(primary);
-                    if (props != null) info.putAll(props);
-                    if (!info.containsKey("jdbcUrl") || !info.containsKey("username") || !info.containsKey("password")) {
-                        fillPrimaryFromEnv(info);
-                    }
-                    dynamicMerge.put("primary", info);
-                }
                 Map<String, DataSource> map = dynamicDataSourceRegistry.getAllDataSources();
                 for (Map.Entry<String, DataSource> e : map.entrySet()) {
-                    Map<String, String> item = dynamicMerge.computeIfAbsent(e.getKey(), k -> new LinkedHashMap<>());
-                    item.put("key", e.getKey());
-                    DataSource ds = e.getValue();
-                    if (ds != null) {
-                        item.put("class", ds.getClass().getName());
-                        Map<String, String> props = extractDataSourceProps(ds);
-                        if (props != null) item.putAll(props);
-                    }
+                    mergeDataSourceInfo(dynamicMerge, e.getKey(), e.getValue(), false);
                 }
                 Map<Object, Object> cfgMap = tryGetNamedMap(dynamicDataSourceRegistry, "dataSourceConfigMap");
                 if (cfgMap != null) {
                     for (Map.Entry<Object, Object> e : cfgMap.entrySet()) {
                         String key = String.valueOf(e.getKey());
-                        Map<String, String> item = dynamicMerge.computeIfAbsent(key, k -> new LinkedHashMap<>());
+                        Map<String, String> item = dynamicMerge.get(key);
+                        if (item == null) {
+                            continue;
+                        }
                         item.put("key", key);
                         Object val = e.getValue();
                         if (val instanceof Map<?, ?> m) {
@@ -102,7 +92,6 @@ public class SystemInitController {
                             String port = str(m.get("db_port"));
                             String dbName = str(m.get("db_name"));
                             String user = str(m.get("db_user_name"));
-                            String pwd = str(m.get("db_password"));
                             item.put("dbType", dbType);
                             item.put("host", host);
                             item.put("port", port);
@@ -126,21 +115,20 @@ public class SystemInitController {
         Map<String, String> result = new LinkedHashMap<>();
         result.put("key", key == null ? "" : key);
         try {
-            if (dynamicDataSourceRegistry == null) {
-                return ApiResult.fail("DynamicDataSourceRegistry未启用");
-            }
-            DataSource ds;
-            if (key == null || key.trim().isEmpty() || "primary".equalsIgnoreCase(key)) {
-                ds = dynamicDataSourceRegistry.getPrimaryDataSource();
-            } else {
-                boolean exists = dynamicDataSourceRegistry.containsDataSource(key);
-                if (!exists) {
-                    return ApiResult.fail("未找到数据源: " + key);
+            String resolvedKey = (key == null || key.trim().isEmpty()) ? "primary" : key.trim();
+            DataSource ds = getSpringManagedDataSources().get(resolvedKey);
+            if (ds == null) {
+                if (dynamicDataSourceRegistry == null) {
+                    return ApiResult.fail("未找到数据源: " + resolvedKey);
                 }
-                ds = dynamicDataSourceRegistry.getDataSource(key);
+                boolean exists = dynamicDataSourceRegistry.containsDataSource(resolvedKey);
+                if (!exists) {
+                    return ApiResult.fail("未找到数据源: " + resolvedKey);
+                }
+                ds = dynamicDataSourceRegistry.getDataSource(resolvedKey);
             }
             if (ds == null) {
-                return ApiResult.fail("数据源不可用: " + (key == null ? "primary" : key));
+                return ApiResult.fail("数据源不可用: " + resolvedKey);
             }
             long start = System.nanoTime();
             boolean connected = false;
@@ -303,7 +291,7 @@ public class SystemInitController {
         String pwd = tryInvokeAny(ds, "getPassword");
         if (url != null) props.put("jdbcUrl", url);
         if (user != null) props.put("username", user);
-        if (pwd != null) props.put("password", pwd);
+        if (pwd != null) props.put("password", maskSensitive(pwd));
         if (!props.containsKey("jdbcUrl") || !props.containsKey("username")) {
             Object wrapped = tryInvokeObject(ds, "getXaDataSource");
             if (wrapped == null) {
@@ -316,7 +304,7 @@ public class SystemInitController {
                 String wPwd = tryInvokeAny(wrapped, "getPassword");
                 if (wUrl != null) props.put("jdbcUrl", wUrl);
                 if (wUser != null) props.put("username", wUser);
-                if (wPwd != null) props.put("password", wPwd);
+                if (wPwd != null) props.put("password", maskSensitive(wPwd));
             }
         }
         return props;
@@ -333,20 +321,26 @@ public class SystemInitController {
         return null;
     }
 
-    private void fillPrimaryFromEnv(Map<String, String> info) {
+    private void fillDataSourceFromEnv(String key, Map<String, String> info) {
+        String prefix = "spring.datasource." + key + ".";
         String url = getPropertyAny(
-            "spring.datasource.primary.jdbc-url",
-            "spring.datasource.primary.jdbcUrl",
-            "spring.datasource.primary.url"
+            prefix + "jdbc-url",
+            prefix + "jdbcUrl",
+            prefix + "url"
         );
         String user = getPropertyAny(
-            "spring.datasource.primary.username",
-            "spring.datasource.primary.user"
+            prefix + "username",
+            prefix + "user"
         );
-        String pwd = getPropertyAny("spring.datasource.primary.password");
+        String pwd = getPropertyAny(prefix + "password");
+        String driver = getPropertyAny(
+            prefix + "driver-class-name",
+            prefix + "driverClassName"
+        );
         if (url != null && !info.containsKey("jdbcUrl")) info.put("jdbcUrl", url);
         if (user != null && !info.containsKey("username")) info.put("username", user);
-        if (pwd != null && !info.containsKey("password")) info.put("password", pwd);
+        if (pwd != null && !info.containsKey("password")) info.put("password", maskSensitive(pwd));
+        if (driver != null && !info.containsKey("driver")) info.put("driver", driver);
     }
 
     private String str(Object v) {
@@ -361,6 +355,47 @@ public class SystemInitController {
             return String.format("jdbc:mysql://%s:%s/%s?%s", host, port, dbName, commonParams);
         }
         return null;
+    }
+
+    private void mergeDataSourceInfo(Map<String, Map<String, String>> target, String key, DataSource dataSource, boolean fillEnvFallback) {
+        if (key == null || key.trim().isEmpty() || dataSource == null) return;
+        Map<String, String> info = target.computeIfAbsent(key, k -> new LinkedHashMap<>());
+        info.put("key", key);
+        info.put("class", dataSource.getClass().getName());
+        Map<String, String> props = extractDataSourceProps(dataSource);
+        if (props != null) info.putAll(props);
+        if (fillEnvFallback) {
+            fillDataSourceFromEnv(key, info);
+        }
+    }
+
+    private Map<String, DataSource> getSpringManagedDataSources() {
+        Map<String, DataSource> result = new LinkedHashMap<>();
+        try {
+            Map<String, DataSource> beans = applicationContext.getBeansOfType(DataSource.class);
+            for (Map.Entry<String, DataSource> entry : beans.entrySet()) {
+                String key = resolveDataSourceKey(entry.getKey(), entry.getValue());
+                if (key != null) {
+                    result.put(key, entry.getValue());
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return result;
+    }
+
+    private String resolveDataSourceKey(String beanName, DataSource dataSource) {
+        if (beanName == null || beanName.isEmpty() || dataSource == null) return null;
+        if ("dynamicDataSource".equals(beanName) || beanName.startsWith("scopedTarget.")) return null;
+        if (dataSource.getClass().getName().equals("cn.geelato.datasource.DynamicRoutingDataSource")) return null;
+        if (beanName.endsWith("DataSource") && beanName.length() > "DataSource".length()) {
+            return beanName.substring(0, beanName.length() - "DataSource".length());
+        }
+        return beanName;
+    }
+
+    private String maskSensitive(String value) {
+        return value == null || value.isEmpty() ? value : "******";
     }
 
 

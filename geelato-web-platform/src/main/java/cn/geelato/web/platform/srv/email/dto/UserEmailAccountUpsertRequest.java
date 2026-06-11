@@ -30,5 +30,7 @@ public class UserEmailAccountUpsertRequest {
     private String smtpFromName;
     private String signatureHtml;
     private Integer enableStatus;
+    private Integer syncEnabled;
+    private Integer syncIntervalMinutes;
 }
 

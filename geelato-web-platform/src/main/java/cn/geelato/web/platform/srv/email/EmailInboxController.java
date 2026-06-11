@@ -15,6 +15,7 @@ import cn.geelato.web.platform.srv.email.dto.EmailMessageListItemDto;
 import cn.geelato.web.platform.srv.email.dto.SaveEmailAttachmentRequest;
 import cn.geelato.web.platform.srv.email.dto.SaveEmailAttachmentResult;
 import cn.geelato.web.platform.srv.email.service.EmailInboxService;
+import cn.geelato.web.platform.srv.email.service.EmailQueryService;
 import cn.geelato.web.platform.srv.file.param.FileParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -36,6 +37,9 @@ public class EmailInboxController extends BaseController {
 
     @Autowired
     private EmailInboxService emailInboxService;
+
+    @Autowired
+    private EmailQueryService emailQueryService;
 
     @Autowired
     private FileHandler fileHandler;
@@ -75,7 +79,7 @@ public class EmailInboxController extends BaseController {
             int[] page = parsePage(rm);
             log.debug("pageQuery request, userId={}, emailAccountId={}, folder={}, pageNum={}, pageSize={}, unread={}",
                     userId, emailAccountId, folder, page[0], page[1], unread);
-            EmailInboxService.PageResult<EmailMessageListItemDto> result = emailInboxService.pageQuery(
+            EmailInboxService.PageResult<EmailMessageListItemDto> result = emailQueryService.pageQuery(
                     userId,
                     emailAccountId,
                     folder,
@@ -103,7 +107,7 @@ public class EmailInboxController extends BaseController {
                 return ApiResult.fail("用户未登录");
             }
             log.debug("getDetail request, userId={}, mailId={}", userId, id);
-            EmailMessageDetailDto dto = emailInboxService.getMessageDetail(userId, id);
+            EmailMessageDetailDto dto = emailQueryService.getMessageDetail(userId, id);
             log.debug("getDetail response, userId={}, mailId={}, attachments={}",
                     userId, id, dto != null && dto.getAttachments() != null ? dto.getAttachments().size() : 0);
             return ApiResult.success(dto);
@@ -123,7 +127,7 @@ public class EmailInboxController extends BaseController {
                 return ApiResult.fail("用户未登录");
             }
             log.debug("getAttachments request, userId={}, mailId={}", userId, id);
-            List<EmailAttachmentDto> list = emailInboxService.getAttachments(userId, id);
+            List<EmailAttachmentDto> list = emailQueryService.getAttachments(userId, id);
             log.debug("getAttachments response, userId={}, mailId={}, size={}", userId, id, list != null ? list.size() : 0);
             return ApiResult.success(list);
         } catch (IllegalArgumentException ex) {
@@ -143,7 +147,7 @@ public class EmailInboxController extends BaseController {
                 return;
             }
             log.debug("downloadAttachment request, userId={}, mailId={}, partId={}", userId, id, partId);
-            EmailInboxService.DownloadAttachment da = emailInboxService.openAttachmentStream(userId, id, partId);
+            EmailInboxService.DownloadAttachment da = emailQueryService.openAttachmentStream(userId, id, partId);
             response.setContentType(da.contentType());
             String fileName = Strings.isNotBlank(da.fileName()) ? da.fileName() : "attachment";
             response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));

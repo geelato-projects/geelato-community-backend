@@ -44,6 +44,9 @@ public class EmailComposeService {
     private EmailInboxService emailInboxService;
 
     @Autowired
+    private EmailQueryService emailQueryService;
+
+    @Autowired
     private EmailContactService emailContactService;
 
     @Autowired
@@ -105,7 +108,7 @@ public class EmailComposeService {
 
     public EmailComposeContextDto buildComposeContext(String userId, String mailId, String mode) throws Exception {
         String composeMode = Strings.isNotBlank(mode) ? mode : "reply";
-        EmailMessageDetailDto detail = emailInboxService.getMessageDetail(userId, mailId);
+        EmailMessageDetailDto detail = emailQueryService.getMessageDetail(userId, mailId);
         EmailComposeContextDto dto = new EmailComposeContextDto();
         dto.setSourceMailId(mailId);
         dto.setComposeMode(composeMode);

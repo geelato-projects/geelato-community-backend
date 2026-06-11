@@ -23,8 +23,7 @@ public class StateWorkFlowController extends BaseController {
      * 通知工作流定义更新
      * 由前端在保存完工作流之后调用，通知所有客户端更新工作流配置
      *
-     * @param workFlowId 工作流ID
-     * @param extendId 扩展ID
+     * @param procDefId 扩展ID
      * @return 操作结果
      */
     @RequestMapping(value = {"/notifyUpdate/{procDefId}"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)

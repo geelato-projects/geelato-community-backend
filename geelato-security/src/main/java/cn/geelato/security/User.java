@@ -2,7 +2,6 @@ package cn.geelato.security;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
 import java.util.List;
@@ -10,7 +9,6 @@ import java.util.Optional;
 
 @Getter
 @Setter
-@Slf4j
 public class User extends UserCore{
 
     private String jobNumber;
@@ -75,44 +73,28 @@ public class User extends UserCore{
     }
     
     /**
-     * 使用OrgProvider设置用户的组织相关信息
-     * 包括orgName、defaultOrgName、buName、companyName
-     *
-     * @param orgProvider 组织信息提供者
-     * @return 当前用户实例，支持链式调用
+     * 历史兼容入口，请优先使用 UserOrgInfoEnricher 补齐组织派生信息。
      */
+    @Deprecated
     public User setupOrgInfo(OrgProvider orgProvider) {
-        try {
-            // 设置当前组织名称
-            if (this.orgId != null && !this.orgId.isEmpty()) {
-                this.orgName = orgProvider.getOrgName(this.orgId);
+        if (orgProvider == null) {
+            return this;
+        }
+        if (this.orgId != null && !this.orgId.isEmpty()) {
+            this.orgName = orgProvider.getOrgName(this.orgId);
+            this.companyId = orgProvider.getCompanyId(this.orgId);
+            if (this.companyId != null && !this.companyId.isEmpty()) {
+                this.companyName = orgProvider.getOrgName(this.companyId);
+                this.buId = this.companyId;
+                this.buName = this.companyName;
             }
-            
-            // 设置默认组织名称
-            if (this.defaultOrgId != null && !this.defaultOrgId.isEmpty()) {
-                this.defaultOrgName = orgProvider.getOrgName(this.defaultOrgId);
-            }
-            
-            // 设置事业部/公司名称
-            if (this.orgId != null && !this.orgId.isEmpty()) {
-                // 获取公司ID
-                this.companyId = orgProvider.getCompanyId(this.orgId);
-                if (this.companyId != null && !this.companyId.isEmpty()) {
-                    this.companyName = orgProvider.getOrgName(this.companyId);
-                    // 事业部与公司是同一概念
-                    this.buId = this.companyId;
-                    this.buName = this.companyName;
-                }
-            }
-            
-            // 如果deptId为空，尝试从orgId获取
-            if ((this.deptId == null || this.deptId.isEmpty()) && this.orgId != null && !this.orgId.isEmpty()) {
+            if (this.deptId == null || this.deptId.isEmpty()) {
                 this.deptId = orgProvider.getDeptId(this.orgId);
             }
-        } catch (Exception e) {
-            log.error("设置用户组织信息失败", e);
         }
-        
+        if (this.defaultOrgId != null && !this.defaultOrgId.isEmpty()) {
+            this.defaultOrgName = orgProvider.getOrgName(this.defaultOrgId);
+        }
         return this;
     }
 }

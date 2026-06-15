@@ -37,13 +37,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 /**
  * @author geemeta
  */
 @Slf4j
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({"rawtypes", "SqlSourceToSinkFlow"})
 public class Dao extends SqlKeyDao {
     private Boolean defaultFilterOption = false;
     private FilterGroup defaultFilterGroup;
@@ -51,46 +53,114 @@ public class Dao extends SqlKeyDao {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-
     public void setDefaultFilter(Boolean defaultFilter, FilterGroup defaultFilterGroup) {
         this.defaultFilterOption = defaultFilter;
         this.defaultFilterGroup = defaultFilterGroup;
     }
+
+    //========================================================
+    //                  内部 helper 方法                    ==
+    //========================================================
+
+    /**
+     * 统一异常转换模板：将 DataAccessException 转为 SqlExecuteException
+     */
+    private <T> T execute(BoundSql bs, Supplier<T> action) {
+        try {
+            return action.get();
+        } catch (DataAccessException e) {
+            throw new SqlExecuteException(e, bs.getSql(), bs.getParams());
+        }
+    }
+
+    private void executeVoid(BoundSql bs, Runnable action) {
+        try {
+            action.run();
+        } catch (DataAccessException e) {
+            throw new SqlExecuteException(e, bs.getSql(), bs.getParams());
+        }
+    }
+
+    /**
+     * 带 types 判断的 update，消除全类重复的 if-else 分支
+     */
+    private int updateWithTypes(BoundSql bs) {
+        return bs.getTypes() != null && bs.getTypes().length > 0
+                ? jdbcTemplate.update(bs.getSql(), bs.getParams(), bs.getTypes())
+                : jdbcTemplate.update(bs.getSql(), bs.getParams());
+    }
+
+    /**
+     * 合并默认过滤器
+     */
+    private void applyDefaultFilter(FilterGroup filterGroup) {
+        if (defaultFilterOption && defaultFilterGroup != null) {
+            for (FilterGroup.Filter filter : defaultFilterGroup.getFilters()) {
+                filterGroup.addFilter(filter);
+            }
+        }
+    }
+
+    /**
+     * 带 types 支持的 Long 查询，用于 count 场景
+     */
+    private Long queryForLong(String sql, Object[] params, int[] types) {
+        if (types != null && types.length > 0) {
+            List<Long> result = jdbcTemplate.query(sql,
+                    ps -> { for (int i = 0; i < params.length; i++) ps.setObject(i + 1, params[i], types[i]); },
+                    (rs, rowNum) -> rs.getLong(1));
+            return result.isEmpty() ? 0L : result.get(0);
+        }
+        Long val = jdbcTemplate.queryForObject(sql, Long.class, params);
+        return val != null ? val : 0L;
+    }
+
+    /**
+     * model 级查询公共逻辑：生成 SQL + 执行 + 异常转换
+     */
+    private <T> T queryForObjectWithFilter(Class<T> entityType, FilterGroup fg, String orderBy) {
+        BoundSql bs = sqlManager.generateQueryForObjectOrMapSql(entityType, fg, orderBy);
+        return execute(bs, () -> jdbcTemplate.queryForObject(bs.getSql(), bs.getParams(), new CommonRowMapper<>()));
+    }
+
+    private List<Map<String, Object>> queryForMapListWithFilter(Class entityType, FilterGroup fg) {
+        BoundSql bs = sqlManager.generateQueryForListSql(entityType, fg, null);
+        return execute(bs, () -> jdbcTemplate.queryForList(bs.getSql(), bs.getParams()));
+    }
+
+    /**
+     * @Ignore 注解缓存，避免每次分页查询都做反射
+     */
+    private static final Map<Class<?>, Map<IgnoreType, String[]>> IGNORE_FIELDS_CACHE = new ConcurrentHashMap<>();
 
 
     //========================================================
     //                  基于元数据  gql                      ==
     //========================================================
     public Map<String, Object> queryForMap(BoundSql boundSql) throws DataAccessException {
-        try{
-            return jdbcTemplate.queryForMap(boundSql.getSql(), boundSql.getParams());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
-
+        return execute(boundSql, () -> {
+            List<Map<String, Object>> rows = boundSql.getTypes() != null && boundSql.getTypes().length > 0
+                    ? jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), boundSql.getTypes(), new DecryptingRowMapper())
+                    : jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new DecryptingRowMapper());
+            return rows.isEmpty() ? null : rows.get(0);
+        });
     }
 
     public <T> T queryForObject(BoundSql boundSql, Class<T> requiredType) throws DataAccessException {
-        try{
-            return jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), requiredType);
-        }catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
+        return execute(boundSql, () -> boundSql.getTypes() != null && boundSql.getTypes().length > 0
+                ? jdbcTemplate.queryForObject(boundSql.getSql(), requiredType, boundSql.getParams(), boundSql.getTypes())
+                : jdbcTemplate.queryForObject(boundSql.getSql(), requiredType, boundSql.getParams()));
     }
 
     public List<Map<String, Object>> queryForMapList(BoundPageSql boundPageSql) {
         log.info(boundPageSql.getBoundSql().getSql());
         QueryCommand command = (QueryCommand) boundPageSql.getBoundSql().getCommand();
-        BoundSql boundSql = boundPageSql.getBoundSql();
-        List<Map<String, Object>> result;
-        List<Map<String, Object>> list = queryForMapListInner(boundSql);
-        result = convert(list, metaManager.getByEntityName(command.getEntityName()));
-        return result;
+        return convert(queryForMapListInner(boundPageSql.getBoundSql()), metaManager.getByEntityName(command.getEntityName()));
     }
 
     public List<Map<String, Object>> callForMapList(String callSql, Object[] params) {
         try {
-            return jdbcTemplate.query(callSql, params, new DecryptingRowMapper());
+            return jdbcTemplate.query(callSql, new DecryptingRowMapper(), params);
         } catch (DataAccessException dataAccessException) {
             throw new SqlExecuteException(dataAccessException, callSql, params);
         }
@@ -103,7 +173,7 @@ public class Dao extends SqlKeyDao {
 
     public List<Map<String, Object>> nativeQueryForMapList(String sql, Object[] params) {
         try {
-            return jdbcTemplate.query(sql, params, new DecryptingRowMapper());
+            return jdbcTemplate.query(sql, new DecryptingRowMapper(), params);
         } catch (DataAccessException dataAccessException) {
             throw new SqlExecuteException(dataAccessException, sql, params);
         }
@@ -116,7 +186,7 @@ public class Dao extends SqlKeyDao {
 
     public <T> T nativeQueryForObject(String sql, Object[] params, Class<T> requiredType) {
         try {
-            return jdbcTemplate.queryForObject(sql, params, requiredType);
+            return jdbcTemplate.queryForObject(sql, requiredType, params);
         } catch (DataAccessException dataAccessException) {
             throw new SqlExecuteException(dataAccessException, sql, params);
         }
@@ -132,14 +202,7 @@ public class Dao extends SqlKeyDao {
 
     public Long queryTotal(BoundPageSql boundPageSql) {
         BoundSql boundSql = boundPageSql.getBoundSql();
-        Object[] sqlParams = boundSql.getParams();
-        Long total;
-        try {
-            total = jdbcTemplate.queryForObject(boundPageSql.getCountSql(), sqlParams, Long.class);
-        } catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
-        return total;
+        return queryForLong(boundPageSql.getCountSql(), boundSql.getParams(), boundSql.getTypes());
     }
 
     private List<Map<String, Object>> convert(List<Map<String, Object>> data, EntityMeta entityMeta) {
@@ -168,11 +231,9 @@ public class Dao extends SqlKeyDao {
  
 
     public <T> List<T> queryForOneColumnList(BoundSql boundSql, Class<T> elementType) {
-        try{
-            return jdbcTemplate.queryForList(boundSql.getSql(), boundSql.getParams(), elementType);
-        }catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
+        return execute(boundSql, () -> boundSql.getTypes() != null && boundSql.getTypes().length > 0
+                ? jdbcTemplate.queryForList(boundSql.getSql(), elementType, boundSql.getParams(), boundSql.getTypes())
+                : jdbcTemplate.queryForList(boundSql.getSql(), elementType, boundSql.getParams()));
     }
 
     /**
@@ -187,14 +248,10 @@ public class Dao extends SqlKeyDao {
         SessionCtx sessionCtx = new SessionCtx();
         SaveEventContext context = new SaveEventContext(this, sessionCtx, null, boundSql, command);
         SaveEventManager.fireBefore(context);
-        try {
-            jdbcTemplate.update(context.getBoundSql().getSql(), context.getBoundSql().getParams());
-            context.setResultValueMap(command.getValueMap());
-            SaveEventManager.fireAfter(context);
-            return command.getPK();
-        } catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, context.getBoundSql().getSql(), context.getBoundSql().getParams());
-        }
+        executeVoid(context.getBoundSql(), () -> updateWithTypes(context.getBoundSql()));
+        context.setResultValueMap(command.getValueMap());
+        SaveEventManager.fireAfter(context);
+        return command.getPK();
     }
 
     /**
@@ -203,15 +260,24 @@ public class Dao extends SqlKeyDao {
     public List<String> batchSave(List<BoundSql> boundSqlList) {
         List<Object[]> paramsObjs = new ArrayList<>();
         List<String> returnPks = new ArrayList<>();
+        List<SaveEventContext> contexts = new ArrayList<>();
+        SessionCtx sessionCtx = new SessionCtx();
         for (BoundSql bs : boundSqlList) {
             paramsObjs.add(bs.getParams());
             SaveCommand saveCommand = (SaveCommand) bs.getCommand();
             returnPks.add(saveCommand.getPK());
+            SaveEventContext context = new SaveEventContext(this, sessionCtx, null, bs, saveCommand);
+            contexts.add(context);
+            SaveEventManager.fireBefore(context);
         }
         try {
             jdbcTemplate.batchUpdate(boundSqlList.get(0).getSql(), paramsObjs);
         } catch (DataAccessException dataAccessException) {
             throw new SqlExecuteException(dataAccessException, boundSqlList.get(0).getSql());
+        }
+        for (SaveEventContext context : contexts) {
+            context.setResultValueMap(context.getCommand().getValueMap());
+            SaveEventManager.fireAfter(context);
         }
         return returnPks;
     }
@@ -223,8 +289,13 @@ public class Dao extends SqlKeyDao {
         for (BoundSql bs : boundSqlList) {
             SaveCommand saveCommand = (SaveCommand) bs.getCommand();
             returnPks.add(saveCommand.getPK());
+            SessionCtx sessionCtx = new SessionCtx();
+            SaveEventContext context = new SaveEventContext(this, sessionCtx, null, bs, saveCommand);
+            SaveEventManager.fireBefore(context);
             try {
-                jdbcTemplate.update(bs.getSql(), bs.getParams());
+                updateWithTypes(bs);
+                context.setResultValueMap(saveCommand.getValueMap());
+                SaveEventManager.fireAfter(context);
             } catch (DataAccessException dataAccessException) {
                 TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
                 returnPks.clear();
@@ -246,22 +317,43 @@ public class Dao extends SqlKeyDao {
         SessionCtx sessionCtx = new SessionCtx();
         DeleteEventContext context = new DeleteEventContext(this, sessionCtx, boundSql, command);
         DeleteEventManager.fireBefore(context);
-        try {
-            int n = jdbcTemplate.update(context.getBoundSql().getSql(), context.getBoundSql().getParams());
-            context.setAffectedRows(n);
-            DeleteEventManager.fireAfter(context);
-            return n;
-        } catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, context.getBoundSql().getSql(), context.getBoundSql().getParams());
+        int n = updateWithTypes(context.getBoundSql());
+        context.setAffectedRows(n);
+        DeleteEventManager.fireAfter(context);
+        return n;
+    }
+
+    /**
+     * 批量事务删除
+     *
+     * @param boundSqlList 删除语句列表
+     * @return 受影响的总行数
+     */
+    public int multiDelete(List<BoundSql> boundSqlList) {
+        DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager(this.jdbcTemplate.getDataSource());
+        TransactionStatus transactionStatus = TransactionHelper.beginTransaction(dataSourceTransactionManager);
+        int totalAffected = 0;
+        for (BoundSql bs : boundSqlList) {
+            DeleteCommand command = (DeleteCommand) bs.getCommand();
+            SessionCtx sessionCtx = new SessionCtx();
+            DeleteEventContext context = new DeleteEventContext(this, sessionCtx, bs, command);
+            DeleteEventManager.fireBefore(context);
+            try {
+                int n = updateWithTypes(bs);
+                context.setAffectedRows(n);
+                totalAffected += n;
+                DeleteEventManager.fireAfter(context);
+            } catch (DataAccessException dataAccessException) {
+                TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
+                throw new SqlExecuteException(dataAccessException, bs.getSql(), bs.getParams());
+            }
         }
+        TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
+        return totalAffected;
     }
 
     public void executeUpdate(BoundSql boundSql) {
-        try {
-            jdbcTemplate.update(boundSql.getSql(), boundSql.getParams());
-        } catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
+        executeVoid(boundSql, () -> updateWithTypes(boundSql));
     }
 
     public Map<String, Object> queryByEntityNameAndPK(String entityName, Object pkValue) {
@@ -294,13 +386,7 @@ public class Dao extends SqlKeyDao {
      * @return 单个实体
      */
     public <T> T queryForObject(Class<T> entityType, String fieldName, Object value) {
-        FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
-        BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, null);
-        try{
-            return jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<>());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
+        return queryForObjectWithFilter(entityType, new FilterGroup().addFilter(fieldName, value.toString()), null);
     }
 
     /**
@@ -317,18 +403,12 @@ public class Dao extends SqlKeyDao {
         EntityMeta entityMeta = metaManager.get(entityType);
         FilterGroup filterGroup = new FilterGroup();
         for (String fieldName : entityMeta.getFieldNames()) {
-            Object value = getFieldValue(entityType, example, fieldName);
-            addExampleFilter(filterGroup, fieldName, value);
+            addExampleFilter(filterGroup, fieldName, getFieldValue(entityType, example, fieldName));
         }
         if (filterGroup.getFilters().isEmpty() && filterGroup.getChildFilterGroup().isEmpty()) {
             throw new IllegalArgumentException("example中没有有效的查询条件");
         }
-        BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, null);
-        try{
-            return jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<>());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
+        return queryForObjectWithFilter(entityType, filterGroup, null);
     }
 
     /**
@@ -342,13 +422,8 @@ public class Dao extends SqlKeyDao {
      * @return 返回泛型
      */
     public <T> T queryForObject(Class<T> entityType, String fieldName1, Object value1, String fieldName2, Object value2) {
-        FilterGroup filterGroup = new FilterGroup().addFilter(fieldName1, value1.toString()).addFilter(fieldName2, value2.toString());
-        BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, null);
-        try{
-            return jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), new CommonRowMapper<T>());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
+        return queryForObjectWithFilter(entityType,
+                new FilterGroup().addFilter(fieldName1, value1.toString()).addFilter(fieldName2, value2.toString()), null);
     }
 
     /**
@@ -360,14 +435,8 @@ public class Dao extends SqlKeyDao {
      * @return map通用格式的实体信息
      */
     public Map queryForMap(Class entityType, String fieldName, Object value) {
-        FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
-        BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, null);
-        try{
-            return jdbcTemplate.queryForMap(boundSql.getSql(), boundSql.getParams());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
-
+        BoundSql bs = sqlManager.generateQueryForObjectOrMapSql(entityType, new FilterGroup().addFilter(fieldName, value.toString()), null);
+        return execute(bs, () -> jdbcTemplate.queryForMap(bs.getSql(), bs.getParams()));
     }
 
     /**
@@ -379,8 +448,7 @@ public class Dao extends SqlKeyDao {
      * @return map通用格式的实体信息列表
      */
     public List<Map<String, Object>> queryForMapList(Class entityType, String fieldName, Object value) {
-        FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
-        return queryForMapList(entityType, filterGroup);
+        return queryForMapListWithFilter(entityType, new FilterGroup().addFilter(fieldName, value.toString()));
     }
 
     /**
@@ -391,12 +459,7 @@ public class Dao extends SqlKeyDao {
      * @return map通用格式的实体信息列表
      */
     public List<Map<String, Object>> queryForMapList(Class entityType, FilterGroup filterGroup) {
-        BoundSql boundSql = sqlManager.generateQueryForListSql(entityType, filterGroup, null);
-        try{
-            return jdbcTemplate.queryForList(boundSql.getSql(), boundSql.getParams());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
+        return queryForMapListWithFilter(entityType, filterGroup);
     }
 
     /**
@@ -406,29 +469,7 @@ public class Dao extends SqlKeyDao {
      * @return map通用格式的实体信息列表
      */
     public List<Map<String, Object>> queryForMapList(Class entityType) {
-        BoundSql boundSql = sqlManager.generateQueryForListSql(entityType, null, null);
-        try{
-            return jdbcTemplate.queryForList(boundSql.getSql(), boundSql.getParams());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
-    }
-
-
-    /**
-     * @param entityType  查询的实体
-     * @param field       查询的单列字段
-     * @param filterGroup 查询条件
-     * @param <T>         数据列类型
-     * @return 单列数据列表
-     */
-    public <T> List<T> queryForOneColumnList(Class<T> entityType, String field, FilterGroup filterGroup) {
-        BoundSql boundSql = sqlManager.generateQueryForListSql(entityType, filterGroup, field);
-        try{
-            return jdbcTemplate.queryForList(boundSql.getSql(), boundSql.getParams(), entityType);
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
+        return queryForMapListWithFilter(entityType, null);
     }
 
 
@@ -438,11 +479,7 @@ public class Dao extends SqlKeyDao {
         SaveCommand command = (SaveCommand) boundSql.getCommand();
         SaveEventContext context = new SaveEventContext(this, sessionCtx, entity, boundSql, command);
         SaveEventManager.fireBefore(context);
-        try{
-            jdbcTemplate.update(context.getBoundSql().getSql(), context.getBoundSql().getParams());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, context.getBoundSql().getSql(), context.getBoundSql().getParams());
-        }
+        executeVoid(context.getBoundSql(), () -> updateWithTypes(context.getBoundSql()));
         Map<String, Object> valueMap = command.getValueMap();
         context.setResultValueMap(valueMap);
         SaveEventManager.fireAfter(context);
@@ -461,18 +498,9 @@ public class Dao extends SqlKeyDao {
      * @return 返回查询结果列表，列表中的元素类型为T
      */
     public <T> List<T> queryList(Class<T> entityType, FilterGroup filterGroup, String orderBy) {
-        if (defaultFilterOption && defaultFilterGroup != null) {
-            for (FilterGroup.Filter filter : defaultFilterGroup.getFilters()) {
-                filterGroup.addFilter(filter);
-            }
-        }
-        BoundSql boundSql = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, orderBy);
-        try{
-            return jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<>(), boundSql.getParams());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
-
+        applyDefaultFilter(filterGroup);
+        BoundSql bs = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, orderBy);
+        return execute(bs, () -> jdbcTemplate.query(bs.getSql(), new CommonRowMapper<>(), bs.getParams()));
     }
 
     /**
@@ -501,50 +529,32 @@ public class Dao extends SqlKeyDao {
      * @return 查询结果列表，元素类型为T
      */
     public <T> List<T> pageQueryList(Class<T> entityType, FilterGroup filterGroup, PageQueryRequest request) {
-        if (defaultFilterOption && defaultFilterGroup != null) {
-            for (FilterGroup.Filter filter : defaultFilterGroup.getFilters()) {
-                filterGroup.addFilter(filter);
-            }
-        }
+        applyDefaultFilter(filterGroup);
         QueryCommand command = new QueryCommand();
         command.setPageNum(request.getPageNum());
         command.setPageSize(request.getPageSize());
         command.setOrderBy(request.getOrderBy());
-        String[] ignoreFields = getIgnoreFields(entityType, IgnoreType.PAGE_QUERY);
-        command.setIgnoreFields(ignoreFields);
-        BoundSql boundSql = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
-        try{
-            return jdbcTemplate.query(boundSql.getSql(), new CommonRowMapper<T>(), boundSql.getParams());
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
+        command.setIgnoreFields(getIgnoreFields(entityType, IgnoreType.PAGE_QUERY));
+        BoundSql bs = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
+        return execute(bs, () -> jdbcTemplate.query(bs.getSql(), new CommonRowMapper<T>(), bs.getParams()));
     }
 
     public <T> ApiPagedResult pageQueryResult(Class<T> entityType, FilterGroup filterGroup, PageQueryRequest request) {
-        if (defaultFilterOption && defaultFilterGroup != null) {
-            for (FilterGroup.Filter filter : defaultFilterGroup.getFilters()) {
-                filterGroup.addFilter(filter);
-            }
-        }
+        applyDefaultFilter(filterGroup);
         QueryCommand command = new QueryCommand();
-        command.setOrderBy(request.getOrderBy());
-        String[] ignoreFields = getIgnoreFields(entityType, IgnoreType.PAGE_QUERY);
-        command.setIgnoreFields(ignoreFields);
-        BoundSql boundSql = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
-        log.info(boundSql.toString());
-        List<T> queryList = jdbcTemplate.query(boundSql.getSql(),
-                new CommonRowMapper<>(), boundSql.getParams());
         command.setPageNum(request.getPageNum());
         command.setPageSize(request.getPageSize());
-        boundSql = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
+        command.setOrderBy(request.getOrderBy());
+        command.setIgnoreFields(getIgnoreFields(entityType, IgnoreType.PAGE_QUERY));
+        BoundSql bs = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
+        BoundSql countBs = sqlManager.generateCountSql(command, entityType, filterGroup);
         try{
-            List<T> pageQueryList = jdbcTemplate.query(boundSql.getSql(),
-                    new CommonRowMapper<>(), boundSql.getParams());
-            long total = queryList.size();
+            List<T> pageQueryList = jdbcTemplate.query(bs.getSql(), new CommonRowMapper<>(), bs.getParams());
+            long total = queryForLong(countBs.getSql(), countBs.getParams(), countBs.getTypes());
             int dataSize = pageQueryList.size();
             return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
         }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
+            throw new SqlExecuteException(dataAccessException, bs.getSql(), bs.getParams());
         }
     }
 
@@ -577,7 +587,7 @@ public class Dao extends SqlKeyDao {
                 filterGroup.getChildFilterGroup().add(delStatusGroup);
                 return;
             }
-            filterGroup.addFilter(fieldName, String.valueOf(value));
+            filterGroup.addFilter(fieldName, String.valueOf(value), value);
             return;
         }
         if (value instanceof String str) {
@@ -590,7 +600,7 @@ public class Dao extends SqlKeyDao {
         if (value instanceof Number && isZeroNumber(value)) {
             return;
         }
-        filterGroup.addFilter(fieldName, String.valueOf(value));
+        filterGroup.addFilter(fieldName, String.valueOf(value), value);
     }
 
     private Object getFieldValue(Class<?> entityType, Object target, String fieldName) {
@@ -657,14 +667,10 @@ public class Dao extends SqlKeyDao {
         SessionCtx sessionCtx = new SessionCtx();
         DeleteEventContext context = new DeleteEventContext(this, sessionCtx, boundSql, command);
         DeleteEventManager.fireBefore(context);
-        try{
-            int n = jdbcTemplate.update(context.getBoundSql().getSql(), context.getBoundSql().getParams());
-            context.setAffectedRows(n);
-            DeleteEventManager.fireAfter(context);
-            return n;
-        }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, context.getBoundSql().getSql(), context.getBoundSql().getParams());
-        }
+        int n = updateWithTypes(context.getBoundSql());
+        context.setAffectedRows(n);
+        DeleteEventManager.fireAfter(context);
+        return n;
     }
 
     /**
@@ -675,38 +681,32 @@ public class Dao extends SqlKeyDao {
      * @return 需要忽略的字段数组，若不存在则返回null
      */
     private String[] getIgnoreFields(Class entityType, IgnoreType ignoreType) {
-        Map<IgnoreType, String[]> ignoreFields = getIgnoreFields(entityType);
-        return ignoreFields.get(ignoreType);
+        return getIgnoreFields(entityType).get(ignoreType);
     }
 
     /**
-     * 根据实体类型获取需要忽略的字段
-     *
-     * @param entityType 实体类型
-     * @return 需要忽略的字段的Map，键为忽略类型，值为字段数组
+     * 根据实体类型获取需要忽略的字段（带缓存）
      */
     private Map<IgnoreType, String[]> getIgnoreFields(Class entityType) {
+        return IGNORE_FIELDS_CACHE.computeIfAbsent(entityType, this::resolveIgnoreFields);
+    }
+
+    private Map<IgnoreType, String[]> resolveIgnoreFields(Class entityType) {
         Map<String, IgnoreType[]> fieldIgnores = new HashMap<>();
-        // 获取所有字段上的@Ignore注解
         for (Class<?> searchType = entityType; searchType != Object.class; searchType = searchType.getSuperclass()) {
-            Field[] fields = searchType.getDeclaredFields();
-            for (Field field : fields) {
+            for (Field field : searchType.getDeclaredFields()) {
                 Ignore ig = field.getAnnotation(Ignore.class);
                 if (ig != null && ig.type().length > 0) {
                     fieldIgnores.put(field.getName(), ig.type());
                 }
             }
         }
-        // 将@Ignore注解中指定的类型和字段名转换为Map
         Map<IgnoreType, List<String>> ignoreFieldList = new HashMap<>();
         for (Map.Entry<String, IgnoreType[]> entry : fieldIgnores.entrySet()) {
-            String key = entry.getKey();
-            IgnoreType[] values = entry.getValue();
-            for (IgnoreType value : values) {
-                ignoreFieldList.computeIfAbsent(value, k -> new ArrayList<>()).add(key);
+            for (IgnoreType value : entry.getValue()) {
+                ignoreFieldList.computeIfAbsent(value, k -> new ArrayList<>()).add(entry.getKey());
             }
         }
-
         return ignoreFieldList.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toArray(new String[0])));
     }
 }

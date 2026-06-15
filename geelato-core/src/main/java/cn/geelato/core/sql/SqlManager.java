@@ -139,6 +139,25 @@ public class SqlManager extends AbstractManager {
         queryCommand.setWhere(filterGroup);
         return metaQuerySqlProvider.generate(queryCommand);
     }
+
+    /**
+     * 生成模型级 COUNT SQL，用于分页查询时获取总数
+     */
+    public <T> BoundSql generateCountSql(QueryCommand queryCommand, Class<T> clazz, FilterGroup filterGroup) {
+        EntityMeta em = metaManager.get(clazz);
+        queryCommand.setEntityName(em.getEntityName());
+        queryCommand.setFields(em.getFieldNames());
+        queryCommand.setQueryForList(true);
+        queryCommand.setWhere(filterGroup);
+        String countSql = metaQuerySqlProvider.buildCountSql(queryCommand);
+        BoundSql boundSql = metaQuerySqlProvider.generate(queryCommand);
+        BoundSql countBoundSql = new BoundSql();
+        countBoundSql.setSql(countSql);
+        countBoundSql.setParams(boundSql.getParams());
+        countBoundSql.setTypes(boundSql.getTypes());
+        countBoundSql.setCommand(queryCommand);
+        return countBoundSql;
+    }
     /**
      * 删除服务
      */

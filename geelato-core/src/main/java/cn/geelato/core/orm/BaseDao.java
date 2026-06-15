@@ -34,6 +34,9 @@ public class BaseDao {
     protected static final Map<String, Object> defaultParams = new HashMap<>();
     protected List<Map<String, Object>> queryForMapListInner(BoundSql boundSql) throws DataAccessException {
         try{
+            if (boundSql.getTypes() != null && boundSql.getTypes().length > 0) {
+                return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), boundSql.getTypes(), new DecryptingRowMapper());
+            }
             return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new DecryptingRowMapper());
         }catch (DataAccessException dataAccessException){
             throw new SqlExecuteException(dataAccessException,boundSql.getSql(),boundSql.getParams());

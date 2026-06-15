@@ -71,8 +71,22 @@ public class FilterGroup {
         return this;
     }
 
+    public FilterGroup addFilter(String field, Operator operator, String value, Object rawValue) {
+        Filter filter = new Filter(field, operator, value);
+        filter.setRawValue(rawValue);
+        addFilter(filter);
+        return this;
+    }
+
     public FilterGroup addFilter(String field, String value) {
         addFilter(new Filter(field, Operator.eq, value));
+        return this;
+    }
+
+    public FilterGroup addFilter(String field, String value, Object rawValue) {
+        Filter filter = new Filter(field, Operator.eq, value);
+        filter.setRawValue(rawValue);
+        addFilter(filter);
         return this;
     }
 
@@ -96,6 +110,14 @@ public class FilterGroup {
         private Operator operator;
         @Getter
         private String value;
+
+        /**
+         * 保留原始类型的值（非String），用于 PostgreSQL 等严格类型数据库的参数绑定。
+         * 当 rawValue 不为空时，SQL 参数绑定应优先使用 rawValue 而非 value。
+         */
+        @Getter
+        @Setter
+        private Object rawValue;
 
         private Object[] arrayValue;
         /**
@@ -157,6 +179,16 @@ public class FilterGroup {
 
         public Filter setValue(String value) {
             this.value = value;
+            this.arrayValue = null;
+            return this;
+        }
+
+        /**
+         * 同时设置字符串值和原始类型值
+         */
+        public Filter setValue(String value, Object rawValue) {
+            this.value = value;
+            this.rawValue = rawValue;
             this.arrayValue = null;
             return this;
         }

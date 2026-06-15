@@ -8,6 +8,7 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.DateTimeConverter;
+import cn.geelato.core.util.EncryptUtils;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.lang.reflect.InvocationTargetException;
@@ -47,6 +48,10 @@ public class CommonRowMapper<T> implements RowMapper<T> {
                 for (int _iterator = 0; _iterator < resultSetMetaData.getColumnCount(); _iterator++) {
                     String columnName = resultSetMetaData.getColumnName(_iterator + 1);
                     Object columnValue = resultSet.getObject(_iterator + 1);
+                    // 对字符串类型字段进行解密，与 DecryptingRowMapper 行为保持一致
+                    if (columnValue instanceof String) {
+                        columnValue = EncryptUtils.decrypt((String) columnValue);
+                    }
                     for (FieldMeta fm : em.getFieldMetas()) {
                         if (columnName.equals(fm.getColumnName())) {
                             BeanUtils.setProperty(bean, fm.getFieldName(), columnValue);

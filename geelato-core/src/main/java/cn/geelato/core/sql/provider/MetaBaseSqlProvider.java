@@ -138,9 +138,9 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             if(filter.getFilterFieldType()== FilterGroup.FilterFieldType.Normal){
                 String fieldType=getEntityMeta(command).getFieldMeta(filter.getField()).getColumnMeta().getDataType();
                 Assert.isTrue(!"JSON".equals(fieldType), filter.getField() + "为JSON,不支持" + filter.getOperator());
-                list.add(filter.getValue());
+                list.add(filter.getRawValue() != null ? filter.getRawValue() : filter.getValue());
             }else {
-                list.add(filter.getValue());
+                list.add(filter.getRawValue() != null ? filter.getRawValue() : filter.getValue());
             }
         }
     }
@@ -170,13 +170,36 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             return new int[0];
         }
         EntityMeta em = getEntityMeta(command);
-        int[] types = new int[command.getWhere().getFilters().size()];
-        int i = 0;
+        List<Integer> typeList = new ArrayList<>();
         for (FilterGroup.Filter filter : command.getWhere().getFilters()) {
-            if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
-                types[i] = TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumnMeta().getDataType());
-                i++;
+            if (filter.getOperator().equals(FilterGroup.Operator.in) || filter.getOperator().equals(FilterGroup.Operator.notin)) {
+                // in/notin 会产生多个参数，需要为每个参数添加类型
+                Object[] ary = filter.getValueAsArray();
+                if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
+                    int sqlType = TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumnMeta().getDataType());
+                    for (int j = 0; j < ary.length; j++) {
+                        typeList.add(sqlType);
+                    }
+                } else {
+                    for (int j = 0; j < ary.length; j++) {
+                        typeList.add(java.sql.Types.VARCHAR);
+                    }
+                }
+            } else if (filter.getOperator().equals(FilterGroup.Operator.nil)
+                    || filter.getOperator().equals(FilterGroup.Operator.bt)
+                    || filter.getOperator().equals(FilterGroup.Operator.fis)) {
+                // nil/bt/fis 不产生参数，跳过
+            } else {
+                if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
+                    typeList.add(TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumnMeta().getDataType()));
+                } else {
+                    typeList.add(java.sql.Types.VARCHAR);
+                }
             }
+        }
+        int[] types = new int[typeList.size()];
+        for (int i = 0; i < typeList.size(); i++) {
+            types[i] = typeList.get(i);
         }
         return types;
     }
@@ -280,6 +303,32 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             sb.append("'");
         } else {
             sb.append(field);
+        }
+    }
+
+    /**
+     * 为标识符加引用符，保留大小写（不同数据库使用不同的引用符）
+     * <ul>
+     *   <li>PostgreSQL/Oracle: 双引号 "identifier"</li>
+     *   <li>MySQL: 反引号 `identifier`</li>
+     *   <li>SQL Server: 方括号 [identifier]</li>
+     * </ul>
+     */
+    protected void appendQuotedIdentifier(StringBuilder sb, EntityMeta em, String identifier) {
+        String dbType = (em != null && em.getTableMeta() != null) ? em.getTableMeta().getDbType() : null;
+        if ("mysql".equalsIgnoreCase(dbType)) {
+            sb.append('`');
+            sb.append(identifier);
+            sb.append('`');
+        } else if ("sqlserver".equalsIgnoreCase(dbType)) {
+            sb.append('[');
+            sb.append(identifier);
+            sb.append(']');
+        } else {
+            // PostgreSQL, Oracle 及其他均使用双引号（ANSI SQL 标准）
+            sb.append('"');
+            sb.append(identifier);
+            sb.append('"');
         }
     }
 

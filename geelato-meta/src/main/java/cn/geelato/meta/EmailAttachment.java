@@ -42,7 +42,7 @@ public class EmailAttachment extends BaseEntity {
     private Long size;
 
     @Title(title = "是否内联", description = "0否，1是")
-    @Col(name = "is_inline", dataType = "smallint")
+    @Col(name = "inline", dataType = "smallint")
     private int inline;
 
     @Title(title = "Content-ID")

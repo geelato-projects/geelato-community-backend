@@ -2,6 +2,7 @@ package cn.geelato.web.platform.srv.email;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.security.SecurityContext;
+import cn.geelato.security.SecurityContextRunnable;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.email.service.EmailSyncService;
@@ -40,10 +41,10 @@ public class EmailSyncController extends BaseController {
                 return ApiResult.fail("emailAccountId 不能为空");
             }
             log.info("手动触发邮件同步, userId={}, emailAccountId={}", userId, emailAccountId);
-            // 异步执行，不阻塞响应
-            CompletableFuture.runAsync(() -> {
+            // 异步执行，不阻塞响应；传播当前用户上下文到异步线程
+            CompletableFuture.runAsync(SecurityContextRunnable.wrap(() -> {
                 emailSyncService.syncAccount(userId, emailAccountId);
-            });
+            }));
             return ApiResult.success("同步任务已提交");
         } catch (Exception e) {
             log.error("手动触发同步失败", e);

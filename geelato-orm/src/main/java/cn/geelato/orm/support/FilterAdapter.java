@@ -23,12 +23,22 @@ public final class FilterAdapter {
         Iterator<Filter> iterator = filters.iterator();
         Filter first = iterator.next();
         filterGroup.setLogic("OR".equalsIgnoreCase(first.getLogic()) ? FilterGroup.Logic.or : FilterGroup.Logic.and);
-        filterGroup.addFilter(new FilterGroup.Filter(first.getField(), mapOperator(first.getOperator()), stringifyValue(first)));
+        filterGroup.addFilter(createFilter(first));
         while (iterator.hasNext()) {
             Filter current = iterator.next();
-            filterGroup.addFilter(new FilterGroup.Filter(current.getField(), mapOperator(current.getOperator()), stringifyValue(current)));
+            filterGroup.addFilter(createFilter(current));
         }
         return filterGroup;
+    }
+
+    private static FilterGroup.Filter createFilter(Filter source) {
+        FilterGroup.Filter fgFilter = new FilterGroup.Filter(
+                source.getField(), mapOperator(source.getOperator()), stringifyValue(source));
+        Object rawValue = source.getValue();
+        if (rawValue != null && !(rawValue instanceof String) && !(rawValue instanceof Collection)) {
+            fgFilter.setRawValue(rawValue);
+        }
+        return fgFilter;
     }
 
     private static FilterGroup.Operator mapOperator(String operator) {

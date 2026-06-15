@@ -43,6 +43,13 @@ public class SecurityContext {
         return threadApp.get();
     }
 
+    public static void clear() {
+        threadUser.remove();
+        threadTenant.remove();
+        threadPassword.remove();
+        threadApp.remove();
+    }
+
     public static boolean isAdmin() {
         User user = getCurrentUser();
         if (user == null) {

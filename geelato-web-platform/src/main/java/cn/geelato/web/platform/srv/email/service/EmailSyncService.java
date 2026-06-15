@@ -144,17 +144,13 @@ public class EmailSyncService {
                 .where(acctFilters.toArray(new Filter[0]))
                 .one();
 
-        String syncStatus = "idle";
-        Date lastSyncAt = null;
         if (account != null) {
-            syncStatus = String.valueOf(account.getOrDefault("syncStatus", "idle"));
-            Object lsa = account.get("lastSyncAt");
-            if (lsa instanceof Date d) {
-                lastSyncAt = d;
-            }
+            Object ss = account.get("syncStatus");
+            Object syncStatus = (ss != null && Strings.isNotBlank(ss.toString())) ? ss.toString() : "idle";
+            Object lastSyncAt = account.get("lastSyncAt");
+            result.put("syncStatus", syncStatus);
+            result.put("lastSyncAt", lastSyncAt);
         }
-        result.put("syncStatus", syncStatus);
-        result.put("lastSyncAt", lastSyncAt);
 
         // 2. 本地已同步邮件数
         long syncedCount = MetaFactory.query(EmailMessage.class)
@@ -309,6 +305,9 @@ public class EmailSyncService {
             imapFolder.open(Folder.READ_ONLY);
             long uidValidity = EmailInboxService.resolveUidValidity(imapFolder);
 
+            // 远端总数在 open 后就可以获取，提前设置确保 INSERT 时写入
+            syncLog.setTotalCount(imapFolder.getMessageCount());
+
             // 查询上次同步的最大 UID
             Long lastUid = findLastSyncedUid(config.id(), folderName, uidValidity);
             String syncType = (lastUid != null && lastUid > 0) ? "incremental" : "full";
@@ -333,9 +332,6 @@ public class EmailSyncService {
                     messages = imapFolder.getMessages(1, mc);
                 }
             }
-
-            // 在获取到 messages 后再设置远端总数
-            syncLog.setTotalCount(messages.length);
 
             log.info("同步文件夹 {}, emailAccountId={}, type={}, messageCount={}",
                     folderName, config.id(), syncType, messages.length);
@@ -591,7 +587,7 @@ public class EmailSyncService {
                     .where(Filter.eq("id", syncLog.getId()))
                     .save();
         } catch (Exception e) {
-            log.warn("更新同步日志失败", e);
+            log.warn("更新同步日志失败, id={}, folder={}", syncLog.getId(), syncLog.getFolder(), e);
         }
     }
 

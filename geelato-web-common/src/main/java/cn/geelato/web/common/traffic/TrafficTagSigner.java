@@ -17,8 +17,7 @@ public class TrafficTagSigner {
 
     public TrafficTagSigner(String secret) {
         if (secret == null || secret.isBlank()) {
-            String generated = generateSecret();
-            this.secret = generated;
+            this.secret = generateSecret();
             if ("product".equalsIgnoreCase(GlobalContext.getEnvironment())) {
                 log.error("geelato.traffic.signing-secret is blank, generated an ephemeral secret for current process");
             } else {

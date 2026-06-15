@@ -11,11 +11,7 @@ import java.util.Date;
 
 /**
  * 邮件同步本地存储实体
- * <p>数据源：PostgreSQL</p>
- * <p>数据源由 {@code EmailDataSourceConfig} 通过 application.properties 配置自动注册，
- * 无需在 platform_dev_db_connect 表中插入记录。</p>
  *
- * @see cn.geelato.web.platform.srv.email.config.EmailDataSourceConfig
  */
 @Getter
 @Setter

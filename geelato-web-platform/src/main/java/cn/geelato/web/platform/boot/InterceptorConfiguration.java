@@ -17,7 +17,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author geemeta
  */
 @Configuration
-// todo：servlet interceptor, does not work under spring webflux，wait refactor
 public class InterceptorConfiguration extends BaseConfiguration implements WebMvcConfigurer {
     @Resource
     private OAuthConfigurationProperties oAuthConfigurationProperties;
@@ -25,10 +24,8 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     private ApiRestControllerInvokeLogging apiRestControllerInvokeLogging;
 
     @Autowired
-    @Qualifier("defaultOrgProvider")
     private cn.geelato.security.OrgProvider orgProvider;
     @Autowired
-    @Qualifier("defaultUserProvider")
     private cn.geelato.security.UserProvider userProvider;
 
     @Autowired(required = false)

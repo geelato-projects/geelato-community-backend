@@ -87,7 +87,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
         if (StringUtils.hasText(command.getOrderBy())) {
             sb.append(" order by ");
-            String ob = command.getOrderBy();
+            String ob = resolveOrderBy(md, command.getOrderBy());
             if (md.getTableAlias() != null) {
                 ob = decorateOriginalWhere(md, ob);
             }
@@ -95,9 +95,9 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
         if (command.isPagingQuery()) {
             sb.append(" limit ");
-            sb.append((command.getPageNum() - 1) * command.getPageSize());
-            sb.append(",");
             sb.append(command.getPageSize());
+            sb.append(" offset ");
+            sb.append((command.getPageNum() - 1) * command.getPageSize());
         }
         return sb.toString();
     }
@@ -246,7 +246,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                                     sb.append(" ");
                                     Object aliasVal = command.getAlias().get(fieldName);
                                     String aliasName = aliasVal != null ? aliasVal.toString() : remoteField;
-                                    tryAppendKeywords(sb, aliasName);
+                                    appendQuotedIdentifier(sb, md, aliasName);
                                     sb.append(",");
                                     continue;
                                 }
@@ -260,7 +260,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                                 sb.append(" ");
                                 Object aliasVal = command.getAlias().get(fieldName);
                                 String aliasName = aliasVal != null ? aliasVal.toString() : selectedFm.getFieldName();
-                                tryAppendKeywords(sb, aliasName);
+                                appendQuotedIdentifier(sb, md, aliasName);
                                 sb.append(",");
                                 continue;
                             }
@@ -272,21 +272,21 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                         if (command.getAlias().containsKey(fieldName)) {
                             tryAppendKeywords(md, sb, fm);
                             sb.append(" ");
-                            tryAppendKeywords(sb, command.getAlias().get(fieldName).toString());
+                            appendQuotedIdentifier(sb, md, command.getAlias().get(fieldName).toString());
                         } else {
                             if (fm.isEquals()) {
                                 tryAppendKeywords(md, sb, fm);
                             } else {
                                 tryAppendKeywords(md, sb, fm);
                                 sb.append(" ");
-                                tryAppendKeywords(sb, fm.getFieldName());
+                                appendQuotedIdentifier(sb, md, fm.getFieldName());
                             }
                         }
                     } else {
                         sb.append(fieldName);
                         if (command.getAlias().containsKey(fieldName)) {
                             sb.append(" ");
-                            tryAppendKeywords(sb, command.getAlias().get(fieldName).toString());
+                            appendQuotedIdentifier(sb, md, command.getAlias().get(fieldName).toString());
                         }
                     }
                 }
@@ -298,7 +298,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                 sb.append(selectExpr.getExpression());
                 if (StringUtils.hasText(selectExpr.getAlias())) {
                     sb.append(" ");
-                    tryAppendKeywords(sb, selectExpr.getAlias());
+                    appendQuotedIdentifier(sb, md, selectExpr.getAlias());
                 }
                 sb.append(",");
             }
@@ -593,5 +593,27 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         } catch (Exception ignored) {
         }
         return fieldOrColumn;
+    }
+
+    /**
+     * 将 ORDER BY 中的字段名转换为列名，并用数据库对应的引用符包裹
+     * 例: "startAt DESC" -> "start_at" DESC (PostgreSQL)
+     *     "startAt DESC" -> `start_at` DESC (MySQL)
+     */
+    private String resolveOrderBy(EntityMeta md, String orderBy) {
+        String[] items = orderBy.split(",");
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < items.length; i++) {
+            if (i > 0) result.append(",");
+            String item = items[i].trim();
+            if (item.isEmpty()) continue;
+            String[] parts = item.split("\\s+");
+            String columnName = resolveColumn(md, parts[0]);
+            appendQuotedIdentifier(result, md, columnName);
+            for (int j = 1; j < parts.length; j++) {
+                result.append(" ").append(parts[j]);
+            }
+        }
+        return result.toString();
     }
 }

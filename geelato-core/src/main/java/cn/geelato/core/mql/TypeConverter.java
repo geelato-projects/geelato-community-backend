@@ -84,8 +84,23 @@ public class TypeConverter {
     }
 
     public static int toSqlType(String typeName) {
-        //TODO 未实现
-        return Types.VARCHAR;
+        if (typeName == null) {
+            return Types.VARCHAR;
+        }
+        return switch (typeName.toLowerCase()) {
+            case "int", "integer", "tinyint", "smallint", "mediumint" -> Types.INTEGER;
+            case "bigint" -> Types.BIGINT;
+            case "float" -> Types.FLOAT;
+            case "double" -> Types.DOUBLE;
+            case "decimal", "numeric" -> Types.DECIMAL;
+            case "bit", "boolean", "bool" -> Types.BOOLEAN;
+            case "date" -> Types.DATE;
+            case "time" -> Types.TIME;
+            case "datetime", "timestamp" -> Types.TIMESTAMP;
+            case "blob", "binary", "varbinary", "longblob", "mediumblob", "tinyblob" -> Types.BLOB;
+            case "json", "jsonb" -> Types.VARCHAR;
+            default -> Types.VARCHAR;
+        };
     }
 
     public static boolean isNumeric(String UIType) {

@@ -9,7 +9,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.security.UserProvider;
+import cn.geelato.security.SecurityDataRefreshCoordinator;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.UUIDUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
@@ -45,14 +45,15 @@ public class UserController extends BaseController {
     private final UserService userService;
     private final OrgService orgService;
     private final UserStockMapService userStockMapService;
-    private final UserProvider userProvider;
+    private final SecurityDataRefreshCoordinator securityDataRefreshCoordinator;
 
     @Autowired
-    public UserController(UserService userService, OrgService orgService, UserStockMapService userStockMapService, UserProvider userProvider) {
+    public UserController(UserService userService, OrgService orgService, UserStockMapService userStockMapService,
+                          SecurityDataRefreshCoordinator securityDataRefreshCoordinator) {
         this.userService = userService;
         this.orgService = orgService;
         this.userStockMapService = userStockMapService;
-        this.userProvider = userProvider;
+        this.securityDataRefreshCoordinator = securityDataRefreshCoordinator;
     }
 
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
@@ -436,10 +437,7 @@ public class UserController extends BaseController {
     @RequestMapping(value = "/reloadProvider", method = RequestMethod.POST)
     public ApiResult<NullResult> reloadProvider() {
         try {
-            if (userProvider == null) {
-                return ApiResult.fail("UserProvider is null");
-            }
-            userProvider.refresh();
+            securityDataRefreshCoordinator.refreshUser();
             return ApiResult.successNoResult();
         } catch (Exception e) {
             log.error(e.getMessage(), e);

@@ -69,9 +69,9 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         // limit offset count
         if (command.isPagingQuery()) {
             sb.append(" limit ");
-            sb.append((command.getPageNum() - 1) * command.getPageSize());
-            sb.append(",");
             sb.append(command.getPageSize());
+            sb.append(" offset ");
+            sb.append((command.getPageNum() - 1) * command.getPageSize());
         }
         return sb.toString();
     }
@@ -182,14 +182,14 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
                 // 有指定的重命名要求时
                 tryAppendKeywords(sb, fm.getColumnName());
                 sb.append(" ");
-                tryAppendKeywords(sb, alias.get(fieldName).toString());
+                appendQuotedIdentifier(sb, md, alias.get(fieldName).toString());
             } else {
                 if (fm.isEquals()) {
                     tryAppendKeywords(sb, fm.getColumnName());
                 } else {
                     tryAppendKeywords(sb, fm.getColumnName());
                     sb.append(" ");
-                    tryAppendKeywords(sb, fm.getFieldName());
+                    appendQuotedIdentifier(sb, md, fm.getFieldName());
                 }
             }
             sb.append(",");

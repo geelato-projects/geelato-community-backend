@@ -4,6 +4,9 @@ import cn.geelato.meta.UserEmailAccount;
 import cn.geelato.orm.Filter;
 import cn.geelato.orm.MetaFactory;
 import cn.geelato.orm.Order;
+import cn.geelato.security.SecurityContextRunnable;
+import cn.geelato.security.Tenant;
+import cn.geelato.security.User;
 import cn.geelato.web.platform.srv.email.service.EmailSyncService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,14 +98,17 @@ public class EmailSyncScheduleTask {
         }
 
         log.info("触发邮箱账号 {} 定时同步", accountId);
-        // 异步执行同步，避免阻塞定时任务
-        CompletableFuture.runAsync(() -> {
+        // 异步执行同步，避免阻塞定时任务；构造系统用户上下文传播到异步线程
+        User systemUser = new User();
+        systemUser.setUserId(userId);
+        systemUser.setUserName("system-sync");
+        CompletableFuture.runAsync(SecurityContextRunnable.wrap(() -> {
             try {
                 emailSyncService.syncAccount(userId, accountId);
             } catch (Exception e) {
                 log.error("邮箱账号 {} 异步同步失败", accountId, e);
             }
-        });
+        }, systemUser, new Tenant("system")));
     }
 
     private int toInt(Object v, int defaultVal) {

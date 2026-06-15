@@ -1,32 +1,58 @@
 package cn.geelato.security;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Component
-public class DefaultUserProvider extends UserProvider {
+@Primary
+@Slf4j
+public class DefaultUserProvider implements UserProvider {
     private final JdbcTemplate platformJdbcTemplate;
-    private final Map<String, Map<String, User>> extendUserPool = new ConcurrentHashMap<>();
-    private final OrgProvider orgProvider;
+    private final UserOrgInfoEnricher userOrgInfoEnricher;
+    private final AtomicReference<UserSnapshot> snapshotRef = new AtomicReference<>(UserSnapshot.empty());
 
-    public DefaultUserProvider(@Qualifier("primaryJdbcTemplate") JdbcTemplate platformJdbcTemplate, OrgProvider orgProvider) {
+    public DefaultUserProvider(@Qualifier("primaryJdbcTemplate") JdbcTemplate platformJdbcTemplate,
+                               UserOrgInfoEnricher userOrgInfoEnricher) {
         this.platformJdbcTemplate = platformJdbcTemplate;
-        this.orgProvider = orgProvider;
-        loadData();
+        this.userOrgInfoEnricher = userOrgInfoEnricher;
     }
 
     @Override
-    public void loadData() {
-        userDataMap.clear();
-        extendUserPool.clear();
+    public User getUser(String userId) {
+        return snapshotRef.get().getUser(userId);
+    }
+
+    @Override
+    public User getUserByExtendKey(String extendKey, String type) {
+        if (extendKey == null || extendKey.isEmpty()) {
+            return null;
+        }
+        return snapshotRef.get().getUserByExtendKey(normalizeType(type), extendKey);
+    }
+
+    @Override
+    public void refresh() {
+        UserSnapshot snapshot = loadSnapshot();
+        snapshotRef.set(snapshot);
+        log.info("User provider snapshot refreshed.");
+    }
+
+    private UserSnapshot loadSnapshot() {
+        Map<String, User> userById = new LinkedHashMap<>();
+        Map<String, Map<String, User>> extendIndex = new LinkedHashMap<>();
 
         List<User> users = platformJdbcTemplate.query(
-                "select * from platform_user where del_status = 0",
+                "select id, login_name, name, tenant_code, weixin_unionId, weixin_work_userId from platform_user where del_status = 0",
                 (rs, rowNum) -> {
                     User u = new User();
                     u.setUserId(rs.getString("id"));
@@ -38,7 +64,9 @@ public class DefaultUserProvider extends UserProvider {
                     return u;
                 }
         );
-        putUsers(users);
+        for (User user : users) {
+            putUser(userById, extendIndex, user);
+        }
         List<Map<String, Object>> roleMapList = platformJdbcTemplate.queryForList(
                 "select ru.user_id, r.id, r.code, r.name, r.type, r.tenant_code " +
                         "from platform_role r join platform_role_r_user ru on r.id = ru.role_id and ru.del_status = 0 " +
@@ -46,11 +74,13 @@ public class DefaultUserProvider extends UserProvider {
         );
         for (Map<String, Object> rm : roleMapList) {
             String userId = String.valueOf(rm.get("user_id"));
-            User user = userDataMap.get(userId);
-            if (user == null) continue;
+            User user = userById.get(userId);
+            if (user == null) {
+                continue;
+            }
             List<UserRole> list = user.getUserRoles();
             if (list == null) {
-                list = new java.util.ArrayList<>();
+                list = new ArrayList<>();
                 user.setUserRoles(list);
             }
             UserRole ur = new UserRole();
@@ -66,28 +96,43 @@ public class DefaultUserProvider extends UserProvider {
         );
         for (Map<String, Object> om : orgMapList) {
             String userId = String.valueOf(om.get("user_id"));
-            User user = userDataMap.get(userId);
-            if (user == null) continue;
+            User user = userById.get(userId);
+            if (user == null) {
+                continue;
+            }
             List<UserOrg> orgs = user.getUserOrgs();
             if (orgs == null) {
-                orgs = new java.util.ArrayList<>();
+                orgs = new ArrayList<>();
                 user.setUserOrgs(orgs);
             }
             UserOrg uo = new UserOrg();
             String orgId = String.valueOf(om.get("org_id"));
             uo.setOrgId(orgId);
             uo.setName(String.valueOf(om.get("org_name")));
-            orgs.add(uo);
             Object defaultOrg = om.get("default_org");
             boolean isDefaultOrg = "1".equals(String.valueOf(defaultOrg)) || Boolean.TRUE.equals(defaultOrg);
+            uo.setDefaultOrg(isDefaultOrg);
+            userOrgInfoEnricher.enrich(uo);
+            orgs.add(uo);
             if (isDefaultOrg && orgId != null && !orgId.isEmpty()) {
                 user.setOrgId(orgId);
                 user.setDefaultOrgId(orgId);
             }
-            if (orgProvider != null) {
-                user.setupOrgInfo(orgProvider);
+        }
+        for (User user : userById.values()) {
+            userOrgInfoEnricher.enrich(user);
+            if (user.getUserRoles() == null) {
+                user.setUserRoles(Collections.emptyList());
+            } else {
+                user.setUserRoles(Collections.unmodifiableList(new ArrayList<>(user.getUserRoles())));
+            }
+            if (user.getUserOrgs() == null) {
+                user.setUserOrgs(Collections.emptyList());
+            } else {
+                user.setUserOrgs(Collections.unmodifiableList(new ArrayList<>(user.getUserOrgs())));
             }
         }
+        return UserSnapshot.from(userById, extendIndex);
     }
 
     private String getMapString(Map<?, ?> m, String key) {
@@ -95,37 +140,20 @@ public class DefaultUserProvider extends UserProvider {
         return v == null ? null : v.toString();
     }
 
-    @Override
-    public User getUserByExtendKey(String extendKey, String type) {
-        if (extendKey == null || extendKey.isEmpty()) {
-            return null;
-        }
-        String normalized = normalizeType(type);
-        Map<String, User> pool = extendUserPool.get(normalized);
-        if (pool != null) {
-            User user = pool.get(extendKey);
-            if (user != null) {
-                return user;
-            }
-        }
-        return super.getUserByExtendKey(extendKey, type);
-    }
-
-    @Override
-    protected void putUser(User user) {
-        super.putUser(user);
-        if (user == null) {
+    private void putUser(Map<String, User> userById, Map<String, Map<String, User>> extendIndex, User user) {
+        if (user == null || user.getUserId() == null || user.getUserId().isEmpty()) {
             return;
         }
-        putExtend("loginName", user.getLoginName(), user);
-        putExtend("weixinUnionId", user.getWeixinUnionId(), user);
-        putExtend("weixinWorkUserId", user.getWeixinWorkUserId(), user);
+        userById.put(user.getUserId(), user);
+        putExtend(extendIndex, "loginName", user.getLoginName(), user);
+        putExtend(extendIndex, "weixinUnionId", user.getWeixinUnionId(), user);
+        putExtend(extendIndex, "weixinWorkUserId", user.getWeixinWorkUserId(), user);
     }
 
-    private void putExtend(String type, String key, User user) {
+    private void putExtend(Map<String, Map<String, User>> extendIndex, String type, String key, User user) {
         if (key == null || key.isEmpty()) {
             return;
         }
-        extendUserPool.computeIfAbsent(type, k -> new ConcurrentHashMap<>()).put(key, user);
+        extendIndex.computeIfAbsent(type, k -> new LinkedHashMap<>()).put(key, user);
     }
 }

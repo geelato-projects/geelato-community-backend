@@ -7,7 +7,6 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.graal.GraalContext;
 import cn.geelato.web.platform.graal.GraalExecutor;
 import cn.geelato.web.platform.srv.script.GraalUse;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
@@ -94,7 +93,7 @@ public class ScriptExecutionService {
             Map<String, Object> globalGraalVariableMap = new HashMap<>(graalManager.getGlobalGraalVariableMap());
             globalGraalVariableMap.remove("ctx");
             if (resolvedParameter.hasParameter()) {
-                globalGraalVariableMap.put("ctx", Map.of("parameter", resolvedParameter.getParsedParameter()));
+                globalGraalVariableMap.put("ctx", Map.of("parameter", resolvedParameter.parsedParameter()));
             }
 
             context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_OBJECT, globalGraalVariableMap);
@@ -107,7 +106,7 @@ public class ScriptExecutionService {
             context.getBindings(GraalUse.Language_JS).putMember(GraalUse.GLOBAL_EXECUTOR, new GraalExecutor(this));
 
             Source source = Source.newBuilder(GraalUse.Language_JS, scriptContent, buildSourceName(api)).build();
-            Value executionResult = context.eval(source).execute(resolvedParameter.getParsedParameter());
+            Value executionResult = context.eval(source).execute(resolvedParameter.parsedParameter());
             Object rawResult = executionResult.hasMembers() && executionResult.hasMember("result")
                     ? executionResult.getMember("result")
                     : null;
@@ -378,16 +377,16 @@ public class ScriptExecutionService {
             }
             return javaList;
         }
+        if (value.isHostObject()) {
+            Object hostObject = value.asHostObject();
+            return unwrapPolyglotValue(hostObject);
+        }
         if (value.hasMembers()) {
             Map<String, Object> javaMap = new HashMap<>();
             for (String memberKey : value.getMemberKeys()) {
                 javaMap.put(memberKey, unwrapValue(value.getMember(memberKey)));
             }
             return javaMap;
-        }
-        if (value.isHostObject()) {
-            Object hostObject = value.asHostObject();
-            return unwrapPolyglotValue(hostObject);
         }
         return value.toString();
     }
@@ -403,18 +402,6 @@ public class ScriptExecutionService {
         }
     }
 
-    private static class ResolvedParameter {
-        @Getter
-        private final Object parsedParameter;
-        private final boolean hasParameter;
-
-        private ResolvedParameter(Object parsedParameter, boolean hasParameter) {
-            this.parsedParameter = parsedParameter;
-            this.hasParameter = hasParameter;
-        }
-
-        public boolean hasParameter() {
-            return hasParameter;
-        }
+    private record ResolvedParameter(Object parsedParameter, boolean hasParameter) {
     }
 }

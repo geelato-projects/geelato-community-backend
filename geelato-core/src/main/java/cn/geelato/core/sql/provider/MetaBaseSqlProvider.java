@@ -171,37 +171,55 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         }
         EntityMeta em = getEntityMeta(command);
         List<Integer> typeList = new ArrayList<>();
-        for (FilterGroup.Filter filter : command.getWhere().getFilters()) {
-            if (filter.getOperator().equals(FilterGroup.Operator.in) || filter.getOperator().equals(FilterGroup.Operator.notin)) {
-                // in/notin 会产生多个参数，需要为每个参数添加类型
-                Object[] ary = filter.getValueAsArray();
-                if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
-                    int sqlType = TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumnMeta().getDataType());
-                    for (int j = 0; j < ary.length; j++) {
-                        typeList.add(sqlType);
-                    }
-                } else {
-                    for (int j = 0; j < ary.length; j++) {
-                        typeList.add(java.sql.Types.VARCHAR);
-                    }
-                }
-            } else if (filter.getOperator().equals(FilterGroup.Operator.nil)
-                    || filter.getOperator().equals(FilterGroup.Operator.bt)
-                    || filter.getOperator().equals(FilterGroup.Operator.fis)) {
-                // nil/bt/fis 不产生参数，跳过
-            } else {
-                if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
-                    typeList.add(TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumnMeta().getDataType()));
-                } else {
-                    typeList.add(java.sql.Types.VARCHAR);
-                }
-            }
-        }
+        appendWhereTypes(command.getWhere(), em, typeList);
         int[] types = new int[typeList.size()];
         for (int i = 0; i < typeList.size(); i++) {
             types[i] = typeList.get(i);
         }
         return types;
+    }
+
+    private void appendWhereTypes(FilterGroup filterGroup, EntityMeta em, List<Integer> typeList) {
+        if (filterGroup == null) {
+            return;
+        }
+        if (filterGroup.getFilters() != null) {
+            for (FilterGroup.Filter filter : filterGroup.getFilters()) {
+                appendWhereType(filter, em, typeList);
+            }
+        }
+        if (filterGroup.getChildFilterGroup() != null) {
+            for (FilterGroup childFilterGroup : filterGroup.getChildFilterGroup()) {
+                appendWhereTypes(childFilterGroup, em, typeList);
+            }
+        }
+    }
+
+    private void appendWhereType(FilterGroup.Filter filter, EntityMeta em, List<Integer> typeList) {
+        if (filter.getOperator().equals(FilterGroup.Operator.in) || filter.getOperator().equals(FilterGroup.Operator.notin)) {
+            // in/notin 会产生多个参数，需要为每个参数添加类型
+            Object[] ary = filter.getValueAsArray();
+            if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
+                int sqlType = TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumnMeta().getDataType());
+                for (int j = 0; j < ary.length; j++) {
+                    typeList.add(sqlType);
+                }
+            } else {
+                for (int j = 0; j < ary.length; j++) {
+                    typeList.add(java.sql.Types.VARCHAR);
+                }
+            }
+        } else if (filter.getOperator().equals(FilterGroup.Operator.nil)
+                || filter.getOperator().equals(FilterGroup.Operator.bt)
+                || filter.getOperator().equals(FilterGroup.Operator.fis)) {
+            // nil/bt/fis 不产生参数，跳过
+        } else {
+            if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
+                typeList.add(TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumnMeta().getDataType()));
+            } else {
+                typeList.add(java.sql.Types.VARCHAR);
+            }
+        }
     }
 
     /**

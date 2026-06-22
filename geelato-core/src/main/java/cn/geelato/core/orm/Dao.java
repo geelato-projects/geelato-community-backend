@@ -111,8 +111,7 @@ public class Dao extends SqlKeyDao {
                     (rs, rowNum) -> rs.getLong(1));
             return result.isEmpty() ? 0L : result.get(0);
         }
-        Long val = jdbcTemplate.queryForObject(sql, Long.class, params);
-        return val != null ? val : 0L;
+        return jdbcTemplate.queryForObject(sql, Long.class, params);
     }
 
     /**

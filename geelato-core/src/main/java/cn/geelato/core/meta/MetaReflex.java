@@ -172,6 +172,13 @@ public class MetaReflex {
         EntityMeta em = new EntityMeta();
         TableMeta tableMeta = getTableMeta(map);
         String viewName = map.get("view_name").toString();
+        String subjectEntityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
+        if (StringUtils.hasText(subjectEntityName)) {
+            EntityMeta subjectEntityMeta = MetaManager.singleInstance().getByEntityName(subjectEntityName);
+            if (subjectEntityMeta != null && subjectEntityMeta.getTableMeta() != null) {
+                tableMeta.setDbType(subjectEntityMeta.getTableMeta().getDbType());
+            }
+        }
         tableMeta.setTableName(viewName);
         em.setTableMeta(tableMeta);
         em.setEntityName(viewName);

@@ -200,7 +200,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             // in/notin 会产生多个参数，需要为每个参数添加类型
             Object[] ary = filter.getValueAsArray();
             if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
-                int sqlType = TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumnMeta().getDataType());
+                int sqlType = resolveFilterSqlType(filter, em);
                 for (int j = 0; j < ary.length; j++) {
                     typeList.add(sqlType);
                 }
@@ -214,12 +214,32 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
                 || filter.getOperator().equals(FilterGroup.Operator.fis)) {
             // nil/bt/fis 不产生参数，跳过
         } else {
-            if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
-                typeList.add(TypeConverter.toSqlType(em.getFieldMeta(filter.getField()).getColumnMeta().getDataType()));
+            if (isPatternMatchOperator(filter.getOperator())) {
+                // like/contains 类查询一律按字符串绑定，避免数值列模糊匹配时尝试把关键字转为数字
+                typeList.add(java.sql.Types.VARCHAR);
+            } else if (filter.getFilterFieldType() != FilterGroup.FilterFieldType.Function) {
+                typeList.add(resolveFilterSqlType(filter, em));
             } else {
                 typeList.add(java.sql.Types.VARCHAR);
             }
         }
+    }
+
+    private boolean isPatternMatchOperator(FilterGroup.Operator operator) {
+        return FilterGroup.Operator.startWith.equals(operator)
+                || FilterGroup.Operator.endWith.equals(operator)
+                || FilterGroup.Operator.contains.equals(operator);
+    }
+
+    private int resolveFilterSqlType(FilterGroup.Filter filter, EntityMeta em) {
+        if (filter == null || em == null || filter.getField() == null) {
+            return java.sql.Types.VARCHAR;
+        }
+        FieldMeta fieldMeta = em.getFieldMeta(filter.getField());
+        if (fieldMeta == null || fieldMeta.getColumnMeta() == null) {
+            return java.sql.Types.VARCHAR;
+        }
+        return TypeConverter.toSqlType(fieldMeta.getColumnMeta().getDataType());
     }
 
     /**

@@ -49,7 +49,7 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         FilterGroup fg = command.getWhere();
         if (fg != null && fg.getFilters() != null && !fg.getFilters().isEmpty()) {
             sb.append(" where ");
-            buildConditions(sb, md, fg.getFilters(), fg.getLogic());
+            buildConditions(sb, md, fg);
         }
         // group by
         if (StringUtils.hasText(command.getGroupBy())) {
@@ -64,7 +64,7 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         // order by
         if (StringUtils.hasText(command.getOrderBy())) {
             sb.append(" order by ");
-            sb.append(command.getOrderBy());
+            sb.append(resolveOrderBy(md, command.getOrderBy()));
         }
         // limit offset count
         if (command.isPagingQuery()) {
@@ -103,7 +103,7 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         FilterGroup fg = command.getWhere();
         if (fg != null && fg.getFilters() != null && !fg.getFilters().isEmpty()) {
             sb.append(" where ");
-            buildConditions(sb, md, fg.getFilters(), fg.getLogic());
+            buildConditions(sb, md, fg);
         }
         // group by
         if (StringUtils.hasText(command.getGroupBy())) {

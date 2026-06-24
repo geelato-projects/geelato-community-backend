@@ -1,5 +1,6 @@
 package cn.geelato.core.sql.provider;
 
+import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.mql.TypeConverter;
 import cn.geelato.core.mql.command.BaseCommand;
 import cn.geelato.core.mql.execute.BoundSql;
@@ -7,11 +8,16 @@ import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.utils.StringUtils;
 import org.apache.commons.collections.map.HashedMap;
-import org.springframework.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -24,6 +30,8 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     protected Boolean PermissionControl = true;
     protected static final HashedMap keywordsMap = new HashedMap();
     protected static final Map<FilterGroup.Operator, String> enumToSignString = new HashMap<FilterGroup.Operator, String>();
+    private static volatile String primaryDbTypeCache;
+    private static volatile boolean primaryDbTypeResolved = false;
     protected MetaManager metaManager = MetaManager.singleInstance();
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final Map<String, String> tableAlias = new HashMap<>(8);
@@ -344,6 +352,45 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         }
     }
 
+    protected String resolveOrderBy(EntityMeta em, String orderBy) {
+        String[] items = orderBy.split(",");
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < items.length; i++) {
+            if (i > 0) {
+                result.append(",");
+            }
+            String item = items[i].trim();
+            if (item.isEmpty()) {
+                continue;
+            }
+            String[] parts = item.split("\\s+");
+            String columnName = resolveOrderByColumn(em, parts[0]);
+            appendQuotedIdentifier(result, em, columnName);
+            for (int j = 1; j < parts.length; j++) {
+                result.append(" ").append(parts[j]);
+            }
+        }
+        return result.toString();
+    }
+
+    protected String resolveOrderByColumn(EntityMeta em, String fieldOrColumn) {
+        if (em == null || !StringUtils.hasText(fieldOrColumn)) {
+            return fieldOrColumn;
+        }
+        if (em.containsField(fieldOrColumn)) {
+            return em.getFieldMeta(fieldOrColumn).getColumnName();
+        }
+        try {
+            FieldMeta fieldMeta = em.getFieldMetaByColumn(fieldOrColumn);
+            if (fieldMeta != null) {
+                return fieldMeta.getColumnName();
+            }
+        } catch (RuntimeException ignored) {
+            // 回退为原始字段，交给调用方按字面值输出
+        }
+        return fieldOrColumn;
+    }
+
     /**
      * 为标识符加引用符，保留大小写（不同数据库使用不同的引用符）
      * <ul>
@@ -353,7 +400,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
      * </ul>
      */
     protected void appendQuotedIdentifier(StringBuilder sb, EntityMeta em, String identifier) {
-        String dbType = (em != null && em.getTableMeta() != null) ? em.getTableMeta().getDbType() : null;
+        String dbType = resolveEffectiveDbType(em);
         if ("mysql".equalsIgnoreCase(dbType)) {
             sb.append('`');
             sb.append(identifier);
@@ -368,6 +415,60 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             sb.append(identifier);
             sb.append('"');
         }
+    }
+
+    private String resolveEffectiveDbType(EntityMeta em) {
+        String dbType = (em != null && em.getTableMeta() != null) ? em.getTableMeta().getDbType() : null;
+        dbType = normalizeDbType(dbType);
+        if (StringUtils.hasText(dbType)) {
+            return dbType;
+        }
+        return resolvePrimaryDbType();
+    }
+
+    private String resolvePrimaryDbType() {
+        if (primaryDbTypeResolved) {
+            return primaryDbTypeCache;
+        }
+        synchronized (MetaBaseSqlProvider.class) {
+            if (primaryDbTypeResolved) {
+                return primaryDbTypeCache;
+            }
+            DataSource dataSource = DataSourceManager.singleInstance().getDataSource("primary");
+            if (dataSource != null) {
+                try (Connection connection = dataSource.getConnection()) {
+                    DatabaseMetaData metaData = connection.getMetaData();
+                    primaryDbTypeCache = normalizeDbType(metaData == null ? null : metaData.getDatabaseProductName());
+                    if (!StringUtils.hasText(primaryDbTypeCache) && metaData != null) {
+                        primaryDbTypeCache = normalizeDbType(metaData.getURL());
+                    }
+                } catch (SQLException e) {
+                    logger.warn("resolve primary dbType failed", e);
+                }
+            }
+            primaryDbTypeResolved = true;
+            return primaryDbTypeCache;
+        }
+    }
+
+    private String normalizeDbType(String dbType) {
+        if (!StringUtils.hasText(dbType)) {
+            return null;
+        }
+        String normalized = dbType.trim().toLowerCase(Locale.ENGLISH);
+        if (normalized.contains("mysql")) {
+            return "mysql";
+        }
+        if (normalized.contains("sql server") || normalized.contains("sqlserver")) {
+            return "sqlserver";
+        }
+        if (normalized.contains("postgres")) {
+            return "postgresql";
+        }
+        if (normalized.contains("oracle")) {
+            return "oracle";
+        }
+        return normalized;
     }
 
     public EntityMeta getEntityMeta(E command) {

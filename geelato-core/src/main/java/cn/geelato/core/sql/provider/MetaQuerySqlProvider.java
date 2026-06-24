@@ -595,25 +595,4 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         return fieldOrColumn;
     }
 
-    /**
-     * 将 ORDER BY 中的字段名转换为列名，并用数据库对应的引用符包裹
-     * 例: "startAt DESC" -> "start_at" DESC (PostgreSQL)
-     *     "startAt DESC" -> `start_at` DESC (MySQL)
-     */
-    private String resolveOrderBy(EntityMeta md, String orderBy) {
-        String[] items = orderBy.split(",");
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < items.length; i++) {
-            if (i > 0) result.append(",");
-            String item = items[i].trim();
-            if (item.isEmpty()) continue;
-            String[] parts = item.split("\\s+");
-            String columnName = resolveColumn(md, parts[0]);
-            appendQuotedIdentifier(result, md, columnName);
-            for (int j = 1; j < parts.length; j++) {
-                result.append(" ").append(parts[j]);
-            }
-        }
-        return result.toString();
-    }
 }

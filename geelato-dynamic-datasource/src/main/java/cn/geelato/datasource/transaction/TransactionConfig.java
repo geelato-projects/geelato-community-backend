@@ -15,11 +15,21 @@ import org.springframework.transaction.jta.JtaTransactionManager;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronization;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+
 
 @Configuration
 public class TransactionConfig {
+    private static final String TRANSACTION_MANAGER_NAME = "dynamic-xa-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+    private static final Object ATOMIKOS_INIT_LOCK = new Object();
+
     @Bean(name = "userTransaction")
     public UserTransaction userTransaction() throws SystemException {
+        configureAtomikosSystemProperties();
         UserTransactionImp userTransactionImp = new UserTransactionImp();
         userTransactionImp.setTransactionTimeout(300);
         return userTransactionImp;
@@ -27,16 +37,13 @@ public class TransactionConfig {
 
     @Bean(name = "atomikosTransactionManager", initMethod = "init", destroyMethod = "close")
     public UserTransactionManager atomikosTransactionManager() throws SystemException {
+        configureAtomikosSystemProperties();
         UserTransactionManager txManager = new UserTransactionManager();
         txManager.setForceShutdown(false);
         // 与UserTransaction超时保持一致
         txManager.setTransactionTimeout(60);
         // 启用事务恢复（核心：处理悬挂事务）
         txManager.setStartupTransactionService(true);
-        // 多实例唯一标识：避免事务日志冲突
-        System.setProperty("com.atomikos.icatch.tm_unique_name", "dynamic-xa-tm");
-        // 事务日志持久化目录（生产建议挂载持久化存储）
-        System.setProperty("com.atomikos.icatch.log_base_dir", "./atomikos-logs");
         return txManager;
     }
 
@@ -50,11 +57,33 @@ public class TransactionConfig {
             JtaTransactionManager jtaTxManager = new JtaTransactionManager(userTx, atomikosTxManager);
             jtaTxManager.setAllowCustomIsolationLevels(true);
             jtaTxManager.setTransactionSynchronization(AbstractPlatformTransactionManager.SYNCHRONIZATION_ALWAYS);
-            jtaTxManager.setTransactionManagerName("dynamic-xa-tm");
+            jtaTxManager.setTransactionManagerName(getTransactionManagerName());
 
             return jtaTxManager;
         } catch (SystemException e) {
             throw new RuntimeException("Atomikos 事务管理器初始化失败", e);
+        }
+    }
+
+    private String getTransactionManagerName() {
+        return TRANSACTION_MANAGER_NAME;
+    }
+
+    private Path getAtomikosLogBaseDir() {
+        return Paths.get(".", "atomikos-logs", getTransactionManagerName());
+    }
+
+    private void configureAtomikosSystemProperties() {
+        synchronized (ATOMIKOS_INIT_LOCK) {
+            Path logBaseDir = getAtomikosLogBaseDir();
+            try {
+                Files.createDirectories(logBaseDir);
+            } catch (IOException e) {
+                throw new RuntimeException("创建 Atomikos 日志目录失败: " + logBaseDir, e);
+            }
+            // 必须在 UserTransactionImp 触发 Atomikos 初始化之前设置完成
+            System.setProperty("com.atomikos.icatch.tm_unique_name", getTransactionManagerName());
+            System.setProperty("com.atomikos.icatch.log_base_dir", logBaseDir.toString());
         }
     }
 }

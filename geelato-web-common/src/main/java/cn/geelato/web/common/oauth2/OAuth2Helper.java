@@ -3,6 +3,7 @@ package cn.geelato.web.common.oauth2;
 import cn.geelato.utils.HttpUtils;
 import cn.geelato.meta.User;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 
 import java.io.IOException;
 
@@ -15,10 +16,21 @@ public class OAuth2Helper {
         String result= HttpUtils.doGet(url,null);
         OAuth2ServerResult oAuthServerResult= JSON.parseObject(result, OAuth2ServerResult.class);
         if(oAuthServerResult.getCode().equals("200")){
-            return JSON.parseObject(oAuthServerResult.getData(), User.class);
+            return parseUserInfoData(oAuthServerResult.getData());
         }else{
             return null;
         }
+    }
+
+    public static User parseUserInfoData(String data) {
+        if (data == null || data.isEmpty()) {
+            return null;
+        }
+        JSONObject dataObject = JSON.parseObject(data);
+        if (dataObject != null && dataObject.containsKey("user")) {
+            return JSON.parseObject(JSON.toJSONString(dataObject.get("user")), User.class);
+        }
+        return JSON.parseObject(data, User.class);
     }
     
     /**

@@ -77,7 +77,8 @@
 
         <dependency>
             <groupId>cn.geelato</groupId>
-            <artifactId>geelato-auth-server</artifactId>
+            <artifactId>geelato-auth-starter</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>

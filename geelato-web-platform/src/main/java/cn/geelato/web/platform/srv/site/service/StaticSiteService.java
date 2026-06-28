@@ -25,21 +25,38 @@ import java.util.zip.ZipFile;
 @Component
 public class StaticSiteService extends BaseService {
     private static final String[] allowedExtensions = new String[]{"zip", "rar", "tar", "7z", "gz", "bz2", "xz", "tar.gz", "tar.bz2", "tar.xz"};
-
-    // 添加静态初始化块加载7z库
-    static {
-        if (!isMacOs()) {
-            try {
-                SevenZip.initSevenZipFromPlatformJAR();
-            } catch (SevenZipNativeInitializationException e) {
-                throw new RuntimeException("初始化7-Zip库失败", e);
-            }
-        }
-    }
+    private static final Object SEVEN_ZIP_INIT_LOCK = new Object();
+    private static volatile boolean sevenZipInitialized = false;
 
     private static boolean isMacOs() {
         String osName = System.getProperty("os.name", "");
         return osName.toLowerCase(Locale.ROOT).contains("mac");
+    }
+
+    private static void ensureSevenZipInitialized() {
+        if (isMacOs() || sevenZipInitialized) {
+            return;
+        }
+        synchronized (SEVEN_ZIP_INIT_LOCK) {
+            if (sevenZipInitialized) {
+                return;
+            }
+            try {
+                // 为每个站点实例分配独立的 native 库临时目录，避免多 JVM 抢占同一 DLL
+                String appName = System.getProperty("spring.application.name", "geelato-site")
+                        .replaceAll("[^a-zA-Z0-9._-]", "_");
+                String runtimeName = java.lang.management.ManagementFactory.getRuntimeMXBean()
+                        .getName()
+                        .replace('@', '-')
+                        .replaceAll("[^a-zA-Z0-9._-]", "_");
+                Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"), "sevenzipjbinding", appName + "-" + runtimeName);
+                Files.createDirectories(tmpDir);
+                SevenZip.initSevenZipFromPlatformJAR(tmpDir.toFile());
+                sevenZipInitialized = true;
+            } catch (IOException | SevenZipNativeInitializationException e) {
+                throw new RuntimeException("初始化7-Zip库失败", e);
+            }
+        }
     }
 
     public StaticSite createModel(StaticSite model, String baseFolderPath) {
@@ -197,6 +214,7 @@ public class StaticSiteService extends BaseService {
 
     // 处理RAR格式的压缩文件
     private void processRarFile(File rarFile, Path rootPath, boolean isByStep, int isExist) throws IOException {
+        ensureSevenZipInitialized();
         try (IInArchive archive = SevenZip.openInArchive(null, (IInStream) new RandomAccessFile(rarFile, "r"))) {
             int[] in = new int[archive.getNumberOfItems()];
             for (int i = 0; i < in.length; i++) {
@@ -265,6 +283,7 @@ public class StaticSiteService extends BaseService {
 
     // 处理7Z格式的压缩文件
     private void process7zFile(File sevenZFile, Path rootPath, boolean isByStep, int isExist) throws IOException {
+        ensureSevenZipInitialized();
         try (IInArchive archive = SevenZip.openInArchive(null, (IInStream) new RandomAccessFile(sevenZFile, "r"))) {
             int[] in = new int[archive.getNumberOfItems()];
             for (int i = 0; i < in.length; i++) {

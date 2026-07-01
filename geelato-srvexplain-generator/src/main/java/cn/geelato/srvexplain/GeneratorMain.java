@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 public class GeneratorMain {
     private static final Set<String> CONTROLLER_ANNOTATIONS = Set.of(
             "ApiRestController",
+            "DesignTimeApiRestController",
             "ApiRuntimeRestController",
             "RestController",
             "Controller"
@@ -428,6 +429,7 @@ public class GeneratorMain {
 
             List<String> basePaths = new ArrayList<>();
             basePaths.addAll(extractPathsFromAnnotation(c, "ApiRestController"));
+            basePaths.addAll(extractPathsFromAnnotation(c, "DesignTimeApiRestController"));
             basePaths.addAll(extractPathsFromAnnotation(c, "ApiRuntimeRestController"));
             basePaths.addAll(extractPathsFromAnnotation(c, "RequestMapping"));
             basePaths = normalizePaths(basePaths);
@@ -632,14 +634,21 @@ public class GeneratorMain {
     }
 
     private static ControllerAnnotationInfo findApiControllerInfo(ClassOrInterfaceDeclaration c) {
+        if (hasAnnotationSimpleName(c, "DesignTimeApiRestController")) {
+            ControllerAnnotationInfo info = new ControllerAnnotationInfo();
+            info.conditional = "design-time（@DesignTimeApiRestController）";
+            info.category = getAnnotationStringValue(c, "DesignTimeApiRestController", "category");
+            return info;
+        }
         if (hasAnnotationSimpleName(c, "ApiRuntimeRestController")) {
             ControllerAnnotationInfo info = new ControllerAnnotationInfo();
             info.conditional = "runtime（@ApiRuntimeRestController）";
+            info.category = getAnnotationStringValue(c, "ApiRuntimeRestController", "category");
             return info;
         }
         if (hasAnnotationSimpleName(c, "ApiRestController")) {
             ControllerAnnotationInfo info = new ControllerAnnotationInfo();
-            info.conditional = "designtime（@ApiRestController）";
+            info.conditional = "runtime-compatible（@ApiRestController）";
             info.category = getAnnotationStringValue(c, "ApiRestController", "category");
             return info;
         }

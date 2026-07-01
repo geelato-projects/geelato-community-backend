@@ -24,7 +24,7 @@
         </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>
-            <artifactId>geelato-web-platform</artifactId>
+            <artifactId>geelato-web-runtime</artifactId>
             <exclusions>
                 <!-- 排除旧版本 MyBatis Plus -->
                 <exclusion>

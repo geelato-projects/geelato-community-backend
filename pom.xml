@@ -11,6 +11,8 @@
 
     <modules>
         <module>geelato-parent</module>
+        <module>geelato-framework-bom</module>
+        <module>geelato-framework-starter</module>
         <module>geelato-lang</module>
         <module>geelato-core</module>
         <module>geelato-meta</module>
@@ -18,19 +20,13 @@
         <module>geelato-utils</module>
         <module>geelato-orm</module>
         <module>geelato-dynamic-datasource</module>
+        <module>geelato-web-runtime</module>
         <module>geelato-web-platform</module>
         <module>geelato-web-common</module>
+        <module>geelato-app-scaffold-starter</module>
         <module>geelato-web-quickstart</module>
         <module>geelato-test</module>
         <module>geelato-mcp</module>
         <module>geelato-srvexplain-generator</module>
     </modules>
-    <dependencies>
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjweaver</artifactId>
-            <version>1.9.21</version>
-            <scope>compile</scope>
-        </dependency>
-    </dependencies>
 </project>

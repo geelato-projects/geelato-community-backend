@@ -1,6 +1,8 @@
 package cn.geelato.web.quickstart;
 
 import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.ApiRuntimeRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
@@ -14,6 +16,11 @@ public class ApiPrefixAutoConfiguration implements WebMvcConfigurer {
                 MergedAnnotations.from(
                         handlerType,
                         MergedAnnotations.SearchStrategy.TYPE_HIERARCHY
-                ).isPresent(ApiRestController.class));
+                ).isPresent(ApiRuntimeRestController.class));
+        configurer.addPathPrefix("/api",  handlerType ->
+                MergedAnnotations.from(
+                        handlerType,
+                        MergedAnnotations.SearchStrategy.TYPE_HIERARCHY
+                ).isPresent(DesignTimeApiRestController.class));
     }
 }

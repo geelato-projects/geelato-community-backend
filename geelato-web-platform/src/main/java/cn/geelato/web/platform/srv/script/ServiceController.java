@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.script;
 
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.script.service.ScriptExecutionException;
 import cn.geelato.web.platform.srv.script.service.ScriptExecutionResult;
@@ -16,7 +16,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 
-@ApiRestController("/service")
+@DesignTimeApiRestController("/service")
 public class ServiceController extends BaseController {
     private final ScriptExecutionService scriptExecutionService;
 

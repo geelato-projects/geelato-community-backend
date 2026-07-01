@@ -164,12 +164,6 @@ public class EnvManager  extends AbstractManager {
             if (user.getTenantCode() == null || user.getTenantCode().trim().isEmpty()) {
                 throw new RuntimeException("租户编码不能为空");
             }
-            if (user.getOrgId() == null || user.getOrgId().trim().isEmpty()) {
-                throw new RuntimeException("组织ID不能为空");
-            }
-            if (user.getDefaultOrgId() == null || user.getDefaultOrgId().trim().isEmpty()) {
-                throw new RuntimeException("默认组织ID不能为空");
-            }
 
             loadUserOrg(user);
             loadTenant(user);

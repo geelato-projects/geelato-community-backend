@@ -13,7 +13,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.arco.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.model.service.DevTableColumnService;
@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@ApiRestController("/model/table/column")
+@DesignTimeApiRestController("/model/table/column")
 @Slf4j
 public class DevTableColumnController extends BaseController {
     private static final Class<ColumnMeta> CLAZZ = ColumnMeta.class;
@@ -95,7 +95,7 @@ public class DevTableColumnController extends BaseController {
             TableMeta tableMeta = devTableColumnService.getModel(TableMeta.class, form.getTableId());
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
-                // 存在，方可更新
+                // 存在，方可更�?
                 ColumnMeta meta = devTableColumnService.getModel(CLAZZ, form.getId());
                 Assert.notNull(meta, ApiErrorMsg.IS_NULL);
                 form = devTableColumnService.upgradeTable(tableMeta, form, meta);
@@ -109,7 +109,7 @@ public class DevTableColumnController extends BaseController {
                 resultMap = devTableColumnService.createModel(form);
                 permissionService.resetDefaultPermission(PermissionTypeEnum.COLUMN.getValue(), form.getTableName(), tableMeta.getConnectId(), form.getAppId());
             }
-            // 选择类型为 组织、用户时
+            // 选择类型�?组织、用户时
             devTableColumnService.automaticGeneration(form);
             // 刷新实体缓存
             if (Strings.isNotEmpty(form.getTableName())) {
@@ -153,7 +153,7 @@ public class DevTableColumnController extends BaseController {
             if (columnMetas == null || columnMetas.size() == 0) {
                 throw new RuntimeException("columnMetas is null");
             }
-            // 已有字段，
+            // 已有字段�?
             List<String> existColumnNames = new ArrayList<>();
             Map<String, Object> columnParams = new HashMap<>();
             columnParams.put("tableId", tableId);

@@ -3,7 +3,7 @@ package cn.geelato.web.platform.srv.meta;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.lang.api.ApiMetaResult;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.platform.service.MetaDdlService;
@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * @author itechgee@126.com
  */
-@ApiRestController(value = "/meta/ddl")
+@DesignTimeApiRestController(value = "/meta/ddl")
 @Slf4j
 public class MetaDdlController extends BaseController {
     private final MetaDdlService metaDdlService;
@@ -72,9 +72,9 @@ public class MetaDdlController extends BaseController {
     /**
      * 新建或更新视图，需要切换数据库
      *
-     * @param view   要创建或更新的视图名称
+     * @param view   要创建或更新的视图名�?
      * @param params 包含SQL语句的Map对象
-     * @return ApiMetaResult 对象，表示操作结果
+     * @return ApiMetaResult 对象，表示操作结�?
      */
     @RequestMapping(value = {"/view/{view}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult createOrUpdateViewByEntity(@PathVariable("view") String view, @RequestBody Map<String, String> params) {
@@ -83,11 +83,11 @@ public class MetaDdlController extends BaseController {
 
     /**
      * 验证视图语句
-     * 代码中存在切换数据库的操作
+     * 代码中存在切换数据库的操�?
      *
      * @param connectId 数据库连接ID
      * @param params    包含SQL语句的Map对象
-     * @return ApiMetaResult 对象，表示操作结果
+     * @return ApiMetaResult 对象，表示操作结�?
      */
     @RequestMapping(value = {"/view/valid/{connectId}"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult<Boolean> validateView(@PathVariable("connectId") String connectId, @RequestBody Map<String, String> params) {
@@ -116,7 +116,7 @@ public class MetaDdlController extends BaseController {
      * 仅操作元数据所在库
      *
      * @param params 包含表ID、表名称、连接ID、应用ID、租户代码的Map对象
-     * @return ApiMetaResult 对象，表示操作结果
+     * @return ApiMetaResult 对象，表示操作结�?
      */
     @RequestMapping(value = {"/redis/refresh"}, method = {RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiMetaResult refreshRedis(@RequestBody Map<String, String> params) {

@@ -7,7 +7,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Role;
 import cn.geelato.web.platform.srv.security.service.RoleService;
@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@ApiRestController(value = "/security/role")
+@DesignTimeApiRestController(value = "/security/role")
 @Slf4j
 public class RoleController extends BaseController {
     private static final Class<Role> CLAZZ = Role.class;
@@ -126,3 +126,4 @@ public class RoleController extends BaseController {
         }
     }
 }
+

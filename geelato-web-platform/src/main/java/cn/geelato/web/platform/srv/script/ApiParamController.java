@@ -6,7 +6,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.ApiParam;
 import cn.geelato.web.platform.srv.script.service.ApiParamService;
@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@ApiRestController("/script/api/param")
+@DesignTimeApiRestController("/script/api/param")
 @Slf4j
 public class ApiParamController extends BaseController {
     private static final Class<ApiParam> CLAZZ = ApiParam.class;

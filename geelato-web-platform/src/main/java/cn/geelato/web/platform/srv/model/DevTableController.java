@@ -16,7 +16,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.arco.enums.PermissionTypeEnum;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.model.service.DevTableColumnService;
@@ -41,7 +41,7 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@ApiRestController("/model/table")
+@DesignTimeApiRestController("/model/table")
 @Slf4j
 public class DevTableController extends BaseController {
     private static final Class<TableMeta> CLAZZ = TableMeta.class;
@@ -86,7 +86,7 @@ public class DevTableController extends BaseController {
             TableMeta resultMap = new TableMeta();
             // ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
-                // 存在，方可更新
+                // 存在，方可更�?
                 TableMeta model = devTableService.getModel(CLAZZ, form.getId());
                 if (model != null) {
                     form = devTableService.handleForm(form, model);

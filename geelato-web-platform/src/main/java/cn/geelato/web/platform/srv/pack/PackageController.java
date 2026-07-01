@@ -29,6 +29,7 @@ import cn.geelato.web.platform.utils.FileParamUtils;
 import cn.geelato.pack.PackageConfigurationProperties;
 import cn.geelato.pack.PackageException;
 import cn.geelato.meta.AppVersion;
+import cn.geelato.web.common.conditional.DesigntimeServiceConditional;
 import cn.geelato.web.platform.srv.pack.service.AppVersionService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -42,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.TransactionStatus;
@@ -55,6 +57,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Controller
+@Conditional(DesigntimeServiceConditional.class)
 @RequestMapping(value = "/package")
 @Slf4j
 public class PackageController {

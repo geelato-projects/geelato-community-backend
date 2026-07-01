@@ -9,7 +9,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.model.service.DevDbConnectService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@ApiRestController("/model/connect")
+@DesignTimeApiRestController("/model/connect")
 @Slf4j
 public class DevDbConnectController extends BaseController {
     private static final Class<ConnectMeta> CLAZZ = ConnectMeta.class;
@@ -78,7 +78,7 @@ public class DevDbConnectController extends BaseController {
         try {
             // 判断是否存在
             devDbConnectService.isExist(form);
-            // 判断是否是更新
+            // 判断是否是更�?
             if (Strings.isNotBlank(form.getId())) {
                 return ApiResult.success(devDbConnectService.updateModel(form));
             } else {
@@ -141,7 +141,7 @@ public class DevDbConnectController extends BaseController {
         try {
             boolean refreshed = devDbConnectService.refreshDataSource(id);
             if (!refreshed) {
-                return ApiResult.fail("未找到数据库连接：" + id);
+                return ApiResult.fail("未找到数据库连接: " + id);
             }
             return ApiResult.success(true);
         } catch (Exception e) {

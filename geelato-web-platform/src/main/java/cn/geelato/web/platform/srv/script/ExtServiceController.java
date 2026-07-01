@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.script;
 
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.platform.graal.utils.GraalUtils;
 import cn.geelato.web.platform.srv.BaseController;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-@ApiRestController("/ext")
+@DesignTimeApiRestController("/ext")
 @Slf4j
 public class ExtServiceController extends BaseController {
     private final RuleService ruleService;
@@ -38,7 +38,6 @@ public class ExtServiceController extends BaseController {
     @IgnoreVerify
     @RequestMapping(value = "{outside_url}", method = {RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
-    @SuppressWarnings("rawtypes")
     public Object exec(@PathVariable("outside_url") String outside_url) {
         String parameter = resolveBody(this.request);
         try {
@@ -64,14 +63,14 @@ public class ExtServiceController extends BaseController {
     }
 
     /**
-     * 创建API日志。
+     * 创建API日志�?
      *
      * @param dg    调试等级
      * @param appId 应用ID
      * @param code  状态码
      * @param rp    请求参数
-     * @param rb    请求体
-     * @param rh    请求头
+     * @param rb    请求�?
+     * @param rh    请求�?
      * @param rc    请求Cookie
      * @param resp  响应参数
      */

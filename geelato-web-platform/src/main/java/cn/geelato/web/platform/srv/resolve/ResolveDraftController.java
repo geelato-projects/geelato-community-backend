@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.resolve;
 
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.resolve.model.ResolveDraftUpdateRequest;
 import cn.geelato.web.platform.srv.BaseController;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
-@ApiRestController("/resolve/draft")
+@DesignTimeApiRestController("/resolve/draft")
 public class ResolveDraftController extends BaseController {
     private final ResolveDraftFacade draftFacade;
 

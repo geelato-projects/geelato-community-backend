@@ -8,7 +8,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.model.service.DevTableForeignService;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@ApiRestController("/model/table/foreign")
+@DesignTimeApiRestController("/model/table/foreign")
 @Slf4j
 public class DevTableForeignController extends BaseController {
     private static final Class<TableForeign> CLAZZ = TableForeign.class;

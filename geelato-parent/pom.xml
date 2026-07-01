@@ -156,6 +156,11 @@
             <!--project-->
             <dependency>
                 <groupId>cn.geelato</groupId>
+                <artifactId>geelato-framework-starter</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
                 <artifactId>geelato-lang</artifactId>
                 <version>${geelato.version}</version>
             </dependency>
@@ -201,12 +206,22 @@
             </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
+                <artifactId>geelato-web-runtime</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
                 <artifactId>geelato-web-platform</artifactId>
                 <version>${geelato.version}</version>
             </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
-                <artifactId>geelato-reactor-platform</artifactId>
+                <artifactId>geelato-app-scaffold-starter</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-app-scaffold</artifactId>
                 <version>${geelato.version}</version>
             </dependency>
             <dependency>

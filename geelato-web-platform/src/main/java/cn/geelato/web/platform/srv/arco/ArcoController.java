@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.arco;
 
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.arco.enums.ArcoEnum;
 import lombok.extern.slf4j.Slf4j;
@@ -9,14 +9,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-@ApiRestController(value = "/arco")
+@DesignTimeApiRestController(value = "/arco")
 @Slf4j
 public class ArcoController extends BaseController {
 
     /**
-     * 根据枚举码获取选择项数据
+     * 根据枚举码获取选择项数�?
      *
-     * @param code 枚举码
+     * @param code 枚举�?
      * @return 包含选择项数据的ApiResult对象，如果找不到对应的枚举类，则返回空的ApiResult对象
      */
     @RequestMapping(value = "/sod/{code}", method = RequestMethod.GET)

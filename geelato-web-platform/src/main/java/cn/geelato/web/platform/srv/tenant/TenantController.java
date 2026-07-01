@@ -4,7 +4,7 @@ package cn.geelato.web.platform.srv.tenant;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Tenant;
 import cn.geelato.web.platform.srv.tenant.service.TenantOrmService;
@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@ApiRestController("/tenant")
+@DesignTimeApiRestController("/tenant")
 @Slf4j
 public class TenantController extends BaseController {
     private static final Class<Tenant> CLAZZ = Tenant.class;
@@ -33,7 +33,7 @@ public class TenantController extends BaseController {
     }
 
     /**
-     * 查询租户列表
+     * 鏌ヨ绉熸埛鍒楄〃
      */
     @GetMapping("/list")
     public ApiResult<List<Tenant>> queryTenantList(
@@ -44,20 +44,20 @@ public class TenantController extends BaseController {
             List<Tenant> tenants = tenantOrmService.queryTenantList(code, companyName, corpId);
             return ApiResult.success(tenants);
         } catch (Exception e) {
-            log.error("查询租户列表失败", e);
-            return ApiResult.fail("查询租户列表失败: " + e.getMessage());
+            log.error("鏌ヨ绉熸埛鍒楄〃澶辫触", e);
+            return ApiResult.fail("鏌ヨ绉熸埛鍒楄〃澶辫触: " + e.getMessage());
         }
     }
 
     /**
-     * 根据ID查询租户信息
+     * 鏍规嵁ID鏌ヨ绉熸埛淇℃伅
      */
     @GetMapping("/{id}")
     public ApiResult<Tenant> queryTenantById(
             @PathVariable String id) {
         try {
             if (!StringUtils.hasText(id)) {
-                return ApiResult.fail("租户ID不能为空");
+                return ApiResult.fail("绉熸埛ID涓嶈兘涓虹┖");
             }
             Tenant tenant = tenantOrmService.getById(id);
             if (tenant == null) {
@@ -65,20 +65,20 @@ public class TenantController extends BaseController {
             }
             return ApiResult.success(tenant);
         } catch (Exception e) {
-            log.error("查询租户信息失败", e);
-            return ApiResult.fail("查询租户信息失败: " + e.getMessage());
+            log.error("鏌ヨ绉熸埛淇℃伅澶辫触", e);
+            return ApiResult.fail("鏌ヨ绉熸埛淇℃伅澶辫触: " + e.getMessage());
         }
     }
 
     /**
-     * 根据租户编码查询租户信息
+     * 鏍规嵁绉熸埛缂栫爜鏌ヨ绉熸埛淇℃伅
      */
     @GetMapping("/code/{code}")
     public ApiResult<Tenant> queryTenantByCode(
             @PathVariable String code) {
         try {
             if (!StringUtils.hasText(code)) {
-                return ApiResult.fail("租户编码不能为空");
+                return ApiResult.fail("绉熸埛缂栫爜涓嶈兘涓虹┖");
             }
             Tenant tenant = tenantOrmService.getByCode(code);
             if (tenant == null) {
@@ -86,14 +86,14 @@ public class TenantController extends BaseController {
             }
             return ApiResult.success(tenant);
         } catch (Exception e) {
-            log.error("查询租户信息失败", e);
-            return ApiResult.fail("查询租户信息失败: " + e.getMessage());
+            log.error("鏌ヨ绉熸埛淇℃伅澶辫触", e);
+            return ApiResult.fail("鏌ヨ绉熸埛淇℃伅澶辫触: " + e.getMessage());
         }
     }
 
 
     /**
-     * 初始化租户（通过租户编码）
+     * 鍒濆鍖栫鎴凤紙閫氳繃绉熸埛缂栫爜锛?
      */
     @GetMapping("/initialize/{code}")
     @Transactional
@@ -101,27 +101,27 @@ public class TenantController extends BaseController {
             @PathVariable String code) {
         try {
             if (!StringUtils.hasText(code)) {
-                return ApiResult.fail("租户编码不能为空");
+                return ApiResult.fail("绉熸埛缂栫爜涓嶈兘涓虹┖");
             }
 
-            // 查找租户
+            // 鏌ユ壘绉熸埛
             Tenant tenant = tenantOrmService.getByCode(code);
             if (tenant == null) {
                 return ApiResult.fail("租户不存在");
             }
 
-            // 检查租户是否已被删除
+            // 妫€鏌ョ鎴锋槸鍚﹀凡琚垹闄?
             if (tenant.getDelStatus() == 1) {
-                return ApiResult.fail("租户已被删除，无法初始化");
+                return ApiResult.fail("绉熸埛宸茶鍒犻櫎锛屾棤娉曞垵濮嬪寲");
             }
 
-            // 执行租户初始化逻辑，创建租户站点、组织、用户、角色等
+            // 鎵ц绉熸埛鍒濆鍖栭€昏緫锛屽垱寤虹鎴风珯鐐广€佺粍缁囥€佺敤鎴枫€佽鑹茬瓑
             Map<String, String> initResult = tenantService.afterCreate(tenant);
 
             tenantOrmService.touchById(tenant.getId());
             tenant = tenantOrmService.getById(tenant.getId());
             if (tenant != null) {
-                // 直接返回包含租户信息和初始化结果（用户名和密码）的Map
+                // 鐩存帴杩斿洖鍖呭惈绉熸埛淇℃伅鍜屽垵濮嬪寲缁撴灉锛堢敤鎴峰悕鍜屽瘑鐮侊級鐨凪ap
                 Map<String, Object> responseData = new HashMap<>();
                 responseData.put("tenant", tenant);
                 responseData.put("userName", initResult.get("userName"));
@@ -131,7 +131,7 @@ public class TenantController extends BaseController {
                 return ApiResult.fail("租户初始化失败");
             }
         } catch (IllegalArgumentException e) {
-            log.warn("租户初始化参数错误: {}", e.getMessage());
+            log.warn("绉熸埛鍒濆鍖栧弬鏁伴敊璇? {}", e.getMessage());
             return ApiResult.fail(e.getMessage());
         } catch (Exception e) {
             log.error("租户初始化失败", e);
@@ -140,7 +140,7 @@ public class TenantController extends BaseController {
     }
 
     /**
-     * 更新租户信息
+     * 鏇存柊绉熸埛淇℃伅
      */
     @PutMapping("/{id}")
     @Transactional
@@ -150,7 +150,7 @@ public class TenantController extends BaseController {
         try {
             tenant.setId(id);
 
-            // 从SecurityContext获取更新者信息
+            // 浠嶴ecurityContext鑾峰彇鏇存柊鑰呬俊鎭?
             String updater = SecurityContext.getCurrentUser().getUserId();
             String updaterName = SecurityContext.getCurrentUser().getUserName();
 
@@ -161,31 +161,31 @@ public class TenantController extends BaseController {
                 updaterName = "系统管理员";
             }
 
-            // 参数验证
+            // 鍙傛暟楠岃瘉
             if (!StringUtils.hasText(id)) {
-                return ApiResult.fail("租户ID不能为空");
+                return ApiResult.fail("绉熸埛ID涓嶈兘涓虹┖");
             }
 
-            // 检查租户是否存在
+            // 妫€鏌ョ鎴锋槸鍚﹀瓨鍦?
             Tenant existingTenant = tenantOrmService.getById(id);
             if (existingTenant == null) {
                 return ApiResult.fail("租户不存在");
             }
 
-            // 设置更新信息
+            // 璁剧疆鏇存柊淇℃伅
             tenant.setUpdateAt(new java.util.Date());
             tenant.setUpdater(updater);
             tenant.setUpdaterName(updaterName);
 
-            // 更新租户
+            // 鏇存柊绉熸埛
             tenantOrmService.updateById(tenant);
-            return ApiResult.success(true, "更新成功");
+            return ApiResult.success(true, "鏇存柊鎴愬姛");
         } catch (IllegalArgumentException e) {
-            log.warn("更新租户参数错误: {}", e.getMessage());
+            log.warn("鏇存柊绉熸埛鍙傛暟閿欒: {}", e.getMessage());
             return ApiResult.fail(e.getMessage());
         } catch (Exception e) {
-            log.error("更新租户失败", e);
-            return ApiResult.fail("更新租户失败: " + e.getMessage());
+            log.error("鏇存柊绉熸埛澶辫触", e);
+            return ApiResult.fail("鏇存柊绉熸埛澶辫触: " + e.getMessage());
         }
     }
 
@@ -201,27 +201,27 @@ public class TenantController extends BaseController {
     }
 
     /**
-     * 创建租户
+     * 鍒涘缓绉熸埛
      */
     @PostMapping("/create")
     @Transactional
     public ApiResult<?> createTenant(@RequestBody Tenant tenant) {
         try {
-            // 参数验证
+            // 鍙傛暟楠岃瘉
             if (!StringUtils.hasText(tenant.getCompanyName())) {
-                return ApiResult.fail("公司名称不能为空");
+                return ApiResult.fail("鍏徃鍚嶇О涓嶈兘涓虹┖");
             }
             if (!StringUtils.hasText(tenant.getCode())) {
-                return ApiResult.fail("租户编码不能为空");
+                return ApiResult.fail("绉熸埛缂栫爜涓嶈兘涓虹┖");
             }
 
-            // 检查租户编码是否已存在
+            // 妫€鏌ョ鎴风紪鐮佹槸鍚﹀凡瀛樺湪
             Tenant existingTenant = tenantOrmService.getByCode(tenant.getCode());
             if (existingTenant != null) {
                 return ApiResult.fail("租户编码已存在");
             }
 
-            // 从SecurityContext获取创建者信息
+            // 浠嶴ecurityContext鑾峰彇鍒涘缓鑰呬俊鎭?
             String creator = SecurityContext.getCurrentUser().getUserId();
             String creatorName = SecurityContext.getCurrentUser().getUserName();
 
@@ -232,51 +232,51 @@ public class TenantController extends BaseController {
                 creatorName = "系统管理员";
             }
 
-            // 设置创建信息
+            // 璁剧疆鍒涘缓淇℃伅
             tenant.setCreator(creator);
             tenant.setCreatorName(creatorName);
             tenant.setCreateAt(new java.util.Date());
             tenant.setDelStatus(0);
             tenant.setDeleteAt(DateUtils.defaultDeleteAt());
 
-            // 创建租户
+            // 鍒涘缓绉熸埛
             tenantOrmService.create(tenant);
 
-            // 直接返回租户信息
-            return ApiResult.success(tenant, "租户创建成功");
+            // 鐩存帴杩斿洖绉熸埛淇℃伅
+            return ApiResult.success(tenant, "绉熸埛鍒涘缓鎴愬姛");
         } catch (IllegalArgumentException e) {
-            log.warn("创建租户参数错误: {}", e.getMessage());
+            log.warn("鍒涘缓绉熸埛鍙傛暟閿欒: {}", e.getMessage());
             return ApiResult.fail(e.getMessage());
         } catch (Exception e) {
-            log.error("创建租户失败", e);
-            return ApiResult.fail("创建租户失败: " + e.getMessage());
+            log.error("鍒涘缓绉熸埛澶辫触", e);
+            return ApiResult.fail("鍒涘缓绉熸埛澶辫触: " + e.getMessage());
         }
     }
 
     /**
-     * 邀请租户（仅创建包含邮箱地址的待填租户信息）
+     * 閭€璇风鎴凤紙浠呭垱寤哄寘鍚偖绠卞湴鍧€鐨勫緟濉鎴蜂俊鎭級
      */
     @PostMapping("/invite")
     @Transactional
     public ApiResult<?> inviteTenant(@RequestParam String email) {
         try {
-            // 参数验证
+            // 鍙傛暟楠岃瘉
             if (!StringUtils.hasText(email)) {
-                return ApiResult.fail("邮箱地址不能为空");
+                return ApiResult.fail("閭鍦板潃涓嶈兘涓虹┖");
             }
 
-            // 生成租户编码（使用邮箱前缀加随机字符）
+            // 鐢熸垚绉熸埛缂栫爜锛堜娇鐢ㄩ偖绠卞墠缂€鍔犻殢鏈哄瓧绗︼級
             String emailPrefix = email.split("@")[0];
             String tenantCode = emailPrefix + "_" + System.currentTimeMillis() % 10000;
 
-            // 检查租户编码是否已存在
+            // 妫€鏌ョ鎴风紪鐮佹槸鍚﹀凡瀛樺湪
             Tenant existingTenant = tenantOrmService.getByCode(tenantCode);
             if (existingTenant != null) {
-                // 如果已存在，添加随机后缀
+                // 濡傛灉宸插瓨鍦紝娣诲姞闅忔満鍚庣紑
                 tenantCode = tenantCode + "_" + (int) (Math.random() * 1000);
             }
 
-            // 从SecurityContext获取创建者信息
+            // 浠嶴ecurityContext鑾峰彇鍒涘缓鑰呬俊鎭?
             String creator = SecurityContext.getCurrentUser().getUserId();
             String creatorName = SecurityContext.getCurrentUser().getUserName();
 
@@ -287,7 +287,7 @@ public class TenantController extends BaseController {
                 creatorName = "系统管理员";
             }
 
-            // 创建租户对象，只设置邮箱和必要信息，其他信息留空
+            // 鍒涘缓绉熸埛瀵硅薄锛屽彧璁剧疆閭鍜屽繀瑕佷俊鎭紝鍏朵粬淇℃伅鐣欑┖
             Tenant tenant = new Tenant();
             tenant.setMainEmail(email);
             tenant.setCode(tenantCode);
@@ -297,15 +297,15 @@ public class TenantController extends BaseController {
             tenant.setCreateAt(new java.util.Date());
             tenant.setDelStatus(0);
 
-            // 创建租户
+            // 鍒涘缓绉熸埛
             tenantOrmService.create(tenant);
 
-            // TODO: 发送邀请邮件给用户，包含完善信息的链接
+            // TODO: 鍙戦€侀個璇烽偖浠剁粰鐢ㄦ埛锛屽寘鍚畬鍠勪俊鎭殑閾炬帴
 
-            // 返回租户信息
-            return ApiResult.success(tenant, "租户邀请成功，等待完善信息");
+            // 杩斿洖绉熸埛淇℃伅
+            return ApiResult.success(tenant, "绉熸埛閭€璇锋垚鍔燂紝绛夊緟瀹屽杽淇℃伅");
         } catch (IllegalArgumentException e) {
-            log.warn("邀请租户参数错误: {}", e.getMessage());
+            log.warn("閭€璇风鎴峰弬鏁伴敊璇? {}", e.getMessage());
             return ApiResult.fail(e.getMessage());
         } catch (Exception e) {
             log.error("邀请租户失败", e);
@@ -313,3 +313,4 @@ public class TenantController extends BaseController {
         }
     }
 }
+

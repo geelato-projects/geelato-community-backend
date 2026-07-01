@@ -10,7 +10,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.security.User;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Permission;
 import cn.geelato.web.platform.srv.security.service.PermissionService;
@@ -28,7 +28,7 @@ import java.util.*;
 /**
  * @author diabl
  */
-@ApiRestController(value = "/security/permission")
+@DesignTimeApiRestController(value = "/security/permission")
 @Slf4j
 public class PermissionController extends BaseController {
     private static final Class<Permission> CLAZZ = Permission.class;
@@ -99,7 +99,7 @@ public class PermissionController extends BaseController {
     public ApiResult<?> createOrUpdate(@RequestBody Permission form) {
         try {
             form.afterSet();
-            // ID为空方可插入
+            // ID涓虹┖鏂瑰彲鎻掑叆
             if (Strings.isNotBlank(form.getId())) {
                 return ApiResult.success(permissionService.updateModel(form));
             } else {
@@ -177,3 +177,4 @@ public class PermissionController extends BaseController {
         return ApiResult.success(rtnPermission);
     }
 }
+

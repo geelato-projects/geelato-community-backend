@@ -6,7 +6,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.RoleTreeNodeMap;
 import cn.geelato.web.platform.srv.security.service.RoleTreeNodeMapService;
@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * @author diabl
  */
-@ApiRestController(value = "/security/role/tree")
+@DesignTimeApiRestController(value = "/security/role/tree")
 @Slf4j
 public class RoleTreeNodeMapController extends BaseController {
     private static final Class<RoleTreeNodeMap> CLAZZ = RoleTreeNodeMap.class;
@@ -130,3 +130,4 @@ public class RoleTreeNodeMapController extends BaseController {
         }
     }
 }
+

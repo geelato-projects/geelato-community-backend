@@ -75,10 +75,9 @@ public class User extends UserCore{
     /**
      * 历史兼容入口，请优先使用 UserOrgInfoEnricher 补齐组织派生信息。
      */
-    @Deprecated
-    public User setupOrgInfo(OrgProvider orgProvider) {
+    public void setupOrgInfo(OrgProvider orgProvider) {
         if (orgProvider == null) {
-            return this;
+            return;
         }
         if (this.orgId != null && !this.orgId.isEmpty()) {
             this.orgName = orgProvider.getOrgName(this.orgId);
@@ -95,6 +94,5 @@ public class User extends UserCore{
         if (this.defaultOrgId != null && !this.defaultOrgId.isEmpty()) {
             this.defaultOrgName = orgProvider.getOrgName(this.defaultOrgId);
         }
-        return this;
     }
 }

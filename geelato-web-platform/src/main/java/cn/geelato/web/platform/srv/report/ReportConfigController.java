@@ -1,6 +1,7 @@
 package cn.geelato.web.platform.srv.report;
 
 import cn.geelato.web.common.constants.MediaTypes;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.report.dto.ReportApiResponse;
 import cn.geelato.web.platform.srv.report.dto.ReportConfigDetailData;
 import cn.geelato.web.platform.srv.report.dto.ReportConfigSaveRequest;
@@ -12,12 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping(value = "/periodic-report/report-config", produces = MediaTypes.APPLICATION_JSON_UTF_8)
+@DesignTimeApiRestController(value = "/periodic-report/report-config", category = "platform-design")
 @RequiredArgsConstructor
 @Slf4j
 public class ReportConfigController {

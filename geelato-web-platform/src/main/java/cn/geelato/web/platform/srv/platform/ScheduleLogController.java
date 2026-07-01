@@ -6,7 +6,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.ScheduleLog;
 import cn.geelato.web.platform.srv.platform.service.ScheduleLogService;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import java.util.List;
 import java.util.Map;
 
-@ApiRestController("/schedule/log")
+@DesignTimeApiRestController("/schedule/log")
 @Slf4j
 public class ScheduleLogController extends BaseController {
     private static final Class<ScheduleLog> CLAZZ = ScheduleLog.class;
@@ -74,7 +74,7 @@ public class ScheduleLogController extends BaseController {
     public ApiResult<ScheduleLog> createOrUpdate(@RequestBody ScheduleLog form) {
         try {
             ScheduleLog result = new ScheduleLog();
-            // ID为空方可插入
+            // ID涓虹┖鏂瑰彲鎻掑叆
             if (Strings.isNotBlank(form.getId())) {
                 result = scheduleLogService.updateModel(form);
             } else {
@@ -100,3 +100,4 @@ public class ScheduleLogController extends BaseController {
         }
     }
 }
+

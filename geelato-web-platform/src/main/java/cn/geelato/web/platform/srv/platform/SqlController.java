@@ -10,7 +10,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.AppSqlMap;
 import cn.geelato.meta.CustomSql;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 /**
  * @author diabl
  */
-@ApiRestController("/sql")
+@DesignTimeApiRestController("/sql")
 @Slf4j
 public class SqlController extends BaseController {
     private static final Class<CustomSql> CLAZZ = CustomSql.class;
@@ -146,13 +146,13 @@ public class SqlController extends BaseController {
     public ApiResult<List<CustomSql>> queryByApp(@PathVariable(required = true) String appId) {
         try {
             List<CustomSql> customSqls = new ArrayList<>();
-            // 应用下sql
+            // 搴旂敤涓媠ql
             Map<String, Object> params = new HashMap<>();
             params.put("appId", appId);
             params.put("tenantCode", SessionCtx.getCurrentTenantCode());
             List<CustomSql> sqlList = sqlService.queryModel(CLAZZ, params);
             customSqls.addAll(sqlList);
-            // 其他应用授权sql
+            // 鍏朵粬搴旂敤鎺堟潈sql
             Map<String, Object> appParams = new HashMap<>();
             appParams.put("appId", appId);
             appParams.put("tenantCode", SessionCtx.getCurrentTenantCode());
@@ -173,3 +173,4 @@ public class SqlController extends BaseController {
         }
     }
 }
+

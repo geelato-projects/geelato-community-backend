@@ -8,7 +8,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.UIDGenerator;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Schedule;
 import cn.geelato.web.platform.srv.platform.enums.ScheduleTypeEnum;
@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@ApiRestController("/schedule")
+@DesignTimeApiRestController("/schedule")
 @Slf4j
 public class ScheduleController extends BaseController {
     private static final Class<Schedule> CLAZZ = Schedule.class;
@@ -78,7 +78,7 @@ public class ScheduleController extends BaseController {
     public ApiResult<Schedule> createOrUpdate(@RequestBody Schedule form) {
         try {
             Schedule result = new Schedule();
-            // ID为空方可插入
+            // ID涓虹┖鏂瑰彲鎻掑叆
             if (Strings.isNotBlank(form.getId())) {
                 result = scheduleService.updateModel(form);
             } else {
@@ -137,3 +137,4 @@ public class ScheduleController extends BaseController {
         }
     }
 }
+

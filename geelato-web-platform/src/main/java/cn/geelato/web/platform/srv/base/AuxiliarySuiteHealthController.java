@@ -2,14 +2,14 @@ package cn.geelato.web.platform.srv.base;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.security.SecurityContext;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.run.monitor.auxiliary.AuxiliarySuiteHealthPoller;
 import cn.geelato.web.platform.srv.BaseController;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-@ApiRestController("/system/monitor/auxiliary-suites")
+@DesignTimeApiRestController("/system/monitor/auxiliary-suites")
 @Slf4j
 public class AuxiliarySuiteHealthController extends BaseController {
     private final AuxiliarySuiteHealthPoller poller;
@@ -44,3 +44,4 @@ public class AuxiliarySuiteHealthController extends BaseController {
         }
     }
 }
+

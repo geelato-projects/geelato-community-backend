@@ -9,7 +9,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.SqlParams;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.handler.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.site.entity.FileInfo;
@@ -32,7 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-@ApiRestController("/site/statics")
+@DesignTimeApiRestController("/site/statics")
 @Slf4j
 public class StaticSiteController extends BaseController {
     private static final Class<StaticSite> CLAZZ = StaticSite.class;
@@ -135,7 +135,7 @@ public class StaticSiteController extends BaseController {
             String tenantCode = Objects.toString(requestBody.get("tenantCode"), getTenantCode());
             if (StringUtils.isBlank(rootPath)) {
                 if (StringUtils.isAnyBlank(appId, tenantCode)) {
-                    throw new RuntimeException("appId和tenantCode不能为空");
+                    throw new RuntimeException("appId鍜宼enantCode涓嶈兘涓虹┖");
                 }
                 List<StaticSite> staticSiteList = staticSiteService.queryModel(CLAZZ, SqlParams.map("appId", appId, "tenantCode", tenantCode), "updateAt desc");
                 return ApiResult.success(StaticSite.buildTreeNodeDataList(staticSiteList, staticSiteConfiguration.getFolder()));
@@ -155,7 +155,7 @@ public class StaticSiteController extends BaseController {
             String rootPath = Objects.toString(requestBody.get("path"), "");
             String type = Objects.toString(requestBody.get("type"), "all");
             if (StringUtils.isBlank(rootPath)) {
-                throw new RuntimeException("path不能为空");
+                throw new RuntimeException("path涓嶈兘涓虹┖");
             }
             Set<FileInfo> fileInfos = FolderUtils.getRootFiles(rootPath, type);
             FileInfo.sortFileInfos(fileInfos);
@@ -172,7 +172,7 @@ public class StaticSiteController extends BaseController {
             String path = Objects.toString(requestBody.get("path"), "");
             List<String> delPaths = cn.geelato.utils.StringUtils.toListDr(path);
             if (delPaths.isEmpty()) {
-                throw new RuntimeException("path不能为空");
+                throw new RuntimeException("path涓嶈兘涓虹┖");
             }
             for (String delPath : delPaths) {
                 FolderUtils.delete(new File(delPath));
@@ -189,11 +189,11 @@ public class StaticSiteController extends BaseController {
         String path = Objects.toString(requestBody.get("path"), "");
         boolean isPreview = !Objects.isNull(requestBody.get("isPreview")) && Boolean.parseBoolean(requestBody.get("isPreview").toString());
         if (StringUtils.isBlank(path)) {
-            throw new RuntimeException("path不能为空");
+            throw new RuntimeException("path涓嶈兘涓虹┖");
         }
         File file = new File(path);
         if (Files.isDirectory(file.toPath())) {
-            throw new RuntimeException("path不是文件");
+            throw new RuntimeException("path涓嶆槸鏂囦欢");
         }
         fileHandler.download(file, file.getName(), isPreview, request, response, null);
     }
@@ -201,14 +201,14 @@ public class StaticSiteController extends BaseController {
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
     public ApiResult<NullResult> upload(@RequestParam("file") MultipartFile file, String path, Boolean isCompress, Boolean isByStep, Integer isExist) {
         try {
-            // 2. 验证文件是否存在
+            // 2. 楠岃瘉鏂囦欢鏄惁瀛樺湪
             if (file == null || file.isEmpty()) {
                 throw new RuntimeException("文件不存在");
             }
             // 2. 验证根目录是否存在
             Path rootPath = Paths.get(path).toAbsolutePath().normalize();
             if (!Files.exists(rootPath)) {
-                throw new RuntimeException("根目录不存在");
+                throw new RuntimeException("鏍圭洰褰曚笉瀛樺湪");
             }
             staticSiteService.uploadFile(file, rootPath, isCompress, isByStep, isExist);
             return ApiResult.successNoResult();
@@ -224,7 +224,7 @@ public class StaticSiteController extends BaseController {
             String path = Objects.toString(requestBody.get("path"), "");
             String name = Objects.toString(requestBody.get("name"), "");
             if (StringUtils.isAnyBlank(path, name)) {
-                throw new RuntimeException("path和name不能为空");
+                throw new RuntimeException("path鍜宯ame涓嶈兘涓虹┖");
             }
             if (FolderUtils.containsIllegalChars(name)) {
                 throw new RuntimeException("文件夹名称不能包含特殊字符");
@@ -243,7 +243,7 @@ public class StaticSiteController extends BaseController {
             String path = Objects.toString(requestBody.get("path"), "");
             String name = Objects.toString(requestBody.get("name"), "");
             if (StringUtils.isAnyBlank(path, name)) {
-                throw new RuntimeException("path和name不能为空");
+                throw new RuntimeException("path鍜宯ame涓嶈兘涓虹┖");
             }
             if (FolderUtils.containsIllegalChars(name)) {
                 throw new RuntimeException("文件夹名称不能包含特殊字符");
@@ -257,3 +257,4 @@ public class StaticSiteController extends BaseController {
     }
 
 }
+

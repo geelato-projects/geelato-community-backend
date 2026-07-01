@@ -10,7 +10,7 @@ import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.model.service.DevTableCheckService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.Map;
 
-@ApiRestController("/model/table/check")
+@DesignTimeApiRestController("/model/table/check")
 @Slf4j
 public class DevTableCheckController extends BaseController {
     private static final Class<TableCheck> CLAZZ = TableCheck.class;
@@ -117,7 +117,7 @@ public class DevTableCheckController extends BaseController {
             if (StringUtils.isBlank(form.getTableSchema()) || StringUtils.isBlank(form.getType())) {
                 throw new RuntimeException("表名或类型不能为空");
             }
-            // 查询是否存在同名同类型同连接的数据检查
+            // 查询是否存在同名同类型同连接的数据检�?
             return ApiResult.success(devTableCheckService.validate(form));
         } catch (Exception e) {
             log.error(e.getMessage());

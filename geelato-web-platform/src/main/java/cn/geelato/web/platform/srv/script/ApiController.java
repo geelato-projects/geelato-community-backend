@@ -8,7 +8,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.utils.UUIDUtils;
-import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.Api;
 import cn.geelato.meta.ApiParam;
@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 /**
  * @author diabl
  */
-@ApiRestController("/script/api")
+@DesignTimeApiRestController("/script/api")
 @Slf4j
 public class ApiController extends BaseController {
     private static final Class<Api> CLAZZ = Api.class;

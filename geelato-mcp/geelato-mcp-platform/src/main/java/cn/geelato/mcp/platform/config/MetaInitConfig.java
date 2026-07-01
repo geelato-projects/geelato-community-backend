@@ -1,6 +1,9 @@
 package cn.geelato.mcp.platform.config;
 
 import cn.geelato.core.meta.MetaManager;
+import cn.geelato.core.meta.spi.MetaBootstrap;
+import cn.geelato.core.meta.spi.MetaResourceProvider;
+import cn.geelato.core.meta.spi.MetaStore;
 import cn.geelato.core.orm.Dao;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +20,23 @@ public class MetaInitConfig {
     @Autowired(required = false)
     @Qualifier("primaryDao")
     private Dao dao;
+    @Autowired(required = false)
+    private MetaStore metaStore;
+    @Autowired(required = false)
+    private MetaResourceProvider metaResourceProvider;
+    @Autowired(required = false)
+    private MetaBootstrap metaBootstrap;
 
     private final MetaManager metaManager = MetaManager.singleInstance();
 
     @PostConstruct
     public void init() {
+        if (metaStore != null) {
+            metaManager.setMetaStore(metaStore);
+        }
+        if (metaResourceProvider != null) {
+            metaManager.setMetaResourceProvider(metaResourceProvider);
+        }
         // 初始化类路径中的实体元数据
         String[] packageNames = System.getProperty("geelato.meta.scan-package-names", "cn.geelato").split(",");
         for (String packageName : packageNames) {
@@ -36,6 +51,9 @@ public class MetaInitConfig {
         if (dao != null) {
             try {
                 metaManager.parseDBMeta(dao);
+                if (metaBootstrap != null) {
+                    metaBootstrap.bootstrap(metaManager, dao);
+                }
                 System.out.println("数据库元数据初始化完成");
             } catch (Exception e) {
                 System.out.println("数据库元数据初始化失败: " + e.getMessage());

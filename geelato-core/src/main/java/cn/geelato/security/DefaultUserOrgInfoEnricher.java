@@ -1,8 +1,5 @@
 package cn.geelato.security;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public class DefaultUserOrgInfoEnricher implements UserOrgInfoEnricher {
     private final OrgProvider orgProvider;
 

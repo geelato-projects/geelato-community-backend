@@ -1,11 +1,12 @@
 package cn.geelato.datasource;
 
-import com.atomikos.jdbc.AtomikosDataSourceBean;
+import cn.geelato.datasource.spi.DynamicDataSourceDefinitionLoader;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.lang.Nullable;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
@@ -30,18 +31,21 @@ public class DynamicDataSourceRegistry {
     private final Map<String, Map<String, Object>> dataSourceConfigMap = new ConcurrentHashMap<>();
     private final DataSourceFactory dataSourceFactory;
     private final DynamicDataSourceProperties dynamicDataSourceProperties;
+    private final DynamicDataSourceDefinitionLoader definitionLoader;
     
     /**
      * 动态数据源注册器Bean
      * 程序启动时自动加载数据源配置
      */
     public DynamicDataSourceRegistry(@Qualifier("primaryJdbcTemplate") JdbcTemplate primaryJdbcTemplate,
-                                     @Qualifier("secondaryJdbcTemplate") JdbcTemplate secondaryJdbcTemplate,
+                                     @Qualifier("secondaryJdbcTemplate") @Nullable JdbcTemplate secondaryJdbcTemplate,
                                      DataSourceFactory dataSourceFactory,
+                                     DynamicDataSourceDefinitionLoader definitionLoader,
                                      DynamicDataSourceProperties dynamicDataSourceProperties) {
         this.primaryJdbcTemplate = primaryJdbcTemplate;
         this.secondaryJdbcTemplate=secondaryJdbcTemplate;
         this.dataSourceFactory = dataSourceFactory;
+        this.definitionLoader = definitionLoader;
         this.dynamicDataSourceProperties = dynamicDataSourceProperties == null ? new DynamicDataSourceProperties() : dynamicDataSourceProperties;
         try {
             refreshAllDataSources();
@@ -56,15 +60,14 @@ public class DynamicDataSourceRegistry {
     }
 
     public DataSource getSecondaryDataSource() {
-        return secondaryJdbcTemplate.getDataSource();
+        return secondaryJdbcTemplate == null ? null : secondaryJdbcTemplate.getDataSource();
     }
 
     /**
      * 全量刷新数据源配置
      */
     public synchronized int refreshAllDataSources() {
-        String sql = "SELECT * FROM platform_dev_db_connect";
-        List<Map<String, Object>> dbConnectMaps = primaryJdbcTemplate.queryForList(sql);
+        List<Map<String, Object>> dbConnectMaps = definitionLoader.loadAll();
         Set<String> latestKeys = new HashSet<>();
         for (Map<String, Object> dbConnectMap : dbConnectMaps) {
             try {
@@ -88,12 +91,11 @@ public class DynamicDataSourceRegistry {
      * 刷新数据源
      */
     public synchronized boolean refreshDataSource(String key) {
-        String sql = "SELECT * FROM platform_dev_db_connect WHERE id = ?";
-        List<Map<String, Object>> dbConnectMaps = primaryJdbcTemplate.queryForList(sql, key);
-        if (dbConnectMaps.isEmpty()) {
+        Map<String, Object> dbConnectMap = definitionLoader.loadOne(key);
+        if (dbConnectMap == null || dbConnectMap.isEmpty()) {
             return false;
         }
-        registerDataSource(key, dbConnectMaps.get(0));
+        registerDataSource(key, dbConnectMap);
         log.info("dynamic data source refresh : {}", key);
         return true;
     }
@@ -111,19 +113,7 @@ public class DynamicDataSourceRegistry {
      */
     public void destroyDataSource(String key) {
         DataSource dataSource = dataSourceMap.get(key);
-        if (dataSource instanceof AtomikosDataSourceBean) {
-            try {
-                ((AtomikosDataSourceBean) dataSource).close();
-            } catch (Exception e) {
-                log.error("数据源销毁失败: {}", key, e);
-            }
-        } else if (dataSource instanceof HikariDataSource) {
-            try {
-                ((HikariDataSource) dataSource).close();
-            } catch (Exception e) {
-                log.error("数据源销毁失败: {}", key, e);
-            }
-        }
+        closeIfNecessary(key, dataSource);
         dataSourceMap.remove(key);
         log.debug("数据源销毁成功: {}", key);
     }
@@ -199,6 +189,27 @@ public class DynamicDataSourceRegistry {
         dataSourceConfigMap.put(key, new HashMap<>(dbConnectMap));
         if (!dynamicDataSourceProperties.isDelayLoadDataSource()) {
             dataSourceMap.put(key, dataSourceFactory.buildDataSource(dbConnectMap));
+        }
+    }
+
+    private void closeIfNecessary(String key, DataSource dataSource) {
+        if (dataSource == null) {
+            return;
+        }
+        if (dataSource instanceof HikariDataSource hikariDataSource) {
+            try {
+                hikariDataSource.close();
+            } catch (Exception e) {
+                log.error("数据源销毁失败: {}", key, e);
+            }
+            return;
+        }
+        if (dataSource instanceof AutoCloseable autoCloseable) {
+            try {
+                autoCloseable.close();
+            } catch (Exception e) {
+                log.error("数据源销毁失败: {}", key, e);
+            }
         }
     }
 }

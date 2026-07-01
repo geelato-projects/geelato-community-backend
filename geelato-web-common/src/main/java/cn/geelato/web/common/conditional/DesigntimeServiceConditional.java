@@ -7,13 +7,22 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 
 public class DesigntimeServiceConditional  implements Condition {
 
+    private static final String LEGACY_PROPERTY = "geelato.web";
+    private static final String DESIGN_TIME_PROPERTY = "geelato.web.platform.design-time.enabled";
+
     @Override
     public boolean matches(@NotNull ConditionContext context, @NotNull AnnotatedTypeMetadata metadata) {
-        //todo 判断该包是否设计时，如设计时，放行设计时接口
-        String webOption=context.getEnvironment().getProperty("geelato.web");
-        if (webOption != null) {
-            return "true".equals(webOption);
+        String designTimeEnabled = context.getEnvironment().getProperty(DESIGN_TIME_PROPERTY);
+        if (designTimeEnabled != null) {
+            return Boolean.parseBoolean(designTimeEnabled);
         }
+
+        // Keep backward compatibility with the historical switch.
+        String webOption = context.getEnvironment().getProperty(LEGACY_PROPERTY);
+        if (webOption != null) {
+            return Boolean.parseBoolean(webOption);
+        }
+
         return true;
     }
 }

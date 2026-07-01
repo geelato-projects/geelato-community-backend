@@ -5,7 +5,7 @@
         <artifactId>geelato-parent</artifactId>
         <groupId>cn.geelato</groupId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath/>
+        <relativePath>../geelato-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>geelato-web-quickstart</artifactId>
@@ -16,9 +16,17 @@
     </properties>
 
     <dependencies>
+        <!-- full runtime + designer capability entry -->
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-web-platform</artifactId>
+        </dependency>
+
+        <!-- sample runtime support -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>redis.clients</groupId>
@@ -45,11 +53,6 @@
             <version>${apache.poi.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.0.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>${apache.poi.version}</version>
@@ -71,10 +74,21 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${commons-codec.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+            <version>2.1.4</version>
+        </dependency>
+
+        <!-- sample extension modules -->
+        <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-schedule-starter</artifactId>
         </dependency>
-
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-auth-starter</artifactId>
@@ -84,10 +98,6 @@
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-site-collocation</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>cn.geelato</groupId>-->
-<!--            <artifactId>geelato-workflow-engine</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-svcp</artifactId>
@@ -129,6 +139,13 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- sample dev and observability support -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.0.2</version>
+        </dependency>
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
@@ -143,22 +160,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
-                    <!-- 指定该Main Class为全局的唯一入口 -->
                     <mainClass>cn.geelato.web.quickstart.QuickStartApplication</mainClass>
-                    <requiresUnpack>
-                        <dependency>
-                            <groupId>org.bouncycastle</groupId>
-                            <artifactId>bcprov-jdk18on</artifactId>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.bouncycastle</groupId>
-                            <artifactId>bcpkix-jdk18on</artifactId>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.bouncycastle</groupId>
-                            <artifactId>bcutil-jdk18on</artifactId>
-                        </dependency>
-                    </requiresUnpack>
                 </configuration>
                 <executions>
                     <execution>

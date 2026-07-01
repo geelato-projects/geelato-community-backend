@@ -6,6 +6,7 @@ import com.atomikos.icatch.jta.UserTransactionManager;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.TransactionManager;
 import jakarta.transaction.UserTransaction;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -15,18 +16,10 @@ import org.springframework.transaction.jta.JtaTransactionManager;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronization;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
-
 
 @Configuration
+@ConditionalOnProperty(prefix = "geelato.datasource.dynamic", name = "enable-jta-transaction", havingValue = "true")
 public class TransactionConfig {
-    private static final String TRANSACTION_MANAGER_NAME = "dynamic-xa-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-    private static final Object ATOMIKOS_INIT_LOCK = new Object();
-
     @Bean(name = "userTransaction")
     public UserTransaction userTransaction() throws SystemException {
         configureAtomikosSystemProperties();
@@ -66,24 +59,10 @@ public class TransactionConfig {
     }
 
     private String getTransactionManagerName() {
-        return TRANSACTION_MANAGER_NAME;
-    }
-
-    private Path getAtomikosLogBaseDir() {
-        return Paths.get(".", "atomikos-logs", getTransactionManagerName());
+        return AtomikosRuntimePropertiesInitializer.getTransactionManagerName();
     }
 
     private void configureAtomikosSystemProperties() {
-        synchronized (ATOMIKOS_INIT_LOCK) {
-            Path logBaseDir = getAtomikosLogBaseDir();
-            try {
-                Files.createDirectories(logBaseDir);
-            } catch (IOException e) {
-                throw new RuntimeException("创建 Atomikos 日志目录失败: " + logBaseDir, e);
-            }
-            // 必须在 UserTransactionImp 触发 Atomikos 初始化之前设置完成
-            System.setProperty("com.atomikos.icatch.tm_unique_name", getTransactionManagerName());
-            System.setProperty("com.atomikos.icatch.log_base_dir", logBaseDir.toString());
-        }
+        AtomikosRuntimePropertiesInitializer.initialize();
     }
 }

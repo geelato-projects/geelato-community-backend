@@ -1,5 +1,7 @@
 package cn.geelato.core.ds;
 
+import cn.geelato.core.ds.spi.DataSourceDefinitionLoader;
+import cn.geelato.core.ds.support.DefaultDataSourceDefinitionLoader;
 import cn.geelato.core.util.EncryptUtils;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -27,6 +29,7 @@ public class DataSourceManager extends AbstractManager {
     private final static ConcurrentHashMap<Object, Object> dynamicDataSourceMap =new ConcurrentHashMap<>();
 
     private final static ConcurrentHashMap<Object, Object> lazyDynamicDataSourceMap =new ConcurrentHashMap<>();
+    private DataSourceDefinitionLoader definitionLoader = new DefaultDataSourceDefinitionLoader();
 
     public static DataSourceManager singleInstance() {
         lock.lock();
@@ -46,7 +49,7 @@ public class DataSourceManager extends AbstractManager {
         if (dao.getJdbcTemplate().getDataSource() != null) {
             dataSourceMap.put("primary",dao.getJdbcTemplate().getDataSource());
         }
-        List<Map<String,Object>> dbConenctList=dao.getJdbcTemplate().queryForList("SELECT * FROM platform_dev_db_connect");
+        List<Map<String,Object>> dbConenctList=definitionLoader.load(dao);
         for (Map<String,Object> dbConnectMap:dbConenctList){
             String connectId=dbConnectMap.get("id").toString();
             lazyDynamicDataSourceMap.put(connectId,dbConnectMap);
@@ -100,5 +103,15 @@ public class DataSourceManager extends AbstractManager {
         config.addDataSourceProperty("autoReconnect","true");
         config.addDataSourceProperty("maxReconnects","10");
         return new HikariDataSource(config);
+    }
+
+    public DataSourceDefinitionLoader getDefinitionLoader() {
+        return definitionLoader;
+    }
+
+    public void setDefinitionLoader(DataSourceDefinitionLoader definitionLoader) {
+        if (definitionLoader != null) {
+            this.definitionLoader = definitionLoader;
+        }
     }
 }

@@ -1,14 +1,10 @@
 package cn.geelato.web.common.filter;
 
-import cn.geelato.core.GlobalContext;
 import jakarta.servlet.Filter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.type.AnnotatedTypeMetadata;
 
 @Configuration
 @SuppressWarnings("rawtypes")
@@ -42,5 +38,20 @@ public class FilterConfiguration {
     @ConditionalOnExpression("#{T(cn.geelato.core.GlobalContext).getApiEncryptOption()}")
     public DecryptHttpServletFilter decryptHttpServletFilter() {
         return new DecryptHttpServletFilter();
+    }
+
+    @Bean
+    public FilterRegistrationBean securityContextFilterRegistration() {
+        FilterRegistrationBean<SecurityContextFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(securityContextFilter());
+        registrationBean.addUrlPatterns("/*");
+        registrationBean.setName("securityContextFilter");
+        registrationBean.setOrder(1);
+        return registrationBean;
+    }
+
+    @Bean(name = "securityContextFilter")
+    public SecurityContextFilter securityContextFilter() {
+        return new SecurityContextFilter();
     }
 }

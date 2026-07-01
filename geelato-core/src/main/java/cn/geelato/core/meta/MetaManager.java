@@ -2,10 +2,13 @@ package cn.geelato.core.meta;
 
 import cn.geelato.core.AbstractManager;
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.constants.MetaDaoSql;
-import cn.geelato.core.constants.ResourcesFiles;
 import cn.geelato.core.enums.DataTypeRadiusEnum;
 import cn.geelato.core.enums.MysqlToJavaEnum;
+import cn.geelato.core.meta.spi.MetaDefinitionBundle;
+import cn.geelato.core.meta.spi.MetaResourceProvider;
+import cn.geelato.core.meta.spi.MetaStore;
+import cn.geelato.core.meta.support.DefaultMetaResourceProvider;
+import cn.geelato.core.meta.support.DefaultMetaStore;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.column.ColumnSelectType;
@@ -16,13 +19,10 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.util.MapUtils;
 import cn.geelato.utils.ClassScanner;
-import cn.geelato.utils.JsonUtils;
-import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,6 +57,8 @@ public class MetaManager extends AbstractManager {
      */
 //    private final HashMap<String, Class> entityMetaClassMap = new HashMap<>();
     private Dao dao;
+    private MetaStore metaStore = new DefaultMetaStore();
+    private MetaResourceProvider metaResourceProvider = new DefaultMetaResourceProvider();
 
     private MetaManager() {
         log.info("MetaManager Instancing...");
@@ -94,19 +96,12 @@ public class MetaManager extends AbstractManager {
     public void parseDBMeta(Dao dao, Map<String, String> params) {
         this.dao = dao;
         log.info("parse meta data in database...");
-        String sql = MetaDaoSql.SQL_TABLE_LIST;
-        if (params != null && !params.isEmpty()) {
-            for (Map.Entry<String, String> entry : params.entrySet()) {
-                if (Strings.isNotBlank(entry.getValue())) {
-                    sql = String.format("%s and find_in_set(%s, '%s')", sql, entry.getKey(), entry.getValue());
-                }
-            }
-        }
-        List<Map<String, Object>> tableList = dao.getJdbcTemplate().queryForList(sql);
-        List<Map<String, Object>> allColumnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE));
-        List<Map<String, Object>> allViewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE));
-        List<Map<String, Object>> allCheckList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE));
-        List<Map<String, Object>> allForeignList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_FOREIGN_LIST_BY_TABLE));
+        MetaDefinitionBundle definitionBundle = metaStore.load(dao, params);
+        List<Map<String, Object>> tableList = definitionBundle.getTableList();
+        List<Map<String, Object>> allColumnList = definitionBundle.getColumnList();
+        List<Map<String, Object>> allViewList = definitionBundle.getViewList();
+        List<Map<String, Object>> allCheckList = definitionBundle.getCheckList();
+        List<Map<String, Object>> allForeignList = definitionBundle.getForeignList();
         for (Map<String, Object> map : tableList) {
             String tableId = map.get("id") == null ? "" : map.get("id").toString();
             String entityName = map.get("entity_name") == null ? "" : map.get("entity_name").toString();
@@ -155,11 +150,7 @@ public class MetaManager extends AbstractManager {
      * @param viewName 视图名称
      */
     private void refreshViewMeta(String viewName) {
-        String viewListSql = MetaDaoSql.SQL_VIEW_LIST_BY_TABLE;
-        if (Strings.isNotEmpty(viewName)) {
-            viewListSql = String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and view_name='%s'", viewName);
-        }
-        List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(viewListSql);
+        List<Map<String, Object>> viewList = metaStore.loadByViewName(dao, viewName).getViewList();
         for (Map<String, Object> map : viewList) {
             removeOne(viewName);
             parseViewEntity(map);
@@ -172,16 +163,13 @@ public class MetaManager extends AbstractManager {
      * @param entityName 实体名称
      */
     private void refreshTableMeta(String entityName) {
-        String tableListSql = MetaDaoSql.SQL_TABLE_LIST;
-        if (Strings.isNotEmpty(entityName)) {
-            tableListSql = String.format(MetaDaoSql.SQL_TABLE_LIST + " and entity_name='%s'", entityName);
-        }
-        List<Map<String, Object>> tableList = dao.getJdbcTemplate().queryForList(tableListSql);
+        MetaDefinitionBundle definitionBundle = metaStore.loadByEntityName(dao, entityName);
+        List<Map<String, Object>> tableList = definitionBundle.getTableList();
         for (Map<String, Object> map : tableList) {
-            List<Map<String, Object>> columnList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_COLUMN_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
-            List<Map<String, Object>> viewList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and entity_name='%s' and connect_id='%s'", map.get("entity_name"), map.get("connect_id")));
-            List<Map<String, Object>> checkList = dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_CHECK_LIST_BY_TABLE + " and table_id='%s'", map.get("id")));
-            List<Map<String,Object>> foreignList=dao.getJdbcTemplate().queryForList(String.format(MetaDaoSql.SQL_FOREIGN_LIST_BY_TABLE + " and main_table='%s'", map.get("table_name")));
+            List<Map<String, Object>> columnList = definitionBundle.getColumnList();
+            List<Map<String, Object>> viewList = definitionBundle.getViewList();
+            List<Map<String, Object>> checkList = definitionBundle.getCheckList();
+            List<Map<String, Object>> foreignList = definitionBundle.getForeignList();
             removeOne(entityName);
             parseTableEntity(map, columnList, viewList, checkList, foreignList);
         }
@@ -472,51 +460,11 @@ public class MetaManager extends AbstractManager {
     }
 
     public List<ColumnMeta> getDefaultColumn() {
-        List<ColumnMeta> defaultColumnMetaList = new ArrayList<ColumnMeta>();
-        try {
-            String jsonStr = JsonUtils.readJsonFile(ResourcesFiles.COLUMN_DEFAULT_JSON);
-            List<ColumnMeta> columnMetaList = JSON.parseArray(jsonStr, ColumnMeta.class);
-            if (columnMetaList != null && !columnMetaList.isEmpty()) {
-                for (ColumnMeta meta : columnMetaList) {
-                    meta.afterSet();
-                    defaultColumnMetaList.add(meta);
-                }
-            }
-        } catch (IOException e) {
-            defaultColumnMetaList = new ArrayList<>();
-        }
-
-        return defaultColumnMetaList;
+        return metaResourceProvider.getDefaultColumns();
     }
 
     public List<ColumnSelectType> getColumnSelectType() {
-        List<ColumnSelectType> columnSelectTypes = new ArrayList<>();
-
-        try {
-            String jsonStr = JsonUtils.readJsonFile(ResourcesFiles.COLUMN_SELECT_TYPE_JSON);
-            List<ColumnSelectType> selectTypeList = JSON.parseArray(jsonStr, ColumnSelectType.class);
-            if (selectTypeList != null && !selectTypeList.isEmpty()) {
-                for (ColumnSelectType selectType : selectTypeList) {
-                    if (Strings.isBlank(selectType.getLabel()) || Strings.isBlank(selectType.getValue()) || Strings.isBlank(selectType.getMysql())) {
-                        continue;
-                    }
-                    selectType.setValue(selectType.getValue().toUpperCase(Locale.ENGLISH));
-                    selectType.setMysql(selectType.getMysql().toUpperCase(Locale.ENGLISH));
-                    selectType.setJava(MysqlToJavaEnum.getJava(selectType.getMysql()));
-                    selectType.setRadius(DataTypeRadiusEnum.getRadius(selectType.getMysql()));
-                    // 固定长度时，默认长度为null、0时，默认长度为数据类型的最大值
-                    if (selectType.getFixed() && (selectType.getExtent() == null || selectType.getExtent() == 0)) {
-                        selectType.setExtent(selectType.getRadius().getMax());
-                    }
-                    columnSelectTypes.add(selectType);
-                }
-                columnSelectTypes.sort(Comparator.comparingInt(o -> o.getSeqNo().intValue()));
-            }
-        } catch (IOException e) {
-            columnSelectTypes = new ArrayList<>();
-        }
-
-        return columnSelectTypes;
+        return metaResourceProvider.getColumnSelectTypes();
     }
 
     /**
@@ -525,20 +473,26 @@ public class MetaManager extends AbstractManager {
      * @return 包含列信息的Map，键为列名，值为列信息对象
      */
     public Map<String, ColumnMeta> getTableUpgradeList() {
-        Map<String, ColumnMeta> columnMetaMap = new HashMap<>();
-        try {
-            String jsonStr = JsonUtils.readJsonFile(ResourcesFiles.TABLE_UPGRADE_JSON);
-            List<ColumnMeta> columnMetaList = JSON.parseArray(jsonStr, ColumnMeta.class);
-            if (columnMetaList != null && !columnMetaList.isEmpty()) {
-                for (ColumnMeta columnMeta : columnMetaList) {
-                    columnMeta.afterSet();
-                    columnMetaMap.put(columnMeta.getFieldName(), columnMeta);
-                }
-            }
-        } catch (IOException e) {
-            columnMetaMap = new HashMap<>();
-        }
+        return metaResourceProvider.getTableUpgradeColumns();
+    }
 
-        return columnMetaMap;
+    public MetaStore getMetaStore() {
+        return metaStore;
+    }
+
+    public void setMetaStore(MetaStore metaStore) {
+        if (metaStore != null) {
+            this.metaStore = metaStore;
+        }
+    }
+
+    public MetaResourceProvider getMetaResourceProvider() {
+        return metaResourceProvider;
+    }
+
+    public void setMetaResourceProvider(MetaResourceProvider metaResourceProvider) {
+        if (metaResourceProvider != null) {
+            this.metaResourceProvider = metaResourceProvider;
+        }
     }
 }

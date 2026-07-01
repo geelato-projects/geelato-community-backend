@@ -1,8 +1,9 @@
 package cn.geelato.datasource;
 
 
-import org.springframework.beans.factory.annotation.Autowired;
+import cn.geelato.datasource.spi.DynamicDataSourceDefinitionLoader;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,15 +16,12 @@ import javax.sql.DataSource;
  */
 @Configuration
 public class DynamicDataSourceConfiguration {
-    
-    @Autowired
-    private DynamicDataSourceRegistry dataSourceRegistry;
 
     /**
      * 动态数据源
      */
     @Bean(name = "dynamicDataSource")
-    public DynamicRoutingDataSource dynamicDataSource() {
+    public DynamicRoutingDataSource dynamicDataSource(DynamicDataSourceRegistry dataSourceRegistry) {
         DynamicRoutingDataSource dynamicDataSource = new DynamicRoutingDataSource();
         dynamicDataSource.setDynamicDataSourceRegistry(dataSourceRegistry);
         dynamicDataSource.refreshAllDataSources();
@@ -36,5 +34,11 @@ public class DynamicDataSourceConfiguration {
     @Bean(name = "dynamicJdbcTemplate")
     public JdbcTemplate dynamicJdbcTemplate(@Qualifier("dynamicDataSource") DataSource dataSource) {
         return new JdbcTemplate(dataSource);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(DynamicDataSourceDefinitionLoader.class)
+    public DynamicDataSourceDefinitionLoader dynamicDataSourceDefinitionLoader(@Qualifier("primaryJdbcTemplate") JdbcTemplate primaryJdbcTemplate) {
+        return new PlatformDynamicDataSourceDefinitionLoader(primaryJdbcTemplate);
     }
 }

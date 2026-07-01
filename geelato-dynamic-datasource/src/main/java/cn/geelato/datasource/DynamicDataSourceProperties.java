@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "geelato.datasource.dynamic")
 public class DynamicDataSourceProperties {
     private boolean delayLoadDataSource = true;
+    private boolean enableJtaTransaction = false;
+    private boolean enableSeataProxy = false;
     private Integer minimumIdle = 1;
     private Integer maximumPoolSize = 10;
     private Long idleTimeoutMs = 600000L;

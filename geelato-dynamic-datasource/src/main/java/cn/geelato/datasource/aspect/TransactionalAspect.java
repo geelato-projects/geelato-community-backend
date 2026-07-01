@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -25,6 +26,7 @@ import java.lang.reflect.Method;
  */
 @Aspect
 @Component
+@ConditionalOnBean(name = "dynamicDataSourceTransactionManager")
 public class TransactionalAspect {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactionalAspect.class);

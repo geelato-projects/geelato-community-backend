@@ -37,6 +37,9 @@ public class DataSourceFactory {
         ConnectionParams params = extractConnectionParams(dbConnectMap);
         HikariDataSource ds = createHikariDataSource(params);
         ds.setPoolName(params.dbId());
+        if (properties.isEnableSeataProxy()) {
+            return new DataSourceProxy(ds);
+        }
         return ds;
     }
 

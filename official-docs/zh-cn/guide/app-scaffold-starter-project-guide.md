@@ -11,25 +11,44 @@
 7. 调用脚手架已内置的运行时能力
 8. 跟随脚手架底层升级你的业务工程
 
-## 为什么不是直接复制 app-scaffold
+## 可以直接复制 geelato-app-scaffold 吗
 
-`geelato-app-scaffold` 是官方可运行示例工程，它的价值在于：
+可以。
+
+`geelato-app-scaffold` 本来就是官方提供的可运行示例工程，它的价值在于：
 
 - 展示一个官方认可的应用层壳子应该怎么搭
 - 证明 `geelato-app-scaffold-starter` 能被正常消费
 - 作为排查问题和提炼规范的事实源
+- 作为新业务项目的起步模板
 
-但真正推荐给业务项目长期依赖的入口是：
+因此，如果你想尽快起一个能跑、能验证、能继续做业务开发的项目，完全可以先复制：
 
-- `geelato-app-scaffold-starter`
+- `geelato-app-scaffold`
+
+然后在你自己的仓库里改成自己的工程坐标、包名、数据库配置和业务代码。
+
+但这里要区分两件事：
+
+- “项目起步形态”可以直接参考甚至复制 `geelato-app-scaffold`
+- “后续公共能力升级入口”仍然应该优先依赖 `geelato-app-scaffold-starter` 和 `geelato-framework-bom`
 
 原因是：
 
 - 业务工程的 `groupId`、`artifactId`、`version` 应该由你自己管理
 - 业务代码、业务实体、业务 SQL 应该留在你的工程里
-- 后续框架增强应该通过升级 starter/BOM 获取，而不是长期复制官方示例目录
+- 后续框架增强更适合通过升级 starter/BOM 获取，而不是长期和官方示例目录保持手工同步
+- `geelato-app-scaffold` 更适合作为“起步模板”和“事实源”，而不是未来长期直接在官方目录里继续开发
 
 ## 1. 创建新工程
+
+创建业务工程时，建议有两种方式：
+
+1. 直接复制 `geelato-app-scaffold` 作为起点，再改造成你的业务工程
+2. 从空目录新建工程，并引入 `geelato-app-scaffold-starter`
+
+如果你的目标是“先尽快跑起来，再继续改业务”，优先推荐第 1 种。
+如果你的目标是“从第一天开始就完全按自己的工程骨架搭建”，可以使用第 2 种。
 
 先确定你的业务工程名和包名，例如：
 
@@ -51,7 +70,28 @@ acme-order-center
          └─ geelato/app/scaffold/init/
 ```
 
-### 1.1 pom.xml 最小模板
+### 1.1 如果你选择复制 `geelato-app-scaffold`
+
+建议复制后优先做这些调整：
+
+1. 修改你自己的 `groupId`、`artifactId`、`version`
+2. 修改启动类包名和 `scanBasePackages`
+3. 修改 `spring.application.name`
+4. 修改数据库连接配置
+5. 保留对 `geelato-app-scaffold-starter` 的依赖入口
+6. 把业务实体、业务 SQL、业务接口逐步替换成你自己的内容
+
+复制示例工程的价值在于：
+
+- 少走一遍从零搭壳、补配置、排查基础依赖的过程
+- 可以直接复用现成的目录结构和启动方式
+- 更适合业务项目快速落地
+
+### 1.2 如果你选择从零创建
+
+下面给出最小模板。
+
+### 1.3 pom.xml 最小模板
 
 业务工程自己的 `pom.xml` 需要自行管理坐标，不依赖官方示例的上级 `pom`。
 
@@ -242,6 +282,10 @@ flush privileges;
 - 租户编码：`geelato`
 
 这条数据来自 `platform_user` 的初始化脚本，属于脚手架默认基础数据，而不是你的业务用户主数据。
+
+如果你想看脚手架底座到底要求哪些基础表，以及 starter 是如何在启动时自动判断并创建这些表的，请继续阅读：
+
+- [RequireTable](require-table.md)
 
 ## 4. 启动与访问验证
 
@@ -612,6 +656,7 @@ MQL 是最核心的通用 CRUD 能力。
 ## 继续阅读
 
 - [App Scaffold 概览](app-scaffold.md)
+- [RequireTable](require-table.md)
 - [新项目最小接入](minimal-integration.md)
 - [Sample Quickstart](sample-quickstart.md)
 - [MQL 使用指南](../mql/usage.md)

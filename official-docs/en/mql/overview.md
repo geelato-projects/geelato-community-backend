@@ -65,9 +65,44 @@ Typical features include:
 - `@order` for sorting
 - `@group` for grouping
 - `@b` for nested boolean logic
+- `@pf` for view template parameter passthrough
 - `ref(...)` for referenced fields
 - functions such as `increment(...)`, `findinset(...)`, and `fuzzymatch(...)`
 - built-in variables such as `$ctx.*`, `$fn.*`, and `$parent.*`
+
+## View Template Parameter `@pf`
+
+When the queried entity is a view entity, MQL can also carry:
+
+- `@pf`
+
+This is not used as a normal field filter. It is a parameter container for SQL template fragments inside the view definition.
+
+A typical template fragment looks like:
+
+```sql
+#and order_type={orderType}#
+```
+
+The client can send:
+
+```json
+{
+  "order_view": {
+    "@pf": {
+      "orderType": 123
+    }
+  }
+}
+```
+
+Rules:
+
+- if `@pf.orderType` has a value, `{orderType}` is replaced with the raw value text and the fragment body is kept
+- if `@pf.orderType` is missing, `null`, or an empty string, the whole `#...#` fragment is removed
+- non-view entities do not apply `@pf` template rendering and keep the existing behavior
+
+So `@pf` should be understood as a view-query template parameter container rather than a generic MQL filter keyword.
 
 ## Suggested Reading Order
 

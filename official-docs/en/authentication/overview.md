@@ -79,6 +79,7 @@ Not intended for:
 Recommended boundaries:
 
 - unified authentication: how to get the central token and confirm identity
+- security authentication: how the platform runtime consumes the token and establishes the authenticated subject for the current request
 - runtime security chain: how to establish backend security context after authentication succeeds
 - MQL / ORM: how to access business data after identity is confirmed
 
@@ -107,6 +108,7 @@ Each third-party application should still keep its own `/login` page as the entr
 ## Suggested Reading Order
 
 1. Read [Unified Authentication Architecture](architecture.md)
-2. Read [lite-login Third-Party Integration](lite-login-integration.md)
-3. Then read [PlatformWebRuntime](../runtime/platform-web-runtime.md) for the runtime security chain position
-4. If you also need platform-side data access, continue with [MQL Overview](../mql/overview.md)
+2. Read [Security Authentication](security-authentication.md) to understand the `DefaultSecurityInterceptor` auth flow
+3. Read [lite-login Third-Party Integration](lite-login-integration.md)
+4. Then read [PlatformWebRuntime](../runtime/platform-web-runtime.md) for the runtime security chain position
+5. If you also need platform-side data access, continue with [MQL Overview](../mql/overview.md)

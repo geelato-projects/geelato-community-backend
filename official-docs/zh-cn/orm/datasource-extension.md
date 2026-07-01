@@ -2,6 +2,10 @@
 
 这篇文档说明当前框架里 ORM 与动态数据源的真实扩展点，以及宿主工程如何在不破坏 Starter 契约的前提下完成覆盖。
 
+如果你想先理解“现有动态数据源能力本身怎么工作”，建议先看：
+
+- [动态数据源](../dynamic-datasource/overview.md)
+
 ## ORM 当前入口
 
 当前 ORM 自动装配入口是 `OrmAutoConfiguration`，核心关注点有两个：
@@ -101,6 +105,7 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 
 ## 推荐继续阅读
 
+- [动态数据源](../dynamic-datasource/overview.md)
 - [ORM 总览](overview.md)
 - [覆盖默认实现](../reference/override-default-implementations.md)
 - [新项目最小接入](../guide/minimal-integration.md)

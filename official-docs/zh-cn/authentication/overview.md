@@ -79,6 +79,7 @@
 统一认证与其他章节的边界建议如下：
 
 - 统一认证：解决“如何拿到认证中心 token 并确认身份”
+- 安全认证：解决“平台运行时如何消费 token 并建立当前请求的认证主体”
 - Runtime 安全链路：解决“认证成功后如何在后端建立安全上下文”
 - MQL / ORM：解决“身份确认之后如何访问业务数据”
 
@@ -107,6 +108,7 @@ https://<auth-host>/lite-login
 ## 推荐阅读顺序
 
 1. 先看 [统一认证中心架构设计](architecture.md)
-2. 再看 [lite-login 第三方应用接入](lite-login-integration.md)
-3. 再看 [PlatformWebRuntime](../runtime/platform-web-runtime.md)，理解运行时安全链路位置
-4. 如需平台协议层数据访问，再看 [MQL 总览](../mql/overview.md)
+2. 再看 [安全认证](security-authentication.md)，理解 `DefaultSecurityInterceptor` 的鉴权链路
+3. 再看 [lite-login 第三方应用接入](lite-login-integration.md)
+4. 再看 [PlatformWebRuntime](../runtime/platform-web-runtime.md)，理解运行时安全链路位置
+5. 如需平台协议层数据访问，再看 [MQL 总览](../mql/overview.md)

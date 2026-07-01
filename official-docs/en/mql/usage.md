@@ -41,6 +41,7 @@ MQL uses keywords prefixed with `@` to control query behavior.
 | `@order` | sorting | `"@order": "createAt|+,name|-"` |
 | `@group` | grouping | `"@group": "type"` |
 | `@b` | nested boolean logic | see example below |
+| `@pf` | view SQL template parameters | see example below |
 
 ## Filter Operators
 
@@ -106,6 +107,45 @@ You can use `ref(...)` in `@fs` to fetch fields from a related entity:
 ```
 
 This means reading `orgName` from the related `platform_org` entity.
+
+## View Template Parameter `@pf`
+
+When the queried entity itself is a view entity, you can pass:
+
+- `@pf`
+
+inside the entity node.
+
+It is used for view SQL template rendering rather than normal field filtering.
+
+For example, if the view SQL contains a fragment like:
+
+```sql
+#and order_type={orderType}#
+```
+
+the request can be written as:
+
+```json
+{
+  "order_view": {
+    "@fs": "id,orderNo,orderType",
+    "@pf": {
+      "orderType": 123
+    }
+  }
+}
+```
+
+Rules:
+
+- `@pf` is extracted before standard MQL parsing, so it does not participate in normal keyword validation
+- template rendering is applied only for view entities
+- if `{orderType}` has a value, the fragment becomes `and order_type=123`
+- if `{orderType}` is missing, `null`, or an empty string, the whole `#...#` fragment is removed
+- parameters are replaced using raw value text and are not automatically quoted
+
+So if you pass a string value, you should ensure the template and parameter content already match your intended SQL output.
 
 ## Save Syntax
 

@@ -41,6 +41,71 @@ MQL 使用以 `@` 开头的关键字控制查询行为。
 | `@order` | 排序 | `"@order": "createAt|+,name|-"` |
 | `@group` | 分组 | `"@group": "type"` |
 | `@b` | 复杂逻辑组合 | 见下文示例 |
+| `@pf` | 视图 SQL 模板参数 | 见下文示例 |
+
+## 字段选择 `@fs`
+
+MQL 通过：
+
+- `@fs`
+
+控制查询结果返回哪些字段。
+
+基本格式是：
+
+```text
+字段1,字段2,字段3
+```
+
+例如：
+
+```json
+{
+  "platform_user": {
+    "@fs": "id,name,loginName"
+  }
+}
+```
+
+这表示查询结果里只返回：
+
+- `id`
+- `name`
+- `loginName`
+
+### 结合关联字段
+
+`@fs` 也支持：
+
+- `ref(...)`
+
+例如：
+
+```json
+{
+  "platform_user": {
+    "@fs": "id,name,ref(platform_org->orgName)"
+  }
+}
+```
+
+### 结合函数表达式
+
+`@fs` 还支持函数或计算列，例如：
+
+```json
+{
+  "platform_user": {
+    "@fs": "id,name,increment($platform_user.loginCount,1) loginCountNext"
+  }
+}
+```
+
+### 使用建议
+
+- 列表查询尽量显式指定 `@fs`
+- 避免默认返回过多无关字段
+- 如果要做前端表格展示，优先只返回页面真正需要的列
 
 ## 过滤操作符
 
@@ -62,7 +127,7 @@ MQL 使用以 `@` 开头的关键字控制查询行为。
 | `bt` | 介于之间 | `"age\|bt": "10,20"` |
 | `nil` | 空值检查 | `"memo\|nil": "1"` |
 
-## 复杂逻辑查询
+## 复杂逻辑 `@b`
 
 使用 `@b` 可以表达嵌套的 `AND / OR` 组合：
 
@@ -106,6 +171,268 @@ MQL 使用以 `@` 开头的关键字控制查询行为。
 ```
 
 这表示基于关联关系取出 `platform_org` 中的 `orgName` 字段。
+
+## 分页 `@p`
+
+MQL 通过：
+
+- `@p`
+
+控制列表分页。
+
+基本格式是：
+
+```text
+页码,每页条数
+```
+
+例如：
+
+```json
+{
+  "platform_user": {
+    "@fs": "id,name,createAt",
+    "@p": "1,10"
+  }
+}
+```
+
+这表示：
+
+- 查询第 `1` 页
+- 每页返回 `10` 条
+
+### 与响应结构的关系
+
+分页查询通常会返回：
+
+- `page`
+- `size`
+- `total`
+- `dataSize`
+
+因此 `@p` 控制的是：
+
+- 当前取哪一页
+- 每页取多少条
+
+而总条数和当前页实际返回条数，则由响应里的分页字段体现。
+
+### 使用建议
+
+- 前端列表页尽量总是显式传入 `@p`
+- 推荐和 `@order` 一起使用，避免分页结果不稳定
+- 如果不传分页参数，就更适合用于小结果集查询，而不是大表列表页
+
+## 分组 `@group`
+
+MQL 通过：
+
+- `@group`
+
+控制分组查询。
+
+基本格式是：
+
+```text
+字段名
+```
+
+也可以是多个字段，使用逗号分隔。
+
+### 单字段分组
+
+例如按用户类型分组：
+
+```json
+{
+  "platform_user": {
+    "@fs": "type",
+    "@group": "type"
+  }
+}
+```
+
+这表示：
+
+```text
+GROUP BY type
+```
+
+### 多字段分组
+
+例如按租户和状态一起分组：
+
+```json
+{
+  "platform_user": {
+    "@fs": "tenantCode,status",
+    "@group": "tenantCode,status"
+  }
+}
+```
+
+这表示：
+
+```text
+GROUP BY tenantCode, status
+```
+
+### 分组时的字段选择建议
+
+使用 `@group` 时，`@fs` 里更应优先放：
+
+- 分组字段本身
+- 聚合函数结果
+
+而不要随意选择大量未参与分组、也未聚合的普通字段。
+
+### 与排序结合
+
+分组查询也可以继续搭配：
+
+- `@order`
+
+例如：
+
+```json
+{
+  "platform_user": {
+    "@fs": "tenantCode,status",
+    "@group": "tenantCode,status",
+    "@order": "tenantCode|+,status|+"
+  }
+}
+```
+
+这适合做：
+
+- 统计类列表
+- 分组汇总结果排序
+- 维度分析结果展示
+
+## 排序 `@order`
+
+MQL 通过：
+
+- `@order`
+
+控制结果集排序。
+
+基本格式是：
+
+```text
+字段名|方向
+```
+
+其中方向约定为：
+
+- `+`：升序
+- `-`：降序
+
+### 单字段排序
+
+例如按创建时间倒序：
+
+```json
+{
+  "platform_user": {
+    "@fs": "id,name,createAt",
+    "@order": "createAt|-"
+  }
+}
+```
+
+这表示：
+
+```text
+ORDER BY createAt DESC
+```
+
+### 多字段排序
+
+多个排序项之间使用逗号分隔。
+
+例如先按状态升序，再按创建时间倒序：
+
+```json
+{
+  "platform_user": {
+    "@fs": "id,name,status,createAt",
+    "@order": "status|+,createAt|-"
+  }
+}
+```
+
+这表示：
+
+```text
+ORDER BY status ASC, createAt DESC
+```
+
+### 函数排序
+
+`@order` 不只支持普通字段，也可以对函数表达式排序。
+
+例如按模糊匹配得分倒序：
+
+```json
+{
+  "platform_user": {
+    "fuzzymatch($platform_user.name,'张三')|gt": "0",
+    "@order": "fuzzymatch($platform_user.name,'张三')|-"
+  }
+}
+```
+
+这类写法适合：
+
+- 搜索结果按命中度排序
+- 计算列排序
+- 动态表达式排序
+
+### 使用建议
+
+- 列表分页查询时，尽量总是显式指定 `@order`
+- 多字段排序时，把更稳定的字段放在后面作为次级排序条件
+- 如果排序字段允许重复值，建议补一个稳定字段，例如 `id` 或 `createAt`
+
+## 视图模板参数 `@pf`
+
+当查询实体本身是“视图实体”时，可以在实体节点内传入：
+
+- `@pf`
+
+它用于给视图 SQL 模板片段传参，而不是普通字段过滤。
+
+例如视图 SQL 中存在模板片段：
+
+```sql
+#and order_type={orderType}#
+```
+
+那么请求可以写成：
+
+```json
+{
+  "order_view": {
+    "@fs": "id,orderNo,orderType",
+    "@pf": {
+      "orderType": 123
+    }
+  }
+}
+```
+
+处理规则：
+
+- `@pf` 会在进入标准 MQL 解析前被提取，不参与普通关键字校验
+- 只有视图实体才会启用模板渲染
+- 当 `{orderType}` 有值时，模板片段会渲染为 `and order_type=123`
+- 当 `{orderType}` 缺失、为 `null` 或空串时，整段 `#...#` 会被移除
+- 参数按原值文本直接替换，不自动补单引号
+
+因此如果你传的是字符串值，需要自行保证模板和参数值都符合你的 SQL 预期。
 
 ## 保存语法
 

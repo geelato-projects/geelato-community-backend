@@ -2,6 +2,10 @@
 
 This page explains the current ORM and dynamic datasource extension surface and how a host application can override defaults without breaking the starter contract.
 
+If you want to understand how the built-in dynamic datasource capability works before customizing it, read this first:
+
+- [Dynamic Datasource](../dynamic-datasource/overview.md)
+
 ## Current ORM Entry
 
 The current ORM auto-configuration entry is `OrmAutoConfiguration`, which mainly creates:
@@ -88,6 +92,7 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 
 ## Suggested Reading
 
+- [Dynamic Datasource](../dynamic-datasource/overview.md)
 - [ORM Overview](overview.md)
 - [Override Default Implementations](../reference/override-default-implementations.md)
 - [Minimal Integration](../guide/minimal-integration.md)

@@ -50,6 +50,7 @@
         <pf4j.version>3.12.0</pf4j.version>
         <pf4j-spring.version>0.9.0</pf4j-spring.version>
         <pf4j-update.version>2.3.0</pf4j-update.version>
+        <mybatis-plus.version>3.5.14</mybatis-plus.version>
         <geelato.schedule.version>0.0.1-SNAPSHOT</geelato.schedule.version>
         <geelato.auth.version>0.0.1-SNAPSHOT</geelato.auth.version>
         <geelato.sc.version>0.0.1-SNAPSHOT</geelato.sc.version>

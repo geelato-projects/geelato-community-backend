@@ -15,7 +15,8 @@ public class ApiPrefixAutoConfiguration implements WebMvcConfigurer {
     public void configurePathMatch(PathMatchConfigurer configurer) {
         configurer.addPathPrefix("/api", handlerType ->
                 AnnotatedElementUtils.findMergedAnnotation(handlerType, ApiRuntimeRestController.class) != null
-                        || AnnotatedElementUtils.findMergedAnnotation(handlerType, DesignTimeApiRestController.class) != null);
+                        || AnnotatedElementUtils.findMergedAnnotation(handlerType, DesignTimeApiRestController.class) != null
+                        || AnnotatedElementUtils.findMergedAnnotation(handlerType, ApiRestController.class) != null);
     }
 }
 

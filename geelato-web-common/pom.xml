@@ -42,7 +42,7 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
-    
+
     <!-- Spring WebFlux for Reactive support (optional) -->
     <dependency>
       <groupId>org.springframework</groupId>
@@ -99,13 +99,7 @@
       <groupId>cn.geelato</groupId>
       <artifactId>geelato-security</artifactId>
     </dependency>
-    
-    <!-- MyBatis Plus for pagination support -->
-    <dependency>
-      <groupId>com.baomidou</groupId>
-      <artifactId>mybatis-plus-extension</artifactId>
-      <version>3.5.3.1</version>
-    </dependency>
+
     
     <!-- Reactor Core for Reactive support -->
     <dependency>

@@ -1,4 +1,4 @@
-﻿# Geelato Framework Docs
+﻿﻿# Geelato Framework Docs
 
 This site is the first official documentation skeleton for `geelato-community`.
 

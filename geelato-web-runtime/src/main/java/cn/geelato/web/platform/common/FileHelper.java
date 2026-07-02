@@ -9,7 +9,7 @@ import cn.geelato.web.oss.ali.AliFileObjectSrvProvider;
 import cn.geelato.web.oss.ali.AliOSSConfiguration;
 import cn.geelato.web.platform.boot.properties.OSSConfigurationProperties;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,7 +19,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @Component
-@ConditionalOnProperty(prefix = "geelato.oss", name = {"accessKeyId", "accessKeySecret", "bucketName"})
+@ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${geelato.oss.accessKeyId:}') && T(org.springframework.util.StringUtils).hasText('${geelato.oss.accessKeySecret:}') && T(org.springframework.util.StringUtils).hasText('${geelato.oss.bucketName:}')")
 public class FileHelper {
     FileObjectSrvProvider fileObjectSrvProvider;
 

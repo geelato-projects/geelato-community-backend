@@ -26,8 +26,5 @@
         <module>geelato-web-platform</module>
         <module>geelato-app-scaffold-starter</module>
         <module>geelato-web-quickstart</module>
-        <module>geelato-test</module>
-        <module>geelato-mcp</module>
-        <module>geelato-srvexplain-generator</module>
     </modules>
 </project>

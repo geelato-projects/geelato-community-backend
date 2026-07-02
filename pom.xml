@@ -20,9 +20,10 @@
         <module>geelato-utils</module>
         <module>geelato-orm</module>
         <module>geelato-dynamic-datasource</module>
+        <module>geelato-web-common</module>
+        <module>geelato-web-oss</module>
         <module>geelato-web-runtime</module>
         <module>geelato-web-platform</module>
-        <module>geelato-web-common</module>
         <module>geelato-app-scaffold-starter</module>
         <module>geelato-web-quickstart</module>
         <module>geelato-test</module>

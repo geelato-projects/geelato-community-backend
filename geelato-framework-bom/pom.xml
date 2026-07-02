@@ -63,6 +63,11 @@
             </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
+                <artifactId>geelato-web-oss</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
                 <artifactId>geelato-framework-starter</artifactId>
                 <version>${geelato.version}</version>
             </dependency>

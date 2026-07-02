@@ -52,7 +52,6 @@
         <pf4j-update.version>2.3.0</pf4j-update.version>
         <geelato.schedule.version>0.0.1-SNAPSHOT</geelato.schedule.version>
         <geelato.auth.version>0.0.1-SNAPSHOT</geelato.auth.version>
-        <geelato.oss.version>0.0.1-SNAPSHOT</geelato.oss.version>
         <geelato.sc.version>0.0.1-SNAPSHOT</geelato.sc.version>
         <geelato.workflow.version>0.0.1-SNAPSHOT</geelato.workflow.version>
         <geelato.svcp.version>0.0.1-SNAPSHOT</geelato.svcp.version>
@@ -293,12 +292,13 @@
                 <artifactId>geelato-auth-server</artifactId>
                 <version>${geelato.auth.version}</version>
             </dependency>
-            <!--enterprise module-->
+            <!--community web module-->
             <dependency>
                 <groupId>cn.geelato</groupId>
                 <artifactId>geelato-web-oss</artifactId>
-                <version>${geelato.oss.version}</version>
+                <version>${geelato.version}</version>
             </dependency>
+            <!--enterprise module-->
             <dependency>
                 <groupId>cn.geelato</groupId>
                 <artifactId>geelato-site-collocation</artifactId>

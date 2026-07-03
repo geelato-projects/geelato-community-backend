@@ -39,20 +39,20 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'en',
-        path: '../official-docs/en',
+        path: './official-docs/en',
         routeBasePath: 'en',
         sidebarPath: './sidebars.en.ts',
-        editUrl: `${repoEditBase}/official-docs/en/`,
+        editUrl: `${repoEditBase}/website/official-docs/en/`,
       },
     ],
     [
       '@docusaurus/plugin-content-docs',
       {
         id: 'zh-cn',
-        path: '../official-docs/zh-cn',
+        path: './official-docs/zh-cn',
         routeBasePath: 'zh-cn',
         sidebarPath: './sidebars.zh-cn.ts',
-        editUrl: `${repoEditBase}/official-docs/zh-cn/`,
+        editUrl: `${repoEditBase}/website/official-docs/zh-cn/`,
       },
     ],
   ],
@@ -118,7 +118,7 @@ const config: Config = {
           items: [
             {
               label: 'official-docs',
-              href: 'https://github.com/geelato-projects/geelato-community-backend/tree/main/geelato-community/official-docs',
+              href: 'https://github.com/geelato-projects/geelato-community-backend/tree/main/geelato-community/website/official-docs',
             },
             {
               label: 'SrvExplain',

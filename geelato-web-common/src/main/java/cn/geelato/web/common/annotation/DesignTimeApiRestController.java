@@ -1,7 +1,5 @@
 package cn.geelato.web.common.annotation;
 
-import cn.geelato.web.common.conditional.DesigntimeServiceConditional;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.Documented;
@@ -14,7 +12,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @ApiRestController
-@Conditional(DesigntimeServiceConditional.class)
 public @interface DesignTimeApiRestController {
     @AliasFor(annotation = ApiRestController.class)
     String name() default "";

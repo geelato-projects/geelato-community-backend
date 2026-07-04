@@ -19,7 +19,6 @@
         <module>geelato-security</module>
         <module>geelato-utils</module>
         <module>geelato-orm</module>
-        <module>geelato-dynamic-datasource</module>
         <module>geelato-web-common</module>
         <module>geelato-web-oss</module>
         <module>geelato-web-runtime</module>

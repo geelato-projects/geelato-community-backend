@@ -10,7 +10,7 @@ import cn.geelato.orm.query.MetaProcedure;
 /**
  * 元数据操作工厂类
  * 提供流式API构建SQL查询、插入、更新、删除操作
- * 
+ * <p>
  * 使用示例：
  * // 查询操作
  * MetaFactory.query("User")
@@ -19,22 +19,22 @@ import cn.geelato.orm.query.MetaProcedure;
  *     .order(Order.asc("name"))
  *     .page(1, 10)
  *     .toSql();
- * 
+ * <p>
  * // 统计操作
  * MetaFactory.query("User")
  *     .where(Filter.eq("status", "active"))
  *     .count();
- * 
+ * <p>
  * // 插入操作
  * MetaFactory.insert("User")
  *     .column(new String[]{"name", "email"})
  *     .values(new Object[]{"张三", "zhangsan@example.com"});
- * 
+ * <p>
  * // 更新操作
  * MetaFactory.update("User")
  *     .column(new String[]{"name", "email"})
  *     .where(Filter.eq("id", 1));
- * 
+ * <p>
  * // 删除操作
  * MetaFactory.delete("User")
  *     .where(Filter.eq("status", "inactive"));

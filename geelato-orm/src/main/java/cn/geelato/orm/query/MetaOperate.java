@@ -4,6 +4,7 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.util.BeansUtils;
 import cn.geelato.orm.Filter;
 import cn.geelato.orm.executor.MetaCommandExecutor;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -14,8 +15,11 @@ import java.util.Map;
 public abstract class MetaOperate<T extends MetaOperate<T>> {
     protected String entityName;
     protected Class<?> entityClass;
+    @Getter
     protected final List<Filter> filters = new ArrayList<>();
+    @Getter
     protected final Map<String, Object> viewTemplateParams = new LinkedHashMap<>();
+    @Getter
     protected String connectId;
     protected boolean withMeta;
 
@@ -51,15 +55,4 @@ public abstract class MetaOperate<T extends MetaOperate<T>> {
         return BeansUtils.getBean(MetaCommandExecutor.class);
     }
 
-    public List<Filter> getFilters() {
-        return filters;
-    }
-
-    public Map<String, Object> getViewTemplateParams() {
-        return viewTemplateParams;
-    }
-
-    public String getConnectId() {
-        return connectId;
-    }
 }

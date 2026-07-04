@@ -2,7 +2,6 @@ package cn.geelato.datasource;
 
 import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
@@ -23,17 +22,17 @@ public class DynamicDaoFieldProcessor implements BeanPostProcessor, ApplicationC
     private ApplicationContext applicationContext;
     
     @Override
-    public void setApplicationContext(@NotNull ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
     
     @Override
-    public Object postProcessBeforeInitialization(@NotNull Object bean, @NotNull String beanName) throws BeansException {
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         return bean;
     }
     
     @Override
-    public Object postProcessAfterInitialization(Object bean, @NotNull String beanName) throws BeansException {
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         Class<?> clazz = bean.getClass();
         ReflectionUtils.doWithFields(clazz, field -> {
             UseDynamicDataSource annotation = field.getAnnotation(UseDynamicDataSource.class);

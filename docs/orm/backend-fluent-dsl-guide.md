@@ -12,6 +12,20 @@
 - 前端页面直接走平台通用数据接口时，继续使用 `MetaController + MQL`。
 - 已有服务已经稳定依赖 `BaseService + 实体类` 且没有元数据通用化诉求时，可继续沿用原模式。
 
+## 最小接入（独立 Spring Boot）
+- 必须提供 `Dao` Bean（`MetaCommandExecutor` 会在 ORM 自动装配中基于 `Dao` 创建）。
+- 若存在多个 `Dao`，可通过 `geelato.orm.dao-bean-name` 显式指定要绑定的 Bean 名称。
+- 默认会自动扫描 `@SpringBootApplication` 所在包及子包下所有 `@Entity` 类，并自动执行 `MetaManager.parseOne(...)` 注册元数据；可通过配置关闭或限定范围。
+
+```yaml
+geelato:
+  orm:
+    dao-bean-name: primaryDao
+    entity-auto-scan-enabled: true
+    entity-scan-base-packages:
+      - com.example.demo.entity
+```
+
 ## 入口
 - 字符串实体名：
 

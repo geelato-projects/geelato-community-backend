@@ -1,6 +1,7 @@
 package cn.geelato.orm.query;
 
 import cn.geelato.orm.WrapperResultFunction;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +9,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class MetaProcedure extends MetaOperate<MetaProcedure> {
+    @Getter
     private final String procedureName;
+    @Getter
     private final List<ProcedureParam> inParams = new ArrayList<>();
     private WrapperResultFunction<?, ?> wrapperFunction;
 
@@ -24,14 +27,6 @@ public class MetaProcedure extends MetaOperate<MetaProcedure> {
     public <T, R> MetaProcedure wrapperResult(WrapperResultFunction<T, R> wrapperFunction) {
         this.wrapperFunction = wrapperFunction;
         return this;
-    }
-
-    public String getProcedureName() {
-        return procedureName;
-    }
-
-    public List<ProcedureParam> getInParams() {
-        return inParams;
     }
 
     public String toSql() {

@@ -1,8 +1,11 @@
 package cn.geelato.orm.query;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class JoinOn {
     private final List<JoinCondition> conditions = new ArrayList<>();
 
@@ -22,7 +25,4 @@ public class JoinOn {
         return this;
     }
 
-    public List<JoinCondition> getConditions() {
-        return conditions;
-    }
 }

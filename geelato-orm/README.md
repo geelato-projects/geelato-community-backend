@@ -30,6 +30,51 @@ int affected = MetaFactory.delete("User")
         .delete();
 ```
 
+## 独立 Spring Boot 工程最小接入
+- 引入依赖：
+
+```xml
+<dependency>
+  <groupId>cn.geelato</groupId>
+  <artifactId>geelato-orm</artifactId>
+</dependency>
+```
+
+- 配置数据源（示例）：
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/demo?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: demo
+    password: demo
+    driver-class-name: com.mysql.cj.jdbc.Driver
+```
+
+- 提供 `Dao` Bean（`MetaCommandExecutor` 会在 ORM 自动装配中基于 `Dao` 创建）：
+
+```java
+@Configuration
+public class OrmDaoConfiguration {
+    @Bean
+    public Dao primaryDao(JdbcTemplate jdbcTemplate) {
+        return new Dao(jdbcTemplate);
+    }
+}
+```
+
+- 元数据准备：
+  - 默认会扫描 `@SpringBootApplication` 所在包及子包下所有 `@Entity` 类并自动 `MetaManager.parseOne(...)`
+  - 可通过配置关闭或限定扫描范围：
+
+```yaml
+geelato:
+  orm:
+    entity-auto-scan-enabled: true
+    entity-scan-base-packages:
+      - com.example.demo.entity
+```
+
 ## 主要能力
 - 支持 `query("Entity")` 与 `query(Entity.class)` 双入口
 - 支持分页、单条、单列、包装结果

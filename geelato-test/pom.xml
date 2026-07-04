@@ -43,13 +43,6 @@
             <version>${geelato.version}</version>
         </dependency>
         
-        <!-- Geelato Dynamic DataSource -->
-        <dependency>
-            <groupId>cn.geelato</groupId>
-            <artifactId>geelato-dynamic-datasource</artifactId>
-            <version>${geelato.version}</version>
-        </dependency>
-        
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

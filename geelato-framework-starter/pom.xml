@@ -47,10 +47,6 @@
         </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>
-            <artifactId>geelato-dynamic-datasource</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>cn.geelato</groupId>
             <artifactId>geelato-orm</artifactId>
         </dependency>
     </dependencies>

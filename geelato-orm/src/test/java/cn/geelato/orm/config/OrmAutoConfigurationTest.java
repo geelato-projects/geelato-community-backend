@@ -1,6 +1,7 @@
 package cn.geelato.orm.config;
 
 import cn.geelato.core.orm.Dao;
+import cn.geelato.core.util.BeansUtils;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
 import cn.geelato.orm.executor.MetaCommandExecutor;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -30,6 +31,15 @@ class OrmAutoConfigurationTest {
                     MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
                     assertNotNull(executor);
                     assertInstanceOf(DefaultMetaCommandExecutor.class, executor);
+                });
+    }
+
+    @Test
+    void shouldExposeMetaCommandExecutorToBeansUtils() {
+        contextRunner.withUserConfiguration(SingleDaoConfiguration.class)
+                .run(context -> {
+                    MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
+                    assertEquals(executor, BeansUtils.getBean(MetaCommandExecutor.class));
                 });
     }
 

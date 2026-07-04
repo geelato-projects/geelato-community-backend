@@ -7,7 +7,7 @@ import cn.geelato.utils.entity.FileIS;
 import cn.geelato.utils.entity.Resolution;
 import cn.geelato.web.oss.OSSResult;
 import cn.geelato.web.platform.common.Base64Helper;
-import cn.geelato.web.platform.common.FileHelper;
+import cn.geelato.web.platform.common.OSSFileHelper;
 import cn.geelato.web.platform.srv.base.service.DownloadService;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.meta.Attachment;
@@ -36,9 +36,9 @@ import java.util.stream.Collectors;
 public class FileHandler extends BaseHandler {
     private static final long COMPRESS_MAX_SIZE = 50 * 1024 * 1024;// 50M 压缩最大容量
     private static final int COMPRESS_MAX_AMOUNT = 1000; // 压缩最大数量
-    private final FileHelper fileHelper;
+    private final OSSFileHelper fileHelper;
 
-    public FileHandler(AccessoryHandler accessoryHandler, DownloadService downloadService, ObjectProvider<FileHelper> fileHelperProvider) {
+    public FileHandler(AccessoryHandler accessoryHandler, DownloadService downloadService, ObjectProvider<OSSFileHelper> fileHelperProvider) {
         super(accessoryHandler, downloadService);
         this.fileHelper = fileHelperProvider.getIfAvailable();
     }
@@ -448,7 +448,7 @@ public class FileHandler extends BaseHandler {
         return result;
     }
 
-    private FileHelper requireFileHelper() {
+    private OSSFileHelper requireFileHelper() {
         if (fileHelper == null) {
             throw new IllegalStateException("Aliyun OSS is not configured. Please set geelato.oss.accessKeyId/accessKeySecret/bucketName or switch storageType to local.");
         }

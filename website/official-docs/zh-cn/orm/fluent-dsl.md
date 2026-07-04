@@ -38,6 +38,111 @@ List<Map<String, Object>> users = MetaFactory.query(User.class)
         .list();
 ```
 
+## 接入与装配
+
+这一节把“依赖、Bean、元数据准备”串起来，确保你在独立 Spring Boot 工程里可以直接使用 Fluent DSL。
+
+### 依赖
+
+最小只需要引入：
+
+```xml
+<dependency>
+  <groupId>cn.geelato</groupId>
+  <artifactId>geelato-orm</artifactId>
+</dependency>
+```
+
+数据库驱动（MySQL / PostgreSQL 等）由业务工程按自身数据库类型自行引入。
+
+### Dao Bean（必须）
+
+ORM 会在 Spring 容器中存在 `Dao` Bean 时，自动装配 `MetaCommandExecutor`，从而让 `MetaFactory.*().list/save/delete` 可执行。
+
+最小示例：
+
+```java
+@Configuration
+public class OrmDaoConfiguration {
+    @Bean
+    public Dao primaryDao(JdbcTemplate jdbcTemplate) {
+        return new Dao(jdbcTemplate);
+    }
+}
+```
+
+### 多 Dao 场景如何选
+
+当容器存在多个 `Dao` 时，建议显式指定 ORM 绑定的 Bean 名称：
+
+```yaml
+geelato:
+  orm:
+    dao-bean-name: dynamicDao
+```
+
+### 元数据准备（@Entity）
+
+默认会扫描 Spring Boot 启动类所在包及子包内所有 `@Entity` 类并注册元数据。
+
+可通过配置开关与限定范围：
+
+```yaml
+geelato:
+  orm:
+    entity-auto-scan-enabled: true
+    entity-scan-base-packages:
+      - com.example.demo.entity
+```
+
+### 动态数据源
+
+Fluent DSL 支持在链式调用中显式切换数据源：
+
+```java
+List<Map<String, Object>> rows = MetaFactory.query("DevDbConnect")
+        .useDataSource("portal")
+        .page(1, 10)
+        .list();
+```
+
+当你的工程中存在名为 `primaryJdbcTemplate` 的 Bean 时，ORM 会自动装配动态数据源相关 Bean（`dynamicDataSource`、`dynamicJdbcTemplate`、`dynamicDao`），供框架内动态数据源链路使用。
+
+## 快速开始（从 0 到 CRUD）
+
+一个最短示例链路：
+
+```java
+@Entity(name = "TestUser", table = "test_user")
+public class TestUserEntity {
+    @Id
+    @Col(name = "id", dataType = "BIGINT")
+    private String id;
+
+    @Col(name = "name", dataType = "VARCHAR", charMaxlength = 128)
+    private String name;
+}
+```
+
+```java
+String id = MetaFactory.insert("TestUser")
+        .value("name", "Alice")
+        .save();
+
+Map<String, Object> row = MetaFactory.query("TestUser")
+        .where(Filter.eq("id", id))
+        .one();
+
+MetaFactory.update("TestUser")
+        .value("id", id)
+        .value("name", "Bob")
+        .save();
+
+MetaFactory.delete("TestUser")
+        .where(Filter.eq("id", id))
+        .delete();
+```
+
 ## 查询示例
 
 单条查询：

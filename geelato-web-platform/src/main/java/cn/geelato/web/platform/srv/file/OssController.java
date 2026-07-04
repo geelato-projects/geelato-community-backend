@@ -3,7 +3,7 @@ package cn.geelato.web.platform.srv.file;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.meta.Attachment;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.common.FileHelper;
+import cn.geelato.web.platform.common.OSSFileHelper;
 import cn.geelato.web.platform.handler.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.oss.OSSResult;
@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -22,11 +21,11 @@ import java.util.concurrent.*;
  * OSS 存储管理控制器
  */
 @ApiRestController("/oss")
-@ConditionalOnBean(FileHelper.class)
+@ConditionalOnBean(OSSFileHelper.class)
 @Slf4j
 public class OssController extends BaseController {
 
-    private final FileHelper fileHelper;
+    private final OSSFileHelper fileHelper;
     private final FileHandler fileHandler;
 
     /**
@@ -50,7 +49,7 @@ public class OssController extends BaseController {
     });
 
     @Autowired
-    public OssController(FileHelper fileHelper, FileHandler fileHandler) {
+    public OssController(OSSFileHelper fileHelper, FileHandler fileHandler) {
         this.fileHelper = fileHelper;
         this.fileHandler = fileHandler;
     }

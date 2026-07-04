@@ -20,11 +20,11 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 @ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${geelato.oss.accessKeyId:}') && T(org.springframework.util.StringUtils).hasText('${geelato.oss.accessKeySecret:}') && T(org.springframework.util.StringUtils).hasText('${geelato.oss.bucketName:}')")
-public class FileHelper {
+public class OSSFileHelper {
     FileObjectSrvProvider fileObjectSrvProvider;
 
     @Autowired
-    public FileHelper(OSSConfigurationProperties ossConfigurationProperties) {
+    public OSSFileHelper(OSSConfigurationProperties ossConfigurationProperties) {
         AliOSSConfiguration aliOSSConfiguration = new AliOSSConfiguration()
                 .setAccessKeyId(ossConfigurationProperties.getAccessKeyId())
                 .setAccessKeySecret(ossConfigurationProperties.getAccessKeySecret())

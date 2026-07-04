@@ -1,6 +1,6 @@
 # ORM / 数据源扩展
 
-这篇文档说明当前框架里 ORM 与动态数据源的真实扩展点，以及宿主工程如何在不破坏 Starter 契约的前提下完成覆盖。
+这篇文档说明当前框架里 ORM 内置的数据源能力与动态数据源扩展点，以及宿主工程如何在 Spring Boot 环境中完成接入与覆盖。
 
 如果你想先理解“现有动态数据源能力本身怎么工作”，建议先看：
 
@@ -53,6 +53,18 @@ geelato.orm.dao-bean-name=dynamicDao
 geelato.datasource.dynamic.*
 ```
 
+## 最小启用动态数据源（宿主工程）
+
+动态数据源相关 Bean 的命名约定如下（用于排障与覆盖）：
+
+- 前置：`primaryJdbcTemplate`
+- 自动装配的动态数据源 Bean：
+  - `dynamicDataSource`
+  - `dynamicJdbcTemplate`
+  - `dynamicDao`
+
+典型工程中，`primaryJdbcTemplate` 由 Starter 提供；如果你没有使用 Starter，也可以在业务工程里自行提供 `primaryJdbcTemplate`（例如基于 Spring Boot 的主数据源构建 `JdbcTemplate`），从而触发动态数据源自动装配。
+
 默认重要属性包括：
 
 - `delay-load-data-source=true`
@@ -77,6 +89,28 @@ geelato.datasource.dynamic.*
 - `DynamicDataSourceDefinitionLoader`
 
 就可以替换默认加载逻辑。
+
+最小示例：
+
+```java
+@Configuration
+public class MyDynamicDataSourceDefinitionConfiguration {
+    @Bean
+    public DynamicDataSourceDefinitionLoader dynamicDataSourceDefinitionLoader() {
+        return new DynamicDataSourceDefinitionLoader() {
+            @Override
+            public List<Map<String, Object>> loadAll() {
+                return List.of();
+            }
+
+            @Override
+            public Map<String, Object> loadOne(String key) {
+                return null;
+            }
+        };
+    }
+}
+```
 
 适合的场景包括：
 

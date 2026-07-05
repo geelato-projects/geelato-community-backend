@@ -51,6 +51,18 @@ It intentionally keeps only:
 - a minimal startup class
 - one runtime sample endpoint
 
+## Example Repository (geelato-hello-example)
+
+Official examples repository: [geelato-hello-example](https://github.com/geelato-projects/geelato-hello-example)
+
+The repository contains multiple projects in a “minimal to production scaffold” order:
+
+- `geelato-sample-quickstart`: minimal foundation verification sample (H2 + one runtime endpoint)
+- `geelato-sample-orm`: ORM standalone integration sample (Fluent DSL / `MetaFactory` CRUD) ([geelato-sample-orm](https://github.com/geelato-projects/geelato-hello-example/tree/main/geelato-sample-orm))
+- `sample-lite-login`: third-party app integration sample for `lite-login` (frontend token + backend `/oauth2/userinfo`) ([sample-lite-login](https://github.com/geelato-projects/geelato-hello-example/tree/main/sample-lite-login))
+- `sample-oauth2-authorize`: OAuth2 authorization-code flow sample (`/oauth2/authorize` + code callback)
+- `geelato-app-scaffold`: official scaffold project (runtime-ready starting point for real projects)
+
 ## What the Scaffold Is
 
 The official scaffold is:

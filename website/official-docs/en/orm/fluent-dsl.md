@@ -2,6 +2,11 @@
 
 This page explains how backend Java services use the Geelato Framework Fluent DSL through `MetaFactory`.
 
+Sample projects:
+
+- Repository: [geelato-hello-example](https://github.com/geelato-projects/geelato-hello-example)
+- ORM integration sample: [geelato-sample-orm](https://github.com/geelato-projects/geelato-hello-example/tree/main/geelato-sample-orm)
+
 ## Goal
 
 - provide a Java-style metadata CRUD entry for backend developers

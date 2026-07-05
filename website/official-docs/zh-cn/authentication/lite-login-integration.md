@@ -9,6 +9,11 @@
 
 本文档不预设第三方应用一定存在固定的 `/api/user/info`、`/session/me` 或 `/auth/profile` 接口；这些接口是否存在、叫什么名字，由第三方应用自己决定。
 
+对应示例工程：
+
+- 仓库：[geelato-hello-example](https://github.com/geelato-projects/geelato-hello-example)
+- lite-login 接入示例：[sample-lite-login](https://github.com/geelato-projects/geelato-hello-example/tree/main/sample-lite-login)
+
 ## 接入目标
 
 接入后的最小结果应满足：

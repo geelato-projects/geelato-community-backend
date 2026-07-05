@@ -42,6 +42,11 @@ List<Map<String, Object>> users = MetaFactory.query(User.class)
 
 这一节把“依赖、Bean、元数据准备”串起来，确保你在独立 Spring Boot 工程里可以直接使用 Fluent DSL。
 
+对应示例工程：
+
+- 仓库：[geelato-hello-example](https://github.com/geelato-projects/geelato-hello-example)
+- ORM 接入示例：[geelato-sample-orm](https://github.com/geelato-projects/geelato-hello-example/tree/main/geelato-sample-orm)
+
 ### 依赖
 
 最小只需要引入：

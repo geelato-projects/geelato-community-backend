@@ -9,6 +9,11 @@ This guide focuses on two things:
 
 This guide does not assume that the third-party application already has fixed endpoints such as `/api/user/info`, `/session/me`, or `/auth/profile`. Those endpoints are application-specific.
 
+Sample projects:
+
+- Repository: [geelato-hello-example](https://github.com/geelato-projects/geelato-hello-example)
+- lite-login integration sample: [sample-lite-login](https://github.com/geelato-projects/geelato-hello-example/tree/main/sample-lite-login)
+
 ## Integration Goal
 
 The minimal acceptable result is:

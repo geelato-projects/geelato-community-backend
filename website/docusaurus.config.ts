@@ -81,6 +81,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          href: 'https://github.com/geelato-projects/geelato-hello-example',
+          label: 'Example',
+          position: 'left',
+        },
+        {
           label: 'Language',
           position: 'right',
           items: [

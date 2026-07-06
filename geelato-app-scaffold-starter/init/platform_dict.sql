@@ -49,4 +49,10 @@ CREATE TABLE `platform_dict`  (
   INDEX `dic_code`(`dict_code` ASC, `del_status` ASC, `delete_at` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci COMMENT = '数据字典' ROW_FORMAT = Dynamic;
 
+-- ----------------------------
+-- Records of platform_dict
+-- ----------------------------
+INSERT INTO `platform_dict` (`id`, `app_id`, `dict_code`, `dict_name`, `dict_remark`, `enable_status`, `dept_id`, `bu_id`, `tenant_code`, `del_status`, `update_at`, `updater`, `updater_name`, `create_at`, `creator`, `creator_name`, `delete_at`, `seq_no`, `dict_color`, `dict_name_en`, `extra_content`, `extra_name`, `extra_value_type`)
+VALUES (9000000000000000001, NULL, 'demo_status', '示例状态', '脚手架初始化示例字典：用于演示字典维护与按 code 获取', 1, NULL, NULL, 'geelato', 0, '2026-07-06 00:00:00', 3751618121485025347, 'gl_user', '2026-07-06 00:00:00', 3751618121485025347, 'gl_user', NULL, 1, NULL, 'Demo Status', NULL, NULL, NULL);
+
 SET FOREIGN_KEY_CHECKS = 1;

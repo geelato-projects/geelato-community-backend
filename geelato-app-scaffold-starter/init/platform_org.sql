@@ -46,4 +46,10 @@ CREATE TABLE `platform_org`  (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci COMMENT = '组织' ROW_FORMAT = DYNAMIC;
 
+-- ----------------------------
+-- Records of platform_org
+-- ----------------------------
+INSERT INTO `platform_org` (`id`, `pid`, `code`, `description`, `type`, `category`, `name`, `extend_id`, `status`, `dept_id`, `bu_id`, `tenant_code`, `del_status`, `update_at`, `updater`, `updater_name`, `create_at`, `creator`, `creator_name`, `delete_at`, `seq_no`)
+VALUES ('9000000000000000101', NULL, 'ROOT', '脚手架初始化示例组织', 'company', 'inside', '示例组织', NULL, 1, NULL, NULL, 'geelato', 0, '2026-07-06 00:00:00', '3751618121485025347', 'gl_user', '2026-07-06 00:00:00', '3751618121485025347', 'gl_user', NULL, 1);
+
 SET FOREIGN_KEY_CHECKS = 1;

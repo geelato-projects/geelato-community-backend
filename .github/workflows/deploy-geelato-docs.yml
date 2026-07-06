@@ -1,0 +1,56 @@
+name: Deploy Geelato Docs
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/deploy-geelato-docs.yml"
+      - "website/**"
+      - "SrvExplain/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-geelato-docs
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build website
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+        run: npm run build
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.GEELATO_DOCS_DEPLOY_TOKEN }}
+          external_repository: geelato-projects/geelato-community-backend
+          publish_branch: gh-pages
+          publish_dir: website/build
+          cname: docs.geelato.cn
+          force_orphan: true
+          full_commit_message: "docs: deploy from ${{ github.repository }}@${{ github.sha }}"

@@ -364,6 +364,20 @@ starter 已提供通用就绪检查接口：
 **上传**
 - `POST /api/upload/file`（multipart，参数 `file`）
 
+上传示例（上传后会返回 `Attachment`，其中 `id` 用于后续查看/下载）：
+
+```bash
+curl -X POST "http://localhost:8088/api/upload/file" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  -F "file=@D:/tmp/demo.png"
+```
+
+上传后如何查看：
+
+- 查看附件元数据：`GET /api/attach/get/{id}`
+- 预览/下载文件：`GET /api/resources/file?id={id}&isPreview=true`
+
 **下载文件**
 - `GET /api/resources/file`
 
@@ -401,15 +415,95 @@ List<Map<String, Object>> users = MetaFactory.query("User")
 ```
 
 #### 4.4.5 字典（维护 + 获取）
-- 维护字典：`/api/dict/*`
-- 维护字典项：`/api/dictItem/*`
-- 按 code 获取字典项：`GET /api/dictionary/{code}`
+脚手架会在自动建表时初始化一条示例字典，便于你确认字典链路已具备最小数据：
+
+- dictCode：`demo_status`
+- 获取：`GET /api/dictionary/demo_status`
+
+如何添加字典：
+
+- 创建/更新字典：`POST /api/dict/createOrUpdate`
+
+```bash
+curl -X POST "http://localhost:8088/api/dict/createOrUpdate" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  --data "{\"dictCode\":\"order_status\",\"dictName\":\"订单状态\",\"enableStatus\":1,\"tenantCode\":\"geelato\"}"
+```
+
+如何添加字典项：
+
+- 创建/更新字典项：`POST /api/dict/item/createOrUpdate`
+
+```bash
+curl -X POST "http://localhost:8088/api/dict/item/createOrUpdate" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  --data "{\"dictId\":\"{dictId}\",\"itemCode\":\"PAID\",\"itemName\":\"已支付\",\"seqNo\":1,\"enableStatus\":1,\"tenantCode\":\"geelato\"}"
+```
+
+如何验证：
+
+- 按字典编码获取树形字典项：`GET /api/dict/item/queryItemByDictCode/{dictCode}`
+- 按 code 获取字典项（简化接口）：`GET /api/dictionary/{code}`
 
 #### 4.4.6 组织 / 用户 / RBAC
 - 组织：`/api/security/org/*`
 - 用户：`/api/security/user/*`
 - 角色：`/api/security/role/*`
 - 权限：`/api/security/permission/*`
+
+脚手架会在自动建表时初始化一条示例组织，并将初始化用户 `gl_user` 绑定为该组织默认用户，便于你验证组织/用户链路：
+
+- orgId：`9000000000000000101`
+- orgName：`示例组织`
+
+如何添加组织：
+
+- 创建组织：`POST /api/security/org/createOrUpdate`
+
+```bash
+curl -X POST "http://localhost:8088/api/security/org/createOrUpdate" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  --data "{\"pid\":\"9000000000000000101\",\"code\":\"DEV\",\"name\":\"研发部\",\"type\":\"department\",\"category\":\"inside\",\"tenantCode\":\"geelato\"}"
+```
+
+验证组织树：
+
+```bash
+curl -X GET "http://localhost:8088/api/security/org/queryTree" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}"
+```
+
+如何添加用户：
+
+- 创建用户：`POST /api/security/user/createOrUpdate`（会返回 `plainPassword`，用于首次登录）
+
+```bash
+curl -X POST "http://localhost:8088/api/security/user/createOrUpdate" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  --data "{\"loginName\":\"tom\",\"name\":\"Tom\",\"orgId\":\"{orgId}\",\"tenantCode\":\"geelato\",\"enableStatus\":1}"
+```
+
+如何给用户分配角色（RBAC）：
+
+- 创建角色：`POST /api/security/role/createOrUpdate`
+- 绑定用户与角色：`POST /api/security/role/user/insert`
+
+```bash
+curl -X POST "http://localhost:8088/api/security/role/user/insert" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  --data "{\"userId\":\"{userId}\",\"roleId\":\"{roleId}\",\"tenantCode\":\"geelato\"}"
+```
 
 #### 4.4.7 Swagger（快速查看服务接口）
 - OpenAPI JSON：`GET /v3/api-docs`

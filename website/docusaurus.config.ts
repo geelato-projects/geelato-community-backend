@@ -3,7 +3,7 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const repoEditBase =
-  'https://github.com/geelato-projects/geelato-community-backend/edit/main/geelato-community';
+  'https://github.com/geelato-projects/geelato-community-backend/edit/master';
 
 const config: Config = {
   title: 'Geelato Framework',
@@ -123,11 +123,11 @@ const config: Config = {
           items: [
             {
               label: 'official-docs',
-              href: 'https://github.com/geelato-projects/geelato-community-backend/tree/main/geelato-community/website/official-docs',
+              href: 'https://github.com/geelato-projects/geelato-community-backend/tree/master/website/official-docs',
             },
             {
               label: 'SrvExplain',
-              href: 'https://github.com/geelato-projects/geelato-community-backend/tree/main/geelato-community/SrvExplain',
+              href: 'https://github.com/geelato-projects/geelato-community-backend/tree/master/SrvExplain',
             },
           ],
         },

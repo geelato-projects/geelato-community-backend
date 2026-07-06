@@ -26,7 +26,7 @@ The generated static files are written to `build/`.
 
 The repository root contains `.github/workflows/deploy-geelato-docs.yml`.
 
-It builds `geelato-community/website` and publishes `build/` to:
+It builds `website` and publishes `build/` to:
 
 - repository: `geelato-projects/geelato-community-backend`
 - branch: `gh-pages`
@@ -34,17 +34,16 @@ It builds `geelato-community/website` and publishes `build/` to:
 
 Current content layout:
 
-- site source: `geelato-community/website`
-- docs content: `geelato-community/website/official-docs`
-- static assets: `geelato-community/website/static`
-- optional API source references: `geelato-community/SrvExplain`
+- site source: `website`
+- docs content: `website/official-docs`
+- static assets: `website/static`
+- optional API source references: `SrvExplain`
 
 The workflow listens to these paths:
 
 - `.github/workflows/deploy-geelato-docs.yml`
-- `geelato-community/website/**`
-- `geelato-community/website/official-docs/**`
-- `geelato-community/SrvExplain/**`
+- `website/**`
+- `SrvExplain/**`
 
 Required secret in the source repository:
 

@@ -111,7 +111,7 @@ geelato.graal.scan-package-names=cn.geelato,com.acme.order
 Use `MetaFactory` in your business services. See `ORM / Fluent DSL` docs in this site.
 
 ### 5.5 Dictionary
-- Maintain dictionaries: `/api/dict/*`, `/api/dictItem/*`
+- Maintain dictionaries: `/api/dict/*`, `/api/dict/item/*`
 - Fetch by code: `GET /api/dictionary/{code}`
 
 ### 5.6 Organization / User / RBAC
@@ -126,4 +126,3 @@ Use `MetaFactory` in your business services. See `ORM / Fluent DSL` docs in this
 
 ### 5.8 Build HTTP services quickly
 Create your own controllers/services in your business package. Prefer using `@ApiRestController` so the `/api` prefix applies consistently.
-

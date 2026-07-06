@@ -49,4 +49,13 @@ CREATE TABLE `platform_dict_item`  (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci COMMENT = '数据字典项' ROW_FORMAT = Dynamic;
 
+-- ----------------------------
+-- Records of platform_dict_item
+-- ----------------------------
+INSERT INTO `platform_dict_item` (`id`, `app_id`, `pid`, `dict_id`, `item_code`, `item_name`, `item_remark`, `seq_no`, `enable_status`, `dept_id`, `bu_id`, `tenant_code`, `del_status`, `update_at`, `updater`, `updater_name`, `create_at`, `creator`, `creator_name`, `delete_at`, `item_color`, `item_tag`, `item_name_en`, `item_extra`)
+VALUES
+('9000000000000000201', NULL, NULL, '9000000000000000001', '0', '禁用', '示例字典项', 1, 1, NULL, NULL, 'geelato', 0, '2026-07-06 00:00:00', '3751618121485025347', 'gl_user', '2026-07-06 00:00:00', '3751618121485025347', 'gl_user', NULL, NULL, NULL, 'Disabled', NULL),
+('9000000000000000202', NULL, NULL, '9000000000000000001', '1', '启用', '示例字典项', 2, 1, NULL, NULL, 'geelato', 0, '2026-07-06 00:00:00', '3751618121485025347', 'gl_user', '2026-07-06 00:00:00', '3751618121485025347', 'gl_user', NULL, NULL, NULL, 'Enabled', NULL),
+('9000000000000000203', NULL, NULL, '9000000000000000001', '2', '未知', '示例字典项', 3, 1, NULL, NULL, 'geelato', 0, '2026-07-06 00:00:00', '3751618121485025347', 'gl_user', '2026-07-06 00:00:00', '3751618121485025347', 'gl_user', NULL, NULL, NULL, 'Unknown', NULL);
+
 SET FOREIGN_KEY_CHECKS = 1;

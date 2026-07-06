@@ -92,7 +92,7 @@ java -jar geelato-web-designer/target/geelato-web-designer-1.0.0-SNAPSHOT-exec.j
 
 ## Relationship with `PlatformWebRuntime`
 
-`PlatformDesginer` and [PlatformWebRuntime](platform-web-runtime.md) are structurally identical shells. They:
+`PlatformDesginer` and [PlatformWebRuntime](../runtime/platform-web-runtime.md) are structurally identical shells. They:
 
 - both extend `BootApplication`
 - both depend only on `geelato-web-platform`
@@ -105,8 +105,8 @@ The shell naming `Desginer` is a long-standing historical name in this module; t
 
 ## Suggested Reading
 
-- [PlatformWebRuntime](platform-web-runtime.md)
+- [PlatformWebRuntime](../runtime/platform-web-runtime.md)
 - [Startup Process](../reference/startup-process.md)
 - [Runtime / Designer Deployment and Dependencies](../operations/runtime-designer-deployment.md)
 - [BOM and Starter](../reference/bom-and-starter.md)
-- [SecurityContext Lifecycle](security-context-lifecycle.md)
+- [SecurityContext Lifecycle](../runtime/security-context-lifecycle.md)

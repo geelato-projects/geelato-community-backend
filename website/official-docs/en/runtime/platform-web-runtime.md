@@ -92,7 +92,7 @@ java -jar geelato-web-runtime/target/geelato-web-runtime-1.0.0-SNAPSHOT-exec.jar
 
 ## Relationship with `PlatformDesginer`
 
-`PlatformWebRuntime` and [PlatformDesginer](platform-desginer.md) are structurally identical shells. They:
+`PlatformWebRuntime` and [PlatformDesginer](../designer/platform-desginer.md) are structurally identical shells. They:
 
 - both extend `BootApplication`
 - both depend only on `geelato-web-platform`
@@ -103,7 +103,7 @@ There is no code-level "switch" between runtime and designer mode. The two jars 
 
 ## Suggested Reading
 
-- [PlatformDesginer](platform-desginer.md)
+- [PlatformDesginer](../designer/platform-desginer.md)
 - [Startup Process](../reference/startup-process.md)
 - [Runtime / Designer Deployment and Dependencies](../operations/runtime-designer-deployment.md)
 - [BOM and Starter](../reference/bom-and-starter.md)

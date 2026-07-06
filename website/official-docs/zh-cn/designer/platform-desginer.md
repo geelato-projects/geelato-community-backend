@@ -92,7 +92,7 @@ java -jar geelato-web-designer/target/geelato-web-designer-1.0.0-SNAPSHOT-exec.j
 
 ## 与 `PlatformWebRuntime` 的关系
 
-`PlatformDesginer` 与 [PlatformWebRuntime](platform-web-runtime.md) 是结构完全一致的两个应用壳。它们：
+`PlatformDesginer` 与 [PlatformWebRuntime](../runtime/platform-web-runtime.md) 是结构完全一致的两个应用壳。它们：
 
 - 都继承 `BootApplication`
 - 都只依赖 `geelato-web-platform`
@@ -105,8 +105,8 @@ java -jar geelato-web-designer/target/geelato-web-designer-1.0.0-SNAPSHOT-exec.j
 
 ## 推荐继续阅读
 
-- [PlatformWebRuntime](platform-web-runtime.md)
+- [PlatformWebRuntime](../runtime/platform-web-runtime.md)
 - [启动过程](../reference/startup-process.md)
 - [普通部署](../operations/runtime-designer-deployment.md)
 - [BOM 与 Starter](../reference/bom-and-starter.md)
-- [SecurityContext 生命周期](security-context-lifecycle.md)
+- [SecurityContext 生命周期](../runtime/security-context-lifecycle.md)

@@ -1,5 +1,13 @@
 # Unified Authentication Architecture
 
+> **This page describes the target-state architecture of the unified authentication center, not the current implementation details of one specific consumer.**
+>
+> For the current runtime behavior, see:
+>
+> - [Unified Authentication Overview](overview.md)
+> - [Authentication and Authorization](security-authentication.md)
+> - [lite-login Third-Party Integration](lite-login-integration.md)
+
 This page describes the overall architecture of the unified authentication center rather than the local integration details of one single consumer application.
 
 Here, the unified authentication center refers to the combination of:
@@ -42,19 +50,14 @@ The difference is not the authentication center itself, but the frontend facade 
 
 Both types finally return to the same `auth-server` authentication and token model.
 
-### Deployment Conclusion
+### Deployment Conclusion (Target State)
 
-In the short term, merged deployment is acceptable:
+The target-state deployment model is:
 
-- frontend sites can be hosted inside one platform host site
-- backend capabilities can be converged into `geelato-web-quickstart`
+- in the short term, merged deployment is acceptable
+- in the long term, independent deployment must be supported for `admin-sso`, `lite-sso`, `rt`, `dt`, and `auth-server`
 
-In the long term, independent deployment must be supported:
-
-- `admin-sso` can be standalone
-- `lite-sso` can be standalone
-- `rt` and `dt` can be standalone
-- `auth-server` can be standalone
+> This section is target-state only. The current merged-deployment status and what is actually deployed in `geelato-web-quickstart` today are described in [Runtime / Designer Deployment and Dependencies](../operations/runtime-designer-deployment.md).
 
 Regardless of the deployment topology, the authentication model remains unchanged:
 
@@ -240,9 +243,9 @@ Notes:
 
 ### `admin-sso`
 
-- `admin-sso` is a platform authentication facade and does not need to stay forever inside `auth-server/templates`
-- if it is currently hosted in templates, that is only one same-origin template mode
-- it can later evolve into a standalone frontend deployment as long as the login entry and redirect contract stay stable
+- `admin-sso` is a platform authentication facade
+- it is currently hosted inside `auth-server/templates` as one same-origin template mode, which is a deployment choice, not a permanent architecture rule
+- the target-state direction is to evolve it into a standalone frontend deployment as long as the login entry and redirect contract stay stable
 
 ### `lite-sso`
 
@@ -311,19 +314,25 @@ Recommended principles:
 - `lite-sso` handles the lightweight third-party facade
 - business systems handle their own business context
 
-### Easier Evolution
+### Evolution Direction
+
+The intended evolution is:
 
 - start with merged deployment and split later
 - onboard one third-party application first and reuse the pattern for others
 - adjust deployment topology without changing the authentication model
 
-## Minimum Acceptance Criteria
+> This section describes the intended direction. It is not a current capability. Whether a specific evolution step has been delivered is reflected in the [Operations](../operations/docker-deployment.md) and [Reference Manual](../reference/bom-and-starter.md) pages.
+
+## Minimum Acceptance Criteria (Target State)
 
 - `auth-server` is the only token issuer
 - platform applications integrate through `admin-sso`
 - third-party applications integrate through `lite-sso`
 - both platform backends and third-party backends directly consume the unified token from `auth-server`
 - `freight-portal` is treated only as an example third-party consumer, not as part of the authentication-center core
+
+> This is the target-state acceptance bar. Whether each item is fully delivered today is reflected in [Unified Authentication Overview](overview.md) and the [Operations](../operations/docker-deployment.md) pages.
 
 ## Suggested Next Reading
 

@@ -1,1 +1,3 @@
 cn.geelato.app.scaffold.boot.AppScaffoldAutoConfiguration
+cn.geelato.app.scaffold.boot.AppScaffoldApiPrefixAutoConfiguration
+cn.geelato.app.scaffold.boot.AppScaffoldEndpointPrunerAutoConfiguration

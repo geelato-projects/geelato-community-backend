@@ -29,12 +29,15 @@
 
 - 登录
 - MQL
+- ORM Fluent DSL（后端代码能力）
 - 组织
 - 用户
-- 字典
-- 上传
+- 角色/权限（RBAC）
+- 字典（维护 + 按 code 获取）
+- 文件上传/下载（支持 OSS 配置后启用）
+- Swagger（dev/test 默认开启；prod 默认关闭，可配置开启）
 
-设计时能力仍然留在 `geelato-web-platform`，不进入脚手架默认边界。
+默认启用 strict 收口：只暴露以上能力相关的接口，其余平台全量接口不会出现在路由与 Swagger 中。
 
 ## 交付形态
 
@@ -71,6 +74,10 @@
 
 - [基于 app-scaffold-starter 创建业务项目](app-scaffold-starter-project-guide.md)
 
+此外，Starter 的最小能力清单与配置项说明见：
+
+- `geelato-app-scaffold-starter/README.md`（仓库内文档）
+
 这篇专题页会完整覆盖：
 
 - 如何自己创建业务工程
@@ -89,4 +96,3 @@
 - [新项目最小接入](minimal-integration.md)
 - [默认实现与 Sample 定位](default-implementation-vs-sample.md)
 - [Runtime / Designer 部署与依赖](../operations/runtime-designer-deployment.md)
-

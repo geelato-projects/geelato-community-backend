@@ -1,6 +1,6 @@
 # Runtime / Designer Deployment and Dependencies
 
-After stage 8, the web platform has been split into one shared base module plus two runnable boot modules:
+The web platform is delivered as one shared base module plus two runnable boot modules:
 
 - `geelato-web-platform` (shared base: controllers/services/boot)
 - `geelato-web-runtime` (runtime boot)
@@ -16,7 +16,7 @@ The current relationship is:
 - `geelato-web-designer` depends on `geelato-web-platform`
 - no dependency between `runtime` and `designer`
 
-In the current phase (endpoint sets not yet split), both boot modules expose the full endpoint set from the shared base. The boundary will be reflected after endpoint-level split based on usage statistics.
+Both boot modules currently expose the full endpoint set from the shared base. The endpoint surface is not yet split at the shared-base level.
 
 ## Current Application Entries
 

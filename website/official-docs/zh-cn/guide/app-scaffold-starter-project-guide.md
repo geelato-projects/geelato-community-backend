@@ -224,9 +224,21 @@ geelato.upload.config-directory=/upload/config
 
 geelato.app.scaffold.enabled=true
 geelato.app.scaffold.auto-init-tables=true
+geelato.app.scaffold.strict=true
+geelato.app.scaffold.capabilities=login,mql,organization,user,dictionary,upload
 
 springdoc.api-docs.enabled=true
 springdoc.api-docs.path=/v3/api-docs
+geelato.app.scaffold.openapi-enabled=true
+geelato.app.scaffold.openapi-expose-in-prod=false
+
+# OSS（可选）
+# 配置齐全才会启用 /api/oss/* 路由
+# geelato.oss.accessKeyId=***
+# geelato.oss.accessKeySecret=***
+# geelato.oss.endPoint=oss-cn-xxx.aliyuncs.com
+# geelato.oss.bucketName=your-bucket
+# geelato.oss.region=cn-xxx
 
 geelato.meta.scan-package-names=cn.geelato,com.acme.order
 geelato.graal.scan-package-names=cn.geelato,com.acme.order
@@ -332,6 +344,81 @@ starter 已提供通用就绪检查接口：
 - `POST /api/security/user/pageQuery`
 
 如果这些入口可访问，说明脚手架内置的运行时能力已经被你的业务工程成功消费。
+
+### 4.4 基础能力如何使用（逐项）
+
+#### 4.4.1 登录鉴权（JWT + OAuth2）
+**JWT 登录**
+- 接口：`POST /api/user/login`
+- 返回：`token`
+- 后续调用 Header：
+  - `Authorization: JWTBearer {token}`
+
+**OAuth2 登录**
+- 接口：`POST /api/oauth2/login`
+- 刷新：`POST /api/oauth2/refreshToken`
+- 后续调用 Header：
+  - `Authorization: Bearer {accessToken}`
+
+#### 4.4.2 文件上传 / 下载（含 OSS）
+**上传**
+- `POST /api/upload/file`（multipart，参数 `file`）
+
+**下载文件**
+- `GET /api/resources/file`
+
+**下载配置（常用于登录前加载站点配置）**
+- `GET /api/resources/json?fileName={hostname}_{locale}.config`
+
+**OSS 管理（配置齐全才启用）**
+- `/api/oss/*`
+
+#### 4.4.3 MQL（通用 CRUD）
+- 列表：`POST /api/meta/list`
+- 保存：`POST /api/meta/save/{biz}`
+- 删除：`POST /api/meta/delete/{biz}/{id}`
+
+请求示例（查询）：
+
+```json
+{
+  "platform_user": {
+    "@fs": "id,loginName,name",
+    "@p": "1,10",
+    "@order": "createAt|-"
+  }
+}
+```
+
+#### 4.4.4 ORM Fluent DSL（后端代码）
+该能力是“写 Java 业务代码时的数据库访问入口”，不额外暴露 HTTP 接口。推荐在业务 Service 中使用：
+
+```java
+List<Map<String, Object>> users = MetaFactory.query("User")
+        .select(new String[]{"id", "name"})
+        .page(1, 10)
+        .list();
+```
+
+#### 4.4.5 字典（维护 + 获取）
+- 维护字典：`/api/dict/*`
+- 维护字典项：`/api/dictItem/*`
+- 按 code 获取字典项：`GET /api/dictionary/{code}`
+
+#### 4.4.6 组织 / 用户 / RBAC
+- 组织：`/api/security/org/*`
+- 用户：`/api/security/user/*`
+- 角色：`/api/security/role/*`
+- 权限：`/api/security/permission/*`
+
+#### 4.4.7 Swagger（快速查看服务接口）
+- OpenAPI JSON：`GET /v3/api-docs`
+- Swagger UI：`/swagger-ui/index.html`
+- prod 默认关闭：`geelato.app.scaffold.openapi-expose-in-prod=false`
+
+#### 4.4.8 快速开发 HTTP 服务
+- 新增你自己的 Controller/Service 放在业务包下（并确保 `scanBasePackages`、`geelato.meta.scan-package-names` 包含业务包）
+- 推荐业务 Controller 使用 `@ApiRestController`，从而自动具备 `/api` 前缀与统一 JSON 约定
 
 ## 5. 开始做业务：新增实体与建表脚本放哪里
 

@@ -66,7 +66,9 @@ The official site now includes a static API catalog grouped by module:
 
 This catalog pulls the currently generated controller documents from `SrvExplain/` into the API chapter for easier browsing and navigation.
 
-## Migration Direction
+## Migration Direction (Evolution, Not Current State)
+
+> The following is the target-state direction for the API documentation model. It is not a description of the current delivery.
 
 The long-term direction is not to remove `SrvExplain`, but to reposition it as:
 

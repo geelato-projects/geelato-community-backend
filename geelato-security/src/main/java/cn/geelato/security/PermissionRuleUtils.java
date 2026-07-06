@@ -19,11 +19,11 @@ public class PermissionRuleUtils {
     /**
      * 替换权限规则中的用户变量
      * 仅支持获取指定的安全字段，防止敏感信息泄露
-     * 
+     * <p>
      * 支持的字段（严格驼峰命名）：
      * - 用户基本字段：userId, orgId, defaultOrgId, cooperatingOrgId, deptId, buId, weixinUnionId, weixinWorkUserId, tenantCode
      * - defaultOrg对象字段：defaultOrg.orgId, defaultOrg.deptId, defaultOrg.companyId, defaultOrg.extendId
-     * 
+     * <p>
      * 使用示例：
      * - #currentUser.userId# -> '123456'
      * - #currentUser.defaultOrg.orgId# -> '789'

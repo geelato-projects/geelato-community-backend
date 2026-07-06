@@ -19,6 +19,7 @@ public class AppScaffoldAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(OpenAPI.class)
+    @ConditionalOnProperty(prefix = "geelato.app.scaffold", name = "openapi-enabled", havingValue = "true", matchIfMissing = true)
     public OpenAPI appScaffoldOpenApi() {
         return new OpenAPI().info(new Info()
                 .title("Geelato App Scaffold API")

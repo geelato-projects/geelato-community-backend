@@ -1,5 +1,13 @@
 # 统一认证中心架构设计
 
+> **本页描述的是统一认证中心的目标态架构，而不是某一接入方在当前实现中的局部行为。**
+>
+> 当前运行时行为请参考：
+>
+> - [统一认证总览](overview.md)
+> - [认证鉴权](security-authentication.md)
+> - [lite-login 第三方应用接入](lite-login-integration.md)
+
 这一页描述统一认证中心的整体架构，而不是单个接入应用的局部接入说明。
 
 这里的统一认证中心，指以下整体能力的组合：
@@ -42,19 +50,14 @@
 
 两类应用最终都回到同一个 `auth-server` 认证与 token 体系。
 
-### 部署结论
+### 部署结论（目标态）
 
-短期可以采用合并部署：
+目标态部署模型如下：
 
-- 前端站点可容纳在平台任一宿主站点中
-- 后端统一收口到 `geelato-web-quickstart`
+- 短期可以采用合并部署
+- 长期必须支持 `admin-sso`、`lite-sso`、`rt`、`dt`、`auth-server` 各自独立部署
 
-长期必须支持独立部署：
-
-- `admin-sso` 可独立
-- `lite-sso` 可独立
-- `rt`、`dt` 可独立
-- `auth-server` 可独立
+> 本节为目标态描述。`geelato-web-quickstart` 当前实际的合并部署状态以 [普通部署](../operations/runtime-designer-deployment.md) 为准。
 
 无论部署拓扑如何变化，认证模型保持不变：
 
@@ -240,9 +243,9 @@
 
 ### `admin-sso`
 
-- `admin-sso` 是平台认证门面，不一定必须永远放在 `auth-server/templates` 中
-- 当前若放在 `templates`，属于一种同源模板模式
-- 后续可演进为独立前端部署，只要登录入口与回跳协议保持一致即可
+- `admin-sso` 是平台认证门面
+- 它当前被托管在 `auth-server/templates` 目录中作为同源模板模式，这只是部署选择，不是架构永久规则
+- 目标态方向是演化为独立前端部署，只要登录入口与回跳协议保持一致即可
 
 ### `lite-sso`
 
@@ -311,19 +314,25 @@
 - `lite-sso` 管第三方轻量门面
 - 业务系统管自己的业务上下文
 
-### 便于演进
+### 演进方向
+
+目标态的演进方向是：
 
 - 可先合并部署，再逐步拆分
 - 可先接入单个第三方应用，再复制到其他第三方
 - 可在不改变认证模型的前提下调整部署方式
 
-## 最小验收标准
+> 本节为方向性描述，不代表已落地的能力。具体某一步是否已经交付，应以 [部署](../operations/docker-deployment.md) 和 [参考手册](../reference/bom-and-starter.md) 章节为准。
+
+## 最小验收标准（目标态）
 
 - `auth-server` 是唯一 token 签发方
 - 平台应用通过 `admin-sso` 接入统一认证中心
 - 第三方应用通过 `lite-sso` 接入统一认证中心
 - 平台后端与第三方后端都直接消费 `auth-server` 统一 token
 - `freight-portal` 只是第三方接入示例，不再被视作认证中心主体部分
+
+> 以上为目标态验收基线。各项是否已落地，请以 [统一认证总览](overview.md) 与 [部署](../operations/docker-deployment.md) 章节为准。
 
 ## 推荐继续阅读
 

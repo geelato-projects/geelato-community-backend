@@ -9,6 +9,21 @@ const sidebars: SidebarsConfig = {
       items: [
         {
           type: 'doc',
+          id: 'guide/quick-start',
+          label: 'Quick Start',
+        },
+        {
+          type: 'doc',
+          id: 'guide/minimal-integration',
+          label: 'Minimal Integration',
+        },
+        {
+          type: 'doc',
+          id: 'guide/default-implementation-vs-sample',
+          label: 'Default Implementations vs Sample',
+        },
+        {
+          type: 'doc',
           id: 'guide/sample-quickstart',
           label: 'Sample Quickstart',
         },
@@ -20,6 +35,11 @@ const sidebars: SidebarsConfig = {
               type: 'doc',
               id: 'guide/app-scaffold',
               label: 'Project Guide',
+            },
+            {
+              type: 'doc',
+              id: 'guide/app-scaffold-starter-project-guide',
+              label: 'Starter Project Guide',
             },
             {
               type: 'doc',
@@ -50,6 +70,11 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'ORM Library',
       items: [
+        {
+          type: 'doc',
+          id: 'orm/overview',
+          label: 'ORM Overview',
+        },
         {
           type: 'doc',
           id: 'orm/annotations',

@@ -1,31 +1,110 @@
 # PlatformWebRuntime
 
-`PlatformWebRuntime` is the runtime-focused application layer for the web platform split.
+`PlatformWebRuntime` is the runtime application shell of the Geelato web platform. It is the runnable entry that boots the shared `geelato-web-platform` base for business-execution scenarios.
 
-## Positioning
+## What It Is
 
-It represents the subset that should stay available for business execution scenarios, such as:
+`PlatformWebRuntime` is a Spring Boot main class:
 
-- runtime-facing HTTP endpoints
-- runtime deployment wiring
-- business execution support
-- selected operational capabilities
+- package: `cn.geelato.web.runtime`
+- class: `cn.geelato.web.runtime.PlatformWebRuntime`
+- main class: `cn.geelato.web.runtime.PlatformWebRuntime`
+- declared in module: `geelato-web-runtime`
 
-## What Belongs Here
+The full source is:
 
-- runtime authentication entry points
-- file and attachment runtime access
-- message, notice, resolve, OCR, AI, and SSE runtime-facing features
-- shared runtime infrastructure and startup chain
+```java
+@SpringBootApplication(scanBasePackages = {"cn.geelato"})
+@EnableConfigurationProperties
+@EnableCaching
+@EnableAsync(proxyTargetClass = true)
+public class PlatformWebRuntime extends BootApplication {
 
-## What Should Stay Out
+    public static void main(String[] args) {
+        SpringApplication.run(PlatformWebRuntime.class, args);
+    }
+}
+```
 
-- metadata definition management
-- table and model design tooling
-- script design and editing
-- package and publish tooling
-- admin-side design governance
+It extends `cn.geelato.web.platform.boot.BootApplication`, which is the shared Geelato runtime bootstrap coordinator (see [Startup Process](../reference/startup-process.md) for the full chain).
 
-## Runtime Rule
+## Module Coordinates
 
-The runtime application should be deployable without requiring the full designer-side capability set.
+| Item | Value |
+|---|---|
+| Maven `artifactId` | `geelato-web-runtime` |
+| Module path | `geelato-community/geelato-web-runtime` |
+| Packaging | `jar` |
+| `spring-boot-maven-plugin` `mainClass` | `cn.geelato.web.runtime.PlatformWebRuntime` |
+| `spring-boot-maven-plugin` `classifier` | `exec` |
+| Direct dependencies | `geelato-web-platform`, `spring-boot-starter-test` (test scope) |
+
+The module deliberately has only one direct dependency (`geelato-web-platform`). All platform capabilities come transitively from the shared base.
+
+## Default Configuration
+
+`geelato-web-runtime/src/main/resources/application.properties`:
+
+```properties
+spring.application.name=geelato-web-runtime
+logging.level.root=INFO
+logging.level.cn.geelato=INFO
+```
+
+The shell currently overrides only the application name and log levels. All other settings (datasource, upload, security, plugin directory, etc.) come from the shared base or the host project that consumes this shell.
+
+## What It Provides
+
+When the shell starts, it brings up everything the shared base declares, including:
+
+- the `geelato-web-platform` controllers and services
+- the default `BootApplication` startup chain (datasource, SQL/Graal scripts, environment cache)
+- the framework starter wiring (`geelato-framework-starter`)
+- the metadata loading layer (`geelato-meta`)
+- the plugin runtime (`pf4j` + `geelato-plugins/geelato-plugin-all`)
+- the OSS, package, security, and Redis integrations declared by the shared base
+
+It enables Spring caching and async execution with CGLIB proxying (`@EnableAsync(proxyTargetClass = true)`) and exposes `@ConfigurationProperties` beans.
+
+## Relationship with `BootApplication`
+
+`PlatformWebRuntime` does not duplicate any startup work. It only sets the `cn.geelato` scan base and enables caching, async, and configuration properties. The actual startup work happens in `BootApplication.run(...)`:
+
+1. `DataSourceManager.parseDataSourceMeta(dao)`
+2. SQL / DB script loading (exploded mode or fat-jar mode)
+3. Graal service and variable scanning
+4. `EnvManager.EnvInit()`
+
+See [Startup Process](../reference/startup-process.md) for details.
+
+## How to Run
+
+```bash
+mvn -pl geelato-web-runtime spring-boot:run
+```
+
+or build the runnable jar:
+
+```bash
+mvn -pl geelato-web-runtime clean package
+java -jar geelato-web-runtime/target/geelato-web-runtime-1.0.0-SNAPSHOT-exec.jar
+```
+
+## Relationship with `PlatformDesginer`
+
+`PlatformWebRuntime` and [PlatformDesginer](platform-desginer.md) are structurally identical shells. They:
+
+- both extend `BootApplication`
+- both depend only on `geelato-web-platform`
+- both have the same Spring annotations
+- differ only in `spring.application.name` and the main class FQN
+
+There is no code-level "switch" between runtime and designer mode. The two jars are two independent deployable entry points. A host project picks one of them as its `main` class. Splitting endpoint surface between the two is not yet part of the shared base; both shells currently expose the full endpoint set from `geelato-web-platform`.
+
+## Suggested Reading
+
+- [PlatformDesginer](platform-desginer.md)
+- [Startup Process](../reference/startup-process.md)
+- [Runtime / Designer Deployment and Dependencies](../operations/runtime-designer-deployment.md)
+- [BOM and Starter](../reference/bom-and-starter.md)
+- [SecurityContext Lifecycle](security-context-lifecycle.md)

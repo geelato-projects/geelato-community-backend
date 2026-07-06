@@ -9,6 +9,21 @@ const sidebars: SidebarsConfig = {
       items: [
         {
           type: 'doc',
+          id: 'guide/quick-start',
+          label: '快速开始',
+        },
+        {
+          type: 'doc',
+          id: 'guide/minimal-integration',
+          label: '新项目最小接入',
+        },
+        {
+          type: 'doc',
+          id: 'guide/default-implementation-vs-sample',
+          label: '默认实现与 Sample 定位',
+        },
+        {
+          type: 'doc',
           id: 'guide/sample-quickstart',
           label: 'Sample Quickstart',
         },
@@ -50,6 +65,11 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'ORM库',
       items: [
+        {
+          type: 'doc',
+          id: 'orm/overview',
+          label: 'ORM 总览',
+        },
         {
           type: 'doc',
           id: 'orm/annotations',

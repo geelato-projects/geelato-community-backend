@@ -16,6 +16,12 @@ public class AppScaffoldProperties {
 
     private boolean autoInitTables = true;
 
+    private boolean strict = true;
+
+    private boolean openapiEnabled = true;
+
+    private boolean openapiExposeInProd = false;
+
     private List<String> capabilities = new ArrayList<>(List.of(
             "login",
             "mql",
@@ -24,5 +30,7 @@ public class AppScaffoldProperties {
             "dictionary",
             "upload"
     ));
+
+    private List<String> extraControllers = new ArrayList<>();
 
 }

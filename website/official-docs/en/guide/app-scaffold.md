@@ -1,4 +1,4 @@
-﻿# App Scaffold
+# App Scaffold
 
 `geelato-app-scaffold` is the official fat scaffold for starting business applications with ready-to-use runtime services while keeping the framework layering intact.
 
@@ -29,12 +29,15 @@ The scaffold assembles the runtime base services from `geelato-web-runtime`, inc
 
 - login
 - MQL
+- ORM Fluent DSL (backend code capability)
 - organization
 - user
-- dictionary
-- upload
+- RBAC (role/permission and mappings)
+- dictionary (maintenance + fetch by code)
+- file upload / download (OSS enabled after configuration)
+- Swagger (enabled by default in dev/test; disabled by default in prod, configurable)
 
-Design-time capabilities remain in `geelato-web-platform` and are not part of the scaffold's default boundary.
+By default, strict pruning is enabled: only the controllers related to the above capabilities are exposed. Other platform endpoints will not appear in routing and Swagger.
 
 ## Delivery Shape
 
@@ -66,15 +69,13 @@ This means new business projects should prefer:
 - a shared starting point for developers and AI-assisted delivery
 
 ## How to Start
+For creating a real business project (not just running the sample), see:
 
-The operational source of truth stays in `../geelato-hello-example/geelato-app-scaffold/README.md`, including:
+- [Create a Business Project Based on app-scaffold-starter](app-scaffold-starter-project-guide.md)
 
-- database initialization
-- platform schema and resource initialization
-- configuration setup
-- build and startup
-- extension strategy
-- dependency upgrade strategy
+Starter-level capability list and configuration is also documented in:
+
+- `geelato-app-scaffold-starter/README.md` (in-repo documentation)
 
 ## Suggested Reading
 

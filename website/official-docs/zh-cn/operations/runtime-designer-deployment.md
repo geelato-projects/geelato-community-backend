@@ -1,6 +1,6 @@
 # Runtime / Designer 部署与依赖
 
-阶段 8 完成后，Web 平台已经拆分为一个共享底座模块 + 两个可发布的启动壳模块：
+Web 平台以"一个共享底座 + 两个可发布的启动壳"的方式交付：
 
 - `geelato-web-platform`（共享底座：controllers/services/boot）
 - `geelato-web-runtime`（运行时启动壳）
@@ -16,7 +16,7 @@
 - `geelato-web-designer` 依赖 `geelato-web-platform`
 - `runtime` 与 `designer` 之间不建立依赖关系
 
-当前阶段（接口集合尚未拆分）两个启动壳都会暴露底座中的全量接口；后续将结合统计结果再按模块拆分接口集合。
+当前两个启动壳都会暴露底座中的全量接口。共享底座的接口集合尚未拆分。
 
 ## 当前启动入口
 

@@ -53,6 +53,7 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
                 // 登录接口
                 .excludePathPatterns(urlPrefix + "/oauth2/login")
                 .excludePathPatterns(urlPrefix + "/oauth2/refreshToken")
+                .excludePathPatterns(urlPrefix + "/auth/login")
                 // 静态资源
                 .excludePathPatterns("/assets/**")
                 // 错误页面

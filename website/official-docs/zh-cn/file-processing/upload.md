@@ -297,6 +297,7 @@ OSS 模式下：
 - `POST /api/attach/pageQuery`
 - `DELETE /api/attach/remove/{id}`
 - `POST /api/attach/storage/{type}`
+- `GET /api/resources/file?id={id}&isPreview=true`
 
 其中：
 
@@ -306,6 +307,9 @@ OSS 模式下：
   - 复制一份新文件
 - `quote`
   - 复用已有文件内容，仅新建引用记录
+- `resources/file`
+  - 用附件 `id` 获取文件内容
+  - `isPreview=true` 时按预览方式输出（通常用于图片/PDF 等）
 
 ## 使用建议
 

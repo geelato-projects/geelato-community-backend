@@ -226,6 +226,12 @@ After upload, attachment metadata can be managed through `AttachController`, inc
 - `POST /api/attach/pageQuery`
 - `DELETE /api/attach/remove/{id}`
 - `POST /api/attach/storage/{type}`
+- `GET /api/resources/file?id={id}&isPreview=true`
+
+Notes:
+
+- `resources/file` returns the file content by attachment `id`
+- `isPreview=true` typically returns preview-friendly content type for images/PDFs
 
 ## Suggested Reading
 

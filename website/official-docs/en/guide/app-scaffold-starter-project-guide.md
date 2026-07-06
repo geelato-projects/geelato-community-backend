@@ -98,7 +98,22 @@ geelato.graal.scan-package-names=cn.geelato,com.acme.order
 
 ### 5.2 File upload / download (OSS optional)
 - Upload: `POST /api/upload/file`
-- Download file: `GET /api/resources/file`
+
+Upload example (the response is an `Attachment`, keep the returned `id` for later view/download):
+
+```bash
+curl -X POST "http://localhost:8088/api/upload/file" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  -F "file=@D:/tmp/demo.png"
+```
+
+How to view after upload:
+
+- View attachment metadata: `GET /api/attach/get/{id}`
+- Preview / download file: `GET /api/resources/file?id={id}&isPreview=true`
+
+Download file: `GET /api/resources/file`
 - Download JSON config: `GET /api/resources/json?fileName=...`
 - OSS management (only when OSS enabled): `/api/oss/*`
 
@@ -111,14 +126,87 @@ geelato.graal.scan-package-names=cn.geelato,com.acme.order
 Use `MetaFactory` in your business services. See `ORM / Fluent DSL` docs in this site.
 
 ### 5.5 Dictionary
-- Maintain dictionaries: `/api/dict/*`, `/api/dict/item/*`
-- Fetch by code: `GET /api/dictionary/{code}`
+The scaffold initializes a demo dictionary when `auto-init-tables=true` (so you can verify the baseline data quickly):
+
+- dictCode: `demo_status`
+- fetch: `GET /api/dictionary/demo_status`
+
+How to add a dictionary:
+
+- Create or update dictionary: `POST /api/dict/createOrUpdate`
+
+```bash
+curl -X POST "http://localhost:8088/api/dict/createOrUpdate" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  --data "{\"dictCode\":\"order_status\",\"dictName\":\"Order Status\",\"enableStatus\":1,\"tenantCode\":\"geelato\"}"
+```
+
+How to add dictionary items:
+
+- Create or update dictionary item: `POST /api/dict/item/createOrUpdate`
+
+```bash
+curl -X POST "http://localhost:8088/api/dict/item/createOrUpdate" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  --data "{\"dictId\":\"{dictId}\",\"itemCode\":\"PAID\",\"itemName\":\"Paid\",\"seqNo\":1,\"enableStatus\":1,\"tenantCode\":\"geelato\"}"
+```
+
+How to verify:
+
+- Fetch items by dict code (tree): `GET /api/dict/item/queryItemByDictCode/{dictCode}`
+- Fetch by code (lightweight API): `GET /api/dictionary/{code}`
 
 ### 5.6 Organization / User / RBAC
 - Org: `/api/security/org/*`
 - User: `/api/security/user/*`
 - Role: `/api/security/role/*`
 - Permission: `/api/security/permission/*`
+
+The scaffold initializes a demo organization and binds the bootstrap user `gl_user` to it (default org):
+
+- orgId: `9000000000000000101`
+- orgName: `示例组织`
+
+How to add an org:
+
+- `POST /api/security/org/createOrUpdate`
+
+```bash
+curl -X POST "http://localhost:8088/api/security/org/createOrUpdate" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  --data "{\"pid\":\"9000000000000000101\",\"code\":\"DEV\",\"name\":\"R&D\",\"type\":\"department\",\"category\":\"inside\",\"tenantCode\":\"geelato\"}"
+```
+
+How to add a user:
+
+- `POST /api/security/user/createOrUpdate` (returns `plainPassword` for first login)
+
+```bash
+curl -X POST "http://localhost:8088/api/security/user/createOrUpdate" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  --data "{\"loginName\":\"tom\",\"name\":\"Tom\",\"orgId\":\"{orgId}\",\"tenantCode\":\"geelato\",\"enableStatus\":1}"
+```
+
+How to grant role to user (minimal RBAC loop):
+
+- Create role: `POST /api/security/role/createOrUpdate`
+- Bind user-role: `POST /api/security/role/user/insert`
+
+```bash
+curl -X POST "http://localhost:8088/api/security/role/user/insert" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  -H "Authorization: JWTBearer {token}" \
+  --data "{\"userId\":\"{userId}\",\"roleId\":\"{roleId}\",\"tenantCode\":\"geelato\"}"
+```
 
 ### 5.7 Swagger (OpenAPI)
 - `/v3/api-docs`

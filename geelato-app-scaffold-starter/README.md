@@ -1,84 +1,62 @@
 # geelato-app-scaffold-starter
 
-该 Starter 用于让外部用户基于 Geelato 快速初始化一个可生产开发的后端工程，并且默认只暴露“脚手架最小能力集”，避免引入 `geelato-web-platform` 的全量接口面。
+该 Starter 用于让开发者基于 Geelato 快速初始化一个可生产开发的后端工程。
+它默认只暴露“脚手架最小能力集”，剔除了冗余的低代码平台配置接口，让工程保持极简，同时开箱即用地提供了一套企业级后端必备的基础设施。
 
-## 开箱即用能力（默认开启）
-- 登录鉴权：JWT + OAuth2
-- 文件上传/下载：支持 OSS（配置后启用）
-- MQL：`/api/meta/*`（runtime 版）
-- ORM Fluent DSL：通过 `geelato-orm` 在业务代码中直接使用 `MetaFactory`
-- 字典：Dict/DictItem + Dictionary（按 code 获取字典项）
-- 组织用户 + RBAC：Org/User/Role/Permission 及映射
-- Swagger：dev/test 默认开启；prod 默认关闭（可配置开启）
-- 快速开发 HTTP 服务：开发者可直接新增 Controller/Service，不与平台能力耦合
+---
 
-## 使用方式（逐项）
-### 0. 通用约定
-- BaseUrl：`http://localhost:{port}`
-- 统一前缀：`/api`
-- 常用 Header：
-  - `Tenant-Code`: 租户编码（建议始终传）
-  - `App-Id`: 应用标识（如你启用了应用隔离）
-  - `Authorization`: 登录后携带
-    - JWT：`JWTBearer {token}`
-    - OAuth2：`Bearer {accessToken}`
+## 一、 脚手架开箱即用能力总览
 
-### 1. 登录鉴权
-**JWT 登录**
-- 接口：`POST /api/user/login`
-- 说明：该接口标注 `@IgnoreVerify`，不需要 `Authorization`
-- 示例：
+引入本 Starter 后，你的工程将自动具备以下 7 大核心能力：
 
+1. **🔐 登录与鉴权**：内置 JWT 本地登录与 OAuth2 授权码登录，自动拦截并解析 Token。
+2. **📁 文件处理与 OSS**：提供统一的本地/OSS 文件上传、下载、预览接口。
+3. **🔍 MQL 动态查询**：通过 `/api/meta/*` 接口，前端可直接发送 JSON 动态查询数据库。
+4. **⚙️ ORM Fluent DSL**：后端业务代码可直接使用 `MetaFactory` 进行防 SQL 注入的链式 CRUD 操作。
+5. **📖 数据字典**：内置字典项的创建、维护与按 Code 快速查询能力。
+6. **👥 组织架构与 RBAC**：内置标准的用户、组织、角色、权限模型及分配接口。
+7. **📚 OpenAPI (Swagger)**：默认在 dev/test 环境自动生成并暴露接口文档。
+
+---
+
+## 二、 通用调用约定
+
+在调用以下所有能力之前，请注意基础约定：
+
+- **统一前缀**：所有脚手架接口均以 `/api` 开头。
+- **租户隔离**：建议在所有请求头中携带 `Tenant-Code`（如未提供，默认为 `geelato`）。
+- **认证凭证**：登录成功后，需在请求头携带 `Authorization`。
+  - JWT 登录：`Authorization: JWTBearer {token}`
+  - OAuth2 登录：`Authorization: Bearer {accessToken}`
+
+---
+
+## 三、 核心能力使用指南
+
+### 1. 登录与鉴权能力
+
+脚手架默认开放了标准的登录入口。
+
+**使用方式：JWT 密码登录**
+无需携带 Token，直接请求获取：
 ```bash
 curl -X POST "http://localhost:8088/api/user/login" \
   -H "Content-Type: application/json" \
   -H "Tenant-Code: geelato" \
   --data "{\"username\":\"gl_user\",\"password\":\"***\"}"
 ```
+*返回的 token 用于后续所有业务请求。*
 
-返回的 `token` 用于后续请求：
+### 2. MQL 动态查询能力
 
-```bash
-Authorization: JWTBearer {token}
-```
+允许前端通过 JSON 定义查询结构，直接获取所需数据，无需后端额外编写 Controller/Mapper。
 
-**OAuth2 登录**
-- 接口：`POST /api/oauth2/login`
-- 刷新：`POST /api/oauth2/refreshToken`
+**使用方式：前端请求 MQL 接口**
+- **列表查询**：`POST /api/meta/list`
+- **单条保存**：`POST /api/meta/save/{biz}`
+- **单条删除**：`POST /api/meta/delete/{biz}/{id}`
 
-### 2. 文件上传 / 下载（含 OSS）
-**上传**
-- 接口：`POST /api/upload/file`（multipart）
-
-上传示例（上传后会返回 `Attachment`，其中 `id` 用于后续查看/下载）：
-
-```bash
-curl -X POST "http://localhost:8088/api/upload/file" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}" \
-  -F "file=@D:/tmp/demo.png"
-```
-
-**上传后如何查看**
-- 查看附件元数据：`GET /api/attach/get/{id}`
-- 预览/下载文件：`GET /api/resources/file?id={id}&isPreview=true`
-
-**下载文件**
-- 接口：`GET /api/resources/file`
-
-**下载配置（常用于登录前加载站点配置）**
-- 接口：`GET /api/resources/json?fileName={...}`
-
-**OSS 管理**
-- 接口：`/api/oss/*`（配置齐全才会出现路由）
-
-### 3. MQL（MetaRuntimeController）
-- 列表：`POST /api/meta/list`
-- 保存：`POST /api/meta/save/{biz}`
-- 删除：`POST /api/meta/delete/{biz}/{id}`
-
-请求体示例（查询）：
-
+*查询示例（获取用户列表，只返回指定字段并排序）：*
 ```json
 {
   "platform_user": {
@@ -89,163 +67,83 @@ curl -X POST "http://localhost:8088/api/upload/file" \
 }
 ```
 
-### 4. ORM Fluent DSL（后端代码能力）
-参考文档：[backend-fluent-dsl-guide.md](file:///d:/geelato/geelato-enterprise/geelato-community/docs/orm/backend-fluent-dsl-guide.md)
+### 3. ORM Fluent DSL 能力
 
-最小示例：
+后端开发人员在编写自定义业务逻辑时，不再需要写繁琐的 SQL 或 MyBatis XML。
 
+**使用方式：在 Service 中直接调用 MetaFactory**
 ```java
+// 查询示例：获取第 1 页的 10 个用户，仅返回 id 和 name 字段
 List<Map<String, Object>> users = MetaFactory.query("User")
         .select(new String[]{"id", "name"})
         .page(1, 10)
         .list();
 ```
 
-### 5. 字典（维护 + 获取）
-- 初始化示例字典（自动建表时写入）：
-  - dictCode：`demo_status`
-  - 获取：`GET /api/dictionary/demo_status`
+### 4. 数据字典能力
 
-**如何添加字典**
-- 创建/更新字典：`POST /api/dict/createOrUpdate`
+提供标准的数据字典维护体系，支持树形或列表结构。
 
-```bash
-curl -X POST "http://localhost:8088/api/dict/createOrUpdate" \
-  -H "Content-Type: application/json" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}" \
-  --data "{\"dictCode\":\"order_status\",\"dictName\":\"订单状态\",\"enableStatus\":1,\"tenantCode\":\"geelato\"}"
-```
+**使用方式：维护与查询字典**
+- **创建字典**：`POST /api/dict/createOrUpdate`
+- **创建字典项**：`POST /api/dict/item/createOrUpdate`
+- **业务查询**：前端通过 `GET /api/dictionary/{code}`（例如 `GET /api/dictionary/order_status`）即可快速拉取字典项用于下拉框渲染。
 
-**如何添加字典项**
-- 创建/更新字典项：`POST /api/dict/item/createOrUpdate`
+### 5. 组织、用户与 RBAC 能力
 
-```bash
-curl -X POST "http://localhost:8088/api/dict/item/createOrUpdate" \
-  -H "Content-Type: application/json" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}" \
-  --data "{\"dictId\":\"{dictId}\",\"itemCode\":\"PAID\",\"itemName\":\"已支付\",\"seqNo\":1,\"enableStatus\":1,\"tenantCode\":\"geelato\"}"
-```
+内置了一套完整的权限管理 API。
 
-**如何验证**
-- 按字典编码获取树形字典项：`GET /api/dict/item/queryItemByDictCode/{dictCode}`
-- 按 code 获取字典项（简化接口）：`GET /api/dictionary/{code}`
-
-### 6. 组织 / 用户 / RBAC
-- 组织：`/api/security/org/*`
-- 用户：`/api/security/user/*`
-- 角色：`/api/security/role/*`
-- 权限：`/api/security/permission/*`
-- 用户-角色、角色-权限等映射：`/api/security/role/*`、`/api/security/org/*` 对应映射接口
-
-初始化示例组织（自动建表时写入）：
-- orgId：`9000000000000000101`
-- orgName：`示例组织`
-- 初始化用户 `gl_user` 会被设置为该组织的默认组织（写入 `platform_org_r_user`）
-
-**如何添加组织**
-- 创建组织：`POST /api/security/org/createOrUpdate`
-
-```bash
-curl -X POST "http://localhost:8088/api/security/org/createOrUpdate" \
-  -H "Content-Type: application/json" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}" \
-  --data "{\"pid\":\"9000000000000000101\",\"code\":\"DEV\",\"name\":\"研发部\",\"type\":\"department\",\"category\":\"inside\",\"tenantCode\":\"geelato\"}"
-```
-
-验证组织树：
-
-```bash
-curl -X GET "http://localhost:8088/api/security/org/queryTree" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}"
-```
-
-**如何添加用户**
-- 创建用户：`POST /api/security/user/createOrUpdate`（会返回 `plainPassword`，请首次登录后修改/重置）
-
-```bash
-curl -X POST "http://localhost:8088/api/security/user/createOrUpdate" \
-  -H "Content-Type: application/json" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}" \
-  --data "{\"loginName\":\"tom\",\"name\":\"Tom\",\"orgId\":\"{orgId}\",\"tenantCode\":\"geelato\",\"enableStatus\":1}"
-```
-
-**如何给用户分配角色（RBAC）**
-- 创建角色：`POST /api/security/role/createOrUpdate`
-- 绑定用户与角色：`POST /api/security/role/user/insert`
-
+**使用方式：用户与角色分配**
+- **创建组织**：`POST /api/security/org/createOrUpdate`
+- **创建用户**：`POST /api/security/user/createOrUpdate`
+- **分配角色**：`POST /api/security/role/user/insert`
+*示例：为新员工绑定研发角色*
 ```bash
 curl -X POST "http://localhost:8088/api/security/role/user/insert" \
   -H "Content-Type: application/json" \
-  -H "Tenant-Code: geelato" \
   -H "Authorization: JWTBearer {token}" \
-  --data "{\"userId\":\"{userId}\",\"roleId\":\"{roleId}\",\"tenantCode\":\"geelato\"}"
+  --data "{\"userId\":\"123\",\"roleId\":\"456\",\"tenantCode\":\"geelato\"}"
 ```
 
-### 7. Swagger（OpenAPI）
-- OpenAPI JSON：`GET /v3/api-docs`
-- Swagger UI：`/swagger-ui/index.html`
+### 6. 文件处理与 OSS 能力
 
-### 8. 快速开发 HTTP 服务
-- 新增你自己的 Controller/Service 放在业务工程包下（确保 `scanBasePackages` 包含业务包）
-- 对外接口建议同样使用 `@ApiRestController`，从而自动具备：
-  - `/api` 前缀
-  - 统一 JSON produces 约定
+统一处理前端的文件上传与下载。如果配置了阿里云等对象存储，会自动切换至 OSS 模式。
 
-## 接口前缀
-- 本 Starter 会对 `@ApiRestController / @DesignTimeApiRestController / @ApiRuntimeRestController` 统一添加 `/api` 前缀。
+**使用方式：文件上传**
+- **接口**：`POST /api/upload/file` (multipart)
+```bash
+curl -X POST "http://localhost:8088/api/upload/file" \
+  -H "Authorization: JWTBearer {token}" \
+  -F "file=@D:/tmp/demo.png"
+```
+*上传成功后会返回包含附件 `id` 的元数据，前端可使用 `GET /api/resources/file?id={id}&isPreview=true` 进行图片预览。*
 
-## 能力收口（strict 模式）
-默认开启 strict 模式，Starter 会在 Spring 容器初始化早期移除非最小能力集的 platform Controller BeanDefinition，从而达到：
-- 路由不可访问（404）
-- Swagger 不展示
+### 7. OpenAPI (Swagger) 自动生成能力
 
-相关配置：
+你的自定义接口与脚手架接口会自动汇总为标准的 OpenAPI 规范文档。
+
+**使用方式：访问文档**
+- **Swagger UI 界面**：`http://localhost:8088/swagger-ui/index.html`
+- **JSON 契约**：`http://localhost:8088/v3/api-docs`
+
+---
+
+## 四、 高级配置项 (application.properties)
+
+脚手架默认以 `strict` 模式运行，即**自动屏蔽**非必要的低代码平台内部接口，保持业务工程干净。
 
 ```properties
-geelato.app.scaffold.enabled=true
+# 是否开启脚手架能力收口（默认 true）
 geelato.app.scaffold.strict=true
+# 允许暴露的基础能力模块
 geelato.app.scaffold.capabilities=login,mql,organization,user,dictionary,upload
-```
 
-若需要临时放开全量平台能力（不建议用于生产）：
-
-```properties
-geelato.app.scaffold.strict=false
-```
-
-若需要额外放行个别 Controller（FQCN）：
-
-```properties
-geelato.app.scaffold.extra-controllers[0]=cn.geelato.web.platform.srv.notice.NoticeController
-```
-
-## Swagger（OpenAPI）
-dev/test：默认开启  
-prod：默认关闭，除非显式开启
-
-```properties
-geelato.app.scaffold.openapi-enabled=true
+# 生产环境是否暴露 Swagger（默认 false，保障安全）
 geelato.app.scaffold.openapi-expose-in-prod=false
-```
 
-prod 显式开启：
-
-```properties
-geelato.app.scaffold.openapi-expose-in-prod=true
-```
-
-## OSS（S3/对象存储）
-当以下配置齐全时，会自动创建 `OSSFileHelper` Bean，从而启用 `/api/oss/*` 相关接口：
-
-```properties
+# 只要配置了以下 OSS 参数，脚手架会自动开启 /api/oss/* 相关能力
 geelato.oss.accessKeyId=***
 geelato.oss.accessKeySecret=***
 geelato.oss.endPoint=oss-cn-xxx.aliyuncs.com
 geelato.oss.bucketName=your-bucket
-geelato.oss.region=cn-xxx
 ```

@@ -61,4 +61,4 @@ Then externalize the same configuration into Docker images and orchestration.
 - [Standard Deployment](runtime-designer-deployment.md)
 - [PlatformWebRuntime](../runtime/platform-web-runtime.md)
 - [PlatformDesginer](../designer/platform-desginer.md)
-- [App Scaffold](../guide/app-scaffold.md)
+- [App Scaffold](../guide/app-scaffold-starter-project-guide.md)

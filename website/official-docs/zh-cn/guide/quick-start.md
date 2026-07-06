@@ -1,47 +1,37 @@
-# 快速开始
+---
+id: quick-start
+title: 快速开始与启动方式对比
+sidebar_label: 概览与启动方式对比
+---
 
-这是面向框架使用者的推荐起点，用来帮助你基于 Geelato 的基础能力搭建新的 Web 工程骨架。
+# 快速开始：两种启动方式对比
 
-## 推荐接入路径
+Geelato Framework 提供了两种标准的项目启动方式。无论是从零开始开发全新的业务系统，还是在现有的 Spring Boot 项目中引入 Geelato 的基础能力，你都可以根据实际需求选择最合适的接入路径。
 
-1. 引入 `geelato-framework-bom`
-2. 增加 `geelato-framework-starter`
-3. 从 `geelato-sample-quickstart` 起步
-4. 在最小骨架跑通后，再逐步叠加业务扩展模块
+## 启动方式对比
 
-## 基础准备
+| 对比维度 | 方式一：基于脚手架启动 (App Scaffold) | 方式二：最小化接入 (Minimal Integration) |
+| --- | --- | --- |
+| **定位** | 开箱即用的“胖脚手架”，直接提供可用于生产的后台骨架。 | 仅引入底层依赖的“瘦启动”，对现有项目侵入性最小。 |
+| **适用场景** | **从零开始的新项目**，需要快速拥有完整的后台管理能力。 | **已有 Spring Boot 项目**，或仅需使用 ORM/MQL 能力。 |
+| **包含能力** | 包含完整底座 + 登录、组织、用户、角色、字典、文件上传、MQL 与自动化建表。 | 仅包含基础 Web 装配、主库配置、动态数据源入口、`JdbcTemplate` 与 ORM 基础装配。 |
+| **依赖引入** | `geelato-app-scaffold-starter` | `geelato-framework-starter` |
+| **数据库表** | 启动时会自动检测并初始化约 17 张平台基础表（如字典表、用户表、权限表等）。 | **零建表要求**。完全由开发者自行决定是否建表及建什么表。 |
+| **开发节奏** | 配置极少，直接上手写业务实体和 CRUD。 | 需自行搭建登录拦截、权限校验、附件管理等周边逻辑。 |
 
-- Java 17
-- Maven 构建环境
-- Spring Boot 兼容运行环境
-- 如果超出最小 H2 样例，再按需准备外部数据库与中间件
+## 我该怎么选？
 
-## 最小成功标准
+1. **如果你在做一个全新的后台管理系统**：
+   👉 **强烈推荐选择 [脚手架快速启动](app-scaffold-starter-project-guide.md)**。它帮你省去了搭基础模块的时间，第一天就能直接写业务。
+   
+2. **如果你正在改造一个老项目，或者只想用 Geelato 的某个单一功能（如 FluentDSL）**：
+   👉 **请选择 [最小化接入](minimal-integration.md)**。这种方式不会给你的数据库强制增加任何平台表，也不会接管你的登录体系。
 
-最短成功路径应满足：
+---
 
-- 应用可以正常启动
-- 主数据源可用
-- `JdbcTemplate`、`Dao`、ORM、Web 自动装配可用
-- 能成功调用一个示例接口
+## 下一步
 
-## 推荐继续阅读
+请根据你的选择，阅读对应的接入指南：
 
-- [Sample Quickstart](sample-quickstart.md)
-- [基于 app-scaffold-starter 创建业务项目](app-scaffold-starter-project-guide.md)
-- [BOM 与 Starter](../reference/bom-and-starter.md)
-- [核心模块说明](../reference/core-modules.md)
-- [PlatformWebRuntime](../runtime/platform-web-runtime.md)
-
-## 最小启动阶段不包含什么
-
-最小启动阶段刻意不要求：
-
-- 平台化上传运行时实现
-- `market`、`message`、`schedule`、`auth` 等扩展模块
-- 设计时元数据管理能力
-- 完整 OpenAPI 治理体系
-
-如果你的项目已经明确需要登录、MQL、组织用户、字典、上传这些基础后台能力，不建议继续停留在最小样例阶段，而应直接切换到：
-
-- [基于 app-scaffold-starter 创建业务项目](app-scaffold-starter-project-guide.md)
+- 🚀 **[方式一：脚手架快速启动 (App Scaffold)](app-scaffold-starter-project-guide.md)**
+- 🌱 **[方式二：最小化接入 (Minimal Integration)](minimal-integration.md)**

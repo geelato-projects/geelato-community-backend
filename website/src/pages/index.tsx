@@ -17,41 +17,41 @@ import styles from './index.module.css';
 
 const highlights = [
   {
-    title: 'Docs-as-Code',
+    title: '极速应用构建',
     description:
-      '官方文档源文件与仓库代码同行，围绕 BOM、Starter、Runtime、Designer 与 Sample 演进。',
+      '提供完整的业务脚手架与最小化接入两种模式，无论全新项目还是老项目改造，都能分钟级启动。',
+    icon: Rocket,
+  },
+  {
+    title: 'AI 与开发者友好',
+    description:
+      '首创《开发者与 AI 导航手册》，内置标准化提示词上下文，让大模型（如 Trae/Copilot）秒懂框架底层。',
     icon: BookOpenText,
   },
   {
-    title: 'Bilingual Structure',
+    title: '强大的平台扩展',
     description:
-      '首版同时落中英文入口，便于对内推广与对外发布，后续可按版本持续扩展内容。',
-    icon: Globe2,
-  },
-  {
-    title: 'API Dual Track',
-    description:
-      'OpenAPI 负责标准契约，SrvExplain 保留静态扫描补充说明，减少迁移断层。',
-    icon: FileCode2,
+      '独创 MQL 语法与 Fluent DSL ORM，结合完备的插件机制与 SPI，轻松应对复杂企业级定制需求。',
+    icon: Layers3,
   },
 ];
 
 const capabilityCards = [
   {
-    label: 'Starter',
-    detail: '统一接入入口，承接最小 Web 工程骨架。',
+    label: 'MQL & ORM',
+    detail: '元数据查询语言与 Fluent DSL，无缝兼容 MySQL、PostgreSQL、Oracle 等多款主流关系型数据库。',
   },
   {
-    label: 'Runtime',
-    detail: '面向运行时部署与业务执行能力。',
+    label: 'Runtime & Designer',
+    detail: '运行时与设计时职责分离，支撑低代码与全代码混合开发。',
   },
   {
-    label: 'Designer',
-    detail: '面向设计时配置、建模和治理能力。',
+    label: 'Auth Server',
+    detail: '独立的统一认证中心，提供标准 OAuth2 与极简 lite-login 接入。',
   },
   {
-    label: 'SPI',
-    detail: '围绕 Meta、Security、ORM、Datasource 建立可替换扩展点。',
+    label: 'Plugin & SPI',
+    detail: '围绕 Meta、Security、ORM 建立可替换的平台级扩展点。',
   },
 ];
 
@@ -70,33 +70,33 @@ export default function Home(): ReactNode {
               <div className={styles.heroCopy}>
                 <div className={styles.eyebrow}>
                   <Rocket size={16} />
-                  Official framework documentation
+                  Enterprise Low-Code & Pro-Code Framework
                 </div>
                 <Heading as="h1" className={styles.heroTitle}>
                   {siteConfig.title}
                 </Heading>
                 <p className={styles.heroText}>
-                  从分散的工程文档、样例 README 与静态接口说明，收敛为一个面向框架消费者和平台维护者的官方入口。
+                  不仅仅是文档，更是开发者与 AI 协同构建复杂业务系统的超级知识库。提供从底层 ORM、独立认证中心到上层低代码建模的全套解决方案。
                 </p>
                 <div className={styles.heroActions}>
-                  <Link className={styles.primaryAction} to="/zh-cn/intro">
-                    进入中文文档
+                  <Link className={styles.primaryAction} to="/zh-cn/guide/quick-start">
+                    快速开始
                     <ArrowRight size={18} />
                   </Link>
-                  <Link className={styles.secondaryAction} to="/en/intro">
-                    Open English Docs
+                  <Link className={styles.secondaryAction} to="/zh-cn/guide/developer-navigation">
+                    AI 导航手册
                   </Link>
                 </div>
                 <div className={styles.statRow}>
-                  <span>双语源文件</span>
-                  <span>官方站点骨架</span>
-                  <span>OpenAPI + SrvExplain</span>
+                  <span>极速骨架</span>
+                  <span>全代码开发</span>
+                  <span>低代码引擎</span>
                 </div>
               </div>
               <div className={styles.heroPanel}>
                 <div className={styles.panelHeader}>
                   <Layers3 size={18} />
-                  Documentation stack
+                  核心能力矩阵
                 </div>
                 <div className={styles.panelGrid}>
                   {capabilityCards.map((card) => (
@@ -114,8 +114,8 @@ export default function Home(): ReactNode {
         <section className={styles.section}>
           <div className="container">
             <div className={styles.sectionHeading}>
-              <span className={styles.sectionTag}>First release scope</span>
-              <Heading as="h2">首批官方内容骨架</Heading>
+              <span className={styles.sectionTag}>Features</span>
+              <Heading as="h2">核心价值主张</Heading>
             </div>
             <div className={styles.cardGrid}>
               {highlights.map((item) => {
@@ -138,24 +138,24 @@ export default function Home(): ReactNode {
           <div className="container">
             <div className={styles.pathGrid}>
               <article className={styles.pathCard}>
-                <Heading as="h3">框架使用者</Heading>
-                <p>从 BOM 与 Starter 入手，优先进入最小接入、Sample Quickstart、核心模块参考与扩展点说明。</p>
-                <Link className={styles.inlineLink} to="/zh-cn/guide/minimal-integration">
-                  查看最小接入
+                <Heading as="h3">开发者 (Developer)</Heading>
+                <p>从脚手架或最小接入启动，掌握 MQL 与 ORM 核心语法，快速完成业务 CRUD 与扩展定制。</p>
+                <Link className={styles.inlineLink} to="/zh-cn/guide/quick-start">
+                  查看快速入门
                 </Link>
               </article>
               <article className={styles.pathCard}>
-                <Heading as="h3">平台维护者</Heading>
-                <p>聚焦 Runtime / Designer 分层、SecurityContext 生命周期、ORM/数据源扩展与部署治理。</p>
-                <Link className={styles.inlineLink} to="/zh-cn/operations/runtime-designer-deployment">
-                  查看部署说明
+                <Heading as="h3">系统架构师 (Architect)</Heading>
+                <p>聚焦独立 Auth Server 接入、Runtime/Designer 架构设计、安全上下文与高可用部署治理。</p>
+                <Link className={styles.inlineLink} to="/zh-cn/authentication/overview">
+                  了解统一认证中心
                 </Link>
               </article>
               <article className={styles.pathCard}>
-                <Heading as="h3">API 调用方</Heading>
-                <p>统一从官方 API 页进入 OpenAPI 标准契约，同时保留 SrvExplain 静态说明作为补充入口。</p>
-                <Link className={styles.inlineLink} to="/zh-cn/api/reference">
-                  查看 API 双轨入口
+                <Heading as="h3">AI 编程助手 (AI Agent)</Heading>
+                <p>通过导航手册快速获取框架“黑话”与上下文设定，辅助开发者生成符合最佳实践的高标准业务代码。</p>
+                <Link className={styles.inlineLink} to="/zh-cn/guide/developer-navigation">
+                  打开 AI 导航手册
                 </Link>
               </article>
             </div>
@@ -166,16 +166,16 @@ export default function Home(): ReactNode {
           <div className="container">
             <div className={styles.bottomShell}>
               <div>
-                <span className={styles.sectionTag}>Governance</span>
-                <Heading as="h2">首版目标不是“一次写完”，而是建立长期可维护的官方文档机制。</Heading>
+                <span className={styles.sectionTag}>Geelato</span>
+                <Heading as="h2">为现代企业级系统与 AI 协同开发而生。</Heading>
               </div>
               <div className={styles.bottomActions}>
-                <Link className={styles.secondaryAction} to="/en/api/reference">
-                  API Reference
+                <Link className={styles.secondaryAction} to="/en/guide/developer-navigation">
+                  English Guide
                 </Link>
-                <Link className={styles.primaryAction} to="/zh-cn/reference/override-default-implementations">
-                  查看扩展与覆盖
-                  <ShieldCheck size={18} />
+                <Link className={styles.primaryAction} to="/zh-cn/guide/quick-start">
+                  阅读官方指南
+                  <ArrowRight size={18} />
                 </Link>
               </div>
             </div>

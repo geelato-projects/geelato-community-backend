@@ -72,7 +72,32 @@ That page is only the third-party handoff page and should not implement username
 
 ## Frontend Integration Flow
 
-### Standard Sequence
+### Interaction Sequence Diagram
+
+The complete interaction sequence for integrating a business system with lite-login is as follows:
+
+```mermaid
+sequenceDiagram
+    participant User as User Browser
+    participant Third as Business Frontend
+    participant LiteSSO as lite-login (Facade)
+    participant Auth as Auth Server (Backend)
+    participant ThirdApi as Business Backend
+
+    User->>Third: 1. Open business system
+    Third->>LiteSSO: 2. Load login via iframe/popup
+    User->>LiteSSO: 3. Enter credentials & submit
+    LiteSSO->>Auth: 4. Authentication request
+    Auth-->>LiteSSO: 5. Return access_token
+    LiteSSO-->>Third: 6. postMessage LOGIN_SUCCESS(accessToken)
+    Third->>ThirdApi: 7. Call own API with Bearer token
+    ThirdApi->>Auth: 8. Request /oauth2/userinfo to validate token
+    Auth-->>ThirdApi: 9. Return Unified Identity (User Info)
+    ThirdApi-->>Third: 10. Return business system's user context
+    Third-->>User: 11. Login complete, enter home page
+```
+
+### Standard Sequence Steps
 
 1. The user visits the third-party application's own `/login`
 2. The application loads `/lite-login?display=embedded&redirect=...`

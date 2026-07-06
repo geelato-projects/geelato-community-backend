@@ -72,9 +72,34 @@ https://<auth-host>/lite-login
 
 ## 前端接入流程
 
-### 标准时序
+### 交互时序图
 
-1. 用户访问第三方应用自己的 `/login`
+业务系统接入 lite-login 的完整交互时序如下：
+
+```mermaid
+sequenceDiagram
+    participant User as 用户浏览器
+    participant Third as 业务系统前端
+    participant LiteSSO as lite-login (认证门面)
+    participant Auth as Auth Server (统一认证中心)
+    participant ThirdApi as 业务系统后端
+
+    User->>Third: 1. 打开业务系统
+    Third->>LiteSSO: 2. iframe/popup 方式加载轻量登录页
+    User->>LiteSSO: 3. 输入账号密码并提交
+    LiteSSO->>Auth: 4. 发起认证请求
+    Auth-->>LiteSSO: 5. 返回统一 access_token
+    LiteSSO-->>Third: 6. postMessage LOGIN_SUCCESS(accessToken)
+    Third->>ThirdApi: 7. 携带 Bearer token 调用业务系统后端接口
+    ThirdApi->>Auth: 8. 请求 /oauth2/userinfo 校验 token
+    Auth-->>ThirdApi: 9. 返回统一身份信息 (User Info)
+    ThirdApi-->>Third: 10. 返回业务系统自身的用户上下文
+    Third-->>User: 11. 登录完成，进入系统首页
+```
+
+### 标准时序步骤
+
+1. 用户访问业务系统自己的 `/login`
 2. 第三方应用加载统一登录页 `/lite-login?display=embedded&redirect=...`
 3. `lite-login` 初始化后发送 `LOGIN_INIT`
 4. 用户在 `lite-login` 中完成登录

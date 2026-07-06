@@ -334,5 +334,5 @@ This design gathers credential consumption, runtime subject establishment, onlin
 ## Suggested Reading
 
 - [Unified Authentication](overview.md)
-- [Unified Authentication Architecture](architecture.md)
-- [SecurityContext Lifecycle](../runtime/security-context-lifecycle.md)
+- [Platform Capabilities: SecurityContext Lifecycle](../runtime/security-context-lifecycle.md)
+- [Security Provider Extension](../reference/security-provider-extension.md)

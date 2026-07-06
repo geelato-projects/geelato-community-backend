@@ -1,12 +1,60 @@
-# Create a Business Project Based on app-scaffold-starter
+# Scaffold Quick Start Guide
 
-This guide explains how to create a production-ready backend project based on `cn.geelato:geelato-app-scaffold-starter`, and how to use the built-in baseline capabilities.
+This guide explains how to create a production-ready backend project based on `geelato-app-scaffold-starter`, and how to use the built-in baseline capabilities.
 
-## 1. Create a new project
+---
+
+## 1. Scaffold Baseline Capabilities Overview
+
+By introducing this Starter, your project will automatically have the following 7 core capabilities:
+
+1. **🔐 Login and Authentication**: Built-in JWT local login and OAuth2 authorization code login, automatically intercepting and parsing Tokens.
+2. **📁 File Processing and OSS**: Provides unified local/OSS file upload, download, and preview interfaces.
+3. **🔍 MQL Dynamic Query**: Through the `/api/meta/*` interface, the frontend can directly send JSON to query the database dynamically.
+4. **⚙️ ORM Fluent DSL**: Backend business code can directly use `MetaFactory` for chained CRUD operations that prevent SQL injection.
+5. **📖 Data Dictionary**: Built-in creation, maintenance, and fast querying by Code for dictionary items.
+6. **👥 Organization and RBAC**: Built-in standard user, organization, role, permission models, and assignment interfaces.
+7. **📚 OpenAPI (Swagger)**: Automatically generates and exposes interface documentation in the dev/test environments by default.
+
+---
+
+## 2. Common Invocation Conventions
+
+Before calling any of the above capabilities, please note the basic conventions:
+
+- **Unified Prefix**: All scaffold interfaces start with `/api`.
+- **Tenant Isolation**: It is recommended to carry `Tenant-Code` in all request headers (defaults to `geelato` if not provided).
+- **Authentication Credentials**: After a successful login, `Authorization` must be carried in the request header.
+  - JWT Login: `Authorization: JWTBearer {token}`
+  - OAuth2 Login: `Authorization: Bearer {accessToken}`
+
+---
+
+## 3. Create a Business Project Based on Scaffold
+
+### 3.1 Create a new project
 
 You can either:
 - copy the runnable sample `geelato-hello-example/geelato-app-scaffold`, then change Maven coordinates / package name / configs
 - or create an empty Spring Boot project and add the starter dependency
+
+### 3.2 AI automation (Skill)
+
+If you want to standardize and automate “create the business project + fill in required configs + verify the minimal working loop”, you can reuse the Skill from the sample repository and let AI guide/modify your project automatically.
+
+- Skill source: [https://github.com/geelato-projects/geelato-hello-example/tree/main/skills/geelato-app-scaffold-starter-guide](https://github.com/geelato-projects/geelato-hello-example/tree/main/skills/geelato-app-scaffold-starter-guide)
+
+Recommended usage:
+
+- import the above folder as a custom Skill in your AI tool (TRAE Skills)
+- in chat, invoke: `Use Skill: geelato-app-scaffold-starter-guide`
+- provide: project directory, `groupId/artifactId`, base package, database connection, and enabled capabilities (login/mql/dictionary/organization/user/upload)
+
+This Skill is distilled from the starter project guide and will walk you through:
+
+- minimal runnable project setup (pom / bootstrap class / application.properties)
+- strict capability pruning
+- verifiable baseline loops (dictionary, org/user, upload)
 
 Minimal `pom.xml` snippet:
 
@@ -36,7 +84,7 @@ Minimal `pom.xml` snippet:
 </dependencies>
 ```
 
-## 2. Bootstrap class
+### 3.3 Bootstrap class
 
 Use `cn.geelato.web.platform.boot.BootApplication` as the base class and make sure your business package is included in scanning:
 
@@ -83,134 +131,109 @@ geelato.meta.scan-package-names=cn.geelato,com.acme.order
 geelato.graal.scan-package-names=cn.geelato,com.acme.order
 ```
 
-## 4. Verify starter readiness
+## 4. Core Capabilities Usage Guide
 
-`GET /api/scaffold/ready`
+### 4.1 Login and Authentication
 
-## 5. How to use baseline capabilities
+The scaffold opens standard login entry points by default.
 
-### 5.1 Authentication (JWT + OAuth2)
-- JWT login: `POST /api/user/login` (no Authorization required)
-  - subsequent calls: `Authorization: JWTBearer {token}`
-- OAuth2 login: `POST /api/oauth2/login`
-  - refresh: `POST /api/oauth2/refreshToken`
-  - subsequent calls: `Authorization: Bearer {accessToken}`
+**Usage: JWT Password Login**
+No Token required, request directly:
+```bash
+curl -X POST "http://localhost:8088/api/user/login" \
+  -H "Content-Type: application/json" \
+  -H "Tenant-Code: geelato" \
+  --data "{\"username\":\"gl_user\",\"password\":\"***\"}"
+```
+*The returned token is used for all subsequent business requests.*
 
-### 5.2 File upload / download (OSS optional)
-- Upload: `POST /api/upload/file`
+### 4.2 MQL Dynamic Query
 
-Upload example (the response is an `Attachment`, keep the returned `id` for later view/download):
+Allows the frontend to define query structures via JSON to fetch required data directly, without the backend writing extra Controllers/Mappers.
 
+**Usage: Frontend requests MQL interface**
+- **List query**: `POST /api/meta/list`
+- **Save single record**: `POST /api/meta/save/{biz}`
+- **Delete single record**: `POST /api/meta/delete/{biz}/{id}`
+
+*Query example (fetch user list, returning only specified fields and sorting):*
+```json
+{
+  "platform_user": {
+    "@fs": "id,loginName,name",
+    "@p": "1,10",
+    "@order": "createAt|-"
+  }
+}
+```
+
+### 4.3 ORM Fluent DSL
+
+Backend developers no longer need to write tedious SQL or MyBatis XML for custom business logic.
+
+**Usage: Call MetaFactory directly in Service**
+```java
+// Query example: fetch 10 users on page 1, returning only id and name fields
+List<Map<String, Object>> users = MetaFactory.query("User")
+        .select(new String[]{"id", "name"})
+        .page(1, 10)
+        .list();
+```
+
+### 4.4 Data Dictionary
+
+Provides a standard data dictionary maintenance system, supporting tree or list structures.
+
+**Usage: Maintain and Query Dictionaries**
+- **Create dictionary**: `POST /api/dict/createOrUpdate`
+- **Create dictionary item**: `POST /api/dict/item/createOrUpdate`
+- **Business query**: The frontend can quickly fetch dictionary items for dropdown rendering via `GET /api/dictionary/{code}` (e.g., `GET /api/dictionary/order_status`).
+
+### 4.5 Organization, User, and RBAC
+
+A complete set of permission management APIs is built-in.
+
+**Usage: User and Role Assignment**
+- **Create organization**: `POST /api/security/org/createOrUpdate`
+- **Create user**: `POST /api/security/user/createOrUpdate`
+- **Assign role**: `POST /api/security/role/user/insert`
+
+### 4.6 File Processing and OSS
+
+Unified handling of frontend file uploads and downloads. If object storage like Aliyun is configured, it automatically switches to OSS mode.
+
+**Usage: File Upload**
+- **Interface**: `POST /api/upload/file` (multipart)
 ```bash
 curl -X POST "http://localhost:8088/api/upload/file" \
-  -H "Tenant-Code: geelato" \
   -H "Authorization: JWTBearer {token}" \
   -F "file=@D:/tmp/demo.png"
 ```
 
-How to view after upload:
+### 4.7 OpenAPI (Swagger)
 
-- View attachment metadata: `GET /api/attach/get/{id}`
-- Preview / download file: `GET /api/resources/file?id={id}&isPreview=true`
+Your custom interfaces and scaffold interfaces are automatically aggregated into a standard OpenAPI specification document.
 
-Download file: `GET /api/resources/file`
-- Download JSON config: `GET /api/resources/json?fileName=...`
-- OSS management (only when OSS enabled): `/api/oss/*`
+**Usage: Access Documentation**
+- **Swagger UI**: `http://localhost:8088/swagger-ui/index.html`
+- **JSON Contract**: `http://localhost:8088/v3/api-docs`
 
-### 5.3 MQL (generic CRUD)
-- `POST /api/meta/list`
-- `POST /api/meta/save/{biz}`
-- `POST /api/meta/delete/{biz}/{id}`
+---
 
-### 5.4 ORM Fluent DSL (backend code)
-Use `MetaFactory` in your business services. See `ORM / Fluent DSL` docs in this site.
+## 5. Advanced Configuration (application.properties)
 
-### 5.5 Dictionary
-The scaffold initializes a demo dictionary when `auto-init-tables=true` (so you can verify the baseline data quickly):
+```properties
+# Whether to enable scaffold capability strict mode (default true)
+geelato.app.scaffold.strict=true
+# Allowed basic capability modules
+geelato.app.scaffold.capabilities=login,mql,organization,user,dictionary,upload
 
-- dictCode: `demo_status`
-- fetch: `GET /api/dictionary/demo_status`
+# Whether to expose Swagger in prod (default false for security)
+geelato.app.scaffold.openapi-expose-in-prod=false
 
-How to add a dictionary:
-
-- Create or update dictionary: `POST /api/dict/createOrUpdate`
-
-```bash
-curl -X POST "http://localhost:8088/api/dict/createOrUpdate" \
-  -H "Content-Type: application/json" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}" \
-  --data "{\"dictCode\":\"order_status\",\"dictName\":\"Order Status\",\"enableStatus\":1,\"tenantCode\":\"geelato\"}"
+# Auto-enable /api/oss/* if OSS parameters are provided
+geelato.oss.accessKeyId=***
+geelato.oss.accessKeySecret=***
+geelato.oss.endPoint=oss-cn-xxx.aliyuncs.com
+geelato.oss.bucketName=your-bucket
 ```
-
-How to add dictionary items:
-
-- Create or update dictionary item: `POST /api/dict/item/createOrUpdate`
-
-```bash
-curl -X POST "http://localhost:8088/api/dict/item/createOrUpdate" \
-  -H "Content-Type: application/json" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}" \
-  --data "{\"dictId\":\"{dictId}\",\"itemCode\":\"PAID\",\"itemName\":\"Paid\",\"seqNo\":1,\"enableStatus\":1,\"tenantCode\":\"geelato\"}"
-```
-
-How to verify:
-
-- Fetch items by dict code (tree): `GET /api/dict/item/queryItemByDictCode/{dictCode}`
-- Fetch by code (lightweight API): `GET /api/dictionary/{code}`
-
-### 5.6 Organization / User / RBAC
-- Org: `/api/security/org/*`
-- User: `/api/security/user/*`
-- Role: `/api/security/role/*`
-- Permission: `/api/security/permission/*`
-
-The scaffold initializes a demo organization and binds the bootstrap user `gl_user` to it (default org):
-
-- orgId: `9000000000000000101`
-- orgName: `示例组织`
-
-How to add an org:
-
-- `POST /api/security/org/createOrUpdate`
-
-```bash
-curl -X POST "http://localhost:8088/api/security/org/createOrUpdate" \
-  -H "Content-Type: application/json" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}" \
-  --data "{\"pid\":\"9000000000000000101\",\"code\":\"DEV\",\"name\":\"R&D\",\"type\":\"department\",\"category\":\"inside\",\"tenantCode\":\"geelato\"}"
-```
-
-How to add a user:
-
-- `POST /api/security/user/createOrUpdate` (returns `plainPassword` for first login)
-
-```bash
-curl -X POST "http://localhost:8088/api/security/user/createOrUpdate" \
-  -H "Content-Type: application/json" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}" \
-  --data "{\"loginName\":\"tom\",\"name\":\"Tom\",\"orgId\":\"{orgId}\",\"tenantCode\":\"geelato\",\"enableStatus\":1}"
-```
-
-How to grant role to user (minimal RBAC loop):
-
-- Create role: `POST /api/security/role/createOrUpdate`
-- Bind user-role: `POST /api/security/role/user/insert`
-
-```bash
-curl -X POST "http://localhost:8088/api/security/role/user/insert" \
-  -H "Content-Type: application/json" \
-  -H "Tenant-Code: geelato" \
-  -H "Authorization: JWTBearer {token}" \
-  --data "{\"userId\":\"{userId}\",\"roleId\":\"{roleId}\",\"tenantCode\":\"geelato\"}"
-```
-
-### 5.7 Swagger (OpenAPI)
-- `/v3/api-docs`
-- `/swagger-ui/index.html`
-
-### 5.8 Build HTTP services quickly
-Create your own controllers/services in your business package. Prefer using `@ApiRestController` so the `/api` prefix applies consistently.

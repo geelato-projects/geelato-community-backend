@@ -342,6 +342,5 @@
 ## 推荐继续阅读
 
 - [统一认证](overview.md)
-- [统一认证中心架构设计](architecture.md)
-- [SecurityContext 生命周期](../runtime/security-context-lifecycle.md)
+- [平台能力：SecurityContext 生命周期](../runtime/security-context-lifecycle.md)
 - [安全 Provider 扩展](../reference/security-provider-extension.md)

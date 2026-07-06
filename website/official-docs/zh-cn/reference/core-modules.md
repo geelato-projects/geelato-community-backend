@@ -39,5 +39,5 @@
 - [ORM 总览](../orm/overview.md)
 - [ORM 注解说明](../orm/annotations.md)
 - [Fluent DSL 指引](../orm/fluent-dsl.md)
-- 最小样例：`geelato-sample-quickstart`
+- 最小样例：`geelato-sample-quickstart` (在 geelato-hello-example 中)
 - 运行时 / 设计时拆分：本官方站中的对应页面

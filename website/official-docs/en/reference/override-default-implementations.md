@@ -59,4 +59,4 @@ If the property is not configured and multiple `Dao` beans exist, the current co
 - [MetaStore Extension](metastore-extension.md)
 - [ORM / DataSource Extension](../orm/datasource-extension.md)
 - [Security Provider Extension](security-provider-extension.md)
-- [Default Implementations vs Sample](../guide/default-implementation-vs-sample.md)
+- [App Scaffold Starter Project Guide](../guide/app-scaffold-starter-project-guide.md)

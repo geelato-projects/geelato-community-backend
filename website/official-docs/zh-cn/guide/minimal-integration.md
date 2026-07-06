@@ -81,9 +81,6 @@
 
 ## 下一步推荐
 
-- 先看 [Sample Quickstart](sample-quickstart.md)
-- 如果需要可直接开工的起点，再看 [App Scaffold](app-scaffold.md)
-- 如果要基于 starter 真正创建自己的业务工程，再看 [基于 app-scaffold-starter 创建业务项目](app-scaffold-starter-project-guide.md)
-- 再看 [默认实现与 Sample 定位](default-implementation-vs-sample.md)
+- 如果要基于 starter 真正创建自己的业务工程，并需要基础后台能力，再看 [基于 app-scaffold-starter 创建业务项目](app-scaffold-starter-project-guide.md)
 - 如需理解交付入口，再看 [BOM 与 Starter](../reference/bom-and-starter.md)
 - 如需扩展元数据能力，再看 [MetaStore 扩展](../reference/metastore-extension.md)

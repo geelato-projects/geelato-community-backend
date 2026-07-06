@@ -39,5 +39,5 @@ This page explains the current framework-facing role of the main reusable module
 - [ORM Overview](../orm/overview.md)
 - [ORM Annotations](../orm/annotations.md)
 - [Fluent DSL Guide](../orm/fluent-dsl.md)
-- Sample skeleton: `geelato-sample-quickstart`
+- Sample skeleton: `geelato-sample-quickstart` (in geelato-hello-example)
 - Runtime / Designer split: see the dedicated pages in this site

@@ -1,17 +1,35 @@
-# Unified Authentication
+# Independent Service: Unified Authentication Center
 
-This chapter explains the current unified authentication integration boundary in Geelato Framework, focusing on the responsibility split between `auth-server` and `lite-login`, and on how third-party applications reuse the central authentication service.
+> **Note: Unified Authentication is not considered a built-in core framework capability. It is essentially an independent Unified Authentication Center (Auth Server) service.**
+>
+> It primarily provides two integration capabilities:
+> 1. **Standardized OAuth2 integration**
+> 2. **Lightweight lite-login integration**
+>
+> This chapter focuses on how internal and external business systems integrate with this independent auth center, delegating user login and identity recognition to it.
+
+## Integration Methods: Comparison & Selection
+
+The Auth Center provides two integration methods. External business systems can choose flexibly based on their tech stack and frontend interaction requirements:
+
+| Dimension | Method 1: Lightweight `lite-login` | Method 2: Standard OAuth2 |
+| --- | --- | --- |
+| **Core Mechanism** | The Auth Center provides a ready-to-use frontend login facade (`lite-login`), pushing the token to the business frontend via cross-domain `postMessage`. | Uses the standard OAuth2 Authorization Code Flow, exchanging tokens via server-to-server redirects. |
+| **Frontend Interaction** | The business system embeds `lite-login` via iframe or opens it in a new window. **No need** for the business system to write a login UI; the UX is seamless. | A **full-page browser redirect** occurs, jumping to the Auth Center's unified login page, then redirecting back to the business system. |
+| **Integration Complexity** | **Very Low**. Primarily frontend integration. The business backend only needs an interceptor to validate the Bearer token. | **Medium**. Requires the business backend to support a complete OAuth2 client protocol stack. |
+| **Use Cases** | 1. Modern frontend-backend separated architectures (Vue/React, etc.)<br/>2. Wanting to pop up a login box directly within the business system (without leaving the page)<br/>3. Pure frontend SPA applications | 1. **Any application with an independent backend**<br/>2. Strict security requirements where tokens must never be exposed to the browser<br/>3. Existing external systems with built-in standard OAuth2 Client modules |
+| **How to Integrate** | 👉 [Read the lite-login Integration Guide](lite-login-integration.md) | 👉 [Read the Standard OAuth2 Integration Guide](oauth2-integration.md) |
 
 ## What Unified Authentication Solves
 
 The main goal is to decouple authentication from each business system's own session model:
 
-- `auth-server` issues tokens
-- `lite-login` provides the lightweight login facade
-- the third-party frontend receives the token and passes it to its own backend
-- the third-party backend confirms the user identity against the authentication center
+- `auth-server` issues tokens independently and centrally, acting as the only trusted identity source.
+- `lite-login` provides the lightweight, cross-domain embeddable login frontend facade.
+- The business system frontend (third-party application) receives the token and passes it to its own backend business service.
+- The business system backend confirms the real user identity against the independent authentication center using the token.
 
-With this model, each new portal, SaaS application, or customer-owned system does not need to build its own username-password login flow.
+With this model, whenever a new portal, SaaS application, or customer-owned system is added, there is no need for each system to repeat a "username + password" login flow. It can simply delegate this to the independent authentication center service.
 
 ## Core Components
 
@@ -74,14 +92,14 @@ Not intended for:
 - extracts `data.user`
 - establishes account mapping, permission context, or local session state
 
-## Relationship to Other Framework Capabilities
+## Boundary between Independent Service and Framework Capabilities
 
-Recommended boundaries:
+Recommended boundaries between the independent Auth Server and the Geelato framework itself:
 
-- unified authentication: how to get the central token and confirm identity
-- security authentication: how the platform runtime consumes the token and establishes the authenticated subject for the current request
-- runtime security chain: how to establish backend security context after authentication succeeds
-- MQL / ORM: how to access business data after identity is confirmed
+- **Auth Server (Independent Service)**: How the business system integrates, gets the central token, and confirms user identity.
+- **Security Authentication (Framework Capability)**: How the business system consumes the token in the platform runtime and establishes the authenticated subject for the current request.
+- **Runtime Security Chain (Framework Capability)**: How to establish backend security context after authentication succeeds.
+- **MQL / ORM (Framework Capability)**: How to access business data after identity is confirmed.
 
 Important note:
 
@@ -105,10 +123,9 @@ Do not reuse:
 
 Each third-party application should still keep its own `/login` page as the entry handoff page, but it should not implement username-password authentication itself.
 
-## Suggested Reading Order
+## Recommended Reading Order
 
-1. Read [Unified Authentication Architecture](architecture.md)
-2. Read [Security Authentication](security-authentication.md) to understand the `DefaultSecurityInterceptor` auth flow
-3. Read [lite-login Third-Party Integration](lite-login-integration.md)
-4. Then read [PlatformWebRuntime](../runtime/platform-web-runtime.md) for the runtime security chain position
-5. If you also need platform-side data access, continue with [MQL Overview](../mql/overview.md)
+1. [lite-login Integration Guide](lite-login-integration.md)
+2. [Standard OAuth2 Integration Guide](oauth2-integration.md)
+3. To understand how the framework consumes Tokens, see [Platform Capabilities: Authentication](security-authentication.md)
+4. To understand the security context, see [Platform Capabilities: SecurityContext Lifecycle](../runtime/security-context-lifecycle.md)

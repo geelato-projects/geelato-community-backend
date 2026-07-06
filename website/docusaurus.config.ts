@@ -34,6 +34,10 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
+  themes: ['@docusaurus/theme-mermaid'],
+  markdown: {
+    mermaid: true,
+  },
   plugins: [
     [
       '@docusaurus/plugin-content-docs',
@@ -89,8 +93,8 @@ const config: Config = {
           label: 'Language',
           position: 'right',
           items: [
-            {label: 'English', to: '/en/intro'},
-            {label: '中文', to: '/zh-cn/intro'},
+            {label: 'English', to: '/en/guide/developer-navigation'},
+            {label: '中文', to: '/zh-cn/guide/developer-navigation'},
           ],
         },
         {
@@ -106,8 +110,8 @@ const config: Config = {
         {
           title: 'Framework',
           items: [
-            {label: 'English Docs', to: '/en/intro'},
-            {label: '中文文档', to: '/zh-cn/intro'},
+            {label: 'English Docs', to: '/en/guide/developer-navigation'},
+            {label: '中文文档', to: '/zh-cn/guide/developer-navigation'},
           ],
         },
         {

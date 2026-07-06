@@ -61,4 +61,4 @@ geelato.upload.config-directory=/data/upload/config
 - [普通部署](runtime-designer-deployment.md)
 - [PlatformWebRuntime](../runtime/platform-web-runtime.md)
 - [PlatformDesginer](../designer/platform-desginer.md)
-- [App Scaffold](../guide/app-scaffold.md)
+- [App Scaffold](../guide/app-scaffold-starter-project-guide.md)

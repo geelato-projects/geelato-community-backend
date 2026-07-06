@@ -1,4 +1,36 @@
-# 基于 app-scaffold-starter 创建业务项目
+# 脚手架快速启动指南
+
+本文档将指导你如何基于 `geelato-app-scaffold-starter` 快速初始化一个可生产开发的后端工程。该脚手架默认只暴露“最小能力集”，剔除了冗余的低代码平台配置接口，让工程保持极简，同时开箱即用地提供了一套企业级后端必备的基础设施。
+
+---
+
+## 一、 脚手架开箱即用能力总览
+
+引入本 Starter 后，你的工程将自动具备以下 7 大核心能力：
+
+1. **🔐 登录与鉴权**：内置 JWT 本地登录与 OAuth2 授权码登录，自动拦截并解析 Token。
+2. **📁 文件处理与 OSS**：提供统一的本地/OSS 文件上传、下载、预览接口。
+3. **🔍 MQL 动态查询**：通过 `/api/meta/*` 接口，前端可直接发送 JSON 动态查询数据库。
+4. **⚙️ ORM Fluent DSL**：后端业务代码可直接使用 `MetaFactory` 进行防 SQL 注入的链式 CRUD 操作。
+5. **📖 数据字典**：内置字典项的创建、维护与按 Code 快速查询能力。
+6. **👥 组织架构与 RBAC**：内置标准的用户、组织、角色、权限模型及分配接口。
+7. **📚 OpenAPI (Swagger)**：默认在 dev/test 环境自动生成并暴露接口文档。
+
+---
+
+## 二、 通用调用约定
+
+在调用以上所有能力之前，请注意基础约定：
+
+- **统一前缀**：所有脚手架接口均以 `/api` 开头。
+- **租户隔离**：建议在所有请求头中携带 `Tenant-Code`（如未提供，默认为 `geelato`）。
+- **认证凭证**：登录成功后，需在请求头携带 `Authorization`。
+  - JWT 登录：`Authorization: JWTBearer {token}`
+  - OAuth2 登录：`Authorization: Bearer {accessToken}`
+
+---
+
+## 三、 基于脚手架创建业务项目
 
 这篇文档面向真正要开工做业务的项目，说明如何基于 `geelato-app-scaffold-starter` 从零创建自己的工程，并逐步完成：
 
@@ -49,6 +81,24 @@
 
 如果你的目标是“先尽快跑起来，再继续改业务”，优先推荐第 1 种。
 如果你的目标是“从第一天开始就完全按自己的工程骨架搭建”，可以使用第 2 种。
+
+### 1.0 AI 自动化初始化（Skill）
+
+如果你希望把“初始化业务工程 + 补齐关键配置 + 验证最小闭环”的过程标准化，可以直接复用示例仓库中的 Skill 来驱动 AI 自动生成/修改你的业务工程。
+
+- Skill 地址：[https://github.com/geelato-projects/geelato-hello-example/tree/main/skills/geelato-app-scaffold-starter-guide](https://github.com/geelato-projects/geelato-hello-example/tree/main/skills/geelato-app-scaffold-starter-guide)
+
+推荐用法：
+
+- 将上述目录作为自定义 Skill 导入你的 AI 工具（TRAE Skills）
+- 在对话中输入：`Use Skill: geelato-app-scaffold-starter-guide`
+- 并补充：项目目录、`groupId/artifactId`、包名、数据库连接信息、你希望开启的能力（login/mql/dictionary/organization/user/upload 等）
+
+该 Skill 的内容提炼自本文档，会引导你完成：
+
+- 最小可运行工程创建（pom / 启动类 / application.properties）
+- strict 能力收口配置
+- 字典、组织用户、上传等“可验证的最小闭环”
 
 先确定你的业务工程名和包名，例如：
 
@@ -295,7 +345,7 @@ flush privileges;
 
 如果你想看脚手架底座到底要求哪些基础表，以及 starter 是如何在启动时自动判断并创建这些表的，请继续阅读：
 
-- [RequireTable](require-table.md)
+- `geelato-app-scaffold-starter` 及其初始建表脚本
 
 ## 4. 启动与访问验证
 
@@ -514,7 +564,9 @@ curl -X POST "http://localhost:8088/api/security/role/user/insert" \
 - 新增你自己的 Controller/Service 放在业务包下（并确保 `scanBasePackages`、`geelato.meta.scan-package-names` 包含业务包）
 - 推荐业务 Controller 使用 `@ApiRestController`，从而自动具备 `/api` 前缀与统一 JSON 约定
 
-## 5. 开始做业务：新增实体与建表脚本放哪里
+## 四、 核心能力使用指南 (CRUD 演示)
+
+### 1. 实体与建表脚本放哪里
 
 这一步是业务开发的核心边界，必须明确：
 
@@ -522,7 +574,7 @@ curl -X POST "http://localhost:8088/api/security/role/user/insert" \
 - 业务建表脚本放在你的业务工程里
 - 不要把业务实体和业务 SQL 下沉到 `geelato-app-scaffold-starter`
 
-### 5.1 实体类放哪里
+### 1.1 实体类放哪里
 
 推荐放在：
 
@@ -568,7 +620,7 @@ public class Customer extends BaseSortableEntity implements EntityEnableAble {
 }
 ```
 
-### 5.2 建表脚本放哪里
+### 1.2 建表脚本放哪里
 
 放在：
 
@@ -610,7 +662,7 @@ CREATE TABLE IF NOT EXISTS `crm_customer` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户';
 ```
 
-## 6. 放完后重启，然后怎么做 CRUD
+### 2. 放完后重启，如何做 CRUD
 
 是的，首次新增业务实体时，典型流程就是：
 
@@ -619,7 +671,7 @@ CREATE TABLE IF NOT EXISTS `crm_customer` (
 3. 重启应用
 4. 用 MQL 直接做增删查改
 
-### 6.1 查询列表
+#### 2.1 查询列表
 
 接口：
 
@@ -637,7 +689,7 @@ CREATE TABLE IF NOT EXISTS `crm_customer` (
 }
 ```
 
-### 6.2 新增
+#### 2.2 新增
 
 接口：
 
@@ -657,7 +709,7 @@ CREATE TABLE IF NOT EXISTS `crm_customer` (
 }
 ```
 
-### 6.3 更新
+#### 2.3 更新
 
 还是调用：
 
@@ -674,7 +726,7 @@ CREATE TABLE IF NOT EXISTS `crm_customer` (
 }
 ```
 
-### 6.4 按 ID 删除
+#### 2.4 按 ID 删除
 
 接口：
 
@@ -684,7 +736,7 @@ CREATE TABLE IF NOT EXISTS `crm_customer` (
 
 - `POST /api/meta/delete/1/1234567890`
 
-### 6.5 按条件删除
+#### 2.5 按条件删除
 
 接口：
 
@@ -700,7 +752,7 @@ CREATE TABLE IF NOT EXISTS `crm_customer` (
 }
 ```
 
-### 6.6 什么时候需要自己写 Controller
+#### 2.6 什么时候需要自己写 Controller
 
 如果你的需求只是：
 
@@ -717,7 +769,7 @@ CREATE TABLE IF NOT EXISTS `crm_customer` (
 - 特殊权限校验
 - 非标准返回结构
 
-### 6.7 一个重要边界
+#### 2.7 一个重要边界
 
 `geelato.app.scaffold.auto-init-tables=true` 只适合“首次建表”场景。
 
@@ -730,9 +782,9 @@ CREATE TABLE IF NOT EXISTS `crm_customer` (
 
 所以后续表结构演进时，你需要使用你自己的数据库变更流程，而不要期待“重启一次应用就自动改表”。
 
-## 7. 脚手架现成能力怎么调用
+## 五、 脚手架现成能力怎么调用
 
-### 7.1 MQL
+### 1. MQL
 
 MQL 是最核心的通用 CRUD 能力。
 
@@ -750,7 +802,7 @@ MQL 是最核心的通用 CRUD 能力。
 
 - [MQL 使用指南](../mql/usage.md)
 
-### 7.2 字典
+### 2. 字典
 
 常用入口：
 
@@ -764,7 +816,7 @@ MQL 是最核心的通用 CRUD 能力。
 - 页面下拉项动态配置
 - 多项目共享字典项
 
-### 7.3 组织与用户
+### 3. 组织与用户
 
 常用入口：
 
@@ -778,7 +830,7 @@ MQL 是最核心的通用 CRUD 能力。
 - 权限模型中的组织/用户关联
 - 业务数据和组织用户主数据联动
 
-### 7.4 上传
+### 4. 上传
 
 上传能力开箱即用，但要先配好目录：
 
@@ -792,7 +844,7 @@ MQL 是最核心的通用 CRUD 能力。
 - 图片或文档文件存储
 - 后续业务表与文件主数据关联
 
-## 8. 底层模块升级时，如何升级你的业务工程
+## 六、 底层模块升级时，如何升级你的业务工程
 
 推荐顺序：
 
@@ -801,13 +853,13 @@ MQL 是最核心的通用 CRUD 能力。
 3. 重新编译业务工程
 4. 重启并验证关键入口
 
-### 8.1 升级前建议
+### 1. 升级前建议
 
 - 保持业务逻辑主要留在你的业务工程里
 - 不要随意把业务代码改到 starter 内
 - 只有多个业务项目都会复用的能力，才考虑下沉到公共层
 
-### 8.2 升级后检查清单
+### 2. 升级后检查清单
 
 至少检查这些内容：
 
@@ -818,7 +870,7 @@ MQL 是最核心的通用 CRUD 能力。
 - 业务实体 CRUD 是否正常
 - 已使用的字典、组织、用户、上传接口是否正常
 
-## 给 AI 和开发者的推荐工作流
+## 七、 给 AI 和开发者的推荐工作流
 
 当你已经基于 starter 起好了业务项目，建议统一遵循下面这条规则：
 
@@ -832,10 +884,7 @@ MQL 是最核心的通用 CRUD 能力。
    - 相关 MQL 请求
    - 本次改动涉及的业务接口
 
-## 继续阅读
+## 八、 继续阅读
 
-- [App Scaffold 概览](app-scaffold.md)
-- [RequireTable](require-table.md)
 - [新项目最小接入](minimal-integration.md)
-- [Sample Quickstart](sample-quickstart.md)
 - [MQL 使用指南](../mql/usage.md)

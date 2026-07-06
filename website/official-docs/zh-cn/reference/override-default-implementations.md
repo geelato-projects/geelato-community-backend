@@ -80,4 +80,4 @@ geelato.orm.dao-bean-name=dynamicDao
 - [MetaStore 扩展](metastore-extension.md)
 - [ORM / 数据源扩展](../orm/datasource-extension.md)
 - [安全 Provider 扩展](security-provider-extension.md)
-- [默认实现与 Sample 定位](../guide/default-implementation-vs-sample.md)
+- [基于 app-scaffold-starter 创建业务项目](../guide/app-scaffold-starter-project-guide.md)

@@ -129,7 +129,8 @@ public class PermissionRuleUtils {
             case "orgId" -> user.getOrgId();
             case "defaultOrgId" -> user.getDefaultOrgId();
             case "cooperatingOrgId" -> user.getCooperatingOrgId();
-            case "companyId", "extendId" ->user.getCompanyId();
+            case "companyId" ->user.getCompanyId();
+            case "extendId"->user.getExtendId();
             case "deptId" -> user.getDeptId();
             case "buId" -> user.getBuId();
             case "weixinUnionId" -> user.getWeixinUnionId();

@@ -7,7 +7,6 @@ import cn.geelato.lang.api.NullResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.web.platform.srv.base.enums.SysConfigPurposeEnum;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;

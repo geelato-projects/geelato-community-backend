@@ -34,7 +34,7 @@ public class PageCheckController extends BaseController {
         try {
             String pageId = (String) params.get("pageId");
             String action = (String) params.get("action");
-            Boolean force = params.get("force") != null && Boolean.parseBoolean(params.get("force").toString());
+            boolean force = params.get("force") != null && Boolean.parseBoolean(params.get("force").toString());
 
             if (pageId == null || pageId.isEmpty()) {
                 return ApiResult.fail("页面ID不能为空");
@@ -461,7 +461,7 @@ public class PageCheckController extends BaseController {
      * @return { code: int, status: string, msg: string, data: null }
      */
     @RequestMapping(value = "/request/cancel", method = RequestMethod.POST, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult cancelCheckRequest(@RequestBody Map<String, Object> params) {
+    public ApiResult<?> cancelCheckRequest(@RequestBody Map<String, Object> params) {
         try {
             String requestId = (String) params.get("requestId");
             

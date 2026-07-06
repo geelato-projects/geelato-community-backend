@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.ai;
+package cn.geelato.web.platform.srv.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

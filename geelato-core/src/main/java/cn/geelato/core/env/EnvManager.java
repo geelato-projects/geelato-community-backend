@@ -187,28 +187,36 @@ public class EnvManager  extends AbstractManager {
     }
 
     private void loadUserOrg(User user) {
-        List<UserOrg> userOrgs=jdbcTemplate.query("    WITH RECURSIVE platform_org_tree AS (\n" +
-                        "    SELECT\n" +
-                        "        o.id,o.pid,o.code,o.name,o.name AS full_name,o.type,o.category,o.tenant_code,\n" +
-                        "        CASE WHEN o.type = 'department' THEN o.id ELSE NULL END AS dept_id,\n" +
-                        "        CASE WHEN o.type = 'company' THEN o.id ELSE NULL END AS company_id,\n" +
-                        "        CASE WHEN o.type = 'company' THEN o.extend_id ELSE NULL END AS company_extend_id\n" +
-                        "    FROM platform_org o WHERE o.pid IS NULL AND o.status = 1 AND o.del_status = 0\n" +
-                        "    UNION ALL\n" +
-                        "    SELECT \n" +
-                        "        o.id,o.pid,o.code,o.name,\n" +
-                        "        CONCAT(ot.full_name, '/', o.name) AS full_name,\n" +
-                        "        o.type,o.category,o.tenant_code,\n" +
-                        "        CASE WHEN o.type = 'department' THEN o.id ELSE ot.dept_id END AS dept_id,\n" +
-                        "        CASE WHEN o.type = 'company' THEN o.id ELSE ot.company_id END AS company_id,\n" +
-                        "        COALESCE(CASE WHEN o.type = 'company' THEN o.extend_id END, ot.company_extend_id) AS company_extend_id\n" +
-                        "    FROM platform_org o JOIN platform_org_tree ot ON o.pid = ot.id WHERE o.status = 1 AND o.del_status = 0\n" +
-                        ") SELECT t2.id AS orgId, t2.code, t2.name,t2.full_name AS fullName, t2.pid,t2.tenant_code AS tenantCode,\n" +
-                        "t2.dept_id AS deptId,t2.company_id AS companyId,t2.company_extend_id AS extendId,t1.default_org AS defaultOrg,t2.type,t2.category \n" +
-                        "FROM platform_org_r_user t1 LEFT JOIN platform_org_tree t2 ON t1.org_id =t2.id WHERE t1.del_status = 0 AND t1.user_id= ?",
+        List<UserOrg> userOrgs=jdbcTemplate.query("""
+                            WITH RECURSIVE platform_org_tree AS (
+                            SELECT
+                                o.id,o.pid,o.code,o.name,
+                                o.name AS full_name,
+                                o.type,o.category,o.tenant_code,
+                                CASE WHEN o.type = 'department' THEN o.id ELSE NULL END AS dept_id,
+                                CASE WHEN o.type = 'company' THEN o.id ELSE NULL END AS company_id,
+                                CASE WHEN o.type = 'company' THEN o.extend_id ELSE NULL END AS company_extend_id
+                            FROM platform_org o WHERE o.pid IS NULL AND o.status = 1 AND o.del_status = 0
+                            UNION ALL
+                            SELECT
+                                o.id,o.pid,o.code,o.name,
+                                CONCAT(ot.full_name, '/', o.name) AS full_name,
+                                o.type,o.category,o.tenant_code,
+                                CASE WHEN o.type = 'department' THEN o.id ELSE ot.dept_id END AS dept_id,
+                                CASE WHEN o.type = 'company' THEN o.id ELSE ot.company_id END AS company_id,
+                                COALESCE(CASE WHEN o.type = 'company' THEN o.extend_id END, ot.company_extend_id) AS company_extend_id
+                            FROM platform_org o JOIN platform_org_tree ot ON o.pid = ot.id WHERE o.status = 1 AND o.del_status = 0
+                        ) SELECT t2.id AS orgId, t2.code, t2.name,t2.full_name AS fullName, t2.pid,t2.tenant_code AS tenantCode,
+                        t2.dept_id AS deptId,t2.company_id AS companyId,t2.company_extend_id AS extendId,t1.default_org AS defaultOrg,t2.type,t2.category\s
+                        FROM platform_org_r_user t1 LEFT JOIN platform_org_tree t2 ON t1.org_id =t2.id WHERE t1.del_status = 0 AND t1.user_id= ?""",
                 new BeanPropertyRowMapper<>(UserOrg.class), user.getUserId());
         user.setUserOrgs(userOrgs);
-        user.setDefaultOrg(userOrgs.stream().filter(UserOrg::getDefaultOrg).findFirst().orElse(null));
+        UserOrg defaultOrg = userOrgs.stream()
+                .filter(org -> Boolean.TRUE.equals(org.getDefaultOrg()))
+                .findFirst()
+                .orElse(null);
+        user.setDefaultOrg(defaultOrg);
+        user.setExtendId(defaultOrg == null ? null : defaultOrg.getExtendId());
     }
     private void loadTenant(User user) {
         user.setTenant(new Tenant(user.getTenantCode()));

@@ -36,7 +36,6 @@ public class DownloadService {
      * @param name     下载文件的名称
      * @param request  HttpServletRequest对象，用于获取请求信息
      * @param response HttpServletResponse对象，用于设置响应信息
-     * @throws Exception 如果在下载文件过程中发生异常，则抛出该异常
      */
     public void downloadFile(File file, String name, boolean isPreview, HttpServletRequest request, HttpServletResponse response, String mineType) throws IOException {
         OutputStream out = null;

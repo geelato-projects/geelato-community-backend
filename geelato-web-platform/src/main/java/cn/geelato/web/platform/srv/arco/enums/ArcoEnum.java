@@ -6,7 +6,7 @@ import cn.geelato.pack.enums.PackageStatusEnum;
 import cn.geelato.utils.enums.LocaleEnum;
 import cn.geelato.utils.enums.TimeUnitEnum;
 import cn.geelato.web.platform.srv.arco.entity.SelectOptionData;
-import cn.geelato.web.platform.srv.base.enums.SysConfigPurposeEnum;
+import cn.geelato.web.platform.srv.base.SysConfigPurposeEnum;
 import cn.geelato.web.platform.srv.platform.enums.*;
 import cn.geelato.web.platform.srv.excel.enums.*;
 import cn.geelato.web.platform.srv.file.enums.AttachmentMimeEnum;

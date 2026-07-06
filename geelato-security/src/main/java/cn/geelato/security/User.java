@@ -22,6 +22,7 @@ public class User extends UserCore{
     private String buId; //事业部
     private String buName;
     private String companyId;  //所属公司
+    private String extendId;
     private String companyName;
     private String enName;
     private int sex;

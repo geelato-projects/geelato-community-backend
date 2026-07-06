@@ -52,7 +52,7 @@ public class TenantService extends BaseService {
         return "admin" + UUIDUtils.generateNumberAndLowerChars(5).toLowerCase(Locale.ENGLISH);
     }
 
-    public TenantSite createTenantSite(String name, String domain, String tenantCode) {
+    public void createTenantSite(String name, String domain, String tenantCode) {
         // 检查是否已存在租户站点
         Map<String, Object> params = new HashMap<>();
         params.put("domain", domain);
@@ -61,7 +61,7 @@ public class TenantService extends BaseService {
         
         if (!existingSites.isEmpty()) {
             // 已存在租户站点，使用现有的
-            return existingSites.get(0);
+            return;
         }
         
         // 不存在租户站点，创建新的
@@ -70,7 +70,7 @@ public class TenantService extends BaseService {
         tenantSite.setLang("cn");
         tenantSite.setDomain(domain);
         tenantSite.setTenantCode(tenantCode);
-        return super.createModel(tenantSite);
+        super.createModel(tenantSite);
     }
 
     public Org createOrg(String name, String tenantCode) {

@@ -60,8 +60,8 @@ export default function Home(): ReactNode {
 
   return (
     <Layout
-      title="Official Docs"
-      description="Geelato Framework 官方文档站，提供中英双语、Starter 接入、Runtime/Designer 分层与 API 双轨入口。">
+      title="Geelato Project - Enterprise Low-Code & Pro-Code Solutions"
+      description="不仅仅是文档，更是开发者与 AI 协同构建复杂业务系统的超级知识库。涵盖 Geelato Framework, AuthServer, 以及 Message 中心。">
       <main className={styles.page}>
         <section className={styles.hero}>
           <div className={styles.heroGlow} />
@@ -70,13 +70,14 @@ export default function Home(): ReactNode {
               <div className={styles.heroCopy}>
                 <div className={styles.eyebrow}>
                   <Rocket size={16} />
-                  Enterprise Low-Code & Pro-Code Framework
+                  Enterprise Low-Code & Pro-Code Solutions
                 </div>
                 <Heading as="h1" className={styles.heroTitle}>
-                  {siteConfig.title}
+                  Geelato Project
                 </Heading>
                 <p className={styles.heroText}>
-                  不仅仅是文档，更是开发者与 AI 协同构建复杂业务系统的超级知识库。提供从底层 ORM、独立认证中心到上层低代码建模的全套解决方案。
+                  不仅仅是文档，更是开发者与 AI 协同构建复杂业务系统的超级知识库。<br/>
+                  项目包含三大核心支柱：<b>Geelato Framework</b>（底层架构与建模）、<b>AuthServer</b>（统一认证）以及 <b>Message</b>（统一消息）。
                 </p>
                 <div className={styles.heroActions}>
                   <Link className={styles.primaryAction} to="/zh-cn/guide/quick-start">

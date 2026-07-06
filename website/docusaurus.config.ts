@@ -6,8 +6,8 @@ const repoEditBase =
   'https://github.com/geelato-projects/geelato-community-backend/edit/master';
 
 const config: Config = {
-  title: 'Geelato Framework',
-  tagline: '官方框架文档站，覆盖 Starter、Runtime、Designer 与 API 双轨入口。',
+  title: 'Geelato Project',
+  tagline: 'Enterprise Low-Code & Pro-Code Solutions',
   favicon: 'img/favicon.ico',
   future: {
     v4: true,
@@ -67,16 +67,26 @@ const config: Config = {
       respectPrefersColorScheme: false,
     },
     navbar: {
-      title: 'Geelato Framework',
+      title: 'Geelato Project',
       logo: {
-        alt: 'Geelato Framework Logo',
-        src: 'img/logo.png',
+        alt: 'Geelato Project Logo',
+        src: 'img/logo.svg',
       },
       items: [
         {to: '/', label: 'Home', position: 'left'},
         {
+          href: '/zh-cn/guide/quick-start',
+          label: 'Framework',
+          position: 'left',
+        },
+        {
           href: '/zh-cn/authentication/overview',
-          label: '统一认证',
+          label: 'AuthServer',
+          position: 'left',
+        },
+        {
+          href: '/zh-cn/message/overview',
+          label: 'Message',
           position: 'left',
         },
         {
@@ -108,7 +118,7 @@ const config: Config = {
       style: 'light',
       links: [
         {
-          title: 'Framework',
+          title: 'Geelato Project',
           items: [
             {label: 'English Docs', to: '/en/guide/developer-navigation'},
             {label: '中文文档', to: '/zh-cn/guide/developer-navigation'},

@@ -27,10 +27,42 @@ public class OAuth2Helper {
             return null;
         }
         JSONObject dataObject = JSON.parseObject(data);
-        if (dataObject != null && dataObject.containsKey("user")) {
-            return JSON.parseObject(JSON.toJSONString(dataObject.get("user")), User.class);
+        if (dataObject != null) {
+            if (dataObject.containsKey("user")) {
+                return parseUserValue(dataObject.get("user"));
+            }
+            if (dataObject.containsKey("data")) {
+                return parseUserValue(dataObject.get("data"));
+            }
         }
         return JSON.parseObject(data, User.class);
+    }
+
+    private static User parseUserValue(Object userValue) {
+        if (userValue == null) {
+            return null;
+        }
+        if (userValue instanceof User user) {
+            return user;
+        }
+        if (userValue instanceof String userText) {
+            String trimmed = userText.trim();
+            if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) {
+                return null;
+            }
+            JSONObject userObject = JSON.parseObject(trimmed);
+            if (userObject != null && userObject.containsKey("user")) {
+                return parseUserValue(userObject.get("user"));
+            }
+            return JSON.parseObject(trimmed, User.class);
+        }
+        if (userValue instanceof JSONObject userObject) {
+            if (userObject.containsKey("user")) {
+                return parseUserValue(userObject.get("user"));
+            }
+            return userObject.toJavaObject(User.class);
+        }
+        return JSON.parseObject(JSON.toJSONString(userValue), User.class);
     }
     
     /**

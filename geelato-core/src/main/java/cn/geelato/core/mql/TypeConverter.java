@@ -3,6 +3,9 @@ package cn.geelato.core.mql;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.sql.Types;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,6 +44,9 @@ public class TypeConverter {
         register(Date.class, "datetime");//to date?
         register(java.sql.Date.class, "datetime");//to date?
         register(Timestamp.class, "timestamp");//to date?
+        register(LocalDate.class, "date");
+        register(LocalDateTime.class, "datetime");
+        register(LocalTime.class, "time");
         register(BigInteger.class, "bigint");
         register(BigDecimal.class, "decimal");
         //TODO db中的json格式
@@ -98,7 +104,6 @@ public class TypeConverter {
             case "time" -> Types.TIME;
             case "datetime", "timestamp" -> Types.TIMESTAMP;
             case "blob", "binary", "varbinary", "longblob", "mediumblob", "tinyblob" -> Types.BLOB;
-            case "json", "jsonb" -> Types.VARCHAR;
             default -> Types.VARCHAR;
         };
     }

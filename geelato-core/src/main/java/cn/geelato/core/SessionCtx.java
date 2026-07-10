@@ -13,25 +13,43 @@ import java.util.HashMap;
  */
 public class SessionCtx extends HashMap<String,String> {
         public SessionCtx(){
-        this.put("userId",getCurrentUser().getUserId());
-        this.put("userName",getCurrentUser().getUserName());
-        this.put("orgId",getCurrentUser().getOrgId());
-        this.put("defaultOrgId",getCurrentUser().getDefaultOrgId());
-        this.put("tenantCode",getCurrentTenantCode());
+        putIfPresent("userId", getUserId());
+        putIfPresent("userName", getUserName());
+        putIfPresent("orgId", getOrgId());
+        putIfPresent("defaultOrgId", getDefaultOrgId());
+        putIfPresent("tenantCode", getCurrentTenantCode());
     }
 
     public static String getUserId(){
-        return getCurrentUser().getUserId();
+        User user = getCurrentUser();
+        return user == null ? null : user.getUserId();
     }
     public static String getUserName(){
-        return getCurrentUser().getUserName();
+        User user = getCurrentUser();
+        return user == null ? null : user.getUserName();
+    }
+
+    public static String getOrgId() {
+        User user = getCurrentUser();
+        return user == null ? null : user.getOrgId();
+    }
+
+    public static String getDefaultOrgId() {
+        User user = getCurrentUser();
+        return user == null ? null : user.getDefaultOrgId();
     }
     public static User getCurrentUser(){
         return SecurityContext.getCurrentUser();
     }
 
     public static String getCurrentTenantCode() {
-        return SecurityContext.getCurrentTenant().getCode();
+        return SecurityContext.getCurrentTenant() == null ? null : SecurityContext.getCurrentTenant().getCode();
+    }
+
+    private void putIfPresent(String key, String value) {
+        if (value != null) {
+            this.put(key, value);
+        }
     }
 
 }

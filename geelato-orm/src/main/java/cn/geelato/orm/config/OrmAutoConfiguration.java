@@ -1,19 +1,18 @@
 package cn.geelato.orm.config;
 
+import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.orm.Dao;
 import cn.geelato.core.util.BeansUtils;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
 import cn.geelato.orm.executor.MetaCommandExecutor;
 import cn.geelato.orm.fill.DefaultSaveDefaultValueFiller;
 import cn.geelato.orm.fill.SaveDefaultValueFiller;
+import cn.geelato.orm.runtime.OrmDaoResolver;
+import cn.geelato.orm.runtime.OrmRuntimeProvider;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationContext;
@@ -23,11 +22,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.util.StringUtils;
 import org.springframework.util.ClassUtils;
+import org.springframework.jdbc.core.JdbcTemplate;
 
+import javax.sql.DataSource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -41,10 +41,15 @@ public class OrmAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(Dao.class)
+    @ConditionalOnMissingBean
+    public OrmRuntimeProvider ormRuntimeProvider(ApplicationContext applicationContext, OrmProperties ormProperties) {
+        return new OrmRuntimeProvider(applicationContext, ormProperties);
+    }
+
+    @Bean
     @ConditionalOnMissingBean
     public MetaCommandExecutor metaCommandExecutor(ApplicationContext applicationContext, OrmProperties ormProperties) {
-        return new DefaultMetaCommandExecutor(resolveDao(applicationContext, ormProperties));
+        return new DefaultMetaCommandExecutor(OrmDaoResolver.resolve(applicationContext, ormProperties));
     }
 
     @Bean
@@ -57,6 +62,20 @@ public class OrmAutoConfiguration {
     @ConditionalOnMissingBean(name = "ormEntityMetadataInitializer")
     public SmartInitializingSingleton ormEntityMetadataInitializer(ApplicationContext applicationContext, OrmProperties ormProperties) {
         return () -> scanAndParseEntities(applicationContext, ormProperties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = "ormDefaultDataSourceInitializer")
+    public SmartInitializingSingleton ormDefaultDataSourceInitializer(ApplicationContext applicationContext, OrmProperties ormProperties) {
+        return () -> {
+            String defaultDataSourceKey = ormProperties == null ? null : ormProperties.getDefaultDataSourceKey();
+            DataSourceManager manager = DataSourceManager.singleInstance();
+            manager.setDefaultDataSourceKey(defaultDataSourceKey);
+            DataSource dataSource = resolveDefaultDataSource(applicationContext, defaultDataSourceKey);
+            if (dataSource != null) {
+                manager.registerDataSource(defaultDataSourceKey, dataSource);
+            }
+        };
     }
 
     private void scanAndParseEntities(ApplicationContext applicationContext, OrmProperties ormProperties) {
@@ -103,46 +122,37 @@ public class OrmAutoConfiguration {
         }
     }
 
-    private Dao resolveDao(ApplicationContext applicationContext, OrmProperties ormProperties) {
-        if (ormProperties != null && StringUtils.hasText(ormProperties.getDaoBeanName())) {
-            return resolveConfiguredDao(applicationContext, ormProperties.getDaoBeanName());
+    private DataSource resolveDefaultDataSource(ApplicationContext applicationContext, String defaultDataSourceKey) {
+        if (!StringUtils.hasText(defaultDataSourceKey)) {
+            return null;
         }
-
-        try {
-            return applicationContext.getBean(Dao.class);
-        } catch (NoUniqueBeanDefinitionException ex) {
-            return resolveCompatibilityDao(applicationContext, ex);
-        } catch (NoSuchBeanDefinitionException ex) {
-            throw new IllegalStateException("No Dao bean found for MetaCommandExecutor", ex);
+        DataSource directDataSource = getBeanIfPresent(applicationContext, defaultDataSourceKey, DataSource.class);
+        if (directDataSource != null) {
+            return directDataSource;
         }
+        DataSource namedDataSource = getBeanIfPresent(applicationContext, defaultDataSourceKey + "DataSource", DataSource.class);
+        if (namedDataSource != null) {
+            return namedDataSource;
+        }
+        JdbcTemplate directJdbcTemplate = getBeanIfPresent(applicationContext, defaultDataSourceKey, JdbcTemplate.class);
+        if (directJdbcTemplate != null) {
+            return directJdbcTemplate.getDataSource();
+        }
+        JdbcTemplate namedJdbcTemplate = getBeanIfPresent(applicationContext, defaultDataSourceKey + "JdbcTemplate", JdbcTemplate.class);
+        if (namedJdbcTemplate != null) {
+            return namedJdbcTemplate.getDataSource();
+        }
+        Map<String, DataSource> dataSources = applicationContext.getBeansOfType(DataSource.class);
+        if (dataSources.size() == 1) {
+            return dataSources.values().iterator().next();
+        }
+        return null;
     }
 
-    private Dao resolveConfiguredDao(ApplicationContext applicationContext, String daoBeanName) {
-        if (!applicationContext.containsBean(daoBeanName)) {
-            throw new IllegalStateException("Configured Dao bean not found: " + daoBeanName);
+    private <T> T getBeanIfPresent(ApplicationContext applicationContext, String beanName, Class<T> beanType) {
+        if (!applicationContext.containsBean(beanName)) {
+            return null;
         }
-        return applicationContext.getBean(daoBeanName, Dao.class);
-    }
-
-    private Dao resolveCompatibilityDao(ApplicationContext applicationContext, NoUniqueBeanDefinitionException ex) {
-        Map<String, Dao> daoBeans = applicationContext.getBeansOfType(Dao.class);
-        if (daoBeans.size() == 1) {
-            return daoBeans.values().iterator().next();
-        }
-        if (daoBeans.containsKey("dynamicDao")) {
-            return daoBeans.get("dynamicDao");
-        }
-        if (daoBeans.containsKey("primaryDao")) {
-            return daoBeans.get("primaryDao");
-        }
-        throw new IllegalStateException(buildAmbiguousDaoMessage(daoBeans), ex);
-    }
-
-    private String buildAmbiguousDaoMessage(Map<String, Dao> daoBeans) {
-        StringJoiner joiner = new StringJoiner(", ");
-        for (String beanName : daoBeans.keySet()) {
-            joiner.add(beanName);
-        }
-        return "Multiple Dao beans found for MetaCommandExecutor: [" + joiner + "], please configure geelato.orm.dao-bean-name";
+        return applicationContext.getBean(beanName, beanType);
     }
 }

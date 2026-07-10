@@ -32,6 +32,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     protected static final Map<FilterGroup.Operator, String> enumToSignString = new HashMap<FilterGroup.Operator, String>();
     private static volatile String primaryDbTypeCache;
     private static volatile boolean primaryDbTypeResolved = false;
+    private final ThreadLocal<BaseCommand> currentCommandHolder = new ThreadLocal<>();
     protected MetaManager metaManager = MetaManager.singleInstance();
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final Map<String, String> tableAlias = new HashMap<>(8);
@@ -81,28 +82,38 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
      */
     @SuppressWarnings("unchecked")
     public BoundSql generate(E command) {
-        BoundSql boundSql = new BoundSql();
-        boundSql.setName(command.getEntityName());
-        String sql = buildOneSql(command);
+        BaseCommand previousCommand = currentCommandHolder.get();
+        currentCommandHolder.set(command);
+        try {
+            BoundSql boundSql = new BoundSql();
+            boundSql.setName(command.getEntityName());
+            String sql = buildOneSql(command);
 //        sql = sanitizeSql(sql);
-        boundSql.setSql(sql);
-        command.setFinalSql(sql);
-        Object[] params = buildParams(command);
+            boundSql.setSql(sql);
+            command.setFinalSql(sql);
+            Object[] params = buildParams(command);
 //        params = sanitizeParams(params);
-        boundSql.setParams(params);
-        boundSql.setTypes(buildTypes(command));
-        logger.info("final-sql: {}", command.getFinalSql());
-        if (command.getCommands() != null) {
-            command.getCommands().forEach(item -> {
-                BoundSql subBoundSql = generate((E)item);
-                if (boundSql.getBoundSqlMap() == null) {
-                    boundSql.setBoundSqlMap(new HashMap<>());
-                }
-                boundSql.getBoundSqlMap().put(subBoundSql.getName(), subBoundSql);
-            });
+            boundSql.setParams(params);
+            boundSql.setTypes(buildTypes(command));
+            logger.info("final-sql: {}", command.getFinalSql());
+            if (command.getCommands() != null) {
+                command.getCommands().forEach(item -> {
+                    BoundSql subBoundSql = generate((E)item);
+                    if (boundSql.getBoundSqlMap() == null) {
+                        boundSql.setBoundSqlMap(new HashMap<>());
+                    }
+                    boundSql.getBoundSqlMap().put(subBoundSql.getName(), subBoundSql);
+                });
+            }
+            boundSql.setCommand(command);
+            return boundSql;
+        } finally {
+            if (previousCommand != null) {
+                currentCommandHolder.set(previousCommand);
+            } else {
+                currentCommandHolder.remove();
+            }
         }
-        boundSql.setCommand(command);
-        return boundSql;
     }
 
     protected abstract Object[] buildParams(E command);
@@ -423,7 +434,43 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         if (StringUtils.hasText(dbType)) {
             return dbType;
         }
+        BaseCommand currentCommand = currentCommandHolder.get();
+        dbType = resolveDbTypeByConnectId(currentCommand != null ? currentCommand.getConnectId() : null);
+        if (StringUtils.hasText(dbType)) {
+            return dbType;
+        }
+        dbType = resolveDbTypeByConnectId(em != null && em.getTableMeta() != null ? em.getTableMeta().getConnectId() : null);
+        if (StringUtils.hasText(dbType)) {
+            return dbType;
+        }
+        dbType = resolveDbTypeByConnectId(DataSourceManager.singleInstance().getDefaultDataSourceKey());
+        if (StringUtils.hasText(dbType)) {
+            return dbType;
+        }
         return resolvePrimaryDbType();
+    }
+
+    private String resolveDbTypeByConnectId(String connectId) {
+        if (!StringUtils.hasText(connectId)) {
+            return null;
+        }
+        try {
+            DataSource dataSource = DataSourceManager.singleInstance().getDataSource(connectId);
+            if (dataSource == null) {
+                return null;
+            }
+            try (Connection connection = dataSource.getConnection()) {
+                DatabaseMetaData metaData = connection.getMetaData();
+                String dbType = normalizeDbType(metaData == null ? null : metaData.getDatabaseProductName());
+                if (!StringUtils.hasText(dbType) && metaData != null) {
+                    dbType = normalizeDbType(metaData.getURL());
+                }
+                return dbType;
+            }
+        } catch (Exception e) {
+            logger.debug("resolve dbType by connectId failed, connectId={}", connectId, e);
+            return null;
+        }
     }
 
     private String resolvePrimaryDbType() {
@@ -434,7 +481,12 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             if (primaryDbTypeResolved) {
                 return primaryDbTypeCache;
             }
-            DataSource dataSource = DataSourceManager.singleInstance().getDataSource("primary");
+            DataSource dataSource = null;
+            try {
+                dataSource = DataSourceManager.singleInstance().getDataSource("primary");
+            } catch (Exception e) {
+                logger.debug("primary data source not available when resolving dbType", e);
+            }
             if (dataSource != null) {
                 try (Connection connection = dataSource.getConnection()) {
                     DatabaseMetaData metaData = connection.getMetaData();

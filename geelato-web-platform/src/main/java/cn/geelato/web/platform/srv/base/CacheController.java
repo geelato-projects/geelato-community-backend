@@ -25,9 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
 
-/**
- * @author geelato
- */
 @ApiRestController("/cache")
 @Slf4j
 public class CacheController extends BaseController {

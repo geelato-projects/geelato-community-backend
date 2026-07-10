@@ -1,6 +1,8 @@
 package cn.geelato.app.scaffold.boot;
 
 import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.List;
 
 public enum AppScaffoldCapability {
     LOGIN("login"),
@@ -23,6 +25,23 @@ public enum AppScaffoldCapability {
         return id;
     }
 
+    public static List<AppScaffoldCapability> builtinCapabilities() {
+        return List.of(
+                LOGIN,
+                MQL,
+                ORGANIZATION,
+                USER,
+                DICTIONARY,
+                UPLOAD
+        );
+    }
+
+    public static List<String> builtinCapabilityIds() {
+        return builtinCapabilities().stream()
+                .map(AppScaffoldCapability::id)
+                .collect(Collectors.toList());
+    }
+
     public static AppScaffoldCapability fromId(String id) {
         if (id == null) {
             return null;
@@ -36,4 +55,3 @@ public enum AppScaffoldCapability {
         return null;
     }
 }
-

@@ -4,6 +4,7 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.util.BeansUtils;
 import cn.geelato.orm.Filter;
 import cn.geelato.orm.executor.MetaCommandExecutor;
+import cn.geelato.orm.runtime.OrmRuntimeProvider;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public abstract class MetaOperate<T extends MetaOperate<T>> {
     }
 
     protected MetaCommandExecutor executor() {
-        return BeansUtils.getBean(MetaCommandExecutor.class);
+        return BeansUtils.getBean(OrmRuntimeProvider.class).metaCommandExecutor();
     }
 
 }

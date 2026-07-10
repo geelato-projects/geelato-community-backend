@@ -11,6 +11,7 @@ import cn.geelato.orm.fill.SaveDefaultValueContext;
 import cn.geelato.orm.fill.SaveDefaultValueFiller;
 import cn.geelato.orm.query.MetaInsert;
 import cn.geelato.orm.query.MetaUpdate;
+import cn.geelato.orm.runtime.OrmRuntimeProvider;
 import cn.geelato.orm.value.ValueRef;
 import cn.geelato.utils.UIDGenerator;
 
@@ -34,6 +35,7 @@ public final class SaveCommandAdapter {
         EntityMeta entityMeta = META_MANAGER.getByEntityName(entityName);
         String pkField = entityMeta.getId().getFieldName();
         command.setEntityName(entityName);
+        command.setConnectId(insert.getConnectId());
         command.setCommandType(CommandType.Insert);
 
         Map<String, Object> entityMap = META_MANAGER.newDefaultEntityMap(entityName);
@@ -67,6 +69,7 @@ public final class SaveCommandAdapter {
         EntityMeta entityMeta = META_MANAGER.getByEntityName(entityName);
         String pkField = entityMeta.getId().getFieldName();
         command.setEntityName(entityName);
+        command.setConnectId(update.getConnectId());
         command.setCommandType(CommandType.Update);
 
         Map<String, Object> params = new HashMap<>();
@@ -119,7 +122,7 @@ public final class SaveCommandAdapter {
 
     private static SaveDefaultValueFiller defaultValueFiller() {
         try {
-            return BeansUtils.getBean(SaveDefaultValueFiller.class);
+            return BeansUtils.getBean(OrmRuntimeProvider.class).saveDefaultValueFiller();
         } catch (Exception ex) {
             return FALLBACK_FILLER;
         }

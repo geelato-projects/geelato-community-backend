@@ -130,14 +130,9 @@ curl -X POST "http://localhost:8088/api/upload/file" \
 
 ## 四、 高级配置项 (application.properties)
 
-脚手架默认以 `strict` 模式运行，即**自动屏蔽**非必要的低代码平台内部接口，保持业务工程干净。
+脚手架默认会自动屏蔽非必要的低代码平台内部接口，保持业务工程干净。
 
 ```properties
-# 是否开启脚手架能力收口（默认 true）
-geelato.app.scaffold.strict=true
-# 允许暴露的基础能力模块
-geelato.app.scaffold.capabilities=login,mql,organization,user,dictionary,upload
-
 # 生产环境是否暴露 Swagger（默认 false，保障安全）
 geelato.app.scaffold.openapi-expose-in-prod=false
 

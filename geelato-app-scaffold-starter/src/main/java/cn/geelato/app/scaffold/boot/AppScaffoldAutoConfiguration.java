@@ -30,7 +30,7 @@ public class AppScaffoldAutoConfiguration {
     @Bean
     @ConditionalOnBean(name = "primaryDao")
     @ConditionalOnMissingBean(AppScaffoldSchemaInitializer.class)
-    @ConditionalOnProperty(prefix = "geelato.app.scaffold", name = {"enabled", "auto-init-tables"}, havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(prefix = "geelato.app.scaffold", name = "auto-init-tables", havingValue = "true", matchIfMissing = true)
     public AppScaffoldSchemaInitializer appScaffoldSchemaInitializer(@Qualifier("primaryDao") Dao primaryDao) {
         return new AppScaffoldSchemaInitializer(primaryDao);
     }
@@ -38,7 +38,6 @@ public class AppScaffoldAutoConfiguration {
     @Bean
     @ConditionalOnBean(name = "primaryJdbcTemplate")
     @ConditionalOnMissingBean(AppScaffoldReadyController.class)
-    @ConditionalOnProperty(prefix = "geelato.app.scaffold", name = "enabled", havingValue = "true", matchIfMissing = true)
     public AppScaffoldReadyController appScaffoldReadyController(@Qualifier("primaryJdbcTemplate") JdbcTemplate primaryJdbcTemplate,
                                                                  AppScaffoldProperties appScaffoldProperties,
                                                                  Environment environment) {

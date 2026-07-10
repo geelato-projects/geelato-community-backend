@@ -18,7 +18,6 @@ import org.springframework.util.ClassUtils;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class AppScaffoldEndpointPruner implements BeanDefinitionRegistryPostProcessor, PriorityOrdered, BeanClassLoaderAware {
@@ -46,10 +45,6 @@ public class AppScaffoldEndpointPruner implements BeanDefinitionRegistryPostProc
         AppScaffoldProperties properties = Binder.get(environment)
                 .bind("geelato.app.scaffold", Bindable.of(AppScaffoldProperties.class))
                 .orElseGet(AppScaffoldProperties::new);
-
-        if (!properties.isEnabled() || !properties.isStrict()) {
-            return;
-        }
 
         Set<String> allowedControllers = resolveAllowedControllers(properties);
 
@@ -88,18 +83,11 @@ public class AppScaffoldEndpointPruner implements BeanDefinitionRegistryPostProc
         Set<String> allowed = new HashSet<>();
         allowed.add("cn.geelato.app.scaffold.boot.AppScaffoldReadyController");
 
-        List<String> capabilities = properties.getCapabilities();
-        if (capabilities != null) {
-            for (String id : capabilities) {
-                AppScaffoldCapability capability = AppScaffoldCapability.fromId(id);
-                if (capability == null) {
-                    continue;
-                }
-                allowed.addAll(controllerCatalog.controllersBy(capability));
-            }
+        for (AppScaffoldCapability capability : AppScaffoldCapability.builtinCapabilities()) {
+            allowed.addAll(controllerCatalog.controllersBy(capability));
         }
 
-        List<String> extras = properties.getExtraControllers();
+        java.util.List<String> extras = properties.getExtraControllers();
         if (extras != null) {
             for (String extra : extras) {
                 if (extra != null && !extra.isBlank()) {
@@ -126,4 +114,3 @@ public class AppScaffoldEndpointPruner implements BeanDefinitionRegistryPostProc
         }
     }
 }
-

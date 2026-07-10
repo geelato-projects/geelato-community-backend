@@ -31,6 +31,7 @@ public final class DeleteCommandAdapter {
         DeleteCommand command = new DeleteCommand();
         String entityName = delete.resolveEntityName();
         command.setEntityName(entityName);
+        command.setConnectId(delete.getConnectId());
         command.setCommandType(CommandType.Delete);
         command.setWhere(FilterAdapter.adapt(delete.getFilters()));
         command.setValueMap(buildDeleteValueMap(entityName));

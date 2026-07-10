@@ -11,25 +11,11 @@ import java.util.List;
 @Getter
 @ConfigurationProperties(prefix = "geelato.app.scaffold")
 public class AppScaffoldProperties {
-
-    private boolean enabled = true;
-
     private boolean autoInitTables = true;
-
-    private boolean strict = true;
 
     private boolean openapiEnabled = true;
 
     private boolean openapiExposeInProd = false;
-
-    private List<String> capabilities = new ArrayList<>(List.of(
-            "login",
-            "mql",
-            "organization",
-            "user",
-            "dictionary",
-            "upload"
-    ));
 
     private List<String> extraControllers = new ArrayList<>();
 

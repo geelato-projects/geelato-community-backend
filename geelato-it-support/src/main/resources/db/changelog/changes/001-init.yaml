@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-init-template
+      author: geelato
+      changes:
+        - sql:
+            splitStatements: true
+            stripComments: true
+            sql: |
+              SELECT 1;
+

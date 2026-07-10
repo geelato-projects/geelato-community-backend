@@ -39,6 +39,7 @@ public class QueryCommandAdapterTest extends OrmTestSupport {
     public void shouldAdaptJoinAndProcedureRelatedQueryOptions() {
         QueryCommand command = QueryCommandAdapter.forList(
                 MetaFactory.query(TestOrderEntity.class)
+                        .useDataSource("crm")
                         .as("o")
                         .select(new String[]{"id", "code"})
                         .selectRef("userId->name", "userName")
@@ -63,5 +64,6 @@ public class QueryCommandAdapterTest extends OrmTestSupport {
         assertEquals("TestUser", command.getJoins().get(0).getEntityName());
         assertEquals("userId", command.getJoins().get(0).getConditions().get(0).getLeftField());
         assertEquals("u.id", command.getJoins().get(0).getConditions().get(0).getRightField());
+        assertEquals("crm", command.getConnectId());
     }
 }

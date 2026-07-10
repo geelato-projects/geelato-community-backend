@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -29,6 +28,7 @@ public class DataSourceManager extends AbstractManager {
     private final static ConcurrentHashMap<Object, Object> dynamicDataSourceMap =new ConcurrentHashMap<>();
 
     private final static ConcurrentHashMap<Object, Object> lazyDynamicDataSourceMap =new ConcurrentHashMap<>();
+    private volatile String defaultDataSourceKey;
     private DataSourceDefinitionLoader definitionLoader = new DefaultDataSourceDefinitionLoader();
 
     public static DataSourceManager singleInstance() {
@@ -61,7 +61,13 @@ public class DataSourceManager extends AbstractManager {
     public DataSource getDataSource(String connectId){
         if(dataSourceMap.get(connectId)==null){
             Object lazyDataSource=DataSourceManager.singleInstance().getLazyDataSource(connectId);
+            if (!(lazyDataSource instanceof Map)) {
+                return null;
+            }
             DataSource dataSource=buildDataSource((Map) lazyDataSource);
+            if (dataSource == null) {
+                return null;
+            }
             dataSourceMap.put(connectId,dataSource);
         }
         return dataSourceMap.get(connectId);
@@ -71,6 +77,9 @@ public class DataSourceManager extends AbstractManager {
         return lazyDynamicDataSourceMap.get(connectId);
     }
     public DataSource buildDataSource(Map dbConnectMap){
+        if (dbConnectMap == null || dbConnectMap.isEmpty()) {
+            return null;
+        }
         HikariConfig config = new HikariConfig();
         String dbType=dbConnectMap.get("db_type").toString().toLowerCase();
         String serverHost=dbConnectMap.get("db_hostname_ip").toString();
@@ -93,6 +102,9 @@ public class DataSourceManager extends AbstractManager {
             default:
                 break;
         }
+        if (jdbcUrl == null || dbDriver == null) {
+            return null;
+        }
         config.setJdbcUrl(jdbcUrl);
         config.setUsername(dbUserName);
         config.setPassword(dbPassWord);
@@ -107,6 +119,21 @@ public class DataSourceManager extends AbstractManager {
 
     public DataSourceDefinitionLoader getDefinitionLoader() {
         return definitionLoader;
+    }
+
+    public String getDefaultDataSourceKey() {
+        return defaultDataSourceKey;
+    }
+
+    public void setDefaultDataSourceKey(String defaultDataSourceKey) {
+        this.defaultDataSourceKey = defaultDataSourceKey;
+    }
+
+    public void registerDataSource(String key, DataSource dataSource) {
+        if (key == null || key.isBlank() || dataSource == null) {
+            return;
+        }
+        dataSourceMap.put(key, dataSource);
     }
 
     public void setDefinitionLoader(DataSourceDefinitionLoader definitionLoader) {

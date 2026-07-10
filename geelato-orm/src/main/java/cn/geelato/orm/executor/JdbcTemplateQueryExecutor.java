@@ -1,16 +1,14 @@
 package cn.geelato.orm.executor;
 
+import cn.geelato.core.mql.execute.BoundPageSql;
+import cn.geelato.core.mql.execute.BoundSql;
+import cn.geelato.core.sql.SqlManager;
 import cn.geelato.orm.WrapperResultFunction;
 import cn.geelato.orm.query.MetaQuery;
-import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import cn.geelato.orm.support.QueryCommandAdapter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Component;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +21,7 @@ import java.util.Map;
 public class JdbcTemplateQueryExecutor implements QueryExecutor {
 
     private final JdbcTemplate jdbcTemplate;
+    private final SqlManager sqlManager = SqlManager.singleInstance();
     
     public JdbcTemplateQueryExecutor(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -35,7 +34,7 @@ public class JdbcTemplateQueryExecutor implements QueryExecutor {
         Map<String, Object> row = new HashMap<>();
         int columnCount = rs.getMetaData().getColumnCount();
         for (int i = 1; i <= columnCount; i++) {
-            String columnName = rs.getMetaData().getColumnName(i);
+            String columnName = rs.getMetaData().getColumnLabel(i);
             Object value = rs.getObject(i);
             row.put(columnName, value);
         }
@@ -44,10 +43,10 @@ public class JdbcTemplateQueryExecutor implements QueryExecutor {
     
     @Override
     public List<Map<String, Object>> executeQuery(MetaQuery query) {
-        String sql = query.toSql();
-        System.out.println("执行查询SQL: " + sql);
-        
-        return jdbcTemplate.query(sql, mapRowMapper);
+        BoundSql boundSql = resolveQueryBoundSql(query);
+        System.out.println("执行查询SQL: " + boundSql);
+
+        return query(boundSql, mapRowMapper);
     }
     
     @Override
@@ -58,10 +57,14 @@ public class JdbcTemplateQueryExecutor implements QueryExecutor {
     
     @Override
     public long executeCount(MetaQuery query) {
-        String countSql = query.toCountSql();
+        BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(QueryCommandAdapter.forList(query));
+        BoundSql boundSql = boundPageSql.getBoundSql();
+        String countSql = boundPageSql.getCountSql();
         System.out.println("执行统计SQL: " + countSql);
-        
-        Long count = jdbcTemplate.queryForObject(countSql, Long.class);
+
+        Long count = boundSql.getTypes() != null && boundSql.getTypes().length > 0
+                ? jdbcTemplate.queryForObject(countSql, boundSql.getParams(), boundSql.getTypes(), Long.class)
+                : jdbcTemplate.queryForObject(countSql, Long.class, boundSql.getParams());
         return count != null ? count : 0L;
     }
     
@@ -145,5 +148,19 @@ public class JdbcTemplateQueryExecutor implements QueryExecutor {
         wrappedPageResult.setPageSize(rawPageResult.getPageSize());
         
         return wrappedPageResult;
+    }
+
+    private BoundSql resolveQueryBoundSql(MetaQuery query) {
+        if (query.getPageNum() != null && query.getPageNum() > 0
+                && query.getPageSize() != null && query.getPageSize() > 0) {
+            return sqlManager.generatePageQuerySql(QueryCommandAdapter.forList(query)).getBoundSql();
+        }
+        return sqlManager.generateQuerySql(QueryCommandAdapter.forList(query));
+    }
+
+    private <T> List<T> query(BoundSql boundSql, RowMapper<T> rowMapper) {
+        return boundSql.getTypes() != null && boundSql.getTypes().length > 0
+                ? jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), boundSql.getTypes(), rowMapper)
+                : jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), rowMapper);
     }
 }

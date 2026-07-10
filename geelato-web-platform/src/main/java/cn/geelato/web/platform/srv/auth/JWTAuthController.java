@@ -4,65 +4,64 @@ import cn.geelato.core.GlobalContext;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.api.NullResult;
-import cn.geelato.lang.constants.ApiErrorMsg;
-import cn.geelato.meta.Role;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.security.Tenant;
 import cn.geelato.security.UserOrg;
-import cn.geelato.utils.Base64Utils;
-import cn.geelato.utils.SqlParams;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
-import cn.geelato.meta.Org;
 import cn.geelato.meta.User;
 import cn.geelato.web.common.shiro.ShiroUser;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.security.entity.*;
-import cn.geelato.web.platform.srv.security.enums.ValidTypeEnum;
-import cn.geelato.web.platform.srv.security.service.AuthCodeService;
+import cn.geelato.web.platform.srv.auth.service.AccountRecoveryService;
+import cn.geelato.web.platform.srv.auth.service.CurrentUserProfileService;
+import cn.geelato.web.platform.srv.auth.service.UserAccountCommandService;
+import cn.geelato.web.platform.srv.auth.service.UserAuthorizationQueryService;
+import cn.geelato.web.platform.srv.auth.service.UserIdentityQueryService;
 import cn.geelato.web.platform.utils.JWTUtil;
-import cn.geelato.web.platform.srv.security.service.OrgService;
 import cn.geelato.web.platform.utils.EncryptUtil;
-import com.alibaba.fastjson2.JSON;
-import lombok.SneakyThrows;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.logging.log4j.util.Strings;
 import org.apache.shiro.SecurityUtils;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.Assert;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.lang.reflect.Field;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @ApiRestController("/user")
 @Slf4j
+@Validated
 public class JWTAuthController extends BaseController {
-    protected AuthCodeService authCodeService;
-    protected OrgService orgService;
+    private final UserIdentityQueryService userIdentityQueryService;
+    private final CurrentUserProfileService currentUserProfileService;
+    private final UserAuthorizationQueryService userAuthorizationQueryService;
+    private final UserAccountCommandService userAccountCommandService;
+    private final AccountRecoveryService accountRecoveryService;
     private static final String anonymousFixedPassword = GlobalContext.getAnonymousPwd();
 
-    @Autowired
-    public JWTAuthController(AuthCodeService authCodeService, OrgService orgService) {
-        this.authCodeService = authCodeService;
-        this.orgService = orgService;
+    public JWTAuthController(UserIdentityQueryService userIdentityQueryService,
+                             CurrentUserProfileService currentUserProfileService,
+                             UserAuthorizationQueryService userAuthorizationQueryService,
+                             UserAccountCommandService userAccountCommandService,
+                             AccountRecoveryService accountRecoveryService) {
+        this.userIdentityQueryService = userIdentityQueryService;
+        this.currentUserProfileService = currentUserProfileService;
+        this.userAuthorizationQueryService = userAuthorizationQueryService;
+        this.userAccountCommandService = userAccountCommandService;
+        this.accountRecoveryService = accountRecoveryService;
     }
 
     @IgnoreVerify
     @RequestMapping(value = "/login", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
-    public ApiResult<LoginResult> login(@RequestBody LoginParams loginParams) {
+    public ApiResult<LoginResult> login(@Valid @RequestBody LoginParams loginParams) {
         return doLogin(loginParams, false);
     }
 
     @RequestMapping(value = "/login/anonymous", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
-    public ApiResult<LoginResult> loginAnonymous(@RequestBody LoginParams loginParams) {
+    public ApiResult<LoginResult> loginAnonymous(@Valid @RequestBody LoginParams loginParams) {
         return doLogin(loginParams, true);
     }
 
@@ -91,7 +90,7 @@ public class JWTAuthController extends BaseController {
                 return ApiResult.fail(anonymousMode ? "账号不存在或不可用" : "账号或密码不正确");
             }
             if (loginUsers.size() > 1) {
-                List<Tenant> tenantList = queryTenantListByLoginName(loginParams.getUsername());
+                List<Tenant> tenantList = userIdentityQueryService.queryTenantListByLoginName(loginParams.getUsername());
                 if (tenantList.size() > 1) {
                     LoginResult loginResult = new LoginResult();
                     loginResult.setTenants(tenantList);
@@ -129,16 +128,15 @@ public class JWTAuthController extends BaseController {
         }
     }
 
-    @SneakyThrows
     @RequestMapping(value = "/switchIdentity", method = RequestMethod.GET, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
-    public ApiResult<LoginResult> switchIdentity(String org, String tenant) {
+    public ApiResult<LoginResult> switchIdentity(String org, String tenant) throws Exception {
         String userId = SecurityContext.getCurrentUser().getUserId();
         User loginUser = dao.queryForObject(User.class, "id", userId);
-        List<Tenant> tenantList = queryTenantListByUserId(userId);
-        List<UserOrg> userOrgList = queryOrgListByUserId(userId);
+        List<Tenant> tenantList = userIdentityQueryService.queryTenantListByUserId(userId);
+        List<UserOrg> userOrgList = userIdentityQueryService.queryOrgListByUserId(userId);
 
-        String orgId = checkOrg(userOrgList, org) ? org : loginUser.getOrgId();
-        String tenantCode = checkTenant(tenantList, tenant) ? tenant : loginUser.getTenantCode();
+        String orgId = userIdentityQueryService.containsOrg(userOrgList, org) ? org : loginUser.getOrgId();
+        String tenantCode = userIdentityQueryService.containsTenant(tenantList, tenant) ? tenant : loginUser.getTenantCode();
         // 生成登录密钥 token
         Map<String, String> payload = new HashMap<>(5);
         payload.put("id", userId);
@@ -155,138 +153,16 @@ public class JWTAuthController extends BaseController {
 
     @RequestMapping(value = "/info", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult<?> getUserInfo() {
-        try {
-            cn.geelato.security.User securityUser = SecurityContext.getCurrentUser();
-            if (securityUser == null) {
-                return ApiResult.fail("获取用户失败");
-            }
-            User user = dao.queryForObject(User.class, "id", securityUser.getUserId());
-            LoginResult loginResult = LoginResult.formatLoginResult(user);
-            loginResult.setToken(this.getToken());
-            loginResult.setRoles(null);
-            // 当前用户组织信息，如果没有设置默认组织，则使用用户的组织
-            List<UserOrg> userOrgList = queryOrgListByUserId(user.getId());
-            if (!userOrgList.isEmpty()) {
-                loginResult.setOrgs(userOrgList);
-                String orgId = checkOrg(userOrgList, securityUser.getOrgId()) ? securityUser.getOrgId() : user.getOrgId();
-                UserOrg userOrg = userOrgList.stream()
-                        .filter(org -> org.getOrgId().equals(orgId))
-                        .findFirst()
-                        .orElse(null);
-                if (userOrg != null) {
-                    loginResult.setOrgId(userOrg.getOrgId());
-                    loginResult.setOrgName(userOrg.getName());
-                    loginResult.setCompanyId(userOrg.getCompanyId());
-                    loginResult.setCompanyName(null);
-                    loginResult.setCompanyExtendId(userOrg.getExtendId());
-                }
-            }
-            // 公司相关信息
-            if (StringUtils.isNotBlank(loginResult.getCompanyId())) {
-                Org org = dao.queryForObject(Org.class, loginResult.getCompanyId());
-                // 公司形态扩展
-                if (StringUtils.isNotBlank(loginResult.getCompanyExtendId())) {
-                    loginResult.setCompanyExtendId(org == null ? null : org.getExtendId());
-                }
-                // 公司名称
-                if (StringUtils.isBlank(loginResult.getCompanyName())) {
-                    loginResult.setCompanyName(org == null ? null : org.getName());
-                }
-            }
-            // 用户所属租户
-            List<Tenant> tenantList = queryTenantListByUserId(user.getId());
-            loginResult.setTenants(tenantList);
-            String tenantCode = checkTenant(tenantList, securityUser.getTenantCode()) ? securityUser.getTenantCode() : user.getTenantCode();
-            loginResult.setTenantCode(tenantCode);
-            // 用户角色
-            getRoleIdsByUserId(loginResult, user.getId(), null, user.getTenantCode());
-            return ApiResult.success(loginResult);
-        } catch (Exception e) {
-            log.error("getUserInfo", e);
-            return ApiResult.fail(e.getMessage());
-        }
-    }
-
-    private @NotNull List<UserOrg> queryOrgListByUserId(String userId) {
-        List<UserOrg> userOrgs = dao.getJdbcTemplate().query(
-                "select o.id, o.name, oru.default_org as defaultOrg, o.pid as pid, o.tenant_code as tenantCode " +
-                        "from platform_org_r_user oru " +
-                        "left join platform_org o on oru.org_id = o.id " +
-                        "where oru.del_status=0 and o.status=1 and o.del_status=0 and oru.user_id = ?",
-                (rs, rowNum) -> {
-                    UserOrg userOrg = new UserOrg();
-                    userOrg.setOrgId(rs.getString("id"));
-                    userOrg.setName(rs.getString("name"));
-                    userOrg.setDefaultOrg(rs.getBoolean("defaultOrg"));
-                    userOrg.setPid(rs.getString("pid"));
-                    userOrg.setTenantCode(rs.getString("tenantCode"));
-                    return userOrg;
-                },
-                userId
-        );
-        if (!userOrgs.isEmpty()) {
-            String orgIds = userOrgs.stream().map(UserOrg::getOrgId).collect(Collectors.joining(","));
-            List<Map<String, Object>> mapList = dao.queryForMapList("query_tree_platform_org_full_name", SqlParams.map("id", orgIds));
-            if (mapList != null && !mapList.isEmpty()) {
-                // 将mapList转换为以ID为key的Map，方便快速查找
-                Map<String, UserOrg> idToUserOrgMap = mapList.stream().collect(Collectors.toMap(
-                        map -> map.get("id").toString(),
-                        map -> new UserOrg(
-                                map.get("full_name").toString(),
-                                Optional.ofNullable(map.get("dept_id")).map(Object::toString).orElse(null),
-                                Optional.ofNullable(map.get("company_id")).map(Object::toString).orElse(null),
-                                Optional.ofNullable(map.get("extend_id")).map(Object::toString).orElse(null)
-                        )
-                ));
-                // 将full_name设置回UserOrg对象
-                userOrgs.forEach(userOrg -> {
-                    UserOrg uo = idToUserOrgMap.get(userOrg.getOrgId());
-                    if (uo != null) {
-                        userOrg.setFullName(uo.getFullName());
-                        userOrg.setDeptId(uo.getDeptId());
-                        userOrg.setCompanyId(uo.getCompanyId());
-                        userOrg.setExtendId(uo.getExtendId());
-                    }
-                });
-            }
-        }
-        return userOrgs;
-    }
-
-    private @NotNull List<Tenant> queryTenantListByUserId(String userId) {
-        return dao.getJdbcTemplate().query("select t.`code` as code ,t.company_name as name from platform_user u left join platform_tenant t on u.tenant_code=t.`code`\n" +
-                "where t.del_status=0 and u.id=?", (rs, rowNum) -> new Tenant(rs.getString("code"),
-                rs.getString("name")), userId);
-    }
-
-    private @NotNull List<Tenant> queryTenantListByLoginName(String loginName) {
-        return dao.getJdbcTemplate().query("select t.`code` as code ,t.company_name as name from platform_user u left join platform_tenant t on u.tenant_code=t.`code`\n" +
-                "where t.del_status=0 and u.login_name=?", (rs, rowNum) -> new Tenant(rs.getString("code"),
-                rs.getString("name")), loginName);
-    }
-
-    private Boolean checkTenant(List<Tenant> tenantList, String tenantCode) {
-        return tenantList.stream()
-                .map(Tenant::getCode)
-                .anyMatch(code -> code.equals(tenantCode));
-    }
-
-    private Boolean checkOrg(List<UserOrg> userOrgList, String orgId) {
-        return userOrgList.stream()
-                .map(UserOrg::getOrgId)
-                .anyMatch(id -> id.equals(orgId));
+        return ApiResult.success(currentUserProfileService.getCurrentUserInfo(SecurityContext.getCurrentUser(), this.getToken()));
     }
 
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
     public ApiResult<NullResult> logout() {
-        try {
-            User user = this.getUserByToken();
+        User user = this.getUserByToken();
+        if (user != null) {
             log.debug("User [{}] logout.", user.getLoginName());
-            return ApiResult.successNoResult();
-        } catch (Exception e) {
-            log.error("退出失败", e);
-            return ApiResult.fail(e.getMessage());
         }
+        return ApiResult.successNoResult();
     }
 
     private Boolean checkPsd(User loginUser, LoginParams loginParams) {
@@ -295,50 +171,15 @@ public class JWTAuthController extends BaseController {
 
     @RequestMapping(value = "/avatar/{userId}", method = {RequestMethod.POST, RequestMethod.GET})
     public ApiResult<NullResult> uploadAvatar(@PathVariable() String userId, @RequestParam("file") MultipartFile file) {
-        try {
-            // 用户信息
-            if (Strings.isBlank(userId)) {
-                throw new RuntimeException("userId is null");
-            }
-            User user = dao.queryForObject(User.class, userId);
-            Assert.notNull(user, ApiErrorMsg.IS_NULL);
-            // 头像
-            if (file == null || file.isEmpty()) {
-                throw new RuntimeException("Avatar file is null");
-            }
-            user.setAvatar(Base64Utils.fromFile(file.getBytes(), "image/png"));
-            dao.save(user);
-            return ApiResult.successNoResult();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
+        userAccountCommandService.uploadAvatar(resolveCurrentUserId(), userId, file);
+        return ApiResult.successNoResult();
     }
 
     @RequestMapping(value = "/update/{userId}", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult<NullResult> updateUserInfo(@PathVariable(required = true) String userId, @RequestBody Map<String, Object> params) {
-        try {
-            // 用户信息
-            if (Strings.isBlank(userId)) {
-                throw new RuntimeException("userId is null");
-            }
-            User user = dao.queryForObject(User.class, userId);
-            Assert.notNull(user, ApiErrorMsg.IS_NULL);
-            // 基础信息更新
-            for (Map.Entry<String, Object> param : params.entrySet()) {
-                String key = param.getKey();
-                Object value = param.getValue();
-                Class<?> clazz = user.getClass();
-                Field labelField = clazz.getDeclaredField(key);
-                labelField.setAccessible(true);
-                labelField.set(user, value);
-            }
-            dao.save(user);
-            return ApiResult.successNoResult();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
+    public ApiResult<NullResult> updateUserInfo(@PathVariable(required = true) String userId,
+                                                 @Valid @RequestBody UpdateUserProfileRequest params) {
+        userAccountCommandService.updateUserProfile(resolveCurrentUserId(), userId, params);
+        return ApiResult.successNoResult();
     }
 
     /**
@@ -351,35 +192,17 @@ public class JWTAuthController extends BaseController {
      * @throws Exception 如果在查询过程中发生异常，则抛出该异常
      */
     @RequestMapping(value = "/menu", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult getCurrentUserMenu(@RequestBody Map<String, Object> params) throws Exception {
-        try {
-            List<Map<String, Object>> menuItemList = new ArrayList<>();
-            Map map = new HashMap<>();
-            String flag = (String) params.get("flag");
-            String appId = (String) params.get("appId");
-            String tenantCode = (String) params.get("tenantCode");
-            User user = getUserByToken();
-            String token = getToken();
-            if (user == null || Strings.isBlank(token)) {
-                return ApiResult.fail("User or token is null");
-            }
-            if (Strings.isNotBlank(tenantCode) && !tenantCode.equalsIgnoreCase(user.getTenantCode())) {
-                return ApiResult.fail("user tenant code not equal");
-            } else {
-                tenantCode = user.getTenantCode();
-            }
-            if (Strings.isNotBlank(appId) && Strings.isNotBlank(tenantCode)) {
-                map.put("currentUser", user.getId());
-                map.put("appId", appId);
-                map.put("tenantCode", tenantCode);
-                map.put("flag", flag);
-                menuItemList = dao.queryForMapList("select_platform_tree_node_app_page", map);
-            }
-            return ApiResult.success(menuItemList);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
+    public ApiResult getCurrentUserMenu(@RequestBody(required = false) Map<String, Object> params) {
+        Map<String, Object> safeParams = params == null ? Collections.emptyMap() : params;
+        User user = getUserByToken();
+        List<Map<String, Object>> menuItemList = userAuthorizationQueryService.getCurrentUserMenu(
+                user,
+                getToken(),
+                (String) safeParams.get("flag"),
+                (String) safeParams.get("appId"),
+                (String) safeParams.get("tenantCode")
+        );
+        return ApiResult.success(menuItemList);
     }
 
     /**
@@ -392,157 +215,34 @@ public class JWTAuthController extends BaseController {
      * @throws Exception 如果在重置密码过程中发生异常，则抛出该异常
      */
     @RequestMapping(value = "/resetPassword", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult resetPassword(@RequestParam(defaultValue = "8", required = false) int passwordLength) throws Exception {
-        try {
-            User user = this.getUserByToken();
-            String plainPassword = RandomStringUtils.randomAlphanumeric(passwordLength > 32 ? 32 : passwordLength);
-            user.setPlainPassword(plainPassword);
-            EncryptUtil.encryptPassword(user);
-            dao.save(user);
-            return ApiResult.success(plainPassword);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
+    public ApiResult resetPassword(@RequestParam(defaultValue = "8", required = false) int passwordLength) {
+        return ApiResult.success(userAccountCommandService.resetCurrentUserPassword(resolveCurrentUserId(), passwordLength));
     }
 
     @RequestMapping(value = "/forgetValid", method = RequestMethod.POST)
-    public ApiResult forgetValid(@RequestBody Map<String, Object> params) {
-        try {
-            ForgetPasswordParams form = new ForgetPasswordParams();
-            BeanUtils.populate(form, params);
-            Map<String, Object> map = new HashMap<>();
-            String validLabel = ValidTypeEnum.getLabel(form.getValidType());
-            if (Strings.isBlank(form.getValidBox()) || Strings.isBlank(validLabel)) {
-                throw new Exception("Parameter error");
-            }
-            map.put(validLabel, form.getValidBox());
-            if (ValidTypeEnum.MOBILE.getValue().equals(form.getValidType())) {
-                if (Strings.isBlank(form.getPrefix())) {
-                    throw new Exception("Parameter error");
-                }
-                map.put("mobilePrefix", form.getPrefix());
-            }
-            List<User> users = dao.queryList(User.class, map, null);
-            if (users != null && users.size() == 1) {
-                User user = new User();
-                user.setId(users.get(0).getId());
-                return ApiResult.success(user);
-            } else {
-                throw new RuntimeException("user not found");
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
+    public ApiResult forgetValid(@Valid @RequestBody ForgetValidRequest form) {
+        User foundUser = accountRecoveryService.findUserByValidBox(form);
+        User result = new User();
+        result.setId(foundUser.getId());
+        return ApiResult.success(result);
     }
 
     @RequestMapping(value = "/forget", method = RequestMethod.POST)
-    public ApiResult<NullResult> forgetPassword(@RequestBody Map<String, Object> params) {
-        try {
-            ForgetPasswordParams form = new ForgetPasswordParams();
-            BeanUtils.populate(form, params);
-            // 用户、密码
-            if (Strings.isBlank(form.getUserId()) || Strings.isBlank(form.getPassword())) {
-                throw new Exception("参数异常，请联系平台");
-            }
-            // 验证码
-            AuthCodeParams code = AuthCodeParams.buildAuthCodeParams(form);
-            if (!authCodeService.validate(code)) {
-                throw new Exception("验证码错误");
-            }
-            // 修改密码
-            User user = dao.queryForObject(User.class, form.getUserId());
-            Assert.notNull(user, ApiErrorMsg.IS_NULL);
-            user.setPlainPassword(form.getPassword());
-            EncryptUtil.encryptPassword(user);
-            dao.save(user);
-            return ApiResult.successNoResult();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
+    public ApiResult<NullResult> forgetPassword(@Valid @RequestBody ForgetPasswordRequest form) {
+        accountRecoveryService.forgetPassword(form);
+        return ApiResult.successNoResult();
     }
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST)
-    public ApiResult<NullResult> validateUser(@RequestBody Map<String, Object> params) {
-        try {
-            AuthCodeParams form = new AuthCodeParams();
-            BeanUtils.populate(form, params);
-            // 用户、密码
-            if (Strings.isBlank(form.getValidType()) || Strings.isBlank(form.getUserId()) || Strings.isBlank(form.getAuthCode())) {
-                throw new Exception("参数异常，请联系平台");
-            }
-            // 用户验证
-            User user = dao.queryForObject(User.class, form.getUserId());
-            Assert.notNull(user, ApiErrorMsg.IS_NULL);
-            // 验证方式：密码、手机、邮箱
-            if (ValidTypeEnum.PASSWORD.getValue().equals(form.getValidType())) {
-                if (Strings.isNotBlank(user.getPassword()) && Strings.isNotBlank(user.getSalt())) {
-                    String pwd = EncryptUtil.encryptPassword(form.getAuthCode(), user.getSalt());
-                    if (user.getPassword().equals(pwd)) {
-                        return ApiResult.successNoResult();
-                    }
-                }
-                throw new RuntimeException("账号密码验证失败");
-            } else if (ValidTypeEnum.MOBILE.getValue().equals(form.getValidType())) {
-                // action、userId、validType、authCode
-                if (authCodeService.validate(form)) {
-                    return ApiResult.successNoResult();
-                }
-                throw new RuntimeException("手机号码验证失败");
-            } else if (ValidTypeEnum.MAIL.getValue().equals(form.getValidType())) {
-                if (authCodeService.validate(form)) {
-                    return ApiResult.successNoResult();
-                }
-                throw new RuntimeException("电子邮箱验证失败");
-            }
-            throw new RuntimeException("验证失败");
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
+    public ApiResult<NullResult> validateUser(@Valid @RequestBody ValidateUserRequest form) {
+        accountRecoveryService.validateUser(form);
+        return ApiResult.successNoResult();
     }
 
     @RequestMapping(value = "/bindAccount", method = RequestMethod.POST)
-    public ApiResult<NullResult> bindAccount(@RequestBody Map<String, Object> params) {
-        try {
-            AuthCodeParams form = new AuthCodeParams();
-            BeanUtils.populate(form, params);
-            // 用户、密码
-            if (Strings.isBlank(form.getValidType()) || Strings.isBlank(form.getUserId()) || Strings.isBlank(form.getAuthCode()) || Strings.isBlank(form.getValidBox())) {
-                throw new RuntimeException("Parameter error");
-            }
-            // 用户验证
-            User user = dao.queryForObject(User.class, form.getUserId());
-            Assert.notNull(user, ApiErrorMsg.IS_NULL);
-            // 账号绑定
-            if (ValidTypeEnum.PASSWORD.getValue().equals(form.getValidType())) {
-                user.setPlainPassword(form.getValidBox());
-                EncryptUtil.encryptPassword(user);
-                dao.save(user);
-                return ApiResult.successNoResult();
-            } else if (ValidTypeEnum.MOBILE.getValue().equals(form.getValidType())) {
-                if (authCodeService.validate(form)) {
-                    user.setMobilePhone(form.getValidBox());
-                    user.setMobilePrefix(form.getPrefix());
-                    dao.save(user);
-                    return ApiResult.successNoResult();
-                }
-                throw new RuntimeException("验证码错误");
-            } else if (ValidTypeEnum.MAIL.getValue().equals(form.getValidType())) {
-                if (authCodeService.validate(form)) {
-                    user.setEmail(form.getValidBox());
-                    dao.save(user);
-                    return ApiResult.successNoResult();
-                }
-                throw new RuntimeException("验证码错误");
-            }
-            throw new RuntimeException("绑定失败");
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
-        }
+    public ApiResult<NullResult> bindAccount(@Valid @RequestBody BindAccountRequest form) {
+        accountRecoveryService.bindAccount(form);
+        return ApiResult.successNoResult();
     }
 
     /**
@@ -553,73 +253,21 @@ public class JWTAuthController extends BaseController {
      * @return 返回获取到的用户信息对象，如果未找到对应的用户则返回null
      */
     private User getUserByToken() {
-        ShiroUser shiroUser = (ShiroUser) SecurityUtils.getSubject().getPrincipal();
-        User user = null;
-        if (shiroUser != null) {
-            user = dao.queryForObject(User.class, "loginName", shiroUser.loginName);
+        cn.geelato.security.User currentUser = SecurityContext.getCurrentUser();
+        if (currentUser != null && StringUtils.isNotBlank(currentUser.getUserId())) {
+            return dao.queryForObject(User.class, "id", currentUser.getUserId());
         }
-        return user;
+        ShiroUser shiroUser = (ShiroUser) SecurityUtils.getSubject().getPrincipal();
+        return shiroUser != null ? dao.queryForObject(User.class, "loginName", shiroUser.loginName) : null;
     }
 
     private String getToken() {
         return this.request.getHeader("Authorization");
     }
 
-    /**
-     * 设置用户所属公司
-     * <p>
-     * 根据登录结果中的公司ID或组织ID，设置登录结果中的公司名称和公司ID。
-     *
-     * @param loginResult 登录结果对象，包含用户的登录信息
-     */
-    private void setCompany(LoginResult loginResult) {
-        if (Strings.isNotBlank(loginResult.getCompanyId())) {
-            Org org = orgService.getModel(Org.class, loginResult.getCompanyId());
-            loginResult.setCompanyName(org.getName());
-        } else if (Strings.isNotBlank(loginResult.getOrgId())) {
-            Org org = orgService.getCompany(loginResult.getOrgId());
-            if (org != null) {
-                loginResult.setCompanyId(org.getId());
-                loginResult.setCompanyName(org.getName());
-            }
-        }
-    }
 
-    /**
-     * 获取用户的角色信息
-     *
-     * @param userId     用户ID
-     * @param appId      应用ID
-     * @param tenantCode 租户代码
-     */
-    private List<Role> getRolesByUserId(String userId, String appId, String tenantCode) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("userId", userId);
-        params.put("appId", appId);
-        params.put("tenantCode", tenantCode);
-        List<Map<String, Object>> mapList = dao.queryForMapList("page_query_platform_role_by_user_id", params);
-        return JSON.parseArray(JSON.toJSONString(mapList), Role.class);
-    }
-
-    private void getRoleIdsByUserId(LoginResult loginResult, String userId, String appId, String tenantCode) {
-        List<Role> roles = getRolesByUserId(userId, appId, tenantCode);
-        Map<String, String> roleMap = new HashMap<>();
-        if (roles != null && !roles.isEmpty()) {
-            loginResult.setRoleIds(roles.stream()
-                    .map(Role::getId)
-                    .filter(Objects::nonNull)
-                    .filter(item -> !item.isEmpty())
-                    .distinct()
-                    .collect(Collectors.joining(",")));
-            loginResult.setRoleCodes(roles.stream()
-                    .map(Role::getCode)
-                    .filter(Objects::nonNull)
-                    .filter(item -> !item.isEmpty())
-                    .distinct()
-                    .collect(Collectors.joining(",")));
-        } else {
-            loginResult.setRoleIds(null);
-            loginResult.setRoleCodes(null);
-        }
+    private String resolveCurrentUserId() {
+        cn.geelato.security.User currentUser = SecurityContext.getCurrentUser();
+        return currentUser == null ? null : currentUser.getUserId();
     }
 }

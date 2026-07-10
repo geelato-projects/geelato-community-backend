@@ -18,11 +18,8 @@ import java.util.stream.Collectors;
 public class AppScaffoldEndpointPrunerTest {
 
     @Test
-    void shouldPruneDisallowedControllersWhenStrictEnabled() {
-        MockEnvironment environment = new MockEnvironment()
-                .withProperty("geelato.app.scaffold.enabled", "true")
-                .withProperty("geelato.app.scaffold.strict", "true")
-                .withProperty("geelato.app.scaffold.capabilities", "login,mql,organization,user,dictionary,upload");
+    void shouldPruneDisallowedControllersByDefault() {
+        MockEnvironment environment = new MockEnvironment();
 
         DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
         registerController(registry, "allowedJwt", "cn.geelato.web.platform.srv.auth.JWTAuthController");
@@ -36,23 +33,6 @@ public class AppScaffoldEndpointPrunerTest {
         Assertions.assertTrue(registry.containsBeanDefinition("allowedJwt"));
         Assertions.assertTrue(registry.containsBeanDefinition("allowedMql"));
         Assertions.assertFalse(registry.containsBeanDefinition("disallowedAi"));
-    }
-
-    @Test
-    void shouldNotPruneWhenStrictDisabled() {
-        MockEnvironment environment = new MockEnvironment()
-                .withProperty("geelato.app.scaffold.enabled", "true")
-                .withProperty("geelato.app.scaffold.strict", "false")
-                .withProperty("geelato.app.scaffold.capabilities", "login");
-
-        DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
-        registerController(registry, "disallowedAi", "cn.geelato.web.platform.srv.ai.AiController");
-
-        AppScaffoldEndpointPruner pruner = new AppScaffoldEndpointPruner(environment, new AppScaffoldControllerCatalog());
-        pruner.setBeanClassLoader(Thread.currentThread().getContextClassLoader());
-        pruner.postProcessBeanDefinitionRegistry(registry);
-
-        Assertions.assertTrue(registry.containsBeanDefinition("disallowedAi"));
     }
 
     @Test

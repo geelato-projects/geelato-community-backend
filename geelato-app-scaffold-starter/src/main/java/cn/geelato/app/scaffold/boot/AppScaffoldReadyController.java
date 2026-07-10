@@ -30,8 +30,7 @@ public class AppScaffoldReadyController {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("app", environment.getProperty("spring.application.name", "unknown-app"));
         payload.put("starter", "geelato-app-scaffold-starter");
-        payload.put("enabled", appScaffoldProperties.isEnabled());
-        payload.put("capabilities", appScaffoldProperties.getCapabilities());
+        payload.put("capabilities", AppScaffoldCapability.builtinCapabilityIds());
         payload.put("database", primaryJdbcTemplate.queryForObject("select 'ready'", String.class));
         return ApiResult.success(payload, "app scaffold starter is ready");
     }

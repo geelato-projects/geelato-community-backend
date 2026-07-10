@@ -35,6 +35,7 @@ public final class QueryCommandAdapter {
     private static QueryCommand adapt(MetaQuery query) {
         QueryCommand command = new QueryCommand();
         command.setEntityName(query.resolveEntityName());
+        command.setConnectId(query.getConnectId());
         command.setFields(query.resolveSelectFields());
         command.setWhere(FilterAdapter.adapt(query.getFilters()));
         command.setTableAlias(query.getTableAlias());

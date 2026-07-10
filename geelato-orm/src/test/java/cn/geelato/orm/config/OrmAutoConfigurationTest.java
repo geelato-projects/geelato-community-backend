@@ -23,6 +23,8 @@ class OrmAutoConfigurationTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(OrmAutoConfiguration.class));
+    private final ApplicationContextRunner scannedConfigurationRunner = new ApplicationContextRunner()
+            .withUserConfiguration(OrmAutoConfiguration.class);
 
     @Test
     void shouldUseSingleDaoBean() {
@@ -73,6 +75,24 @@ class OrmAutoConfigurationTest {
                     assertTrue(context.getStartupFailure() != null);
                     assertTrue(context.getStartupFailure().getMessage().contains("geelato.orm.dao-bean-name"));
                 });
+    }
+
+    @Test
+    void shouldCreateMetaCommandExecutorWhenOrmConfigurationIsRegisteredAsRegularConfiguration() {
+        scannedConfigurationRunner.withUserConfiguration(SingleDaoConfiguration.class)
+                .run(context -> {
+                    MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
+                    assertNotNull(executor);
+                    assertInstanceOf(DefaultMetaCommandExecutor.class, executor);
+                });
+    }
+
+    @Test
+    void shouldFailFastWhenDaoBeanIsMissing() {
+        contextRunner.run(context -> {
+            assertTrue(context.getStartupFailure() != null);
+            assertTrue(context.getStartupFailure().getMessage().contains("No Dao bean found for MetaCommandExecutor"));
+        });
     }
 
     @Configuration

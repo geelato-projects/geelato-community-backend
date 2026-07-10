@@ -2,6 +2,7 @@ package cn.geelato.orm.executor;
 
 import cn.geelato.core.Fn;
 import cn.geelato.core.SessionCtx;
+import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
@@ -385,7 +386,13 @@ public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
     }
 
     private String resolveConnectId(String connectIdOverride, String entityConnectId) {
-        return StringUtils.hasText(connectIdOverride) ? connectIdOverride : entityConnectId;
+        if (StringUtils.hasText(connectIdOverride)) {
+            return connectIdOverride;
+        }
+        if (StringUtils.hasText(entityConnectId)) {
+            return entityConnectId;
+        }
+        return DataSourceManager.singleInstance().getDefaultDataSourceKey();
     }
 
     private <T> T withDataSource(String connectId, SupplierWithException<T> supplier) {

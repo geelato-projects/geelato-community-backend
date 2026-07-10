@@ -10,7 +10,6 @@ public class AppScaffoldOpenApiEnvironmentPostProcessorTest {
     void shouldDisableSpringdocByDefaultInProdWhenNotExposed() {
         MockEnvironment environment = new MockEnvironment()
                 .withProperty("spring.profiles.active", "prod")
-                .withProperty("geelato.app.scaffold.enabled", "true")
                 .withProperty("geelato.app.scaffold.openapi-enabled", "true")
                 .withProperty("geelato.app.scaffold.openapi-expose-in-prod", "false");
 
@@ -25,7 +24,6 @@ public class AppScaffoldOpenApiEnvironmentPostProcessorTest {
     void shouldNotOverrideWhenSpringdocAlreadyConfigured() {
         MockEnvironment environment = new MockEnvironment()
                 .withProperty("spring.profiles.active", "prod")
-                .withProperty("geelato.app.scaffold.enabled", "true")
                 .withProperty("geelato.app.scaffold.openapi-enabled", "true")
                 .withProperty("geelato.app.scaffold.openapi-expose-in-prod", "false")
                 .withProperty("springdoc.api-docs.enabled", "true");
@@ -36,4 +34,3 @@ public class AppScaffoldOpenApiEnvironmentPostProcessorTest {
         Assertions.assertEquals("true", environment.getProperty("springdoc.api-docs.enabled"));
     }
 }
-

@@ -19,6 +19,7 @@ public class BaseCommand<E extends BaseCommand> {
     protected BaseCommand<E> parentCommand;
     private Boolean execution;
     protected CommandType commandType;
+    protected String connectId;
     // 命令对应实体名称
     protected String entityName;
     // 指定字段

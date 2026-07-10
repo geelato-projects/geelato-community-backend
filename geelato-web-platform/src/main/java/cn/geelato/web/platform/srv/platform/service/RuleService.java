@@ -25,8 +25,6 @@ import cn.geelato.web.platform.utils.CacheUtil;
 import cn.geelato.web.platform.cache.MetaCacheProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.HashedMap;
-import org.jeasy.rules.api.RulesEngine;
-import org.jeasy.rules.core.DefaultRulesEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
@@ -50,10 +48,8 @@ public class RuleService {
     private final MetaQLManager gqlManager = MetaQLManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
     private final MetaManager metaManager = MetaManager.singleInstance();
-    private final RulesEngine rulesEngine = new DefaultRulesEngine();
     private final static String VARS_PARENT = "$parent";
     private final static String VARS_CTX = "$ctx";
-    // $fn.now.
     private final static String VARS_FN = "$fn";
     private final MetaCacheProvider<Object> metaCache = new MetaCacheProvider<>();
 

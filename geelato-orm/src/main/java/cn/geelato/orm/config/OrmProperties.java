@@ -17,6 +17,12 @@ public class OrmProperties {
     private String daoBeanName;
 
     /**
+     * 默认 ORM 数据源键。
+     * 未显式 useDataSource 且实体元数据未声明 connectId 时，回退使用该数据源。
+     */
+    private String defaultDataSourceKey;
+
+    /**
      * 是否启用 @Entity 自动扫描并注册到 MetaManager。
      */
     private Boolean entityAutoScanEnabled = Boolean.TRUE;

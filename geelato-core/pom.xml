@@ -54,18 +54,6 @@
         </exclusion>
       </exclusions>
     </dependency>
-    <!--轻量级的规则引擎-->
-    <dependency>
-      <groupId>org.jeasy</groupId>
-      <artifactId>easy-rules-core</artifactId>
-      <version>${easy-rules.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jeasy</groupId>
-      <artifactId>easy-rules-mvel</artifactId>
-      <version>${easy-rules.version}</version>
-    </dependency>
     <!--java性能高、内存占用小的序列化工具-->
     <dependency>
       <groupId>de.ruedigermoeller</groupId>

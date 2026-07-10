@@ -18,6 +18,7 @@ public class SaveCommandAdapterTest extends OrmTestSupport {
     public void shouldBuildInsertCommandWithNestedChild() {
         SaveCommand command = SaveCommandAdapter.fromInsert(
                 MetaFactory.insert(TestUserEntity.class)
+                        .useDataSource("archive")
                         .value("name", "Alice")
                         .child("TestOrder", child -> child
                                 .value("userId", ValueRefs.parent("id"))
@@ -37,6 +38,7 @@ public class SaveCommandAdapterTest extends OrmTestSupport {
         assertNotNull(command.getValueMap().get("createAt"));
         assertNotNull(command.getValueMap().get("updateAt"));
         assertNotNull(command.getValueMap().get("deleteAt"));
+        assertEquals("archive", command.getConnectId());
         assertEquals(1, command.getCommands().size());
         assertEquals("$parent.id", command.getCommands().get(0).getValueMap().get("userId"));
     }
@@ -45,6 +47,7 @@ public class SaveCommandAdapterTest extends OrmTestSupport {
     public void shouldBuildUpdateCommandFromPrimaryKey() {
         SaveCommand command = SaveCommandAdapter.fromUpdate(
                 MetaFactory.update("TestUser")
+                        .useDataSource("analytics")
                         .value("id", "19001")
                         .value("name", "Bob")
         );
@@ -52,6 +55,7 @@ public class SaveCommandAdapterTest extends OrmTestSupport {
         assertEquals(CommandType.Update, command.getCommandType());
         assertEquals("19001", command.getPK());
         assertNotNull(command.getWhere());
+        assertEquals("analytics", command.getConnectId());
         assertEquals("Bob", command.getValueMap().get("name"));
         assertEquals("U1001", command.getValueMap().get("updater"));
         assertEquals("orm-tester", command.getValueMap().get("updaterName"));

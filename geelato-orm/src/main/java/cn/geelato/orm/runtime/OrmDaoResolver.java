@@ -45,11 +45,11 @@ public final class OrmDaoResolver {
         if (daoBeans.size() == 1) {
             return daoBeans.values().iterator().next();
         }
-        if (daoBeans.containsKey("dynamicDao")) {
-            return daoBeans.get("dynamicDao");
-        }
         if (daoBeans.containsKey("primaryDao")) {
             return daoBeans.get("primaryDao");
+        }
+        if (daoBeans.containsKey("dynamicDao")) {
+            return daoBeans.get("dynamicDao");
         }
         throw new IllegalStateException(buildAmbiguousDaoMessage(daoBeans), ex);
     }

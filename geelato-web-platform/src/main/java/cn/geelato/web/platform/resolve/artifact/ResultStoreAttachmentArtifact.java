@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.resolve.artifact;
 
 import cn.geelato.meta.Attachment;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.resolve.core.ResolveArtifact;
 import cn.geelato.web.platform.resolve.core.ResolveContext;
 import cn.geelato.web.platform.srv.file.enums.AttachmentSourceEnum;

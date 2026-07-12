@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.resolve;
 
 import cn.geelato.meta.Attachment;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.resolve.core.ResolveContext;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;

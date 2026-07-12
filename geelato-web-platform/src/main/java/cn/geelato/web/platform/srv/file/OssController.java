@@ -4,7 +4,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.meta.Attachment;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.common.OSSFileHelper;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.oss.OSSResult;
 import lombok.extern.slf4j.Slf4j;

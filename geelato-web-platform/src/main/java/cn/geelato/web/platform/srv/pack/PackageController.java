@@ -20,7 +20,7 @@ import cn.geelato.core.sql.SqlManager;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.srv.file.enums.AttachmentSourceEnum;

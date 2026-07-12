@@ -7,7 +7,7 @@ import cn.geelato.orm.Filter;
 import cn.geelato.orm.MetaFactory;
 import cn.geelato.orm.Order;
 import cn.geelato.orm.PageResult;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.srv.email.MailIdCodec;
 import cn.geelato.web.platform.srv.email.dto.EmailAddressDto;
 import cn.geelato.web.platform.srv.email.dto.EmailAttachmentDto;

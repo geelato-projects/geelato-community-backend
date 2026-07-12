@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.handler;
+package cn.geelato.web.platform.common;
 
 import cn.geelato.utils.FileUtils;
 import cn.geelato.utils.StringUtils;
@@ -7,8 +7,6 @@ import cn.geelato.utils.entity.FileIS;
 import cn.geelato.utils.entity.Resolution;
 import cn.geelato.web.platform.srv.file.enums.FileGenreEnum;
 import cn.geelato.web.oss.OSSResult;
-import cn.geelato.web.platform.common.Base64Helper;
-import cn.geelato.web.platform.common.OSSFileHelper;
 import cn.geelato.web.platform.srv.base.service.DownloadService;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.meta.Attachment;

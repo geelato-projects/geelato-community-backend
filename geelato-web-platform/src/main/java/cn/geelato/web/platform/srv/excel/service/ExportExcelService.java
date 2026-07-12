@@ -5,7 +5,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.platform.common.Base64Helper;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.meta.SysConfig;
 import cn.geelato.web.platform.srv.platform.service.SysConfigService;
 import cn.geelato.web.platform.srv.base.service.UploadService;

@@ -2,7 +2,7 @@ package cn.geelato.web.platform.srv.platform.service;
 
 import cn.geelato.meta.AppMultiLang;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;

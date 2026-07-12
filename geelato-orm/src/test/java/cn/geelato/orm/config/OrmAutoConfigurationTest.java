@@ -1,9 +1,11 @@
 package cn.geelato.orm.config;
 
+import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.util.BeansUtils;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
 import cn.geelato.orm.executor.MetaCommandExecutor;
+import org.junit.jupiter.api.AfterEach;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -11,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import javax.sql.DataSource;
 import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,6 +28,11 @@ class OrmAutoConfigurationTest {
             .withConfiguration(AutoConfigurations.of(OrmAutoConfiguration.class));
     private final ApplicationContextRunner scannedConfigurationRunner = new ApplicationContextRunner()
             .withUserConfiguration(OrmAutoConfiguration.class);
+
+    @AfterEach
+    void clearDefaultDataSourceKey() {
+        DataSourceManager.singleInstance().setDefaultDataSourceKey(null);
+    }
 
     @Test
     void shouldUseSingleDaoBean() {
@@ -58,14 +66,20 @@ class OrmAutoConfigurationTest {
     }
 
     @Test
-    void shouldFallbackToDynamicDaoForCompatibility() {
+    void shouldFallbackToPrimaryDaoForCompatibility() {
         contextRunner.withUserConfiguration(MultiDaoConfiguration.class)
                 .run(context -> {
                     MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
                     assertNotNull(executor);
-                    Dao dynamicDao = context.getBean("dynamicDao", Dao.class);
-                    assertEquals(dynamicDao, extractDao(executor));
+                    Dao primaryDao = context.getBean("primaryDao", Dao.class);
+                    assertEquals(primaryDao, extractDao(executor));
                 });
+    }
+
+    @Test
+    void shouldDefaultDataSourceKeyToPrimaryWhenPrimaryInfrastructureExists() {
+        contextRunner.withUserConfiguration(PrimaryInfrastructureConfiguration.class)
+                .run(context -> assertEquals("primary", DataSourceManager.singleInstance().getDefaultDataSourceKey()));
     }
 
     @Test
@@ -113,6 +127,26 @@ class OrmAutoConfigurationTest {
         @Bean
         Dao dynamicDao() {
             return new Dao(mock(JdbcTemplate.class));
+        }
+    }
+
+    @Configuration
+    static class PrimaryInfrastructureConfiguration {
+        @Bean
+        DataSource primaryDataSource() {
+            return mock(DataSource.class);
+        }
+
+        @Bean
+        JdbcTemplate primaryJdbcTemplate() {
+            JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+            org.mockito.Mockito.when(jdbcTemplate.getDataSource()).thenReturn(primaryDataSource());
+            return jdbcTemplate;
+        }
+
+        @Bean
+        Dao primaryDao() {
+            return new Dao(primaryJdbcTemplate());
         }
     }
 

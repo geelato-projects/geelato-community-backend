@@ -11,7 +11,7 @@ import cn.geelato.lang.api.DataItems;
 import cn.geelato.lang.api.NullResult;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.SysConfig;
 import cn.geelato.web.platform.srv.platform.service.SysConfigService;

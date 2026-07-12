@@ -2,6 +2,7 @@ package cn.geelato.orm.config;
 
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.meta.MetaManager;
+import cn.geelato.core.orm.Dao;
 import cn.geelato.core.util.BeansUtils;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
@@ -68,7 +69,7 @@ public class OrmAutoConfiguration {
     @ConditionalOnMissingBean(name = "ormDefaultDataSourceInitializer")
     public SmartInitializingSingleton ormDefaultDataSourceInitializer(ApplicationContext applicationContext, OrmProperties ormProperties) {
         return () -> {
-            String defaultDataSourceKey = ormProperties == null ? null : ormProperties.getDefaultDataSourceKey();
+            String defaultDataSourceKey = resolveEffectiveDefaultDataSourceKey(applicationContext, ormProperties);
             DataSourceManager manager = DataSourceManager.singleInstance();
             manager.setDefaultDataSourceKey(defaultDataSourceKey);
             DataSource dataSource = resolveDefaultDataSource(applicationContext, defaultDataSourceKey);
@@ -122,6 +123,19 @@ public class OrmAutoConfiguration {
         }
     }
 
+    private String resolveEffectiveDefaultDataSourceKey(ApplicationContext applicationContext, OrmProperties ormProperties) {
+        String configuredDefaultKey = ormProperties == null ? null : ormProperties.getDefaultDataSourceKey();
+        if (StringUtils.hasText(configuredDefaultKey)) {
+            return configuredDefaultKey;
+        }
+        if (applicationContext.containsBean("primaryDao")
+                || applicationContext.containsBean("primaryJdbcTemplate")
+                || applicationContext.containsBean("primaryDataSource")) {
+            return "primary";
+        }
+        return null;
+    }
+
     private DataSource resolveDefaultDataSource(ApplicationContext applicationContext, String defaultDataSourceKey) {
         if (!StringUtils.hasText(defaultDataSourceKey)) {
             return null;
@@ -141,6 +155,14 @@ public class OrmAutoConfiguration {
         JdbcTemplate namedJdbcTemplate = getBeanIfPresent(applicationContext, defaultDataSourceKey + "JdbcTemplate", JdbcTemplate.class);
         if (namedJdbcTemplate != null) {
             return namedJdbcTemplate.getDataSource();
+        }
+        Dao directDao = getBeanIfPresent(applicationContext, defaultDataSourceKey, Dao.class);
+        if (directDao != null && directDao.getJdbcTemplate() != null) {
+            return directDao.getJdbcTemplate().getDataSource();
+        }
+        Dao namedDao = getBeanIfPresent(applicationContext, defaultDataSourceKey + "Dao", Dao.class);
+        if (namedDao != null && namedDao.getJdbcTemplate() != null) {
+            return namedDao.getJdbcTemplate().getDataSource();
         }
         Map<String, DataSource> dataSources = applicationContext.getBeansOfType(DataSource.class);
         if (dataSources.size() == 1) {

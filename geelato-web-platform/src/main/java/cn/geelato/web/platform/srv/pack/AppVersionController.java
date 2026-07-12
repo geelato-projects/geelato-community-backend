@@ -11,7 +11,7 @@ import cn.geelato.pack.entity.AppPackData;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.utils.ZipUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.AppVersion;
 import cn.geelato.web.platform.srv.pack.service.AppVersionService;

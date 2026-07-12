@@ -6,7 +6,7 @@ import cn.geelato.meta.UserEmailAccount;
 import cn.geelato.orm.Filter;
 import cn.geelato.orm.MetaFactory;
 import cn.geelato.orm.Order;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.srv.email.dto.EmailAddressDto;
 import cn.geelato.web.platform.srv.email.dto.EmailComposeContextDto;
 import cn.geelato.web.platform.srv.email.dto.EmailMessageDetailDto;

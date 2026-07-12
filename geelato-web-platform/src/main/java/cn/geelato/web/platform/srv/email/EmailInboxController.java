@@ -6,7 +6,7 @@ import cn.geelato.meta.Attachment;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.utils.FileUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.email.dto.EmailFolderDto;
 import cn.geelato.web.platform.srv.email.dto.EmailAttachmentDto;

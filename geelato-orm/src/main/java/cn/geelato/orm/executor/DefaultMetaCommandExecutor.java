@@ -29,6 +29,7 @@ import java.util.Map;
  */
 public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
 
+    private static final String PRIMARY_CONNECT_ID = "primary";
     private static final String VARS_PARENT = "$parent";
     private static final String VARS_CTX = "$ctx";
     private static final String VARS_FN = "$fn";
@@ -62,7 +63,7 @@ public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
 
     @Override
     public Map<String, Object> callForMap(String callSql, Object[] params, String connectIdOverride) {
-        return withDataSource(connectIdOverride, () -> dao.callForMap(callSql, params));
+        return withDataSource(resolveConnectId(connectIdOverride, null), () -> dao.callForMap(callSql, params));
     }
 
     @Override
@@ -72,7 +73,7 @@ public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
 
     @Override
     public Map<String, Object> nativeQueryForMap(String sql, Object[] params, String connectIdOverride) {
-        return withDataSource(connectIdOverride, () -> dao.nativeQueryForMap(sql, params));
+        return withDataSource(resolveConnectId(connectIdOverride, null), () -> dao.nativeQueryForMap(sql, params));
     }
 
     @Override
@@ -109,7 +110,7 @@ public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
 
     @Override
     public List<Map<String, Object>> callForMapList(String callSql, Object[] params, String connectIdOverride) {
-        return withDataSource(connectIdOverride, () -> dao.callForMapList(callSql, params));
+        return withDataSource(resolveConnectId(connectIdOverride, null), () -> dao.callForMapList(callSql, params));
     }
 
     @Override
@@ -119,7 +120,7 @@ public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
 
     @Override
     public List<Map<String, Object>> nativeQueryForMapList(String sql, Object[] params, String connectIdOverride) {
-        return withDataSource(connectIdOverride, () -> dao.nativeQueryForMapList(sql, params));
+        return withDataSource(resolveConnectId(connectIdOverride, null), () -> dao.nativeQueryForMapList(sql, params));
     }
 
     @Override
@@ -129,7 +130,7 @@ public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
 
     @Override
     public <T> T nativeQueryForObject(String sql, Object[] params, Class<T> requiredType, String connectIdOverride) {
-        return withDataSource(connectIdOverride, () -> dao.nativeQueryForObject(sql, params, requiredType));
+        return withDataSource(resolveConnectId(connectIdOverride, null), () -> dao.nativeQueryForObject(sql, params, requiredType));
     }
 
     @Override
@@ -139,7 +140,7 @@ public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
 
     @Override
     public int nativeExecute(String sql, Object[] params, String connectIdOverride) {
-        return withDataSource(connectIdOverride, () -> dao.nativeExecute(sql, params));
+        return withDataSource(resolveConnectId(connectIdOverride, null), () -> dao.nativeExecute(sql, params));
     }
 
     @Override
@@ -392,7 +393,8 @@ public class DefaultMetaCommandExecutor implements MetaCommandExecutor {
         if (StringUtils.hasText(entityConnectId)) {
             return entityConnectId;
         }
-        return DataSourceManager.singleInstance().getDefaultDataSourceKey();
+        String defaultDataSourceKey = DataSourceManager.singleInstance().getDefaultDataSourceKey();
+        return StringUtils.hasText(defaultDataSourceKey) ? defaultDataSourceKey : PRIMARY_CONNECT_ID;
     }
 
     private <T> T withDataSource(String connectId, SupplierWithException<T> supplier) {

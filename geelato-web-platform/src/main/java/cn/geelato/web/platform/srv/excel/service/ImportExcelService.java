@@ -13,7 +13,7 @@ import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.common.Base64Helper;
 import cn.geelato.web.platform.srv.excel.exception.*;
-import cn.geelato.web.platform.handler.FileHandler;
+import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.srv.platform.service.RuleService;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.web.platform.srv.excel.entity.*;

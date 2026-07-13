@@ -1,0 +1,46 @@
+{
+  "link.title.Geelato 项目": {
+    "message": "Geelato Project",
+    "description": "The title of the footer links column with title=Geelato 项目 in the footer"
+  },
+  "link.title.参考": {
+    "message": "Reference",
+    "description": "The title of the footer links column with title=参考 in the footer"
+  },
+  "link.title.仓库": {
+    "message": "Repository",
+    "description": "The title of the footer links column with title=仓库 in the footer"
+  },
+  "link.item.label.开发者导航": {
+    "message": "Developer Navigation",
+    "description": "The label of footer link with label=开发者导航 linking to /docs/guide/developer-navigation"
+  },
+  "link.item.label.快速开始": {
+    "message": "Quick Start",
+    "description": "The label of footer link with label=快速开始 linking to /docs/guide/quick-start"
+  },
+  "link.item.label.最小接入": {
+    "message": "Minimal Integration",
+    "description": "The label of footer link with label=最小接入 linking to /docs/guide/minimal-integration"
+  },
+  "link.item.label.Runtime / Designer 部署": {
+    "message": "Runtime / Designer Deployment",
+    "description": "The label of footer link with label=Runtime / Designer 部署 linking to /docs/operations/runtime-designer-deployment"
+  },
+  "link.item.label.API 双轨入口": {
+    "message": "Dual-track API Entry",
+    "description": "The label of footer link with label=API 双轨入口 linking to /docs/api/reference"
+  },
+  "link.item.label.official-docs": {
+    "message": "official-docs",
+    "description": "The label of footer link with label=official-docs linking to https://github.com/geelato-projects/geelato-community-backend/tree/master/website/official-docs"
+  },
+  "link.item.label.SrvExplain": {
+    "message": "SrvExplain",
+    "description": "The label of footer link with label=SrvExplain linking to https://github.com/geelato-projects/geelato-community-backend/tree/master/SrvExplain"
+  },
+  "copyright": {
+    "message": "Copyright © 2026 Geelato Framework. Built with Docusaurus.",
+    "description": "The footer copyright"
+  }
+}

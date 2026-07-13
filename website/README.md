@@ -35,9 +35,17 @@ It builds `website` and publishes `build/` to:
 Current content layout:
 
 - site source: `website`
-- docs content: `website/official-docs`
+- default docs content: `website/official-docs/zh-cn`
+- English translated docs: `website/i18n/en/docusaurus-plugin-content-docs/current`
 - static assets: `website/static`
 - optional API source references: `SrvExplain`
+
+Current route layout:
+
+- Chinese home: `/`
+- English home: `/en/`
+- Chinese docs: `/docs/...`
+- English docs: `/en/docs/...`
 
 The workflow listens to these paths:
 
@@ -95,7 +103,7 @@ Recommended checks after the first deployment:
 - `nslookup docs.geelato.cn`
 - open `https://docs.geelato.cn`
 - confirm the certificate is valid
-- confirm `/en/intro` and `/zh-cn/intro` can be accessed
+- confirm `/docs/guide/quick-start` and `/en/docs/guide/quick-start` can be accessed
 
 ## Manual Fallback
 
@@ -106,3 +114,25 @@ GIT_USER=<github-user> npm run deploy
 ```
 
 This uses the Docusaurus deploy flow and targets the configured repository metadata in `docusaurus.config.ts`.
+
+## Native i18n Development
+
+Default locale is `zh-cn`, and English is available as locale `en`.
+
+Start the default locale:
+
+```bash
+npm start
+```
+
+Start English locally:
+
+```bash
+npm start -- --locale en
+```
+
+When updating React page text or navbar/footer/sidebar labels, refresh translation scaffolding with:
+
+```bash
+npm run write-translations -- --locale en
+```

@@ -1,0 +1,38 @@
+{
+  "title": {
+    "message": "Geelato Project",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "Geelato Project Logo",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.首页": {
+    "message": "Home",
+    "description": "Navbar item with label 首页"
+  },
+  "item.label.框架": {
+    "message": "Framework",
+    "description": "Navbar item with label 框架"
+  },
+  "item.label.认证": {
+    "message": "Auth",
+    "description": "Navbar item with label 认证"
+  },
+  "item.label.消息": {
+    "message": "Message",
+    "description": "Navbar item with label 消息"
+  },
+  "item.label.API": {
+    "message": "API",
+    "description": "Navbar item with label API"
+  },
+  "item.label.示例": {
+    "message": "Example",
+    "description": "Navbar item with label 示例"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}

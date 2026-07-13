@@ -19,14 +19,32 @@ const config: Config = {
   deploymentBranch: 'gh-pages',
   onBrokenLinks: 'throw',
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: 'zh-cn',
+    locales: ['zh-cn', 'en'],
+    localeConfigs: {
+      'zh-cn': {
+        htmlLang: 'zh-CN',
+        label: '中文',
+      },
+      en: {
+        htmlLang: 'en-US',
+        label: 'English',
+      },
+    },
   },
   presets: [
     [
       'classic',
       {
-        docs: false,
+        docs: {
+          path: './official-docs/zh-cn',
+          routeBasePath: 'docs',
+          sidebarPath: './sidebars.ts',
+          editUrl: ({locale, docPath}) =>
+            locale === 'en'
+              ? `${repoEditBase}/website/i18n/en/docusaurus-plugin-content-docs/current/${docPath}`
+              : `${repoEditBase}/website/official-docs/zh-cn/${docPath}`,
+        },
         blog: false,
         theme: {
           customCss: './src/css/custom.css',
@@ -34,36 +52,31 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
-  themes: ['@docusaurus/theme-mermaid'],
-  markdown: {
-    mermaid: true,
-  },
-  plugins: [
+  themes: [
+    '@docusaurus/theme-mermaid',
     [
-      '@docusaurus/plugin-content-docs',
+      '@easyops-cn/docusaurus-search-local',
       {
-        id: 'en',
-        path: './official-docs/en',
-        routeBasePath: 'en',
-        sidebarPath: './sidebars.en.ts',
-        editUrl: `${repoEditBase}/website/official-docs/en/`,
-      },
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      {
-        id: 'zh-cn',
-        path: './official-docs/zh-cn',
-        routeBasePath: 'zh-cn',
-        sidebarPath: './sidebars.zh-cn.ts',
-        editUrl: `${repoEditBase}/website/official-docs/zh-cn/`,
+        hashed: true,
+        indexBlog: false,
+        indexPages: false,
+        docsRouteBasePath: 'docs',
+        docsDir: [
+          './official-docs/zh-cn',
+          './i18n/en/docusaurus-plugin-content-docs/current',
+        ],
+        language: ['en', 'zh'],
+        highlightSearchTermsOnTargetPage: true,
+        removeDefaultStemmer: true,
       },
     ],
   ],
+  markdown: {
+    mermaid: true,
+  },
   themeConfig: {
     image: 'img/docusaurus-social-card.jpg',
     colorMode: {
-      defaultMode: 'light',
       respectPrefersColorScheme: false,
     },
     navbar: {
@@ -73,39 +86,39 @@ const config: Config = {
         src: 'img/logo.svg',
       },
       items: [
-        {to: '/', label: 'Home', position: 'left'},
+        {to: '/', label: '首页', position: 'left'},
         {
-          href: '/zh-cn/guide/quick-start',
-          label: 'Framework',
+          to: '/docs/guide/quick-start',
+          label: '框架',
           position: 'left',
         },
         {
-          href: '/zh-cn/authentication/overview',
-          label: 'AuthServer',
+          to: '/docs/authentication/overview',
+          label: '认证',
           position: 'left',
         },
         {
-          href: '/zh-cn/message/overview',
-          label: 'Message',
+          to: '/docs/message/overview',
+          label: '消息',
           position: 'left',
         },
         {
-          href: '/zh-cn/api/reference',
+          to: '/docs/api/reference',
           label: 'API',
           position: 'left',
         },
         {
           href: 'https://github.com/geelato-projects/geelato-hello-example',
-          label: 'Example',
+          label: '示例',
           position: 'left',
         },
         {
-          label: 'Language',
+          type: 'search',
           position: 'right',
-          items: [
-            {label: 'English', to: '/en/guide/developer-navigation'},
-            {label: '中文', to: '/zh-cn/guide/developer-navigation'},
-          ],
+        },
+        {
+          type: 'localeDropdown',
+          position: 'right',
         },
         {
           href: 'https://github.com/geelato-projects/geelato-community-backend',
@@ -118,22 +131,22 @@ const config: Config = {
       style: 'light',
       links: [
         {
-          title: 'Geelato Project',
+          title: 'Geelato 项目',
           items: [
-            {label: 'English Docs', to: '/en/guide/developer-navigation'},
-            {label: '中文文档', to: '/zh-cn/guide/developer-navigation'},
+            {label: '开发者导航', to: '/docs/guide/developer-navigation'},
+            {label: '快速开始', to: '/docs/guide/quick-start'},
           ],
         },
         {
-          title: 'Reference',
+          title: '参考',
           items: [
-            {label: 'Minimal Integration', to: '/en/guide/minimal-integration'},
-            {label: 'Runtime / Designer 部署', to: '/zh-cn/operations/runtime-designer-deployment'},
-            {label: 'API 双轨入口', to: '/zh-cn/api/reference'},
+            {label: '最小接入', to: '/docs/guide/minimal-integration'},
+            {label: 'Runtime / Designer 部署', to: '/docs/operations/runtime-designer-deployment'},
+            {label: 'API 双轨入口', to: '/docs/api/reference'},
           ],
         },
         {
-          title: 'Repository',
+          title: '仓库',
           items: [
             {
               label: 'official-docs',

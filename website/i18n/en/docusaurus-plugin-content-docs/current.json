@@ -1,0 +1,78 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.frameworkSidebar.category.🌐 Geelato Project": {
+    "message": "🌐 Geelato Project",
+    "description": "The label for category '🌐 Geelato Project' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.📦 Geelato Framework": {
+    "message": "📦 Geelato Framework",
+    "description": "The label for category '📦 Geelato Framework' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.🌱 快速入门": {
+    "message": "🌱 Getting Started",
+    "description": "The label for category '🌱 快速入门' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.🧠 架构与核心概念": {
+    "message": "🧠 Architecture & Core Concepts",
+    "description": "The label for category '🧠 架构与核心概念' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.🛠️ 开发指南：基础能力": {
+    "message": "🛠️ Developer Guide: Basics",
+    "description": "The label for category '🛠️ 开发指南：基础能力' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.ORM 与数据源": {
+    "message": "ORM & Datasource",
+    "description": "The label for category 'ORM 与数据源' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.MQL 语法": {
+    "message": "MQL Syntax",
+    "description": "The label for category 'MQL 语法' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.文件处理": {
+    "message": "File Processing",
+    "description": "The label for category '文件处理' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.🔌 开发指南：高级特性": {
+    "message": "🔌 Developer Guide: Advanced",
+    "description": "The label for category '🔌 开发指南：高级特性' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.平台能力": {
+    "message": "Platform Capabilities",
+    "description": "The label for category '平台能力' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.插件机制": {
+    "message": "Plugin Mechanism",
+    "description": "The label for category '插件机制' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.可扩展性体系": {
+    "message": "Extensibility",
+    "description": "The label for category '可扩展性体系' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.⚙️ 系统配置与运维": {
+    "message": "⚙️ Configuration & Operations",
+    "description": "The label for category '⚙️ 系统配置与运维' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.系统模块配置": {
+    "message": "System Module Config",
+    "description": "The label for category '系统模块配置' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.平台部署指南": {
+    "message": "Deployment Guides",
+    "description": "The label for category '平台部署指南' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.📚 API 与参考手册": {
+    "message": "📚 API & References",
+    "description": "The label for category '📚 API 与参考手册' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.🔐 Geelato AuthServer (统一认证)": {
+    "message": "🔐 Geelato AuthServer",
+    "description": "The label for category '🔐 Geelato AuthServer (统一认证)' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.📨 Geelato Message (消息中心)": {
+    "message": "📨 Geelato Message",
+    "description": "The label for category '📨 Geelato Message (消息中心)' in sidebar 'frameworkSidebar'"
+  }
+}

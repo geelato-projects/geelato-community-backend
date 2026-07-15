@@ -3,6 +3,7 @@ package cn.geelato.orm.executor;
 import cn.geelato.core.mql.execute.BoundPageSql;
 import cn.geelato.core.mql.execute.BoundSql;
 import cn.geelato.core.sql.SqlManager;
+import cn.geelato.orm.PageResult;
 import cn.geelato.orm.WrapperResultFunction;
 import cn.geelato.orm.query.MetaQuery;
 import cn.geelato.orm.support.QueryCommandAdapter;
@@ -70,15 +71,14 @@ public class JdbcTemplateQueryExecutor implements QueryExecutor {
     
     @Override
     public PageResult<Map<String, Object>> executePageQuery(MetaQuery query) {
-        List<Map<String, Object>> data = executeQuery(query);
+        List<Map<String, Object>> records = executeQuery(query);
         long total = executeCount(query);
-        
-        PageResult<Map<String, Object>> pageResult = new PageResult<>();
-        pageResult.setData(data);
-        pageResult.setTotal(total);
-        pageResult.setPageNum(query.getPageNum() != null ? query.getPageNum() : 1);
-        pageResult.setPageSize(query.getPageSize() != null ? query.getPageSize() : 10);
-        
+
+        long current = query.getPageNum() != null ? query.getPageNum() : 1;
+        long size = query.getPageSize() != null ? query.getPageSize() : 10;
+        PageResult<Map<String, Object>> pageResult = new PageResult<>(current, size, total, true);
+        pageResult.setRecords(records);
+
         return pageResult;
     }
     
@@ -135,18 +135,24 @@ public class JdbcTemplateQueryExecutor implements QueryExecutor {
             throw new IllegalArgumentException("WrapperFunction不能为空");
         }
         
-        List<R> wrappedData = new ArrayList<>();
-        for (Map<String, Object> rawData : rawPageResult.getData()) {
-            R wrappedResult = (R) ((WrapperResultFunction<Map<String, Object>, R>) wrapperFunction).apply(rawData);
-            wrappedData.add(wrappedResult);
+        List<R> wrappedRecords = new ArrayList<>();
+        for (Map<String, Object> rawRecord : rawPageResult.getRecords()) {
+            R wrappedResult = (R) ((WrapperResultFunction<Map<String, Object>, R>) wrapperFunction).apply(rawRecord);
+            wrappedRecords.add(wrappedResult);
         }
-        
-        PageResult<R> wrappedPageResult = new PageResult<>();
-        wrappedPageResult.setData(wrappedData);
-        wrappedPageResult.setTotal(rawPageResult.getTotal());
-        wrappedPageResult.setPageNum(rawPageResult.getPageNum());
-        wrappedPageResult.setPageSize(rawPageResult.getPageSize());
-        
+
+        PageResult<R> wrappedPageResult = new PageResult<>(
+                rawPageResult.getCurrent(),
+                rawPageResult.getSize(),
+                rawPageResult.getTotal(),
+                rawPageResult.searchCount()
+        );
+        wrappedPageResult.setRecords(wrappedRecords);
+        wrappedPageResult.setOrders(rawPageResult.orders());
+        wrappedPageResult.setOptimizeCountSql(rawPageResult.optimizeCountSql());
+        wrappedPageResult.setCountId(rawPageResult.countId());
+        wrappedPageResult.setMaxLimit(rawPageResult.maxLimit());
+
         return wrappedPageResult;
     }
 

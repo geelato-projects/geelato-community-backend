@@ -7,9 +7,13 @@ import cn.geelato.core.util.BeansUtils;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
 import cn.geelato.orm.executor.MetaCommandExecutor;
+import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
+import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
+import cn.geelato.orm.executor.spi.MetaExecutionStrategy;
 import cn.geelato.orm.fill.DefaultSaveDefaultValueFiller;
 import cn.geelato.orm.fill.SaveDefaultValueFiller;
 import cn.geelato.orm.runtime.OrmDaoResolver;
+import cn.geelato.orm.runtime.OrmJdbcTemplateResolver;
 import cn.geelato.orm.runtime.OrmRuntimeProvider;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -48,9 +52,18 @@ public class OrmAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    public MetaCommandExecutor metaCommandExecutor(ApplicationContext applicationContext, OrmProperties ormProperties) {
-        return new DefaultMetaCommandExecutor(OrmDaoResolver.resolve(applicationContext, ormProperties));
+    @ConditionalOnMissingBean(value = {MetaExecutionStrategy.class, MetaCommandExecutor.class})
+    public MetaExecutionStrategy metaExecutionStrategy(ApplicationContext applicationContext, OrmProperties ormProperties) {
+        if (ormProperties != null && ormProperties.getExecutionMode() == MetaExecutorMode.JDBC_TEMPLATE) {
+            return new JdbcTemplateMetaExecutionStrategy(OrmJdbcTemplateResolver.resolve(applicationContext, ormProperties));
+        }
+        return new DaoMetaExecutionStrategy(OrmDaoResolver.resolve(applicationContext, ormProperties));
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(MetaCommandExecutor.class)
+    public MetaCommandExecutor metaCommandExecutor(MetaExecutionStrategy metaExecutionStrategy) {
+        return new DefaultMetaCommandExecutor(metaExecutionStrategy);
     }
 
     @Bean

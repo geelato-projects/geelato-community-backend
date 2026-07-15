@@ -1,17 +1,14 @@
 package cn.geelato.orm;
 
 import cn.geelato.lang.api.ApiPagedResult;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
- * 分页结果类，实现MyBatis-Plus的IPage接口
- * 用于将MyBatis-Plus的分页数据转换为ApiPagedResult格式
+ * 分页结果类，实现 ORM 自定义的 IPage 接口。
+ * 用于将分页数据转换为 ApiPagedResult 格式。
  * 
  * @author geemeta
  */

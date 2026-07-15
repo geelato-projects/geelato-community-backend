@@ -5,6 +5,9 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.core.util.BeansUtils;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
 import cn.geelato.orm.executor.MetaCommandExecutor;
+import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
+import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
+import cn.geelato.orm.executor.spi.MetaExecutionStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.junit.jupiter.api.Test;
@@ -14,7 +17,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
-import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -72,7 +74,9 @@ class OrmAutoConfigurationTest {
                     MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
                     assertNotNull(executor);
                     Dao primaryDao = context.getBean("primaryDao", Dao.class);
-                    assertEquals(primaryDao, extractDao(executor));
+                    MetaExecutionStrategy executionStrategy = extractExecutionStrategy(executor);
+                    assertInstanceOf(DaoMetaExecutionStrategy.class, executionStrategy);
+                    assertEquals(primaryDao, ((DaoMetaExecutionStrategy) executionStrategy).getDao());
                 });
     }
 
@@ -107,6 +111,40 @@ class OrmAutoConfigurationTest {
             assertTrue(context.getStartupFailure() != null);
             assertTrue(context.getStartupFailure().getMessage().contains("No Dao bean found for MetaCommandExecutor"));
         });
+    }
+
+    @Test
+    void shouldUseJdbcTemplateBackendWhenConfigured() {
+        contextRunner
+                .withPropertyValues(
+                        "geelato.orm.execution-mode=jdbc-template",
+                        "geelato.orm.default-data-source-key=primary"
+                )
+                .withUserConfiguration(JdbcTemplateOnlyConfiguration.class)
+                .run(context -> {
+                    MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
+                    assertNotNull(executor);
+                    MetaExecutionStrategy executionStrategy = extractExecutionStrategy(executor);
+                    assertInstanceOf(JdbcTemplateMetaExecutionStrategy.class, executionStrategy);
+                });
+    }
+
+    @Test
+    void shouldUseConfiguredJdbcTemplateBeanName() {
+        contextRunner
+                .withPropertyValues(
+                        "geelato.orm.execution-mode=jdbc-template",
+                        "geelato.orm.jdbc-template-bean-name=portalJdbcTemplate"
+                )
+                .withUserConfiguration(MultiJdbcTemplateConfiguration.class)
+                .run(context -> {
+                    MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
+                    assertNotNull(executor);
+                    MetaExecutionStrategy executionStrategy = extractExecutionStrategy(executor);
+                    assertInstanceOf(JdbcTemplateMetaExecutionStrategy.class, executionStrategy);
+                    assertEquals(context.getBean("portalJdbcTemplate", JdbcTemplate.class),
+                            ((JdbcTemplateMetaExecutionStrategy) executionStrategy).getJdbcTemplate());
+                });
     }
 
     @Configuration
@@ -163,13 +201,39 @@ class OrmAutoConfigurationTest {
         }
     }
 
-    private Dao extractDao(MetaCommandExecutor executor) {
-        try {
-            Field field = DefaultMetaCommandExecutor.class.getDeclaredField("dao");
-            field.setAccessible(true);
-            return (Dao) field.get(executor);
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError("Failed to inspect MetaCommandExecutor dao", e);
+    @Configuration
+    static class JdbcTemplateOnlyConfiguration {
+        @Bean
+        DataSource primaryDataSource() {
+            return mock(DataSource.class);
         }
+
+        @Bean
+        JdbcTemplate primaryJdbcTemplate() {
+            JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+            org.mockito.Mockito.when(jdbcTemplate.getDataSource()).thenReturn(primaryDataSource());
+            return jdbcTemplate;
+        }
+    }
+
+    @Configuration
+    static class MultiJdbcTemplateConfiguration {
+        @Bean
+        JdbcTemplate primaryJdbcTemplate() {
+            JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+            org.mockito.Mockito.when(jdbcTemplate.getDataSource()).thenReturn(mock(DataSource.class));
+            return jdbcTemplate;
+        }
+
+        @Bean
+        JdbcTemplate portalJdbcTemplate() {
+            JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+            org.mockito.Mockito.when(jdbcTemplate.getDataSource()).thenReturn(mock(DataSource.class));
+            return jdbcTemplate;
+        }
+    }
+
+    private MetaExecutionStrategy extractExecutionStrategy(MetaCommandExecutor executor) {
+        return ((DefaultMetaCommandExecutor) executor).getExecutionStrategy();
     }
 }

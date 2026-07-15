@@ -58,4 +58,45 @@ class JdbcTemplateQueryExecutorTest extends OrmTestSupport {
         assertEquals(0, rows.get(0).get("delStatus"));
         assertFalse(rows.get(0).containsKey("del_status"));
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnOrmPageResultForPagedQuery() throws Exception {
+        JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
+        JdbcTemplateQueryExecutor executor = new JdbcTemplateQueryExecutor(jdbcTemplate);
+
+        ResultSet resultSet = Mockito.mock(ResultSet.class);
+        ResultSetMetaData metaData = Mockito.mock(ResultSetMetaData.class);
+        Mockito.when(resultSet.getMetaData()).thenReturn(metaData);
+        Mockito.when(metaData.getColumnCount()).thenReturn(2);
+        Mockito.when(metaData.getColumnLabel(1)).thenReturn("id");
+        Mockito.when(metaData.getColumnLabel(2)).thenReturn("name");
+        Mockito.when(resultSet.getObject(1)).thenReturn("U1");
+        Mockito.when(resultSet.getObject(2)).thenReturn("Alice");
+
+        Mockito.doAnswer(invocation -> {
+                    RowMapper<Map<String, Object>> rowMapper = invocation.getArgument(3);
+                    return List.of(rowMapper.mapRow(resultSet, 0));
+                })
+                .when(jdbcTemplate)
+                .query(Mockito.anyString(), Mockito.<Object[]>any(), Mockito.any(int[].class), Mockito.any(RowMapper.class));
+        Mockito.when(jdbcTemplate.queryForObject(
+                        Mockito.anyString(),
+                        Mockito.<Object[]>any(),
+                        Mockito.any(int[].class),
+                        Mockito.eq(Long.class)))
+                .thenReturn(3L);
+
+        PageResult<Map<String, Object>> page = executor.executePageQuery(
+                MetaFactory.query(TestUserEntity.class)
+                        .where(Filter.eq("delStatus", 0))
+                        .page(2, 5)
+        );
+
+        assertEquals(3L, page.getTotal());
+        assertEquals(2L, page.getCurrent());
+        assertEquals(5L, page.getSize());
+        assertEquals(1, page.getRecords().size());
+        assertEquals("Alice", page.getRecords().get(0).get("name"));
+    }
 }

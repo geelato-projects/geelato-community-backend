@@ -15,6 +15,7 @@ public class PermissionRuleUtils {
     
     // 匹配 #currentUser.fieldName# 或 #currentUser.defaultOrg.fieldName# 格式的变量
     private static final Pattern USER_VARIABLE_PATTERN = Pattern.compile("#currentUser\\.(\\w+(?:\\.\\w+)?)#");
+    private static final Pattern UNRESOLVED_VARIABLE_PATTERN = Pattern.compile("#[^#]+#");
     
     /**
      * 替换权限规则中的用户变量
@@ -33,12 +34,14 @@ public class PermissionRuleUtils {
      * @return 替换后的规则字符串
      */
     public static String replaceRuleVariable(Permission dp, User user) {
-        if (dp == null || dp.getRule() == null || user == null) {
+        if (dp == null || dp.getRule() == null) {
             return dp != null ? dp.getRule() : "";
         }
         
-        String rule = dp.getRule();
-        Matcher matcher = USER_VARIABLE_PATTERN.matcher(rule);
+        String originalRule = dp.getRule();
+        String rule = originalRule;
+        Matcher matcher = USER_VARIABLE_PATTERN.matcher(originalRule);
+        Set<String> unresolvedPlaceholders = new LinkedHashSet<>();
         
         while (matcher.find()) {
             String fieldName = matcher.group(1); // 获取字段名
@@ -50,8 +53,14 @@ public class PermissionRuleUtils {
                 rule = rule.replace(placeholder, replacement);
                 log.debug("替换用户变量: {} -> {}", placeholder, replacement);
             } catch (Exception e) {
+                unresolvedPlaceholders.add(placeholder);
                 log.warn("获取用户字段值失败: {}, 错误: {}", fieldName, e.getMessage());
             }
+        }
+
+        unresolvedPlaceholders.addAll(getUnresolvedVariables(rule));
+        if (!unresolvedPlaceholders.isEmpty()) {
+            throw new IllegalArgumentException(buildUnresolvedRuleMessage(dp, originalRule, unresolvedPlaceholders));
         }
         
         return rule;
@@ -87,6 +96,25 @@ public class PermissionRuleUtils {
             joiner.add("(" + r + ")");
         }
         return joiner.toString();
+    }
+
+    public static void validateResolvedRule(Permission dp, String rule) {
+        Set<String> unresolvedPlaceholders = getUnresolvedVariables(rule);
+        if (!unresolvedPlaceholders.isEmpty()) {
+            throw new IllegalArgumentException(buildUnresolvedRuleMessage(dp, dp != null ? dp.getRule() : rule, unresolvedPlaceholders));
+        }
+    }
+
+    public static Set<String> getUnresolvedVariables(String rule) {
+        Set<String> unresolvedPlaceholders = new LinkedHashSet<>();
+        if (rule == null) {
+            return unresolvedPlaceholders;
+        }
+        Matcher matcher = UNRESOLVED_VARIABLE_PATTERN.matcher(rule);
+        while (matcher.find()) {
+            unresolvedPlaceholders.add(matcher.group());
+        }
+        return unresolvedPlaceholders;
     }
     
     /**
@@ -147,6 +175,14 @@ public class PermissionRuleUtils {
                     "weixinUnionId, weixinWorkUserId, tenantCode, defaultOrg.orgId, defaultOrg.deptId, " +
                     "defaultOrg.companyId, defaultOrg.extendId");
         };
+    }
+
+    private static String buildUnresolvedRuleMessage(Permission dp, String originalRule, Set<String> unresolvedPlaceholders) {
+        String entity = dp != null ? dp.getEntity() : "";
+        return String.format("data permission rule contains unresolved placeholders. entity=%s, rule=%s, placeholders=%s",
+                entity,
+                originalRule,
+                unresolvedPlaceholders);
     }
     
     /**

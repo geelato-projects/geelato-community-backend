@@ -4,11 +4,14 @@ import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
+import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
 import cn.geelato.orm.query.MetaNativeSql;
 import cn.geelato.orm.support.OrmTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import java.util.List;
 import java.util.Map;
@@ -91,6 +94,29 @@ public class MetaNativeSqlTest extends OrmTestSupport {
         );
 
         assertEquals(1, affected);
+        assertNull(DynamicDataSourceHolder.getDataSourceKey());
+    }
+
+    @Test
+    public void shouldDelegateNativeExecuteToJdbcTemplateBackendAndClearOverrideDataSource() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.h2.Driver");
+        dataSource.setUrl("jdbc:h2:mem:orm_native_executor;MODE=MySQL;DB_CLOSE_DELAY=-1");
+        dataSource.setUsername("sa");
+        dataSource.setPassword("");
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        jdbcTemplate.execute("create table if not exists test_user(id varchar(32) primary key, name varchar(64))");
+        jdbcTemplate.update("merge into test_user(id, name) key(id) values(?, ?)", "1001", "Alice");
+        DefaultMetaCommandExecutor executor = new DefaultMetaCommandExecutor(new JdbcTemplateMetaExecutionStrategy(jdbcTemplate));
+
+        int affected = executor.nativeExecute(
+                "update test_user set name = ? where id = ?",
+                new Object[]{"Bob", "1001"},
+                "portal"
+        );
+
+        assertEquals(1, affected);
+        assertEquals("Bob", jdbcTemplate.queryForObject("select name from test_user where id = ?", String.class, "1001"));
         assertNull(DynamicDataSourceHolder.getDataSourceKey());
     }
 }

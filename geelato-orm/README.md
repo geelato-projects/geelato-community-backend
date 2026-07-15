@@ -70,9 +70,22 @@ public class OrmDaoConfiguration {
 ```yaml
 geelato:
   orm:
+    execution-mode: dao
     entity-auto-scan-enabled: true
     entity-scan-base-packages:
       - com.example.demo.entity
+```
+
+- 执行策略说明：
+  - 默认 `execution-mode: dao`，由 ORM 统一门面委托 `Dao` ExecutionStrategy 执行
+  - 可切换为 `execution-mode: jdbc-template`，继续复用 `SqlManager` 构造 SQL，但主执行链不再调用 `Dao.query/save/delete`
+  - 多 `JdbcTemplate` 场景建议显式配置：
+
+```yaml
+geelato:
+  orm:
+    execution-mode: jdbc-template
+    jdbc-template-bean-name: primaryJdbcTemplate
 ```
 
 ## 主要能力
@@ -133,6 +146,7 @@ int affected = MetaFactory.sql("update platform_notice set status = ? where id =
 
 ## 说明
 - 调试可使用 `toSql()` / `toCountSql()` 查看内核生成语句
+- `MetaCommandExecutor` 现在是统一执行门面，底层可切换不同 `ExecutionStrategy`；SQL 构造仍统一来自 `SqlManager`
 - 原生 SQL 入口适用于业务侧已经持有完整 SQL 的场景；字段映射、别名与 SQL 安全由调用方自行保证
 - 默认字段填充通过 `SaveDefaultValueFiller` 扩展点实现，框架内置默认 Bean，业务侧可覆盖
 - 更完整的使用说明见 `docs/orm/backend-fluent-dsl-guide.md`

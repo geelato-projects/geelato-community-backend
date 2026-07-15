@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 统一执行基于元数据命令的查询与写入能力。
+ * 统一执行 Fluent DSL / 元数据命令的门面。
+ * 具体 SQL 落地由下游 ExecutionStrategy SPI 决定，当前可按配置切换 Dao 或 JdbcTemplate 实现。
  */
 public interface MetaCommandExecutor {
 

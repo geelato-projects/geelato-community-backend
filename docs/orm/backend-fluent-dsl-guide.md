@@ -46,6 +46,151 @@ List<Map<String, Object>> users = MetaFactory.query(User.class)
         .list();
 ```
 
+## ExecutionStrategy 架构图
+
+- 当前 Fluent DSL 的执行闭环已经从“固定 `Dao` 执行器”整理为“统一 `MetaCommandExecutor` 门面 + 可插拔 `MetaExecutionStrategy`”。
+- `SqlManager` 仍然是唯一 SQL 构造内核，`ExecutionStrategy` 只负责“怎么执行已经生成好的 SQL”。
+
+```mermaid
+graph TD
+    A[业务代码 / Service] --> B[MetaFactory]
+    B --> C[MetaQuery / MetaInsert / MetaUpdate / MetaDelete / MetaProcedure / MetaNativeSql]
+    C --> D[QueryCommandAdapter / SaveCommandAdapter / DeleteCommandAdapter]
+    D --> E[QueryCommand / SaveCommand / DeleteCommand]
+    E --> F[DefaultMetaCommandExecutor]
+
+    F --> G[AbstractExecutionStrategySupport]
+    G --> H[SqlManager]
+    H --> I[BoundSql / BoundPageSql]
+
+    F --> J[MetaExecutionStrategy]
+    J --> K[DaoMetaExecutionStrategy]
+    J --> L[JdbcTemplateMetaExecutionStrategy]
+
+    K --> M[Dao]
+    L --> N[BoundSqlJdbcSupport]
+    L --> O[事件桥接 Dao]
+
+    M --> P[(Database)]
+    N --> P
+    O -. SaveEventContext / DeleteEventContext .-> Q[SaveEventManager / DeleteEventManager]
+    Q -. listener callback .-> O
+```
+
+## 查询时序图
+
+- 这条链路体现的是“构造 SQL”和“执行 SQL”分层：
+  - `MetaQuery` 负责 DSL 语义
+  - `SqlManager` 负责生成 `BoundSql`
+  - `MetaExecutionStrategy` 负责落地执行
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant S as Service
+    participant MF as MetaFactory
+    participant MQ as MetaQuery
+    participant QA as QueryCommandAdapter
+    participant EX as DefaultMetaCommandExecutor
+    participant SUP as AbstractExecutionStrategySupport
+    participant SM as SqlManager
+    participant ST as MetaExecutionStrategy
+    participant DB as Database
+
+    S->>MF: query("User")
+    MF-->>S: MetaQuery
+    S->>MQ: select/where/page/list
+    MQ->>QA: toQueryCommand()
+    QA-->>MQ: QueryCommand
+    MQ->>EX: queryForMapList(command)
+    EX->>SUP: resolveConnectId + withDataSource
+    EX->>SUP: prepareQueryCommand()
+    EX->>SM: generatePageQuerySql(command)
+    SM-->>EX: BoundPageSql
+    EX->>ST: queryForMapList(boundPageSql)
+    ST->>DB: execute SQL
+    DB-->>ST: rows
+    ST-->>EX: List<Map>
+    EX-->>MQ: List<Map>
+    MQ-->>S: List<Map>
+```
+
+## JdbcTemplate 写入时序图
+
+- 这条链路体现的是 `JdbcTemplateMetaExecutionStrategy` 的关键差异：
+  - 主写入链路不再委托 `Dao.save(...)`
+  - 但为了兼容事件监听器，仍保留一个“事件桥接用 `Dao`”
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant S as Service
+    participant MF as MetaFactory
+    participant MI as MetaInsert/MetaUpdate
+    participant SA as SaveCommandAdapter
+    participant EX as DefaultMetaCommandExecutor
+    participant SUP as AbstractExecutionStrategySupport
+    participant SM as SqlManager
+    participant ST as JdbcTemplateMetaExecutionStrategy
+    participant EVT as SaveEventManager
+    participant DAO as 事件桥接Dao
+    participant JDBC as JdbcTemplate
+    participant DB as Database
+
+    S->>MF: insert("User")
+    MF-->>S: MetaInsert
+    S->>MI: value(...).save()
+    MI->>SA: toSaveCommand()
+    SA-->>MI: SaveCommand
+    MI->>EX: save(command)
+    EX->>SUP: resolveConnectId + withDataSource
+    EX->>SUP: prepareSaveValues()
+    EX->>SM: generateSaveSql(command)
+    SM-->>EX: BoundSql
+    EX->>ST: save(boundSql)
+    ST->>EVT: fireBefore(context with eventDao)
+    EVT-->>ST: maybe mutate BoundSql
+    ST->>JDBC: update(boundSql)
+    JDBC->>DB: execute update
+    DB-->>JDBC: affected rows
+    JDBC-->>ST: affected rows
+    ST->>EVT: fireAfter(context)
+    EVT-->>DAO: listener 可继续通过 context.getDao() 做补充操作
+    ST-->>EX: PK
+    EX-->>MI: PK
+    MI-->>S: PK
+```
+
+## 启动期装配时序图
+
+- 启动期会根据 `geelato.orm.execution-mode` 选择执行策略：
+  - `dao`
+  - `jdbc-template`
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant AC as ApplicationContext
+    participant CFG as OrmAutoConfiguration
+    participant RES as OrmDaoResolver / OrmJdbcTemplateResolver
+    participant STR as MetaExecutionStrategy
+    participant EX as MetaCommandExecutor
+
+    AC->>CFG: 初始化 ORM 自动装配
+    CFG->>CFG: 读取 OrmProperties.executionMode
+    alt execution-mode = dao
+        CFG->>RES: resolve Dao
+        RES-->>CFG: Dao
+        CFG->>STR: new DaoMetaExecutionStrategy(dao)
+    else execution-mode = jdbc-template
+        CFG->>RES: resolve JdbcTemplate
+        RES-->>CFG: JdbcTemplate
+        CFG->>STR: new JdbcTemplateMetaExecutionStrategy(jdbcTemplate)
+    end
+    CFG->>EX: new DefaultMetaCommandExecutor(strategy)
+    EX-->>AC: 注册 MetaCommandExecutor Bean
+```
+
 ## 查询示例
 - 单条查询：
 

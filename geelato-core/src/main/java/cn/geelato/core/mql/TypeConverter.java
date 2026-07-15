@@ -19,11 +19,8 @@ public class TypeConverter {
 
     private static final HashMap<String, String> sqlTypeToUITypeMap;
 
-    private static HashMap<String, String> isNumericUITypeMap;
-
     static {
         javaTypeToSqlTypeMap = new HashMap<>();
-        //mysql dataType:int|bigint|varchar|datetime|date|time|timestamp
         register(String.class, "varchar");
         register(Byte.class, "blob");
         register(byte.class, "blob");
@@ -49,12 +46,7 @@ public class TypeConverter {
         register(LocalTime.class, "time");
         register(BigInteger.class, "bigint");
         register(BigDecimal.class, "decimal");
-        //TODO db中的json格式
 
-//        NUMBER("number"),
-//                STRING("string"),
-//                BOOLEAN("boolean"),
-//                DATETIME("date");
         sqlTypeToUITypeMap = new HashMap<>();
         register("varchar", "string");
         register("blob", "string");

@@ -12,9 +12,20 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "geelato.orm")
 public class OrmProperties {
     /**
+     * 元数据执行模式。
+     * 默认走 Dao 执行策略，可切换为直接基于 JdbcTemplate 的执行策略。
+     */
+    private MetaExecutorMode executionMode = MetaExecutorMode.DAO;
+
+    /**
      * 显式指定 MetaCommandExecutor 绑定的 Dao Bean 名称。
      */
     private String daoBeanName;
+
+    /**
+     * 显式指定 JDBC_TEMPLATE 模式下绑定的 JdbcTemplate Bean 名称。
+     */
+    private String jdbcTemplateBeanName;
 
     /**
      * 默认 ORM 数据源键。
@@ -28,7 +39,7 @@ public class OrmProperties {
     private Boolean entityAutoScanEnabled = Boolean.TRUE;
 
     /**
-     * @Entity 自动扫描的 base packages。
+     * 注解 @Entity 自动扫描的 base packages。
      * 为空时将使用 Spring Boot 的 AutoConfigurationPackages。
      */
     private String[] entityScanBasePackages;

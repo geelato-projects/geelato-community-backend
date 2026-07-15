@@ -9,7 +9,6 @@ import cn.geelato.core.mql.parser.keyword.DeleteKeyword;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -27,8 +26,6 @@ public class JsonTextDeleteParser extends JsonTextParser {
     public DeleteCommand parse(String jsonText, SessionCtx sessionCtx) {
         JSONObject jo = JSON.parseObject(jsonText);
         CommandValidator validator = new CommandValidator();
-        // TODO biz怎么用起来
-        String biz = jo.getString(KW_BIZ);
         jo.remove(KW_BIZ);
         String key = jo.keySet().iterator().next();
         return parse(sessionCtx, key, jo.getJSONObject(key), validator);

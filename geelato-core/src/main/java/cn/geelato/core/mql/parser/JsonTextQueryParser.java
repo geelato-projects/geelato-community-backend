@@ -13,7 +13,6 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -83,14 +82,7 @@ public class JsonTextQueryParser extends JsonTextParser {
         command.setEntityName(entityName);
         FilterGroup fg = new FilterGroup();
         fg.addFilter("tenantCode", SessionCtx.getCurrentTenantCode());
-
-        if (SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName) != null) {
-            Permission dp = SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName);
-            String rule = PermissionRuleUtils.replaceRuleVariable(dp,SessionCtx.getCurrentUser());
-            command.setOriginalWhere(rule);
-        } else {
-            command.setOriginalWhere(String.format("creator='%s'", SessionCtx.getCurrentUser().getUserId()));
-        }
+        command.setOriginalWhere(resolveOriginalWhere(entityName));
         command.setWhere(fg);
 
         jo.keySet().forEach(key -> {
@@ -137,6 +129,21 @@ public class JsonTextQueryParser extends JsonTextParser {
             logAndThrow(validator.getMessage(), "final validation failed");
         }
         return command;
+    }
+
+    String resolveOriginalWhere(String entityName) {
+        Permission dp = SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName);
+        if (dp == null) {
+            return String.format("creator='%s'", SessionCtx.getCurrentUser().getUserId());
+        }
+        try {
+            String rule = PermissionRuleUtils.replaceRuleVariable(dp, SessionCtx.getCurrentUser());
+            PermissionRuleUtils.validateResolvedRule(dp, rule);
+            return rule;
+        } catch (IllegalArgumentException ex) {
+            logAndThrow(ex.getMessage(), "resolve data permission rule failed for entity {}", entityName);
+            return null;
+        }
     }
 
 }

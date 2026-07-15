@@ -17,6 +17,7 @@ import java.util.Map;
 @ApiRestController("/sk")
 @Slf4j
 public class SqlKeyController extends BaseController {
+    
     @UseDynamicDataSource
     protected Dao dynamicDao;
     @RequestMapping(value = "/{key}", method = {RequestMethod.POST})

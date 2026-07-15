@@ -1,8 +1,7 @@
 package cn.geelato.app.scaffold.boot;
 
 import cn.geelato.core.orm.Dao;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.Ordered;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.EncodedResource;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -18,7 +17,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class AppScaffoldSchemaInitializer implements Ordered, CommandLineRunner {
+public class AppScaffoldSchemaInitializer implements InitializingBean {
 
     private static final String INIT_SCRIPT_LOCATION = "classpath*:geelato/app/scaffold/init/*.sql";
     private static final Logger log = LoggerFactory.getLogger(AppScaffoldSchemaInitializer.class);
@@ -30,15 +29,13 @@ public class AppScaffoldSchemaInitializer implements Ordered, CommandLineRunner 
     }
 
     @Override
-    public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
-    }
-
-    @Override
-    public void run(String... args) {
+    public void afterPropertiesSet() {
         ResourcePatternResolver resolver = new org.springframework.core.io.support.PathMatchingResourcePatternResolver();
         try {
             Resource[] resources = resolver.getResources(INIT_SCRIPT_LOCATION);
+            if (resources.length == 0) {
+                throw new IllegalStateException("No scaffold init scripts found at " + INIT_SCRIPT_LOCATION);
+            }
             Arrays.sort(resources, Comparator.comparing(this::resourceName));
             try (Connection connection = dao.getJdbcTemplate().getDataSource().getConnection()) {
                 DatabaseMetaData metaData = connection.getMetaData();

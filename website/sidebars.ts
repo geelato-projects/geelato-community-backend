@@ -96,6 +96,7 @@ const sidebars: SidebarsConfig = {
                 'reference/metastore-extension',
                 'orm/datasource-extension',
                 'reference/security-provider-extension',
+                'reference/spi-query-filter-and-save-fill-extension',
                 'reference/override-default-implementations',
               ],
             },

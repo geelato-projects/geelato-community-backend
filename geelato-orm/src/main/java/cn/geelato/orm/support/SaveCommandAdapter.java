@@ -5,13 +5,10 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.mql.command.CommandType;
 import cn.geelato.core.mql.command.SaveCommand;
 import cn.geelato.core.mql.filter.FilterGroup;
-import cn.geelato.core.util.BeansUtils;
-import cn.geelato.orm.fill.DefaultSaveDefaultValueFiller;
-import cn.geelato.orm.fill.SaveDefaultValueContext;
-import cn.geelato.orm.fill.SaveDefaultValueFiller;
 import cn.geelato.orm.query.MetaInsert;
 import cn.geelato.orm.query.MetaUpdate;
-import cn.geelato.orm.runtime.OrmRuntimeProvider;
+import cn.geelato.orm.spi.FluentSaveFieldValueFillContext;
+import cn.geelato.orm.spi.support.FluentSaveFieldValueFillRuntimeResolver;
 import cn.geelato.orm.value.ValueRef;
 import cn.geelato.utils.UIDGenerator;
 
@@ -24,7 +21,6 @@ import java.util.Map;
 public final class SaveCommandAdapter {
 
     private static final MetaManager META_MANAGER = MetaManager.singleInstance();
-    private static final SaveDefaultValueFiller FALLBACK_FILLER = new DefaultSaveDefaultValueFiller();
 
     private SaveCommandAdapter() {
     }
@@ -38,15 +34,21 @@ public final class SaveCommandAdapter {
         command.setConnectId(insert.getConnectId());
         command.setCommandType(CommandType.Insert);
 
-        Map<String, Object> entityMap = META_MANAGER.newDefaultEntityMap(entityName);
+        Map<String, Object> defaultEntityMap = META_MANAGER.newDefaultEntityMap(entityName);
+        Map<String, Object> entityMap = new HashMap<>(defaultEntityMap);
         Object pkValue = insert.getValueMap().get(pkField);
         if (pkValue == null) {
             pkValue = UIDGenerator.generate();
         }
         entityMap.put(pkField, stringifyValue(pkValue));
         insert.getValueMap().forEach((key, value) -> entityMap.put(key, stringifyValue(value)));
-        defaultValueFiller().fill(new SaveDefaultValueContext(entityName, CommandType.Insert, entityMeta,
-                META_MANAGER.newDefaultEntityMap(entityName), entityMap));
+        FluentSaveFieldValueFillRuntimeResolver.fillIfAvailable(new FluentSaveFieldValueFillContext(
+                entityName,
+                CommandType.Insert,
+                entityMeta,
+                defaultEntityMap,
+                entityMap
+        ));
 
         String[] fields = entityMap.keySet().toArray(new String[0]);
         command.setFields(fields);
@@ -91,8 +93,13 @@ public final class SaveCommandAdapter {
                     .orElse(null);
         }
         params.remove(pkField);
-        defaultValueFiller().fill(new SaveDefaultValueContext(entityName, CommandType.Update, entityMeta,
-                META_MANAGER.newDefaultEntityMap(entityName), params));
+        FluentSaveFieldValueFillRuntimeResolver.fillIfAvailable(new FluentSaveFieldValueFillContext(
+                entityName,
+                CommandType.Update,
+                entityMeta,
+                META_MANAGER.newDefaultEntityMap(entityName),
+                params
+        ));
 
         command.setWhere(where);
         command.setFields(params.keySet().toArray(new String[0]));
@@ -118,13 +125,5 @@ public final class SaveCommandAdapter {
             };
         }
         return value;
-    }
-
-    private static SaveDefaultValueFiller defaultValueFiller() {
-        try {
-            return BeansUtils.getBean(OrmRuntimeProvider.class).saveDefaultValueFiller();
-        } catch (Exception ex) {
-            return FALLBACK_FILLER;
-        }
     }
 }

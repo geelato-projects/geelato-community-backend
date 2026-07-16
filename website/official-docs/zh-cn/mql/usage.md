@@ -16,6 +16,17 @@ MQL 的核心处理类为 `MetaController`，主要接口如下：
 | ID 删除 | `/api/meta/delete/{biz}/{id}` | POST | 根据 ID 删除，支持逗号分隔多个 ID |
 | 条件删除 | `/api/meta/delete2/{biz}` | POST | 根据 MQL 过滤条件删除数据 |
 
+## 查询链路的 SPI 扩展
+
+除了前端显式传入的过滤条件，MQL 查询链路还支持通过 SPI 注入平台级默认过滤规则。
+
+- MQL 查询入口对应：`MqlQueryFilterInjector`
+- 运行时解析器对应：`MqlQueryFilterRuntimeResolver`
+- 典型用途包括：租户隔离、数据权限、组织维度过滤
+- 当前平台默认实现位于 `geelato-web-platform`
+
+如果你需要在宿主项目中替换或扩展这类规则，建议阅读：[查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)
+
 ## 查询语法
 
 查询请求通常采用这种 JSON 结构：
@@ -471,6 +482,9 @@ ORDER BY status ASC, createAt DESC
 
 - 更新时自动补 `updateAt`、`updater`、`updaterName`
 - 新增时自动补 `createAt`、`creator`、`tenantCode` 等默认字段
+- 这些默认字段现在通过 `MqlSaveFieldValueFiller` SPI 注入，而不是要求业务侧手工补字段
+- 当前平台默认实现位于 `geelato-web-platform`，运行时同样遵循 `0` 个跳过、`1` 个按 `isEnabled()`、多实现直接报错
+- 扩展方式与完整说明见：[查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)
 
 ## 嵌套保存
 
@@ -645,3 +659,4 @@ MQL 内置了几类常用变量：
 - [MQL 总览](overview.md)
 - [API 参考](../api/reference.md)
 - [Fluent DSL 指引](../orm/fluent-dsl.md)
+- [查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)

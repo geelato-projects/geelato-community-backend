@@ -55,6 +55,8 @@ public class FilterGroup {
     public FilterGroup addFilter(Filter filter) {
         if (this.filters == null) {
             this.filters = new ArrayList<>();
+        }
+        if (this.params == null) {
             this.params = new HashMap<>();
         }
         this.filters.add(filter);

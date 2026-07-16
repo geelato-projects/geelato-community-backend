@@ -202,7 +202,9 @@ String userId = MetaFactory.insert("User")
 
 - 新增场景默认对齐 MQL 规则，自动补 `createAt / creator / creatorName / tenantCode / buId / deptId / updateAt / updater / updaterName / deleteAt`
 - 更新场景默认自动补 `updateAt / updater / updaterName`
-- 这些规则来自 DSL 内置的默认字段 filler，业务侧可通过覆盖 `SaveDefaultValueFiller` Bean 自定义
+- 这些规则已经改为通过 `FluentSaveFieldValueFiller` SPI 注入；平台默认实现位于 `geelato-web-platform`
+- 运行时遵循统一规则：`0` 个实现跳过，`1` 个实现按 `isEnabled()` 决定是否执行，多实现直接报错
+- 如需扩展宿主项目自己的规则，建议阅读：[查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)
 
 更新：
 
@@ -410,4 +412,5 @@ int affected = MetaFactory.sql("update platform_notice set status = ? where id =
 
 - [ORM 总览](overview.md)
 - [ORM 注解说明](annotations.md)
+- [查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)
 - [核心模块说明](../reference/core-modules.md)

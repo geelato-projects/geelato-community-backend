@@ -1,14 +1,12 @@
 package cn.geelato.core.mql.parser;
 
-import cn.geelato.core.SessionCtx;
 import cn.geelato.core.mql.command.CommandValidator;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.mql.parser.keyword.QueryKeyword;
+import cn.geelato.core.mql.spi.support.MqlQueryFilterRuntimeResolver;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
-import cn.geelato.security.Permission;
-import cn.geelato.security.PermissionRuleUtils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -81,8 +79,6 @@ public class JsonTextQueryParser extends JsonTextParser {
         QueryCommand command = new QueryCommand();
         command.setEntityName(entityName);
         FilterGroup fg = new FilterGroup();
-        fg.addFilter("tenantCode", SessionCtx.getCurrentTenantCode());
-        command.setOriginalWhere(resolveOriginalWhere(entityName));
         command.setWhere(fg);
 
         jo.keySet().forEach(key -> {
@@ -128,22 +124,8 @@ public class JsonTextQueryParser extends JsonTextParser {
         if (!validator.isSuccess()) {
             logAndThrow(validator.getMessage(), "final validation failed");
         }
+        MqlQueryFilterRuntimeResolver.injectIfAvailable(command);
         return command;
-    }
-
-    String resolveOriginalWhere(String entityName) {
-        Permission dp = SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName);
-        if (dp == null) {
-            return String.format("creator='%s'", SessionCtx.getCurrentUser().getUserId());
-        }
-        try {
-            String rule = PermissionRuleUtils.replaceRuleVariable(dp, SessionCtx.getCurrentUser());
-            PermissionRuleUtils.validateResolvedRule(dp, rule);
-            return rule;
-        } catch (IllegalArgumentException ex) {
-            logAndThrow(ex.getMessage(), "resolve data permission rule failed for entity {}", entityName);
-            return null;
-        }
     }
 
 }

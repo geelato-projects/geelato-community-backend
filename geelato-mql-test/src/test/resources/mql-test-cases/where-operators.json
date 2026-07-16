@@ -1,0 +1,75 @@
+[
+  {
+    "name": "eq操作符-字符串",
+    "mql": "{\"mql_test_user\":{\"name|eq\":\"张三\"}}",
+    "expectedSql": "select * from mql_test_user where name=?",
+    "expectedParams": ["张三"],
+    "expectedTypes": [12],
+    "description": "12 = Types.VARCHAR"
+  },
+  {
+    "name": "eq操作符-整数",
+    "mql": "{\"mql_test_user\":{\"age|eq\":\"18\"}}",
+    "expectedSql": "select * from mql_test_user where age=?",
+    "expectedParams": ["18"],
+    "expectedTypes": [4],
+    "description": "4 = Types.INTEGER"
+  },
+  {
+    "name": "eq操作符-大整数",
+    "mql": "{\"mql_test_user\":{\"id|eq\":\"1\"}}",
+    "expectedSql": "select * from mql_test_user where id=?",
+    "expectedParams": ["1"],
+    "expectedTypes": [-5],
+    "description": "-5 = Types.BIGINT"
+  },
+  {
+    "name": "neq操作符",
+    "mql": "{\"mql_test_user\":{\"name|neq\":\"李四\"}}",
+    "expectedSql": "select * from mql_test_user where name!=?",
+    "expectedParams": ["李四"],
+    "expectedTypes": [12]
+  },
+  {
+    "name": "gt操作符-整数",
+    "mql": "{\"mql_test_user\":{\"age|gt\":\"18\"}}",
+    "expectedSql": "select * from mql_test_user where age>?",
+    "expectedParams": ["18"],
+    "expectedTypes": [4]
+  },
+  {
+    "name": "contains操作符",
+    "mql": "{\"mql_test_user\":{\"name|contains\":\"三\"}}",
+    "expectedSql": "select * from mql_test_user where name like CONCAT('%',?,'%')",
+    "expectedParams": ["三"],
+    "expectedTypes": [12]
+  },
+  {
+    "name": "in操作符-多值",
+    "mql": "{\"mql_test_user\":{\"id|in\":\"1,2,3\"}}",
+    "expectedSql": "select * from mql_test_user where id in(?,?,?)",
+    "expectedParams": ["1", "2", "3"],
+    "expectedTypes": [-5, -5, -5]
+  },
+  {
+    "name": "nil操作符-IS_NULL",
+    "mql": "{\"mql_test_user\":{\"email|nil\":\"1\"}}",
+    "expectedSql": "select * from mql_test_user where email is NULL",
+    "expectedParams": [],
+    "expectedTypes": []
+  },
+  {
+    "name": "多条件AND",
+    "mql": "{\"mql_test_user\":{\"name|eq\":\"张三\",\"age|gt\":\"18\"}}",
+    "expectedSql": "select * from mql_test_user where name=? and age>?",
+    "expectedParams": ["张三", "18"],
+    "expectedTypes": [12, 4]
+  },
+  {
+    "name": "分页查询",
+    "mql": "{\"mql_test_user\":{\"@p\":\"1,10\"}}",
+    "expectedSql": "select * from mql_test_user limit 10 offset 0",
+    "expectedParams": [],
+    "expectedTypes": []
+  }
+]

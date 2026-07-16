@@ -7,12 +7,13 @@ import cn.geelato.core.mql.command.CommandValidator;
 import cn.geelato.core.mql.command.SaveCommand;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.mql.parser.keyword.SaveKeyword;
+import cn.geelato.core.mql.spi.MqlSaveFieldValueFillContext;
+import cn.geelato.core.mql.spi.support.MqlSaveFieldValueFillRuntimeResolver;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
 import cn.geelato.core.util.EncryptUtils;
-import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -267,7 +268,9 @@ public class JsonTextSaveParser extends JsonTextParser {
 
     private void generateInsertCommand(SessionCtx sessionCtx, String commandName, SaveCommand command, Map<String, Object> params, String PK) {
         command.setCommandType(CommandType.Insert);
-        Map<String, Object> entityMap = metaManager.newDefaultEntityMap(commandName);
+        EntityMeta entityMeta = metaManager.getByEntityName(commandName);
+        Map<String, Object> defaultEntityMap = metaManager.newDefaultEntityMap(commandName);
+        Map<String, Object> entityMap = new HashMap<>(defaultEntityMap);
         if (params.containsKey(Force_ID)) {
             entityMap.put(PK, params.get(Force_ID));
             params.remove(Force_ID);
@@ -276,7 +279,14 @@ public class JsonTextSaveParser extends JsonTextParser {
             params.remove(PK);
         }
         entityMap.putAll(params);
-        putInsertDefaultField(entityMap, sessionCtx);
+        MqlSaveFieldValueFillRuntimeResolver.fillIfAvailable(new MqlSaveFieldValueFillContext(
+                commandName,
+                CommandType.Insert,
+                entityMeta,
+                defaultEntityMap,
+                entityMap,
+                sessionCtx
+        ));
         String[] insertFields = new String[entityMap.size()];
         entityMap.keySet().toArray(insertFields);
         command.setFields(insertFields);
@@ -290,7 +300,14 @@ public class JsonTextSaveParser extends JsonTextParser {
         command.setWhere(fg);
         command.setCommandType(CommandType.Update);
         params.remove(pkValue);
-        putUpdateDefaultField(metaManager.newDefaultEntityMap(command.getEntityName()),params,sessionCtx);
+        MqlSaveFieldValueFillRuntimeResolver.fillIfAvailable(new MqlSaveFieldValueFillContext(
+                command.getEntityName(),
+                CommandType.Update,
+                metaManager.getByEntityName(command.getEntityName()),
+                metaManager.newDefaultEntityMap(command.getEntityName()),
+                params,
+                sessionCtx
+        ));
         String[] updateFields = new String[params.size()];
         params.keySet().toArray(updateFields);
         command.setFields(updateFields);
@@ -311,51 +328,5 @@ public class JsonTextSaveParser extends JsonTextParser {
             }
         }
         command.setValueMap(newValueMap);
-    }
-
-
-    private void putUpdateDefaultField(Map<String, Object> entity,Map<String, Object> params, SessionCtx sessionCtx) {
-        if (entity.containsKey(FN_UPDATE_AT)) {
-            params.put(FN_UPDATE_AT, simpleDateFormat.format(new Date()));
-        }
-        if (entity.containsKey(FN_UPDATER)) {
-            params.put(FN_UPDATER, SessionCtx.getUserId());
-        }
-        if (entity.containsKey(FN_UPDATER_NAME)) {
-            params.put(FN_UPDATER_NAME, SessionCtx.getUserName());
-        }
-    }
-
-    private void putInsertDefaultField(Map<String, Object> entity, SessionCtx sessionCtx) {
-        if (entity.containsKey(FN_CREATE_AT)) {
-            entity.put(FN_CREATE_AT, simpleDateFormat.format(new Date()));
-        }
-        if (entity.containsKey(FN_CREATOR)) {
-            entity.put(FN_CREATOR, SessionCtx.getUserId());
-        }
-        if (entity.containsKey(FN_CREATOR_NAME)) {
-            entity.put(FN_CREATOR_NAME, SessionCtx.getUserName());
-        }
-        if (entity.containsKey(FN_TENANT_CODE)) {
-            entity.put(FN_TENANT_CODE, SessionCtx.getCurrentTenantCode());
-        }
-        if (entity.containsKey(FN_BU_ID)) {
-            entity.put(FN_BU_ID, SessionCtx.getCurrentUser().getBuId());
-        }
-        if (entity.containsKey(FN_DEPT_ID)) {
-            entity.put(FN_DEPT_ID, SessionCtx.getCurrentUser().getOrgId());
-        }
-        if (entity.containsKey(FN_UPDATE_AT)) {
-            entity.put(FN_UPDATE_AT, simpleDateFormat.format(new Date()));
-        }
-        if (entity.containsKey(FN_UPDATER)) {
-            entity.put(FN_UPDATER, SessionCtx.getUserId());
-        }
-        if (entity.containsKey(FN_UPDATER_NAME)) {
-            entity.put(FN_UPDATER_NAME, SessionCtx.getUserName());
-        }
-        if (entity.containsKey(FN_DELETE_AT)) {
-            entity.put(FN_DELETE_AT, DateUtils.DEFAULT_DELETE_AT);
-        }
     }
 }

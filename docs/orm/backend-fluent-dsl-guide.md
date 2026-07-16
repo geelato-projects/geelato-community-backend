@@ -242,7 +242,7 @@ String userId = MetaFactory.insert("User")
 - 默认字段会在保存前自动补齐：
   - 新增场景默认对齐 MQL 规则，自动补 `createAt / creator / creatorName / tenantCode / buId / deptId / updateAt / updater / updaterName / deleteAt`
   - 更新场景默认自动补 `updateAt / updater / updaterName`
-  - 这些规则来自 DSL 内置的默认字段 filler，业务侧可通过覆盖 `SaveDefaultValueFiller` Bean 自定义
+  - 这些规则已经改为通过 `FluentSaveFieldValueFiller` SPI 注入；默认实现位于 `geelato-web-platform`，业务侧可按同一 SPI 扩展
 
 - 更新：
 
@@ -501,7 +501,10 @@ List<UserSimpleDto> users = MetaFactory.sql("select id, name from platform_user 
 - `update()` 推荐显式传 `id` 或显式 `where(...)`，避免更新条件不清晰。
 - `toSql()` 与 `toCountSql()` 用于排障和调试，不建议把其输出当成业务主流程接口。
 - DSL 写入链路在生成 `SaveCommand` 后、生成 SQL 前执行默认字段填充。
-- 框架提供一份与当前 MQL 规则对齐的默认实现；若业务需要差异化规则，可覆盖 `SaveDefaultValueFiller` Bean。
+- 当前字段值填充改为按入口 SPI 扩展：Fluent DSL 使用 `FluentSaveFieldValueFiller`，MQL Save 使用 `MqlSaveFieldValueFiller`，对象保存链路使用 `EntitySaveFieldValueFiller`。
+- 默认业务规则位于 `geelato-web-platform` 的 `PlatformFieldValueFillSupport`；`core/orm` 只保留 SPI 契约、上下文对象和运行时解析器。
+- 运行时遵循统一策略：`0` 个实现跳过，`1` 个实现按 `isEnabled()` 决定是否执行，多实现直接报错。
+- 详细说明见 `docs/orm/save-field-fill-spi.md`。
 
 ## 迁移建议
 - 原来后端手写 MQL JSON 的场景，可优先迁移到 `MetaFactory.query/insert/update/delete`。
@@ -509,7 +512,7 @@ List<UserSimpleDto> users = MetaFactory.sql("select id, name from platform_user 
 
 ## P1 替代样板
 - `QueryWrapper.like/eq/orderByDesc` 可直接映射为 `MetaFactory.query(...).where(...).order(...)`。
-- `BaseMapper.insert/updateById` 可映射为 `MetaFactory.insert/update`，实体转 `Map` 后仅保留非空业务字段，审计字段交给 DSL 默认 filler 补齐。
+- `BaseMapper.insert/updateById` 可映射为 `MetaFactory.insert/update`，实体转 `Map` 后仅保留非空业务字段，审计字段交给保存链路的字段填充 SPI 补齐。
 - 查询结果默认返回 `Map<String, Object>`；若接口仍对外暴露实体对象，可用 `wrapperResult(...)` 或服务层统一做 `Map -> Entity` 转换。
 
 ```java

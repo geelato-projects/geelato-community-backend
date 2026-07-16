@@ -8,6 +8,7 @@ import cn.geelato.orm.Order;
 import cn.geelato.orm.query.JoinClause;
 import cn.geelato.orm.query.JoinCondition;
 import cn.geelato.orm.query.MetaQuery;
+import cn.geelato.orm.spi.support.FluentQueryFilterRuntimeResolver;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -72,6 +73,7 @@ public final class QueryCommandAdapter {
         if (!query.getViewTemplateParams().isEmpty()) {
             command.setViewTemplateParams(query.getViewTemplateParams());
         }
+        FluentQueryFilterRuntimeResolver.injectIfAvailable(command, query);
         return command;
     }
 

@@ -88,11 +88,9 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             BoundSql boundSql = new BoundSql();
             boundSql.setName(command.getEntityName());
             String sql = buildOneSql(command);
-//        sql = sanitizeSql(sql);
             boundSql.setSql(sql);
             command.setFinalSql(sql);
             Object[] params = buildParams(command);
-//        params = sanitizeParams(params);
             boundSql.setParams(params);
             boundSql.setTypes(buildTypes(command));
             logger.info("final-sql: {}", command.getFinalSql());

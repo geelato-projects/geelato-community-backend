@@ -1,7 +1,8 @@
 package cn.geelato.core.meta.model.parser;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.utils.DateUtils;
+import cn.geelato.core.meta.spi.EntitySaveFieldValueFillContext;
+import cn.geelato.core.meta.spi.support.EntitySaveFieldValueFillRuntimeResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.logging.log4j.util.Strings;
@@ -15,8 +16,6 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.utils.UIDGenerator;
 
 import java.lang.reflect.InvocationTargetException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,7 +45,15 @@ public class EntitySaveParser {
                 fg.addFilter(PK, String.valueOf(entity.get(PK)));
                 command.setWhere(fg);
                 command.setCommandType(CommandType.Update);
-                putUpdateDefaultField(entity, sessionCtx);
+                EntitySaveFieldValueFillRuntimeResolver.fillIfAvailable(new EntitySaveFieldValueFillContext(
+                        entityMeta.getEntityName(),
+                        CommandType.Update,
+                        entityMeta,
+                        metaManager.newDefaultEntityMap(entityMeta.getEntityName()),
+                        entity,
+                        sessionCtx,
+                        object
+                ));
 
                 String[] updateFields = new String[entity.size()];
                 entity.keySet().toArray(updateFields);
@@ -55,7 +62,15 @@ public class EntitySaveParser {
             } else {
                 command.setCommandType(CommandType.Insert);
                 entity.put(PK, UIDGenerator.generate());
-                putInsertDefaultField(entity, sessionCtx);
+                EntitySaveFieldValueFillRuntimeResolver.fillIfAvailable(new EntitySaveFieldValueFillContext(
+                        entityMeta.getEntityName(),
+                        CommandType.Insert,
+                        entityMeta,
+                        metaManager.newDefaultEntityMap(entityMeta.getEntityName()),
+                        entity,
+                        sessionCtx,
+                        object
+                ));
                 String[] insertFields = new String[entity.size()];
                 entity.keySet().toArray(insertFields);
                 command.setFields(insertFields);
@@ -67,42 +82,5 @@ public class EntitySaveParser {
 
         return command;
     }
-
-    private void putUpdateDefaultField(Map<String,Object> entity, SessionCtx sessionCtx) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
-        if (entity.containsKey("updateAt")) {
-            entity.put("updateAt",  simpleDateFormat.format(new Date()));
-        }
-        if (entity.containsKey("updater")) {
-            entity.put("updater", SessionCtx.getUserId());
-        }
-        if (entity.containsKey("updaterName")) {
-            entity.put("updaterName",  SessionCtx.getUserName());
-        }
-    }
-
-    private void putInsertDefaultField(Map<String,Object> entity, SessionCtx sessionCtx) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
-        if (entity.containsKey("createAt")) {
-            entity.put("createAt", simpleDateFormat.format(new Date()));
-        }
-        if (entity.containsKey("creator")) {
-            entity.put("creator", SessionCtx.getUserId());
-        }
-        if (entity.containsKey("creatorName")) {
-            entity.put("creatorName", SessionCtx.getUserName());
-        }
-        if (entity.containsKey("buId")) {
-            entity.put("buId", SessionCtx.getCurrentUser().getBuId());
-        }
-        if (entity.containsKey("deptId")) {
-            entity.put("deptId", SessionCtx.getCurrentUser().getOrgId());
-        }
-        if (entity.containsKey("deleteAt")) {
-            entity.put("deleteAt", DateUtils.DEFAULT_DELETE_AT);
-        }
-        putUpdateDefaultField(entity, sessionCtx);
-    }
-
 
 }

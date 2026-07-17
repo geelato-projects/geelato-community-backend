@@ -301,7 +301,14 @@ public class DevTableController extends BaseController {
             params.put("del_status", String.valueOf(ColumnDefault.DEL_STATUS_VALUE));
             params.put("app_id", form.getAppId());
             params.put("tenant_code", form.getTenantCode());
-            return ApiResult.success(devTableService.validate("platform_dev_table", form.getId(), params, lowers));
+            boolean valid = devTableService.validate("platform_dev_table", form.getId(), params, lowers);
+            // 仅当冲突检测开关开启时，校验在线实体的 entity_name 是否与已加载的 Java 内置实体同名，
+            // 否则会导致 CRUD 时元数据冲突、无法构造合适 SQL
+            if (valid && metaManager.isConflictDetectEnabled() && Strings.isNotBlank(form.getEntityName())
+                    && metaManager.getClassSourceEntity(form.getEntityName()) != null) {
+                return ApiResult.fail("实体名「" + form.getEntityName() + "」与Java内置实体冲突，请更改实体名");
+            }
+            return ApiResult.success(valid);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());

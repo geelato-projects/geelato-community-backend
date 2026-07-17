@@ -3,10 +3,10 @@ package cn.geelato.web.platform.srv.security.service;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.web.platform.srv.platform.service.RuleService;
 import cn.geelato.meta.User;
+import cn.geelato.web.platform.cache.SafeJ2CacheSupport;
 import cn.geelato.web.platform.utils.EncryptUtil;
 import net.oschina.j2cache.CacheChannel;
 import net.oschina.j2cache.CacheObject;
-import net.oschina.j2cache.J2Cache;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,9 +27,6 @@ public class AccountService {
     @Autowired
     protected RuleService ruleService;
 
-    private final CacheChannel cache = J2Cache.getChannel();
-
-
     public User findUserByLoginName(String loginName) {
         return dao.queryForObject(User.class, "loginName", loginName);
     }
@@ -45,23 +42,24 @@ public class AccountService {
     public Map<String,Object> wrapUser(User user) {
         HashMap<String,Object> map = new HashMap<>(3);
         map.put("user", user);
-        CacheObject userConfigCacheObject = cache.get("config", user.getId(), null);
         HashMap<String,Object> userConfig = new HashMap<>();
-        if (userConfigCacheObject.getValue() != null) {
-            List<Map<String, Object>> list = (List<Map<String, Object>>) userConfigCacheObject.getValue();
-            list.forEach((item) -> {
-                userConfig.put(item.get("code").toString(), item);
-            });
+        CacheChannel cache = SafeJ2CacheSupport.getChannel();
+        if (cache != null) {
+            CacheObject userConfigCacheObject = cache.get("config", user.getId(), null);
+            if (userConfigCacheObject.getValue() != null) {
+                List<Map<String, Object>> list = (List<Map<String, Object>>) userConfigCacheObject.getValue();
+                list.forEach((item) -> userConfig.put(item.get("code").toString(), item));
+            }
         }
         map.put("userConfig", userConfig);
 
-        CacheObject commonConfigCacheObject = cache.get("config", user.getId().toString(), null);
         HashMap<String,Object> commonConfig = new HashMap<>();
-        if (userConfigCacheObject.getValue() != null) {
-            List<Map<String, Object>> list = (List<Map<String, Object>>) commonConfigCacheObject.getValue();
-            list.forEach((item) -> {
-                commonConfig.put(item.get("code").toString(), item);
-            });
+        if (cache != null) {
+            CacheObject commonConfigCacheObject = cache.get("config", user.getId().toString(), null);
+            if (commonConfigCacheObject.getValue() != null) {
+                List<Map<String, Object>> list = (List<Map<String, Object>>) commonConfigCacheObject.getValue();
+                list.forEach((item) -> commonConfig.put(item.get("code").toString(), item));
+            }
         }
         map.put("commonConfig", commonConfig);
 

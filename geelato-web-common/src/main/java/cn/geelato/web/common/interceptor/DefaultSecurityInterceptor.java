@@ -136,6 +136,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
 
         String token = request.getHeader(__AuthorizationTag__);
         if (token == null) {
+            log.warn("unauthorized request without authorization header, method:{}, url:{}", request.getMethod(), buildRequestUrl(request));
             throw new UnauthorizedException();
         }
         log.info("handle token:{}",token);
@@ -156,9 +157,19 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             authenticated = tryOAuth2Authenticate(token, request, response);
         }
         if (!authenticated) {
+            log.warn("unauthorized request, method:{}, url:{}", request.getMethod(), buildRequestUrl(request));
             throw new UnauthorizedException("未授权访问");
         }
         return true;
+    }
+
+    private String buildRequestUrl(HttpServletRequest request) {
+        if (request == null) {
+            return "";
+        }
+        String url = request.getRequestURL().toString();
+        String queryString = request.getQueryString();
+        return StringUtils.isNotEmpty(queryString) ? url + "?" + queryString : url;
     }
 
     @Override

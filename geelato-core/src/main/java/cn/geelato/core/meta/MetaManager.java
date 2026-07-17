@@ -59,6 +59,23 @@ public class MetaManager extends AbstractManager {
     private Dao dao;
     private MetaStore metaStore = new DefaultMetaStore();
     private MetaResourceProvider metaResourceProvider = new DefaultMetaResourceProvider();
+    /**
+     * 同名实体（Java类源 vs DB在线源）冲突时的合并策略：
+     * <ul>
+     *     <li>DATABASE：以在线DB定义为准（覆盖字段集），适合在线实体由设计器维护最新真值的场景</li>
+     *     <li>CLASS：以Java类定义为准（兼容历史行为）</li>
+     * </ul>
+     * catalog=platform 的系统内置实体始终以 Java 类为准，不受此配置影响。
+     */
+    private ConflictStrategy conflictStrategy = ConflictStrategy.CLASS;
+    /**
+     * 冲突检测总开关，默认关闭。对应配置项 geelato.meta.conflict-detect.enabled。
+     * <p>
+     * 关闭时：parseOne/parseTableEntity/parseDBMeta 保持原有静默"先到先得"逻辑，不输出冲突告警、不改变覆盖行为，与改动前完全一致。
+     * 开启时：才输出冲突 warn 日志、启用 diff 日志、按 conflictStrategy 处理同名冲突。
+     * </p>
+     */
+    private boolean conflictDetectEnabled = false;
 
     private MetaManager() {
         log.info("MetaManager Instancing...");
@@ -124,8 +141,11 @@ public class MetaManager extends AbstractManager {
             ).collect(Collectors.toList());
             parseTableEntity(map, columnList, viewList, checkList, foreignList);
             parseViewEntity(viewList);
-//            Map<String, Object> diffResult = compareEntitySourcesAll(entityName);
-//            MetaComapare.logDiffs(log, diffResult);
+            // 冲突检测开关开启时：同名实体输出 Java类源 与 DB源 的字段级差异，便于发现"在线实体被静默忽略"问题
+            if (conflictDetectEnabled && entityMetadataMapFromClass.containsKey(entityName)) {
+                Map<String, Object> diffResult = compareEntitySourcesAll(entityName);
+                MetaComapare.logDiffs(log, diffResult);
+            }
         }
     }
 
@@ -345,6 +365,9 @@ public class MetaManager extends AbstractManager {
                     }
                 }
             }
+        } else if (Strings.isNotBlank(entityName) && conflictDetectEnabled) {
+            // 冲突检测开关开启时：已存在同名实体（通常是被更早扫描到的同名Java类占用），本类定义被忽略
+            log.warn("实体名冲突：{} 已由 Java 类注册，当前类 {} 的定义被忽略", entityName, clazz.getName());
         }
     }
 
@@ -355,17 +378,51 @@ public class MetaManager extends AbstractManager {
             entityMeta = MetaReflex.getEntityMetaByTable(map, columnList, viewList, checkList, foreignList);
             entityMetadataMapFromDatabase.put(entityName, entityMeta);
         }
-        if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
+        if (Strings.isBlank(entityName)) {
+            return;
+        }
+        // 冲突检测开关关闭时：保持原有静默"先到先得"逻辑（含历史半覆盖行为），与改动前完全一致
+        if (!conflictDetectEnabled) {
+            if (!entityMetadataMap.containsKey(entityName)) {
+                entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
+                removeLiteMeta(entityMeta.getEntityName());
+                entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
+                tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
+                printEntityTree(entityMeta);
+            } else if (entityMetadataMap.containsKey(entityName)) {
+                entityMeta = entityMetadataMap.get(entityName);
+                if (entityMeta != null && entityMeta.getTableMeta() != null) {
+                    entityMeta.setTableMeta(MetaReflex.getTableMeta(map));
+                }
+            }
+            return;
+        }
+        // 冲突检测开关开启时：同名冲突按 conflictStrategy 处理
+        if (entityMetadataMapFromClass.containsKey(entityName)) {
+            EntityMeta classMeta = entityMetadataMapFromClass.get(entityName);
+            boolean classIsPlatform = classMeta != null && "platform".equalsIgnoreCase(classMeta.getCatalog());
+            if (classIsPlatform || conflictStrategy == ConflictStrategy.CLASS) {
+                // platform 系统内置实体 或 策略为 CLASS：以 Java 类为准，仅记录冲突，不覆盖
+                log.warn("实体名冲突：{} 同时存在于 Java 类与在线DB定义，采用 Java 类定义（catalog={}, strategy={}）", entityName, classMeta.getCatalog(), conflictStrategy);
+                return;
+            }
+            // 策略为 DATABASE：以在线 DB 定义整体覆盖，消除"表名走DB、字段走Java"的半覆盖不一致
+            log.warn("实体名冲突：{} 同时存在于 Java 类与在线DB定义，采用在线DB定义覆盖（strategy={}）", entityName, conflictStrategy);
+            removeOne(entityName);
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
             printEntityTree(entityMeta);
-        } else if (entityMetadataMap.containsKey(entityName)) {
-            entityMeta = entityMetadataMap.get(entityName);
-            if (entityMeta != null && entityMeta.getTableMeta() != null) {
-                entityMeta.setTableMeta(MetaReflex.getTableMeta(map));
-            }
+            return;
+        }
+        // 无冲突：正常注册在线实体
+        if (!entityMetadataMap.containsKey(entityName)) {
+            entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
+            removeLiteMeta(entityMeta.getEntityName());
+            entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
+            tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
+            printEntityTree(entityMeta);
         }
     }
 
@@ -494,5 +551,67 @@ public class MetaManager extends AbstractManager {
         if (metaResourceProvider != null) {
             this.metaResourceProvider = metaResourceProvider;
         }
+    }
+
+    public ConflictStrategy getConflictStrategy() {
+        return conflictStrategy;
+    }
+
+    public void setConflictStrategy(ConflictStrategy conflictStrategy) {
+        if (conflictStrategy != null) {
+            this.conflictStrategy = conflictStrategy;
+        }
+    }
+
+    public boolean isConflictDetectEnabled() {
+        return conflictDetectEnabled;
+    }
+
+    public void setConflictDetectEnabled(boolean conflictDetectEnabled) {
+        this.conflictDetectEnabled = conflictDetectEnabled;
+    }
+
+    /**
+     * 获取同时存在于 Java 类源与 DB 在线源的实体名集合（即冲突实体名）。
+     *
+     * @return 冲突实体名列表，按名称排序
+     */
+    public List<String> getConflictingEntityNames() {
+        List<String> names = new ArrayList<>();
+        for (String name : entityMetadataMapFromClass.keySet()) {
+            if (entityMetadataMapFromDatabase.containsKey(name)) {
+                names.add(name);
+            }
+        }
+        Collections.sort(names);
+        return names;
+    }
+
+    /**
+     * 获取所有冲突实体的字段级差异明细。
+     *
+     * @return key=entityName，value=差异描述（compareEntitySources 结果）
+     */
+    public Map<String, Map<String, Object>> getAllConflicts() {
+        Map<String, Map<String, Object>> result = new LinkedHashMap<>();
+        for (String name : getConflictingEntityNames()) {
+            result.put(name, compareEntitySources(name));
+        }
+        return result;
+    }
+
+    /**
+     * 当前冲突实体数量。
+     *
+     * @return 冲突实体数
+     */
+    public int getConflictCount() {
+        int count = 0;
+        for (String name : entityMetadataMapFromClass.keySet()) {
+            if (entityMetadataMapFromDatabase.containsKey(name)) {
+                count++;
+            }
+        }
+        return count;
     }
 }

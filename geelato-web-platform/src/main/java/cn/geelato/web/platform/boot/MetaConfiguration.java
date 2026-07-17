@@ -1,5 +1,6 @@
 package cn.geelato.web.platform.boot;
 
+import cn.geelato.core.meta.ConflictStrategy;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.spi.MetaBootstrap;
 import cn.geelato.core.meta.spi.MetaResourceProvider;
@@ -36,6 +37,17 @@ public class MetaConfiguration extends BaseConfiguration{
         }
         if (metaResourceProvider != null) {
             metaManager.setMetaResourceProvider(metaResourceProvider);
+        }
+        // 读取冲突检测总开关：geelato.meta.conflict-detect.enabled，默认关闭（false）。
+        // 关闭时所有冲突检测/合并改动均不生效，保持原有运行行为；开启时才启用冲突告警与合并策略。
+        boolean conflictDetectEnabled = Boolean.parseBoolean(getProperty("geelato.meta.conflict-detect.enabled", "false"));
+        metaManager.setConflictDetectEnabled(conflictDetectEnabled);
+        // 冲突合并策略：geelato.meta.conflict-strategy = DATABASE | CLASS，默认 CLASS（仅在总开关开启时生效）
+        String strategy = getProperty("geelato.meta.conflict-strategy", ConflictStrategy.CLASS.name());
+        try {
+            metaManager.setConflictStrategy(ConflictStrategy.valueOf(strategy.trim().toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            metaManager.setConflictStrategy(ConflictStrategy.CLASS);
         }
         initClassPackageMeta();
         initDataBaseMeta();

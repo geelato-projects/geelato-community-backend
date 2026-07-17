@@ -8,6 +8,7 @@ import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.core.sql.InvalidFilterFieldException;
 import cn.geelato.utils.StringUtils;
 import org.apache.commons.collections.map.HashedMap;
 import org.slf4j.Logger;
@@ -153,7 +154,8 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             // not do anything
         }else {
             if(filter.getFilterFieldType()== FilterGroup.FilterFieldType.Normal){
-                String fieldType=getEntityMeta(command).getFieldMeta(filter.getField()).getColumnMeta().getDataType();
+                FieldMeta fieldMeta = requireFilterFieldMeta(getEntityMeta(command), filter, "buildWhereParams");
+                String fieldType = fieldMeta.getColumnMeta().getDataType();
                 Assert.isTrue(!"JSON".equals(fieldType), filter.getField() + "为JSON,不支持" + filter.getOperator());
                 list.add(filter.getRawValue() != null ? filter.getRawValue() : filter.getValue());
             }else {
@@ -252,8 +254,8 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         if (filter == null || em == null || filter.getField() == null) {
             return java.sql.Types.VARCHAR;
         }
-        FieldMeta fieldMeta = em.getFieldMeta(filter.getField());
-        if (fieldMeta == null || fieldMeta.getColumnMeta() == null) {
+        FieldMeta fieldMeta = requireFilterFieldMeta(em, filter, "buildWhereTypes");
+        if (fieldMeta.getColumnMeta() == null) {
             return java.sql.Types.VARCHAR;
         }
         return TypeConverter.toSqlType(fieldMeta.getColumnMeta().getDataType());
@@ -329,10 +331,27 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             ConditionOperator.from(filter.getOperator())
                     .appendFunction(this, sb, em, filter.getField(), filter);
         } else {
-            FieldMeta fm = em.getFieldMeta(filter.getField());
+            FieldMeta fm = requireFilterFieldMeta(em, filter, "buildConditionSegment");
             ConditionOperator.from(filter.getOperator())
                     .appendField(this, sb, em, fm, filter);
         }
+    }
+
+    private FieldMeta requireFilterFieldMeta(EntityMeta em, FilterGroup.Filter filter, String scene) {
+        if (em == null) {
+            throw new IllegalArgumentException("EntityMeta不能为空");
+        }
+        if (filter == null) {
+            throw new IllegalArgumentException("过滤条件不能为空");
+        }
+        if (filter.getFilterFieldType() == FilterGroup.FilterFieldType.Function || !StringUtils.hasText(filter.getField())) {
+            return null;
+        }
+        FieldMeta fieldMeta = em.getFieldMeta(filter.getField());
+        if (fieldMeta == null) {
+            throw new InvalidFilterFieldException(em.getEntityName(), filter.getField(), filter.getOperator(), scene);
+        }
+        return fieldMeta;
     }
 
     protected boolean isKeywords(String field) {

@@ -1,0 +1,337 @@
+<!doctype html><html lang=en-US dir=ltr class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-orm/event-features" data-has-hydrated=false><head><meta charset=UTF-8><meta name=generator content="Docusaurus v3.10.1"><title data-rh=true>ORM Event Features | Geelato Project</title><meta data-rh=true name=viewport content="width=device-width, initial-scale=1.0"/><meta data-rh=true name=twitter:card content=summary_large_image /><meta data-rh=true property=og:image content=https://docs.geelato.cn/en/img/docusaurus-social-card.jpg /><meta data-rh=true name=twitter:image content=https://docs.geelato.cn/en/img/docusaurus-social-card.jpg /><meta data-rh=true property=og:url content=https://docs.geelato.cn/en/docs/orm/event-features /><meta data-rh=true property=og:locale content=en_US /><meta data-rh=true property=og:locale:alternate content=zh_CN /><meta data-rh=true name=docusaurus_locale content=en /><meta data-rh=true name=docsearch:language content=en /><meta data-rh=true name=docusaurus_version content=current /><meta data-rh=true name=docusaurus_tag content=docs-default-current /><meta data-rh=true name=docsearch:version content=current /><meta data-rh=true name=docsearch:docusaurus_tag content=docs-default-current /><meta data-rh=true property=og:title content="ORM Event Features | Geelato Project"/><meta data-rh=true name=description content="This page explains the built-in ORM event mechanism in Geelato Framework and how developers can use it to add their own custom logic around save and delete flows."/><meta data-rh=true property=og:description content="This page explains the built-in ORM event mechanism in Geelato Framework and how developers can use it to add their own custom logic around save and delete flows."/><link data-rh=true rel=icon href=/en/img/favicon.ico /><link data-rh=true rel=canonical href=https://docs.geelato.cn/en/docs/orm/event-features /><link data-rh=true rel=alternate href=https://docs.geelato.cn/docs/orm/event-features hreflang=zh-CN /><link data-rh=true rel=alternate href=https://docs.geelato.cn/en/docs/orm/event-features hreflang=en-US /><link data-rh=true rel=alternate href=https://docs.geelato.cn/docs/orm/event-features hreflang=x-default /><script data-rh=true type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://docs.geelato.cn/en/docs/orm/event-features","name":"ORM Event Features","position":1}]}</script><link rel=stylesheet href=/en/assets/css/styles.65d660af.css /><script src=/en/assets/js/runtime~main.7e88dc9e.js defer></script><script src=/en/assets/js/main.0818e492.js defer></script></head><body><svg style="display: none;"><defs>
+<symbol id=theme-svg-external-link viewBox="0 0 24 24"><path fill=currentColor d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme-00c")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||"light"),document.documentElement.setAttribute("data-theme-choice",t||"light")}(),function(){try{for(var[t,e]of new URLSearchParams(window.location.search).entries())if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id=__docusaurus><link rel=preload as=image href=/en/img/logo.svg /><div role=region aria-label="Skip to main content"><a class=skipToContent_fXgn href=#__docusaurus_skipToContent_fallback>Skip to main content</a></div><nav aria-label=Main class="theme-layout-navbar navbar navbar--fixed-top"><div class=navbar__inner><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded=false class="navbar__toggle clean-btn" type=button><svg width=30 height=30 viewBox="0 0 30 30" aria-hidden=true><path stroke=currentColor stroke-linecap=round stroke-miterlimit=10 stroke-width=2 d="M4 7h22M4 15h22M4 23h22"/></svg></button><a class=navbar__brand href=/en/><div class=navbar__logo><img src=/en/img/logo.svg alt="Geelato Project Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"/><img src=/en/img/logo.svg alt="Geelato Project Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"/></div><b class="navbar__title text--truncate">Geelato Project</b></a><a aria-current=page class="navbar__item navbar__link navbar__link--active" href=/en/>Home</a><a class="navbar__item navbar__link" href=/en/docs/guide/quick-start>Framework</a><a class="navbar__item navbar__link" href=/en/docs/authentication/overview>Auth</a><a class="navbar__item navbar__link" href=/en/docs/message/overview>Message</a><a class="navbar__item navbar__link" href=/en/docs/api/reference>API</a><a href=https://github.com/geelato-projects/geelato-hello-example target=_blank rel="noopener noreferrer" class="navbar__item navbar__link">Example<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><div class=navbarSearchContainer_Bca1><div class="navbar__search searchBarContainer_NW3z" dir=ltr><input placeholder=Search aria-label=Search class="navbar__search-input searchInput_YFbd" value="" /><div class="loadingRing_RJI3 searchBarLoadingRing_YnHq"><div></div><div></div><div></div><div></div></div></div></div><div class="navbar__item dropdown dropdown--hoverable dropdown--right"><a href=# aria-haspopup=true aria-expanded=false role=button class=navbar__link><svg viewBox="0 0 24 24" width=20 height=20 aria-hidden=true class=iconLanguage_nlXk><path fill=currentColor d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>English</a><ul class=dropdown__menu><li><a href=/docs/orm/event-features target=_self rel="noopener noreferrer" class=dropdown__link lang=zh-CN>中文</a><li><a href=/en/docs/orm/event-features target=_self rel="noopener noreferrer" class="dropdown__link dropdown__link--active" lang=en-US>English</a></ul></div><a href=https://github.com/geelato-projects/geelato-community-backend target=_blank rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type=button disabled title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill=currentColor d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"/></svg><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill=currentColor d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"/></svg><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill=currentColor d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"/></svg></button></div></div></div><div role=presentation class=navbar-sidebar__backdrop></div></nav><div id=__docusaurus_skipToContent_fallback class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class=docsWrapper_hBAB><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type=button></button><div class=docRoot_UBD9><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class=sidebarViewport_aRkj><div class=sidebar_njMd><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link"><span title="🌐 Geelato Project" class=categoryLinkLabel_W154>🌐 Geelato Project</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/guide/developer-navigation><span title="Dev & AI Navigation" class=linkLabel_WmDU>Dev & AI Navigation</span></a></ul><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--active"><span title="📦 Geelato Framework" class=categoryLinkLabel_W154>📦 Geelato Framework</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/guide/quick-start><span title="🌱 Getting Started" class=categoryLinkLabel_W154>🌱 Getting Started</span></a></div><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/runtime/platform-web-runtime><span title="🧠 Architecture & Core Concepts" class=categoryLinkLabel_W154>🧠 Architecture & Core Concepts</span></a></div><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role=button aria-expanded=true tabindex=0 href=/en/docs/orm/overview><span title="🛠️ Developer Guide: Basics" class=categoryLinkLabel_W154>🛠️ Developer Guide: Basics</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-3 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role=button aria-expanded=true tabindex=0 href=/en/docs/orm/overview><span title="ORM & Datasource" class=categoryLinkLabel_W154>ORM & Datasource</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/orm/overview><span title=ORM class=linkLabel_WmDU>ORM</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/orm/annotations><span title="ORM Annotations" class=linkLabel_WmDU>ORM Annotations</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/orm/fluent-dsl><span title="Fluent DSL Guide" class=linkLabel_WmDU>Fluent DSL Guide</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class="menu__link menu__link--active" aria-current=page tabindex=0 href=/en/docs/orm/event-features><span title="ORM Event Features" class=linkLabel_WmDU>ORM Event Features</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/dynamic-datasource/overview><span title="Dynamic Datasource" class=linkLabel_WmDU>Dynamic Datasource</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/dynamic-datasource/host-mapping><span title="Host Mapping (Local Debug)" class=linkLabel_WmDU>Host Mapping (Local Debug)</span></a></ul><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-3 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/mql/overview><span title="MQL Syntax" class=categoryLinkLabel_W154>MQL Syntax</span></a></div><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-3 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/file-processing/upload><span title="File Processing" class=categoryLinkLabel_W154>File Processing</span></a></div></ul><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/platform-capabilities/global-context><span title="🔌 Developer Guide: Advanced" class=categoryLinkLabel_W154>🔌 Developer Guide: Advanced</span></a></div><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/system-config/overview><span title="⚙️ Configuration & Operations" class=categoryLinkLabel_W154>⚙️ Configuration & Operations</span></a></div><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/api/reference><span title="📚 API & References" class=categoryLinkLabel_W154>📚 API & References</span></a></div></ul><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link"><span title="🔐 Geelato AuthServer" class=categoryLinkLabel_W154>🔐 Geelato AuthServer</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/authentication/overview><span title="Independent Service: Unified Authentication Center" class=linkLabel_WmDU>Independent Service: Unified Authentication Center</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/authentication/lite-login-integration><span title="lite-login Third-Party Integration" class=linkLabel_WmDU>lite-login Third-Party Integration</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/authentication/oauth2-integration><span title="OAuth2 Integration" class=linkLabel_WmDU>OAuth2 Integration</span></a></ul><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link"><span title="📨 Geelato Message" class=categoryLinkLabel_W154>📨 Geelato Message</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/message/overview><span title="Message Center Overview" class=linkLabel_WmDU>Message Center Overview</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/message/integration><span title="Message Enqueue Integration" class=linkLabel_WmDU>Message Enqueue Integration</span></a></ul></ul></nav></div></div></aside><main class=docMainContainer_TBSr><div class="container padding-top--md padding-bottom--lg"><div class=row><div class="col docItemCol_VOVn"><div class=docItemContainer_Djhp><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label=Breadcrumbs><ul class=breadcrumbs><li class=breadcrumbs__item><a aria-label="Home page" class=breadcrumbs__link href=/en/><svg viewBox="0 0 24 24" class=breadcrumbHomeIcon_YNFT><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill=currentColor /></svg></a><li class=breadcrumbs__item><span class=breadcrumbs__link>📦 Geelato Framework</span><li class=breadcrumbs__item><span class=breadcrumbs__link>🛠️ Developer Guide: Basics</span><li class=breadcrumbs__item><span class=breadcrumbs__link>ORM & Datasource</span><li class="breadcrumbs__item breadcrumbs__item--active"><span class=breadcrumbs__link>ORM Event Features</span></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type=button class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>ORM Event Features</h1></header>
+<p>This page explains the built-in ORM event mechanism in Geelato Framework and how developers can use it to add their own custom logic around save and delete flows.</p>
+<p>The current event capability lives in:</p>
+<ul>
+<li class=""><code>cn.geelato.core.orm.event</code></li>
+</ul>
+<p>It is not a standalone message bus and not just a thin wrapper over Spring ApplicationEvent. It is a lightweight hook mechanism inside the ORM execution chain itself.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=what-problem-it-solves>What Problem It Solves<a href=#what-problem-it-solves class=hash-link aria-label="Direct link to What Problem It Solves" title="Direct link to What Problem It Solves" translate=no>​</a></h2>
+<p>The purpose of the ORM event mechanism is to decouple generic CRUD execution from business-specific side effects.</p>
+<p>It is suitable for scenarios such as:</p>
+<ul>
+<li class="">adding extra validation or values before save</li>
+<li class="">blocking or guarding delete before execution</li>
+<li class="">synchronizing a mirror table after save</li>
+<li class="">writing audit logs, sending notifications, or refreshing cache after save</li>
+<li class="">cleaning downstream state, maintaining side indexes, or doing async compensation after delete</li>
+</ul>
+<p>With this model, developers do not need to modify <code>Dao</code> directly or duplicate the CRUD flow. They only need to attach listeners.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=current-event-types>Current Event Types<a href=#current-event-types class=hash-link aria-label="Direct link to Current Event Types" title="Direct link to Current Event Types" translate=no>​</a></h2>
+<p>The current ORM event system has two major groups:</p>
+<ul>
+<li class="">save events</li>
+<li class="">delete events</li>
+</ul>
+<p>Each group has two timing points:</p>
+<ul>
+<li class=""><code>Before</code></li>
+<li class=""><code>After</code></li>
+</ul>
+<p>So the current extension points are:</p>
+<ul>
+<li class=""><code>BeforeSaveEventListener</code></li>
+<li class=""><code>AfterSaveEventListener</code></li>
+<li class=""><code>BeforeDeleteEventListener</code></li>
+<li class=""><code>AfterDeleteEventListener</code></li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=trigger-points>Trigger Points<a href=#trigger-points class=hash-link aria-label="Direct link to Trigger Points" title="Direct link to Trigger Points" translate=no>​</a></h2>
+<p>Events are triggered inside the actual <code>Dao</code> save, batch save, multi save, delete, and multi delete flows.</p>
+<p>That means whether the write operation starts from:</p>
+<ul>
+<li class=""><code>Dao.save(...)</code></li>
+<li class=""><code>Dao.batchSave(...)</code></li>
+<li class=""><code>Dao.multiSave(...)</code></li>
+<li class=""><code>Dao.delete(...)</code></li>
+<li class=""><code>Dao.multiDelete(...)</code></li>
+</ul>
+<p>or from a higher-level Fluent DSL path that eventually lands in these ORM write paths, the event mechanism is still part of the execution chain.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=execution-model>Execution Model<a href=#execution-model class=hash-link aria-label="Direct link to Execution Model" title="Direct link to Execution Model" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=before-events>Before Events<a href=#before-events class=hash-link aria-label="Direct link to Before Events" title="Direct link to Before Events" translate=no>​</a></h3>
+<p><code>Before</code> events run synchronously.</p>
+<p>That means they run:</p>
+<ul>
+<li class="">before the real SQL execution</li>
+<li class="">with the ability to modify <code>BoundSql</code></li>
+<li class="">with the ability to validate</li>
+<li class="">with the ability to throw exceptions and stop the main flow</li>
+</ul>
+<p>If a before-listener throws an exception, the current save or delete operation fails immediately.</p>
+<p>So <code>Before</code> events are best for:</p>
+<ul>
+<li class="">normalization</li>
+<li class="">SQL adjustment</li>
+<li class="">permission or state validation</li>
+<li class="">hard pre-check interception</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=after-events>After Events<a href=#after-events class=hash-link aria-label="Direct link to After Events" title="Direct link to After Events" translate=no>​</a></h3>
+<p><code>After</code> events run asynchronously.</p>
+<p>The current implementation uses a fixed thread pool:</p>
+<ul>
+<li class="">save event thread name prefix: <code>save-event-*</code></li>
+<li class="">delete event thread name prefix: <code>delete-event-*</code></li>
+</ul>
+<p>The default pool size is:</p>
+<ul>
+<li class=""><code>4</code></li>
+</ul>
+<p>So <code>After</code> events mean:</p>
+<ul>
+<li class="">the main SQL has already finished</li>
+<li class="">the listener is scheduled asynchronously</li>
+<li class="">listener exceptions are logged, but they do not break the main flow</li>
+</ul>
+<p>This makes them suitable for:</p>
+<ul>
+<li class="">audit logging</li>
+<li class="">mirror-table synchronization</li>
+<li class="">cache refresh</li>
+<li class="">non-critical notifications</li>
+<li class="">async side processing</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=what-the-event-context-contains>What the Event Context Contains<a href=#what-the-event-context-contains class=hash-link aria-label="Direct link to What the Event Context Contains" title="Direct link to What the Event Context Contains" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=save-event-context-saveeventcontext>Save Event Context <code>SaveEventContext</code><a href=#save-event-context-saveeventcontext class=hash-link aria-label="Direct link to save-event-context-saveeventcontext" title="Direct link to save-event-context-saveeventcontext" translate=no>​</a></h3>
+<p>The save-event context currently contains:</p>
+<ul>
+<li class=""><code>Dao dao</code></li>
+<li class=""><code>SessionCtx sessionCtx</code></li>
+<li class=""><code>IdEntity entity</code></li>
+<li class=""><code>BoundSql boundSql</code></li>
+<li class=""><code>SaveCommand command</code></li>
+<li class=""><code>Map&lt;String, Object> resultValueMap</code></li>
+<li class=""><code>String eventId</code></li>
+<li class=""><code>long startTime</code></li>
+</ul>
+<p>Meaning:</p>
+<ul>
+<li class=""><code>dao</code>: lets the listener reuse ORM execution capability</li>
+<li class=""><code>sessionCtx</code>: shared session-level context of the save flow</li>
+<li class=""><code>entity</code>: direct entity object when the entry path is entity save</li>
+<li class=""><code>boundSql</code>: the final SQL and parameters for this write</li>
+<li class=""><code>command</code>: ORM save command information such as entity name and values</li>
+<li class=""><code>resultValueMap</code>: the result values after the main save finishes</li>
+<li class=""><code>eventId</code>: unique ID for log correlation</li>
+<li class=""><code>startTime</code>: event start timestamp for timing and diagnostics</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=delete-event-context-deleteeventcontext>Delete Event Context <code>DeleteEventContext</code><a href=#delete-event-context-deleteeventcontext class=hash-link aria-label="Direct link to delete-event-context-deleteeventcontext" title="Direct link to delete-event-context-deleteeventcontext" translate=no>​</a></h3>
+<p>The delete-event context currently contains:</p>
+<ul>
+<li class=""><code>Dao dao</code></li>
+<li class=""><code>SessionCtx sessionCtx</code></li>
+<li class=""><code>BoundSql boundSql</code></li>
+<li class=""><code>DeleteCommand command</code></li>
+<li class=""><code>int affectedRows</code></li>
+<li class=""><code>String eventId</code></li>
+<li class=""><code>long startTime</code></li>
+</ul>
+<p>It is mainly used for:</p>
+<ul>
+<li class="">viewing or adjusting delete SQL</li>
+<li class="">reading delete-command metadata</li>
+<li class="">checking affected row count after delete</li>
+<li class="">tracing this delete event in logs or compensation flows</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=how-to-read-the-listener-interfaces>How to Read the Listener Interfaces<a href=#how-to-read-the-listener-interfaces class=hash-link aria-label="Direct link to How to Read the Listener Interfaces" title="Direct link to How to Read the Listener Interfaces" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=saveeventlistener><code>SaveEventListener</code><a href=#saveeventlistener class=hash-link aria-label="Direct link to saveeventlistener" title="Direct link to saveeventlistener" translate=no>​</a></h3>
+<p>The base save-listener interface defines:</p>
+<ul>
+<li class=""><code>beforeSave(SaveEventContext context)</code></li>
+<li class=""><code>afterSave(SaveEventContext context)</code></li>
+<li class=""><code>supports(...)</code></li>
+<li class=""><code>enabled(...)</code></li>
+</ul>
+<p>Important detail:</p>
+<ul>
+<li class=""><code>supports(...)</code> returns <code>false</code> by default</li>
+<li class=""><code>enabled(...)</code> returns <code>false</code> by default</li>
+</ul>
+<p>So if a developer does not override these methods explicitly, the listener may be registered but still never execute.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=deleteeventlistener><code>DeleteEventListener</code><a href=#deleteeventlistener class=hash-link aria-label="Direct link to deleteeventlistener" title="Direct link to deleteeventlistener" translate=no>​</a></h3>
+<p>The base delete-listener interface defines:</p>
+<ul>
+<li class=""><code>beforeDelete(DeleteEventContext context)</code></li>
+<li class=""><code>afterDelete(DeleteEventContext context)</code></li>
+<li class=""><code>supports(...)</code></li>
+<li class=""><code>enabled(...)</code></li>
+</ul>
+<p>Again:</p>
+<ul>
+<li class="">listeners are not enabled automatically by default</li>
+<li class="">they must explicitly declare both support and enabled behavior</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=how-listeners-are-registered>How Listeners Are Registered<a href=#how-listeners-are-registered class=hash-link aria-label="Direct link to How Listeners Are Registered" title="Direct link to How Listeners Are Registered" translate=no>​</a></h2>
+<p>The current model does not rely on Spring auto-discovery. It uses static event managers.</p>
+<p>Save events use:</p>
+<ul>
+<li class=""><code>SaveEventManager.registerBefore(...)</code></li>
+<li class=""><code>SaveEventManager.registerAfter(...)</code></li>
+<li class=""><code>SaveEventManager.registerBeforeIfAbsent(...)</code></li>
+<li class=""><code>SaveEventManager.registerAfterIfAbsent(...)</code></li>
+</ul>
+<p>Delete events use:</p>
+<ul>
+<li class=""><code>DeleteEventManager.registerBefore(...)</code></li>
+<li class=""><code>DeleteEventManager.registerAfter(...)</code></li>
+<li class=""><code>DeleteEventManager.registerBeforeIfAbsent(...)</code></li>
+<li class=""><code>DeleteEventManager.registerAfterIfAbsent(...)</code></li>
+</ul>
+<p>The managers also support:</p>
+<ul>
+<li class="">unregistering listeners</li>
+<li class="">clearing listeners</li>
+<li class="">replacing the executor with <code>setExecutor(...)</code></li>
+</ul>
+<p>This means the current event model is:</p>
+<ul>
+<li class="">globally registered</li>
+<li class="">process-local</li>
+<li class="">bounded by the current JVM</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=built-in-example-readonly-shadow-table-listener>Built-In Example: Readonly Shadow Table Listener<a href=#built-in-example-readonly-shadow-table-listener class=hash-link aria-label="Direct link to Built-In Example: Readonly Shadow Table Listener" title="Direct link to Built-In Example: Readonly Shadow Table Listener" translate=no>​</a></h2>
+<p>The current save-event manager registers one built-in example listener:</p>
+<ul>
+<li class=""><code>ReadonlyShadowTableListener</code></li>
+</ul>
+<p>Its purpose is to mirror save SQL into a corresponding:</p>
+<ul>
+<li class=""><code>*_readonly</code></li>
+</ul>
+<p>shadow table.</p>
+<p>For example:</p>
+<ul>
+<li class=""><code>insert into xxx (...)</code></li>
+<li class=""><code>update xxx set ...</code></li>
+</ul>
+<p>can be rewritten as:</p>
+<ul>
+<li class=""><code>insert into xxx_readonly (...)</code></li>
+<li class=""><code>update xxx_readonly set ...</code></li>
+</ul>
+<p>However, the internal switch is currently disabled by default:</p>
+<ul>
+<li class=""><code>READONLY_EVENT_ENABLED = false</code></li>
+</ul>
+<p>So it works more as a reference implementation that shows how the event mechanism can support:</p>
+<ul>
+<li class="">readonly mirror synchronization</li>
+<li class="">side-write behavior</li>
+<li class="">data shadow maintenance</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=what-developers-can-customize>What Developers Can Customize<a href=#what-developers-can-customize class=hash-link aria-label="Direct link to What Developers Can Customize" title="Direct link to What Developers Can Customize" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=scenario-1-validate-before-save>Scenario 1: Validate Before Save<a href=#scenario-1-validate-before-save class=hash-link aria-label="Direct link to Scenario 1: Validate Before Save" title="Direct link to Scenario 1: Validate Before Save" translate=no>​</a></h3>
+<p>If you want to validate domain rules before the write happens, implement:</p>
+<ul>
+<li class=""><code>BeforeSaveEventListener</code></li>
+</ul>
+<p>Typical uses:</p>
+<ul>
+<li class="">blocking updates in certain states</li>
+<li class="">validating cross-field constraints</li>
+<li class="">enriching values before persistence</li>
+</ul>
+<p>Example:</p>
+<div class="language-java codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-java codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">public class CustomerBeforeSaveListener implements BeforeSaveEventListener {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    @Override</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    public void beforeSave(SaveEventContext context) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        if ("crm_customer".equalsIgnoreCase(context.getCommand().getEntityName())) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">            Object code = context.getCommand().getValueMap().get("code");</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">            if (code == null || String.valueOf(code).isBlank()) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">                throw new IllegalArgumentException("customer code must not be empty");</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">            }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    @Override</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    public void afterSave(SaveEventContext context) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    @Override</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    public boolean supports(SaveEventContext context) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        return context.getCommand() != null;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    @Override</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    public boolean enabled(SaveEventContext context) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        return true;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">}</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=scenario-2-async-side-processing-after-save>Scenario 2: Async Side Processing After Save<a href=#scenario-2-async-side-processing-after-save class=hash-link aria-label="Direct link to Scenario 2: Async Side Processing After Save" title="Direct link to Scenario 2: Async Side Processing After Save" translate=no>​</a></h3>
+<p>If you want non-blocking side effects after the main save succeeds, implement:</p>
+<ul>
+<li class=""><code>AfterSaveEventListener</code></li>
+</ul>
+<p>Typical uses:</p>
+<ul>
+<li class="">writing audit logs</li>
+<li class="">refreshing cache</li>
+<li class="">pushing change notifications</li>
+<li class="">synchronizing search indexes</li>
+</ul>
+<p>Example:</p>
+<div class="language-java codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-java codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">public class CustomerAfterSaveListener implements AfterSaveEventListener {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    @Override</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    public void beforeSave(SaveEventContext context) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    @Override</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    public void afterSave(SaveEventContext context) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        if ("crm_customer".equalsIgnoreCase(context.getCommand().getEntityName())) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">            System.out.println("customer changed, eventId=" + context.getEventId());</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    @Override</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    public boolean supports(SaveEventContext context) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        return context.getCommand() != null;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    @Override</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    public boolean enabled(SaveEventContext context) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        return true;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">}</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=scenario-3-block-or-guard-delete>Scenario 3: Block or Guard Delete<a href=#scenario-3-block-or-guard-delete class=hash-link aria-label="Direct link to Scenario 3: Block or Guard Delete" title="Direct link to Scenario 3: Block or Guard Delete" translate=no>​</a></h3>
+<p>If you want to protect delete operations before execution, implement:</p>
+<ul>
+<li class=""><code>BeforeDeleteEventListener</code></li>
+</ul>
+<p>Typical uses:</p>
+<ul>
+<li class="">blocking deletion of built-in system data</li>
+<li class="">checking downstream references</li>
+<li class="">rewriting physical delete into a guarded strategy</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=scenario-4-cleanup-after-delete>Scenario 4: Cleanup After Delete<a href=#scenario-4-cleanup-after-delete class=hash-link aria-label="Direct link to Scenario 4: Cleanup After Delete" title="Direct link to Scenario 4: Cleanup After Delete" translate=no>​</a></h3>
+<p>If you want to do cleanup after delete, implement:</p>
+<ul>
+<li class=""><code>AfterDeleteEventListener</code></li>
+</ul>
+<p>Typical uses:</p>
+<ul>
+<li class="">cache cleanup</li>
+<li class="">index cleanup</li>
+<li class="">side-table cleanup</li>
+<li class="">delete audit logging</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=recommended-integration-style>Recommended Integration Style<a href=#recommended-integration-style class=hash-link aria-label="Direct link to Recommended Integration Style" title="Direct link to Recommended Integration Style" translate=no>​</a></h2>
+<p>It is better to centralize listener registration in one explicit startup location instead of registering listeners in many scattered places.</p>
+<p>Examples:</p>
+<ul>
+<li class="">application startup initialization</li>
+<li class="">one dedicated ORM configuration class</li>
+<li class="">one shared base module initialization entry</li>
+</ul>
+<p>This helps keep:</p>
+<ul>
+<li class="">registration order predictable</li>
+<li class="">duplicate registration under control</li>
+<li class="">enable/disable behavior easier across environments</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=usage-notes>Usage Notes<a href=#usage-notes class=hash-link aria-label="Direct link to Usage Notes" title="Direct link to Usage Notes" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=1-before-can-break-the-main-flow>1. <code>Before</code> Can Break the Main Flow<a href=#1-before-can-break-the-main-flow class=hash-link aria-label="Direct link to 1-before-can-break-the-main-flow" title="Direct link to 1-before-can-break-the-main-flow" translate=no>​</a></h3>
+<p>If a before-listener fails, the main save or delete fails too.</p>
+<p>So <code>Before</code> should be used for:</p>
+<ul>
+<li class="">hard constraints</li>
+<li class="">mandatory validation</li>
+<li class="">must-succeed preconditions</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=2-after-is-not-for-strong-transaction-semantics>2. <code>After</code> Is Not for Strong Transaction Semantics<a href=#2-after-is-not-for-strong-transaction-semantics class=hash-link aria-label="Direct link to 2-after-is-not-for-strong-transaction-semantics" title="Direct link to 2-after-is-not-for-strong-transaction-semantics" translate=no>​</a></h3>
+<p><code>After</code> listeners run asynchronously, so they should not be the only place for logic that must stay strongly consistent with the main transaction.</p>
+<p>If the logic must remain fully aligned with the main write transaction, it is better to:</p>
+<ul>
+<li class="">handle it before execution</li>
+<li class="">or orchestrate it explicitly in the service layer transaction flow</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=3-mind-thread-and-context-boundaries>3. Mind Thread and Context Boundaries<a href=#3-mind-thread-and-context-boundaries class=hash-link aria-label="Direct link to 3. Mind Thread and Context Boundaries" title="Direct link to 3. Mind Thread and Context Boundaries" translate=no>​</a></h3>
+<p>Because <code>After</code> listeners run in a thread pool, developers should not assume they can freely rely on:</p>
+<ul>
+<li class="">thread-local state</li>
+<li class="">web request context</li>
+<li class="">security context that was never explicitly propagated</li>
+</ul>
+<p>If the listener needs such information, it should read it from the event context or make it explicit before the event is dispatched.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=4-mind-duplicate-registration>4. Mind Duplicate Registration<a href=#4-mind-duplicate-registration class=hash-link aria-label="Direct link to 4. Mind Duplicate Registration" title="Direct link to 4. Mind Duplicate Registration" translate=no>​</a></h3>
+<p>Although <code>register*IfAbsent(...)</code> exists, duplicate behavior can still happen if different modules create different listener instances and register them repeatedly.</p>
+<p>A better approach is:</p>
+<ul>
+<li class="">centralize listener instances</li>
+<li class="">centralize registration</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=summary>Summary<a href=#summary class=hash-link aria-label="Direct link to Summary" title="Direct link to Summary" translate=no>​</a></h2>
+<p>The current ORM event mechanism in Geelato Framework is a built-in extension point around <code>Dao</code> save and delete flows:</p>
+<ul>
+<li class="">before-events run synchronously and fit validation or interception</li>
+<li class="">after-events run asynchronously and fit notifications or side processing</li>
+<li class="">context objects expose SQL, command, result, and session information to listeners</li>
+<li class="">developers can use the listener abstraction to implement custom audit, mirror, cache, index, and validation logic</li>
+</ul>
+<p>So it works especially well as:</p>
+<ul>
+<li class="">a unified ORM extension mechanism</li>
+<li class="">a reusable domain hook shared across business modules</li>
+<li class="">a customization entry that avoids direct intrusion into core CRUD implementation</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=suggested-reading>Suggested Reading<a href=#suggested-reading class=hash-link aria-label="Direct link to Suggested Reading" title="Direct link to Suggested Reading" translate=no>​</a></h2>
+<ul>
+<li class=""><a class="" href=/en/docs/orm/overview>ORM Overview</a></li>
+<li class=""><a class="" href=/en/docs/orm/fluent-dsl>Fluent DSL Guide</a></li>
+<li class=""><a class="" href=/en/docs/reference/core-modules>Core Modules</a></li>
+</ul></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href=https://github.com/geelato-projects/geelato-community-backend/edit/master/website/i18n/en/docusaurus-plugin-content-docs/current/orm/event-features.md target=_blank rel="noopener noreferrer" class=theme-edit-this-page><svg fill=currentColor height=20 width=20 viewBox="0 0 40 40" class=iconEdit_Z9Sw aria-hidden=true><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"/></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href=/en/docs/orm/fluent-dsl><div class=pagination-nav__sublabel>Previous</div><div class=pagination-nav__label>Fluent DSL Guide</div></a><a class="pagination-nav__link pagination-nav__link--next" href=/en/docs/dynamic-datasource/overview><div class=pagination-nav__sublabel>Next</div><div class=pagination-nav__label>Dynamic Datasource</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href=#what-problem-it-solves class="table-of-contents__link toc-highlight">What Problem It Solves</a><li><a href=#current-event-types class="table-of-contents__link toc-highlight">Current Event Types</a><li><a href=#trigger-points class="table-of-contents__link toc-highlight">Trigger Points</a><li><a href=#execution-model class="table-of-contents__link toc-highlight">Execution Model</a><ul><li><a href=#before-events class="table-of-contents__link toc-highlight">Before Events</a><li><a href=#after-events class="table-of-contents__link toc-highlight">After Events</a></ul><li><a href=#what-the-event-context-contains class="table-of-contents__link toc-highlight">What the Event Context Contains</a><ul><li><a href=#save-event-context-saveeventcontext class="table-of-contents__link toc-highlight">Save Event Context <code>SaveEventContext</code></a><li><a href=#delete-event-context-deleteeventcontext class="table-of-contents__link toc-highlight">Delete Event Context <code>DeleteEventContext</code></a></ul><li><a href=#how-to-read-the-listener-interfaces class="table-of-contents__link toc-highlight">How to Read the Listener Interfaces</a><ul><li><a href=#saveeventlistener class="table-of-contents__link toc-highlight"><code>SaveEventListener</code></a><li><a href=#deleteeventlistener class="table-of-contents__link toc-highlight"><code>DeleteEventListener</code></a></ul><li><a href=#how-listeners-are-registered class="table-of-contents__link toc-highlight">How Listeners Are Registered</a><li><a href=#built-in-example-readonly-shadow-table-listener class="table-of-contents__link toc-highlight">Built-In Example: Readonly Shadow Table Listener</a><li><a href=#what-developers-can-customize class="table-of-contents__link toc-highlight">What Developers Can Customize</a><ul><li><a href=#scenario-1-validate-before-save class="table-of-contents__link toc-highlight">Scenario 1: Validate Before Save</a><li><a href=#scenario-2-async-side-processing-after-save class="table-of-contents__link toc-highlight">Scenario 2: Async Side Processing After Save</a><li><a href=#scenario-3-block-or-guard-delete class="table-of-contents__link toc-highlight">Scenario 3: Block or Guard Delete</a><li><a href=#scenario-4-cleanup-after-delete class="table-of-contents__link toc-highlight">Scenario 4: Cleanup After Delete</a></ul><li><a href=#recommended-integration-style class="table-of-contents__link toc-highlight">Recommended Integration Style</a><li><a href=#usage-notes class="table-of-contents__link toc-highlight">Usage Notes</a><ul><li><a href=#1-before-can-break-the-main-flow class="table-of-contents__link toc-highlight">1. <code>Before</code> Can Break the Main Flow</a><li><a href=#2-after-is-not-for-strong-transaction-semantics class="table-of-contents__link toc-highlight">2. <code>After</code> Is Not for Strong Transaction Semantics</a><li><a href=#3-mind-thread-and-context-boundaries class="table-of-contents__link toc-highlight">3. Mind Thread and Context Boundaries</a><li><a href=#4-mind-duplicate-registration class="table-of-contents__link toc-highlight">4. Mind Duplicate Registration</a></ul><li><a href=#summary class="table-of-contents__link toc-highlight">Summary</a><li><a href=#suggested-reading class="table-of-contents__link toc-highlight">Suggested Reading</a></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Geelato Project</div><ul class="footer__items clean-list"><li class=footer__item><a class=footer__link-item href=/en/docs/guide/developer-navigation>Developer Navigation</a><li class=footer__item><a class=footer__link-item href=/en/docs/guide/quick-start>Quick Start</a></ul></div><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Reference</div><ul class="footer__items clean-list"><li class=footer__item><a class=footer__link-item href=/en/docs/guide/minimal-integration>Minimal Integration</a><li class=footer__item><a class=footer__link-item href=/en/docs/operations/runtime-designer-deployment>Runtime / Designer Deployment</a><li class=footer__item><a class=footer__link-item href=/en/docs/api/reference>Dual-track API Entry</a></ul></div><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Repository</div><ul class="footer__items clean-list"><li class=footer__item><a href=https://github.com/geelato-projects/geelato-community-backend/tree/master/website/official-docs target=_blank rel="noopener noreferrer" class=footer__link-item>official-docs<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://github.com/geelato-projects/geelato-community-backend/tree/master/SrvExplain target=_blank rel="noopener noreferrer" class=footer__link-item>SrvExplain<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a></ul></div></div><div class="footer__bottom text--center"><div class=footer__copyright>Copyright © 2026 Geelato Framework. Built with Docusaurus.</div></div></div></footer></div></body>

@@ -1,0 +1,300 @@
+<!doctype html><html lang=en-US dir=ltr class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-authentication/security-authentication" data-has-hydrated=false><head><meta charset=UTF-8><meta name=generator content="Docusaurus v3.10.1"><title data-rh=true>Authentication and Authorization | Geelato Project</title><meta data-rh=true name=viewport content="width=device-width, initial-scale=1.0"/><meta data-rh=true name=twitter:card content=summary_large_image /><meta data-rh=true property=og:image content=https://docs.geelato.cn/en/img/docusaurus-social-card.jpg /><meta data-rh=true name=twitter:image content=https://docs.geelato.cn/en/img/docusaurus-social-card.jpg /><meta data-rh=true property=og:url content=https://docs.geelato.cn/en/docs/authentication/security-authentication /><meta data-rh=true property=og:locale content=en_US /><meta data-rh=true property=og:locale:alternate content=zh_CN /><meta data-rh=true name=docusaurus_locale content=en /><meta data-rh=true name=docsearch:language content=en /><meta data-rh=true name=docusaurus_version content=current /><meta data-rh=true name=docusaurus_tag content=docs-default-current /><meta data-rh=true name=docsearch:version content=current /><meta data-rh=true name=docsearch:docusaurus_tag content=docs-default-current /><meta data-rh=true property=og:title content="Authentication and Authorization | Geelato Project"/><meta data-rh=true name=description content="This page focuses on the runtime entry that actually performs backend authentication inside the platform:"/><meta data-rh=true property=og:description content="This page focuses on the runtime entry that actually performs backend authentication inside the platform:"/><link data-rh=true rel=icon href=/en/img/favicon.ico /><link data-rh=true rel=canonical href=https://docs.geelato.cn/en/docs/authentication/security-authentication /><link data-rh=true rel=alternate href=https://docs.geelato.cn/docs/authentication/security-authentication hreflang=zh-CN /><link data-rh=true rel=alternate href=https://docs.geelato.cn/en/docs/authentication/security-authentication hreflang=en-US /><link data-rh=true rel=alternate href=https://docs.geelato.cn/docs/authentication/security-authentication hreflang=x-default /><script data-rh=true type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://docs.geelato.cn/en/docs/authentication/security-authentication","name":"Authentication and Authorization","position":1}]}</script><link rel=stylesheet href=/en/assets/css/styles.65d660af.css /><script src=/en/assets/js/runtime~main.7e88dc9e.js defer></script><script src=/en/assets/js/main.0818e492.js defer></script></head><body><svg style="display: none;"><defs>
+<symbol id=theme-svg-external-link viewBox="0 0 24 24"><path fill=currentColor d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme-00c")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||"light"),document.documentElement.setAttribute("data-theme-choice",t||"light")}(),function(){try{for(var[t,e]of new URLSearchParams(window.location.search).entries())if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id=__docusaurus><link rel=preload as=image href=/en/img/logo.svg /><div role=region aria-label="Skip to main content"><a class=skipToContent_fXgn href=#__docusaurus_skipToContent_fallback>Skip to main content</a></div><nav aria-label=Main class="theme-layout-navbar navbar navbar--fixed-top"><div class=navbar__inner><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded=false class="navbar__toggle clean-btn" type=button><svg width=30 height=30 viewBox="0 0 30 30" aria-hidden=true><path stroke=currentColor stroke-linecap=round stroke-miterlimit=10 stroke-width=2 d="M4 7h22M4 15h22M4 23h22"/></svg></button><a class=navbar__brand href=/en/><div class=navbar__logo><img src=/en/img/logo.svg alt="Geelato Project Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"/><img src=/en/img/logo.svg alt="Geelato Project Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"/></div><b class="navbar__title text--truncate">Geelato Project</b></a><a aria-current=page class="navbar__item navbar__link navbar__link--active" href=/en/>Home</a><a class="navbar__item navbar__link" href=/en/docs/guide/quick-start>Framework</a><a class="navbar__item navbar__link" href=/en/docs/authentication/overview>Auth</a><a class="navbar__item navbar__link" href=/en/docs/message/overview>Message</a><a class="navbar__item navbar__link" href=/en/docs/api/reference>API</a><a href=https://github.com/geelato-projects/geelato-hello-example target=_blank rel="noopener noreferrer" class="navbar__item navbar__link">Example<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><div class=navbarSearchContainer_Bca1><div class="navbar__search searchBarContainer_NW3z" dir=ltr><input placeholder=Search aria-label=Search class="navbar__search-input searchInput_YFbd" value="" /><div class="loadingRing_RJI3 searchBarLoadingRing_YnHq"><div></div><div></div><div></div><div></div></div></div></div><div class="navbar__item dropdown dropdown--hoverable dropdown--right"><a href=# aria-haspopup=true aria-expanded=false role=button class=navbar__link><svg viewBox="0 0 24 24" width=20 height=20 aria-hidden=true class=iconLanguage_nlXk><path fill=currentColor d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>English</a><ul class=dropdown__menu><li><a href=/docs/authentication/security-authentication target=_self rel="noopener noreferrer" class=dropdown__link lang=zh-CN>中文</a><li><a href=/en/docs/authentication/security-authentication target=_self rel="noopener noreferrer" class="dropdown__link dropdown__link--active" lang=en-US>English</a></ul></div><a href=https://github.com/geelato-projects/geelato-community-backend target=_blank rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type=button disabled title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill=currentColor d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"/></svg><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill=currentColor d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"/></svg><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill=currentColor d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"/></svg></button></div></div></div><div role=presentation class=navbar-sidebar__backdrop></div></nav><div id=__docusaurus_skipToContent_fallback class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class=docsWrapper_hBAB><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type=button></button><div class=docRoot_UBD9><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class=sidebarViewport_aRkj><div class=sidebar_njMd><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link"><span title="🌐 Geelato Project" class=categoryLinkLabel_W154>🌐 Geelato Project</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/guide/developer-navigation><span title="Dev & AI Navigation" class=linkLabel_WmDU>Dev & AI Navigation</span></a></ul><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--active"><span title="📦 Geelato Framework" class=categoryLinkLabel_W154>📦 Geelato Framework</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/guide/quick-start><span title="🌱 Getting Started" class=categoryLinkLabel_W154>🌱 Getting Started</span></a></div><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/runtime/platform-web-runtime><span title="🧠 Architecture & Core Concepts" class=categoryLinkLabel_W154>🧠 Architecture & Core Concepts</span></a></div><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/orm/overview><span title="🛠️ Developer Guide: Basics" class=categoryLinkLabel_W154>🛠️ Developer Guide: Basics</span></a></div><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role=button aria-expanded=true tabindex=0 href=/en/docs/platform-capabilities/global-context><span title="🔌 Developer Guide: Advanced" class=categoryLinkLabel_W154>🔌 Developer Guide: Advanced</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-3 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role=button aria-expanded=true tabindex=0 href=/en/docs/platform-capabilities/global-context><span title="Platform Capabilities" class=categoryLinkLabel_W154>Platform Capabilities</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/platform-capabilities/global-context><span title="Global Context" class=linkLabel_WmDU>Global Context</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/platform-capabilities/event-bus><span title="Event Bus" class=linkLabel_WmDU>Event Bus</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/platform-capabilities/sse-subscription><span title="SSE Subscription Push" class=linkLabel_WmDU>SSE Subscription Push</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/platform-capabilities/traffic-tagging><span title="Traffic Tagging" class=linkLabel_WmDU>Traffic Tagging</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/runtime/security-context-lifecycle><span title="SecurityContext Lifecycle" class=linkLabel_WmDU>SecurityContext Lifecycle</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class="menu__link menu__link--active" aria-current=page tabindex=0 href=/en/docs/authentication/security-authentication><span title="Authentication and Authorization" class=linkLabel_WmDU>Authentication and Authorization</span></a></ul><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-3 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/plugin-mechanism/overview><span title="Plugin Mechanism" class=categoryLinkLabel_W154>Plugin Mechanism</span></a></div><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-3 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/reference/metastore-extension><span title=Extensibility class=categoryLinkLabel_W154>Extensibility</span></a></div></ul><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/system-config/overview><span title="⚙️ Configuration & Operations" class=categoryLinkLabel_W154>⚙️ Configuration & Operations</span></a></div><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--sublist-caret" role=button aria-expanded=false tabindex=0 href=/en/docs/api/reference><span title="📚 API & References" class=categoryLinkLabel_W154>📚 API & References</span></a></div></ul><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link"><span title="🔐 Geelato AuthServer" class=categoryLinkLabel_W154>🔐 Geelato AuthServer</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/authentication/overview><span title="Independent Service: Unified Authentication Center" class=linkLabel_WmDU>Independent Service: Unified Authentication Center</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/authentication/lite-login-integration><span title="lite-login Third-Party Integration" class=linkLabel_WmDU>lite-login Third-Party Integration</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/authentication/oauth2-integration><span title="OAuth2 Integration" class=linkLabel_WmDU>OAuth2 Integration</span></a></ul><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link"><span title="📨 Geelato Message" class=categoryLinkLabel_W154>📨 Geelato Message</span></a></div><ul class=menu__list><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/message/overview><span title="Message Center Overview" class=linkLabel_WmDU>Message Center Overview</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/en/docs/message/integration><span title="Message Enqueue Integration" class=linkLabel_WmDU>Message Enqueue Integration</span></a></ul></ul></nav></div></div></aside><main class=docMainContainer_TBSr><div class="container padding-top--md padding-bottom--lg"><div class=row><div class="col docItemCol_VOVn"><div class=docItemContainer_Djhp><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label=Breadcrumbs><ul class=breadcrumbs><li class=breadcrumbs__item><a aria-label="Home page" class=breadcrumbs__link href=/en/><svg viewBox="0 0 24 24" class=breadcrumbHomeIcon_YNFT><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill=currentColor /></svg></a><li class=breadcrumbs__item><span class=breadcrumbs__link>📦 Geelato Framework</span><li class=breadcrumbs__item><span class=breadcrumbs__link>🔌 Developer Guide: Advanced</span><li class=breadcrumbs__item><span class=breadcrumbs__link>Platform Capabilities</span><li class="breadcrumbs__item breadcrumbs__item--active"><span class=breadcrumbs__link>Authentication and Authorization</span></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type=button class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Authentication and Authorization</h1></header>
+<p>This page focuses on the runtime entry that actually performs backend authentication inside the platform:</p>
+<ul>
+<li class=""><code>DefaultSecurityInterceptor</code></li>
+</ul>
+<p>It is not an architecture page for the unified authentication center. It explains how one request is authenticated inside the platform runtime, how the security context is established, and how the request is finally allowed through.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=what-it-solves>What It Solves<a href=#what-it-solves class=hash-link aria-label="Direct link to What It Solves" title="Direct link to What It Solves" translate=no>​</a></h2>
+<p><code>DefaultSecurityInterceptor</code> does not issue tokens. Its job is to consume the credential already attached to the request and build the current request security state, including:</p>
+<ul>
+<li class="">current user</li>
+<li class="">current tenant</li>
+<li class="">current password or authentication credential context</li>
+<li class="">Shiro <code>Subject</code></li>
+<li class="">online user activity state</li>
+<li class="">request-level traffic tagging context</li>
+</ul>
+<p>In other words:</p>
+<ul>
+<li class="">the unified authentication chapter explains where the token comes from</li>
+<li class="">this chapter explains how the backend authenticates after it receives the token</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=where-it-sits>Where It Sits<a href=#where-it-sits class=hash-link aria-label="Direct link to Where It Sits" title="Direct link to Where It Sits" translate=no>​</a></h2>
+<p>The main runtime authentication interceptor is located in:</p>
+<ul>
+<li class=""><code>geelato-web-common</code></li>
+<li class=""><code>cn.geelato.web.common.interceptor.DefaultSecurityInterceptor</code></li>
+</ul>
+<p>It implements Spring MVC:</p>
+<ul>
+<li class=""><code>HandlerInterceptor</code></li>
+</ul>
+<p>So it runs before controller execution, rather than trusting the subject directly from the Servlet Filter layer.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=main-flow>Main Flow<a href=#main-flow class=hash-link aria-label="Direct link to Main Flow" title="Direct link to Main Flow" translate=no>​</a></h2>
+<p>When a request enters the platform, the execution order of <code>DefaultSecurityInterceptor</code> can be summarized as:</p>
+<ol>
+<li class="">apply traffic tagging</li>
+<li class="">check whether the endpoint skips authentication</li>
+<li class="">read <code>Authorization</code></li>
+<li class="">try restoring user context from local cache</li>
+<li class="">try multiple authentication strategies in order</li>
+<li class="">establish <code>SecurityContext</code> after authentication succeeds</li>
+<li class="">update online user activity</li>
+<li class="">clean up request-level context at request completion</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=step-1-apply-traffic-tagging-first>Step 1: Apply Traffic Tagging First<a href=#step-1-apply-traffic-tagging-first class=hash-link aria-label="Direct link to Step 1: Apply Traffic Tagging First" title="Direct link to Step 1: Apply Traffic Tagging First" translate=no>​</a></h2>
+<p>At the beginning of <code>preHandle()</code>, the interceptor executes:</p>
+<ul>
+<li class=""><code>applyTrafficTag(request, response)</code></li>
+</ul>
+<p>This happens before the <code>@IgnoreVerify</code> check, so even endpoints that do not require authentication can still receive:</p>
+<ul>
+<li class=""><code>trafficTag</code></li>
+<li class="">MDC logging context</li>
+<li class="">request-level traffic marker</li>
+</ul>
+<p>The design rule here is:</p>
+<ul>
+<li class="">traffic-tagging failure only degrades gracefully and must not block the authentication flow</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=step-2-check-whether-authentication-is-skipped>Step 2: Check Whether Authentication Is Skipped<a href=#step-2-check-whether-authentication-is-skipped class=hash-link aria-label="Direct link to Step 2: Check Whether Authentication Is Skipped" title="Direct link to Step 2: Check Whether Authentication Is Skipped" translate=no>​</a></h2>
+<p>If the current handler is not a <code>HandlerMethod</code>, or the method is annotated with:</p>
+<ul>
+<li class=""><code>@IgnoreVerify</code></li>
+</ul>
+<p>the interceptor simply returns:</p>
+<ul>
+<li class=""><code>return true</code></li>
+</ul>
+<p>Such endpoints do not enter authentication logic, but they still keep the traffic-tagging work already done in step 1.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=step-3-read-authorization>Step 3: Read Authorization<a href=#step-3-read-authorization class=hash-link aria-label="Direct link to Step 3: Read Authorization" title="Direct link to Step 3: Read Authorization" translate=no>​</a></h2>
+<p>For authenticated endpoints, the interceptor reads:</p>
+<ul>
+<li class=""><code>Authorization</code></li>
+</ul>
+<p>from the request header.</p>
+<p>If the header is missing, it throws:</p>
+<ul>
+<li class=""><code>UnauthorizedException</code></li>
+</ul>
+<p>This means the platform runtime treats <code>Authorization</code> as the unified authentication entry, rather than building the subject from business parameters or a generic filter.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=step-4-try-cache-restore-first>Step 4: Try Cache Restore First<a href=#step-4-try-cache-restore-first class=hash-link aria-label="Direct link to Step 4: Try Cache Restore First" title="Direct link to Step 4: Try Cache Restore First" translate=no>​</a></h2>
+<p>Before entering the concrete authentication branches, the interceptor calls:</p>
+<ul>
+<li class=""><code>tryRestoreFromCache(token, request, response)</code></li>
+</ul>
+<p>The main cache here is:</p>
+<ul>
+<li class=""><code>tokenContextCache</code></li>
+</ul>
+<p>It stores:</p>
+<ul>
+<li class="">user</li>
+<li class="">tenant</li>
+<li class="">current password</li>
+<li class="">authentication token object</li>
+<li class="">expiration timestamp</li>
+</ul>
+<p>If the cache hits, it restores:</p>
+<ul>
+<li class=""><code>SecurityContext.setCurrentUser(...)</code></li>
+<li class=""><code>SecurityContext.setCurrentTenant(...)</code></li>
+<li class=""><code>SecurityContext.setCurrentPassword(...)</code></li>
+<li class=""><code>Subject.login(...)</code></li>
+</ul>
+<p>and then continues with:</p>
+<ul>
+<li class="">post-auth traffic tagging</li>
+<li class="">online-user touch update</li>
+</ul>
+<p>The purpose is to avoid repeated token parsing and remote validation for the same token within a short time window.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=step-5-try-multiple-authentication-strategies-in-order>Step 5: Try Multiple Authentication Strategies in Order<a href=#step-5-try-multiple-authentication-strategies-in-order class=hash-link aria-label="Direct link to Step 5: Try Multiple Authentication Strategies in Order" title="Direct link to Step 5: Try Multiple Authentication Strategies in Order" translate=no>​</a></h2>
+<p>If cache restore does not succeed, the interceptor tries the following authentication branches in a fixed order.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=51-anonymous-authentication>5.1 Anonymous Authentication<a href=#51-anonymous-authentication class=hash-link aria-label="Direct link to 5.1 Anonymous Authentication" title="Direct link to 5.1 Anonymous Authentication" translate=no>​</a></h3>
+<p>Prefix:</p>
+<ul>
+<li class=""><code>Authorization: Anonymous &lt;token></code></li>
+</ul>
+<p>Processing:</p>
+<ul>
+<li class="">verify the anonymous JWT</li>
+<li class="">read <code>loginName</code>, <code>orgId</code>, and <code>tenantCode</code></li>
+<li class="">initialize the current user</li>
+<li class="">establish anonymous password context</li>
+<li class="">build <code>UsernamePasswordToken</code></li>
+<li class="">perform Shiro login</li>
+</ul>
+<p>Typical scenarios:</p>
+<ul>
+<li class="">controlled anonymous access inside the platform</li>
+<li class="">lightweight authenticated-anonymous flows with a known subject identity</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=52-jwtbearer-authentication>5.2 JWTBearer Authentication<a href=#52-jwtbearer-authentication class=hash-link aria-label="Direct link to 5.2 JWTBearer Authentication" title="Direct link to 5.2 JWTBearer Authentication" translate=no>​</a></h3>
+<p>Prefix:</p>
+<ul>
+<li class=""><code>Authorization: JWTBearer &lt;token></code></li>
+</ul>
+<p>Processing:</p>
+<ul>
+<li class="">verify the JWT</li>
+<li class="">read <code>loginName</code>, <code>passWord</code>, <code>orgId</code>, and <code>tenantCode</code></li>
+<li class="">initialize the current user</li>
+<li class="">fill organization, department, and business-unit information</li>
+<li class="">write to <code>SecurityContext</code></li>
+<li class="">build <code>UsernamePasswordToken</code></li>
+<li class="">perform Shiro login</li>
+</ul>
+<p>This is the classic path that turns a local JWT into a runtime security context.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=53-extended-key-authentication>5.3 Extended-Key Authentication<a href=#53-extended-key-authentication class=hash-link aria-label="Direct link to 5.3 Extended-Key Authentication" title="Direct link to 5.3 Extended-Key Authentication" translate=no>​</a></h3>
+<p>The current implementation supports two extended-key types:</p>
+<ul>
+<li class=""><code>WeixinUnionId</code></li>
+<li class=""><code>WeixinWorkUserId</code></li>
+</ul>
+<p>Their header prefixes are:</p>
+<ul>
+<li class=""><code>Authorization: WeixinUnionId &lt;key></code></li>
+<li class=""><code>Authorization: WeixinWorkUserId &lt;key></code></li>
+</ul>
+<p>Processing:</p>
+<ul>
+<li class="">use <code>UserProvider</code> to find the local user by extended key</li>
+<li class="">initialize the platform current user</li>
+<li class="">write to <code>SecurityContext</code></li>
+<li class="">build the corresponding Shiro <code>AuthenticationToken</code></li>
+<li class="">perform Shiro login</li>
+</ul>
+<p>This path is suitable for:</p>
+<ul>
+<li class="">Enterprise WeChat</li>
+<li class="">WeChat UnionId</li>
+<li class="">other external identities mapped into the local user system</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=54-oauth2-bearer-authentication>5.4 OAuth2 Bearer Authentication<a href=#54-oauth2-bearer-authentication class=hash-link aria-label="Direct link to 5.4 OAuth2 Bearer Authentication" title="Direct link to 5.4 OAuth2 Bearer Authentication" translate=no>​</a></h3>
+<p>Prefix:</p>
+<ul>
+<li class=""><code>Authorization: Bearer &lt;token></code></li>
+</ul>
+<p>This is the key integration path with the unified authentication center.</p>
+<p>Its processing uses two cache layers:</p>
+<ol>
+<li class="">check whether <code>tokenContextCache</code> already has the full authenticated context</li>
+<li class="">check whether <code>tokenUserCache</code> already has OAuth2 user information</li>
+<li class="">if neither exists, call <code>OAuth2Helper.getUserInfo(...)</code> to fetch user info from the authentication center</li>
+</ol>
+<p>After the user is resolved, the interceptor:</p>
+<ul>
+<li class="">initializes the local current user</li>
+<li class="">sets the current tenant</li>
+<li class="">builds <code>OAuth2Token</code></li>
+<li class="">performs Shiro login</li>
+<li class="">writes the context cache</li>
+</ul>
+<p>So this path effectively means:</p>
+<ul>
+<li class="">the backend consumes the Bearer token issued by the unified authentication center</li>
+<li class="">then projects that unified identity into the current platform runtime security context</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=step-6-what-happens-after-authentication-succeeds>Step 6: What Happens After Authentication Succeeds<a href=#step-6-what-happens-after-authentication-succeeds class=hash-link aria-label="Direct link to Step 6: What Happens After Authentication Succeeds" title="Direct link to Step 6: What Happens After Authentication Succeeds" translate=no>​</a></h2>
+<p>Regardless of which branch succeeds, the interceptor performs several post-auth actions.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=establish-securitycontext>Establish SecurityContext<a href=#establish-securitycontext class=hash-link aria-label="Direct link to Establish SecurityContext" title="Direct link to Establish SecurityContext" translate=no>​</a></h3>
+<p>It writes:</p>
+<ul>
+<li class=""><code>SecurityContext.setCurrentUser(...)</code></li>
+<li class=""><code>SecurityContext.setCurrentTenant(...)</code></li>
+<li class=""><code>SecurityContext.setCurrentPassword(...)</code></li>
+</ul>
+<p>This is the main source used by business code to read user, tenant, and credential context.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=perform-shiro-login>Perform Shiro Login<a href=#perform-shiro-login class=hash-link aria-label="Direct link to Perform Shiro Login" title="Direct link to Perform Shiro Login" translate=no>​</a></h3>
+<p>The interceptor also calls:</p>
+<ul>
+<li class=""><code>SecurityUtils.getSubject().login(...)</code></li>
+</ul>
+<p>So the platform does not rely only on a custom thread-local context. It also integrates the authenticated result into the Shiro <code>Subject</code> model.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=apply-post-authentication-traffic-tagging>Apply Post-Authentication Traffic Tagging<a href=#apply-post-authentication-traffic-tagging class=hash-link aria-label="Direct link to Apply Post-Authentication Traffic Tagging" title="Direct link to Apply Post-Authentication Traffic Tagging" translate=no>​</a></h3>
+<p>After the user is identified, it calls:</p>
+<ul>
+<li class=""><code>applyTrafficTagAfterAuthenticated(...)</code></li>
+</ul>
+<p>This allows traffic-tagging strategy to refine behavior using authenticated user information.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=update-online-state>Update Online State<a href=#update-online-state class=hash-link aria-label="Direct link to Update Online State" title="Direct link to Update Online State" translate=no>​</a></h3>
+<p>Finally, it calls:</p>
+<ul>
+<li class=""><code>touchOnline(user, request)</code></li>
+</ul>
+<p>If <code>OnlineUserTracker</code> is configured, the user's latest activity and request information are written into the online-user tracking system.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=step-7-what-happens-on-authentication-failure>Step 7: What Happens on Authentication Failure<a href=#step-7-what-happens-on-authentication-failure class=hash-link aria-label="Direct link to Step 7: What Happens on Authentication Failure" title="Direct link to Step 7: What Happens on Authentication Failure" translate=no>​</a></h2>
+<p>If all authentication branches fail, the interceptor throws:</p>
+<ul>
+<li class=""><code>UnauthorizedException("未授权访问")</code></li>
+</ul>
+<p>So in runtime semantics, there are only two failure exits:</p>
+<ul>
+<li class="">no <code>Authorization</code> header</li>
+<li class="">an <code>Authorization</code> header exists, but none of the supported authentication strategies can resolve it</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=step-8-cleanup-at-request-completion>Step 8: Cleanup at Request Completion<a href=#step-8-cleanup-at-request-completion class=hash-link aria-label="Direct link to Step 8: Cleanup at Request Completion" title="Direct link to Step 8: Cleanup at Request Completion" translate=no>​</a></h2>
+<p>In <code>afterCompletion()</code>, the interceptor clears:</p>
+<ul>
+<li class="">the traffic-tagging MDC key</li>
+<li class=""><code>TrafficTagContext</code></li>
+</ul>
+<p>The key point is:</p>
+<ul>
+<li class="">authenticated subject cleanup is not completed inside this interceptor</li>
+<li class="">unified <code>SecurityContext</code> cleanup is handled by the outer <code>SecurityContextFilter</code></li>
+</ul>
+<p>This matches the framework boundary:</p>
+<ul>
+<li class="">the filter handles final cleanup</li>
+<li class="">the interceptor builds the subject after authentication succeeds</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=key-supporting-objects>Key Supporting Objects<a href=#key-supporting-objects class=hash-link aria-label="Direct link to Key Supporting Objects" title="Direct link to Key Supporting Objects" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=orgprovider><code>OrgProvider</code><a href=#orgprovider class=hash-link aria-label="Direct link to orgprovider" title="Direct link to orgprovider" translate=no>​</a></h3>
+<p>Used to enrich:</p>
+<ul>
+<li class="">organization</li>
+<li class="">department</li>
+<li class="">business unit</li>
+</ul>
+<p>This means the current user has not only a login identity but also organizational context.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=userprovider><code>UserProvider</code><a href=#userprovider class=hash-link aria-label="Direct link to userprovider" title="Direct link to userprovider" translate=no>​</a></h3>
+<p>Used to resolve local users by external identity extension keys, mainly for:</p>
+<ul>
+<li class=""><code>WeixinUnionId</code></li>
+<li class=""><code>WeixinWorkUserId</code></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=onlineusertracker><code>OnlineUserTracker</code><a href=#onlineusertracker class=hash-link aria-label="Direct link to onlineusertracker" title="Direct link to onlineusertracker" translate=no>​</a></h3>
+<p>Used to record online activity for:</p>
+<ul>
+<li class="">online-user display</li>
+<li class="">latest activity observation</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id=traffictagresolver><code>TrafficTagResolver</code><a href=#traffictagresolver class=hash-link aria-label="Direct link to traffictagresolver" title="Direct link to traffictagresolver" translate=no>​</a></h3>
+<p>Used to apply traffic tagging both when the request arrives and after authentication succeeds.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=design-conclusion>Design Conclusion<a href=#design-conclusion class=hash-link aria-label="Direct link to Design Conclusion" title="Direct link to Design Conclusion" translate=no>​</a></h2>
+<p><code>DefaultSecurityInterceptor</code> currently represents a clear runtime authentication chain:</p>
+<ul>
+<li class="">apply traffic tagging first</li>
+<li class="">allow no-auth endpoints to pass early</li>
+<li class="">read the unified authentication header</li>
+<li class="">try cache restore first</li>
+<li class="">then authenticate in order through anonymous, JWT, local extension-key, and OAuth2 Bearer flows</li>
+<li class="">establish both <code>SecurityContext</code> and Shiro <code>Subject</code> after success</li>
+<li class="">update online state and clean request-level context at the end</li>
+</ul>
+<p>This design gathers credential consumption, runtime subject establishment, online-state update, and traffic tagging into one interceptor entry, while still keeping these boundaries intact:</p>
+<ul>
+<li class=""><code>SecurityContext</code> must only be written after authentication succeeds</li>
+<li class="">filters do not directly trust frontend-injected subject identity</li>
+<li class="">the unified authentication center and the runtime authentication chain remain separate concerns</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id=suggested-reading>Suggested Reading<a href=#suggested-reading class=hash-link aria-label="Direct link to Suggested Reading" title="Direct link to Suggested Reading" translate=no>​</a></h2>
+<ul>
+<li class=""><a class="" href=/en/docs/authentication/overview>Unified Authentication</a></li>
+<li class=""><a class="" href=/en/docs/runtime/security-context-lifecycle>Platform Capabilities: SecurityContext Lifecycle</a></li>
+<li class=""><a class="" href=/en/docs/reference/security-provider-extension>Security Provider Extension</a></li>
+</ul></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href=https://github.com/geelato-projects/geelato-community-backend/edit/master/website/i18n/en/docusaurus-plugin-content-docs/current/authentication/security-authentication.md target=_blank rel="noopener noreferrer" class=theme-edit-this-page><svg fill=currentColor height=20 width=20 viewBox="0 0 40 40" class=iconEdit_Z9Sw aria-hidden=true><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"/></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href=/en/docs/runtime/security-context-lifecycle><div class=pagination-nav__sublabel>Previous</div><div class=pagination-nav__label>SecurityContext Lifecycle</div></a><a class="pagination-nav__link pagination-nav__link--next" href=/en/docs/plugin-mechanism/overview><div class=pagination-nav__sublabel>Next</div><div class=pagination-nav__label>Plugin Mechanism Overview</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href=#what-it-solves class="table-of-contents__link toc-highlight">What It Solves</a><li><a href=#where-it-sits class="table-of-contents__link toc-highlight">Where It Sits</a><li><a href=#main-flow class="table-of-contents__link toc-highlight">Main Flow</a><li><a href=#step-1-apply-traffic-tagging-first class="table-of-contents__link toc-highlight">Step 1: Apply Traffic Tagging First</a><li><a href=#step-2-check-whether-authentication-is-skipped class="table-of-contents__link toc-highlight">Step 2: Check Whether Authentication Is Skipped</a><li><a href=#step-3-read-authorization class="table-of-contents__link toc-highlight">Step 3: Read Authorization</a><li><a href=#step-4-try-cache-restore-first class="table-of-contents__link toc-highlight">Step 4: Try Cache Restore First</a><li><a href=#step-5-try-multiple-authentication-strategies-in-order class="table-of-contents__link toc-highlight">Step 5: Try Multiple Authentication Strategies in Order</a><ul><li><a href=#51-anonymous-authentication class="table-of-contents__link toc-highlight">5.1 Anonymous Authentication</a><li><a href=#52-jwtbearer-authentication class="table-of-contents__link toc-highlight">5.2 JWTBearer Authentication</a><li><a href=#53-extended-key-authentication class="table-of-contents__link toc-highlight">5.3 Extended-Key Authentication</a><li><a href=#54-oauth2-bearer-authentication class="table-of-contents__link toc-highlight">5.4 OAuth2 Bearer Authentication</a></ul><li><a href=#step-6-what-happens-after-authentication-succeeds class="table-of-contents__link toc-highlight">Step 6: What Happens After Authentication Succeeds</a><ul><li><a href=#establish-securitycontext class="table-of-contents__link toc-highlight">Establish SecurityContext</a><li><a href=#perform-shiro-login class="table-of-contents__link toc-highlight">Perform Shiro Login</a><li><a href=#apply-post-authentication-traffic-tagging class="table-of-contents__link toc-highlight">Apply Post-Authentication Traffic Tagging</a><li><a href=#update-online-state class="table-of-contents__link toc-highlight">Update Online State</a></ul><li><a href=#step-7-what-happens-on-authentication-failure class="table-of-contents__link toc-highlight">Step 7: What Happens on Authentication Failure</a><li><a href=#step-8-cleanup-at-request-completion class="table-of-contents__link toc-highlight">Step 8: Cleanup at Request Completion</a><li><a href=#key-supporting-objects class="table-of-contents__link toc-highlight">Key Supporting Objects</a><ul><li><a href=#orgprovider class="table-of-contents__link toc-highlight"><code>OrgProvider</code></a><li><a href=#userprovider class="table-of-contents__link toc-highlight"><code>UserProvider</code></a><li><a href=#onlineusertracker class="table-of-contents__link toc-highlight"><code>OnlineUserTracker</code></a><li><a href=#traffictagresolver class="table-of-contents__link toc-highlight"><code>TrafficTagResolver</code></a></ul><li><a href=#design-conclusion class="table-of-contents__link toc-highlight">Design Conclusion</a><li><a href=#suggested-reading class="table-of-contents__link toc-highlight">Suggested Reading</a></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Geelato Project</div><ul class="footer__items clean-list"><li class=footer__item><a class=footer__link-item href=/en/docs/guide/developer-navigation>Developer Navigation</a><li class=footer__item><a class=footer__link-item href=/en/docs/guide/quick-start>Quick Start</a></ul></div><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Reference</div><ul class="footer__items clean-list"><li class=footer__item><a class=footer__link-item href=/en/docs/guide/minimal-integration>Minimal Integration</a><li class=footer__item><a class=footer__link-item href=/en/docs/operations/runtime-designer-deployment>Runtime / Designer Deployment</a><li class=footer__item><a class=footer__link-item href=/en/docs/api/reference>Dual-track API Entry</a></ul></div><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Repository</div><ul class="footer__items clean-list"><li class=footer__item><a href=https://github.com/geelato-projects/geelato-community-backend/tree/master/website/official-docs target=_blank rel="noopener noreferrer" class=footer__link-item>official-docs<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://github.com/geelato-projects/geelato-community-backend/tree/master/SrvExplain target=_blank rel="noopener noreferrer" class=footer__link-item>SrvExplain<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a></ul></div></div><div class="footer__bottom text--center"><div class=footer__copyright>Copyright © 2026 Geelato Framework. Built with Docusaurus.</div></div></div></footer></div></body>

@@ -28,6 +28,12 @@ public class GlobalContext {
     protected final static Boolean __LogStack__=false;
     protected final static Boolean __POLYGLOT_DEBUGGER__ =false;
     protected final static Boolean __MetaQueryCache__ = false;
+    /*
+    在线文档站根地址，用于异常响应中拼接错误码文档链接（docUrl）。
+    代码固化，如需替换部署域名，直接修改此处常量。
+     */
+    protected final static String __DocBaseUrl__ = "https://docs.geelato.cn";
+    protected final static Boolean __DocUrlEnabled__ = true;
     public static String getEnvironment() {
         return __Environment__;
     }
@@ -79,6 +85,22 @@ public class GlobalContext {
     }
     public static Boolean getMetaQueryCacheOption() {
         return __MetaQueryCache__;
+    }
+
+    /**
+     * 在线文档站根地址（固化为 https://docs.geelato.cn）。
+     * 异常处理器据此拼接错误码文档链接：{@code {baseUrl}/docs/reference/error-codes#{code}} 或
+     * {@code {baseUrl}/docs/reference/error-codes/{slug}}。
+     */
+    public static String getDocBaseUrl() {
+        return __DocBaseUrl__;
+    }
+
+    /**
+     * 是否在异常响应中输出 docUrl 字段。
+     */
+    public static Boolean getDocUrlEnabled() {
+        return __DocUrlEnabled__;
     }
 
     private static String getEnvOrDefault(String envName, String defaultValue) {

@@ -1,22 +1,18 @@
 package cn.geelato.web.platform.srv.excel.exception;
 
+import cn.geelato.web.platform.exception.PlatformErrorCodes;
+
 /**
  * @author diabl
  * 12.4 文件大小超出限制异常
  */
 public class FileSizeExceedLimitException extends FileException {
-    private static final String MESSAGE = "12.4 File Size Exceed Limit Exception";
-    private static final int CODE = 1214;
 
     public FileSizeExceedLimitException() {
-        super(MESSAGE, CODE);
-    }
-
-    public FileSizeExceedLimitException(String msg, int code) {
-        super(msg, code);
+        super(PlatformErrorCodes.FILE_SIZE_EXCEED_LIMIT);
     }
 
     public FileSizeExceedLimitException(String detailMessage) {
-        super(String.format("%s：%s", MESSAGE, detailMessage), CODE);
+        super(PlatformErrorCodes.FILE_SIZE_EXCEED_LIMIT, String.format("%s：%s", PlatformErrorCodes.FILE_SIZE_EXCEED_LIMIT.getDefaultMessage(), detailMessage));
     }
 }

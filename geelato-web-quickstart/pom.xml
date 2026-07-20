@@ -22,6 +22,14 @@
             <artifactId>geelato-web-platform</artifactId>
         </dependency>
 
+        <!-- MQL 测试套件与在线调试工具链（Playground 端点 + HTML 页面 + 场景集）。
+             由 geelato.mql.playground.enabled=true 开启，默认关闭不激活。 -->
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-mql-test</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
         <!-- sample runtime support -->
         <dependency>
             <groupId>com.mysql</groupId>

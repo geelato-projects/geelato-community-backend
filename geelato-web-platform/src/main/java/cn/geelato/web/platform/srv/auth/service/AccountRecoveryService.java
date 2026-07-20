@@ -3,6 +3,7 @@ package cn.geelato.web.platform.srv.auth.service;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.meta.User;
+import cn.geelato.security.SecurityContext;
 import cn.geelato.web.platform.srv.auth.AuthBadRequestException;
 import cn.geelato.web.platform.srv.security.entity.AuthCodeParams;
 import cn.geelato.web.platform.srv.security.entity.BindAccountRequest;
@@ -63,7 +64,16 @@ public class AccountRecoveryService {
         Assert.notNull(user, ApiErrorMsg.IS_NULL);
         user.setPlainPassword(request.getPassword());
         EncryptUtil.encryptPassword(user);
-        dao.save(user);
+        cn.geelato.security.User originalUser = SecurityContext.getCurrentUser();
+        cn.geelato.security.User forgetUser = new cn.geelato.security.User();
+        forgetUser.setUserId("sys_forget");
+        forgetUser.setUserName("sys_forget");
+        try {
+            SecurityContext.setCurrentUser(forgetUser);
+            dao.save(user);
+        } finally {
+            SecurityContext.setCurrentUser(originalUser);
+        }
     }
 
     public void validateUser(ValidateUserRequest request) {

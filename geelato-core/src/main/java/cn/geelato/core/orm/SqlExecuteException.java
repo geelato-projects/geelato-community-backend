@@ -1,6 +1,7 @@
 package cn.geelato.core.orm;
 
 import cn.geelato.lang.exception.CoreException;
+import cn.geelato.lang.exception.ErrorCode;
 import lombok.Getter;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
@@ -9,10 +10,13 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * SQL 执行异常。
+ * <p>富异常：除错误码外，保留 SQL 语句、参数、数据库错误码、SQL 状态码以及原始异常引用，便于排障。
+ * 错误码引用 {@link CoreErrorCodes#SQL_EXECUTE}（docSlug = {@code "sql-execute"}，提供独立在线文档详情页）。</p>
+ */
 @Getter
 public class SqlExecuteException extends CoreException {
-
-    private static final int DEFAULT_CODE = 10010;
 
     private final String sql;
     private final Object[] params;
@@ -20,8 +24,9 @@ public class SqlExecuteException extends CoreException {
     private final String sqlState;
     private final SQLException originalSqlException;
     private final DataAccessException originalDataAccessException;
-        public SqlExecuteException(DataAccessException dae, String sql, Object[] params) {
-        super(DEFAULT_CODE,buildErrorMsg(dae, sql, params), dae);
+
+    public SqlExecuteException(DataAccessException dae, String sql, Object[] params) {
+        super(CoreErrorCodes.SQL_EXECUTE, buildErrorMsg(dae, sql, params), dae);
         Throwable rootCause = NestedExceptionUtils.getRootCause(dae);
         SQLException sqlException = rootCause instanceof SQLException ? (SQLException) rootCause : null;
         this.sql = sql;

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * The filter operator (comparison).
@@ -97,6 +98,39 @@ public class FilterGroup {
             childFilterGroup=new ArrayList<>();
         }
         return childFilterGroup;
+    }
+
+    /**
+     * 生成确定性的签名字符串，供上层（如查询缓存、慢查询追踪等）派生 key。
+     * <p>
+     * 递归处理 childFilterGroup，保证相同过滤条件产生相同签名。
+     * 注意：filters 列表保持原顺序（顺序不同的过滤条件视为不同查询，保守策略）。
+     * </p>
+     */
+    public String signatureString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("logic=").append(logic == null ? "and" : logic.text).append(";");
+        if (filters != null && !filters.isEmpty()) {
+            sb.append("filters=[");
+            for (int i = 0; i < filters.size(); i++) {
+                if (i > 0) {
+                    sb.append(",");
+                }
+                sb.append(filters.get(i).signatureString());
+            }
+            sb.append("];");
+        }
+        if (childFilterGroup != null && !childFilterGroup.isEmpty()) {
+            sb.append("children=[");
+            for (int i = 0; i < childFilterGroup.size(); i++) {
+                if (i > 0) {
+                    sb.append(",");
+                }
+                sb.append(childFilterGroup.get(i).signatureString());
+            }
+            sb.append("];");
+        }
+        return sb.toString();
     }
 
     public static class Filter {
@@ -193,6 +227,19 @@ public class FilterGroup {
             this.rawValue = rawValue;
             this.arrayValue = null;
             return this;
+        }
+
+        /**
+         * 单个 Filter 的签名：field + operator + value + rawValue 类型。
+         * rawValue 纳入签名是因为 PostgreSQL 等严格类型库中 rawValue 决定实际绑定的参数。
+         */
+        public String signatureString() {
+            return "{" +
+                    "f=" + field +
+                    ",o=" + (operator == null ? "null" : operator.text) +
+                    ",v=" + Objects.toString(value, "null") +
+                    ",rv=" + (rawValue == null ? "null" : rawValue.getClass().getSimpleName() + ":" + rawValue) +
+                    "}";
         }
 
     }

@@ -148,6 +148,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'api/reference',
             'api/srvexplain-catalog',
+            'reference/error-codes',
           ],
         },
       ],

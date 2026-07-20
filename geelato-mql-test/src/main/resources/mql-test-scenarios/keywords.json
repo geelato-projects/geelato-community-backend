@@ -1,0 +1,95 @@
+[
+  {
+    "id": "kw-empty-query",
+    "name": "空查询-select全表",
+    "category": "关键字组合",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{}}",
+    "expectRowCount": 2,
+    "expectSqlContains": "select * from mql_test_user"
+  },
+  {
+    "id": "kw-fs-fields",
+    "name": "@fs字段选择",
+    "category": "关键字组合",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1)"],
+    "mql": "{\"mql_test_user\":{\"@fs\":\"name,age\"}}",
+    "expectRowCount": 1,
+    "expectFirstRow": {"name": "张三"}
+  },
+  {
+    "id": "kw-order-desc",
+    "name": "@order排序-降序",
+    "category": "关键字组合",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"@order\":\"age|-\"}}",
+    "expectRowCount": 2,
+    "expectFirstRow": {"name": "李四"},
+    "expectSqlContains": "order by"
+  },
+  {
+    "id": "kw-pagination",
+    "name": "@p分页-第1页",
+    "category": "关键字组合",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"@p\":\"1,1\",\"@order\":\"id|+\"}}",
+    "expectRowCount": 1,
+    "expectFirstRow": {"name": "张三"},
+    "expectSqlContains": "limit 1 offset 0"
+  },
+  {
+    "id": "kw-group",
+    "name": "@group分组统计",
+    "category": "关键字组合",
+    "setup": [
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tenant_code) VALUES (1, 'NO1', 1, 100, 'pending', 'test')",
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tenant_code) VALUES (2, 'NO2', 1, 200, 'pending', 'test')",
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tenant_code) VALUES (3, 'NO3', 2, 300, 'done', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_order WHERE id IN (1,2,3)"],
+    "mql": "{\"mql_test_order\":{\"@fs\":\"status\",\"@group\":\"status\"}}",
+    "expectRowCount": 2,
+    "expectSqlContains": "group by"
+  },
+  {
+    "id": "kw-combined",
+    "name": "全关键字组合(@fs+where+@order+@p)",
+    "category": "关键字组合",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"@fs\":\"name,age\",\"age|gt\":\"20\",\"@order\":\"age|-\",\"@p\":\"1,10\"}}",
+    "expectRowCount": 2,
+    "expectSqlContains": "limit 10 offset 0"
+  },
+  {
+    "id": "kw-brackets-or",
+    "name": "@b括号嵌套OR逻辑",
+    "category": "关键字组合",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"age|gt\":\"0\",\"@b\":[{\"or\":[{\"name|eq\":\"张三\"},{\"name|eq\":\"李四\"}]}]}}",
+    "expectRowCount": 2,
+    "expectSqlContains": "( name=? or name=? )"
+  }
+]

@@ -38,7 +38,8 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     @Autowired(required = false)
     private TrafficTagStrategy trafficTagStrategy;
 
-    private static final String urlPrefix = "/api";
+    @Autowired
+    private cn.geelato.web.common.interceptor.SecurityInterceptorProperties securityInterceptorProperties;
 
     @Override
     public void addInterceptors(@NotNull InterceptorRegistry registry) {
@@ -47,45 +48,14 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
         securityInterceptor.setTrafficColoringProperties(trafficColoringProperties);
         securityInterceptor.setTrafficTagStrategy(trafficTagStrategy);
 
+        // 排除鉴权的路径：内置默认（SecurityInterceptorProperties.initDefaultExcludes）
+        // + 用户配置追加（geelato.security.interceptor.extra-excludes[*]）
+        // + 用户配置覆盖（geelato.security.interceptor.default-excludes[*] + override-default-excludes）
+        java.util.List<String> excludes = securityInterceptorProperties.resolveEffectiveExcludes();
+
         registry.addInterceptor(securityInterceptor)
                 .addPathPatterns("/**")
-                // 以下为排除鉴权的路径
-                // 登录接口
-                .excludePathPatterns(urlPrefix + "/oauth2/login")
-                .excludePathPatterns(urlPrefix + "/oauth2/refreshToken")
-                .excludePathPatterns(urlPrefix + "/auth/login")
-                // 静态资源
-                .excludePathPatterns("/assets/**")
-                // 错误页面
-                .excludePathPatterns("/error/**")
-                // swagger-ui 相关
-                .excludePathPatterns("/v3/**")
-                .excludePathPatterns("/swagger-ui/**")
-                .excludePathPatterns("/swagger-ui/index.html")
-                // starter 就绪检查
-                .excludePathPatterns(urlPrefix + "/scaffold/ready")
-                // 重置密码接口
-                .excludePathPatterns(urlPrefix + "/user/forgetValid")
-                .excludePathPatterns(urlPrefix + "/user/forget")
-                .excludePathPatterns(urlPrefix + "/code/generate/**")
-                // 未登录前相关配置文件
-                .excludePathPatterns(urlPrefix + "/resources/json")
-                // 加载或下载文件
-                .excludePathPatterns(urlPrefix + "/resources/file")
-                // 分支识别
-                .excludePathPatterns(urlPrefix + "/branch")
-                // 微信回调接口
-                .excludePathPatterns("/wx/callback/hook")
-                // 微信登录接口
-                .excludePathPatterns("/wx/login/**")
-                // 微信重定向接口
-                .excludePathPatterns("/wx/redirect")
-                // oauth2登录接口
-                .excludePathPatterns("/oauth2/**")
-                // 监控页面
-                .excludePathPatterns("/monitor/**")
-                .excludePathPatterns("/wx/validate/**")
-        ;
+                .excludePathPatterns(excludes);
         registry.addInterceptor(apiRestControllerInvokeLogging)
                 .addPathPatterns("/**");
     }

@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQL Playground</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif; font-size: 14px; color: #1d2129; background: #f5f5f5; }
+        .header { background: #1d2129; color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .desc { font-size: 12px; color: #86909c; margin-left: 12px; }
+        .tabs { background: #fff; border-bottom: 1px solid #e5e6eb; padding: 0 20px; display: flex; gap: 4px; }
+        .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: #4e5969; font-size: 14px; }
+        .tab.active { color: #165dff; border-bottom-color: #165dff; font-weight: 500; }
+        .content { padding: 16px 20px; }
+        .hidden { display: none; }
+
+        /* 调试台三栏布局 */
+        .playground-grid { display: grid; grid-template-columns: 240px 1fr 1fr; gap: 12px; height: calc(100vh - 120px); }
+        .panel { background: #fff; border: 1px solid #e5e6eb; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+        .panel-header { padding: 10px 12px; border-bottom: 1px solid #e5e6eb; font-weight: 600; font-size: 13px; background: #fafafa; display: flex; align-items: center; justify-content: space-between; }
+        .panel-body { flex: 1; overflow: auto; padding: 8px; }
+
+        /* 实体字段面板 */
+        .entity-select { width: 100%; padding: 6px; margin-bottom: 8px; border: 1px solid #e5e6eb; border-radius: 4px; }
+        .field-section { font-size: 11px; color: #86909c; font-weight: 600; padding: 6px 4px 4px; border-bottom: 1px solid #f0f0f0; }
+        .field-item { display: flex; align-items: center; gap: 6px; padding: 4px 6px; cursor: pointer; border-radius: 3px; font-size: 12px; }
+        .field-item:hover { background: #f2f3f5; }
+        .field-name { flex: 1; font-family: 'JetBrains Mono', Consolas, monospace; }
+        .field-type { font-size: 10px; color: #86909c; }
+        .tag { font-size: 10px; padding: 1px 5px; border-radius: 8px; background: #00b42a; color: #fff; }
+
+        /* 编辑器 */
+        .editor-toolbar { display: flex; gap: 6px; }
+        .mql-textarea { width: 100%; flex: 1; border: none; outline: none; padding: 10px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; line-height: 1.6; resize: none; background: #fafafa; }
+
+        /* 按钮 */
+        button { padding: 5px 14px; border: 1px solid #c9cdd4; border-radius: 4px; background: #fff; color: #4e5969; cursor: pointer; font-size: 12px; }
+        button:hover { border-color: #165dff; color: #165dff; }
+        button.primary { background: #165dff; color: #fff; border-color: #165dff; }
+        button.primary:hover { background: #4080ff; }
+        button.sm { padding: 3px 10px; font-size: 11px; }
+        button.danger { border-color: #f53f3f; color: #f53f3f; }
+
+        /* 结果区 */
+        .result-tabs { display: flex; border-bottom: 1px solid #e5e6eb; }
+        .result-tab { padding: 8px 14px; cursor: pointer; font-size: 12px; color: #4e5969; border-bottom: 2px solid transparent; }
+        .result-tab.active { color: #165dff; border-bottom-color: #165dff; }
+        .sql-block, .ast-block { background: #f7f8fa; padding: 10px; border-radius: 4px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; line-height: 1.6; margin: 4px; }
+        .param-item { display: flex; gap: 12px; padding: 4px 8px; background: #f7f8fa; border-radius: 3px; margin-bottom: 3px; font-size: 12px; font-family: monospace; }
+        .param-idx { color: #86909c; min-width: 28px; }
+        table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        table.data-table th { background: #f7f8fa; padding: 6px 8px; text-align: left; border-bottom: 1px solid #e5e6eb; font-weight: 600; }
+        table.data-table td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
+        .empty { text-align: center; color: #c9cdd4; padding: 40px 0; font-size: 13px; }
+
+        /* 场景集 */
+        .scenario-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+        .scenario-summary { padding: 10px 14px; background: #fff; border-radius: 4px; border: 1px solid #e5e6eb; font-size: 13px; margin-bottom: 12px; }
+        .scenario-group { background: #fff; border: 1px solid #e5e6eb; border-radius: 4px; margin-bottom: 10px; }
+        .scenario-group-header { padding: 10px 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f0f0f0; }
+        .scenario-group-header .count { font-size: 11px; color: #86909c; font-weight: 400; }
+        .scenario-group-header .pass-count { color: #00b42a; font-size: 11px; }
+        .scenario-group-header .fail-count { color: #f53f3f; font-size: 11px; }
+        .scenario-group-body { display: none; }
+        .scenario-group-body.open { display: block; }
+        .scenario-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid #f7f8fa; font-size: 13px; }
+        .scenario-row:last-child { border-bottom: none; }
+        .scenario-status { width: 20px; font-weight: 600; }
+        .scenario-status.pass { color: #00b42a; }
+        .scenario-status.fail { color: #f53f3f; }
+        .scenario-status.pending { color: #c9cdd4; }
+        .scenario-name { flex: 1; }
+        .scenario-time { font-size: 11px; color: #86909c; min-width: 60px; text-align: right; }
+        .scenario-detail { margin: 4px 14px 8px 44px; padding: 8px; background: #fff7f0; border-radius: 4px; font-size: 12px; border-left: 3px solid #f53f3f; }
+        .scenario-detail .detail-line { margin: 2px 0; }
+        .scenario-detail pre { margin-top: 6px; background: #f7f8fa; padding: 6px; border-radius: 3px; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+        .loading { color: #165dff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display:flex;align-items:center;">
+            <h1>MQL Playground</h1>
+            <span class="desc">MQL → SQL 可视化调试与交互式测试平台（geelato-mql-test 内置版）</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;color:#86909c;">模拟身份:</span>
+            <select id="tenantSelect" class="entity-select" style="width:120px;padding:3px;" onchange="loadUsers()">
+                <option value="">租户</option>
+            </select>
+            <select id="userSelect" class="entity-select" style="width:180px;padding:3px;">
+                <option value="">不注入用户</option>
+            </select>
+            <button class="sm danger" onclick="cleanup()">清理数据</button>
+            <button class="sm" onclick="initSchema()">初始化测试表</button>
+        </div>
+    </div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('playground')">调试台</div>
+        <div class="tab" onclick="switchTab('scenarios')">测试场景集</div>
+    </div>
+
+    <!-- ==================== Tab1: 调试台 ==================== -->
+    <div id="tab-playground" class="content">
+        <div class="playground-grid">
+            <!-- 左栏：实体/字段 -->
+            <div class="panel">
+                <div class="panel-header">实体 / 字段</div>
+                <div class="panel-body">
+                    <select class="entity-select" id="entitySelect" onchange="loadSchema()">
+                        <option value="">选择实体...</option>
+                    </select>
+                    <div id="fieldList"></div>
+                </div>
+            </div>
+            <!-- 中栏：编辑器 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>MQL 编辑器</span>
+                    <div class="editor-toolbar">
+                        <button class="sm" onclick="formatJson()">格式化</button>
+                        <button class="sm" onclick="clearEditor()">清空</button>
+                        <button class="sm" onclick="validate()">校验</button>
+                        <button class="sm" onclick="explain()">Explain</button>
+                        <button class="sm primary" onclick="execute()">Execute</button>
+                    </div>
+                </div>
+                <textarea class="mql-textarea" id="mqlInput" spellcheck="false" placeholder='输入 MQL JSON，例如 {"mql_test_user":{"name|eq":"张三"}}'></textarea>
+            </div>
+            <!-- 右栏：结果 -->
+            <div class="panel">
+                <div class="panel-header" id="resultPanelHeader">结果</div>
+                <div class="panel-body" id="resultBody">
+                    <div class="empty">点击 Explain 或 Execute 查看结果</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== Tab2: 测试场景集 ==================== -->
+    <div id="tab-scenarios" class="content hidden">
+        <div class="scenario-toolbar">
+            <button class="primary" onclick="runAll()">全部运行</button>
+            <span id="scenarioSummaryText" style="font-size:13px;color:#86909c;">点击"全部运行"执行所有场景</span>
+        </div>
+        <div id="scenarioList">
+            <div class="empty">加载场景中...</div>
+        </div>
+    </div>
+
+<script>
+    // ==================== 全局状态 ====================
+    const DEFAULT_MQL = '{\n  "mql_test_user": {\n    "name|eq": "张三",\n    "@p": "1,10"\n  }\n}';
+    let currentResult = null;
+
+    document.getElementById('mqlInput').value = DEFAULT_MQL;
+
+    // ==================== Tab 切换 ====================
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById('tab-playground').classList.add('hidden');
+        document.getElementById('tab-scenarios').classList.add('hidden');
+        document.getElementById('tab-' + tab).classList.remove('hidden');
+        if (tab === 'scenarios' && !document.getElementById('scenarioList').dataset.loaded) {
+            loadScenarios();
+        }
+    }
+
+    // ==================== API 调用 ====================
+    async function api(url, options = {}) {
+        const opts = { headers: { 'Content-Type': 'application/json' }, ...options };
+        const res = await fetch(url, opts);
+        const json = await res.json();
+        // ApiResult 结构：{data, code, msg, status}
+        return json;
+    }
+
+    async function apiPost(url, body) {
+        const opts = { method: 'POST' };
+        if (body !== undefined) opts.body = JSON.stringify(body);
+        return api(url, opts);
+    }
+
+    function unwrap(json) {
+        // ApiResult: 成功 code=20000, data 在 data 字段
+        if (json && json.data !== undefined) return json.data;
+        return json;
+    }
+
+    // ==================== 实体/字段 ====================
+    async function loadEntities() {
+        try {
+            const data = unwrap(await api('/api/mql/entities'));
+            const sel = document.getElementById('entitySelect');
+            (data || []).forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e; opt.textContent = e;
+                sel.appendChild(opt);
+            });
+        } catch (e) { console.error('加载实体失败', e); }
+    }
+
+    async function loadSchema() {
+        const entity = document.getElementById('entitySelect').value;
+        const list = document.getElementById('fieldList');
+        list.innerHTML = '';
+        if (!entity) return;
+        try {
+            const schema = unwrap(await api('/api/mql/schema/' + encodeURIComponent(entity)));
+            let html = '<div class="field-section">字段 (' + (schema.fields||[]).length + ')</div>';
+            (schema.fields || []).forEach(f => {
+                html += `<div class="field-item" title="${f.fieldName} → ${f.columnName} (${f.dataType})" onclick="insertField('${f.fieldName}')">
+                    <span class="field-name">${f.fieldName}</span>
+                    ${f.isJson ? '<span class="tag">JSON</span>' : ''}
+                    <span class="field-type">${f.dataType}</span>
+                </div>`;
+            });
+            if (schema.foreigns && schema.foreigns.length) {
+                html += '<div class="field-section" style="margin-top:8px;">外键 (' + schema.foreigns.length + ')</div>';
+                schema.foreigns.forEach(fk => {
+                    html += `<div class="field-item" title="${fk.mainTableCol} → ${fk.foreignTable}" onclick="insertForeign('${fk.mainTableCol}','${fk.foreignTable}')">
+                        <span class="field-name">${fk.mainTableCol}</span>
+                        <span class="field-type">→ ${fk.foreignTable}</span>
+                    </div>`;
+                });
+            }
+            list.innerHTML = html;
+        } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
+    }
+
+    function insertField(name) {
+        const ta = document.getElementById('mqlInput');
+        ta.value += `"${name}|eq":"",`;
+        ta.focus();
+    }
+    function insertForeign(col, table) {
+        const ta = document.getElementById('mqlInput');
+        ta.value += `"@fs":"ref(${col}->name) ${table}Name",`;
+        ta.focus();
+    }
+
+    // ==================== 调试台操作 ====================
+    function getMql() { return document.getElementById('mqlInput').value.trim(); }
+
+    /** 获取当前选择的模拟身份，合并到请求体 */
+    function withIdentity(extra = {}) {
+        const u = document.getElementById('userSelect').value;
+        const t = document.getElementById('tenantSelect').value;
+        const body = Object.assign({}, extra);
+        if (u) body.loginName = u;
+        if (t) body.tenantCode = t;
+        return body;
+    }
+
+    async function explain() {
+        if (!getMql()) return alert('请输入 MQL');
+        try {
+            const data = unwrap(await apiPost('/api/mql/explain', withIdentity({ mql: getMql() })));
+            renderExplain(data);
+        } catch (e) { renderError(e.message); }
+    }
+
+    async function execute() {
+        if (!getMql()) return alert('请输入 MQL');
+        try {
+            const data = unwrap(await apiPost('/api/mql/execute', withIdentity({ mql: getMql() })));
+            renderExecute(data);
+        } catch (e) { renderError(e.message); }
+    }
+
+    async function validate() {
+        if (!getMql()) return;
+        try {
+            const data = unwrap(await apiPost('/api/mql/validate', withIdentity({ mql: getMql() })));
+            if (data.valid) { alert('✓ 校验通过，实体: ' + data.entityName); }
+            else { alert('✗ 校验失败:\n' + data.errors.join('\n')); }
+        } catch (e) { alert('校验请求失败: ' + e.message); }
+    }
+
+    function formatJson() {
+        try {
+            document.getElementById('mqlInput').value = JSON.stringify(JSON.parse(getMql()), null, 2);
+        } catch (e) { alert('JSON 格式错误'); }
+    }
+    function clearEditor() {
+        document.getElementById('mqlInput').value = '';
+        document.getElementById('resultBody').innerHTML = '<div class="empty">已清空</div>';
+    }
+
+    // ==================== 结果渲染 ====================
+    function renderExplain(data) {
+        currentResult = data;
+        let html = '<div class="result-tabs">';
+        html += '<div class="result-tab active" onclick="switchResultTab(\'sql\',this)">生成SQL</div>';
+        html += '<div class="result-tab" onclick="switchResultTab(\'params\',this)">参数</div>';
+        if (data.countSql) html += '<div class="result-tab" onclick="switchResultTab(\'countSql\',this)">Count SQL</div>';
+        html += '<div class="result-tab" onclick="switchResultTab(\'ast\',this)">AST</div>';
+        html += '</div><div id="resultTabContent"></div>';
+        document.getElementById('resultBody').innerHTML = html;
+        document.getElementById('resultPanelHeader').textContent = 'Explain 结果' + (data.success ? '' : ' (失败)');
+        switchResultTab('sql', document.querySelector('.result-tab'));
+        if (!data.success) renderError(data.error);
+    }
+
+    function renderExecute(data) {
+        let html = '';
+        if (!data.success) { renderError(data.error); return; }
+        html += '<div class="result-tabs">';
+        html += '<div class="result-tab active" onclick="switchResultTab(\'sql\',this)">生成SQL</div>';
+        html += '<div class="result-tab" onclick="switchResultTab(\'params\',this)">参数</div>';
+        html += '<div class="result-tab" onclick="switchResultTab(\'rows\',this)">执行结果(' + data.rowCount + '行)</div>';
+        if (data.countSql) html += '<div class="result-tab" onclick="switchResultTab(\'countSql\',this)">Count SQL</div>';
+        html += '</div><div id="resultTabContent"></div>';
+        document.getElementById('resultBody').innerHTML = html;
+        document.getElementById('resultPanelHeader').textContent = `Execute 结果 (${data.rowCount} 行, ${data.elapsedMs}ms)`;
+        // 存数据供 tab 切换
+        currentResult = data;
+        switchResultTab('sql', document.querySelector('.result-tab'));
+    }
+
+    function switchResultTab(key, el) {
+        document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
+        if (el) el.classList.add('active');
+        const c = document.getElementById('resultTabContent');
+        const r = currentResult;
+        if (!r) return;
+        if (key === 'sql') c.innerHTML = `<div class="sql-block">${esc(r.sql || '')}</div>`;
+        else if (key === 'countSql') c.innerHTML = `<div class="sql-block">${esc(r.countSql || '')}</div>`;
+        else if (key === 'ast') c.innerHTML = `<div class="ast-block">${esc(JSON.stringify(r.ast || r, null, 2))}</div>`;
+        else if (key === 'params') {
+            if (!r.params || !r.params.length) c.innerHTML = '<div class="empty">无参数</div>';
+            else c.innerHTML = r.params.map((p, i) => `<div class="param-item"><span class="param-idx">[${i}]</span><span>${esc(p)}</span><span class="field-type">${sqlTypeName(r.types && r.types[i])}</span></div>`).join('');
+        } else if (key === 'rows') {
+            if (!r.rows || !r.rows.length) c.innerHTML = '<div class="empty">无数据</div>';
+            else {
+                const cols = Object.keys(r.rows[0]);
+                let t = '<table class="data-table"><thead><tr>' + cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>';
+                r.rows.forEach(row => { t += '<tr>' + cols.map(c => `<td>${esc(row[c])}</td>`).join('') + '</tr>'; });
+                t += '</tbody></table>';
+                c.innerHTML = t;
+            }
+        }
+    }
+
+    function renderError(msg) {
+        document.getElementById('resultBody').innerHTML = `<div style="padding:12px;color:#f53f3f;background:#fff7f0;border-radius:4px;">✗ ${esc(msg || '未知错误')}</div>`;
+    }
+
+    function sqlTypeName(t) {
+        const m = { 4: 'INTEGER', '-5': 'BIGINT', 12: 'VARCHAR', 3: 'DECIMAL', 93: 'TIMESTAMP', 91: 'DATE' };
+        return t !== undefined && t !== null ? `${t} (${m[t] || '?'})` : '';
+    }
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ==================== 测试场景集 ====================
+    let allScenarios = [];
+
+    async function loadScenarios() {
+        try {
+            const data = unwrap(await api('/api/mql/scenarios'));
+            allScenarios = [];
+            let html = '';
+            Object.entries(data || {}).forEach(([category, scenarios], gi) => {
+                allScenarios.push(...scenarios);
+                html += `<div class="scenario-group" id="group-${gi}">
+                    <div class="scenario-group-header" onclick="toggleGroup(${gi})">
+                        <span>▶</span><span>${esc(category)}</span>
+                        <span class="count">(${scenarios.length})</span>
+                        <span class="pass-count" id="pass-${gi}"></span>
+                        <span class="fail-count" id="fail-${gi}"></span>
+                    </div>
+                    <div class="scenario-group-body" id="body-${gi}">`;
+                scenarios.forEach(s => {
+                    html += `<div class="scenario-row" id="row-${esc(s.id)}">
+                        <span class="scenario-status pending">○</span>
+                        <span class="scenario-name">${esc(s.name)}</span>
+                        <button class="sm" onclick="runOne('${esc(s.id)}')">运行</button>
+                        <span class="scenario-time" id="time-${esc(s.id)}"></span>
+                    </div>`;
+                });
+                html += '</div></div>';
+            });
+            document.getElementById('scenarioList').innerHTML = html || '<div class="empty">无场景（未配置数据源）</div>';
+            document.getElementById('scenarioList').dataset.loaded = '1';
+        } catch (e) {
+            document.getElementById('scenarioList').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '（可能未配置数据源）</div>';
+        }
+    }
+
+    function toggleGroup(gi) {
+        const body = document.getElementById('body-' + gi);
+        body.classList.toggle('open');
+        const header = document.querySelector(`#group-${gi} .scenario-group-header span`);
+        header.textContent = body.classList.contains('open') ? '▼' : '▶';
+    }
+
+    async function runOne(id) {
+        const row = document.getElementById('row-' + id);
+        const status = row.querySelector('.scenario-status');
+        status.className = 'scenario-status pending';
+        status.textContent = '…';
+        try {
+            const result = unwrap(await apiPost('/api/mql/scenarios/run/' + encodeURIComponent(id), withIdentity({})));
+            renderScenarioResult(id, result);
+        } catch (e) {
+            status.className = 'scenario-status fail';
+            status.textContent = '✗';
+        }
+        updateGroupCounts();
+    }
+
+    async function runAll() {
+        document.getElementById('scenarioSummaryText').innerHTML = '<span class="loading">运行中...</span>';
+        let passed = 0, failed = 0;
+        for (const s of allScenarios) {
+            try {
+                const result = unwrap(await apiPost('/api/mql/scenarios/run/' + encodeURIComponent(s.id)));
+                renderScenarioResult(s.id, result);
+                if (result.passed) passed++; else failed++;
+            } catch (e) { failed++; }
+        }
+        document.getElementById('scenarioSummaryText').textContent = `共 ${allScenarios.length} 场景，通过 ${passed}，失败 ${failed}`;
+        updateGroupCounts();
+        // 展开所有组
+        document.querySelectorAll('.scenario-group-body').forEach(b => b.classList.add('open'));
+        document.querySelectorAll('.scenario-group-header span:first-child').forEach(s => s.textContent = '▼');
+    }
+
+    function renderScenarioResult(id, r) {
+        const row = document.getElementById('row-' + id);
+        if (!row) return;
+        const status = row.querySelector('.scenario-status');
+        status.className = 'scenario-status ' + (r.passed ? 'pass' : 'fail');
+        status.textContent = r.passed ? '✓' : '✗';
+        document.getElementById('time-' + id).textContent = r.elapsedMs + 'ms';
+        // 移除旧详情
+        const oldDetail = row.querySelector('.scenario-detail');
+        if (oldDetail) oldDetail.remove();
+        if (!r.passed) {
+            const detail = document.createElement('div');
+            detail.className = 'scenario-detail';
+            let html = '';
+            if (r.error) html += `<div class="detail-line">✗ ${esc(r.error)}</div>`;
+            if (r.expectedRowCount !== null && r.actualRowCount !== null) {
+                html += `<div class="detail-line">行数: 期望 ${r.expectedRowCount}, 实际 ${r.actualRowCount}</div>`;
+            }
+            (r.details || []).forEach(d => { if (d.includes('不匹配') || d.includes('失败')) html += `<div class="detail-line">${esc(d)}</div>`; });
+            if (r.sql) html += `<pre>${esc(r.sql)}</pre>`;
+            detail.innerHTML = html;
+            row.appendChild(detail);
+        }
+    }
+
+    function updateGroupCounts() {
+        document.querySelectorAll('.scenario-group').forEach((g, gi) => {
+            const rows = g.querySelectorAll('.scenario-row');
+            let p = 0, f = 0;
+            rows.forEach(r => {
+                const s = r.querySelector('.scenario-status');
+                if (s.classList.contains('pass')) p++;
+                if (s.classList.contains('fail')) f++;
+            });
+            document.getElementById('pass-' + gi).textContent = p ? `✓${p}` : '';
+            document.getElementById('fail-' + gi).textContent = f ? `✗${f}` : '';
+        });
+    }
+
+    // ==================== 建表/清理 ====================
+    async function initSchema() {
+        if (!confirm('确认在当前数据库创建 mql_test_* 测试表？')) return;
+        try {
+            const msg = unwrap(await apiPost('/api/mql/scenarios/initSchema', {}));
+            alert(msg);
+        } catch (e) { alert('建表失败: ' + e.message); }
+    }
+    async function cleanup() {
+        if (!confirm('确认清理所有 mql_test_* 表数据？')) return;
+        try {
+            const msg = unwrap(await apiPost('/api/mql/scenarios/cleanup', {}));
+            alert(msg);
+        } catch (e) { alert('清理失败: ' + e.message); }
+    }
+
+    // ==================== 模拟身份 ====================
+    async function loadTenants() {
+        try {
+            const data = unwrap(await api('/api/mql/identities/tenants'));
+            const sel = document.getElementById('tenantSelect');
+            (data || []).forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t; opt.textContent = t;
+                sel.appendChild(opt);
+            });
+        } catch (e) { console.warn('加载租户失败', e); }
+    }
+
+    async function loadUsers() {
+        const tenant = document.getElementById('tenantSelect').value;
+        const sel = document.getElementById('userSelect');
+        sel.innerHTML = '<option value="">不注入用户</option>';
+        if (!tenant) return;
+        try {
+            const data = unwrap(await api('/api/mql/identities/users?tenantCode=' + encodeURIComponent(tenant)));
+            (data || []).forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.loginName;
+                opt.textContent = `${u.loginName} (${u.userName || ''})`;
+                sel.appendChild(opt);
+            });
+        } catch (e) { console.warn('加载用户失败', e); }
+    }
+
+    // ==================== 初始化 ====================
+    loadEntities();
+    loadTenants();
+</script>
+</body>
+</html>

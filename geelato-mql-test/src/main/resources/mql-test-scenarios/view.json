@@ -1,0 +1,29 @@
+[
+  {
+    "id": "view-default-derived",
+    "name": "DEFAULT视图-派生表查询",
+    "category": "视图",
+    "setup": [
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tenant_code) VALUES (1, 'NO1', 1, 100, 'pending', 'test')",
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tenant_code) VALUES (2, 'NO2', 2, 200, 'done', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_order WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_order_view\":{}}",
+    "expectRowCount": 2,
+    "expectSqlContains": "from (",
+    "description": "视图查询依赖元数据中已注册 mql_test_order_view 实体（含view_construct模板）。首次使用需点击页面'注册测试元数据'按钮。"
+  },
+  {
+    "id": "view-template-filter",
+    "name": "视图模板-@pf参数过滤",
+    "category": "视图",
+    "setup": [
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tenant_code) VALUES (1, 'NO1', 1, 100, 'pending', 'test')",
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tenant_code) VALUES (2, 'NO2', 2, 200, 'done', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_order WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_order_view\":{\"@pf\":{\"statusFilter\":\"pending\"}}}",
+    "expectRowCount": 1,
+    "description": "视图模板渲染 statusFilter=pending。注意 @pf 由 RuleService 层处理，直接解析需手动设置 viewTemplateParams。"
+  }
+]

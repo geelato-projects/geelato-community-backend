@@ -1,12 +1,10 @@
 package cn.geelato.web.platform.run;
 
 import cn.geelato.core.GlobalContext;
-import cn.geelato.core.orm.SqlExecuteException;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.exception.CoreException;
-import cn.geelato.lang.exception.UnSupportedVersionException;
-import cn.geelato.web.platform.plugin.UnFoundPluginException;
+import cn.geelato.lang.exception.ErrorCode;
 import cn.geelato.utils.BeanValidators;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson.JSON;
@@ -30,6 +28,8 @@ import java.util.Map;
 @Slf4j
 public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
 
+    private final ErrorDocResolver errorDocResolver = new ErrorDocResolver();
+
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {ConstraintViolationException.class})
     public final ResponseEntity<?> handleException(ConstraintViolationException ex, WebRequest request) {
         Map<String, String> errors = BeanValidators.extractPropertyAndMessage(ex.getConstraintViolations());
@@ -42,32 +42,43 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {CoreException.class})
     public final ResponseEntity<?> handleException(CoreException ex, WebRequest request) {
-        ApiResult<PlatformRuntimeException> apiResult = ApiResult.fail(coreException2PlatformException(ex),
+        PlatformErrorResult errorResult = coreException2PlatformErrorResult(ex);
+        ApiResult<PlatformErrorResult> apiResult = ApiResult.fail(errorResult,
                 ex.getErrorMsg() != null ? ex.getErrorMsg() : "系统异常");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
-        return handleExceptionInternal(ex, apiResult, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);
+        // 按 ErrorCode 声明的 HTTP 状态码返回（鉴权类 401/403/400，其余默认 500）
+        HttpStatus httpStatus = HttpStatus.resolve(resolveHttpStatus(ex));
+        return handleExceptionInternal(ex, apiResult, headers, httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
-    private PlatformRuntimeException coreException2PlatformException(CoreException coreException) {
-        PlatformRuntimeException platformRuntimeException = new PlatformRuntimeException(coreException);
+    private PlatformErrorResult coreException2PlatformErrorResult(CoreException coreException) {
+        PlatformErrorResult errorResult = new PlatformErrorResult(coreException);
         String logTag = Long.toString(UIDGenerator.generate());
-        String logMessage = "logTag=" + logTag + "|userId=" + platformRuntimeException.getOccurUserId() + "|occurTime=" + platformRuntimeException.getOccurTime();
+        String logMessage = "logTag=" + logTag + "|userId=" + errorResult.getOccurUserId() + "|occurTime=" + errorResult.getOccurTime();
         log.error(logMessage, coreException);
-        platformRuntimeException.setLogTag(logTag);
+        errorResult.setLogTag(logTag);
+        errorResult.setDocUrl(errorDocResolver.resolve(coreException));
         if (!GlobalContext.getLogStack()) {
-            platformRuntimeException.setCoreException(null);
+            errorResult.setCoreException(null);
         }
-        return platformRuntimeException;
+        return errorResult;
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(value = {UnFoundPluginException.class})
-    public final ResponseEntity<?> handleException(UnFoundPluginException ex, WebRequest request) {
-        UnSupportedVersionException unSupportedVersionException = new UnSupportedVersionException();
-        ApiResult<UnSupportedVersionException> apiResult = ApiResult.fail(unSupportedVersionException.getErrorCode(), unSupportedVersionException.getErrorMsg());
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
-        return handleExceptionInternal(ex, apiResult, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);
+    /**
+     * 从 {@link ErrorCode} 读取声明的 HTTP 状态码；异常未持有 ErrorCode 时回退到 500。
+     */
+    private int resolveHttpStatus(CoreException ex) {
+        ErrorCode ec = ex.getError();
+        if (ec == null) {
+            return HttpStatus.INTERNAL_SERVER_ERROR.value();
+        }
+        int status = ec.getHttpStatus();
+        // 仅放行标准可用的 4xx/5xx 状态码，避免异常类误声明非法值导致 ResponseEntity 构造失败
+        if (status >= 400 && status <= 599) {
+            return status;
+        }
+        return HttpStatus.INTERNAL_SERVER_ERROR.value();
     }
 
     /**
@@ -76,7 +87,8 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler
     public final ResponseEntity<?> handleOtherException(Exception ex, WebRequest request) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(MediaTypes.TEXT_PLAIN_UTF_8));
-        return handleExceptionInternal(ex, ex.getMessage(), headers, HttpStatus.BAD_REQUEST, request);
+        headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
+        ApiResult<Object> apiResult = ApiResult.fail(ex.getMessage() != null ? ex.getMessage() : "系统异常");
+        return handleExceptionInternal(ex, apiResult, headers, HttpStatus.BAD_REQUEST, request);
     }
 }

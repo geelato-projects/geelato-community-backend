@@ -1,0 +1,186 @@
+[
+  {
+    "id": "where-eq-string",
+    "name": "eq操作符-字符串相等",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'zhangsan', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'lisi', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"name|eq\":\"张三\"}}",
+    "expectRowCount": 1,
+    "expectFirstRow": {"name": "张三"},
+    "expectSqlContains": "where name=?",
+    "description": "eq应生成参数化SQL并精确匹配"
+  },
+  {
+    "id": "where-neq",
+    "name": "neq操作符-不等于",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"name|neq\":\"张三\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "where name!=?"
+  },
+  {
+    "id": "where-lt",
+    "name": "lt操作符-小于",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"age|lt\":\"28\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "where age<?"
+  },
+  {
+    "id": "where-lte",
+    "name": "lte操作符-小于等于",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"age|lte\":\"25\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "where age<=?"
+  },
+  {
+    "id": "where-gt",
+    "name": "gt操作符-大于",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"age|gt\":\"28\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "where age>?"
+  },
+  {
+    "id": "where-gte",
+    "name": "gte操作符-大于等于",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"age|gte\":\"30\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "where age>=?"
+  },
+  {
+    "id": "where-startwith",
+    "name": "startwith操作符-前缀匹配",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"name|startwith\":\"张\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "like CONCAT('',?,'%')"
+  },
+  {
+    "id": "where-endwith",
+    "name": "endwith操作符-后缀匹配",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"name|endwith\":\"三\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "like CONCAT('%',?,'')"
+  },
+  {
+    "id": "where-contains",
+    "name": "contains操作符-包含",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三丰', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"name|contains\":\"三\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "like CONCAT('%',?,'%')"
+  },
+  {
+    "id": "where-in",
+    "name": "in操作符-集合包含",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (3, '王五', 28, 'c', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2,3)"],
+    "mql": "{\"mql_test_user\":{\"id|in\":\"1,2\"}}",
+    "expectRowCount": 2,
+    "expectSqlContains": "in(?,?)"
+  },
+  {
+    "id": "where-nin",
+    "name": "nin操作符-集合排除",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"id|nin\":\"1\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "not in(?)"
+  },
+  {
+    "id": "where-nil-isnull",
+    "name": "nil操作符-为空(IS NULL)",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '无邮箱', 20, 'a', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1)"],
+    "mql": "{\"mql_test_user\":{\"email|nil\":\"1\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "is NULL"
+  },
+  {
+    "id": "where-nil-isnotnull",
+    "name": "nil操作符-非空(IS NOT NULL)",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, email, tenant_code) VALUES (1, '有邮箱', 20, 'a', 'a@b.com', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1)"],
+    "mql": "{\"mql_test_user\":{\"email|nil\":\"0\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "is NOT NULL"
+  },
+  {
+    "id": "where-bt",
+    "name": "bt操作符-区间(between)",
+    "category": "WHERE过滤",
+    "setup": [
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (1, '张三', 25, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (2, '李四', 30, 'b', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, login_name, tenant_code) VALUES (3, '王五', 40, 'c', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2,3)"],
+    "mql": "{\"mql_test_user\":{\"age|bt\":\"[20,35]\"}}",
+    "expectRowCount": 2,
+    "expectSqlContains": "between"
+  }
+]

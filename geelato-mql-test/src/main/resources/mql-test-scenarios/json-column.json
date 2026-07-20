@@ -1,0 +1,39 @@
+[
+  {
+    "id": "json-fis-single",
+    "name": "JSON列-fis单值匹配",
+    "category": "JSON列",
+    "setup": [
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tags, tenant_code) VALUES (1, 'NO1', 1, 100, 'pending', '[\"red\", \"blue\"]', 'test')",
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tags, tenant_code) VALUES (2, 'NO2', 2, 200, 'done', '[\"green\"]', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_order WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_order\":{\"tags|fis\":\"red\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "JSON_CONTAINS"
+  },
+  {
+    "id": "json-fis-multi",
+    "name": "JSON列-fis多值匹配(OR)",
+    "category": "JSON列",
+    "setup": [
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tags, tenant_code) VALUES (1, 'NO1', 1, 100, 'pending', '[\"red\", \"blue\"]', 'test')",
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tags, tenant_code) VALUES (2, 'NO2', 2, 200, 'done', '[\"green\"]', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_order WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_order\":{\"tags|fis\":\"red,green\"}}",
+    "expectRowCount": 2,
+    "expectSqlContains": "or"
+  },
+  {
+    "id": "json-fis-no-match",
+    "name": "JSON列-fis无匹配返回0行",
+    "category": "JSON列",
+    "setup": [
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tags, tenant_code) VALUES (1, 'NO1', 1, 100, 'pending', '[\"red\"]', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_order WHERE id IN (1)"],
+    "mql": "{\"mql_test_order\":{\"tags|fis\":\"black\"}}",
+    "expectRowCount": 0
+  }
+]

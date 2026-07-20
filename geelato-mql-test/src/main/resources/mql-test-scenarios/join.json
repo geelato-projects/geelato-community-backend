@@ -1,0 +1,65 @@
+[
+  {
+    "id": "join-ref-org",
+    "name": "ref关联-org名称",
+    "category": "JOIN关联",
+    "setup": [
+      "INSERT INTO mql_test_org (id, name, code, tenant_code) VALUES (1, '技术部', 'TECH', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, org_id, login_name, tenant_code) VALUES (1, '张三', 25, 1, 'a', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1)", "DELETE FROM mql_test_org WHERE id IN (1)"],
+    "mql": "{\"mql_test_user\":{\"@fs\":\"name,ref(orgId->name) orgName\"}}",
+    "expectRowCount": 1,
+    "expectFirstRow": {"name": "张三"},
+    "expectSqlContains": "left join"
+  },
+  {
+    "id": "join-ref-filter",
+    "name": "ref关联+过滤条件",
+    "category": "JOIN关联",
+    "setup": [
+      "INSERT INTO mql_test_org (id, name, code, tenant_code) VALUES (1, '技术部', 'TECH', 'test')",
+      "INSERT INTO mql_test_org (id, name, code, tenant_code) VALUES (2, '市场部', 'MKT', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, org_id, login_name, tenant_code) VALUES (1, '张三', 25, 1, 'a', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, org_id, login_name, tenant_code) VALUES (2, '李四', 30, 2, 'b', 'test')"
+    ],
+    "teardown": ["DELETE FROM mql_test_user WHERE id IN (1,2)", "DELETE FROM mql_test_org WHERE id IN (1,2)"],
+    "mql": "{\"mql_test_user\":{\"@fs\":\"name,ref(orgId->name) orgName\",\"orgId|eq\":\"1\"}}",
+    "expectRowCount": 1,
+    "expectFirstRow": {"name": "张三"}
+  },
+  {
+    "id": "join-multi-level",
+    "name": "多级关联-order→user→org",
+    "category": "JOIN关联",
+    "setup": [
+      "INSERT INTO mql_test_org (id, name, code, tenant_code) VALUES (1, '技术部', 'TECH', 'test')",
+      "INSERT INTO mql_test_user (id, name, age, org_id, login_name, tenant_code) VALUES (1, '张三', 25, 1, 'a', 'test')",
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tenant_code) VALUES (1, 'NO1', 1, 100, 'pending', 'test')"
+    ],
+    "teardown": [
+      "DELETE FROM mql_test_order WHERE id IN (1)",
+      "DELETE FROM mql_test_user WHERE id IN (1)",
+      "DELETE FROM mql_test_org WHERE id IN (1)"
+    ],
+    "mql": "{\"mql_test_order\":{\"@fs\":\"orderNo,ref(userId->name) userName\"}}",
+    "expectRowCount": 1,
+    "expectSqlContains": "left join"
+  },
+  {
+    "id": "join-order-items",
+    "name": "订单-明细关联",
+    "category": "JOIN关联",
+    "setup": [
+      "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tenant_code) VALUES (1, 'NO1', 1, 100, 'pending', 'test')",
+      "INSERT INTO mql_test_order_item (id, order_id, product_name, qty, price, tenant_code) VALUES (1, 1, '商品A', 2, 50, 'test')"
+    ],
+    "teardown": [
+      "DELETE FROM mql_test_order_item WHERE id IN (1)",
+      "DELETE FROM mql_test_order WHERE id IN (1)"
+    ],
+    "mql": "{\"mql_test_order_item\":{\"@fs\":\"productName,qty,ref(orderId->orderNo) orderNo\"}}",
+    "expectRowCount": 1,
+    "expectFirstRow": {"productName": "商品A"}
+  }
+]

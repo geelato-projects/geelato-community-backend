@@ -1,16 +1,23 @@
 package cn.geelato.lang.exception;
 
-public class UnSupportedVersionException extends CoreException{
-    private static final int DEFAULT_CODE = 10006;
-    private static final String DEFAULT_MSG = "The current version does not support this operation！";
+import cn.geelato.lang.exception.LangErrorCodes;
 
-    public UnSupportedVersionException(){
-        super(DEFAULT_CODE, DEFAULT_MSG);
+/**
+ * 当前版本不支持该操作时抛出。
+ *
+ * @author geelato
+ */
+public class UnSupportedVersionException extends CoreException {
+
+    public UnSupportedVersionException() {
+        super(LangErrorCodes.UNSUPPORTED_VERSION);
     }
+
     public UnSupportedVersionException(String msg) {
-        super(DEFAULT_CODE, msg);
+        super(LangErrorCodes.UNSUPPORTED_VERSION, msg);
     }
+
     public UnSupportedVersionException(String msg, Throwable cause) {
-        super(DEFAULT_CODE, msg, cause);
+        super(LangErrorCodes.UNSUPPORTED_VERSION, msg, cause);
     }
 }

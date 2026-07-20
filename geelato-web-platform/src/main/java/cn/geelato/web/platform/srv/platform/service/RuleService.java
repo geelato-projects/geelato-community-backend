@@ -24,6 +24,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.utils.CacheUtil;
 import cn.geelato.web.platform.cache.MetaCacheProvider;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections.map.HashedMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -61,7 +62,7 @@ public class RuleService {
         if (!GlobalContext.getMetaQueryCacheOption()) {
             return dao.queryForMap(boundSql);
         }
-        String key = "query:" + command.getEntityName() + ":" + command.getCacheKey() + ":map";
+        String key = buildCacheKey(command, "map");
         if (metaCache.exists(key)) {
             Object cached = metaCache.getCache(key);
             if (cached instanceof Map) {
@@ -80,7 +81,7 @@ public class RuleService {
         if (!GlobalContext.getMetaQueryCacheOption()) {
             return dao.queryForObject(boundSql, requiredType);
         }
-        String key = "query:" + command.getEntityName() + ":" + command.getCacheKey() + ":obj:" + requiredType.getSimpleName();
+        String key = buildCacheKey(command, "obj:" + requiredType.getSimpleName());
         if (metaCache.exists(key)) {
             Object cached = metaCache.getCache(key);
             try{
@@ -112,9 +113,8 @@ public class RuleService {
             Long total = dao.queryTotal(boundPageSql);
             return createPageResult(list, command.getPageNum(), command.getPageSize(), total, meta, false);
         }
-        String prefix = "query:" + command.getEntityName() + ":" + command.getCacheKey();
-        String kList = prefix + ":list";
-        String kTotal = prefix + ":total";
+        String kList = buildCacheKey(command, "list");
+        String kTotal = buildCacheKey(command, "total");
         if (metaCache.exists(kList) && metaCache.exists(kTotal)) {
             List<Map<String, Object>> cachedList = (List<Map<String, Object>>) metaCache.getCache(kList);
             Long cachedTotal = (Long) metaCache.getCache(kTotal);
@@ -191,9 +191,8 @@ public class RuleService {
         for (QueryCommand command : commandList) {
             applyViewTemplateParams(command, queryParamsByEntity);
             BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
-            String prefix = "query:" + command.getEntityName() + ":" + command.getCacheKey();
-            String kList = prefix + ":list";
-            String kTotal = prefix + ":total";
+            String kList = buildCacheKey(command, "list");
+            String kTotal = buildCacheKey(command, "total");
             List<Map<String, Object>> list;
             Long total;
             if (GlobalContext.getMetaQueryCacheOption() && metaCache.exists(kList) && metaCache.exists(kTotal)) {
@@ -217,6 +216,30 @@ public class RuleService {
             result.put("cache", true);
         }
         return result;
+    }
+
+    /**
+     * 构建 MQL 查询缓存 Key（platform 层）。
+     * <p>
+     * 格式：mql:{tenantCode}:{entityName}:{md5(tenant|entity|signature)}:{suffix}
+     * </p>
+     * <p>
+     * 设计：
+     * <ul>
+     *   <li>core 层的 {@link QueryCommand#signatureString()} 提供查询规范化签名（不含缓存概念）</li>
+     *   <li>platform 层在此叠加 tenant 维度并做 md5 压缩，所有缓存语义集中在本方法</li>
+     *   <li>tenantCode 既作前缀又纳入 md5 输入，多租户双重隔离</li>
+     * </ul>
+     *
+     * @param command 查询命令（parse + SPI 注入 + @pf 填充应已完成）
+     * @param suffix  返回形态后缀，如 "list" / "total" / "map" / "obj:String" / "col:String"
+     */
+    private String buildCacheKey(QueryCommand command, String suffix) {
+        String tenant = SessionCtx.getCurrentTenantCode();
+        String tenantSeg = (tenant == null || tenant.isEmpty()) ? "_" : tenant;
+        String sig = tenantSeg + "|" + command.getEntityName() + "|" + command.signatureString();
+        String hash = DigestUtils.md5Hex(sig).toUpperCase();
+        return "mql:" + tenantSeg + ":" + command.getEntityName() + ":" + hash + ":" + suffix;
     }
 
     private Map<String, Object> createPageResult(List<Map<String, Object>> list, long page, int size, Long total, Object meta, boolean cache) {
@@ -267,7 +290,7 @@ public class RuleService {
         if (!GlobalContext.getMetaQueryCacheOption()) {
             return dao.queryForOneColumnList(boundSql, elementType);
         }
-        String key = "query:" + command.getEntityName() + ":" + command.getCacheKey() + ":col:" + elementType.getSimpleName();
+        String key = buildCacheKey(command, "col:" + elementType.getSimpleName());
         if (metaCache.exists(key)) {
             Object cached = metaCache.getCache(key);
             try{

@@ -1,20 +1,19 @@
 package cn.geelato.core.mql.parser;
 
+import cn.geelato.core.orm.CoreErrorCodes;
 import cn.geelato.lang.exception.CoreException;
 
 public class JsonParseException extends CoreException {
-    private static final int DEFAULT_CODE = 10008;
-    private static final String DEFAULT_MSG = "MQL json解析异常";
 
     public JsonParseException() {
-        super(DEFAULT_CODE, DEFAULT_MSG);
+        super(CoreErrorCodes.MQL_JSON_PARSE);
     }
 
     public JsonParseException(String msg) {
-        super(DEFAULT_CODE, msg);
+        super(CoreErrorCodes.MQL_JSON_PARSE, msg);
     }
 
     public JsonParseException(String msg, Throwable cause) {
-        super(DEFAULT_CODE, msg, cause);
+        super(CoreErrorCodes.MQL_JSON_PARSE, msg, cause);
     }
 }

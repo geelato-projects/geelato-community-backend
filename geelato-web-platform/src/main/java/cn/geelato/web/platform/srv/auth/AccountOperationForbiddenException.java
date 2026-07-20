@@ -1,20 +1,19 @@
 package cn.geelato.web.platform.srv.auth;
 
 import cn.geelato.lang.exception.CoreException;
+import cn.geelato.web.platform.exception.PlatformErrorCodes;
 
 public class AccountOperationForbiddenException extends CoreException {
-    private static final int DEFAULT_CODE = 403;
-    private static final String DEFAULT_MSG = "无权操作该用户";
 
     public AccountOperationForbiddenException() {
-        super(DEFAULT_CODE, DEFAULT_MSG);
+        super(PlatformErrorCodes.ACCOUNT_OPERATION_FORBIDDEN);
     }
 
     public AccountOperationForbiddenException(String message) {
-        super(DEFAULT_CODE, message);
+        super(PlatformErrorCodes.ACCOUNT_OPERATION_FORBIDDEN, message);
     }
 
     public AccountOperationForbiddenException(String message, Throwable cause) {
-        super(DEFAULT_CODE, message, cause);
+        super(PlatformErrorCodes.ACCOUNT_OPERATION_FORBIDDEN, message, cause);
     }
 }

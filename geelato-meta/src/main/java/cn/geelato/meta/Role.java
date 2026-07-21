@@ -11,12 +11,10 @@ import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * Created by hongxueqian on 14-4-12.
- */
+
 @Getter
 @Setter
-@Entity(name = "platform_role")
+@Entity(name = "platform_role", catalog = "platform")
 @Title(title = "角色")
 public class Role extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "应用")

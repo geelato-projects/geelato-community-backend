@@ -11,7 +11,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_role_r_permission")
+@Entity(name = "platform_role_r_permission", catalog = "platform")
 @Title(title = "角色权限关系表")
 public class RolePermissionMap extends BaseEntity {
 

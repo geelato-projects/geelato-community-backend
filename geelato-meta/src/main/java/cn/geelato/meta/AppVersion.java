@@ -16,7 +16,7 @@ import java.util.Date;
  */
 @Getter
 @Setter
-@Entity(name = "platform_app_version")
+@Entity(name = "platform_app_version",catalog = "platform")
 @Title(title = "应用版本")
 public class AppVersion extends BaseEntity {
     @Title(title = "包地址")

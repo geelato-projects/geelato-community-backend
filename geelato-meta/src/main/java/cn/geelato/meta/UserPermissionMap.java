@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(name = "platform_user_r_permission")
+@Entity(name = "platform_user_r_permission", catalog = "platform")
 @Title(title = "用户权限关系表")
 public class UserPermissionMap extends BaseEntity {
 

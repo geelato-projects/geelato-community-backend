@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds" debug="false">
     <contextName>geelato-logback</contextName>
-    <property name="LOG_DIR" value="${LOG_DIR:-/log}"/>
+    <property name="LOG_DIR" value="${LOG_DIR:-~/log}"/>
     <property name="ROOT_LOG_LEVEL" value="${ROOT_LOG_LEVEL:-DEBUG}"/>
     <property name="FILE_LOG_LEVEL" value="${FILE_LOG_LEVEL:-DEBUG}"/>
     <property name="CONSOLE_LOG_LEVEL" value="${CONSOLE_LOG_LEVEL:-${ROOT_LOG_LEVEL}}"/>

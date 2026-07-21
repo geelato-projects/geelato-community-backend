@@ -1,4 +1,4 @@
-package cn.geelato.meta;
+package cn.geelato.meta.email;
 
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.lang.meta.Col;
@@ -15,7 +15,7 @@ import java.util.Date;
  */
 @Getter
 @Setter
-@Entity(name = "platform_email_message")
+@Entity(name = "platform_email_message",catalog = "email")
 @Title(title = "邮件消息")
 public class EmailMessage extends BaseEntity {
 

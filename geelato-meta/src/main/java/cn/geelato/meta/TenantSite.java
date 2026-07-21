@@ -4,7 +4,6 @@ import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,7 +13,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity(name = "platform_tenant_site",catalog = "platform")
-@TableName("platform_tenant_site")
 @Title(title = "租户站点")
 public class TenantSite extends BaseEntity {
 

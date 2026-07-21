@@ -1,9 +1,8 @@
-package cn.geelato.meta;
+package cn.geelato.meta.email;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,8 +10,7 @@ import java.util.Date;
 
 @Getter
 @Setter
-@Entity(name = "platform_user_email_contact")
-@TableName("platform_user_email_contact")
+@Entity(name = "platform_user_email_contact", catalog = "email")
 @Title(title = "用户邮件联系人")
 public class UserEmailContact extends BaseEntity {
     @Title(title = "用户ID")

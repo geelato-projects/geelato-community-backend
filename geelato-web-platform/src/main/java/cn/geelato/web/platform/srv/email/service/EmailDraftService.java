@@ -1,6 +1,6 @@
 package cn.geelato.web.platform.srv.email.service;
 
-import cn.geelato.meta.UserEmailDraft;
+import cn.geelato.meta.email.UserEmailDraft;
 import cn.geelato.orm.Filter;
 import cn.geelato.orm.MetaFactory;
 import cn.geelato.orm.Order;

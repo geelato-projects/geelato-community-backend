@@ -18,7 +18,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_org_r_user")
+@Entity(name = "platform_org_r_user", catalog = "platform")
 @Title(title = "组织用户关系表")
 public class OrgUserMap extends BaseEntity {
     @Title(title = "组织ID")

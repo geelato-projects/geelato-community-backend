@@ -2,7 +2,7 @@ package cn.geelato.web.platform.srv.email.service;
 
 import cn.geelato.meta.User;
 import cn.geelato.meta.UserEmailAccount;
-import cn.geelato.meta.UserEmailContact;
+import cn.geelato.meta.email.UserEmailContact;
 import cn.geelato.orm.Filter;
 import cn.geelato.orm.MetaFactory;
 import cn.geelato.orm.Order;

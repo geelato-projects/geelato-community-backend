@@ -1,4 +1,4 @@
-package cn.geelato.meta;
+package cn.geelato.meta.email;
 
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.lang.meta.Col;
@@ -19,7 +19,7 @@ import java.util.Date;
  */
 @Getter
 @Setter
-@Entity(name = "platform_email_sync_log")
+@Entity(name = "platform_email_sync_log",catalog = "email")
 @Title(title = "邮件同步日志")
 public class EmailSyncLog extends BaseEntity {
 

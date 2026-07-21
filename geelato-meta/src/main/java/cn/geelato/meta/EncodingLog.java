@@ -13,7 +13,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_encoding_log")
+@Entity(name = "platform_encoding_log",catalog = "email")
 @Title(title = "编码记录")
 public class EncodingLog extends BaseEntity {
     @Title(title = "编码模板")

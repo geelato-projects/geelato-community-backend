@@ -1,7 +1,7 @@
 package cn.geelato.web.platform.srv.email.service;
 
-import cn.geelato.meta.EmailAttachment;
-import cn.geelato.meta.EmailMessage;
+import cn.geelato.meta.email.EmailAttachment;
+import cn.geelato.meta.email.EmailMessage;
 import cn.geelato.meta.UserEmailAccount;
 import cn.geelato.orm.Filter;
 import cn.geelato.orm.MetaFactory;

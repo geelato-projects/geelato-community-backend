@@ -10,12 +10,9 @@ import cn.geelato.meta.User;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * Created by hongxq on 2015/6/17.
- */
 @Getter
 @Setter
-@Entity(name = "platform_role_r_user")
+@Entity(name = "platform_role_r_user", catalog = "platform")
 @Title(title = "角色用户关系表")
 public class RoleUserMap extends BaseEntity {
     @Title(title = "角色ID")

@@ -14,7 +14,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_role_r_tree_node")
+@Entity(name = "platform_role_r_tree_node", catalog = "platform")
 @Title(title = "角色菜单关系表")
 public class RoleTreeNodeMap extends BaseEntity {
     @Title(title = "应用Id")

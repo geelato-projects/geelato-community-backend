@@ -11,7 +11,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(name = "platform_role_r_app")
+@Entity(name = "platform_role_r_app", catalog = "platform")
 @Title(title = "角色APP关系表")
 public class RoleAppMap extends BaseEntity {
     @Title(title = "角色ID")

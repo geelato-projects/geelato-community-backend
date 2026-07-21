@@ -11,7 +11,7 @@ import java.util.Date;
 
 @Getter
 @Setter
-@Entity(name = "platform_schedule")
+@Entity(name = "platform_schedule", catalog = "platform")
 @Title(title = "应用")
 public class Schedule extends BaseEntity {
     @Title(title = "所属应用")

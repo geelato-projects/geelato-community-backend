@@ -10,7 +10,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(name = "platform_menu_item")
+@Entity(name = "platform_menu_item",catalog = "platform")
 @Title(title = "菜单项", description = "菜单项与菜单子项")
 public class MenuItem extends BaseSortableEntity {
     @Title(title = "标题")

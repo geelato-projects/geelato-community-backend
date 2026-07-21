@@ -14,7 +14,7 @@ import lombok.Setter;
  */
 @Setter
 @Getter
-@Entity(name = "platform_permission")
+@Entity(name = "platform_permission", catalog = "platform")
 public class Permission extends BaseSortableEntity {
 
     @Title(title = "应用Id")

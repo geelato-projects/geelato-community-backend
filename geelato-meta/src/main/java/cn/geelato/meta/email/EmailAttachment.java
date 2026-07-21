@@ -1,4 +1,4 @@
-package cn.geelato.meta;
+package cn.geelato.meta.email;
 
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.lang.meta.Col;
@@ -17,7 +17,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_email_attachment")
+@Entity(name = "platform_email_attachment",catalog = "email")
 @Title(title = "邮件附件")
 public class EmailAttachment extends BaseEntity {
 

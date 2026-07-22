@@ -24,16 +24,22 @@ import java.util.Map;
 @Slf4j
 public class DeepSeekClient {
     private static final int CONNECT_TIMEOUT = 30000;
-    private static final int READ_TIMEOUT = 60000;
+    private static final int READ_TIMEOUT = 180000;
 
-    @Value("${geelato.ai.deepseek.base-url:https://api.deepseek.com/v1/chat/completions}")
+    @Value("${geelato.ai.deepseek.base-url}")
     private String deepseekBaseUrl;
 
-    @Value("${geelato.ai.deepseek.api-key:}")
+    @Value("${geelato.ai.deepseek.api-key}")
     private String deepseekApiKey;
 
-    @Value("${geelato.ai.deepseek.model:deepseek-chat}")
+    @Value("${geelato.ai.deepseek.model}")
     private String deepseekModel;
+
+    @Value("${geelato.ai.deepseek.thinking-enabled}")
+    private boolean deepseekThinkingEnabled;
+
+    @Value("${geelato.ai.deepseek.reasoning-effort}")
+    private String deepseekReasoningEffort;
 
     public String extract(String userPrompt, String markdownContent) throws IOException {
         if (Strings.isBlank(markdownContent)) {
@@ -61,6 +67,14 @@ public class DeepSeekClient {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", deepseekModel);
         requestBody.put("stream", false);
+        if (deepseekThinkingEnabled) {
+            Map<String, String> thinking = new HashMap<>();
+            thinking.put("type", "enabled");
+            requestBody.put("thinking", thinking);
+            if (Strings.isNotBlank(deepseekReasoningEffort)) {
+                requestBody.put("reasoning_effort", deepseekReasoningEffort);
+            }
+        }
 
         List<Map<String, String>> messages = new ArrayList<>();
         if (Strings.isNotBlank(systemPrompt)) {

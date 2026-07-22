@@ -1,3 +1,7 @@
+---
+title: OSS 模块
+sidebar_label: OSS 模块
+---
 # OSS 模块
 
 对应配置文件：

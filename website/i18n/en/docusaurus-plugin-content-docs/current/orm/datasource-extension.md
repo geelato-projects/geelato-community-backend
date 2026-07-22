@@ -94,5 +94,5 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 
 - [Dynamic Datasource](../dynamic-datasource/overview.md)
 - [ORM Overview](overview.md)
-- [Override Default Implementations](../reference/override-default-implementations.md)
+- [Query Filter and Field Fill SPI](../reference/spi-query-filter-and-save-fill-extension.md)
 - [Minimal Integration](../guide/minimal-integration.md)

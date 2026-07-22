@@ -1,6 +1,10 @@
+---
+title: 系统配置
+sidebar_label: 系统配置
+---
 # 系统配置
 
-这篇文档说明 `geelato-web-quickstart` 当前的主配置入口，以及它如何把各个业务模块的配置拆分到独立的 `properties/*.properties` 文件中。
+本页说明 `geelato-web-quickstart` 的主配置入口，以及如何将各业务模块的配置拆分到独立的 `properties/*.properties` 文件中。
 
 主配置文件位于：
 

@@ -1,3 +1,7 @@
+---
+title: Market 模块
+sidebar_label: Market 模块
+---
 # Market 模块
 
 对应配置文件：

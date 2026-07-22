@@ -62,8 +62,8 @@ public class FileService {
         }
         try {
             // 业务数据
-            List<Map> valueMapList = new ArrayList<>();
-            Map valueMap = new HashMap();
+            List<Map> valueMapList;
+            Map valueMap;
             // 解析
             JSONObject jo = JSON.parseObject(JSON.toJSONString(data));
             valueMapList = (List<Map>) jo.get("valueMapList");

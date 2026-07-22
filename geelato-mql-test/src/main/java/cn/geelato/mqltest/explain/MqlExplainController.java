@@ -71,8 +71,9 @@ public class MqlExplainController {
         if (!StringUtils.hasText(mql)) {
             return ApiResult.fail("mql 参数不能为空");
         }
+        String op = stringValue(body, "op");
         try {
-            MqlExplainResult result = runAs(body, () -> explainService.explain(mql));
+            MqlExplainResult result = runAs(body, () -> explainService.explain(mql, op));
             if (result.isSuccess()) {
                 return ApiResult.success(result);
             }

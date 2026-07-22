@@ -1,13 +1,16 @@
+---
+title: lite-login 第三方应用接入
+sidebar_label: lite-login 接入
+---
+
 # lite-login 第三方应用接入
 
-这一页说明任意第三方应用如何接入统一认证中心的 `lite-login` 轻量登录门面。
+本页说明第三方应用如何接入统一认证中心的 `lite-login` 轻量登录门面，聚焦两件事：
 
-本文档聚焦两件事：
+- 前端如何获取 `auth-server` 签发的 token。
+- 第三方应用后端如何使用该 token 调用 OAuth 接口确认用户身份。
 
-- 前端如何拿到 `auth-server` 签发的 token
-- 第三方应用后端如何使用这个 token 调用 OAuth 接口确认用户身份
-
-本文档不预设第三方应用一定存在固定的 `/api/user/info`、`/session/me` 或 `/auth/profile` 接口；这些接口是否存在、叫什么名字，由第三方应用自己决定。
+接入不要求第三方应用一定存在固定的 `/api/user/info`、`/session/me` 或 `/auth/profile` 接口；这些接口是否存在及命名由第三方应用自行决定。
 
 对应示例工程：
 

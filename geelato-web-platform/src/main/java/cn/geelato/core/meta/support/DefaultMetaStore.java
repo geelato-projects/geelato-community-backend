@@ -6,13 +6,19 @@ import cn.geelato.core.meta.spi.MetaStore;
 import cn.geelato.core.orm.Dao;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 
 /**
  * 当前平台表结构的默认元数据实现。
+ *
+ * <p>本类位于业务层（geelato-web-platform），框架层（geelato-core）仅保留
+ * {@link MetaStore} SPI 接口。保留原 package（cn.geelato.core.meta.support）
+ * 以维持 import 一致性，由 {@code @ComponentScan(basePackages = {"cn.geelato"})} 发现。</p>
  */
+@Component
 public class DefaultMetaStore implements MetaStore {
 
     @Override

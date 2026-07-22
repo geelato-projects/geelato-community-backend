@@ -1,6 +1,11 @@
+---
+title: PlatformWebRuntime
+sidebar_label: PlatformWebRuntime
+---
+
 # PlatformWebRuntime
 
-`PlatformWebRuntime` 是 Geelato Web 平台的运行时应用壳。它是基于共享底座 `geelato-web-platform` 启动的可执行入口，面向业务执行场景。
+`PlatformWebRuntime` 是 Geelato Web 平台的运行时应用壳，基于共享底座 `geelato-web-platform` 启动，面向业务执行场景。
 
 ## 它是什么
 

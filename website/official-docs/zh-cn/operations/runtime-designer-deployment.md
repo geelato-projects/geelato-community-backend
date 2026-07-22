@@ -1,3 +1,7 @@
+---
+title: Runtime / Designer 部署与依赖
+sidebar_label: Runtime / Designer 部署
+---
 # Runtime / Designer 部署与依赖
 
 Web 平台以"一个共享底座 + 两个可发布的启动壳"的方式交付：

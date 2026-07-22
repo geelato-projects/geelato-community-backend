@@ -1,13 +1,18 @@
 package cn.geelato.mqltest.explain;
 
+import cn.geelato.core.SessionCtx;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
+import cn.geelato.core.mql.MetaQLManager;
+import cn.geelato.core.mql.command.DeleteCommand;
 import cn.geelato.core.mql.command.QueryCommand;
+import cn.geelato.core.mql.command.SaveCommand;
 import cn.geelato.core.mql.execute.BoundPageSql;
 import cn.geelato.core.mql.execute.BoundSql;
 import cn.geelato.core.mql.parser.JsonTextQueryParser;
+import cn.geelato.core.sql.SqlManager;
 import cn.geelato.core.sql.provider.MetaQuerySqlProvider;
 import cn.geelato.mqltest.dto.MqlExplainResult;
 import cn.geelato.mqltest.dto.MqlValidateResult;
@@ -25,27 +30,99 @@ import java.util.stream.Collectors;
  * <p>
  * 复用 {@link JsonTextQueryParser} + {@link MetaQuerySqlProvider} 的核心链路，
  * 在 dry-run 模式下返回生成的 SQL/params/types，不执行。
+ * <p>
+ * 支持查询（query）、保存（save：自动判 Insert/Update）、删除（delete）三类操作的 dry-run。
  */
 @Slf4j
 @Service
 public class MqlExplainService {
 
     private final JsonTextQueryParser queryParser = new JsonTextQueryParser();
+    private final MetaQLManager gqlManager = MetaQLManager.singleInstance();
+    private final SqlManager sqlManager = SqlManager.singleInstance();
 
     /**
-     * explain（dry-run）：解析 MQL JSON 并生成 SQL，不执行。
+     * explain（dry-run）：按指定操作类型解析 MQL JSON 并生成 SQL，不执行。
      *
      * @param mqlJson MQL JSON 文本
+     * @param op      操作类型：query（默认）/ save / batchSave / delete
      * @return explain 结果（含 SQL/params/types/countSql/AST）
      */
-    public MqlExplainResult explain(String mqlJson) {
+    public MqlExplainResult explain(String mqlJson, String op) {
         try {
-            QueryCommand command = queryParser.parse(mqlJson);
-            return doExplain(command);
+            String operation = op == null ? "query" : op.toLowerCase();
+            switch (operation) {
+                case "save":
+                case "save-update":
+                case "save-insert":
+                    return explainSave(mqlJson);
+                case "batchsave":
+                    return explainBatchSave(mqlJson);
+                case "delete":
+                case "delete-by-id":
+                case "delete-by-where":
+                    return explainDelete(mqlJson);
+                case "query":
+                default:
+                    QueryCommand command = queryParser.parse(mqlJson);
+                    return doExplain(command);
+            }
         } catch (Exception e) {
             log.warn("MQL explain 解析失败: {}", e.getMessage());
             return MqlExplainResult.fail(e.getMessage());
         }
+    }
+
+    /** 兼容旧调用（默认 query） */
+    public MqlExplainResult explain(String mqlJson) {
+        return explain(mqlJson, "query");
+    }
+
+    private MqlExplainResult explainSave(String mqlJson) {
+        SaveCommand command = gqlManager.generateSaveSql(mqlJson, new SessionCtx());
+        BoundSql boundSql = sqlManager.generateSaveSql(command);
+        MqlExplainResult r = baseResult(command.getEntityName(), boundSql);
+        r.setAst(buildAstMap("save/" + command.getCommandType(), command.getEntityName()));
+        return r;
+    }
+
+    private MqlExplainResult explainBatchSave(String mqlJson) {
+        List<SaveCommand> commands = gqlManager.generateBatchSaveSql(mqlJson, new SessionCtx());
+        if (commands.isEmpty()) {
+            return MqlExplainResult.fail("批量保存命令为空");
+        }
+        // 批量场景展示第一条 SQL，AST 标注数量
+        List<BoundSql> boundSqls = sqlManager.generateBatchSaveSql(commands);
+        BoundSql first = boundSqls.get(0);
+        MqlExplainResult r = baseResult(commands.get(0).getEntityName(), first);
+        Map<String, Object> ast = buildAstMap("batchSave", commands.get(0).getEntityName());
+        ast.put("batchCount", commands.size());
+        r.setAst(ast);
+        return r;
+    }
+
+    private MqlExplainResult explainDelete(String mqlJson) {
+        DeleteCommand command = gqlManager.generateDeleteSql(mqlJson, new SessionCtx());
+        BoundSql boundSql = sqlManager.generateDeleteSql(command);
+        MqlExplainResult r = baseResult(command.getEntityName(), boundSql);
+        r.setAst(buildAstMap("delete", command.getEntityName()));
+        return r;
+    }
+
+    private MqlExplainResult baseResult(String entityName, BoundSql boundSql) {
+        MqlExplainResult r = new MqlExplainResult();
+        r.setEntityName(entityName);
+        r.setSql(boundSql.getSql());
+        r.setParams(boundSql.getParams());
+        r.setTypes(boundSql.getTypes());
+        return r;
+    }
+
+    private Map<String, Object> buildAstMap(String op, String entityName) {
+        Map<String, Object> ast = new LinkedHashMap<>();
+        ast.put("op", op);
+        ast.put("entityName", entityName);
+        return ast;
     }
 
     /**

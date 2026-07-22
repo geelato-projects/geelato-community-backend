@@ -54,12 +54,16 @@ public class MqlTestAutoConfiguration {
     /**
      * 模拟身份支持（仅在 JdbcTemplate Bean 存在时装配）。
      * 用于 Playground 以指定身份执行，使租户/数据权限注入器照常工作。
+     * <p>
+     * EnvStore 可选注入：宿主引入了 platform EnvStore 实现（如 geelato-web-platform 的 PlatformEnvStore）
+     * 时才可用；未提供时 MqlIdentitySupport.runAs 在指定身份场景下会跳过加载。
      */
     @Bean
     @ConditionalOnBean(JdbcTemplate.class)
     public MqlIdentitySupport mqlIdentitySupport(
             @Qualifier("primaryJdbcTemplate") JdbcTemplate jdbcTemplate,
-            org.springframework.beans.factory.ObjectProvider<cn.geelato.security.OrgProvider> orgProviderProvider) {
-        return new MqlIdentitySupport(jdbcTemplate, orgProviderProvider.getIfAvailable());
+            org.springframework.beans.factory.ObjectProvider<cn.geelato.security.OrgProvider> orgProviderProvider,
+            org.springframework.beans.factory.ObjectProvider<cn.geelato.core.env.EnvStore> envStoreProvider) {
+        return new MqlIdentitySupport(jdbcTemplate, orgProviderProvider.getIfAvailable(), envStoreProvider.getIfAvailable());
     }
 }

@@ -1,6 +1,11 @@
+---
+title: 新项目最小接入
+sidebar_label: 新项目最小接入
+---
+
 # 新项目最小接入
 
-这篇文档说明如何从零开始接入 Geelato Framework，并在不引入平台重扩展的前提下跑通一个最小 Spring Boot Web 应用。
+本页说明如何从零接入 Geelato Framework，在不引入平台重扩展的前提下跑通一个最小 Spring Boot Web 应用。
 
 ## 推荐接入顺序
 
@@ -49,25 +54,11 @@
 
 这条链路的目的不是展示平台全能力，而是验证框架底座可以被独立消费。
 
-## 什么时候切换到脚手架
+## 何时切换到脚手架
 
-如果项目已经明确需要这些基础后台能力：
+当项目明确需要登录、MQL、组织与用户、字典、上传等基础后台能力时，不建议继续在最小 sample 上扩展，而应直接采用 `geelato-app-scaffold`。其定位是可直接开工的官方脚手架，而非最小样例。
 
-- 登录
-- MQL
-- 组织与用户
-- 字典
-- 上传
-
-则不建议继续在最小 sample 上做胖，而应直接采用：
-
-- `geelato-app-scaffold`
-
-它的定位是“可以直接开工的官方脚手架”，而不是“最小样例”。
-
-如果你的目标不是运行官方示例，而是自己新起一个业务工程并长期依赖 starter，请继续阅读：
-
-- [基于 app-scaffold-starter 创建业务项目](app-scaffold-starter-project-guide.md)
+若目标不是运行官方示例，而是新建业务工程并长期依赖 starter，请继续阅读 [基于 app-scaffold-starter 创建业务项目](app-scaffold-starter-project-guide.md)。
 
 ## 最小成功标准
 
@@ -79,8 +70,8 @@
 - ORM 自动装配可用
 - 能调用一个运行时接口
 
-## 下一步推荐
+## 下一步
 
-- 如果要基于 starter 真正创建自己的业务工程，并需要基础后台能力，再看 [基于 app-scaffold-starter 创建业务项目](app-scaffold-starter-project-guide.md)
-- 如需理解交付入口，再看 [BOM 与 Starter](../reference/bom-and-starter.md)
-- 如需扩展元数据能力，再看 [MetaStore 扩展](../reference/metastore-extension.md)
+- 基于 starter 创建业务工程并需要基础后台能力：[基于 app-scaffold-starter 创建业务项目](app-scaffold-starter-project-guide.md)
+- 理解交付入口：[BOM 与 Starter](../reference/bom-and-starter.md)
+- 扩展元数据能力：[MetaStore 扩展](../reference/metastore-extension.md)

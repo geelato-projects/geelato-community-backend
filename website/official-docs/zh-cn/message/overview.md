@@ -1,5 +1,4 @@
 ---
-id: overview
 title: 消息中心总览
 sidebar_label: 消息中心总览
 ---

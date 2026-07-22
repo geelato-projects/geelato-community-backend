@@ -1,3 +1,7 @@
+---
+title: SC 模块
+sidebar_label: SC 模块
+---
 # SC 模块
 
 对应配置文件：

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 
 import java.util.Calendar;
@@ -224,7 +225,15 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         SecurityContext.setCurrentTenant(entry.tenant);
         SecurityContext.setCurrentPassword(entry.password);
         Subject subject = SecurityUtils.getSubject();
-        subject.login(entry.authToken);
+        try {
+            subject.login(entry.authToken);
+        } catch (AuthenticationException e) {
+            // 缓存的凭证已失效（如用户修改密码后，基于旧密码生成的令牌无法通过校验）。
+            // 清理失效缓存并按未授权处理，交由上层统一抛出 401 异常，避免向外泄漏 Shiro 原始异常。
+            tokenContextCache.remove(rawToken, entry);
+            log.warn("cached credential invalidated, maybe password changed, url:{}", buildRequestUrl(request));
+            return false;
+        }
         applyTrafficTagAfterAuthenticated(entry.user, request, response);
         touchOnline(entry.user, request);
         return true;

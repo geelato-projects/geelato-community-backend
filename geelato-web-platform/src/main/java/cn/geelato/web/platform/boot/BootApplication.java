@@ -3,6 +3,7 @@ package cn.geelato.web.platform.boot;
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.ds.spi.DataSourceDefinitionLoader;
 import cn.geelato.core.env.EnvManager;
+import cn.geelato.core.env.EnvStore;
 import cn.geelato.core.graal.GraalManager;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.script.db.DbScriptManagerFactory;
@@ -31,6 +32,8 @@ public class BootApplication implements CommandLineRunner {
     protected Dao dao;
     @Autowired(required = false)
     protected DataSourceDefinitionLoader dataSourceDefinitionLoader;
+    @Autowired(required = false)
+    protected EnvStore envStore;
 
     @Override
     public void run(String... args) throws Exception {
@@ -66,7 +69,9 @@ public class BootApplication implements CommandLineRunner {
     }
 
     public void initEnvironment(){
-        EnvManager.singleInstance().setJdbcTemplate(dao.getJdbcTemplate());
+        if (envStore != null) {
+            EnvManager.singleInstance().setEnvStore(envStore);
+        }
         EnvManager.singleInstance().EnvInit();
     }
     /**

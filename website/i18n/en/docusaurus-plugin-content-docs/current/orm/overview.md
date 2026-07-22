@@ -1,84 +1,124 @@
 # ORM
 
-`geelato-orm` is the ORM module of Geelato Framework on the backend side. Its goal is not to be a heavyweight JPA-style persistence layer, but to provide a unified metadata-driven access path for server-side services.
+ORM stands for Object-Relational Mapping. In Geelato Framework, it is the operational layer between programming-language objects and relational databases such as MySQL and PostgreSQL.
 
-This ORM chapter has two major parts:
+In practice, Geelato does not expose ORM as a single monolithic API. It is a capability system built around metadata, JSON protocol access, Java DSL access, and extension hooks:
 
-- ORM annotations: define how Java classes are recognized as framework entities
-- Fluent DSL: define how backend code queries and writes data through `MetaFactory`
-- ORM events: provide extensible listener hooks around save and delete flows
+- annotation layer: declares how Java objects map to entities, tables, and columns
+- protocol layer: uses `MetaController + MQL` for frontend and platform-side data access
+- Java API layer: uses `MetaFactory + Fluent DSL` for backend service code
+- extension layer: uses events, dynamic datasource, and SPI-based rule injection for platform-specific behavior
 
-## Role in the Framework
+## Current State
 
-`geelato-orm` is used to:
+The current Geelato ORM state can be summarized as:
 
-- keep entity-to-table and field-to-column mapping consistent
-- expose metadata-driven CRUD entry points for backend Java services
-- reuse framework capabilities such as dynamic datasource switching, view parameters, default audit field filling, and value references
-- attach custom audit, mirror, validation, cache, and side-processing logic to save and delete flows
-- reduce repeated DAO boilerplate and direct MQL JSON construction in service code
+- it is not a heavyweight JPA/Hibernate-style stateful ORM
+- it is not only a thin table-mapping helper either
+- it is a metadata-centered data access system
+- different entry points serve different runtime layers
 
-## Recommended Scope
+The recommended mental model is:
 
-Use ORM first when:
+- `@Entity / @Col / @Title / @Transient` answer how objects map to relational structures
+- `MQL` answers how platform-side JSON requests describe query and save behavior
+- `Fluent DSL` answers how backend Java code performs CRUD and light advanced querying
+- events, dynamic datasource, and SPI extensions answer how platform rules are injected into the execution path
 
-- backend services need standard CRUD by entity name or entity class
-- queries need pagination, sorting, light joins, or a few referenced fields
-- the service wants to reuse `useDataSource(...)`, `viewParams(...)`, or `ValueRefs`
+## Purpose
 
-Do not force ORM when:
+This ORM system is designed to:
 
-- frontend traffic still goes through `MetaController + MQL`
-- the query is SQL-first and heavily depends on recursive CTEs, window functions, or very complex filtering
-- the scenario depends on multi-result-set procedures or complex MyBatis `resultMap` behavior
+- keep Java objects, relational tables, columns, and metadata titles declared in one place
+- let frontend protocol flow and backend Java flow reuse the same metadata model
+- reduce repeated DAO boilerplate, scattered SQL assembly, and direct MQL JSON construction in services
+- centralize dynamic datasource, view parameters, value references, default field filling, and query-rule injection
+- move platform rules out of low-level CRUD and expose them through events or SPI extensions
 
-## Three Parts of This Chapter
+## Four Entry Types
 
-### ORM Annotations
+### 1. ORM Annotations
 
-Annotations answer the question: what is the entity metadata?
+Annotations answer: what is the entity?
 
 They define:
 
-- which table a class maps to
+- which entity name and table a Java class maps to
 - which column a field maps to
 - which properties stay transient
-- which business-facing titles or descriptions belong to entities and fields
+- which titles and descriptions are attached to entities and fields
 
 See [ORM Annotations](annotations.md).
 
-### Fluent DSL
+### 2. MQL
 
-The Fluent DSL answers the question: how does backend code access data?
+MQL answers: how does the platform-side JSON protocol access data?
 
-It covers:
+It mainly targets:
 
-- querying one row or a page of rows
-- insert, update, and delete
-- `selectRef`, join, datasource switching, and procedure calls
-- `ValueRefs.ctx/fn/parent` on the write path
+- frontend pages
+- platform-wide generic data APIs
+- low-code or JSON-driven scenarios
+
+It typically includes capabilities such as:
+
+- `@fs` field selection
+- `@p` pagination
+- `@order` sorting
+- `@group` grouping
+- `@b` nested boolean logic
+- `@pf` view template parameters
+- `ref(...)` referenced fields
+- `$ctx.* / $fn.* / $parent.*` built-in variables
+
+MQL is closely related to ORM, but it is a platform protocol rather than the backend Java DSL.
+
+See [MQL Overview](../mql/overview.md) and [MQL Usage](../mql/usage.md).
+
+### 3. Fluent DSL
+
+The Fluent DSL answers: how does backend Java service code access data?
+
+It mainly targets:
+
+- server-side service code
+- standard CRUD in Java
+- light join, pagination, aggregation, and procedure use cases
+- scenarios that want to reuse datasource switching, view parameters, and value references
 
 See [Fluent DSL Guide](fluent-dsl.md).
 
-### ORM Events
+### 4. Advanced Features and Extension Hooks
 
-ORM events answer the question: what extra logic should run before or after save and delete?
+Advanced features answer: how are platform rules injected beyond standard CRUD?
 
-Typical examples:
+Current extension areas include:
 
-- validate domain rules before save
-- write audit logs, notifications, or mirror-table updates after save
-- block delete under certain constraints
-- clear cache or side indexes after delete
+- ORM events around save and delete
+- dynamic datasource switching
+- query-filter SPI for tenant, permission, or organization rules
+- field-filling SPI for audit and default values
 
-See [ORM Event Features](event-features.md).
+See:
 
-## Recommended Reading Order
+- [ORM Event Features](event-features.md)
+- [ORM / Datasource Extension](datasource-extension.md)
+- [Query Filter and Field Fill SPI](../reference/spi-query-filter-and-save-fill-extension.md)
 
-1. Read [ORM Annotations](annotations.md) first
-2. Continue with [Fluent DSL Guide](fluent-dsl.md)
-3. Then read [ORM Event Features](event-features.md)
-4. Then read [Core Modules](../reference/core-modules.md) for the framework-level position of `geelato-orm`
+## Recommended Scope
+
+Use the Geelato ORM system first when:
+
+- backend services need standard CRUD by entity name or entity class
+- platform APIs or frontend requests need JSON-based metadata access
+- queries need pagination, sorting, light joins, lightweight aggregation, or lightweight procedure support
+- the service wants to reuse datasource switching, view parameters, default filling, or value references
+
+Do not force it when:
+
+- the query is SQL-first and depends on recursive CTEs, window functions, or very complex filtering
+- the scenario depends on multi-result-set procedures or mapping-heavy MyBatis behavior
+- the team already intentionally owns the final SQL text
 
 ## Relationship to Other Data Access Options
 
@@ -86,3 +126,11 @@ See [ORM Event Features](event-features.md).
 - `MetaController + MQL`: preferred for platform data APIs and frontend-facing protocol flow
 - `MetaFactory.sql(...)`: preferred when the team already owns the final SQL and only wants the execution chain
 - MyBatis / native SQL: still the better fit for highly complex SQL and mapping-heavy cases
+
+## Suggested Reading Order
+
+1. Read [ORM Annotations](annotations.md) first
+2. Continue with [MQL Overview](../mql/overview.md)
+3. Continue with [Fluent DSL Guide](fluent-dsl.md)
+4. Then read [ORM Event Features](event-features.md) and [ORM / Datasource Extension](datasource-extension.md)
+5. Finally read [Query Filter and Field Fill SPI](../reference/spi-query-filter-and-save-fill-extension.md) and [Core Modules](../reference/core-modules.md)

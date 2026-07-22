@@ -1,3 +1,7 @@
+---
+title: PlatformDesginer
+sidebar_label: PlatformDesginer
+---
 # PlatformDesginer
 
 `PlatformDesginer` 是 Geelato Web 平台的设计时应用壳。它是基于共享底座 `geelato-web-platform` 启动的可执行入口，面向设计时与平台管理场景。

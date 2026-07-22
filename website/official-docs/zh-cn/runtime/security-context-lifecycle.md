@@ -1,13 +1,18 @@
+---
+title: SecurityContext 生命周期
+sidebar_label: SecurityContext 生命周期
+---
+
 # SecurityContext 生命周期
 
-当前运行时 `SecurityContext` 已经形成了明确的请求级生命周期边界，这也是框架安全文档里最需要被稳定说明的一部分。
+运行时 `SecurityContext` 具有明确的请求级生命周期边界。本页说明该生命周期的核心原则、写入链路与清理机制。
 
 ## 核心原则
 
-当前实现遵循两个约束：
+`SecurityContext` 遵循两个约束：
 
-- `SecurityContext` 是线程级上下文
-- 安全主体只能在鉴权成功后由安全链路内部设置
+- `SecurityContext` 是线程级上下文。
+- 安全主体只能在鉴权成功后由安全链路内部设置。
 
 通用 Filter 不负责从请求中直接注入主体，它只负责在请求结束后统一清理。
 

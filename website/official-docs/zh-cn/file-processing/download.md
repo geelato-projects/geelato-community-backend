@@ -1,13 +1,11 @@
+---
+title: 文件下载
+sidebar_label: 文件下载
+---
+
 # 文件下载
 
-这篇文档说明 Geelato 当前文件下载与预览能力的入口、运行方式，以及本地文件与 OSS 文件在下载时的差异。
-
-本文主要基于：
-
-- `DownloadController`
-- `FileHandler`
-- `BaseHandler`
-- `AttachController`
+本页说明文件下载与预览能力的入口、运行方式，以及本地文件与 OSS 文件在下载时的差异，涉及的核心组件包括 `DownloadController`、`FileHandler`、`BaseHandler`、`AttachController`。
 
 ## 下载入口
 

@@ -1,6 +1,11 @@
 package cn.geelato.core.constants;
 
 /**
+ * 平台表结构相关 SQL 常量。
+ *
+ * <p>本类位于业务层（geelato-web-platform），框架层（geelato-core）不再绑定 platform_dev_* 表。
+ * 保留原 package（cn.geelato.core.constants）以维持 import 一致性，依赖 {@link ColumnDefault}（仍在 core）。</p>
+ *
  * @author diabl
  */
 public class MetaDaoSql {

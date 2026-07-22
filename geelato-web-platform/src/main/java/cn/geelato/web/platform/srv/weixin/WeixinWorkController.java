@@ -8,8 +8,7 @@ import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.meta.User;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.boot.properties.WeixinWorkConfigurationProperties;
-import cn.geelato.web.platform.srv.weixin.mapper.WeixinWorkMapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import cn.geelato.web.platform.srv.weixin.service.WeixinWorkService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +25,7 @@ import java.util.Map;
 @Slf4j
 public class WeixinWorkController extends BaseController {
     @Autowired
-    private WeixinWorkMapper weixinWorkMapper;
+    private WeixinWorkService weixinWorkService;
 
     @Autowired
     private UserProvider userProvider;
@@ -45,7 +44,7 @@ public class WeixinWorkController extends BaseController {
             
             if (orgId != null && !orgId.isEmpty()) {
                 // 获取指定组织的企业微信配置
-                String weixinWorkInfo = weixinWorkMapper.getCompanyWeixinWorkInfo(orgId);
+                String weixinWorkInfo = weixinWorkService.getCompanyWeixinWorkInfo(orgId);
                 if (weixinWorkInfo != null && !weixinWorkInfo.isEmpty()) {
                     try {
                         JsonNode configNode = objectMapper.readTree(weixinWorkInfo);
@@ -64,7 +63,7 @@ public class WeixinWorkController extends BaseController {
             
             int successCount = 0;
             List<User> users;
-            users = weixinWorkMapper.findUsersByOrgId(orgId);
+            users = weixinWorkService.findUsersByOrgId(orgId);
 
             for (User user : users) {
                 String mobilePhone = user.getMobilePhone();
@@ -75,7 +74,7 @@ public class WeixinWorkController extends BaseController {
                     String weixinWorkUserId = getUserIdByMobile(mobilePhone, corpId, corpSecret);
 
                     if (weixinWorkUserId != null) {
-                        weixinWorkMapper.updateUserWeixinWorkUserId(weixinWorkUserId, user.getId());
+                        weixinWorkService.updateUserWeixinWorkUserId(weixinWorkUserId, user.getId());
                         successCount++;
                     }
                 }
@@ -103,13 +102,13 @@ public class WeixinWorkController extends BaseController {
                 companyId=userProvider.getUserById(userId).getCompanyId();
             }
 
-            String weixinWorkUserId = weixinWorkMapper.getWeixinWorkUserIdByUserId(userId);
+            String weixinWorkUserId = weixinWorkService.getWeixinWorkUserIdByUserId(userId);
             if (weixinWorkUserId == null || weixinWorkUserId.isEmpty()) {
                 return ApiResult.fail("用户未绑定企业微信账号");
             }
             
             // 从platform_company表获取企业微信配置信息
-            String weixinWorkInfo = weixinWorkMapper.getCompanyWeixinWorkInfo(companyId);
+            String weixinWorkInfo = weixinWorkService.getCompanyWeixinWorkInfo(companyId);
             if (weixinWorkInfo == null || weixinWorkInfo.isEmpty()) {
                 log.error("未找到公司的企业微信配置信息, companyId: {}", companyId);
                 return ApiResult.fail("未找到公司的企业微信配置信息");
@@ -196,7 +195,7 @@ public class WeixinWorkController extends BaseController {
                 companyId = userProvider.getUserById(userId).getCompanyId();
             }
 
-            String weixinWorkInfo = weixinWorkMapper.getCompanyWeixinWorkInfo(companyId);
+            String weixinWorkInfo = weixinWorkService.getCompanyWeixinWorkInfo(companyId);
             if (weixinWorkInfo == null || weixinWorkInfo.isEmpty()) {
                 log.error("未找到公司的企业微信配置信息, companyId: {}", companyId);
                 return ApiResult.fail("未找到公司的企业微信配置信息");
@@ -272,7 +271,7 @@ public class WeixinWorkController extends BaseController {
             }
             
             // 获取指定组织的企业微信配置
-            String weixinWorkInfo = weixinWorkMapper.getCompanyWeixinWorkInfo(parentOrgId);
+            String weixinWorkInfo = weixinWorkService.getCompanyWeixinWorkInfo(parentOrgId);
             if (weixinWorkInfo != null && !weixinWorkInfo.isEmpty()) {
                 try {
                     JsonNode configNode = objectMapper.readTree(weixinWorkInfo);

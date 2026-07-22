@@ -126,6 +126,11 @@ public class MqlTestScenarioService {
 
     /**
      * 执行单个场景：setup → 执行 MQL → 比对 → teardown。
+     * <p>
+     * 场景集测试的是 MQL 语法与 SQL 生成的正确性，不应被平台的租户隔离/数据权限注入器干扰
+     * （否则 setup 数据的 tenant_code/creator 与注入身份不匹配会导致查不到数据）。
+     * 因此执行期间临时禁用 SPI 注入器（通过清空 BeansUtils 的 ApplicationContext，
+     * 使 MqlQueryFilterRuntimeResolver 找不到注入器 Bean 而跳过 inject）。
      */
     public MqlScenarioResult executeScenario(MqlScenario scenario) {
         long start = System.currentTimeMillis();
@@ -133,6 +138,7 @@ public class MqlTestScenarioService {
             return MqlScenarioResult.fail(scenario, System.currentTimeMillis() - start,
                     "未配置数据源（JdbcTemplate 不可用）");
         }
+        Object savedCtx = disableInjectorTemporarily();
         try {
             // 1. setup 预置数据
             runSqlList(scenario.getSetup());
@@ -151,6 +157,36 @@ public class MqlTestScenarioService {
             // 尝试清理
             safeRunSqlList(scenario.getTeardown());
             return r;
+        } finally {
+            restoreInjectorContext(savedCtx);
+        }
+    }
+
+    /**
+     * 临时禁用 MQL SPI 注入器：通过反射清空 BeansUtils 的静态 ApplicationContext，
+     * 使 MqlQueryFilterRuntimeResolver.resolveUniqueInjectorEntry 返回 null（找不到注入器）。
+     * 返回原 context 供恢复使用。
+     */
+    private Object disableInjectorTemporarily() {
+        try {
+            java.lang.reflect.Field f = cn.geelato.core.util.BeansUtils.class.getDeclaredField("context");
+            f.setAccessible(true);
+            Object original = f.get(null);
+            f.set(null, null);
+            return original;
+        } catch (Exception e) {
+            log.debug("禁用注入器失败（非致命）: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private void restoreInjectorContext(Object original) {
+        try {
+            java.lang.reflect.Field f = cn.geelato.core.util.BeansUtils.class.getDeclaredField("context");
+            f.setAccessible(true);
+            f.set(null, original);
+        } catch (Exception e) {
+            log.debug("恢复注入器 context 失败（非致命）: {}", e.getMessage());
         }
     }
 
@@ -278,6 +314,7 @@ public class MqlTestScenarioService {
 
     /**
      * 初始化测试表结构（执行 mql-test-schema.sql）。
+     * 返回每条语句的执行结果（成功/失败原因），便于排查。
      */
     public String initSchema() {
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(SCHEMASQL_PATH)) {
@@ -285,37 +322,81 @@ public class MqlTestScenarioService {
                 return "schema 文件未找到: " + SCHEMASQL_PATH;
             }
             String sql = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-            // 移除注释行，按分号分割执行
-            String[] statements = sql.split(";");
-            int count = 0;
-            for (String stmt : statements) {
-                String trimmed = stmt.trim();
-                // 跳过注释行和空语句
-                if (trimmed.isEmpty() || trimmed.startsWith("--")) {
-                    continue;
-                }
-                // 跳过纯注释行
-                String[] lines = trimmed.split("\n");
-                StringBuilder clean = new StringBuilder();
-                for (String line : lines) {
-                    if (!line.trim().startsWith("--")) {
-                        clean.append(line).append("\n");
+            List<String> statements = splitSqlStatements(sql);
+            StringBuilder result = new StringBuilder();
+            int success = 0;
+            int failed = 0;
+            for (int i = 0; i < statements.size(); i++) {
+                String stmt = statements.get(i).trim();
+                if (stmt.isEmpty()) continue;
+                try {
+                    jdbcTemplate.execute(stmt);
+                    success++;
+                } catch (Exception e) {
+                    failed++;
+                    String errMsg = e.getMessage();
+                    // 截取根因（取第一行）
+                    if (errMsg != null && errMsg.contains("\n")) {
+                        errMsg = errMsg.substring(0, errMsg.indexOf('\n'));
                     }
-                }
-                String cleanStmt = clean.toString().trim();
-                if (!cleanStmt.isEmpty()) {
-                    try {
-                        jdbcTemplate.execute(cleanStmt);
-                        count++;
-                    } catch (Exception e) {
-                        log.debug("建表语句执行（可能已存在）: {}", e.getMessage());
-                    }
+                    result.append(String.format("[语句%d 失败] %s\n  SQL: %s\n  错误: %s\n\n",
+                            i + 1, summarizeStmt(stmt), abbreviate(stmt, 80), errMsg));
+                    log.warn("建表语句执行失败: SQL={}, err={}", abbreviate(stmt, 100), errMsg);
                 }
             }
-            return "初始化完成，执行 " + count + " 条语句";
+            result.insert(0, String.format("初始化完成：成功 %d 条，失败 %d 条。\n\n", success, failed));
+            return result.toString().trim();
         } catch (Exception e) {
+            log.error("初始化测试表异常", e);
             return "初始化失败: " + e.getMessage();
         }
+    }
+
+    /**
+     * 按分号分割 SQL，移除注释行，跳过空语句。
+     * 注意：简单的分号分割对含分号的字符串字面值不安全，但 schema.sql 不含此类情况。
+     */
+    private List<String> splitSqlStatements(String sql) {
+        List<String> statements = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        for (String line : sql.split("\n")) {
+            String trimmedLine = line.trim();
+            // 跳过整行注释
+            if (trimmedLine.startsWith("--")) {
+                continue;
+            }
+            current.append(line).append("\n");
+            // 按分号结尾分割（分号在行尾的常见情况）
+            if (trimmedLine.endsWith(";")) {
+                String stmt = current.toString().trim();
+                if (!stmt.isEmpty()) {
+                    // 去掉末尾分号（execute 不需要）
+                    if (stmt.endsWith(";")) {
+                        stmt = stmt.substring(0, stmt.length() - 1).trim();
+                    }
+                    statements.add(stmt);
+                }
+                current.setLength(0);
+            }
+        }
+        // 处理末尾无分号的残余
+        String tail = current.toString().trim();
+        if (!tail.isEmpty() && !tail.endsWith(";")) {
+            statements.add(tail.endsWith(";") ? tail.substring(0, tail.length() - 1) : tail);
+        }
+        return statements;
+    }
+
+    /** 提取 SQL 类型与操作对象（CREATE TABLE mql_test_user / CREATE FUNCTION gfn_xxx） */
+    private String summarizeStmt(String stmt) {
+        String firstLine = stmt.split("\n")[0].trim().replaceAll("\\s+", " ");
+        return abbreviate(firstLine, 60);
+    }
+
+    private String abbreviate(String s, int max) {
+        if (s == null) return "";
+        String oneLine = s.replaceAll("\\s+", " ").trim();
+        return oneLine.length() > max ? oneLine.substring(0, max) + "..." : oneLine;
     }
 
     /**

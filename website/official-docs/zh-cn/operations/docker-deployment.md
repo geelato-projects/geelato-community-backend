@@ -1,6 +1,10 @@
+---
+title: Docker 部署
+sidebar_label: Docker 部署
+---
 # Docker 部署
 
-这篇文档用于说明 Geelato Framework 在容器化场景下的推荐部署边界。
+本页说明 Geelato Framework 在容器化场景下的推荐部署方式。
 
 当前仓库已经明确了运行时与设计时的模块拆分：
 

@@ -55,5 +55,4 @@ Keep responsibilities separate:
 ## Suggested Reading
 
 - [Core Modules](core-modules.md)
-- [Override Default Implementations](override-default-implementations.md)
 - [Minimal Integration](../guide/minimal-integration.md)

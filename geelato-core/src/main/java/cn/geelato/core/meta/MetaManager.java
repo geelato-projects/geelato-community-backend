@@ -8,7 +8,6 @@ import cn.geelato.core.meta.spi.MetaDefinitionBundle;
 import cn.geelato.core.meta.spi.MetaResourceProvider;
 import cn.geelato.core.meta.spi.MetaStore;
 import cn.geelato.core.meta.support.DefaultMetaResourceProvider;
-import cn.geelato.core.meta.support.DefaultMetaStore;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.column.ColumnSelectType;
@@ -17,7 +16,6 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.core.util.MapUtils;
 import cn.geelato.utils.ClassScanner;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -57,7 +55,8 @@ public class MetaManager extends AbstractManager {
      */
 //    private final HashMap<String, Class> entityMetaClassMap = new HashMap<>();
     private Dao dao;
-    private MetaStore metaStore = new DefaultMetaStore();
+    // 框架层不再绑定 platform_dev_* 表；默认实现由业务层（geelato-web-platform）通过 SPI 注入。
+    private MetaStore metaStore = null;
     private MetaResourceProvider metaResourceProvider = new DefaultMetaResourceProvider();
     /**
      * 同名实体（Java类源 vs DB在线源）冲突时的合并策略：
@@ -112,6 +111,11 @@ public class MetaManager extends AbstractManager {
      */
     public void parseDBMeta(Dao dao, Map<String, String> params) {
         this.dao = dao;
+        // 业务层未提供 MetaStore 时（框架独立运行），跳过数据库元数据加载。
+        if (metaStore == null) {
+            log.info("parse meta data in database... skipped (no MetaStore provided)");
+            return;
+        }
         log.info("parse meta data in database...");
         MetaDefinitionBundle definitionBundle = metaStore.load(dao, params);
         List<Map<String, Object>> tableList = definitionBundle.getTableList();

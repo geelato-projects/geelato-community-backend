@@ -10,6 +10,11 @@ import java.util.Map;
 
 /**
  * 基于平台用户表的默认用户快照加载器。
+ *
+ * <p>本类位于业务层（geelato-web-platform），框架层（geelato-core）仅保留
+ * {@link UserSnapshotLoader} SPI 接口（接口在 geelato-security 模块）。保留原 package
+ * （cn.geelato.security）以维持 import 一致性——该 package 本身已是 geelato-security + geelato-core 的 split package，
+ * 本次仅将 core 侧的 JDBC 实现迁到 platform 侧。</p>
  */
 public class JdbcUserSnapshotLoader implements UserSnapshotLoader {
     private final JdbcTemplate platformJdbcTemplate;

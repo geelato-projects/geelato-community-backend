@@ -38,7 +38,7 @@ When you need a specific function during development, use the table below to qui
 | --- | --- | --- |
 | Get current login user, tenant, or request context | **Global Context**, **SecurityContext** | [Capabilities: Global Context](../platform-capabilities/global-context) |
 | Intercept logic before/after data save or update | **Entity Events**, **Event Bus** | [ORM: Event Features](../orm/event-features) |
-| Replace default implementations (e.g., custom PK generation) | **SPI**, **Spring @Primary** | [Override Default Implementations](../reference/override-default-implementations) |
+| Extend platform default rules (e.g., query filters, field filling) | **SPI**, **Spring Bean** | [Query Filter and Field Fill SPI](../reference/spi-query-filter-and-save-fill-extension) |
 | Develop, load, and unload business plugins | **Plugin Mechanism** | [Plugin: Development](../plugin-mechanism/development) |
 
 ### Files & Interfaces

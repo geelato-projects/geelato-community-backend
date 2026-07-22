@@ -1,3 +1,7 @@
+---
+title: API 参考
+sidebar_label: API 参考
+---
 # API 参考
 
 官方 API 文档采用双轨模式。

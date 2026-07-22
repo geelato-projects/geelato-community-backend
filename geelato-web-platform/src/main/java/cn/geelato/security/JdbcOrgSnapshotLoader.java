@@ -8,6 +8,10 @@ import java.util.Map;
 
 /**
  * 基于平台组织表的默认组织快照加载器。
+ *
+ * <p>本类位于业务层（geelato-web-platform），框架层（geelato-core）仅保留
+ * {@link OrgSnapshotLoader} SPI 接口（接口在 geelato-security 模块）。保留原 package
+ * （cn.geelato.security）以维持 import 一致性。</p>
  */
 public class JdbcOrgSnapshotLoader implements OrgSnapshotLoader {
     private final JdbcTemplate platformJdbcTemplate;

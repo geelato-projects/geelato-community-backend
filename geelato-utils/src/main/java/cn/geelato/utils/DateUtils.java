@@ -8,7 +8,10 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 /**
@@ -244,6 +247,54 @@ public class DateUtils {
 
     public static Date defaultDeleteAt() {
         return parse(DateUtils.DEFAULT_DELETE_AT, DateUtils.DATETIME);
+    }
+
+    /**
+     * 尽力将多种常见格式的日期时间字符串解析为 {@link LocalDateTime}。
+     * <p>支持带/不带时区偏移的 ISO-8601（如 {@code 2026-07-22T07:28:39.818+00:00}、{@code ...Z}）、
+     * 纯日期、纯时间以及若干常见自定义格式。带时区偏移的输入会换算到系统默认时区。</p>
+     *
+     * @param value 待解析的字符串
+     * @return 解析成功返回 {@code LocalDateTime}，无法解析或空白时返回 {@code null}
+     */
+    public static LocalDateTime parseFlexible(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        // 1、带时区偏移的 ISO-8601：2026-07-22T07:28:39.818+00:00 / ...Z
+        try {
+            return OffsetDateTime.parse(trimmed).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
+        } catch (DateTimeParseException ignored) {
+        }
+        // 2、无偏移的 ISO-8601：2026-07-22T07:28:39.818 / 2026-07-22T07:28:39
+        try {
+            return LocalDateTime.parse(trimmed);
+        } catch (DateTimeParseException ignored) {
+        }
+        // 3、纯日期 ISO：2026-07-22
+        try {
+            return LocalDate.parse(trimmed).atStartOfDay();
+        } catch (DateTimeParseException ignored) {
+        }
+        // 4、纯时间 ISO：07:28:39 / 07:28:39.818
+        try {
+            return LocalTime.parse(trimmed).atDate(LocalDate.ofEpochDay(0));
+        } catch (DateTimeParseException ignored) {
+        }
+        // 5、常见的自定义格式
+        for (String pattern : new String[]{DATETIME, TIMESTAMP, DATE, TIME, "yyyy/MM/dd HH:mm:ss", "yyyy/MM/dd"}) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+                sdf.setLenient(false);
+                return asLocalDateTime(sdf.parse(trimmed));
+            } catch (ParseException ignored) {
+            }
+        }
+        return null;
     }
 
     public static String hexMonth(int month) {

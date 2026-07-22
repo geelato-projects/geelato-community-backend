@@ -5,7 +5,7 @@ import cn.geelato.core.env.EnvManager;
 import cn.geelato.security.*;
 
 import cn.geelato.utils.StringUtils;
-import cn.geelato.utils.logging.LogContext;
+import cn.geelato.logging.LogContext;
 import cn.geelato.web.common.online.OnlineUserTracker;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.common.oauth2.OAuth2Helper;

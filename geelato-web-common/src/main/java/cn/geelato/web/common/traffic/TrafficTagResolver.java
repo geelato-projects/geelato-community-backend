@@ -4,7 +4,7 @@ import cn.geelato.core.GlobalContext;
 import cn.geelato.security.User;
 import cn.geelato.traffic.TrafficTagStrategy;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.utils.logging.LogContext;
+import cn.geelato.logging.LogContext;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

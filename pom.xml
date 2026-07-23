@@ -27,5 +27,6 @@
         <module>geelato-app-scaffold-starter</module>
         <module>geelato-web-quickstart</module>
         <module>geelato-mql-test</module>
+        <module>geelato-tenant-test</module>
     </modules>
 </project>

@@ -8,16 +8,20 @@ import cn.geelato.security.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
+/**
+ * 环境与安全数据的内存缓存管理器。
+ *
+ * <p>本类位于框架层（geelato-core），只负责内存缓存与对外 API；
+ * 所有对 platform_* 表的访问都委托给 {@link EnvStore} SPI 实现（由业务层 geelato-web-platform 提供）。
+ * 当未注入 {@link EnvStore} 时（框架独立运行），加载动作跳过，对外读 API 返回空结果。</p>
+ */
 @Slf4j
 public class EnvManager  extends AbstractManager {
     // 内存缓存相关
@@ -26,8 +30,11 @@ public class EnvManager  extends AbstractManager {
 
     private final Map<String ,Map<String , SysConfig>> sysConfigClassifyMap;
     private final Map<String ,SysConfig> sysConfigMap;
+    /**
+     * 平台数据加载 SPI，由业务层注入。
+     */
     @Setter
-    private JdbcTemplate jdbcTemplate;
+    private EnvStore envStore;
     private static EnvManager instance;
 
     private EnvManager(){
@@ -51,9 +58,14 @@ public class EnvManager  extends AbstractManager {
     }
 
     private void LoadSysConfig() {
-        String sql = "select config_key as configKey,config_value as configValue,app_Id as appId,tenant_code as tenantCode,purpose as purpose " +
-                "from platform_sys_config where enable_status =1 and del_status =0";
-        List<SysConfig> sysConfigList = jdbcTemplate.query(sql,new BeanPropertyRowMapper<>(SysConfig.class));
+        if (envStore == null) {
+            log.info("LoadSysConfig skipped (no EnvStore provided)");
+            return;
+        }
+        List<SysConfig> sysConfigList = envStore.loadAllSysConfig();
+        if (sysConfigList == null) {
+            return;
+        }
         for (SysConfig config:sysConfigList) {
             if(!sysConfigMap.containsKey(config.getConfigKey())){
                 sysConfigMap.put(config.getConfigKey(),config);
@@ -78,10 +90,11 @@ public class EnvManager  extends AbstractManager {
     }
 
     public void refreshConfig(String configKey){
-        String sql = "select config_key as configKey,config_value as configValue,app_Id as appId,tenant_code as tenantCode,purpose as purpose from platform_sys_config " +
-                "where enable_status =1 and del_status =0 and config_key='%s'";
-        SysConfig sysConfig = jdbcTemplate.queryForObject(String.format(sql,configKey),
-                new BeanPropertyRowMapper<>(SysConfig.class));
+        if (envStore == null) {
+            log.info("refreshConfig skipped (no EnvStore provided)");
+            return;
+        }
+        SysConfig sysConfig = envStore.loadSysConfig(configKey);
         if(sysConfig!=null){
             String key=sysConfig.getConfigKey();
             String purpose=sysConfig.getPurpose();
@@ -90,10 +103,11 @@ public class EnvManager  extends AbstractManager {
             }else{
                 sysConfigMap.put(key,sysConfig);
             }
-            if(sysConfigClassifyMap.get(purpose).containsKey(key)){
-                sysConfigClassifyMap.get(purpose).replace(key,sysConfig);
+            Map<String, SysConfig> purposeMap = sysConfigClassifyMap.computeIfAbsent(purpose, k -> new HashMap<>());
+            if(purposeMap.containsKey(key)){
+                purposeMap.replace(key,sysConfig);
             }else {
-                sysConfigClassifyMap.get(purpose).put(key,sysConfig);
+                purposeMap.put(key,sysConfig);
             }
         }
     }
@@ -111,6 +125,10 @@ public class EnvManager  extends AbstractManager {
     }
 
     public User InitCurrentUser(String loginName,String tenantCode) {
+        if (envStore == null) {
+            log.info("InitCurrentUser skipped (no EnvStore provided)");
+            return null;
+        }
         String cacheKey = loginName + ":" + tenantCode;
         CachedUser cachedUser = userCache.get(cacheKey);
         if (cachedUser != null && !cachedUser.isExpired()) {
@@ -120,39 +138,8 @@ public class EnvManager  extends AbstractManager {
             loadUserPermission(cachedUserData);
             return cachedUserData;
         }
-        log.debug("从数据库查询用户信息: {}", loginName);
-        String sql = "select " +
-                "id as userId, " +
-                "name as userName, " +
-                "login_name as loginName, " +
-                "tenant_code as tenantCode, " +
-                "job_number as jobNumber, " +
-                "description, " +
-                "org_id as orgId, " +
-                "org_id as defaultOrgId, " +
-                "cooperating_org_id as cooperatingOrgId, " +
-                "bu_id as buId, " +
-                "dept_id as deptId, " +
-                "en_name as enName, " +
-                "sex, " +
-                "avatar, " +
-                "mobile_prefix as mobilePrefix, " +
-                "mobile_phone as mobilePhone, " +
-                "telephone, " +
-                "email, " +
-                "post, " +
-                "nation_code as nationCode, " +
-                "province_code as provinceCode, " +
-                "city_code as cityCode, " +
-                "address, " +
-                "type, " +
-                "source, " +
-                "enable_status, " +
-                "weixin_unionId as weixinUnionId, " +
-                "weixin_work_userId as weixinWorkUserId " +
-                "from platform_user " +
-                "where del_status = 0 and login_name =? and tenant_code =?";
-        User user = jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(User.class), loginName, tenantCode);
+        log.debug("从数据源查询用户信息: {}", loginName);
+        User user = envStore.loadUser(loginName, tenantCode);
 
         if (user != null) {
             if (user.getEnableStatus() == 0) {
@@ -180,36 +167,18 @@ public class EnvManager  extends AbstractManager {
     }
 
     private void loadUserRole(User user) {
-        List<UserRole> userRoles=jdbcTemplate.query(" select t3.id,t3.code,t3.`NAME`,t3.type,t3.tenant_code as tenantCode from platform_role_r_user t1 left join platform_user t2 on t1.user_id=t2.id\n" +
-                        "left join platform_role t3 on t3.id=t1.role_id where t2.id= ?",
-                new BeanPropertyRowMapper<>(UserRole.class), user.getUserId());
+        List<UserRole> userRoles = envStore.loadUserRoles(user.getUserId());
+        if (userRoles == null) {
+            userRoles = new ArrayList<>();
+        }
         user.setUserRoles(userRoles);
     }
 
     private void loadUserOrg(User user) {
-        List<UserOrg> userOrgs=jdbcTemplate.query("""
-                            WITH RECURSIVE platform_org_tree AS (
-                            SELECT
-                                o.id,o.pid,o.code,o.name,
-                                o.name AS full_name,
-                                o.type,o.category,o.tenant_code,
-                                CASE WHEN o.type = 'department' THEN o.id ELSE NULL END AS dept_id,
-                                CASE WHEN o.type = 'company' THEN o.id ELSE NULL END AS company_id,
-                                CASE WHEN o.type = 'company' THEN o.extend_id ELSE NULL END AS company_extend_id
-                            FROM platform_org o WHERE o.pid IS NULL AND o.status = 1 AND o.del_status = 0
-                            UNION ALL
-                            SELECT
-                                o.id,o.pid,o.code,o.name,
-                                CONCAT(ot.full_name, '/', o.name) AS full_name,
-                                o.type,o.category,o.tenant_code,
-                                CASE WHEN o.type = 'department' THEN o.id ELSE ot.dept_id END AS dept_id,
-                                CASE WHEN o.type = 'company' THEN o.id ELSE ot.company_id END AS company_id,
-                                COALESCE(CASE WHEN o.type = 'company' THEN o.extend_id END, ot.company_extend_id) AS company_extend_id
-                            FROM platform_org o JOIN platform_org_tree ot ON o.pid = ot.id WHERE o.status = 1 AND o.del_status = 0
-                        ) SELECT t2.id AS orgId, t2.code, t2.name,t2.full_name AS fullName, t2.pid,t2.tenant_code AS tenantCode,
-                        t2.dept_id AS deptId,t2.company_id AS companyId,t2.company_extend_id AS extendId,t1.default_org AS defaultOrg,t2.type,t2.category\s
-                        FROM platform_org_r_user t1 LEFT JOIN platform_org_tree t2 ON t1.org_id =t2.id WHERE t1.del_status = 0 AND t1.user_id= ?""",
-                new BeanPropertyRowMapper<>(UserOrg.class), user.getUserId());
+        List<UserOrg> userOrgs = envStore.loadUserOrgs(user.getUserId());
+        if (userOrgs == null) {
+            userOrgs = new ArrayList<>();
+        }
         user.setUserOrgs(userOrgs);
         UserOrg defaultOrg = userOrgs.stream()
                 .filter(org -> Boolean.TRUE.equals(org.getDefaultOrg()))
@@ -230,32 +199,20 @@ public class EnvManager  extends AbstractManager {
 
 
     private List<Permission> structDataPermission(String userId) {
-        String rolePermissionSql = """
-                select t2.`object` as entity,t2.name as `name`,t2.rule as rule,t2.seq_no as weight, t3.weight as role_weight from platform_role_r_permission t1\s
-                left join platform_permission t2 on t1.permission_id =t2.id\s
-                left join platform_role_r_user t4 on t4.role_id =t1.role_id\s
-                left join platform_role t3 on t4.role_id =t3.id\s
-                left join platform_user t5 on t5.id =t4.user_id\s
-                where  t2.type='dp' and t1.del_status=0 and t2.del_status=0 and t3.del_status=0 and t3.enable_status = 1 and t4.del_status=0 and t5.id =?""";
-        List<Permission> rolePermission= jdbcTemplate.query(rolePermissionSql,
-                new BeanPropertyRowMapper<>(Permission.class), userId);
-
-        String userPermissionSql= """
-                select * from platform_user_r_permission t1\s
-                left join platform_permission t2 on t1.permission_id=t2.id
-                where t2.type='dp' and t1.del_status=0 and t2.del_status=0\s
-                and t1.user_id=?""";
-        List<Permission> userPermission= jdbcTemplate.query(userPermissionSql,
-                new BeanPropertyRowMapper<>(Permission.class), userId);
-        
-        return  Stream.concat(rolePermission.stream(), userPermission.stream())
-                .toList();
+        List<Permission> rolePermission = envStore.loadDataPermissions(userId);
+        if (rolePermission == null) {
+            return new ArrayList<>();
+        }
+        return rolePermission;
     }
 
 
     private List<Permission> structElementPermission(String userId) {
-        //todo
-        return new ArrayList<>();
+        if (envStore == null) {
+            return new ArrayList<>();
+        }
+        List<Permission> elementPermissions = envStore.loadElementPermissions(userId);
+        return elementPermissions == null ? new ArrayList<>() : elementPermissions;
     }
 
     /**

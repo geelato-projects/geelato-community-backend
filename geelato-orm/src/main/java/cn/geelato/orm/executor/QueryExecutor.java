@@ -1,6 +1,6 @@
 package cn.geelato.orm.executor;
 
-import cn.geelato.orm.PageResult;
+import cn.geelato.orm.page.PageResult;
 import cn.geelato.orm.query.MetaQuery;
 
 import java.util.List;

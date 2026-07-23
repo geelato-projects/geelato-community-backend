@@ -1,13 +1,11 @@
+---
+title: 文件上传
+sidebar_label: 文件上传
+---
+
 # 文件上传
 
-这篇文档说明 Geelato 当前文件上传能力的核心入口、存储方式、附件表模型，以及与 OSS 配置的关系。
-
-本文主要基于：
-
-- `UploadController`
-- `FileHandler`
-- `UploadService`
-- `Attachment`
+本页说明文件上传的核心入口、存储方式、附件表模型及其与 OSS 配置的关系，涉及的核心组件包括 `UploadController`、`FileHandler`、`UploadService`、`Attachment`。
 
 ## 总体链路
 

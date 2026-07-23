@@ -8,7 +8,7 @@ import cn.geelato.core.mql.execute.BoundSql;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.sql.SqlManager;
-import cn.geelato.orm.PageResult;
+import cn.geelato.orm.page.PageResult;
 import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
 import cn.geelato.orm.executor.spi.MetaExecutionStrategy;
 import cn.geelato.orm.executor.support.AbstractExecutionStrategySupport;

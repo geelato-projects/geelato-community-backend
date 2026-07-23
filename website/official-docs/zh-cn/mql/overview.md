@@ -1,3 +1,8 @@
+---
+title: MQL
+sidebar_label: MQL
+---
+
 # MQL
 
 MQL，完整名称为 Meta Query Language，是 Geelato Framework 在平台侧提供的一套基于 JSON 的元数据查询与操作协议。
@@ -54,11 +59,9 @@ MQL 的核心处理类为 `MetaController`，常见接口包括：
 - `/api/meta/delete/{biz}/{id}`
 - `/api/meta/delete2/{biz}`
 
-## 你会在 MQL 中看到什么
+## MQL 关键能力
 
-MQL 的主体是一段 JSON，通常围绕“实体名 + 关键字 + 条件表达式”展开。
-
-你会频繁看到这些能力：
+MQL 的主体是一段 JSON，围绕"实体名 + 关键字 + 条件表达式"展开，包含以下能力：
 
 - `@fs` 字段选择
 - `@p` 分页

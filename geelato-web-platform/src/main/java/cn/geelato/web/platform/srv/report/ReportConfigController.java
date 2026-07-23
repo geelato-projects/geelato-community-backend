@@ -1,12 +1,15 @@
 package cn.geelato.web.platform.srv.report;
 
+import cn.geelato.web.common.annotation.ApiRuntimeRestController;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.web.platform.srv.report.dto.ReportApiResponse;
 import cn.geelato.web.platform.srv.report.dto.ReportConfigDetailData;
 import cn.geelato.web.platform.srv.report.dto.ReportConfigSaveRequest;
+import cn.geelato.web.platform.srv.report.dto.ReportTypeConfig;
 import cn.geelato.web.platform.srv.report.dto.TemplateAdjustRequest;
 import cn.geelato.web.platform.srv.report.dto.TemplateAdjustResult;
+import cn.geelato.web.platform.srv.report.dto.TemplateReflowRequest;
 import cn.geelato.web.platform.srv.report.service.ReportConfigEditorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,11 +18,23 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@DesignTimeApiRestController(value = "/periodic-report/report-config", category = "platform-design")
+import java.util.List;
+
+@ApiRuntimeRestController(value = "/periodic-report/report-config", category = "platform-design")
 @RequiredArgsConstructor
 @Slf4j
 public class ReportConfigController {
     private final ReportConfigEditorService reportConfigEditorService;
+
+    @GetMapping("/report-types")
+    public ReportApiResponse<List<ReportTypeConfig>> reportTypes() {
+        try {
+            return ReportApiResponse.success(reportConfigEditorService.listReportTypes());
+        } catch (Exception e) {
+            log.error("list report types failed", e);
+            return ReportApiResponse.error(e.getMessage());
+        }
+    }
 
     @GetMapping("/detail")
     public ReportApiResponse<ReportConfigDetailData> detail(@RequestParam(value = "templateId", required = false) String templateId,
@@ -49,6 +64,16 @@ public class ReportConfigController {
             return ReportApiResponse.success(reportConfigEditorService.adjustTemplate(request));
         } catch (Exception e) {
             log.error("adjust template failed", e);
+            return ReportApiResponse.error(e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/reflow-template", consumes = MediaTypes.APPLICATION_JSON_UTF_8)
+    public ReportApiResponse<TemplateAdjustResult> reflowTemplate(@RequestBody TemplateReflowRequest request) {
+        try {
+            return ReportApiResponse.success(reportConfigEditorService.reflowTemplate(request));
+        } catch (Exception e) {
+            log.error("reflow template failed", e);
             return ReportApiResponse.error(e.getMessage());
         }
     }

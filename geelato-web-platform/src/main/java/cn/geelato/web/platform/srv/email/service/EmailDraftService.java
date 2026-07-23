@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.srv.email.service;
 
 import cn.geelato.meta.email.UserEmailDraft;
-import cn.geelato.orm.Filter;
+import cn.geelato.orm.query.Filter;
 import cn.geelato.orm.MetaFactory;
-import cn.geelato.orm.Order;
+import cn.geelato.orm.query.Order;
 import cn.geelato.web.platform.srv.email.dto.EmailAddressDto;
 import cn.geelato.web.platform.srv.email.dto.EmailDraftDto;
 import cn.geelato.web.platform.srv.email.dto.EmailDraftUpsertRequest;

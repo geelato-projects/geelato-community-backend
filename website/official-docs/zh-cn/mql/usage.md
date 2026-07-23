@@ -1,6 +1,11 @@
+---
+title: MQL 使用指引
+sidebar_label: MQL 使用指引
+---
+
 # MQL 使用指引
 
-这一页说明 Geelato Framework 当前在平台侧如何使用 MQL 发起查询、保存、删除与表达式计算。
+本页说明在平台侧如何使用 MQL 发起查询、保存、删除与表达式计算。
 
 ## 核心接口
 
@@ -482,7 +487,7 @@ ORDER BY status ASC, createAt DESC
 
 - 更新时自动补 `updateAt`、`updater`、`updaterName`
 - 新增时自动补 `createAt`、`creator`、`tenantCode` 等默认字段
-- 这些默认字段现在通过 `MqlSaveFieldValueFiller` SPI 注入，而不是要求业务侧手工补字段
+- 这些默认字段通过 `MqlSaveFieldValueFiller` SPI 注入，业务侧无需手工补字段
 - 当前平台默认实现位于 `geelato-web-platform`，运行时同样遵循 `0` 个跳过、`1` 个按 `isEnabled()`、多实现直接报错
 - 扩展方式与完整说明见：[查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)
 

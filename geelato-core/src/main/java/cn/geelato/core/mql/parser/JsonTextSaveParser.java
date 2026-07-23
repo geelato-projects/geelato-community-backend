@@ -14,6 +14,7 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
 import cn.geelato.core.util.EncryptUtils;
+import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -21,6 +22,8 @@ import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -116,6 +119,13 @@ public class JsonTextSaveParser extends JsonTextParser {
     private final static String SUB_ENTITY_FLAG = "#";
     private final static String KW_BIZ = "@biz";
     private final static String Force_ID = "forceId";
+
+    /**
+     * 日期/时间列归一化的目标格式化器（缓存实例，避免重复编译 pattern）。
+     */
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DateUtils.DATE);
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern(DateUtils.TIME);
+    private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern(DateUtils.DATETIME);
 
     /**
      * 解析传入的JSON文本，并返回一个SaveCommand对象。
@@ -243,7 +253,7 @@ public class JsonTextSaveParser extends JsonTextParser {
                             params.put(key, "true".equals(v) || "1".equals(v) ? 1 : ("false".equals(v) || "0".equals(v) ? 0 : v));
                         }
                     } else {
-                        params.put(key, jo.getString(key));
+                        params.put(key, normalizeDateValueIfNeeded(fieldMeta, jo.getString(key)));
                     }
                 }
             }
@@ -313,6 +323,50 @@ public class JsonTextSaveParser extends JsonTextParser {
         command.setFields(updateFields);
         command.setValueMap(params);
         command.setPK(pkValue);
+    }
+
+    /**
+     * 若字段为日期/时间类型列，则将其字符串值归一化为数据库可识别的格式，
+     * 以兼容前端传入的 ISO-8601（如 {@code 2026-07-22T07:28:39.818+00:00}）等格式。
+     * 非时间类型列、无字段元数据或无法解析时原样返回。
+     *
+     * @param fieldMeta 字段元数据
+     * @param value     原始字符串值
+     * @return 归一化后的值
+     */
+    private Object normalizeDateValueIfNeeded(FieldMeta fieldMeta, String value) {
+        if (fieldMeta == null || fieldMeta.getColumnMeta() == null || value == null) {
+            return value;
+        }
+        // 零分配的类型快速判断：非日期/时间类型列直接返回
+        DateTimeFormatter formatter = temporalFormatterOf(fieldMeta.getColumnMeta().getDataType());
+        if (formatter == null) {
+            return value;
+        }
+        LocalDateTime ldt = DateUtils.parseFlexible(value);
+        return ldt == null ? value : ldt.format(formatter);
+    }
+
+    /**
+     * 根据列数据类型返回对应的目标格式化器（缓存实例，{@code equalsIgnoreCase} 零字符串分配）。
+     *
+     * @param columnDataType 列数据类型（如 date/time/datetime/timestamp）
+     * @return 日期/时间类型返回对应格式化器，否则 {@code null}
+     */
+    private static DateTimeFormatter temporalFormatterOf(String columnDataType) {
+        if (columnDataType == null) {
+            return null;
+        }
+        if (columnDataType.equalsIgnoreCase("datetime") || columnDataType.equalsIgnoreCase("timestamp")) {
+            return DATETIME_FORMATTER;
+        }
+        if (columnDataType.equalsIgnoreCase("date")) {
+            return DATE_FORMATTER;
+        }
+        if (columnDataType.equalsIgnoreCase("time")) {
+            return TIME_FORMATTER;
+        }
+        return null;
     }
 
     private static void EncryptInner(SaveCommand command, EntityMeta entityMeta) {

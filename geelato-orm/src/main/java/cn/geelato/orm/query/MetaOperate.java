@@ -2,7 +2,6 @@ package cn.geelato.orm.query;
 
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.util.BeansUtils;
-import cn.geelato.orm.Filter;
 import cn.geelato.orm.executor.MetaCommandExecutor;
 import cn.geelato.orm.runtime.OrmRuntimeProvider;
 import lombok.Getter;

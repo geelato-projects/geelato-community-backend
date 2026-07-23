@@ -24,7 +24,7 @@ public class ReportConfigEditorDatabaseService {
 
     public ReportConfigDetailData loadDetail(String templateId, String reportTypeId, String customerId) {
         ReportConfigDetailData detail = new ReportConfigDetailData();
-        List<ReportTypeConfig> reportTypes = listReportTypes();
+        List<ReportTypeConfig> reportTypes = listAllReportTypes();
         detail.setReportTypes(reportTypes);
         String resolvedReportTypeId = resolveReportTypeId(reportTypeId, reportTypes);
         CustomerReportConfig customerConfig = getCustomerConfig(resolvedReportTypeId, customerId, templateId);
@@ -45,10 +45,12 @@ public class ReportConfigEditorDatabaseService {
         return detail;
     }
 
-    private List<ReportTypeConfig> listReportTypes() {
-        String sql = "SELECT id, report_code, report_name, scope_type, data_provider_code, renderer_type, enabled, tenant_code "
-                + "FROM rn_report_type WHERE del_status = 0 AND enabled = 1 AND scope_type = 'CUSTOMER' "
-                + "ORDER BY report_name, scope_type";
+    // 报告类型下拉框数据源：列出系统中所有已启用的客户级报告定义（rn_report_type），不按客户是否已配置过滤
+    public List<ReportTypeConfig> listAllReportTypes() {
+        String sql = "SELECT t.id, t.report_code, t.report_name, t.scope_type, t.data_provider_code, t.renderer_type, t.enabled, t.tenant_code "
+                + "FROM rn_report_type t "
+                + "WHERE t.del_status = 0 AND t.enabled = 1 AND t.scope_type = 'CUSTOMER' "
+                + "ORDER BY t.report_name, t.scope_type";
         try {
             List<Map<String, Object>> rows = MetaFactory.sql(sql).list();
             return rows.stream().map(this::mapReportType).toList();
@@ -145,7 +147,8 @@ public class ReportConfigEditorDatabaseService {
         config.setChannels("email");
         config.setRecipientRuleJson("{}");
         config.setBizFilterJson("{}");
-        config.setEnabled(true);
+        // 该客户尚未配置该报告，加载默认模板时启用默认关闭，由用户勾选后再插入记录
+        config.setEnabled(false);
         config.setTenantCode(DEFAULT_TENANT);
         return config;
     }

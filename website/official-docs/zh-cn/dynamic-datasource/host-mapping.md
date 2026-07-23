@@ -1,5 +1,4 @@
 ---
-id: host-mapping
 title: 内网 Host 映射 (本地连生产)
 sidebar_label: Host 映射 (本地调试)
 ---

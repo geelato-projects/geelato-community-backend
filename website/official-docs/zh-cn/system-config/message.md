@@ -1,3 +1,7 @@
+---
+title: Message 模块
+sidebar_label: Message 模块
+---
 # Message 模块
 
 对应配置文件：

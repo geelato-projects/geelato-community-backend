@@ -1,6 +1,10 @@
+---
+title: 认证鉴权
+sidebar_label: 认证鉴权
+---
 # 认证鉴权
 
-这篇文档聚焦平台运行时内部真正执行鉴权的入口：
+本页说明平台运行时内部执行鉴权的入口：
 
 - `DefaultSecurityInterceptor`
 

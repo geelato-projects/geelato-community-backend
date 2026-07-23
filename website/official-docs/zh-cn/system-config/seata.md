@@ -1,3 +1,7 @@
+---
+title: Seata 模块
+sidebar_label: Seata 模块
+---
 # Seata 模块
 
 对应配置文件：

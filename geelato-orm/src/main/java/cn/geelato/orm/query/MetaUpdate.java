@@ -1,8 +1,7 @@
 package cn.geelato.orm.query;
 
-import cn.geelato.orm.Filter;
 import cn.geelato.core.sql.SqlManager;
-import cn.geelato.orm.support.SaveCommandAdapter;
+import cn.geelato.orm.adapter.SaveCommandAdapter;
 import lombok.Getter;
 
 import java.util.ArrayList;

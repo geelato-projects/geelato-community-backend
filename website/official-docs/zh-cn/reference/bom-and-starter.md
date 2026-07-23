@@ -1,3 +1,8 @@
+---
+title: BOM 与 Starter
+sidebar_label: BOM 与 Starter
+---
+
 # BOM 与 Starter
 
 框架的官方交付入口采用 `BOM + Starter` 模式。

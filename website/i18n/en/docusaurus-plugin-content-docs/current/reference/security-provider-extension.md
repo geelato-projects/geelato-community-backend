@@ -186,4 +186,4 @@ This makes them suitable as:
 ## Suggested Reading
 
 - [Authentication and Authorization](../authentication/security-authentication.md)
-- [Override Default Implementations](override-default-implementations.md)
+- [Minimal Integration](../guide/minimal-integration.md)

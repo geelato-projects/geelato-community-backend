@@ -3,7 +3,7 @@ package cn.geelato.orm.executor;
 import cn.geelato.core.mql.command.DeleteCommand;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.command.SaveCommand;
-import cn.geelato.orm.PageResult;
+import cn.geelato.orm.page.PageResult;
 
 import java.util.List;
 import java.util.Map;

@@ -1,6 +1,11 @@
+---
+title: 安全 Provider 扩展
+sidebar_label: 安全 Provider 扩展
+---
+
 # 安全 Provider 扩展
 
-这篇文档说明 `geelato-security` 中两个非常关键的安全抽象：
+本页说明 `geelato-security` 中两个关键的安全抽象：
 
 - `UserProvider`
 - `OrgProvider`
@@ -336,4 +341,4 @@
 ## 推荐继续阅读
 
 - [认证鉴权](../authentication/security-authentication.md)
-- [覆盖默认实现](override-default-implementations.md)
+- [新项目最小接入](../guide/minimal-integration.md)

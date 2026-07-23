@@ -1,167 +1,118 @@
-# SSE订阅推送
+---
+title: SSE 订阅推送
+sidebar_label: SSE 订阅推送
+---
 
-这篇文档说明平台侧如何同时支持：
+# SSE 订阅推送
 
-- 按主题订阅 SSE 消息
-- 订阅全部主题的 SSE 消息
+平台基于 Server-Sent Events（SSE）提供消息订阅与推送能力，支持服务端在数据变更后将事件实时下发到前端。订阅者可按业务主题精确订阅，也可以一次性订阅全部主题的全量消息。
 
-目标是让前端既可以按业务主题精确订阅，也可以在监控、聚合通知、调试页面里一次性接收所有主题推送。
+## 适用场景
 
-## 当前能力
+- 前端实时刷新字典、页面配置、流程状态等数据缓存。
+- 聚合通知、监控大盘、调试页需要接收平台所有主题的事件流。
 
-当前平台已经有按主题订阅入口：
+## 订阅端点
 
-- `GET /subscribe/{topic}`
+订阅端点统一挂在 `/subscribe` 下，返回 `text/event-stream` 长连接流：
 
-同时也预留了“全部主题订阅”入口：
+| 端点 | 说明 |
+| --- | --- |
+| `GET /subscribe/{topic}` | 订阅指定主题。`topic` 为非空字符串，否则返回 `400 Bad Request`。 |
+| `GET /subscribe/topic/all` | 订阅全部主题。平台向任意主题推送的消息都会复制一份到该流。 |
 
-- `GET /subscribe/topic/all`
+### 认证
 
-但该入口在设计方案形成时仍是占位状态，因此需要补齐完整实现。
+订阅端点受 `DefaultSecurityInterceptor` 保护，请求头需携带有效的 `Authorization`，支持的凭证形式包括 `JWTBearer`、`Bearer`（OAuth2）、`Anonymous` 等。订阅本身不区分主题权限——任意已认证用户均可订阅任意主题或全量主题流。
 
-## 设计目标
+### 连接生命周期
 
-### 按主题订阅
+每个连接的超时时间为 **30 分钟**。连接完成（completion）、超时（timeout）或异常（error）后，订阅关系会被自动清理；推送过程中识别到失效连接时也会即时移除，避免内存泄漏。客户端断线后，浏览器 `EventSource` 会按服务端下发的 `retry: 3000`（毫秒）自动重连。
 
-保留并完善：
+## 客户端订阅
 
-- `GET /subscribe/{topic}`
+服务端未在事件流中设置自定义 `event:` 名称，因此消息统一以默认 `message` 事件下发，客户端通过 `onmessage` 接收。消息体为 JSON 字符串，其结构由推送方决定。
 
-要求：
+### 订阅单个主题
 
-- 返回 `text/event-stream`
-- `topic` 不能为空
-- 生命周期结束时自动清理订阅关系
+```javascript
+const source = new EventSource('/subscribe/upgrade_page_topic');
+
+source.onmessage = (event) => {
+  const payload = JSON.parse(event.data);
+  console.log(payload);
+  // 示例：{ "DATA": "UpgradePageEvent", "PAGE_ID": 12, "EXTEND_ID": 3 }
+};
+```
 
 ### 订阅全部主题
 
-新增完整实现：
-
-- `GET /subscribe/topic/all`
-
-这个入口返回 `SseEmitter`，客户端可直接使用：
-
 ```javascript
 const source = new EventSource('/subscribe/topic/all');
+
+source.onmessage = (event) => {
+  const payload = JSON.parse(event.data);
+  console.log(payload);
+};
 ```
 
-这样可以接收所有主题广播出来的消息。
+## 服务端推送
 
-## 核心实现点
+推送通过服务端代码触发，**不提供 HTTP 推送端点**。调用 `SseHelper.push(...)` 即可将消息广播到对应主题的全部订阅者，同时同步复制到 `/subscribe/topic/all` 的全量订阅者。
 
-### 控制器层
-
-控制器建议显式声明：
+### 推送 API
 
 ```java
-produces = "text/event-stream"
+// 构造消息：topic 为主题名称，data 为任意可序列化为 JSON 的对象
+SseMessage message = new SseMessage("upgrade_page_topic", payload);
+SseHelper.push(message);
 ```
 
-并提供两个订阅入口：
+`SseHelper` 主要方法：
 
-- 主题订阅：`/subscribe/{topic}`
-- 全部主题订阅：`/subscribe/topic/all`
+| 方法 | 说明 |
+| --- | --- |
+| `SseHelper.push(SseMessage message)` | 向指定主题推送消息。`message.topic` 不能为空，否则抛出 `IllegalArgumentException`。 |
+| `SseHelper.subscribe(String topic)` | 创建指定主题的 `SseEmitter`（供控制器返回）。 |
+| `SseHelper.subscribeAll()` | 创建全量主题的 `SseEmitter`。 |
+| `SseHelper.getActiveTopics()` | 返回当前有活跃订阅者的主题集合。 |
 
-### 管理器层
+`SseMessage` 仅包含两个字段：
 
-在 `SseEmitterManager` 中增加“全局订阅者”集合，例如：
-
-- `allSubscribers`
-
-并补齐：
-
-- `subscribeAll()`
-- 生命周期回调清理
-- 发送失败时移除失效订阅
-
-### 广播策略
-
-当调用 `sendToTopic(topic, message)` 时，应同时广播给：
-
-- 当前 `topic` 的订阅者
-- 全部主题订阅者
-
-这样既不破坏现有按主题能力，也能让聚合订阅自然生效。
-
-## 推荐实现结构
-
-### `SseEmitterManager`
-
-负责：
-
-- 管理 topic -> emitters 的映射
-- 管理全部主题订阅者集合
-- 统一注册 `onCompletion`、`onTimeout`、`onError`
-- 在发送失败时做回收
-
-### `SseHelper`
-
-负责对管理器做轻量封装，建议同时提供：
-
-- `subscribe(String topic)`
-- `subscribeAll()`
-
-保持统一调用风格。
-
-### `SseController`
-
-负责暴露 HTTP 入口：
-
-- `GET /subscribe/{topic}`
-- `GET /subscribe/topic/all`
-
-并向外返回 `SseEmitter`。
-
-## API 说明
-
-### 按主题订阅
-
-- 路径：`GET /subscribe/{topic}`
-- 返回类型：`text/event-stream`
-- 适用场景：只监听某个业务主题，如订单、通知、任务状态等
-
-客户端示例：
-
-```javascript
-const source = new EventSource('/subscribe/news');
+```java
+public class SseMessage {
+    private String topic;   // 主题名称
+    private Object data;    // 负载，序列化为 JSON 下发
+}
 ```
 
-### 全部主题订阅
+### 示例：在事件处理中推送
 
-- 路径：`GET /subscribe/topic/all`
-- 返回类型：`text/event-stream`
-- 适用场景：聚合通知、调试监控、平台总线观察
+平台内置多处推送调用，通常由领域事件触发。以页面配置升级为例：
 
-客户端示例：
-
-```javascript
-const source = new EventSource('/subscribe/topic/all');
+```java
+@Override
+public void handle() {
+    Map<String, Object> data = new HashMap<>();
+    data.put("DATA", getEventCode());          // "UpgradePageEvent"
+    data.put("PAGE_ID", pageId);
+    data.put("EXTEND_ID", extendId);
+    SseHelper.push(new SseMessage("upgrade_page_topic", data));
+}
 ```
 
-## 验证建议
+业务侧推送消息时，建议在负载中约定一个标识字段（如示例中的 `DATA`），便于客户端区分事件类型。
 
-即使不启动整站，也建议至少做两类验证。
+## 平台内置主题
 
-### 管理器层验证
+平台已通过领域事件接入以下主题，业务可直接订阅：
 
-验证 `SseEmitterManager`：
+| 主题 | 触发时机 | 负载字段 |
+| --- | --- | --- |
+| `upgrade_dictionary_topic` | 数据字典项变更 | `DATA`、`DICT_ID` |
+| `upgrade_page_topic` | 页面配置变更 | `DATA`、`PAGE_ID`、`EXTEND_ID` |
+| `upgrade_state_workflow_topic` | 状态机流程定义变更 | `DATA`、`PROC_DEF_ID` |
 
-- 创建一个主题订阅者
-- 创建一个全部主题订阅者
-- 调用 `sendToTopic(topic, message)`
-- 确认两个订阅关系都能被正确投递
+## 兼容性
 
-### 代码审查检查点
-
-- 生命周期回调是否会正确清理连接
-- 发送失败是否只移除当前失效订阅者
-- 空集合时是否及时清理，避免内存膨胀
-
-## 兼容性说明
-
-这项能力不改变既有订阅路径，只是在现有基础上补齐：
-
-- 全部主题订阅能力
-- 更完整的清理与广播逻辑
-
-因此对已有按主题订阅调用方是兼容增强，而不是破坏性调整。
+订阅能力向后兼容：新增的全量主题订阅与既有按主题订阅相互独立，不影响现有调用方；推送时按主题订阅者与全量订阅者各收到一份副本，互不干扰。

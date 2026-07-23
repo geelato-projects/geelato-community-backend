@@ -1,10 +1,11 @@
+---
+title: 全局上下文
+sidebar_label: 全局上下文
+---
+
 # 全局上下文
 
-这篇文档说明 `geelato-core` 中的：
-
-- `cn.geelato.core.GlobalContext`
-
-它当前承担的全局职责主要包括：
+本页说明 `geelato-core` 中 `cn.geelato.core.GlobalContext` 提供的全局上下文能力，主要包括：
 
 - 系统环境标识
 - 系统密级与匿名访问开关

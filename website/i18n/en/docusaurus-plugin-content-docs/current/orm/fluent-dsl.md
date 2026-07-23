@@ -12,6 +12,17 @@ Sample projects:
 - provide a Java-style metadata CRUD entry for backend developers
 - avoid direct MQL JSON construction while still reusing the existing `MetaQLManager + SqlManager + Dao` execution kernel
 
+## Position in the ORM System
+
+In the current ORM system, the Fluent DSL is the backend Java API. Its boundary relative to other parts is:
+
+- ORM annotations declare entity metadata
+- MQL serves frontend and platform-side JSON protocol access
+- the Fluent DSL serves backend Java CRUD and lightweight advanced querying
+- events, dynamic datasource, and query/filter fill SPI inject platform rules into the execution path
+
+So the Fluent DSL is not a string wrapper around MQL. It is the Java-facing ORM entry for service code.
+
 ## When to Use It
 
 - when backend services need metadata query, insert, update, or delete by entity name or entity class
@@ -21,6 +32,7 @@ Sample projects:
 
 - when frontend pages already go through the platform data API based on `MetaController + MQL`
 - when an existing service already works well with `BaseService + entity class` and does not need metadata-driven unification
+- when the query has clearly become SQL-first and is better maintained as final SQL or MyBatis mapping
 
 ## Entry Points
 

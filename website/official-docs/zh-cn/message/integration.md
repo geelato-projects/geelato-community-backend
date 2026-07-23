@@ -1,12 +1,11 @@
 ---
-id: integration
 title: 业务系统消息接入指南
 sidebar_label: 消息入队接入
 ---
 
 # Geelato Message 消息入队接入指南
 
-本文档面向业务系统的开发者，说明如何调用 `geelato-message` 的消息入队接口，以及如何按短信、邮件、Bot、企业微信四类消息构造请求数据。
+本页面向业务系统开发者，说明如何调用 `geelato-message` 的消息入队接口，以及如何按短信、邮件、Bot、企业微信四类消息构造请求数据。
 
 ## 1. HTTP 接口入队 (推荐)
 

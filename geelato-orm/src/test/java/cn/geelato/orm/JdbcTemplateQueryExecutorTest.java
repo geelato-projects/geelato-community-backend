@@ -1,6 +1,8 @@
 package cn.geelato.orm;
 
 import cn.geelato.orm.executor.JdbcTemplateQueryExecutor;
+import cn.geelato.orm.page.PageResult;
+import cn.geelato.orm.query.Filter;
 import cn.geelato.orm.support.OrmTestSupport;
 import cn.geelato.orm.support.TestUserEntity;
 import org.junit.jupiter.api.Test;

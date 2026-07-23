@@ -1,10 +1,11 @@
+---
+title: 事件总线
+sidebar_label: 事件总线
+---
+
 # 事件总线
 
-这篇文档说明 `geelato-web-common` 中的事件总线能力：
-
-- `cn.geelato.web.common.event`
-
-它当前由四个核心类组成：
+本页说明 `geelato-web-common` 中 `cn.geelato.web.common.event` 提供的事件总线能力，由四个核心类组成：
 
 - `BusinessEvent`
 - `EventPublisher`

@@ -86,6 +86,9 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @org.springframework.web.bind.annotation.ExceptionHandler
     public final ResponseEntity<?> handleOtherException(Exception ex, WebRequest request) {
+        // 兜底异常此前只包装返回、不打日志，导致“前端能看到错误、服务端控制台却无任何记录”，无法定位。
+        // 这里统一记录堆栈；请求描述由 WebRequest 提供（如 uri=/xxx;client=ip）。
+        log.error("Unhandled exception on [{}]: {}", request.getDescription(false), ex.getMessage(), ex);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
         ApiResult<Object> apiResult = ApiResult.fail(ex.getMessage() != null ? ex.getMessage() : "系统异常");

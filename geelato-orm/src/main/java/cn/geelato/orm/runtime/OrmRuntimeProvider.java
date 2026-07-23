@@ -6,8 +6,6 @@ import cn.geelato.orm.executor.MetaCommandExecutor;
 import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
 import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
 import cn.geelato.orm.executor.spi.MetaExecutionStrategy;
-import cn.geelato.orm.fill.DefaultSaveDefaultValueFiller;
-import cn.geelato.orm.fill.SaveDefaultValueFiller;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -15,8 +13,6 @@ import org.springframework.context.ApplicationContext;
  * 统一负责在 DSL/适配器入口解析执行器与默认填充器，降低对静态 Bean 直接查找的耦合。
  */
 public class OrmRuntimeProvider {
-
-    private static final SaveDefaultValueFiller FALLBACK_FILLER = new DefaultSaveDefaultValueFiller();
 
     private final ApplicationContext applicationContext;
     private final OrmProperties ormProperties;
@@ -48,11 +44,6 @@ public class OrmRuntimeProvider {
             }
             return cachedMetaCommandExecutor;
         }
-    }
-
-    public SaveDefaultValueFiller saveDefaultValueFiller() {
-        SaveDefaultValueFiller filler = applicationContext.getBeanProvider(SaveDefaultValueFiller.class).getIfAvailable();
-        return filler != null ? filler : FALLBACK_FILLER;
     }
 
     private MetaExecutionStrategy createExecutionStrategy() {

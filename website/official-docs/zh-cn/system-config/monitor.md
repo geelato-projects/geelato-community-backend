@@ -1,3 +1,7 @@
+---
+title: Monitor 模块
+sidebar_label: Monitor 模块
+---
 # Monitor 模块
 
 对应配置文件：

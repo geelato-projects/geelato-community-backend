@@ -1,8 +1,13 @@
+---
+title: MetaStore 扩展
+sidebar_label: MetaStore 扩展
+---
+
 # MetaStore 扩展
 
-当前框架已经把元数据定义来源抽象为 `MetaStore` SPI，用来支持“平台表默认实现”之外的上层替换。
+框架将元数据定义来源抽象为 `MetaStore` SPI，用于支持"平台表默认实现"之外的上层替换。
 
-## 当前可见扩展点
+## 可见扩展点
 
 当前已经落地的元数据 SPI 包括：
 
@@ -71,5 +76,4 @@
 ## 推荐继续阅读
 
 - [核心模块说明](core-modules.md)
-- [覆盖默认实现](override-default-implementations.md)
 - [新项目最小接入](../guide/minimal-integration.md)

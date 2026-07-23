@@ -12,7 +12,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FluentSaveFieldValueFillRuntimeResolverTest {
 
@@ -83,31 +82,53 @@ class FluentSaveFieldValueFillRuntimeResolverTest {
     }
 
     @Test
-    void shouldFailFastWhenMultipleFillersExist() {
+    void shouldRunAllEnabledFillersAndSkipDisabled() {
         ApplicationContext applicationContext = Mockito.mock(ApplicationContext.class);
         Map<String, FluentSaveFieldValueFiller> fillers = new LinkedHashMap<>();
-        fillers.put("fillerA", new NoopFluentSaveFieldValueFiller());
-        fillers.put("fillerB", new NoopFluentSaveFieldValueFiller());
+        fillers.put("fillerA", new FluentSaveFieldValueFiller() {
+            @Override
+            public boolean isEnabled() {
+                return true;
+            }
+
+            @Override
+            public void fill(FluentSaveFieldValueFillContext context) {
+                context.getTargetValueMap().put("a", "A");
+            }
+        });
+        fillers.put("disabled", new FluentSaveFieldValueFiller() {
+            @Override
+            public boolean isEnabled() {
+                return false;
+            }
+
+            @Override
+            public void fill(FluentSaveFieldValueFillContext context) {
+                context.getTargetValueMap().put("x", "X");
+            }
+        });
+        fillers.put("fillerB", new FluentSaveFieldValueFiller() {
+            @Override
+            public boolean isEnabled() {
+                return true;
+            }
+
+            @Override
+            public void fill(FluentSaveFieldValueFillContext context) {
+                context.getTargetValueMap().put("b", "B");
+            }
+        });
         Mockito.when(applicationContext.getBeansOfType(FluentSaveFieldValueFiller.class)).thenReturn(fillers);
         new BeansUtils().setApplicationContext(applicationContext);
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
-                FluentSaveFieldValueFillRuntimeResolver.fillIfAvailable(
-                        new FluentSaveFieldValueFillContext("demo", cn.geelato.core.mql.command.CommandType.Insert, null, Map.of(), new LinkedHashMap<>()))
+        Map<String, Object> values = new LinkedHashMap<>();
+        FluentSaveFieldValueFillRuntimeResolver.fillIfAvailable(
+                new FluentSaveFieldValueFillContext("demo", cn.geelato.core.mql.command.CommandType.Insert, null, Map.of(), values)
         );
 
-        assertEquals("Multiple FluentSaveFieldValueFiller beans found: [fillerA, fillerB]. Expected 0 or 1.", ex.getMessage());
-    }
-
-    private static class NoopFluentSaveFieldValueFiller implements FluentSaveFieldValueFiller {
-        @Override
-        public boolean isEnabled() {
-            return true;
-        }
-
-        @Override
-        public void fill(FluentSaveFieldValueFillContext context) {
-            // no-op
-        }
+        // 保存填充点允许多个：所有启用的都执行，禁用的跳过。
+        assertEquals("A", values.get("a"));
+        assertEquals("B", values.get("b"));
+        assertNull(values.get("x"));
     }
 }

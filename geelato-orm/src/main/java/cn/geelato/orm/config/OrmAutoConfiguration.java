@@ -10,8 +10,6 @@ import cn.geelato.orm.executor.MetaCommandExecutor;
 import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
 import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
 import cn.geelato.orm.executor.spi.MetaExecutionStrategy;
-import cn.geelato.orm.fill.DefaultSaveDefaultValueFiller;
-import cn.geelato.orm.fill.SaveDefaultValueFiller;
 import cn.geelato.orm.runtime.OrmDaoResolver;
 import cn.geelato.orm.runtime.OrmJdbcTemplateResolver;
 import cn.geelato.orm.runtime.OrmRuntimeProvider;
@@ -64,12 +62,6 @@ public class OrmAutoConfiguration {
     @ConditionalOnMissingBean(MetaCommandExecutor.class)
     public MetaCommandExecutor metaCommandExecutor(MetaExecutionStrategy metaExecutionStrategy) {
         return new DefaultMetaCommandExecutor(metaExecutionStrategy);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public SaveDefaultValueFiller saveDefaultValueFiller() {
-        return new DefaultSaveDefaultValueFiller();
     }
 
     @Bean

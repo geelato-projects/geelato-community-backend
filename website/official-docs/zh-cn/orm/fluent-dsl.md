@@ -1,11 +1,27 @@
+---
+title: Fluent DSL 指引
+sidebar_label: Fluent DSL 指引
+---
+
 # Fluent DSL 指引
 
-这一页说明 Geelato Framework 在后端 Java 服务中如何使用 `MetaFactory` 提供的 Fluent DSL 访问 ORM 能力。
+本页说明在后端 Java 服务中如何使用 `MetaFactory` 提供的 Fluent DSL 访问 ORM 能力。
 
 ## 目标
 
 - 面向后端开发者提供一套 Java 风格的元数据 CRUD 入口
 - 避免直接手写 MQL JSON，同时继续复用 `MetaQLManager + SqlManager + Dao` 现有内核
+
+## 在整体 ORM 中的位置
+
+当前 ORM 体系里，Fluent DSL 的定位是“后端 Java API”，它与注解、MQL、事件/扩展机制之间的分工如下：
+
+- ORM 注解负责声明实体元数据
+- MQL 负责前端和平台协议侧的 JSON 数据访问
+- Fluent DSL 负责后端 Java 服务中的链式 CRUD 与轻量高级查询
+- 事件、动态数据源、查询过滤/字段填充 SPI 负责把平台规则注入到执行链路
+
+因此，Fluent DSL 不是 MQL 的字符串包装器，而是面向 Java 服务代码的独立入口。
 
 ## 何时使用
 
@@ -16,6 +32,7 @@
 
 - 前端页面直接走平台通用数据接口时，继续使用 `MetaController + MQL`
 - 已有服务已经稳定依赖 `BaseService + 实体类` 且没有元数据通用化诉求时，可继续沿用原模式
+- 查询已经明显转向 SQL-first，且更适合直接维护完整 SQL / MyBatis 时，不建议强行转成 Fluent DSL
 
 ## 入口
 

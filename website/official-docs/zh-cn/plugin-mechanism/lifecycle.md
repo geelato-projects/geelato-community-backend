@@ -1,45 +1,24 @@
+---
+title: 插件加载、启停与卸载
+sidebar_label: 加载、启停与卸载
+---
+
 # 插件加载、启停与卸载
 
-这篇文档说明当前 Geelato Runtime 如何识别插件目录、如何管理插件状态，以及当前实现下“禁用”和“卸载”的区别。
-
-本文主要基于：
-
-- `PluginConfiguration`
-- `PluginManagerController`
-- `PluginBeanProvider`
-- `PluginLogUtil`
-- `plugins` 运行目录
+本页说明 Geelato Runtime 如何识别插件目录、管理插件状态，以及"禁用"与"卸载"的区别。
 
 ## 加载入口
 
-当前插件运行时管理器由：
+插件运行时管理器由 `PluginConfiguration` 创建 `SpringPluginManager`，其初始化目录来自 `geelato.plugin.pluginDirectory`，默认值为 `plugins`。
 
-- `PluginConfiguration`
+最基本的加载方式：
 
-创建：
+1. 将插件 jar 或目录型插件放入 `plugins` 目录。
+2. Runtime 以该目录作为插件根目录进行管理。
 
-- `SpringPluginManager`
+## 运行目录结构
 
-其初始化目录来自：
-
-- `geelato.plugin.pluginDirectory`
-
-默认值是：
-
-- `plugins`
-
-因此当前最基本的加载方式就是：
-
-1. 将插件 jar 或目录型插件放入 `plugins`
-2. Runtime 以该目录作为插件根目录进行管理
-
-## 运行目录长什么样
-
-当前仓库中的运行目录示例是：
-
-- `d:\geelato\geelato-enterprise\plugins`
-
-里面可以看到：
+运行目录（`plugins`）示例内容：
 
 - `example-plugin-0.0.1-SNAPSHOT.jar`
 - `ocr-plugin-0.0.1-SNAPSHOT.jar`

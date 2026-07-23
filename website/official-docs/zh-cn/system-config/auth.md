@@ -1,3 +1,7 @@
+---
+title: Auth 模块
+sidebar_label: Auth 模块
+---
 # Auth 模块
 
 对应配置文件：

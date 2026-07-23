@@ -1,6 +1,7 @@
 package cn.geelato.mqltest.explain;
 
 import cn.geelato.core.env.EnvManager;
+import cn.geelato.core.env.EnvStore;
 import cn.geelato.security.OrgProvider;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.security.Tenant;
@@ -22,17 +23,20 @@ import java.util.Map;
  * 执行后清理。
  * <p>
  * 用户加载复用 {@link EnvManager#InitCurrentUser(String, String)}（与登录链路一致，
- * 含 dataPermissions、userOrgs、tenant 等完整属性）。
+ * 含 dataPermissions、userOrgs、tenant 等完整属性）。EnvManager 的加载委托给
+ * {@link EnvStore} SPI（由宿主的 PlatformEnvStore 实现）。
  */
 @Slf4j
 public class MqlIdentitySupport {
 
     private final JdbcTemplate jdbcTemplate;
     private final OrgProvider orgProvider;
+    private final EnvStore envStore;
 
-    public MqlIdentitySupport(JdbcTemplate jdbcTemplate, OrgProvider orgProvider) {
+    public MqlIdentitySupport(JdbcTemplate jdbcTemplate, OrgProvider orgProvider, EnvStore envStore) {
         this.jdbcTemplate = jdbcTemplate;
         this.orgProvider = orgProvider;
+        this.envStore = envStore;
     }
 
     /**
@@ -74,12 +78,17 @@ public class MqlIdentitySupport {
 
     /**
      * 加载完整 User 对象（复用 EnvManager 的登录链路加载逻辑）。
+     * EnvManager 委托 EnvStore SPI 访问 platform_* 表。
      */
     private User loadUser(String loginName, String tenantCode) {
         try {
-            // 确保 EnvManager 持有 jdbcTemplate（与 BootApplication 启动初始化一致）
+            if (envStore == null) {
+                log.warn("模拟身份加载跳过：未提供 EnvStore 实现（宿主未引入 platform EnvStore）");
+                return null;
+            }
+            // 确保 EnvManager 持有 EnvStore（与宿主启动初始化一致）
             EnvManager envManager = EnvManager.singleInstance();
-            envManager.setJdbcTemplate(jdbcTemplate);
+            envManager.setEnvStore(envStore);
             User user = envManager.InitCurrentUser(loginName, tenantCode);
             if (user == null) {
                 log.warn("模拟身份加载失败：用户不存在 loginName={}, tenantCode={}", loginName, tenantCode);

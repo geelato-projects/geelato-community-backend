@@ -1,3 +1,7 @@
+---
+title: Package 模块
+sidebar_label: Package 模块
+---
 # Package 模块
 
 对应配置文件：

@@ -41,12 +41,17 @@
         button.primary { background: #165dff; color: #fff; border-color: #165dff; }
         button.primary:hover { background: #4080ff; }
         button.sm { padding: 3px 10px; font-size: 11px; }
+        /* header 内控件统一样式（select 与 button 等高对齐） */
+        .header-ctrl { font-size: 12px; height: 28px; box-sizing: border-box; vertical-align: middle; }
+        select.header-ctrl { padding: 0 8px; border: 1px solid #c9cdd4; border-radius: 4px; background: #fff; color: #4e5969; }
         button.danger { border-color: #f53f3f; color: #f53f3f; }
 
         /* 结果区 */
         .result-tabs { display: flex; border-bottom: 1px solid #e5e6eb; }
         .result-tab { padding: 8px 14px; cursor: pointer; font-size: 12px; color: #4e5969; border-bottom: 2px solid transparent; }
         .result-tab.active { color: #165dff; border-bottom-color: #165dff; }
+        .result-section { margin-bottom: 10px; }
+        .result-section-title { font-size: 12px; font-weight: 600; color: #4e5969; margin: 8px 0 4px; padding-left: 2px; border-left: 3px solid #165dff; padding-left: 8px; }
         .sql-block, .ast-block { background: #f7f8fa; padding: 10px; border-radius: 4px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; line-height: 1.6; margin: 4px; }
         .param-item { display: flex; gap: 12px; padding: 4px 8px; background: #f7f8fa; border-radius: 3px; margin-bottom: 3px; font-size: 12px; font-family: monospace; }
         .param-idx { color: #86909c; min-width: 28px; }
@@ -65,17 +70,23 @@
         .scenario-group-header .fail-count { color: #f53f3f; font-size: 11px; }
         .scenario-group-body { display: none; }
         .scenario-group-body.open { display: block; }
-        .scenario-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid #f7f8fa; font-size: 13px; }
+        .scenario-row { display: block; padding: 8px 14px; border-bottom: 1px solid #f7f8fa; font-size: 13px; }
         .scenario-row:last-child { border-bottom: none; }
-        .scenario-status { width: 20px; font-weight: 600; }
+        .scenario-row-main { display: flex; align-items: center; gap: 10px; }
+        .scenario-status { width: 20px; font-weight: 600; text-align: center; }
         .scenario-status.pass { color: #00b42a; }
         .scenario-status.fail { color: #f53f3f; }
         .scenario-status.pending { color: #c9cdd4; }
         .scenario-name { flex: 1; }
         .scenario-time { font-size: 11px; color: #86909c; min-width: 60px; text-align: right; }
-        .scenario-detail { margin: 4px 14px 8px 44px; padding: 8px; background: #fff7f0; border-radius: 4px; font-size: 12px; border-left: 3px solid #f53f3f; }
+        .scenario-detail { margin: 6px 0 2px 30px; padding: 8px 10px; border-radius: 4px; font-size: 12px; }
+        .scenario-detail.pass { background: #f7fff0; border-left: 3px solid #00b42a; }
+        .scenario-detail.fail { background: #fff7f0; border-left: 3px solid #f53f3f; }
+        .scenario-detail.pending { background: #f7f8fa; border-left: 3px solid #c9cdd4; }
         .scenario-detail .detail-line { margin: 2px 0; }
-        .scenario-detail pre { margin-top: 6px; background: #f7f8fa; padding: 6px; border-radius: 3px; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+        .scenario-detail .detail-label { color: #86909c; margin-right: 6px; }
+        .scenario-detail pre { margin: 4px 0 2px; background: #fff; padding: 6px; border-radius: 3px; font-size: 11px; white-space: pre-wrap; word-break: break-all; border: 1px solid #eee; }
+        .scenario-detail pre.sql-block { color: #165dff; }
         .loading { color: #165dff; }
     </style>
 </head>
@@ -84,17 +95,18 @@
         <div style="display:flex;align-items:center;">
             <h1>MQL Playground</h1>
             <span class="desc">MQL → SQL 可视化调试与交互式测试平台（geelato-mql-test 内置版）</span>
+            <a href="https://docs.geelato.cn/docs/mql/overview" target="_blank" style="margin-left:16px;color:#4080ff;font-size:12px;text-decoration:none;">📖 MQL 文档</a>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:12px;color:#86909c;">模拟身份:</span>
-            <select id="tenantSelect" class="entity-select" style="width:120px;padding:3px;" onchange="loadUsers()">
+            <select id="tenantSelect" class="header-ctrl" style="width:120px;" onchange="loadUsers()">
                 <option value="">租户</option>
             </select>
-            <select id="userSelect" class="entity-select" style="width:180px;padding:3px;">
+            <select id="userSelect" class="header-ctrl" style="width:180px;">
                 <option value="">不注入用户</option>
             </select>
-            <button class="sm danger" onclick="cleanup()">清理数据</button>
-            <button class="sm" onclick="initSchema()">初始化测试表</button>
+            <button class="sm danger header-ctrl" onclick="cleanup()">清理数据</button>
+            <button class="sm header-ctrl" onclick="initSchema()">初始化测试表</button>
         </div>
     </div>
     <div class="tabs">
@@ -118,8 +130,31 @@
             <!-- 中栏：编辑器 -->
             <div class="panel">
                 <div class="panel-header">
-                    <span>MQL 编辑器</span>
+                    <span>MQL 编辑器 <span id="currentOpHint" style="font-size:11px;color:#86909c;font-weight:normal;">操作: query</span></span>
                     <div class="editor-toolbar">
+                        <select id="templateSelect" class="header-ctrl" style="width:140px;" onchange="applyTemplate()">
+                            <option value="">语法模板</option>
+                            <optgroup label="查询">
+                                <option value="query-empty">空查询</option>
+                                <option value="query-where">条件查询</option>
+                                <option value="query-page">分页查询</option>
+                                <option value="query-fields">字段选择+排序</option>
+                                <option value="query-brackets">括号嵌套(OR)</option>
+                                <option value="query-join">关联查询(ref)</option>
+                            </optgroup>
+                            <optgroup label="新增">
+                                <option value="save-insert">新增(无主键→Insert)</option>
+                                <option value="save-batch">批量新增</option>
+                                <option value="save-sub">主子表新增</option>
+                            </optgroup>
+                            <optgroup label="修改">
+                                <option value="save-update">修改(带主键→Update)</option>
+                            </optgroup>
+                            <optgroup label="删除">
+                                <option value="delete-by-id">按主键删除</option>
+                                <option value="delete-by-where">按条件删除</option>
+                            </optgroup>
+                        </select>
                         <button class="sm" onclick="formatJson()">格式化</button>
                         <button class="sm" onclick="clearEditor()">清空</button>
                         <button class="sm" onclick="validate()">校验</button>
@@ -200,8 +235,17 @@
                 opt.value = e; opt.textContent = e;
                 sel.appendChild(opt);
             });
+            // 自动选中第一个测试实体并加载 schema（触发编辑器联动）
+            const firstTest = (data || []).find(e => e.startsWith('mql_test_')) || (data || [])[0];
+            if (firstTest) {
+                sel.value = firstTest;
+                loadSchema();
+            }
         } catch (e) { console.error('加载实体失败', e); }
     }
+
+    /** 当前实体的 schema 缓存（供模板生成使用真实字段） */
+    let currentSchema = null;
 
     async function loadSchema() {
         const entity = document.getElementById('entitySelect').value;
@@ -210,6 +254,7 @@
         if (!entity) return;
         try {
             const schema = unwrap(await api('/api/mql/schema/' + encodeURIComponent(entity)));
+            currentSchema = schema;
             let html = '<div class="field-section">字段 (' + (schema.fields||[]).length + ')</div>';
             (schema.fields || []).forEach(f => {
                 html += `<div class="field-item" title="${f.fieldName} → ${f.columnName} (${f.dataType})" onclick="insertField('${f.fieldName}')">
@@ -228,7 +273,22 @@
                 });
             }
             list.innerHTML = html;
-        } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
+            // 联动：用该实体的真实字段重新生成编辑器 MQL
+            regenerateFromCurrentEntity();
+        } catch (e) {
+            list.innerHTML = '<div class="empty">加载失败</div>';
+            currentSchema = null;
+        }
+    }
+
+    /** 根据当前选中实体 + 当前操作类型，用真实字段重新生成 MQL 写入编辑器 */
+    function regenerateFromCurrentEntity() {
+        const entity = document.getElementById('entitySelect').value;
+        if (!entity) return;
+        const mql = buildMql(currentOp, entity, currentSchema);
+        if (mql) {
+            document.getElementById('mqlInput').value = mql;
+        }
     }
 
     function insertField(name) {
@@ -240,6 +300,183 @@
         const ta = document.getElementById('mqlInput');
         ta.value += `"@fs":"ref(${col}->name) ${table}Name",`;
         ta.focus();
+    }
+
+    // ==================== 语法模板（基于实体真实字段动态生成） ====================
+
+    /** 当前操作类型（由语法模板决定，explain 时传给后端路由到对应解析器） */
+    let currentOp = 'query';
+
+    /** 获取当前选中的实体（默认 mql_test_user） */
+    function currentEntity() {
+        return document.getElementById('entitySelect').value || 'mql_test_user';
+    }
+
+    /** 系统字段（生成示例时跳过这些） */
+    const SYSTEM_FIELDS = new Set(['id', 'createAt', 'creator', 'creatorName', 'updateAt', 'updater',
+        'updaterName', 'deleteAt', 'delStatus', 'tenantCode', 'seqNo', 'description']);
+
+    /** 按字段类型生成示例值（用于 save 模板） */
+    function sampleValue(field) {
+        const t = (field.dataType || 'VARCHAR').toUpperCase();
+        const n = field.fieldName;
+        if (t.includes('INT')) return '1';
+        if (t.includes('DECIMAL') || t.includes('NUMERIC')) return '100.00';
+        if (t === 'DATE') return '2026-07-21';
+        if (t.includes('DATETIME') || t.includes('TIMESTAMP')) return '2026-07-21 10:00:00';
+        if (t === 'JSON') return '["red","blue"]';
+        if (t.includes('BOOL') || t === 'BIT') return '1';
+        // VARCHAR 等：用字段名生成可读示例
+        if (/name/i.test(n)) return '示例';
+        if (/code/i.test(n)) return 'CODE001';
+        if (/status/i.test(n)) return 'active';
+        if (/phone|mobile/i.test(n)) return '13800000000';
+        if (/email/i.test(n)) return 'example@test.com';
+        if (/no$/i.test(n)) return 'NO001';
+        return '示例值';
+    }
+
+    /** 取实体的业务字段（排除系统字段和 id） */
+    function businessFields(schema) {
+        if (!schema || !schema.fields) return [];
+        return schema.fields.filter(f => !SYSTEM_FIELDS.has(f.fieldName) && f.fieldName !== 'id');
+    }
+
+    /** 取字符串类字段（用于 where 条件） */
+    function stringFields(schema) {
+        return businessFields(schema).filter(f => {
+            const t = (f.dataType || '').toUpperCase();
+            return t.includes('VARCHAR') || t.includes('TEXT') || t === 'CHAR';
+        });
+    }
+
+    /** 取数值类字段（用于范围查询） */
+    function numericFields(schema) {
+        return businessFields(schema).filter(f => {
+            const t = (f.dataType || '').toUpperCase();
+            return t.includes('INT') || t.includes('DECIMAL') || t.includes('NUMERIC') || t.includes('DOUBLE') || t.includes('FLOAT');
+        });
+    }
+
+    /** 取首个状态字段（用于 delete-by-where） */
+    function statusField(schema) {
+        return businessFields(schema).find(f => /status/i.test(f.fieldName));
+    }
+
+    /**
+     * 根据操作类型 + 实体 + schema，用真实字段动态构造 MQL。
+     * @param op query/save/batchSave/delete 等模板 key
+     * @param entity 实体名
+     * @param schema 实体 schema（currentSchema）
+     */
+    function buildMql(op, entity, schema) {
+        const biz = businessFields(schema);
+        const strs = stringFields(schema);
+        const nums = numericFields(schema);
+        const firstStr = strs[0];
+        const firstNum = nums[0];
+        const status = statusField(schema);
+
+        switch (op) {
+            case 'query-empty':
+                return `{\n  "${entity}": {}\n}`;
+            case 'query-where': {
+                const conds = [];
+                if (firstStr) conds.push(`    "${firstStr.fieldName}|eq": "${sampleValue(firstStr)}"`);
+                if (firstNum) conds.push(`    "${firstNum.fieldName}|gt": "10"`);
+                if (conds.length === 0 && biz[0]) conds.push(`    "${biz[0].fieldName}|eq": ""`);
+                return `{\n  "${entity}": {\n${conds.join(',\n')}\n  }\n}`;
+            }
+            case 'query-page': {
+                const fs = biz.slice(0, 3).map(f => f.fieldName).join(',');
+                const ob = (firstNum || biz[0]);
+                return `{\n  "${entity}": {\n    "@fs": "${fs}",\n    "@order": "${ob ? ob.fieldName : 'id'}|-",\n    "@p": "1,10"\n  }\n}`;
+            }
+            case 'query-fields': {
+                const fs = biz.slice(0, 4).map((f, i) => i === 0 ? `${f.fieldName} ${f.fieldName}Alias` : f.fieldName).join(',');
+                const ob = (status || firstStr || biz[0]);
+                const st = status ? `    "${status.fieldName}|eq": "1",\n` : '';
+                return `{\n  "${entity}": {\n    "@fs": "${fs}",\n${st}    "@order": "${ob ? ob.fieldName : 'id'}|+"\n  }\n}`;
+            }
+            case 'query-brackets': {
+                const f1 = firstStr || biz[0];
+                const f2 = (strs[1] || biz[1] || f1);
+                if (!f1) return `{\n  "${entity}": {}\n}`;
+                return `{\n  "${entity}": {\n    "${(firstNum || f1).fieldName}|gt": "0",\n    "@b": [\n      {\n        "or": [\n          {"${f1.fieldName}|eq": "${sampleValue(f1)}"},\n          {"${f2.fieldName}|eq": "${sampleValue(f2)}"}\n        ]\n      }\n    ]\n  }\n}`;
+            }
+            case 'query-join': {
+                const fk = schema && schema.foreigns && schema.foreigns[0];
+                const cond = firstNum ? `    "${firstNum.fieldName}|gt": "0"\n` : '';
+                if (fk) {
+                    return `{\n  "${entity}": {\n    "@fs": "${(firstStr || biz[0]).fieldName},ref(${fk.mainTableCol}->name) ${fk.foreignTable}Name",\n${cond}  }\n}`;
+                }
+                // 无外键，退化为普通查询
+                return `{\n  "${entity}": {\n    "@fs": "${(firstStr || biz[0] || {fieldName: 'id'}).fieldName}"${cond ? ',' : ''}\n${cond}  }\n}`;
+            }
+            case 'save-insert':
+            case 'save': {
+                const fields = biz.slice(0, 5);
+                if (fields.length === 0) return `{\n  "${entity}": {}\n}`;
+                const pairs = fields.map(f => `    "${f.fieldName}": "${sampleValue(f)}"`);
+                return `{\n  "${entity}": {\n${pairs.join(',\n')}\n  }\n}`;
+            }
+            case 'save-batch':
+            case 'batchSave': {
+                const fields = biz.slice(0, 4);
+                if (fields.length === 0) return `{\n  "${entity}": []\n}`;
+                const row = f => `{${fields.map(x => `"${x.fieldName}": "${sampleValue(x)}"`).join(', ')}}`;
+                return `{\n  "${entity}": [\n    ${row(fields)},\n    ${row(fields)}\n  ]\n}`;
+            }
+            case 'save-sub': {
+                const fields = biz.slice(0, 3);
+                const pairs = fields.map(f => `    "${f.fieldName}": "${sampleValue(f)}"`).join(',\n');
+                return `{\n  "${entity}": {\n${pairs}\n  }\n}`;
+            }
+            case 'save-update': {
+                const fields = biz.slice(0, 3);
+                const pairs = ['    "id": "1"'].concat(fields.map(f => `    "${f.fieldName}": "${sampleValue(f)}"`));
+                return `{\n  "${entity}": {\n${pairs.join(',\n')}\n  }\n}`;
+            }
+            case 'delete-by-id':
+                return `{\n  "${entity}": {\n    "id|eq": "1"\n  }\n}`;
+            case 'delete-by-where': {
+                const conds = [];
+                if (status) conds.push(`    "${status.fieldName}|eq": "0"`);
+                if (firstNum) conds.push(`    "${firstNum.fieldName}|lt": "10"`);
+                if (conds.length === 0 && firstStr) conds.push(`    "${firstStr.fieldName}|eq": ""`);
+                if (conds.length === 0) conds.push(`    "id|eq": "1"`);
+                return `{\n  "${entity}": {\n${conds.join(',\n')}\n  }\n}`;
+            }
+            default:
+                return `{\n  "${entity}": {}\n}`;
+        }
+    }
+
+    function applyTemplate() {
+        const key = document.getElementById('templateSelect').value;
+        if (!key) return;
+        // 模板 key 映射到操作类型
+        const opMap = {
+            'query-empty': 'query-empty', 'query-where': 'query-where', 'query-page': 'query-page',
+            'query-fields': 'query-fields', 'query-brackets': 'query-brackets', 'query-join': 'query-join',
+            'save-insert': 'save-insert', 'save-batch': 'save-batch', 'save-sub': 'save-sub',
+            'save-update': 'save-update', 'delete-by-id': 'delete-by-id', 'delete-by-where': 'delete-by-where'
+        };
+        const op = opMap[key];
+        if (!op) return;
+        currentOp = op;
+        const entity = currentEntity();
+        const mql = buildMql(op, entity, currentSchema);
+        document.getElementById('mqlInput').value = mql;
+        // 设置 explain 用的操作类型（save-* 都走 save，batch 走 batchSave）
+        const explainOp = op.startsWith('save-batch') ? 'batchSave'
+            : op.startsWith('save-') ? 'save'
+            : op.startsWith('delete') ? 'delete'
+            : 'query';
+        currentOp = explainOp;
+        document.getElementById('currentOpHint').textContent = '操作: ' + explainOp;
+        // 重置下拉
+        document.getElementById('templateSelect').value = '';
     }
 
     // ==================== 调试台操作 ====================
@@ -258,7 +495,7 @@
     async function explain() {
         if (!getMql()) return alert('请输入 MQL');
         try {
-            const data = unwrap(await apiPost('/api/mql/explain', withIdentity({ mql: getMql() })));
+            const data = unwrap(await apiPost('/api/mql/explain', withIdentity({ mql: getMql(), op: currentOp })));
             renderExplain(data);
         } catch (e) { renderError(e.message); }
     }
@@ -293,32 +530,66 @@
     // ==================== 结果渲染 ====================
     function renderExplain(data) {
         currentResult = data;
+        if (!data.success) { renderError(data.error); return; }
+        // Explain：SQL + 参数 + Count SQL 合并在一个视图（用分区段展示），AST 单独页签
         let html = '<div class="result-tabs">';
-        html += '<div class="result-tab active" onclick="switchResultTab(\'sql\',this)">生成SQL</div>';
-        html += '<div class="result-tab" onclick="switchResultTab(\'params\',this)">参数</div>';
-        if (data.countSql) html += '<div class="result-tab" onclick="switchResultTab(\'countSql\',this)">Count SQL</div>';
+        html += '<div class="result-tab active" onclick="switchResultTab(\'overview\',this)">SQL 与参数</div>';
         html += '<div class="result-tab" onclick="switchResultTab(\'ast\',this)">AST</div>';
         html += '</div><div id="resultTabContent"></div>';
         document.getElementById('resultBody').innerHTML = html;
-        document.getElementById('resultPanelHeader').textContent = 'Explain 结果' + (data.success ? '' : ' (失败)');
-        switchResultTab('sql', document.querySelector('.result-tab'));
-        if (!data.success) renderError(data.error);
+        document.getElementById('resultPanelHeader').textContent = 'Explain 结果';
+        switchResultTab('overview', document.querySelector('.result-tab'));
     }
 
     function renderExecute(data) {
-        let html = '';
         if (!data.success) { renderError(data.error); return; }
-        html += '<div class="result-tabs">';
-        html += '<div class="result-tab active" onclick="switchResultTab(\'sql\',this)">生成SQL</div>';
-        html += '<div class="result-tab" onclick="switchResultTab(\'params\',this)">参数</div>';
-        html += '<div class="result-tab" onclick="switchResultTab(\'rows\',this)">执行结果(' + data.rowCount + '行)</div>';
-        if (data.countSql) html += '<div class="result-tab" onclick="switchResultTab(\'countSql\',this)">Count SQL</div>';
+        // Execute：SQL + 参数 + Count SQL + 执行结果 合并在一个视图，AST 单独页签
+        let html = '<div class="result-tabs">';
+        html += '<div class="result-tab active" onclick="switchResultTab(\'overview\',this)">SQL与结果 (' + data.rowCount + '行, ' + data.elapsedMs + 'ms)</div>';
+        html += '<div class="result-tab" onclick="switchResultTab(\'ast\',this)">AST</div>';
         html += '</div><div id="resultTabContent"></div>';
         document.getElementById('resultBody').innerHTML = html;
-        document.getElementById('resultPanelHeader').textContent = `Execute 结果 (${data.rowCount} 行, ${data.elapsedMs}ms)`;
-        // 存数据供 tab 切换
         currentResult = data;
-        switchResultTab('sql', document.querySelector('.result-tab'));
+        switchResultTab('overview', document.querySelector('.result-tab'));
+    }
+
+    /** 渲染 SQL + 参数 + Count SQL 的合并视图（单页签内分区段） */
+    function renderOverview(r) {
+        let html = '';
+        // 生成 SQL
+        html += '<div class="result-section"><div class="result-section-title">生成 SQL</div>';
+        html += `<pre class="sql-block">${esc(r.sql || '')}</pre></div>`;
+        // 参数 + 类型
+        html += '<div class="result-section"><div class="result-section-title">参数';
+        if (r.params && r.params.length) html += ` (${r.params.length})`;
+        html += '</div>';
+        if (!r.params || !r.params.length) {
+            html += '<div class="empty">无参数</div>';
+        } else {
+            html += r.params.map((p, i) =>
+                `<div class="param-item"><span class="param-idx">[${i}]</span><span>${esc(p)}</span><span class="field-type">${sqlTypeName(r.types && r.types[i])}</span></div>`
+            ).join('');
+        }
+        html += '</div>';
+        // Count SQL（分页时）
+        if (r.countSql) {
+            html += '<div class="result-section"><div class="result-section-title">Count SQL</div>';
+            html += `<pre class="sql-block">${esc(r.countSql)}</pre></div>`;
+        }
+        // 执行结果（仅 Execute 时有）
+        if (r.rows !== undefined) {
+            html += '<div class="result-section"><div class="result-section-title">执行结果 (' + (r.rowCount || 0) + ' 行)</div>';
+            if (!r.rows || !r.rows.length) {
+                html += '<div class="empty">无数据</div>';
+            } else {
+                const cols = Object.keys(r.rows[0]);
+                html += '<table class="data-table"><thead><tr>' + cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>';
+                r.rows.forEach(row => { html += '<tr>' + cols.map(c => `<td>${esc(row[c])}</td>`).join('') + '</tr>'; });
+                html += '</tbody></table>';
+            }
+            html += '</div>';
+        }
+        return html;
     }
 
     function switchResultTab(key, el) {
@@ -327,21 +598,10 @@
         const c = document.getElementById('resultTabContent');
         const r = currentResult;
         if (!r) return;
-        if (key === 'sql') c.innerHTML = `<div class="sql-block">${esc(r.sql || '')}</div>`;
-        else if (key === 'countSql') c.innerHTML = `<div class="sql-block">${esc(r.countSql || '')}</div>`;
-        else if (key === 'ast') c.innerHTML = `<div class="ast-block">${esc(JSON.stringify(r.ast || r, null, 2))}</div>`;
-        else if (key === 'params') {
-            if (!r.params || !r.params.length) c.innerHTML = '<div class="empty">无参数</div>';
-            else c.innerHTML = r.params.map((p, i) => `<div class="param-item"><span class="param-idx">[${i}]</span><span>${esc(p)}</span><span class="field-type">${sqlTypeName(r.types && r.types[i])}</span></div>`).join('');
-        } else if (key === 'rows') {
-            if (!r.rows || !r.rows.length) c.innerHTML = '<div class="empty">无数据</div>';
-            else {
-                const cols = Object.keys(r.rows[0]);
-                let t = '<table class="data-table"><thead><tr>' + cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>';
-                r.rows.forEach(row => { t += '<tr>' + cols.map(c => `<td>${esc(row[c])}</td>`).join('') + '</tr>'; });
-                t += '</tbody></table>';
-                c.innerHTML = t;
-            }
+        if (key === 'overview') {
+            c.innerHTML = renderOverview(r);
+        } else if (key === 'ast') {
+            c.innerHTML = `<div class="ast-block">${esc(JSON.stringify(r.ast || r, null, 2))}</div>`;
         }
     }
 
@@ -374,11 +634,15 @@
                     </div>
                     <div class="scenario-group-body" id="body-${gi}">`;
                 scenarios.forEach(s => {
+                    allScenariosById[s.id] = s;
                     html += `<div class="scenario-row" id="row-${esc(s.id)}">
-                        <span class="scenario-status pending">○</span>
-                        <span class="scenario-name">${esc(s.name)}</span>
-                        <button class="sm" onclick="runOne('${esc(s.id)}')">运行</button>
-                        <span class="scenario-time" id="time-${esc(s.id)}"></span>
+                        <div class="scenario-row-main">
+                            <span class="scenario-status pending">○</span>
+                            <span class="scenario-name">${esc(s.name)}</span>
+                            <button class="sm" onclick="runOne('${esc(s.id)}')">运行</button>
+                            <span class="scenario-time" id="time-${esc(s.id)}"></span>
+                        </div>
+                        ${renderScenarioDetail(s, null)}
                     </div>`;
                 });
                 html += '</div></div>';
@@ -388,6 +652,56 @@
         } catch (e) {
             document.getElementById('scenarioList').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '（可能未配置数据源）</div>';
         }
+    }
+
+    /** 场景 id → 场景定义 缓存（用于查 MQL/setup 等原始内容） */
+    const allScenariosById = {};
+
+    /**
+     * 渲染场景详情（MQL + 期望 + 执行结果）。
+     * @param s 场景定义（含 mql/expectRowCount/expectSqlContains/setup/description）
+     * @param r 执行结果（null 表示未运行）
+     */
+    function renderScenarioDetail(s, r) {
+        const state = r == null ? 'pending' : (r.passed ? 'pass' : 'fail');
+        let html = `<div class="scenario-detail ${state}">`;
+        // MQL（始终展示）
+        if (s.description) html += `<div class="detail-line"><span class="detail-label">说明:</span>${esc(s.description)}</div>`;
+        html += `<div class="detail-line"><span class="detail-label">MQL:</span></div>`;
+        html += `<pre>${esc(formatJsonStr(s.mql))}</pre>`;
+        // 期望
+        const expects = [];
+        if (s.expectRowCount != null) expects.push(`行数=${s.expectRowCount}`);
+        if (s.expectFirstRow) expects.push(`首行=${JSON.stringify(s.expectFirstRow)}`);
+        if (s.expectSqlContains) expects.push(`SQL含"${s.expectSqlContains}"`);
+        if (expects.length) html += `<div class="detail-line"><span class="detail-label">期望:</span>${esc(expects.join('，'))}</div>`;
+        // 执行结果
+        if (r) {
+            if (r.error) html += `<div class="detail-line"><span class="detail-label">错误:</span><span style="color:#f53f3f;">${esc(r.error)}</span></div>`;
+            if (r.expectedRowCount != null || r.actualRowCount != null) {
+                html += `<div class="detail-line"><span class="detail-label">行数:</span>期望 ${r.expectedRowCount}，实际 ${r.actualRowCount}</div>`;
+            }
+            if (r.details && r.details.length) {
+                html += `<div class="detail-line"><span class="detail-label">校验:</span></div>`;
+                r.details.forEach(d => {
+                    const ok = !d.includes('不匹配') && !d.includes('失败');
+                    html += `<div class="detail-line" style="padding-left:12px;color:${ok ? '#00b42a' : '#f53f3f'};">${ok ? '✓' : '✗'} ${esc(d)}</div>`;
+                });
+            }
+            if (r.sql) {
+                html += `<div class="detail-line"><span class="detail-label">生成 SQL:</span></div>`;
+                html += `<pre class="sql-block">${esc(r.sql)}</pre>`;
+            }
+        }
+        html += '</div>';
+        return html;
+    }
+
+    /** 简单格式化 JSON 字符串（若已是合法 JSON 则美化，否则原样返回） */
+    function formatJsonStr(str) {
+        if (!str) return '';
+        try { return JSON.stringify(JSON.parse(str), null, 2); }
+        catch (e) { return str; }
     }
 
     function toggleGroup(gi) {
@@ -417,7 +731,7 @@
         let passed = 0, failed = 0;
         for (const s of allScenarios) {
             try {
-                const result = unwrap(await apiPost('/api/mql/scenarios/run/' + encodeURIComponent(s.id)));
+                const result = unwrap(await apiPost('/api/mql/scenarios/run/' + encodeURIComponent(s.id), withIdentity({})));
                 renderScenarioResult(s.id, result);
                 if (result.passed) passed++; else failed++;
             } catch (e) { failed++; }
@@ -436,21 +750,12 @@
         status.className = 'scenario-status ' + (r.passed ? 'pass' : 'fail');
         status.textContent = r.passed ? '✓' : '✗';
         document.getElementById('time-' + id).textContent = r.elapsedMs + 'ms';
-        // 移除旧详情
+        // 用新的详情渲染替换（通过/失败都展示 MQL + SQL + 校验明细）
         const oldDetail = row.querySelector('.scenario-detail');
         if (oldDetail) oldDetail.remove();
-        if (!r.passed) {
-            const detail = document.createElement('div');
-            detail.className = 'scenario-detail';
-            let html = '';
-            if (r.error) html += `<div class="detail-line">✗ ${esc(r.error)}</div>`;
-            if (r.expectedRowCount !== null && r.actualRowCount !== null) {
-                html += `<div class="detail-line">行数: 期望 ${r.expectedRowCount}, 实际 ${r.actualRowCount}</div>`;
-            }
-            (r.details || []).forEach(d => { if (d.includes('不匹配') || d.includes('失败')) html += `<div class="detail-line">${esc(d)}</div>`; });
-            if (r.sql) html += `<pre>${esc(r.sql)}</pre>`;
-            detail.innerHTML = html;
-            row.appendChild(detail);
+        const s = allScenariosById[id];
+        if (s) {
+            row.insertAdjacentHTML('beforeend', renderScenarioDetail(s, r));
         }
     }
 

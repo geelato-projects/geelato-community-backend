@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.srv.email.task;
 
 import cn.geelato.meta.UserEmailAccount;
-import cn.geelato.orm.Filter;
+import cn.geelato.orm.query.Filter;
 import cn.geelato.orm.MetaFactory;
-import cn.geelato.orm.Order;
+import cn.geelato.orm.query.Order;
 import cn.geelato.security.SecurityContextRunnable;
 import cn.geelato.security.Tenant;
 import cn.geelato.security.User;

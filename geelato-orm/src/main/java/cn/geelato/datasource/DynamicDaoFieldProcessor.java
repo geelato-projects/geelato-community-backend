@@ -6,6 +6,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
@@ -32,7 +33,7 @@ public class DynamicDaoFieldProcessor implements BeanPostProcessor, ApplicationC
     }
     
     @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+    public Object postProcessAfterInitialization(Object bean, @NonNull String beanName) throws BeansException {
         Class<?> clazz = bean.getClass();
         ReflectionUtils.doWithFields(clazz, field -> {
             UseDynamicDataSource annotation = field.getAnnotation(UseDynamicDataSource.class);
@@ -70,29 +71,9 @@ public class DynamicDaoFieldProcessor implements BeanPostProcessor, ApplicationC
             field.set(bean, dynamicDao);
             log.info("inject dynamic dao to field {}.{}, datasource: {}",
                     bean.getClass().getSimpleName(), field.getName(), dataSourceKey);
-            setDataSourceContext(dynamicDao, dataSourceKey, annotation);
         } catch (Exception e) {
             log.error("inject dynamic dao fail: {}.{}",
                     bean.getClass().getSimpleName(), field.getName(), e);
-        }
-    }
-    
-    /**
-     * 设置数据源上下文信息
-     */
-    private void setDataSourceContext(Object dao, String dataSourceKey, UseDynamicDataSource annotation) {
-        try {
-            try {
-                java.lang.reflect.Method setDataSourceMethod = dao.getClass().getMethod("setDataSourceKey", String.class);
-                setDataSourceMethod.invoke(dao, dataSourceKey);
-                log.debug("设置dao数据源上下文: {}", dataSourceKey);
-            } catch (NoSuchMethodException e) {
-                // 方法不存在，忽略
-                log.debug("dao类型 {} 不支持setDataSourceKey方法", dao.getClass().getSimpleName());
-            }
-            
-        } catch (Exception e) {
-            log.warn("设置数据源上下文时发生错误", e);
         }
     }
 }

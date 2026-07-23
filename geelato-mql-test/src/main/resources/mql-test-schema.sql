@@ -1,11 +1,12 @@
 -- MQL 测试表结构（5 个表）
 -- 在目标数据库手动执行此文件以初始化测试环境。
 -- 命令示例：mysql -u root -p geelato < mql-test-schema.sql
-
--- 注册 MQL 自定义函数（increment/findinset/fuzzymatch 依赖）
--- 注意：MySQL 函数创建需要相关权限；如无权限可跳过，仅 increment 类场景受影响
-CREATE FUNCTION IF NOT EXISTS gfn_increment(val BIGINT, step INT) RETURNS BIGINT
-    DETERMINISTIC NO SQL RETURN val + step;
+--
+-- 注意：MQL 自定义函数 gfn_increment（increment 内置函数依赖）未包含在此文件中，
+-- 因为 MySQL 不支持 CREATE FUNCTION IF NOT EXISTS，且函数创建需要 SUPER 权限。
+-- 如需测试 increment 函数场景，请单独执行：
+--   DROP FUNCTION IF EXISTS gfn_increment;
+--   CREATE FUNCTION gfn_increment(val BIGINT, step INT) RETURNS BIGINT DETERMINISTIC NO SQL RETURN val + step;
 
 -- 组织机构（树形 pid 自引用）
 CREATE TABLE IF NOT EXISTS mql_test_org (

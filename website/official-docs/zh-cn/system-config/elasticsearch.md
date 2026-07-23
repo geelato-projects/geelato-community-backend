@@ -1,3 +1,7 @@
+---
+title: Elasticsearch 模块
+sidebar_label: Elasticsearch 模块
+---
 # Elasticsearch 模块
 
 对应配置文件：

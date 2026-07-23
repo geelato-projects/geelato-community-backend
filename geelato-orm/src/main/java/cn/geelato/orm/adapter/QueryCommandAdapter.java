@@ -1,10 +1,10 @@
-package cn.geelato.orm.support;
+package cn.geelato.orm.adapter;
 
 import cn.geelato.core.mql.command.QueryJoin;
 import cn.geelato.core.mql.command.QueryJoinCondition;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.command.QuerySelectExpr;
-import cn.geelato.orm.Order;
+import cn.geelato.orm.query.Order;
 import cn.geelato.orm.query.JoinClause;
 import cn.geelato.orm.query.JoinCondition;
 import cn.geelato.orm.query.MetaQuery;

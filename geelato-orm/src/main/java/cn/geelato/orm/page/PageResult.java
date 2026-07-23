@@ -1,4 +1,4 @@
-package cn.geelato.orm;
+package cn.geelato.orm.page;
 
 import cn.geelato.lang.api.ApiPagedResult;
 import lombok.Getter;

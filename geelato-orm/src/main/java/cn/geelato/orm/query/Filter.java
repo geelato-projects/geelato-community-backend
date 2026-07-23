@@ -1,4 +1,4 @@
-package cn.geelato.orm;
+package cn.geelato.orm.query;
 
 import lombok.Getter;
 

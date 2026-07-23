@@ -1,7 +1,7 @@
-package cn.geelato.orm.support;
+package cn.geelato.orm.adapter;
 
 import cn.geelato.core.mql.filter.FilterGroup;
-import cn.geelato.orm.Filter;
+import cn.geelato.orm.query.Filter;
 
 import java.util.Collection;
 import java.util.Iterator;

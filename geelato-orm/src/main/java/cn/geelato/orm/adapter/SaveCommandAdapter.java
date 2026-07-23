@@ -1,4 +1,4 @@
-package cn.geelato.orm.support;
+package cn.geelato.orm.adapter;
 
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;

@@ -1,4 +1,4 @@
-package cn.geelato.orm;
+package cn.geelato.orm.page;
 
 import java.io.Serializable;
 import java.util.List;

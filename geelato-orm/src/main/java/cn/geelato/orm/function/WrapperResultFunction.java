@@ -1,4 +1,4 @@
-package cn.geelato.orm;
+package cn.geelato.orm.function;
 
 /**
  * 函数式接口，用于结果包装

@@ -1,4 +1,4 @@
-package cn.geelato.orm.support;
+package cn.geelato.orm.adapter;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.meta.MetaManager;

@@ -3,10 +3,10 @@ package cn.geelato.orm.executor;
 import cn.geelato.core.mql.execute.BoundPageSql;
 import cn.geelato.core.mql.execute.BoundSql;
 import cn.geelato.core.sql.SqlManager;
-import cn.geelato.orm.PageResult;
-import cn.geelato.orm.WrapperResultFunction;
+import cn.geelato.orm.page.PageResult;
+import cn.geelato.orm.function.WrapperResultFunction;
 import cn.geelato.orm.query.MetaQuery;
-import cn.geelato.orm.support.QueryCommandAdapter;
+import cn.geelato.orm.adapter.QueryCommandAdapter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 

@@ -13,9 +13,21 @@ public class PlatformFluentQueryFilterInjector implements FluentQueryFilterInjec
 
     private final PlatformQueryFilterSupport ruleSupport = new PlatformQueryFilterSupport();
 
+    /**
+     * 是否启用。默认 true，保持平台应用原有行为。
+     * <p>当某些应用（如客户门户）需用自定义的 {@link FluentQueryFilterInjector} 完全取代平台默认行为时，
+     * 可通过 {@link #setEnabled(boolean)} 将本注入器置为禁用。禁用后不会参与运行期的“唯一启用注入器”判定，
+     * 与其它启用的注入器不再冲突。</p>
+     */
+    private volatile boolean enabled = true;
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 
     @Override

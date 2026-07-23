@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    发布到 Sonatype Central Portal 用的 settings.xml 模板。
+
+    用法：
+      1) 复制本文件为 settings.xml（同目录或 ~/.m2/settings.xml）
+      2) 把 <username>/<password> 替换为 Central Portal 生成的 User Token：
+           登录 https://central.sonatype.com → Account → User Token → Generate
+           得到形如 usr_xxxxxxxx 的用户名和一长串 token（作为密码）
+      3) 不要把填好真实 token 的 settings.xml 提交到 git
+
+    CI(GitHub Actions) 中不使用本文件，而是用 secrets 动态注入同样的 server 块。
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+    <!-- 阿里云镜像加速依赖下载；不影响发布（发布由 central-publishing-maven-plugin 直连 Portal） -->
+    <mirrors>
+        <mirror>
+            <id>alimaven</id>
+            <name>aliyun maven</name>
+            <url>https://maven.aliyun.com/nexus/content/groups/public/</url>
+            <mirrorOf>central</mirrorOf>
+        </mirror>
+    </mirrors>
+
+    <servers>
+        <!-- server id 必须与 geelato-parent/pom.xml 中
+             central-publishing-maven-plugin 的 <publishingServerId> 一致，即 "central" -->
+        <server>
+            <id>central</id>
+            <username>REPLACE_WITH_CENTRAL_USER_TOKEN_NAME</username>
+            <password>REPLACE_WITH_CENTRAL_USER_TOKEN_SECRET</password>
+        </server>
+    </servers>
+</settings>

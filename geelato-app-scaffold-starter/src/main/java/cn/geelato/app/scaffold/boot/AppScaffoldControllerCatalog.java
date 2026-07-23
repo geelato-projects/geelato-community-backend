@@ -27,6 +27,10 @@ public class AppScaffoldControllerCatalog {
                 "cn.geelato.web.platform.srv.platform.DictItemController"
         )));
 
+        map.put(AppScaffoldCapability.NOTICE, new LinkedHashSet<>(Set.of(
+                "cn.geelato.web.platform.srv.notice.NoticeController"
+        )));
+
         map.put(AppScaffoldCapability.ORGANIZATION, new LinkedHashSet<>(Set.of(
                 "cn.geelato.web.platform.srv.security.OrgController",
                 "cn.geelato.web.platform.srv.security.OrgUserMapController"

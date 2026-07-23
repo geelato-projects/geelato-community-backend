@@ -2,9 +2,9 @@ package cn.geelato.web.platform.srv.email.service;
 
 import cn.geelato.core.util.EncryptUtils;
 import cn.geelato.meta.UserEmailAccount;
-import cn.geelato.orm.Filter;
+import cn.geelato.orm.query.Filter;
 import cn.geelato.orm.MetaFactory;
-import cn.geelato.orm.Order;
+import cn.geelato.orm.query.Order;
 import cn.geelato.web.platform.srv.email.MailIdCodec;
 import cn.geelato.web.platform.srv.email.dto.EmailAddressDto;
 import cn.geelato.web.platform.srv.email.dto.EmailAttachmentDto;
@@ -610,7 +610,7 @@ public class EmailInboxService {
             defaultFilters.add(Filter.eq("enableStatus", 1));
         }
 
-        cn.geelato.orm.PageResult<Map<String, Object>> defaultPage = MetaFactory.query(UserEmailAccount.class)
+        cn.geelato.orm.page.PageResult<Map<String, Object>> defaultPage = MetaFactory.query(UserEmailAccount.class)
                 .where(defaultFilters.toArray(new Filter[0]))
                 .order(Order.desc("createAt"))
                 .page(1, 1)
@@ -626,7 +626,7 @@ public class EmailInboxService {
             fallbackFilters.add(Filter.eq("enableStatus", 1));
         }
 
-        cn.geelato.orm.PageResult<Map<String, Object>> fallbackPage = MetaFactory.query(UserEmailAccount.class)
+        cn.geelato.orm.page.PageResult<Map<String, Object>> fallbackPage = MetaFactory.query(UserEmailAccount.class)
                 .where(fallbackFilters.toArray(new Filter[0]))
                 .order(Order.desc("defaultFlag"), Order.desc("createAt"))
                 .page(1, 1)

@@ -79,7 +79,7 @@ class FluentQueryFilterRuntimeResolverTest {
     }
 
     @Test
-    void shouldFailFastWhenMultipleInjectorsExist() {
+    void shouldFailFastWhenMultipleEnabledInjectorsExist() {
         ApplicationContext applicationContext = Mockito.mock(ApplicationContext.class);
         Map<String, FluentQueryFilterInjector> injectors = new LinkedHashMap<>();
         injectors.put("injectorA", new NoopFluentInjector());
@@ -90,7 +90,43 @@ class FluentQueryFilterRuntimeResolverTest {
         IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> FluentQueryFilterRuntimeResolver.injectIfAvailable(new QueryCommand(), new MetaQuery("demo")));
 
-        assertEquals("Multiple FluentQueryFilterInjector beans found: [injectorA, injectorB]. Expected 0 or 1.", ex.getMessage());
+        assertEquals("Multiple enabled FluentQueryFilterInjector beans found: [injectorA, injectorB]. Expected at most 1 enabled.", ex.getMessage());
+    }
+
+    @Test
+    void shouldIgnoreDisabledInjectorWhenAnotherEnabledExists() {
+        ApplicationContext applicationContext = Mockito.mock(ApplicationContext.class);
+        Map<String, FluentQueryFilterInjector> injectors = new LinkedHashMap<>();
+        injectors.put("disabled", new FluentQueryFilterInjector() {
+            @Override
+            public boolean isEnabled() {
+                return false;
+            }
+
+            @Override
+            public void inject(QueryCommand command, MetaQuery query) {
+                command.setOriginalWhere("should-not-run");
+            }
+        });
+        injectors.put("enabled", new FluentQueryFilterInjector() {
+            @Override
+            public boolean isEnabled() {
+                return true;
+            }
+
+            @Override
+            public void inject(QueryCommand command, MetaQuery query) {
+                command.setOriginalWhere("enabled");
+            }
+        });
+        Mockito.when(applicationContext.getBeansOfType(FluentQueryFilterInjector.class)).thenReturn(injectors);
+        new BeansUtils().setApplicationContext(applicationContext);
+
+        QueryCommand command = new QueryCommand();
+        FluentQueryFilterRuntimeResolver.injectIfAvailable(command, new MetaQuery("demo"));
+
+        // 禁用的注入器不参与冲突，也不执行；仅启用的那个生效。
+        assertEquals("enabled", command.getOriginalWhere());
     }
 
     private static class NoopFluentInjector implements FluentQueryFilterInjector {

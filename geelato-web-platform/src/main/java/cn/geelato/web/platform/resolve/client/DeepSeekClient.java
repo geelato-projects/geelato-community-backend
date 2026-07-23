@@ -26,19 +26,19 @@ public class DeepSeekClient {
     private static final int CONNECT_TIMEOUT = 30000;
     private static final int READ_TIMEOUT = 180000;
 
-    @Value("${geelato.ai.deepseek.base-url}")
+    @Value("${geelato.ai.deepseek.base-url:https://api.deepseek.com/chat/completions}")
     private String deepseekBaseUrl;
 
-    @Value("${geelato.ai.deepseek.api-key}")
+    @Value("${geelato.ai.deepseek.api-key:}")
     private String deepseekApiKey;
 
-    @Value("${geelato.ai.deepseek.model}")
+    @Value("${geelato.ai.deepseek.model:deepseek-v4-pro}")
     private String deepseekModel;
 
-    @Value("${geelato.ai.deepseek.thinking-enabled}")
+    @Value("${geelato.ai.deepseek.thinking-enabled:true}")
     private boolean deepseekThinkingEnabled;
 
-    @Value("${geelato.ai.deepseek.reasoning-effort}")
+    @Value("${geelato.ai.deepseek.reasoning-effort:max}")
     private String deepseekReasoningEffort;
 
     public String extract(String userPrompt, String markdownContent) throws IOException {

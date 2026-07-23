@@ -2,11 +2,9 @@ package cn.geelato.orm.query;
 
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.sql.SqlManager;
-import cn.geelato.orm.Filter;
-import cn.geelato.orm.PageResult;
-import cn.geelato.orm.WrapperResultFunction;
-import cn.geelato.orm.Order;
-import cn.geelato.orm.support.QueryCommandAdapter;
+import cn.geelato.orm.page.PageResult;
+import cn.geelato.orm.function.WrapperResultFunction;
+import cn.geelato.orm.adapter.QueryCommandAdapter;
 import lombok.Getter;
 
 import java.util.Arrays;

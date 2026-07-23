@@ -1,6 +1,6 @@
 package cn.geelato.orm.query;
 
-import cn.geelato.orm.WrapperResultFunction;
+import cn.geelato.orm.function.WrapperResultFunction;
 
 import java.util.ArrayList;
 import java.util.Arrays;

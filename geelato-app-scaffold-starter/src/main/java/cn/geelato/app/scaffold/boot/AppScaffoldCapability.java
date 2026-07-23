@@ -10,6 +10,7 @@ public enum AppScaffoldCapability {
     ORGANIZATION("organization"),
     USER("user"),
     DICTIONARY("dictionary"),
+    NOTICE("notice"),
     UPLOAD("upload"),
     DOWNLOAD("download"),
     OSS("oss"),
@@ -32,6 +33,7 @@ public enum AppScaffoldCapability {
                 ORGANIZATION,
                 USER,
                 DICTIONARY,
+                NOTICE,
                 UPLOAD
         );
     }

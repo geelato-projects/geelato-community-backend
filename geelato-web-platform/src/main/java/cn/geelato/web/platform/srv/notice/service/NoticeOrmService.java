@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.srv.notice.service;
 
 import cn.geelato.meta.Notice;
-import cn.geelato.orm.Filter;
+import cn.geelato.orm.query.Filter;
 import cn.geelato.orm.MetaFactory;
-import cn.geelato.orm.Order;
+import cn.geelato.orm.query.Order;
 import com.alibaba.fastjson2.JSON;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;

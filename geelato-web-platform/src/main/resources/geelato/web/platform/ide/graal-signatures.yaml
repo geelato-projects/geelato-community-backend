@@ -1,0 +1,271 @@
+# GraalVM 桥服务签名表（M4 AI 上下文包的数据源）
+# 来源：geelato-web-platform graal/service/ 下桥服务的真实方法签名
+# 用途：让 AI 在没有 Java 反射能力的情况下，也能精确知道 $gl.<svc>.<method>(...) 的参数类型
+# 维护：手工维护（M14 后置 milestone 会用 javaparser 自动生成替代）
+#
+# 约定：参数类型用 Java 类型签名（与 AI 系统提示中保持一致）
+
+graal-services:
+  # ============================================================
+  # dao - 数据访问（CRUD 主力）
+  # ============================================================
+  - name: dao
+    description: 数据访问服务，CRUD 主力
+    functions:
+      - name: queryForMapList
+        signature: "(gql: String, withMeta: boolean)"
+        returns: "List<Map<String,Object>>（含字段元数据，当 withMeta=true）"
+        example: "$gl.dao.queryForMapList(\"order_info|user_id=${parameter.userId}\")"
+        description: 按 GQL 查询，返回 Map 列表
+      - name: queryForMap
+        signature: "(gql: String)"
+        returns: "Map<String,Object>"
+        example: "$gl.dao.queryForMap(\"platform_user|id=1\")"
+        description: 按 GQL 查询单条记录
+      - name: queryForObject
+        signature: "(gql: String, clazz: Class)"
+        returns: "<T>"
+        example: "$gl.dao.queryForObject(\"platform_user|id=1\", cn.geelato.security.User.class)"
+        description: 按 GQL 查询并映射到实体对象
+      - name: queryForOneColumnList
+        signature: "(gql: String)"
+        returns: "List<Object>"
+        example: "$gl.dao.queryForOneColumnList(\"platform_user|@fs=id\")"
+        description: 查询单列值列表
+      - name: queryForTreeNodeList
+        signature: "(gql: String)"
+        returns: "List<Map>（带 children 树结构）"
+        example: "$gl.dao.queryForTreeNodeList(\"platform_org\")"
+        description: 树形节点查询
+      - name: save
+        signature: "(biz: String, gql: String)"
+        returns: "Map<String,Object>（含生成的 id）"
+        example: "$gl.dao.save(\"order_info\", \"name=新订单|amount=100\")"
+        description: 按 GQL 保存（insert 或 update，由主键决定）
+      - name: batchSave
+        signature: "(gql: String, transaction: boolean)"
+        returns: "List<String>（id 列表）"
+        example: "$gl.dao.batchSave(\"[...]\", true)"
+        description: 批量保存
+      - name: multiSave
+        signature: "(gql: String)"
+        returns: "List<String>"
+        example: "$gl.dao.multiSave(\"{...}\")"
+        description: 多表同时保存
+      - name: delete
+        signature: "(biz: String, id: String)"
+        returns: "int（影响行数）"
+        example: "$gl.dao.delete(\"order_info\", \"123\")"
+        description: 物理删除（按主键）
+      - name: deleteByGql
+        signature: "(biz: String, gql: String)"
+        returns: "int"
+        example: "$gl.dao.deleteByGql(\"order_info\", \"status=DRAFT\")"
+        description: 按 GQL 条件删除
+      - name: executeSqlKey
+        signature: "(sqlKey: String, connectId: String, params: Map)"
+        returns: "Object（取决于 SQL）"
+        example: "$gl.dao.executeSqlKey(\"queryUserOrders\", null, {userId: \"1\"})"
+        description: 执行 classpath 中预定义的 SQL（.sql 文件）
+
+  # ============================================================
+  # http - HTTP 调用（worker 中受限于白名单）
+  # ============================================================
+  - name: http
+    description: HTTP 客户端服务（worker 中受域名白名单限制）
+    functions:
+      - name: get
+        signature: "(url: String, params: Map<String,String>, headers: Map<String,String>)"
+        returns: "String（响应文本）"
+        example: "$gl.http.get(\"https://api.example.com/users\", {page: \"1\"}, {Authorization: \"Bearer xxx\"})"
+        description: GET 请求
+      - name: post
+        signature: "(url: String, params: Map<String,String>, body: String, headers: Map<String,String>)"
+        returns: "String"
+        example: "$gl.http.post(\"https://api.example.com/orders\", null, JSON.stringify({name: \"new\"}), {\"Content-Type\": \"application/json\"})"
+        description: POST 请求
+      - name: put
+        signature: "(url: String, params: Map<String,String>, body: String, headers: Map<String,String>)"
+        returns: "String"
+        example: "$gl.http.put(url, null, body, null)"
+        description: PUT 请求
+      - name: delete
+        signature: "(url: String, params: Map<String,String>, headers: Map<String,String>)"
+        returns: "String"
+        example: "$gl.http.delete(url, null, null)"
+        description: DELETE 请求
+      - name: withTimeout
+        signature: "(timeoutMs: long)"
+        returns: "HttpService（链式调用）"
+        example: "$gl.http.withTimeout(5000).get(url, null, null)"
+        description: 设置下次请求的超时
+
+  # ============================================================
+  # fn - 通用工具
+  # ============================================================
+  - name: fn
+    description: 通用工具服务
+    functions:
+      - name: getUser
+        signature: "(userId: String)"
+        returns: "User"
+        example: "$gl.fn.getUser(\"123\")"
+        description: 按 userId 查用户
+      - name: toChineseCurrency
+        signature: "(digit: double)"
+        returns: "String（中文大写金额）"
+        example: "$gl.fn.toChineseCurrency(1234.56)"
+        description: 数字转中文大写金额
+      - name: dateText
+        signature: "(format: String, dateStr: String)"
+        returns: "String"
+        example: "$gl.fn.dateText(\"yyyy-MM-dd\", \"2026-07-21\")"
+        description: 格式化日期
+      - name: groupSum
+        signature: "(data: List<Map>, groupField: String, sumFields: String[])"
+        returns: "List<Map>"
+        example: "$gl.fn.groupSum(rows, \"dept\", [\"amount\", \"count\"])"
+        description: 分组求和
+
+  # ============================================================
+  # file - 文件 / Excel（worker 中默认禁用）
+  # ============================================================
+  - name: file
+    description: 文件与 Excel 服务（worker 中默认禁用）
+    functions:
+      - name: exportExcel
+        signature: "(fileName: String, templateId: String, index: int, data: List<Map>, options: Map)"
+        returns: "byte[]（Excel 文件字节）"
+        example: "$gl.file.exportExcel(\"report.xlsx\", \"tpl1\", 0, rows, null)"
+        description: 基于 Excel 模板导出
+      - name: saveBase64
+        signature: "(base64: String, fileName: String, suffix: String, serviceType: String, tableType: String, batchNo: String, isThumbnail: boolean, onlyThumb: boolean, dimension: String)"
+        returns: "Map（含 id/url）"
+        example: "$gl.file.saveBase64(b64, \"file.png\", \"png\", \"order\", \"head\", null, false, false, null)"
+        description: 上传 base64 文件
+
+  # ============================================================
+  # encrypt - 加密
+  # ============================================================
+  - name: encrypt
+    description: 加密服务
+    functions:
+      - name: md5_32bit
+        signature: "(str: String)"
+        returns: "String（32 位 MD5）"
+        example: "$gl.encrypt.md5_32bit(\"hello\")"
+        description: 32 位 MD5
+      - name: md5_16bit
+        signature: "(str: String)"
+        returns: "String（16 位 MD5）"
+        example: "$gl.encrypt.md5_16bit(\"hello\")"
+        description: 16 位 MD5
+      - name: aes
+        signature: "(str: String)"
+        returns: "String（AES 加密）"
+        example: "$gl.encrypt.aes(\"secret\")"
+        description: AES 加密
+
+  # ============================================================
+  # json - JSON 工具
+  # ============================================================
+  - name: json
+    description: JSON 工具
+    functions:
+      - name: toString
+        signature: "(object: Object)"
+        returns: "String（JSON 字符串）"
+        example: "$gl.json.toString({a: 1})"
+        description: 对象转 JSON 字符串
+      - name: toObject
+        signature: "(jsonString: String)"
+        returns: "Object（解析后的对象）"
+        example: "$gl.json.toObject(\"{\\\"a\\\":1}\")"
+        description: JSON 字符串转对象
+
+  # ============================================================
+  # date - 日期工具
+  # ============================================================
+  - name: date
+    description: 日期工具
+    functions:
+      - name: formatDate
+        signature: "(date: Date, format: String)"
+        returns: "String"
+        example: "$gl.date.formatDate(new Date(), \"yyyy-MM-dd HH:mm:ss\")"
+        description: 格式化 Date
+      - name: formatDate
+        signature: "(timeStamp: long, format: String)"
+        returns: "String"
+        example: "$gl.date.formatDate(Date.now(), \"yyyy-MM-dd\")"
+        description: 格式化时间戳
+
+  # ============================================================
+  # cfg - 配置
+  # ============================================================
+  - name: cfg
+    description: 配置查询服务
+    functions:
+      - name: queryTenantConfig
+        signature: "(tenantCode: String)"
+        returns: "Map"
+        example: "$gl.cfg.queryTenantConfig(\"geelato\")"
+        description: 查租户配置
+      - name: queryAppConfig
+        signature: "(appId: String)"
+        returns: "Map"
+        example: "$gl.cfg.queryAppConfig(\"app1\")"
+        description: 查应用配置
+      - name: getConfig
+        signature: "(key: String)"
+        returns: "Object"
+        example: "$gl.cfg.getConfig(\"site.title\")"
+        description: 按键查任意配置
+
+  # ============================================================
+  # user / tenant / app - 当前上下文（ProxyObject，按属性访问）
+  # ============================================================
+  - name: user
+    description: 当前登录用户（ProxyObject，直接 $gl.user.<field>）
+    fields:
+      - userId
+      - userName
+      - loginName
+      - buId
+      - defaultOrgId
+      - defaultOrgName
+      - deptId
+    example: "$gl.user.userId, $gl.user.userName"
+
+  - name: tenant
+    description: 当前租户（ProxyObject）
+    fields:
+      - code
+      - name
+    example: "$gl.tenant.code"
+
+  - name: app
+    description: 当前应用（ProxyObject）
+    fields:
+      - id
+      - name
+      - code
+    example: "$gl.app.id"
+
+  # ============================================================
+  # request - HTTP 请求（仅 web-platform 主进程可用，worker 中无）
+  # ============================================================
+  - name: request
+    description: 当前 HTTP 请求信息（仅 web-platform 主进程；worker 中无此服务）
+    availableIn: web-platform-only
+    functions:
+      - name: getHeaders
+        signature: "()"
+        returns: "Map<String,String>"
+        example: "$gl.request.getHeaders()"
+        description: 取所有请求头
+      - name: getHeader
+        signature: "(key: String)"
+        returns: "String"
+        example: "$gl.request.getHeader(\"User-Agent\")"
+        description: 取单个请求头

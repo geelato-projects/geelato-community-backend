@@ -24,6 +24,7 @@ public class AppScaffoldEndpointPrunerTest {
         DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
         registerController(registry, "allowedJwt", "cn.geelato.web.platform.srv.auth.JWTAuthController");
         registerController(registry, "allowedMql", "cn.geelato.web.platform.srv.meta.MetaRuntimeController");
+        registerController(registry, "allowedNotice", "cn.geelato.web.platform.srv.notice.NoticeController");
         registerController(registry, "disallowedAi", "cn.geelato.web.platform.srv.ai.AiController");
 
         AppScaffoldEndpointPruner pruner = new AppScaffoldEndpointPruner(environment, new AppScaffoldControllerCatalog());
@@ -32,6 +33,7 @@ public class AppScaffoldEndpointPrunerTest {
 
         Assertions.assertTrue(registry.containsBeanDefinition("allowedJwt"));
         Assertions.assertTrue(registry.containsBeanDefinition("allowedMql"));
+        Assertions.assertTrue(registry.containsBeanDefinition("allowedNotice"));
         Assertions.assertFalse(registry.containsBeanDefinition("disallowedAi"));
     }
 

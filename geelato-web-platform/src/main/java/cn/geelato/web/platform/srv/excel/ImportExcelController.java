@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.srv.excel;
 
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.meta.ExportTemplate;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.BaseController;
-import cn.geelato.meta.ExportTemplate;
 import cn.geelato.web.platform.srv.excel.service.ExportTemplateService;
 import cn.geelato.web.platform.srv.excel.service.ImportExcelService;
 import lombok.extern.slf4j.Slf4j;
@@ -82,6 +82,25 @@ public class ImportExcelController extends BaseController {
         try {
             // 调用importExcel方法执行导入操作
             return importExcelService.importExcel(this.request, this.response, importType, templateId, index, null);
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+            return ApiResult.fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * 读取复杂Excel文件
+     *
+     * @param importType 导入类型，可选值为"part"（部分导入）和"all"（全部导入，遇到错误即中断并回滚）
+     * @param templateId 模板文件ID，用于指定导入数据的模板
+     * @param attachId   业务数据文件ID，标识要导入的业务数据文件
+     * @return 返回一个包含导入结果的ApiResult对象
+     */
+    @RequestMapping(value = "/complex/{importType}/{templateId}/{attachId}", method = {RequestMethod.POST, RequestMethod.GET})
+    public ApiResult<?> importComplexExcel(@PathVariable String importType, @PathVariable String templateId, @PathVariable String attachId) {
+        try {
+            // 调用importExcel方法执行导入操作
+            return importExcelService.importComplexExcel(importType, templateId, attachId);
         } catch (Exception ex) {
             log.error(ex.getMessage());
             return ApiResult.fail(ex.getMessage());

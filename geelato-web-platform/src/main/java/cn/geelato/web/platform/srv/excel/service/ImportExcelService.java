@@ -1,7 +1,5 @@
 package cn.geelato.web.platform.srv.excel.service;
 
-import cn.geelato.meta.ExportTemplate;
-import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.core.enums.MysqlDataTypeEnum;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
@@ -9,21 +7,25 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.script.js.JsProvider;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.meta.Attachment;
+import cn.geelato.meta.ExportTemplate;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
+import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.platform.common.Base64Helper;
-import cn.geelato.web.platform.srv.excel.exception.*;
 import cn.geelato.web.platform.common.FileHandler;
-import cn.geelato.web.platform.srv.platform.service.RuleService;
 import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.web.platform.srv.excel.entity.*;
-import cn.geelato.meta.Attachment;
 import cn.geelato.web.platform.srv.excel.exception.FileNotFoundException;
+import cn.geelato.web.platform.srv.excel.exception.*;
 import cn.geelato.web.platform.srv.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.srv.file.enums.FileGenreEnum;
 import cn.geelato.web.platform.srv.file.param.FileParam;
+import cn.geelato.web.platform.srv.platform.service.RuleService;
 import cn.geelato.web.platform.utils.FileParamUtils;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -87,6 +89,118 @@ public class ImportExcelService {
     private RedisTemplate<String, Object> redisTemplate;
     @Autowired
     private ExcelCommonUtils excelCommonUtils;
+    @Autowired
+    private ComplexExcelReader complexExcelReader;
+    @Autowired
+    private ComplexRuleProcessor complexRuleProcessor;
+
+    /**
+     * 复杂Excel文件解析
+     * <p>
+     * 根据模板ID获取模板配置（固定单元格、列表区域、列表字段），再用模板解析上传的Excel文件（attachId），
+     * 返回扁平化的JSON数据：固定单元格字段与列表区域平铺在同一层级。复杂模板采用位置（单元格引用/列字母+行号）定位，
+     * 与普通导入不同：不使用变量取值、不处理清洗规则（BusinessTypeRuleData）、不入库，仅返回解析后的数据。
+     * <p>
+     * 模板配置存储在 ExportTemplate.businessTypeData 中，JSON 结构为：
+     * <pre>
+     * {
+     *   "tableData":       [{fieldName, valueType, position, ...}],          // 固定单元格
+     *   "listData":        [{fieldName, startColumn, endColumn, startRow}],  // 列表区域
+     *   "listColumnData":  [{listFieldName, fieldName, position, ...}]       // 列表字段（列位置）
+     * }
+     * </pre>
+     * position 形如 "A1" 或合并区间 "A1:D2"；startRow 为 1-based 行号；列字母统一大写。
+     * <p>
+     * 返回 data 扁平化结构示例：
+     * <pre>
+     * {
+     *   "customerId": "OBEC260699420",      // 固定单元格字段直接作为顶层键
+     *   "deliveryChannel": "普船-奥克兰",
+     *   "ilEcoCargo": [ {...}, {...} ]      // 列表以列表fieldName为键，值为行数据数组
+     * }
+     * </pre>
+     *
+     * @param importType 导入类型（保留参数，兼容接口签名）
+     * @param templateId 模板文件ID，用于指定解析使用的模板
+     * @param attachId   业务数据文件ID，标识要解析的Excel文件
+     * @return 返回操作结果，data 为扁平化JSON：固定单元格字段与列表区域（键=列表fieldName，值=行数组）平铺在同一层级
+     */
+    public ApiResult<?> importComplexExcel(String importType, String templateId, String attachId) {
+        System.gc();
+        String currentUUID = String.valueOf(UIDGenerator.generate());
+        try {
+            // 事务模板查询
+            ExportTemplate exportTemplate = exportTemplateService.getModel(ExportTemplate.class, templateId);
+            ExcelCommonUtils.notNull(exportTemplate, new FileNotFoundException("ExportTemplate Data Not Found"));
+            // 模板配置（固定单元格 / 列表区域 / 列表字段），存储于 businessTypeData
+            if (Strings.isBlank(exportTemplate.getBusinessTypeData())) {
+                throw new FileNotFoundException("Complex Template Config Not Found");
+            }
+            JSONObject complexConfig = JSON.parseObject(exportTemplate.getBusinessTypeData());
+            JSONArray tableCellArray = complexConfig.getJSONArray("tableData");
+            JSONArray listArray = complexConfig.getJSONArray("listData");
+            JSONArray listColumnArray = complexConfig.getJSONArray("listColumnData");
+            List<ComplexCellData> cellDataList = tableCellArray == null ? new ArrayList<>() : tableCellArray.toJavaList(ComplexCellData.class);
+            List<ComplexListData> listDataList = listArray == null ? new ArrayList<>() : listArray.toJavaList(ComplexListData.class);
+            List<ComplexListColumnData> listColumnList = listColumnArray == null ? new ArrayList<>() : listColumnArray.toJavaList(ComplexListColumnData.class);
+            if (cellDataList.isEmpty() && listDataList.isEmpty() && listColumnList.isEmpty()) {
+                throw new FileContentIsEmptyException("Complex Template Config Is Empty");
+            }
+            // 业务数据文件
+            if (Strings.isBlank(attachId)) {
+                throw new FileNotFoundException("Business Data File Not Found");
+            }
+            Attachment businessFile = fileHandler.getAttachment(attachId);
+            ExcelCommonUtils.notNull(businessFile, new FileNotFoundException("Business Data File Not Found"));
+            // 读取Excel（仅取第一个工作表），得到扁平化结果
+            Map<String, Object> flatResult = complexExcelReader.readComplexExcel(businessFile, cellDataList, listDataList, listColumnList);
+            // 清洗规则（businessRuleData）：复杂模板规则存储于 businessRuleData
+            List<ComplexRuleData> ruleList = new ArrayList<>();
+            if (Strings.isNotBlank(exportTemplate.getBusinessRuleData())) {
+                ruleList = JSON.parseArray(exportTemplate.getBusinessRuleData(), ComplexRuleData.class);
+            }
+            if (ruleList != null && !ruleList.isEmpty()) {
+                // 拆分扁平结果为 tableData / listData，列表fieldName来自 listDataList
+                Set<String> listFieldNames = new HashSet<>();
+                for (ComplexListData list : listDataList) {
+                    if (Strings.isNotBlank(list.getFieldName())) {
+                        listFieldNames.add(list.getFieldName());
+                    }
+                }
+                Map<String, Object> tableData = new LinkedHashMap<>();
+                Map<String, List<Map<String, Object>>> listData = new LinkedHashMap<>();
+                for (Map.Entry<String, Object> entry : flatResult.entrySet()) {
+                    if (listFieldNames.contains(entry.getKey())) {
+                        Object v = entry.getValue();
+                        if (v instanceof List) {
+                            //noinspection unchecked
+                            listData.put(entry.getKey(), (List<Map<String, Object>>) v);
+                        } else {
+                            listData.put(entry.getKey(), new ArrayList<>());
+                        }
+                    } else {
+                        tableData.put(entry.getKey(), entry.getValue());
+                    }
+                }
+                // 应用清洗规则
+                Map<String, Object> processed = complexRuleProcessor.process(tableData, listData, ruleList);
+                //noinspection unchecked
+                tableData = (Map<String, Object>) processed.get("tableData");
+                //noinspection unchecked
+                listData = (Map<String, List<Map<String, Object>>>) processed.get("listData");
+                // 重新扁平化输出
+                flatResult = new LinkedHashMap<>();
+                flatResult.putAll(tableData);
+                flatResult.putAll(listData);
+            }
+            // 返回解析后的JSON数据
+            return ApiResult.success(flatResult, "解析成功");
+        } catch (Exception ex) {
+            return ApiResult.fail(currentUUID).exception(ex);
+        } finally {
+            System.gc();
+        }
+    }
 
     public ApiResult<?> importExcel(HttpServletRequest request, HttpServletResponse response, String importType, String templateId, String index, String attachId) {
         System.gc();

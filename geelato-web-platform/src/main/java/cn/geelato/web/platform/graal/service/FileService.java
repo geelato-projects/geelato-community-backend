@@ -5,13 +5,14 @@ import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.api.ApiResult;
-import cn.geelato.utils.FileUtils;
-import cn.geelato.web.platform.graal.ApplicationContextProvider;
-import cn.geelato.web.platform.graal.utils.GraalUtils;
-import cn.geelato.web.platform.common.FileHandler;
-import cn.geelato.web.platform.srv.excel.service.ExportExcelService;
 import cn.geelato.meta.Attach;
 import cn.geelato.meta.Attachment;
+import cn.geelato.utils.FileUtils;
+import cn.geelato.web.platform.common.FileHandler;
+import cn.geelato.web.platform.graal.ApplicationContextProvider;
+import cn.geelato.web.platform.graal.utils.GraalUtils;
+import cn.geelato.web.platform.srv.excel.service.ExportExcelService;
+import cn.geelato.web.platform.srv.excel.service.ImportExcelService;
 import cn.geelato.web.platform.srv.file.param.FileParam;
 import cn.geelato.web.platform.utils.FileParamUtils;
 import com.alibaba.fastjson2.JSON;
@@ -21,8 +22,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,11 +29,13 @@ import java.util.Map;
 public class FileService {
 
     private final ExportExcelService exportExcelService;
+    private final ImportExcelService importExcelService;
     private final FileHandler fileHandler;
 
     public FileService() {
         // 使用ApplicationContextProvider获取RuleService
         this.exportExcelService = ApplicationContextProvider.getBean(ExportExcelService.class);
+        this.importExcelService = ApplicationContextProvider.getBean(ImportExcelService.class);
         this.fileHandler = ApplicationContextProvider.getBean(FileHandler.class);
     }
 
@@ -76,6 +77,23 @@ public class FileService {
             ApiResult result = exportExcelService.exportWps(null, templateId, index, fileName, valueMapList, valueMap, markText, markKey, readonly);
             if (result.isSuccess()) {
                 return ((Attach) result.getData()).getId();
+            }
+        } catch (Exception ex) {
+            return null;
+        }
+
+        return null;
+    }
+
+    @GraalFunction(example = "$gl.file.readComplexExcel({importType},{templateId},{attachId})", description = "读取复杂Excel并返回数据列表")
+    public Object readComplexExcel(String importType, String templateId, String attachId) {
+        if (Strings.isBlank(importType) || Strings.isBlank(templateId) || Strings.isBlank(attachId)) {
+            return null;
+        }
+        try {
+            ApiResult result = importExcelService.importComplexExcel(importType, templateId, attachId);
+            if (result.isSuccess()) {
+                return result.getData();
             }
         } catch (Exception ex) {
             return null;

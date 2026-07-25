@@ -121,11 +121,17 @@ public class ScheduledTaskMonitorRegistry {
                 continue;
             }
             MetadataReader metadataReader = new CachingMetadataReaderFactory(resolver).getMetadataReader(resource);
-            Class<?> candidateClass = ClassUtils.forName(metadataReader.getClassMetadata().getClassName(), null);
-            if (!isSpringComponent(candidateClass)) {
-                continue;
+            String className = metadataReader.getClassMetadata().getClassName();
+            try {
+                Class<?> candidateClass = ClassUtils.forName(className, null);
+                if (!isSpringComponent(candidateClass)) {
+                    continue;
+                }
+                collectMethodDefinitions(candidateClass, beanNameMap, definitions);
+            } catch (ClassNotFoundException | LinkageError e) {
+                // 类本身或其方法签名引用的类型在当前 classpath 上不可解析（如混用了不同版本的依赖 jar），跳过该类，不影响整体扫描
+                log.warn("skip unresolvable class [{}] during scheduled task scan: {}", className, e.toString());
             }
-            collectMethodDefinitions(candidateClass, beanNameMap, definitions);
         }
         definitions.sort(Comparator
             .comparing(ScheduledTaskMonitorSnapshot::getModuleName, Comparator.nullsLast(String::compareTo))
@@ -144,14 +150,22 @@ public class ScheduledTaskMonitorRegistry {
     private void collectMethodDefinitions(Class<?> candidateClass,
                                           Map<Class<?>, List<String>> beanNameMap,
                                           List<ScheduledTaskMonitorSnapshot> definitions) {
-        Method[] methods = candidateClass.getDeclaredMethods();
+        Method[] methods;
+        try {
+            // getDeclaredMethods 会急切解析全部方法签名中的参数/返回类型，签名引用的类缺失时会抛 NoClassDefFoundError
+            methods = candidateClass.getDeclaredMethods();
+        } catch (LinkageError e) {
+            log.warn("skip class [{}] during scheduled task scan, method signature unresolvable: {}",
+                candidateClass.getName(), e.toString());
+            return;
+        }
         for (Method method : methods) {
             if (method.isSynthetic() || method.isBridge()) {
                 continue;
             }
             Collection<Scheduled> scheduledAnnotations =
                 AnnotatedElementUtils.getMergedRepeatableAnnotations(method, Scheduled.class, Schedules.class);
-            if (scheduledAnnotations == null || scheduledAnnotations.isEmpty()) {
+            if (scheduledAnnotations.isEmpty()) {
                 continue;
             }
             ScheduledTaskMonitorSnapshot snapshot = new ScheduledTaskMonitorSnapshot();

@@ -1,17 +1,18 @@
 package cn.geelato.web.common.controller;
 
 import cn.geelato.core.SessionCtx;
+import cn.geelato.orm.page.IPage;
+import cn.geelato.orm.page.PageResult;
 import cn.geelato.web.common.controller.extractor.RequestParamsExtractor;
 import cn.geelato.web.common.controller.extractor.ServletRequestParamsExtractor;
 import cn.geelato.web.common.controller.extractor.ReactiveRequestParamsExtractor;
 
 import com.alibaba.fastjson2.JSON;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -222,30 +223,7 @@ public class BaseController {
         return new PageParams(defaultPageNum, defaultPageSize);
     }
     
-    /**
-     * 创建MyBatis Plus的Page对象（自动适配当前环境）
-     * 
-     * @param <T> 实体类型
-     * @return Page对象
-     */
-    protected <T> Page<T> createPage() {
-        PageParams params = getPageParams();
-        return new Page<>(params.getCurrent(), params.getSize());
-    }
-    
-    /**
-     * 创建MyBatis Plus的Page对象，带默认值（自动适配当前环境）
-     * 
-     * @param defaultPageNum 默认页码
-     * @param defaultPageSize 默认页面大小
-     * @param <T> 实体类型
-     * @return Page对象
-     */
-    protected <T> Page<T> createPage(int defaultPageNum, int defaultPageSize) {
-        PageParams params = getPageParams(defaultPageNum, defaultPageSize);
-        return new Page<>(params.getCurrent(), params.getSize());
-    }
-    
+
 
     
     
@@ -258,8 +236,8 @@ public class BaseController {
      * @param <T> 实体类型
      * @return Page对象
      */
-    public <T> Page<T> createPage(PageParams pageParams) {
-        return new Page<>(pageParams.getCurrent(), pageParams.getSize());
+    public <T> IPage<T> createPage(PageParams pageParams) {
+        return new PageResult<>(pageParams.getCurrent(), pageParams.getSize());
     }
     
     /**
@@ -271,8 +249,8 @@ public class BaseController {
      * @param <T> 实体类型
      * @return Page对象
      */
-    public <T> Page<T> createPage(PageParams pageParams, int defaultPageNum, int defaultPageSize) {
-        return new Page<>(pageParams.getCurrent(), pageParams.getSize());
+    public <T> IPage<T> createPage(PageParams pageParams, int defaultPageNum, int defaultPageSize) {
+        return new PageResult<>(pageParams.getCurrent(), pageParams.getSize());
     }
     
 

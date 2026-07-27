@@ -17,13 +17,6 @@
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-mcp-common</artifactId>
-            <exclusions>
-                <!-- 排除旧版本 MyBatis Plus，统一使用 3.5.14 -->
-                <exclusion>
-                    <groupId>com.baomidou</groupId>
-                    <artifactId>mybatis-plus-extension</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>
@@ -32,12 +25,6 @@
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-meta</artifactId>
-        </dependency>
-        <!-- 显式指定 MyBatis Plus 版本，避免冲突 -->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-            <version>3.5.14</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

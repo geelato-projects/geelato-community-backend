@@ -28,18 +28,7 @@ public class PlatformLogSearchService {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-    public static class LogHit {
-        private final Path file;
-        private final int lineNumber;
-        private final List<String> lines;
-        public LogHit(Path file, int lineNumber, List<String> lines) {
-            this.file = file;
-            this.lineNumber = lineNumber;
-            this.lines = lines;
-        }
-        public Path getFile() { return file; }
-        public int getLineNumber() { return lineNumber; }
-        public List<String> getLines() { return lines; }
+    public record LogHit(Path file, int lineNumber, List<String> lines) {
     }
 
     public Optional<LogHit> findFirstByLogTag(String tag) {
@@ -76,7 +65,7 @@ public class PlatformLogSearchService {
                 }
             } catch (IOException ignored) { }
         }
-        hits.sort(Comparator.comparing(LogHit::getFile).thenComparingInt(LogHit::getLineNumber));
+        hits.sort(Comparator.comparing(LogHit::file).thenComparingInt(LogHit::lineNumber));
         return hits;
     }
 

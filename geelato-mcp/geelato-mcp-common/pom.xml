@@ -25,13 +25,6 @@
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-web-runtime</artifactId>
-            <exclusions>
-                <!-- 排除旧版本 MyBatis Plus -->
-                <exclusion>
-                    <groupId>com.baomidou</groupId>
-                    <artifactId>mybatis-plus-extension</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

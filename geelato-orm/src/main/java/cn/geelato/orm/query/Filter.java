@@ -12,9 +12,9 @@ import java.util.List;
 @Getter
 public class Filter {
     // Getters
-    private String field;
-    private String operator;
-    private Object value;
+    private final String field;
+    private final String operator;
+    private final Object value;
     private String logic = "AND"; // 默认AND连接
     
     public Filter(String field, String operator, Object value) {
@@ -100,8 +100,7 @@ public class Filter {
         sql.append(field).append(" ").append(operator);
         
         if (value != null) {
-            if ("IN".equals(operator) && value instanceof List) {
-                List<?> list = (List<?>) value;
+            if ("IN".equals(operator) && value instanceof List<?> list) {
                 sql.append(" (");
                 for (int i = 0; i < list.size(); i++) {
                     if (i > 0) sql.append(", ");

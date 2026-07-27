@@ -1,6 +1,5 @@
 package cn.geelato.ide.service;
 
-import cn.geelato.core.orm.Dao;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.security.User;
 import cn.geelato.ide.entity.IdeSyncLog;

@@ -7,7 +7,6 @@ import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
 import cn.geelato.lang.meta.Transient;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,7 +16,6 @@ import java.util.List;
 @Setter
 @Title(title = "数据字典项")
 @Entity(name = "platform_dict_item", catalog = "platform")
-@TableName("platform_dict_item")
 public class DictItem extends BaseSortableEntity implements EntityEnableAble {
 
     @Title(title = "应用Id")

@@ -9,7 +9,6 @@ import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.srv.platform.service.RuleService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
-import com.github.pagehelper.PageHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
@@ -227,18 +226,10 @@ public class BaseController extends ParameterOperator {
         }
         return params;
     }
-    
-    /**
-     * 启动分页查询
-     * 直接调用 PageHelper.startPage 方法，使用从请求中获取的分页参数
-     */
-    protected void startPage() {
-        PageHelper.startPage(getPageNum(), getPageSize());
-    }
-    
+
     /**
      * 获取当前页码
-     * 
+     *
      * @return 当前页码
      */
     protected int getPageNum() {

@@ -22,7 +22,7 @@
     "nullable": true,
     "numericPrecision": 0,
     "numericScale": 0,
-    "numericSigned": false,
+    "numericSigned": f  alse,
     "ordinalPosition": 1,
     "selectType": "ENTITY",
     "seqNo": "1",

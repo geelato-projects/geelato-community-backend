@@ -30,7 +30,7 @@ public class ErrorDocResolver {
      * @return 文档 URL；关闭开关或异常为 null 时返回 null
      */
     public String resolve(CoreException ex) {
-        if (ex == null || !Boolean.TRUE.equals(GlobalContext.getDocUrlEnabled())) {
+        if (ex == null || !GlobalContext.getDocUrlEnabled()) {
             return null;
         }
         ErrorCode ec = ex.getError();

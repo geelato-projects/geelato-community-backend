@@ -2,7 +2,6 @@ package cn.geelato.ide.controller;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.security.SecurityContext;
-import cn.geelato.security.User;
 import cn.geelato.web.common.annotation.DesignTimeApiRestController;
 import cn.geelato.ide.dto.IdeScriptCreateRequest;
 import cn.geelato.ide.dto.IdeScriptUpdateRequest;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 

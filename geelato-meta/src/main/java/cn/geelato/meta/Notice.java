@@ -4,14 +4,12 @@ import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
 import cn.geelato.core.meta.model.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity(name = "platform_notice")
-@TableName("platform_notice")
 @Title(title = "平台通知")
 public class Notice extends BaseEntity {
     @Title(title = "收件人")

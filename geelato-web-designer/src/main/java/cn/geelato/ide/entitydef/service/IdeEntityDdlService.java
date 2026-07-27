@@ -1,6 +1,5 @@
 package cn.geelato.ide.entitydef.service;
 
-import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.ide.entitydef.dto.IdeEntityDefinition;
 import cn.geelato.ide.entitydef.dto.IdeEntityFieldDefinition;

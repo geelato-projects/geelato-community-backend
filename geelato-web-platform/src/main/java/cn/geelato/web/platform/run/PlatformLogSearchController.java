@@ -24,9 +24,9 @@ public class PlatformLogSearchController {
         return logSearchService.findFirstByLogTag(tag)
                 .map(hit -> {
                     Map<String, Object> result = new HashMap<>();
-                    result.put("file", hit.getFile().toString());
-                    result.put("lineNumber", hit.getLineNumber());
-                    result.put("lines", hit.getLines());
+                    result.put("file", hit.file().toString());
+                    result.put("lineNumber", hit.lineNumber());
+                    result.put("lines", hit.lines());
                     return ApiResult.success(result);
                 })
                 .orElseGet(() -> ApiResult.fail("未找到匹配日志"));
@@ -42,9 +42,9 @@ public class PlatformLogSearchController {
         List<PlatformLogSearchService.LogHit> hits = logSearchService.findByUserAndTimeRange(userId, fromTime, toTime);
         List<Map<String, Object>> list = hits.stream().map(hit -> {
             Map<String, Object> result = new HashMap<>();
-            result.put("file", hit.getFile().toString());
-            result.put("lineNumber", hit.getLineNumber());
-            result.put("lines", hit.getLines());
+            result.put("file", hit.file().toString());
+            result.put("lineNumber", hit.lineNumber());
+            result.put("lines", hit.lines());
             return result;
         }).collect(Collectors.toList());
         return ApiResult.success(list);

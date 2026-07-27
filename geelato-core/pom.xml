@@ -80,14 +80,9 @@
           <type>pom</type>
       </dependency>
     <!-- 邮箱 -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-mail</artifactId>
-    </dependency>
       <dependency>
-          <groupId>com.baomidou</groupId>
-          <artifactId>mybatis-plus</artifactId>
-          <version>3.5.14</version>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-mail</artifactId>
       </dependency>
   </dependencies>
 

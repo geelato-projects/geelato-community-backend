@@ -14,10 +14,10 @@
         <module>geelato-framework-bom</module>
         <module>geelato-framework-starter</module>
         <module>geelato-lang</module>
-        <module>geelato-core</module>
-        <module>geelato-meta</module>
         <module>geelato-security</module>
         <module>geelato-utils</module>
+        <module>geelato-core</module>
+        <module>geelato-meta</module>
         <module>geelato-orm</module>
         <module>geelato-web-common</module>
         <module>geelato-web-oss</module>

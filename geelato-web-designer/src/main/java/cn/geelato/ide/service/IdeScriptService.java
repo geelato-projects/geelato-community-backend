@@ -56,9 +56,14 @@ public class IdeScriptService {
             return null;
         }
         Dao dao = baseService.dao;
-        dao.setDefaultFilter(true, baseService.filterGroup);
-        IdeScript script = dao.queryForObject(IdeScript.class, "code", code);
-        // wasm 字节码从 OSS/本地按需加载为 base64（列表查询不触发，只在单条详情时加载）
+        // 用原生 SQL 查询（绕开 MetaManager 对 ide_script 元数据的依赖，与 list 方法保持一致）
+        List<Map<String, Object>> rows = dao.nativeQueryForMapList(
+                "SELECT * FROM ide_script WHERE code = ? AND del_status = 0",
+                new Object[]{code});
+        if (rows == null || rows.isEmpty()) {
+            return null;
+        }
+        IdeScript script = mapToIdeScript(rows.get(0));
         populateWasmBase64(script);
         return script;
     }
@@ -71,8 +76,13 @@ public class IdeScriptService {
             return null;
         }
         Dao dao = baseService.dao;
-        dao.setDefaultFilter(true, baseService.filterGroup);
-        IdeScript script = dao.queryForObject(IdeScript.class, id);
+        List<Map<String, Object>> rows = dao.nativeQueryForMapList(
+                "SELECT * FROM ide_script WHERE id = ? AND del_status = 0",
+                new Object[]{id});
+        if (rows == null || rows.isEmpty()) {
+            return null;
+        }
+        IdeScript script = mapToIdeScript(rows.get(0));
         populateWasmBase64(script);
         return script;
     }
@@ -85,8 +95,13 @@ public class IdeScriptService {
             return null;
         }
         Dao dao = baseService.dao;
-        dao.setDefaultFilter(true, baseService.filterGroup);
-        return dao.queryForObject(IdeScript.class, "code", code);
+        List<Map<String, Object>> rows = dao.nativeQueryForMapList(
+                "SELECT * FROM ide_script WHERE code = ? AND del_status = 0",
+                new Object[]{code});
+        if (rows == null || rows.isEmpty()) {
+            return null;
+        }
+        return mapToIdeScript(rows.get(0));
     }
 
     /**
@@ -429,5 +444,57 @@ public class IdeScriptService {
     private String generateId() {
         // 19 位数字 ID（与平台其他实体风格一致）
         return String.valueOf(System.currentTimeMillis() * 1000 + (UUID.randomUUID().hashCode() & 0x3FF));
+    }
+
+    /**
+     * 把 DB 行 Map（snake_case 列名）映射到 IdeScript 实体（camelCase 字段）。
+     * 用于绕开 MetaManager 元数据查询，与 list 方法保持一致。
+     */
+    private IdeScript mapToIdeScript(Map<String, Object> row) {
+        if (row == null) {
+            return null;
+        }
+        IdeScript s = new IdeScript();
+        s.setId(asString(row.get("id")));
+        s.setCode(asString(row.get("code")));
+        s.setName(asString(row.get("name")));
+        s.setGroupName(asString(row.get("group_name")));
+        s.setLanguage(asString(row.get("language")));
+        s.setContent(asString(row.get("content")));
+        s.setWasmObjectName(asString(row.get("wasm_object_name")));
+        s.setFileHash(asString(row.get("file_hash")));
+        Object version = row.get("version");
+        if (version instanceof Number) {
+            s.setVersion(((Number) version).intValue());
+        }
+        s.setStatus(asString(row.get("status")));
+        s.setEnvScope(asString(row.get("env_scope")));
+        s.setDescription(asString(row.get("description")));
+        s.setDefaultParams(asString(row.get("default_params")));
+        s.setAppId(asString(row.get("app_id")));
+        s.setTenantCode(asString(row.get("tenant_code")));
+        s.setBuId(asString(row.get("bu_id")));
+        s.setDeptId(asString(row.get("dept_id")));
+        s.setCreator(asString(row.get("creator")));
+        s.setCreatorName(asString(row.get("creator_name")));
+        s.setUpdater(asString(row.get("updater")));
+        s.setUpdaterName(asString(row.get("updater_name")));
+        Object createAt = row.get("create_at");
+        if (createAt instanceof java.util.Date) {
+            s.setCreateAt((java.util.Date) createAt);
+        }
+        Object updateAt = row.get("update_at");
+        if (updateAt instanceof java.util.Date) {
+            s.setUpdateAt((java.util.Date) updateAt);
+        }
+        Object delStatus = row.get("del_status");
+        if (delStatus instanceof Number) {
+            s.setDelStatus(((Number) delStatus).intValue());
+        }
+        return s;
+    }
+
+    private static String asString(Object v) {
+        return v == null ? null : String.valueOf(v);
     }
 }

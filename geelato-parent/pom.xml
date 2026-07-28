@@ -204,6 +204,11 @@
             </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
+                <artifactId>geelato-web-designer</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
                 <artifactId>geelato-web-platform</artifactId>
                 <version>${geelato.version}</version>
             </dependency>
@@ -408,7 +413,6 @@
                         <version>3.11.2</version>
                         <configuration>
                             <failOnError>false</failOnError>
-                            <failOnWarning>false</failOnWarning>
                             <doclint>none</doclint>
                             <charset>UTF-8</charset>
                             <encoding>UTF-8</encoding>

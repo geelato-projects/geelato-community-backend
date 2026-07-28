@@ -1,11 +1,13 @@
 package cn.geelato.web.platform.boot.fill;
 
-import cn.geelato.core.SessionCtx;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.meta.spi.EntitySaveFieldValueFillContext;
 import cn.geelato.core.mql.command.CommandType;
 import cn.geelato.core.mql.spi.MqlSaveFieldValueFillContext;
 import cn.geelato.orm.spi.FluentSaveFieldValueFillContext;
+import cn.geelato.security.SecurityContext;
+import cn.geelato.security.Tenant;
+import cn.geelato.security.User;
 import cn.geelato.utils.DateUtils;
 
 import java.text.SimpleDateFormat;
@@ -60,32 +62,29 @@ final class PlatformFieldValueFillSupport {
 
     private void fillMqlInsertDefaults(Map<String, Object> defaultEntityMap, Map<String, Object> values) {
         String now = nowDateTime();
+        User currentUser = SecurityContext.getCurrentUser();
+        Tenant currentTenant = SecurityContext.getCurrentTenant();
         if (defaultEntityMap.containsKey(FN_CREATE_AT)) {
             values.put(FN_CREATE_AT, now);
         }
         if (defaultEntityMap.containsKey(FN_CREATOR)) {
-            values.put(FN_CREATOR, SessionCtx.getUserId());
+            values.put(FN_CREATOR, getUserId(currentUser));
         }
         if (defaultEntityMap.containsKey(FN_CREATOR_NAME)) {
-            values.put(FN_CREATOR_NAME, SessionCtx.getUserName());
+            values.put(FN_CREATOR_NAME, getUserName(currentUser));
         }
         if (defaultEntityMap.containsKey(FN_TENANT_CODE)) {
-            values.put(FN_TENANT_CODE, SessionCtx.getCurrentTenantCode());
+            values.put(FN_TENANT_CODE, getTenantCode(currentTenant));
         }
-        if (defaultEntityMap.containsKey(FN_BU_ID)) {
-            values.put(FN_BU_ID, SessionCtx.getCurrentUser().getBuId());
-        }
-        if (defaultEntityMap.containsKey(FN_DEPT_ID)) {
-            values.put(FN_DEPT_ID, SessionCtx.getCurrentUser().getOrgId());
-        }
+        fillOrgDefaults(defaultEntityMap, values, currentUser);
         if (defaultEntityMap.containsKey(FN_UPDATE_AT)) {
             values.put(FN_UPDATE_AT, now);
         }
         if (defaultEntityMap.containsKey(FN_UPDATER)) {
-            values.put(FN_UPDATER, SessionCtx.getUserId());
+            values.put(FN_UPDATER, getUserId(currentUser));
         }
         if (defaultEntityMap.containsKey(FN_UPDATER_NAME)) {
-            values.put(FN_UPDATER_NAME, SessionCtx.getUserName());
+            values.put(FN_UPDATER_NAME, getUserName(currentUser));
         }
         if (defaultEntityMap.containsKey(FN_DELETE_AT)) {
             values.put(FN_DELETE_AT, DateUtils.DEFAULT_DELETE_AT);
@@ -94,32 +93,29 @@ final class PlatformFieldValueFillSupport {
 
     private void fillFluentInsertDefaults(Map<String, Object> defaultEntityMap, Map<String, Object> values) {
         String now = nowDateTime();
+        User currentUser = SecurityContext.getCurrentUser();
+        Tenant currentTenant = SecurityContext.getCurrentTenant();
         if (defaultEntityMap.containsKey(FN_CREATE_AT)) {
             values.put(FN_CREATE_AT, now);
         }
         if (defaultEntityMap.containsKey(FN_CREATOR)) {
-            values.put(FN_CREATOR, SessionCtx.getUserId());
+            values.put(FN_CREATOR, getUserId(currentUser));
         }
         if (defaultEntityMap.containsKey(FN_CREATOR_NAME)) {
-            values.put(FN_CREATOR_NAME, SessionCtx.getUserName());
+            values.put(FN_CREATOR_NAME, getUserName(currentUser));
         }
         if (defaultEntityMap.containsKey(FN_TENANT_CODE)) {
-            values.put(FN_TENANT_CODE, SessionCtx.getCurrentTenantCode());
+            values.put(FN_TENANT_CODE, getTenantCode(currentTenant));
         }
-        if (defaultEntityMap.containsKey(FN_BU_ID) && SessionCtx.getCurrentUser() != null) {
-            values.put(FN_BU_ID, SessionCtx.getCurrentUser().getBuId());
-        }
-        if (defaultEntityMap.containsKey(FN_DEPT_ID) && SessionCtx.getCurrentUser() != null) {
-            values.put(FN_DEPT_ID, SessionCtx.getCurrentUser().getOrgId());
-        }
+        fillOrgDefaults(defaultEntityMap, values, currentUser);
         if (defaultEntityMap.containsKey(FN_UPDATE_AT)) {
             values.put(FN_UPDATE_AT, now);
         }
         if (defaultEntityMap.containsKey(FN_UPDATER)) {
-            values.put(FN_UPDATER, SessionCtx.getUserId());
+            values.put(FN_UPDATER, getUserId(currentUser));
         }
         if (defaultEntityMap.containsKey(FN_UPDATER_NAME)) {
-            values.put(FN_UPDATER_NAME, SessionCtx.getUserName());
+            values.put(FN_UPDATER_NAME, getUserName(currentUser));
         }
         if (defaultEntityMap.containsKey(FN_DELETE_AT)) {
             values.put(FN_DELETE_AT, DateUtils.DEFAULT_DELETE_AT);
@@ -128,21 +124,17 @@ final class PlatformFieldValueFillSupport {
 
     private void fillEntityInsertDefaults(Map<String, Object> entity) {
         String now = nowDateTime();
+        User currentUser = SecurityContext.getCurrentUser();
         if (entity.containsKey(FN_CREATE_AT)) {
             entity.put(FN_CREATE_AT, now);
         }
         if (entity.containsKey(FN_CREATOR)) {
-            entity.put(FN_CREATOR, SessionCtx.getUserId());
+            entity.put(FN_CREATOR, getUserId(currentUser));
         }
         if (entity.containsKey(FN_CREATOR_NAME)) {
-            entity.put(FN_CREATOR_NAME, SessionCtx.getUserName());
+            entity.put(FN_CREATOR_NAME, getUserName(currentUser));
         }
-        if (entity.containsKey(FN_BU_ID)) {
-            entity.put(FN_BU_ID, SessionCtx.getCurrentUser().getBuId());
-        }
-        if (entity.containsKey(FN_DEPT_ID)) {
-            entity.put(FN_DEPT_ID, SessionCtx.getCurrentUser().getOrgId());
-        }
+        fillOrgDefaults(entity, entity, currentUser);
         if (entity.containsKey(FN_DELETE_AT)) {
             entity.put(FN_DELETE_AT, DateUtils.DEFAULT_DELETE_AT);
         }
@@ -150,15 +142,40 @@ final class PlatformFieldValueFillSupport {
     }
 
     private void fillUpdateDefaults(Map<String, Object> defaultEntityMap, Map<String, Object> values) {
+        User currentUser = SecurityContext.getCurrentUser();
         if (defaultEntityMap.containsKey(FN_UPDATE_AT)) {
             values.put(FN_UPDATE_AT, nowDateTime());
         }
         if (defaultEntityMap.containsKey(FN_UPDATER)) {
-            values.put(FN_UPDATER, SessionCtx.getUserId());
+            values.put(FN_UPDATER, getUserId(currentUser));
         }
         if (defaultEntityMap.containsKey(FN_UPDATER_NAME)) {
-            values.put(FN_UPDATER_NAME, SessionCtx.getUserName());
+            values.put(FN_UPDATER_NAME, getUserName(currentUser));
         }
+    }
+
+    private void fillOrgDefaults(Map<String, Object> defaultEntityMap, Map<String, Object> values, User currentUser) {
+        if (currentUser == null) {
+            return;
+        }
+        if (defaultEntityMap.containsKey(FN_BU_ID)) {
+            values.put(FN_BU_ID, currentUser.getBuId());
+        }
+        if (defaultEntityMap.containsKey(FN_DEPT_ID)) {
+            values.put(FN_DEPT_ID, currentUser.getOrgId());
+        }
+    }
+
+    private String getUserId(User currentUser) {
+        return currentUser == null ? null : currentUser.getUserId();
+    }
+
+    private String getUserName(User currentUser) {
+        return currentUser == null ? null : currentUser.getUserName();
+    }
+
+    private String getTenantCode(Tenant currentTenant) {
+        return currentTenant == null ? null : currentTenant.getCode();
     }
 
     private String nowDateTime() {

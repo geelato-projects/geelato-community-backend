@@ -1,5 +1,7 @@
 package cn.geelato.ide.service;
 
+import lombok.Getter;
+
 /**
  * IDE 脚本乐观锁冲突异常。
  * <p>
@@ -7,6 +9,7 @@ package cn.geelato.ide.service;
  *
  * @author geelato
  */
+@Getter
 public class IdeOptimisticLockException extends RuntimeException {
 
     private final Integer serverVersion;
@@ -19,11 +22,4 @@ public class IdeOptimisticLockException extends RuntimeException {
         this.clientVersion = clientVersion;
     }
 
-    public Integer getServerVersion() {
-        return serverVersion;
-    }
-
-    public Integer getClientVersion() {
-        return clientVersion;
-    }
 }

@@ -19,7 +19,7 @@
         <!-- full runtime + designer capability entry -->
         <dependency>
             <groupId>cn.geelato</groupId>
-            <artifactId>geelato-web-platform</artifactId>
+            <artifactId>geelato-web-designer</artifactId>
         </dependency>
 
         <!-- MQL 测试套件与在线调试工具链（Playground 端点 + HTML 页面 + 场景集）。
@@ -112,30 +112,6 @@
             <artifactId>geelato-actuator</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>cn.geelato</groupId>-->
-<!--            <artifactId>geelato-message</artifactId>-->
-<!--            <version>0.0.1-SNAPSHOT</version>-->
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.springframework.boot</groupId>-->
-<!--                    <artifactId>spring-boot-starter-mail</artifactId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.eclipse.angus</groupId>-->
-<!--                    <artifactId>jakarta.mail</artifactId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.eclipse.angus</groupId>-->
-<!--                    <artifactId>angus-activation</artifactId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <groupId>jakarta.activation</groupId>-->
-<!--                    <artifactId>jakarta.activation-api</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
-<!--        </dependency>-->
-
         <!-- sample dev and observability support -->
         <dependency>
             <groupId>org.springdoc</groupId>

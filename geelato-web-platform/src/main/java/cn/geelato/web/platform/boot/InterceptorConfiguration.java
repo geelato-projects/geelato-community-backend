@@ -41,12 +41,16 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     @Autowired
     private cn.geelato.web.common.interceptor.SecurityInterceptorProperties securityInterceptorProperties;
 
+    @Autowired(required = false)
+    private cn.geelato.web.common.security.delegate.DelegateSessionStore delegateSessionStore;
+
     @Override
     public void addInterceptors(@NotNull InterceptorRegistry registry) {
         DefaultSecurityInterceptor securityInterceptor = new DefaultSecurityInterceptor(oAuthConfigurationProperties, orgProvider, userProvider);
         securityInterceptor.setOnlineUserTracker(onlineUserTracker);
         securityInterceptor.setTrafficColoringProperties(trafficColoringProperties);
         securityInterceptor.setTrafficTagStrategy(trafficTagStrategy);
+        securityInterceptor.setDelegateSessionStore(delegateSessionStore);
 
         // 排除鉴权的路径：内置默认（SecurityInterceptorProperties.initDefaultExcludes）
         // + 用户配置追加（geelato.security.interceptor.extra-excludes[*]）

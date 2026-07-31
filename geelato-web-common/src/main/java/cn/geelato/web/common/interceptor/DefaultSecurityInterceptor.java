@@ -9,6 +9,8 @@ import cn.geelato.logging.LogContext;
 import cn.geelato.web.common.online.OnlineUserTracker;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
+import cn.geelato.web.common.security.delegate.DelegateSession;
+import cn.geelato.web.common.security.delegate.DelegateSessionStore;
 import cn.geelato.web.common.shiro.OAuth2Token;
 import cn.geelato.web.common.shiro.WeixinUnionIdToken;
 import cn.geelato.web.common.shiro.WeixinWorkUserIdToken;
@@ -57,6 +59,8 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private TrafficColoringProperties trafficColoringProperties;
     private TrafficTagResolver trafficTagResolver;
     private TrafficTagStrategy trafficTagStrategy;
+    @Setter
+    private DelegateSessionStore delegateSessionStore;
 
     public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();
 
@@ -161,7 +165,67 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             log.warn("unauthorized request, method:{}, url:{}", request.getMethod(), buildRequestUrl(request));
             throw new UnauthorizedException("未授权访问");
         }
+        // 认证成功后统一应用委托代办态（统一支持 JWT / OAuth2 / 扩展键等多种 token 类型）
+        applyDelegation(token);
         return true;
+    }
+
+    /**
+     * 应用委托代办态：若当前凭证存在委托代办会话，则用目标身份（被委托人代为操作的对象，
+     * 如新员工）重新加载 SecurityContext，并注入实际操作人（被委托人/代理人，如导师）到
+     * {@code User.delegateUserId/delegateUserName} 供审计使用。
+     * <p>
+     * token 全程不变，对业务模块透明；JWT 与 OAuth2 走同一条逻辑。
+     * <p>
+     * 注意：委托会话写入/移除时已通过 {@link #invalidateTokenContextCache(String)} 清除旧上下文缓存，
+     * 避免 tryRestoreFromCache 还原成原身份。此处命中后再 cacheUserContext，使后续请求命中缓存。
+     */
+    private void applyDelegation(String rawToken) {
+        if (delegateSessionStore == null || rawToken == null || rawToken.isEmpty()) {
+            return;
+        }
+        DelegateSession session = delegateSessionStore.get(rawToken);
+        if (session == null) {
+            return;
+        }
+        try {
+            User actUser = EnvManager.singleInstance().InitCurrentUser(session.getTargetLoginName(), session.getTenantCode());
+            if (actUser == null) {
+                log.warn("applyDelegation: target user not found, loginName:{}, fallback to origin identity", session.getTargetLoginName());
+                return;
+            }
+            actUser.setupOrgInfo(orgProvider);
+            // 注入实际操作人（被委托人/代理人），与 platform_user_r_delegate.delegate_user_id 同义
+            actUser.setDelegateUserId(session.getOriginUserId());
+            actUser.setDelegateUserName(session.getOriginUserName() != null ? session.getOriginUserName() : session.getOriginLoginName());
+            SecurityContext.setCurrentUser(actUser);
+            SecurityContext.setCurrentTenant(new Tenant(session.getTenantCode()));
+            // 将委托态上下文写入缓存，后续请求走 tryRestoreFromCache 直接还原
+            cacheUserContext(rawToken, actUser, SecurityContext.getCurrentPassword(), buildShiroToken(actUser));
+        } catch (Exception e) {
+            log.warn("applyDelegation failed, fallback to origin identity, target:{}, err:{}",
+                    session.getTargetLoginName(), e.getMessage());
+        }
+    }
+
+    private org.apache.shiro.authc.AuthenticationToken buildShiroToken(User user) {
+        // 复用目标身份重建 Shiro 会话；密码沿用当前上下文（仅用于 Shiro 校验链路，不改密码体系）
+        String pwd = SecurityContext.getCurrentPassword();
+        if (pwd == null || pwd.isEmpty()) {
+            pwd = anonymousFixedPassword;
+        }
+        return new org.apache.shiro.authc.UsernamePasswordToken(user.getLoginName(), pwd);
+    }
+
+    /**
+     * 失效指定凭证 key 的上下文缓存。供委托代办切换/退出接口调用，
+     * 确保下一次请求重新认证并应用最新的委托态（而非被旧缓存还原成原身份）。
+     */
+    public static void invalidateTokenContextCache(String rawToken) {
+        if (rawToken == null || rawToken.isEmpty()) {
+            return;
+        }
+        tokenContextCache.remove(rawToken);
     }
 
     private String buildRequestUrl(HttpServletRequest request) {
@@ -562,7 +626,13 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
 
     private User performOAuth2Login(cn.geelato.meta.User user, String accessToken, String rawToken) {
         String loginName = user.getLoginName();
-        User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, "geelato");
+        // 优先使用认证中心 userinfo 下发的 tenantCode（meta.User 继承字段，OAuth2Helper.parseUserInfoData 已保留）；
+        // 为空时降级为默认租户（环境变量 GEELATO_DEFAULT_TENANT 覆盖，默认 geelato，向后兼容）。
+        String tenantCode = user.getTenantCode();
+        if (tenantCode == null || tenantCode.trim().isEmpty()) {
+            tenantCode = GlobalContext.getDefaultTenantCode();
+        }
+        User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
         currentUser.setupOrgInfo(orgProvider);
         SecurityContext.setCurrentUser(currentUser);
         SecurityContext.setCurrentTenant(new Tenant(user.getTenantCode()));

@@ -48,6 +48,12 @@ public class LoginResult {
     private List<LoginRoleInfo> roles;
     private List<Tenant> tenants;
     private List<UserOrg> orgs;
+    /**
+     * 委托代办（老带新）：当前是否处于代办态。非空且 delegateUserId 非空表示正以委托人（新员工）身份代办操作，
+     * 实际操作人为 delegateUserId（导师）。供前端右上角显示代办态指示器。
+     */
+    private String delegateUserId;
+    private String delegateUserName;
 
     /**
      * 对象转换

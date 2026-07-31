@@ -35,6 +35,9 @@ public class CurrentUserProfileService {
         LoginResult loginResult = LoginResult.formatLoginResult(user);
         loginResult.setToken(token);
         loginResult.setRoles(null);
+        // 委托代办态：securityUser 已由 applyDelegation 注入 delegateUserId（导师），回填供前端展示
+        loginResult.setDelegateUserId(securityUser.getDelegateUserId());
+        loginResult.setDelegateUserName(securityUser.getDelegateUserName());
 
         List<UserOrg> userOrgList = userIdentityQueryService.queryOrgListByUserId(user.getId());
         if (!userOrgList.isEmpty()) {

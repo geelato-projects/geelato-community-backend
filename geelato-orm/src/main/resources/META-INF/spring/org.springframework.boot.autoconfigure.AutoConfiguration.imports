@@ -1,2 +1,3 @@
 cn.geelato.orm.config.OrmAutoConfiguration
 cn.geelato.orm.config.OrmDynamicDataSourceAutoConfiguration
+cn.geelato.orm.config.OrmEventAutoConfiguration

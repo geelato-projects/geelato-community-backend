@@ -34,6 +34,12 @@ public class GlobalContext {
      */
     protected final static String __DocBaseUrl__ = "https://docs.geelato.cn";
     protected final static Boolean __DocUrlEnabled__ = true;
+    /**
+     * 默认租户编码：当登录链路无法确定用户租户（如 OAuth2 userinfo 未下发 tenantCode）时使用。
+     * 可由环境变量 GEELATO_DEFAULT_TENANT 覆盖；默认 geelato，向后兼容历史硬编码。
+     */
+    protected final static String __DefaultTenantCode__ = "geelato";
+    protected final static String __ENV_DEFAULT_TENANT__ = "GEELATO_DEFAULT_TENANT";
     public static String getEnvironment() {
         return __Environment__;
     }
@@ -101,6 +107,13 @@ public class GlobalContext {
      */
     public static Boolean getDocUrlEnabled() {
         return __DocUrlEnabled__;
+    }
+
+    /**
+     * 默认租户编码（OAuth2 等场景下用户租户未知时降级使用）。
+     */
+    public static String getDefaultTenantCode() {
+        return getEnvOrDefault(__ENV_DEFAULT_TENANT__, __DefaultTenantCode__);
     }
 
     private static String getEnvOrDefault(String envName, String defaultValue) {

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户委托关系服务
@@ -30,6 +31,12 @@ import java.util.List;
 public class UserDelegateMapService extends BaseService {
     @Autowired
     private UserService userService;
+
+    /**
+     * 老带新代办业务范围标识：新员工把工作委托给导师，导师可切换到新员工身份代为操作。
+     * 与 periodic_report 等并列，作为 platform_user_r_delegate.scope 的一个取值。
+     */
+    public static final String SCOPE_MENTOR_ASSIST = "mentor_assist";
 
     /**
      * 批量创建委托关系
@@ -96,6 +103,58 @@ public class UserDelegateMapService extends BaseService {
         filter.addFilter("userId", userId);
         filter.addFilter("delegateUserId", delegateUserId);
         return this.queryModel(UserDelegateMap.class, filter);
+    }
+
+    /**
+     * 查询某代理人（导师）在「老带新代办」范围下，被委托代办的所有委托人（新员工）。
+     * <p>
+     * 用于导师在右上角切换身份时，下拉展示可代办的新员工列表（一个老员工可带多个新员工）。
+     * 条件：scope=mentor_assist、enable_status=1、未逻辑删除。按委托人去重（同一对关系多 scope 行只计一次）。
+     *
+     * @param delegateUserId 代理人（导师）用户ID
+     * @return 委托关系列表（含委托人ID/姓名/英文名等冗余字段）
+     */
+    public List<UserDelegateMap> queryDelegators(String delegateUserId) {
+        if (Strings.isBlank(delegateUserId)) {
+            return new ArrayList<>();
+        }
+        FilterGroup filter = new FilterGroup();
+        filter.addFilter("delegateUserId", delegateUserId);
+        filter.addFilter("scope", SCOPE_MENTOR_ASSIST);
+        filter.addFilter("enableStatus", "1");
+        filter.addFilter("delStatus", "0");
+        List<UserDelegateMap> list = this.queryModel(UserDelegateMap.class, filter);
+        if (list == null || list.isEmpty()) {
+            return new ArrayList<>();
+        }
+        // 按 userId 去重：同一对(新员工->导师)在 mentor_assist 下理论上只一行，去重以防异常数据
+        Map<String, UserDelegateMap> dedup = new java.util.LinkedHashMap<>();
+        for (UserDelegateMap m : list) {
+            if (m != null && m.getUserId() != null) {
+                dedup.putIfAbsent(m.getUserId(), m);
+            }
+        }
+        return new ArrayList<>(dedup.values());
+    }
+
+    /**
+     * 判断代理人（导师）是否有权代办指定委托人（新员工）。
+     * <p>
+     * 用于 delegateAs 接口鉴权：必须存在 (user_id=userId, delegate_user_id=delegateUserId,
+     * scope=mentor_assist, enable_status=1, 未删除) 的记录，否则拒绝切换，防越权。
+     */
+    public boolean canAssist(String userId, String delegateUserId) {
+        if (Strings.isBlank(userId) || Strings.isBlank(delegateUserId)) {
+            return false;
+        }
+        FilterGroup filter = new FilterGroup();
+        filter.addFilter("userId", userId);
+        filter.addFilter("delegateUserId", delegateUserId);
+        filter.addFilter("scope", SCOPE_MENTOR_ASSIST);
+        filter.addFilter("enableStatus", "1");
+        filter.addFilter("delStatus", "0");
+        List<UserDelegateMap> list = this.queryModel(UserDelegateMap.class, filter);
+        return list != null && !list.isEmpty();
     }
 
     /**

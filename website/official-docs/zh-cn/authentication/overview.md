@@ -20,7 +20,7 @@ sidebar_label: 统一认证中心
 | 维度 | 方式一：轻量化 lite-login 集成 | 方式二：标准 OAuth2 集成 |
 | --- | --- | --- |
 | **核心机制** | 认证中心提供现成的前端登录门面（`lite-login`），通过跨域 `postMessage` 机制向业务系统前端下发 token。 | 走标准的 OAuth2 授权码模式（Authorization Code Flow），通过后端服务器间的重定向交换 token。 |
-| **前端交互** | 业务系统以 iframe 嵌入或新开窗口拉起 `lite-login` 页面，**无需**业务系统自己写登录 UI，用户体验无缝。 | 浏览器发生**全页重定向**，跳到认证中心的统一登录页，登录后再重定向回业务系统。 |
+| **前端交互** | 业务系统以 iframe 嵌入或新开窗口拉起 `lite-login` 页面，**无需**业务系统自己写登录 UI，用户体验无缝；嵌入态下支持由宿主页面统一控制显示语言。 | 浏览器发生**全页重定向**，跳到认证中心的统一登录页，登录后再重定向回业务系统。 |
 | **对接复杂度** | **极低**。纯前端对接为主，业务系统后端只需增加拦截器来验证拿到的 Bearer token 即可。 | **中等**。需要业务系统后端支持完整的 OAuth2 客户端协议栈能力。 |
 | **适用场景** | 1. 现代的前后端分离架构 (Vue/React 等)<br/>2. 希望在业务系统内部直接弹出登录框（不离开当前页面）<br/>3. 纯前端 SPA 应用 | 1. **拥有独立后端的任意应用**<br/>2. 强安全要求，token 绝对不能暴露给浏览器前端<br/>3. 现有的外部系统已经内置了标准 OAuth2 Client 模块 |
 | **如何接入** | 👉 [阅读 lite-login 业务系统接入指南](lite-login-integration.md) | 👉 [阅读标准 OAuth2 业务系统接入指南](oauth2-integration.md) |
@@ -57,6 +57,7 @@ sidebar_label: 统一认证中心
 - 承载登录交互
 - 支持 iframe 或窗口方式嵌入第三方应用
 - 通过 `postMessage` 把登录结果回传给第三方应用前端
+- 在 `display=embedded` 场景下支持由父页面统一控制语言切换
 
 ## 适用范围
 
@@ -132,5 +133,6 @@ https://<auth-host>/lite-login
 
 1. [lite-login 业务系统接入指南](lite-login-integration.md)
 2. [标准 OAuth2 业务系统接入指南](oauth2-integration.md)
+   - 如果你采用 iframe 嵌入 `lite-login`，并希望语言跟随宿主页面，请重点查看其中的“嵌入态语言控制”章节
 3. 了解框架如何消费 Token，请看 [平台能力：认证鉴权](security-authentication.md)
 4. 了解安全上下文，请看 [平台能力：SecurityContext 生命周期](../runtime/security-context-lifecycle.md)

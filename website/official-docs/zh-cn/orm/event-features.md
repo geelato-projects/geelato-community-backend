@@ -13,6 +13,8 @@ sidebar_label: ORM 事件特性
 
 它不是独立的消息总线，也不是 Spring ApplicationEvent 的简单包装，而是 ORM 执行链路内部的轻量事件钩子。
 
+事件机制围绕 `Dao` 的写操作（save/delete/batchSave/multiSave/multiDelete）以及查询操作（query）展开，提供「前置同步、后置异步、事务感知、可控线程池、优先级」等能力，覆盖审计、校验、缓存、旁路同步、读拦截等场景。
+
 ## 适用场景
 
 适合通过事件机制处理的需求：
@@ -21,6 +23,8 @@ sidebar_label: ORM 事件特性
 - 保存后写审计日志、刷新缓存、做旁路同步。
 - 删除前阻止误删。
 - 删除后做清理动作。
+- 查询前后做读审计、慢查询统计、缓存预热（查询事件）。
+- 只在事务真正提交后才执行的副作用（事务感知 after 回调）。
 
 以下需求不适合使用事件机制，应改用对应能力：
 
@@ -32,235 +36,238 @@ sidebar_label: ORM 事件特性
 
 ORM 事件机制的目标，是把“通用 CRUD 执行”和“业务侧附加动作”解耦。
 
-它适合承载这类需求：
-
-- 保存前补充或校验额外字段
-- 删除前做约束校验或软拦截
-- 保存后做镜像表同步
-- 保存后写审计日志、触发通知、做缓存刷新
-- 删除后做下游清理、旁路索引维护、异步补偿
-
 这样开发者不需要每次都侵入 `Dao` 或复制整套 CRUD 流程，只需要挂接事件监听器即可。
 
 ## 当前有哪些事件
 
-当前 ORM 事件分为两大类：
+ORM 事件分为三大类，每类都分成 `Before`/`After` 两个时机：
 
-- 保存事件
-- 删除事件
+| 事件类型 | 前置监听器 | 后置监听器 | 说明 |
+|---|---|---|---|
+| 保存 | `BeforeSaveEventListener` | `AfterSaveEventListener` | insert / update |
+| 删除 | `BeforeDeleteEventListener` | `AfterDeleteEventListener` | delete |
+| 查询 | `BeforeQueryEventListener` | `AfterQueryEventListener` | query（读拦截） |
 
-并且每类都分成两个时机：
+此外，保存和删除还提供**事务感知**后置监听器：
 
-- `Before`
-- `After`
+- `TransactionalAfterSaveEventListener`：仅在事务提交/回滚后触发
+- `TransactionalAfterDeleteEventListener`：同上
 
-因此一共可以理解为四种扩展点：
-
-- `BeforeSaveEventListener`
-- `AfterSaveEventListener`
-- `BeforeDeleteEventListener`
-- `AfterDeleteEventListener`
+监听器还可通过**函数式接口**用 lambda 注册（详见下文“函数式 callback”）。
 
 ## 先决定该用哪一种
 
-可以按下面的判断来选：
+按下面判断选择监听器：
 
 - 保存前强校验、强约束、强拦截：`BeforeSaveEventListener`
 - 保存后异步通知、审计、缓存刷新：`AfterSaveEventListener`
+- **必须保证只在事务提交后才执行的副作用**（如 ES 同步、避免读到回滚数据）：`TransactionalAfterSaveEventListener`
 - 删除前防误删、引用校验：`BeforeDeleteEventListener`
 - 删除后清缓存、删旁路数据、记审计：`AfterDeleteEventListener`
+- 查询前后读审计、慢查询统计、缓存预热：`QueryEventListener`（`BeforeQueryEventListener` / `AfterQueryEventListener`）
 
-最重要的区分只有两条：
+最重要的区分：
 
-- `Before` 同步执行，异常会直接阻断主流程
-- `After` 异步执行，异常只记日志，不回滚主流程
+- `Before` **同步**执行，异常会直接阻断主流程（异常是否阻断由监听器实现者决定，框架透传异常、不做全局开关）
+- `After` **异步**执行，异常只记日志，不影响主流程
+- `Transactional After` 在**事务提交/回滚后**触发，解决普通 `After`「异步、事务外、可能读到回滚数据」的问题
 
 ## 触发时机
 
-事件是在 `Dao` 的实际保存、批量保存、多保存、删除、多删除链路中触发的。
+事件在 `Dao` 的写操作与查询链路中触发：
 
-也就是说，不管你是通过：
+- `Dao.save(...)` / `Dao.batchSave(...)` / `Dao.multiSave(...)`
+- `Dao.delete(...)` / `Dao.multiDelete(...)`
+- `Dao.queryList(...)` / `Dao.queryForMapList(...)`（查询事件）
 
-- `Dao.save(...)`
-- `Dao.batchSave(...)`
-- `Dao.multiSave(...)`
-- `Dao.delete(...)`
-- `Dao.multiDelete(...)`
-
-还是通过更上层的 ORM Fluent DSL 最终落到这些执行路径，只要进入这些 ORM 写操作入口，就会命中事件机制。
+不管是直接调用 `Dao`，还是通过 ORM Fluent DSL（`MetaFactory.insert/update/delete/query`）最终落到这些执行路径，只要进入这些 ORM 入口，就会命中事件机制。
 
 ## 执行模型
 
-### 前置事件
+### 前置事件（Before）
 
-`Before` 事件是同步执行的。
-
-这意味着：
+`Before` 事件**同步**执行：
 
 - 在真正执行 SQL 之前触发
 - 可以修改上下文中的 `BoundSql`
 - 可以做校验
 - 可以直接抛异常阻断主流程
 
-如果某个前置监听器抛出异常，当前保存或删除流程会直接失败。
+如果某个前置监听器抛出异常，当前保存/删除/查询流程会直接失败。
 
-因此 `Before` 事件适合做：
+**异常契约**：框架对 `Before` 监听器抛出的异常采取**透传**策略（重新抛出给调用方），**不提供全局开关**。是否阻断业务由监听器实现者自行决定：
 
-- 参数规范化
-- SQL 调整
-- 权限或状态校验
-- 前置拦截
+- 校验类监听器（需要拦截非法写入）：直接抛异常，由异常阻断主流程。
+- 旁路类监听器（审计、埋点，不应阻断业务）：在方法内部 `try/catch` 自行吞掉异常。
 
-### 后置事件
+> 提示：`Before` 监听器如果抛出非数据访问异常，`Dao.multiSave/multiDelete` 会确保事务回滚（不会出现事务悬挂）。
 
-`After` 事件是异步执行的。
+### 后置事件（After）
 
-当前实现通过固定线程池调度：
+`After` 事件**异步**执行，通过线程池调度：
 
 - 保存事件线程名前缀：`save-event-*`
 - 删除事件线程名前缀：`delete-event-*`
+- 查询事件线程名前缀：`query-event-*`
 
-默认线程池大小是：
+线程池是**可控的**（默认：核心线程 4 + 有界队列 1000 + `CallerRunsPolicy` 背压策略），可通过配置调整（详见下文“线程池配置”）。
 
-- `4`
-
-因此 `After` 事件的语义更接近：
+`After` 的语义：
 
 - 主 SQL 已执行完成
 - 监听器被异步调度
-- 监听器异常只记录日志，不反向打断主流程
+- 监听器异常只记录日志，不影响主流程
 
-这类事件更适合做：
+适合做：审计日志、镜像表同步、缓存刷新、非关键链路通知、异步旁路处理。
 
-- 审计日志
-- 镜像表同步
-- 缓存刷新
-- 非关键链路通知
-- 异步旁路处理
+### 事务感知后置事件（Transactional After）
+
+普通 `After` 是异步、在事务提交前调度，监听器无法保证读到已提交数据（事务可能尚未 commit 或已回滚）。
+
+实现 `TransactionalAfterSaveEventListener` / `TransactionalAfterDeleteEventListener` 的监听器：
+
+- `afterCommit(context)`：仅在事务**真正提交后**触发；无事务时立即触发（视为已提交）
+- `afterRollback(context)`：事务**回滚后**触发
+
+框架在 `fireAfter` 时检测监听器是否实现了事务感知接口，若是则把回调登记到事件上下文，由 `EventTransactionSupport` 结合 Spring `TransactionSynchronizationManager` 在提交/回滚点触发。
+
+适合做：ES 同步、强依赖提交数据的旁路处理（消除「读到回滚脏数据」风险）。
+
+> 注意：事务感知 after 回调在 `Dao.save/delete/multiSave/multiDelete` 路径完整生效。使用时确保写操作经由 `Dao` 执行。
 
 ## 事件上下文里有什么
 
 ### 保存事件上下文 `SaveEventContext`
 
-保存事件上下文当前包含：
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `dao` | `Dao` | 允许监听器复用当前 ORM 执行能力 |
+| `sessionCtx` | `SessionCtx` | 保存链路共享的会话级上下文 |
+| `entity` | `IdEntity` | 当入口来自实体保存时，可直接拿到实体对象 |
+| `boundSql` | `BoundSql` | 可看到或修改本次最终执行的 SQL 与参数 |
+| `command` | `SaveCommand` | 实体名、值映射等 ORM 保存命令信息 |
+| `resultValueMap` | `Map` | 主保存完成后的结果值映射 |
+| `eventId` | `String` | 本次事件链路唯一标识 |
+| `startTime` | `long` | 事件开始时间 |
+| `success` | `boolean` | SQL 是否执行成功（after 触发前置 true，失败为 false） |
+| `exception` | `Throwable` | 失败时的异常 |
+| `affectedRows` | `int` | 受影响行数 |
 
-- `Dao dao`
-- `SessionCtx sessionCtx`
-- `IdEntity entity`
-- `BoundSql boundSql`
-- `SaveCommand command`
-- `Map<String, Object> resultValueMap`
-- `String eventId`
-- `long startTime`
+便捷判断（避免解析 SQL）：
 
-它的意义分别是：
+- `getOperType()`：操作类型（`CommandType.Insert` / `CommandType.Update`）
+- `isInsert()` / `isUpdate()`：是否新增/更新
 
-- `dao`：允许监听器继续复用当前 ORM 执行能力
-- `sessionCtx`：保存链路共享的会话级上下文
-- `entity`：当入口来自实体保存时，可直接拿到实体对象
-- `boundSql`：可以看到或修改本次最终执行的 SQL 与参数
-- `command`：可读取实体名、值映射等 ORM 保存命令信息
-- `resultValueMap`：主保存完成后的结果值映射
-- `eventId`：本次事件链路唯一标识，方便日志关联
-- `startTime`：事件开始时间，可用于统计耗时
+事务感知回调注册入口：
+
+- `onCommit(Runnable)` / `onRollback(Runnable)`
 
 ### 删除事件上下文 `DeleteEventContext`
 
-删除事件上下文当前包含：
+| 字段 | 说明 |
+|---|---|
+| `dao` / `sessionCtx` / `boundSql` / `command` / `affectedRows` / `eventId` / `startTime` | 同保存上下文 |
+| `success` / `exception` | 执行结果（同保存上下文） |
 
-- `Dao dao`
-- `SessionCtx sessionCtx`
-- `BoundSql boundSql`
-- `DeleteCommand command`
-- `int affectedRows`
-- `String eventId`
-- `long startTime`
+事务感知回调入口：`onCommit(Runnable)` / `onRollback(Runnable)`。
 
-它主要用于：
+### 查询事件上下文 `QueryEventContext`
 
-- 查看或改写删除 SQL
-- 获取删除命令的实体信息
-- 在删除后读取受影响行数
-- 在日志或补偿流程里跟踪本次删除事件
+| 字段 | 说明 |
+|---|---|
+| `dao` / `sessionCtx` / `boundSql` / `command` | ORM 执行能力与会话信息 |
+| `entityType` | 查询目标实体类型（原生 SQL 查询时可能为 null） |
+| `success` / `exception` | 查询是否成功 |
+| `rowCount` | 返回行数（after 阶段填充，便于慢查询/大结果集统计） |
+| `eventId` / `startTime` | 链路标识与开始时间 |
 
 ## 监听器接口怎么理解
 
-### `SaveEventListener`
+`SaveEventListener` / `DeleteEventListener` / `QueryEventListener` 定义：
 
-保存监听器基础接口定义了：
+- `beforeXxx(context)` / `afterXxx(context)`
+- `enabled(context)`：配置级粗开关，应廉价（只读 properties/常量），判断监听器是否全局启用
+- `supports(context)`：单次事件级细匹配，可查元数据/解析 SQL，判断是否处理本次特定事件
+- `getOrder()`：优先级，值小先执行（默认 0）
 
-- `beforeSave(SaveEventContext context)`
-- `afterSave(SaveEventContext context)`
-- `supports(...)`
-- `enabled(...)`
+**需要特别注意**：
 
-需要特别注意：
+- `enabled(...)` 与 `supports(...)` 默认返回 `false`
+- 二者均须为 `true` 才触发回调
+- 不显式覆写这两个方法，监听器即使注册了也不会生效
 
-- `supports(...)` 默认返回 `false`
-- `enabled(...)` 默认返回 `false`
+`enabled` 与 `supports` 的语义约定：
 
-这意味着如果开发者不显式覆写这两个方法，监听器即使注册了也不会实际生效。
-
-### `DeleteEventListener`
-
-删除监听器基础接口定义了：
-
-- `beforeDelete(DeleteEventContext context)`
-- `afterDelete(DeleteEventContext context)`
-- `supports(...)`
-- `enabled(...)`
-
-同样地：
-
-- 默认不会自动启用
-- 必须显式声明自己“支持当前上下文”且“当前启用”
+- `enabled`：粗粒度，判配置（如 `properties.isEnabled()`、常量开关），每次触发都求值但应廉价
+- `supports`：细粒度，判单次事件（如按实体名/表名过滤），可查元数据
 
 ## 监听器如何注册
 
-当前不是通过 Spring 自动发现，而是通过静态管理器注册。
+当前通过静态管理器注册（全局、进程内、以 JVM 为边界），推荐在 Spring 配置类集中注册：
 
-保存事件使用：
+保存事件：`SaveEventManager.registerBefore(...)` / `registerAfter(...)` / `registerBeforeIfAbsent(...)` / `registerAfterIfAbsent(...)`
 
-- `SaveEventManager.registerBefore(...)`
-- `SaveEventManager.registerAfter(...)`
-- `SaveEventManager.registerBeforeIfAbsent(...)`
-- `SaveEventManager.registerAfterIfAbsent(...)`
+删除事件：`DeleteEventManager.registerBefore(...)` / `registerAfter(...)` / `registerBeforeIfAbsent(...)` / `registerAfterIfAbsent(...)`
 
-删除事件使用：
+查询事件：`QueryEventManager.registerBefore(...)` / `registerAfter(...)` / `registerBeforeIfAbsent(...)` / `registerAfterIfAbsent(...)`
 
-- `DeleteEventManager.registerBefore(...)`
-- `DeleteEventManager.registerAfter(...)`
-- `DeleteEventManager.registerBeforeIfAbsent(...)`
-- `DeleteEventManager.registerAfterIfAbsent(...)`
+注销：`unregisterBefore(...)` / `unregisterAfter(...)`（推荐在 `@PreDestroy` 调用，防热部署/上下文刷新累积泄漏）。
 
-同时也支持：
+注册按 `getOrder()` 升序插入，值小先执行。
 
-- 注销监听器
-- 清空监听器
-- 替换执行器 `setExecutor(...)`
+### 函数式 callback（推荐用于轻量场景）
 
-这说明当前事件机制是：
+为避免实现空标记接口的样板代码，提供函数式 callback 接口，可用 lambda 注册：
 
-- 全局注册
-- 进程内生效
-- 以 JVM 为边界的监听器模型
+```java
+import cn.geelato.core.orm.event.SaveEventManager;
+
+// 等价于实现 BeforeSaveEventListener，但无需写空的 afterSave/enabled/supports
+SaveEventManager.registerBeforeCallback((ctx) -> {
+    // 保存前逻辑
+});
+// 可指定优先级
+SaveEventManager.registerBeforeCallback((ctx) -> { /* ... */ }, 10);
+```
+
+可用的 callback 接口：`BeforeSaveCallback` / `AfterSaveCallback` / `BeforeDeleteCallback` / `AfterDeleteCallback`（均在 `cn.geelato.core.orm.event.callback` 包）。
+
+注册入口：`SaveEventManager.registerBeforeCallback(...)` / `registerAfterCallback(...)`，`DeleteEventManager` 同名方法。
+
+> 函数式 callback 与传统监听器接口并存，不互相替代；新代码轻量场景推荐 callback。
+
+## 线程池配置
+
+后置事件异步线程池由 `geelato-orm` 的 `OrmEventAutoConfiguration` 自动装配，可通过配置调整：
+
+```properties
+# 关闭事件线程池自动装配（回退到管理器默认池）
+geelato.orm.event.enabled=true
+# 保存事件线程池
+geelato.orm.event.save.pool-size=4
+geelato.orm.event.save.queue-capacity=1000
+# 删除事件线程池
+geelato.orm.event.delete.pool-size=4
+geelato.orm.event.delete.queue-capacity=1000
+```
+
+特性：
+
+- 有界队列 + `CallerRunsPolicy`（队列满时由提交线程执行，背压、不丢任务、不 OOM）
+- 守护线程，容器销毁时优雅关闭（`@PreDestroy` 调用 `shutdown`）
+- 也可通过 `SaveEventManager.setExecutor(...)` / `DeleteEventManager.setExecutor(...)` 程序化替换（替换前会优雅关闭旧池）
 
 ## 最短接入步骤
 
-如果你只是想快速把一个监听器跑起来，可以直接照下面 4 步做。
-
 ### 第 1 步：选一个扩展点
-
-先决定你的逻辑应该挂在保存前、保存后、删除前还是删除后。
-
-经验建议：
 
 - 会影响主写入正确性的逻辑，优先放 `Before`
 - 只是旁路增强的逻辑，优先放 `After`
+- 必须等事务提交后才执行的逻辑，用 `Transactional After`
 
 ### 第 2 步：实现监听器
 
-下面是一个“保存前校验客户编码”的最小示例：
+“保存前校验客户编码”的最小示例：
 
 ```java
 public class CustomerBeforeSaveListener implements BeforeSaveEventListener {
@@ -290,49 +297,35 @@ public class CustomerBeforeSaveListener implements BeforeSaveEventListener {
 }
 ```
 
-这里有两个非常容易漏掉的点：
-
-- `supports(...)` 默认是 `false`
-- `enabled(...)` 默认也是 `false`
-
-如果你不覆写这两个方法，监听器注册了也不会执行。
+容易漏掉的两个点：`supports(...)` 与 `enabled(...)` 默认都是 `false`，不覆写则注册了也不执行。
 
 ### 第 3 步：在统一入口注册监听器
 
-推荐在一个明确的 Spring 配置类中集中注册，而不是在很多业务类里零散注册。
-
-最小示例：
-
 ```java
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+
 @Configuration
 public class OrmEventConfiguration {
 
-    @Bean
-    public CustomerBeforeSaveListener customerBeforeSaveListener() {
-        return new CustomerBeforeSaveListener();
-    }
-
-    @Bean
-    public CustomerAfterSaveListener customerAfterSaveListener() {
-        return new CustomerAfterSaveListener();
-    }
+    private final CustomerBeforeSaveListener beforeListener = new CustomerBeforeSaveListener();
 
     @PostConstruct
     public void registerListeners() {
-        SaveEventManager.registerBeforeIfAbsent(customerBeforeSaveListener());
-        SaveEventManager.registerAfterIfAbsent(customerAfterSaveListener());
+        SaveEventManager.registerBeforeIfAbsent(beforeListener);
+    }
+
+    @PreDestroy
+    public void unregisterListeners() {
+        // 生命周期管理：容器销毁时注销，防热部署泄漏
+        SaveEventManager.unregisterBefore(beforeListener);
     }
 }
 ```
 
-如果是删除链路，改成对应的：
-
-- `DeleteEventManager.registerBeforeIfAbsent(...)`
-- `DeleteEventManager.registerAfterIfAbsent(...)`
+删除/查询链路改成对应的 `DeleteEventManager` / `QueryEventManager`。
 
 ### 第 4 步：实际触发并验证
-
-建议用一条最短的保存或删除链路验证：
 
 ```java
 String id = MetaFactory.insert("Customer")
@@ -341,67 +334,19 @@ String id = MetaFactory.insert("Customer")
         .save();
 ```
 
-或者：
-
-```java
-MetaFactory.delete("Customer")
-        .where(Filter.eq("id", id))
-        .delete();
-```
-
 验证时优先看三件事：
 
-- 你的监听器方法是否真的被触发
+- 监听器方法是否真的被触发
 - `supports(...)` 与 `enabled(...)` 是否返回 `true`
-- 注册入口是否只执行了一次，避免重复注册
+- 注册入口是否只执行了一次（避免重复注册）
 
 ## 当前内置示例：只读影子表监听器
 
-当前保存事件默认注册了一个示例监听器：
-
-- `ReadonlyShadowTableListener`
-
-它的作用是把保存 SQL 映射到对应的：
-
-- `*_readonly`
-
-影子表。
-
-例如：
-
-- `insert into xxx (...)`
-- `update xxx set ...`
-
-会被转换成：
-
-- `insert into xxx_readonly (...)`
-- `update xxx_readonly set ...`
-
-不过当前这个监听器内部开关默认是关闭的：
-
-- `READONLY_EVENT_ENABLED = false`
-
-所以它更像一个“内置参考实现”，说明事件机制可以用来做：
-
-- 只读镜像表同步
-- 双写旁路
-- 数据镜像维护
+保存事件默认注册了 `ReadonlyShadowTableListener`，把保存 SQL 映射到 `*_readonly` 影子表。其内部开关默认关闭（`READONLY_EVENT_ENABLED = false`），作为内置参考实现。
 
 ## 开发者可以怎么做定制
 
-### 场景 1：保存前校验
-
-如果你想在写库前做领域校验，可以实现：
-
-- `BeforeSaveEventListener`
-
-典型用途：
-
-- 禁止某些状态下更新
-- 校验跨字段约束
-- 补充落库前的附加字段
-
-示例：
+### 场景 1：保存前校验（Before）
 
 ```java
 public class CustomerBeforeSaveListener implements BeforeSaveEventListener {
@@ -414,90 +359,64 @@ public class CustomerBeforeSaveListener implements BeforeSaveEventListener {
             }
         }
     }
-
-    @Override
-    public void afterSave(SaveEventContext context) {
-    }
-
-    @Override
-    public boolean supports(SaveEventContext context) {
-        return context.getCommand() != null;
-    }
-
-    @Override
-    public boolean enabled(SaveEventContext context) {
-        return true;
-    }
+    @Override public void afterSave(SaveEventContext context) {}
+    @Override public boolean supports(SaveEventContext context) { return context.getCommand() != null; }
+    @Override public boolean enabled(SaveEventContext context) { return true; }
 }
 ```
 
-适合放在这里的逻辑：
+适合：必填校验、状态流转校验、写入前参数规范化、必须阻断主流程的约束。
 
-- 必填校验
-- 状态流转校验
-- 写入前参数规范化
-- 明确需要阻断主流程的约束
-
-### 场景 2：保存后异步旁路处理
-
-如果你想在主保存成功后做一些不阻断主链路的扩展动作，可以实现：
-
-- `AfterSaveEventListener`
-
-典型用途：
-
-- 写审计日志
-- 刷新缓存
-- 推送变更通知
-- 同步搜索索引
-
-示例：
+### 场景 2：保存后异步旁路处理（After）
 
 ```java
 public class CustomerAfterSaveListener implements AfterSaveEventListener {
-    @Override
-    public void beforeSave(SaveEventContext context) {
-    }
-
+    @Override public void beforeSave(SaveEventContext context) {}
     @Override
     public void afterSave(SaveEventContext context) {
         if ("crm_customer".equalsIgnoreCase(context.getCommand().getEntityName())) {
-            System.out.println("customer changed, eventId=" + context.getEventId());
+            System.out.println("customer changed, eventId=" + context.getEventId()
+                    + ", success=" + context.isSuccess());
+        }
+    }
+    @Override public boolean supports(SaveEventContext context) { return context.getCommand() != null; }
+    @Override public boolean enabled(SaveEventContext context) { return true; }
+}
+```
+
+适合：审计日志、缓存刷新、旁路通知、搜索索引同步。
+
+### 场景 3：事务感知后置（Transactional After）
+
+适合必须等事务提交后才执行的副作用（如 ES 同步，避免读到回滚数据）：
+
+```java
+public class CustomerEsSyncListener implements TransactionalAfterSaveEventListener {
+    @Override public void beforeSave(SaveEventContext context) {}
+    @Override public void afterSave(SaveEventContext context) {} // 老的异步 after，留空
+
+    @Override
+    public void afterCommit(SaveEventContext context) {
+        // 仅在事务提交后执行，此时数据已落库
+        if ("crm_customer".equalsIgnoreCase(context.getCommand().getEntityName())) {
+            System.out.println("customer committed, sync to ES, eventId=" + context.getEventId());
         }
     }
 
     @Override
-    public boolean supports(SaveEventContext context) {
-        return context.getCommand() != null;
+    public void afterRollback(SaveEventContext context) {
+        // 事务回滚时触发，可用于清理/告警
+        System.out.println("customer save rolled back, skip ES sync");
     }
 
-    @Override
-    public boolean enabled(SaveEventContext context) {
-        return true;
-    }
+    @Override public boolean supports(SaveEventContext context) { return context.getCommand() != null; }
+    @Override public boolean enabled(SaveEventContext context) { return true; }
 }
 ```
 
-适合放在这里的逻辑：
+注册方式与普通监听器相同：`SaveEventManager.registerAfterIfAbsent(listener)`（它仍继承 `AfterSaveEventListener`）。
 
-- 审计日志
-- 缓存刷新
-- 旁路通知
-- 搜索索引同步
-
-### 场景 3：删除前拦截
-
-如果你想在删除前做防护，可以实现：
-
-- `BeforeDeleteEventListener`
-
-典型用途：
-
-- 禁止删除系统内置数据
-- 校验是否存在下游引用
-- 把物理删除改写为特殊删除策略
-
-最小示例：
+### 场景 4：删除前拦截（Before）
 
 ```java
 public class CustomerBeforeDeleteListener implements BeforeDeleteEventListener {
@@ -507,167 +426,120 @@ public class CustomerBeforeDeleteListener implements BeforeDeleteEventListener {
             throw new IllegalStateException("客户数据不允许直接删除，请先走业务注销流程");
         }
     }
-
-    @Override
-    public void afterDelete(DeleteEventContext context) {
-    }
-
-    @Override
-    public boolean supports(DeleteEventContext context) {
-        return context.getCommand() != null;
-    }
-
-    @Override
-    public boolean enabled(DeleteEventContext context) {
-        return true;
-    }
+    @Override public void afterDelete(DeleteEventContext context) {}
+    @Override public boolean supports(DeleteEventContext context) { return context.getCommand() != null; }
+    @Override public boolean enabled(DeleteEventContext context) { return true; }
 }
 ```
 
-### 场景 4：删除后清理
-
-如果你想在删除后做清理动作，可以实现：
-
-- `AfterDeleteEventListener`
-
-典型用途：
-
-- 删除缓存
-- 清理索引
-- 删除旁路表数据
-- 记录删除审计
-
-最小示例：
+### 场景 5：查询读审计/慢查询统计（Query）
 
 ```java
-public class CustomerAfterDeleteListener implements AfterDeleteEventListener {
+public class SlowQueryListener implements AfterQueryEventListener {
+    @Override public void beforeQuery(QueryEventContext context) {}
     @Override
-    public void beforeDelete(DeleteEventContext context) {
-    }
-
-    @Override
-    public void afterDelete(DeleteEventContext context) {
-        if ("crm_customer".equalsIgnoreCase(context.getCommand().getEntityName())) {
-            System.out.println("customer deleted, eventId=" + context.getEventId());
+    public void afterQuery(QueryEventContext context) {
+        long cost = System.currentTimeMillis() - context.getStartTime();
+        if (cost > 500) {
+            System.out.println("slow query, cost=" + cost + "ms, rows=" + context.getRowCount()
+                    + ", eventId=" + context.getEventId());
         }
     }
+    @Override public boolean supports(QueryEventContext context) { return true; }
+    @Override public boolean enabled(QueryEventContext context) { return true; }
+}
+```
 
-    @Override
-    public boolean supports(DeleteEventContext context) {
-        return context.getCommand() != null;
-    }
+注册：`QueryEventManager.registerAfterIfAbsent(listener)`。
 
-    @Override
-    public boolean enabled(DeleteEventContext context) {
-        return true;
-    }
+### 场景 6：函数式 callback（轻量注册）
+
+```java
+@PostConstruct
+public void register() {
+    // 用 lambda 注册保存前校验，无需写实现类
+    SaveEventManager.registerBeforeCallback(ctx -> {
+        if (ctx.isUpdate() && "crm_customer".equalsIgnoreCase(ctx.getCommand().getEntityName())) {
+            // 更新前校验
+        }
+    });
 }
 ```
 
 ## 推荐接入方式
 
-当前更推荐业务方把监听器注册收口到一个明确的启动装配位置，而不是在很多零散位置随意注册。
-
-例如：
+推荐把监听器注册收口到一个明确的启动装配位置：
 
 - Spring 启动类初始化阶段
 - 某个统一的 ORM 配置类
 - 某个基础模块的静态初始化逻辑
 
-这样可以保证：
+建议做法：
 
-- 监听器注册顺序可控
-- 多个业务模块不会重复注册
-- 环境切换时更容易控制启停
-
-一个推荐做法是：
-
-1. 每个监听器单独一个类
-2. 在统一配置类里声明 Bean
+1. 每个监听器单独一个类（或用函数式 callback）
+2. 在统一配置类里声明/注册
 3. 在统一初始化入口里调用 `register*IfAbsent(...)`
-4. 不要在业务 Service 方法里临时注册
-
-这样后续排障时，你能很清楚地知道：
-
-- 监听器实例从哪里来
-- 注册时机是什么
-- 是否可能重复注册
+4. 在 `@PreDestroy` 里调用 `unregister*`（生命周期管理）
+5. 不要在业务 Service 方法里临时注册
 
 ## 一步一步的排障顺序
 
-如果你写好了监听器但感觉“没有生效”，建议按这个顺序排查：
+写好了监听器但“没有生效”，按这个顺序排查：
 
-1. 看是否真的进入了 ORM 的保存/删除链路
-2. 看监听器是否已经注册到了 `SaveEventManager` 或 `DeleteEventManager`
+1. 看是否真的进入了 ORM 的写/查询链路
+2. 看监听器是否已注册到对应 `EventManager`
 3. 看 `supports(...)` 是否返回 `true`
 4. 看 `enabled(...)` 是否返回 `true`
 5. 看逻辑是不是写在 `After`，而你却期待它阻断主流程
 6. 看是否出现重复注册，导致执行多次
+7. （事务感知 after）确认写操作经由 `Dao` 执行，且回调在事务提交后才触发
 
 ## 使用注意事项
 
 ### 1. `Before` 会阻断主流程
 
-前置监听器异常会直接中断保存或删除，因此这里更适合放：
+前置监听器异常会中断主流程。框架对异常**透传、不加全局开关**：需要拦截就抛异常；不需要阻断就自行 `try/catch` 吞掉。
 
-- 强约束
-- 强校验
-- 必须成功的前置处理
+### 2. 普通 `After` 不适合承载强事务语义
 
-### 2. `After` 不适合承载强事务语义
-
-后置监听器是异步执行的，因此不要把“必须和主事务完全一致”的动作只放在 `After` 里。
-
-如果你的逻辑必须与主写操作强一致，更适合：
-
-- 放在前置阶段处理
-- 或者直接在主业务服务中显式编排事务
+后置监听器异步执行且在事务提交前调度，不要把“必须和主事务完全一致”的动作只放在普通 `After`。需要强事务一致请用 `TransactionalAfter*` 监听器，或显式编排事务。
 
 ### 3. 注意线程与上下文边界
 
-由于 `After` 事件在线程池里执行，开发者不能想当然依赖：
+`After` 事件在线程池执行，不能想当然依赖当前线程本地变量、Web 请求上下文。需要这些信息应从事件上下文取，或在进入事件前显式复制。
 
-- 当前线程本地变量
-- Web 请求上下文
-- 尚未显式透传的安全上下文
+### 4. 注意重复注册与生命周期
 
-如果监听器需要这些信息，应从事件上下文里取，或者在进入事件前显式复制所需数据。
-
-### 4. 注意重复注册
-
-虽然提供了 `register*IfAbsent(...)`，但如果业务方在多个位置各自 new 监听器实例，仍然可能造成重复生效。
-
-推荐做法是：
-
-- 统一管理监听器实例
-- 统一注册入口
+提供 `register*IfAbsent(...)` 防重复，但若多处各自 new 实例仍可能重复生效。推荐统一管理实例 + 统一注册 + `@PreDestroy` 注销（尤其热部署/上下文刷新场景）。
 
 ### 5. 不要把查询规则塞进事件里
 
-ORM 事件更适合写操作链路。
+ORM 事件适合写/读操作链路的附加动作。查询自动追加租户/权限过滤、保存自动补字段，应优先用 SPI，不要塞进事件监听器。
 
-如果你的目标是：
+### 6. 插入与更新的区分
 
-- 自动给查询追加租户条件
-- 自动追加权限过滤
-- 自动补默认保存字段
+`SaveCommand` 同时覆盖 insert/update。监听器可用 `context.isInsert()` / `context.isUpdate()` / `context.getOperType()` 区分，无需解析 SQL 字符串。
 
-应优先使用 SPI，而不是把这些逻辑塞进事件监听器。
+## 完整示例工程
+
+平台在 `geelato-hello-example` 仓库提供了事件机制的可运行示例工程：
+
+- `geelato-sample-orm-event`
+
+它基于最轻量的 `geelato-orm`（H2 内存库），演示：保存前校验、保存后旁路、事务感知 after、查询慢查询统计、函数式 callback、优先级、执行结果回传。运行方式见该工程 README。
 
 ## 总结
 
-Geelato Framework 当前 ORM 事件机制本质上是一套围绕 `Dao` 保存与删除链路的内置扩展点：
+Geelato Framework ORM 事件机制是一套围绕 `Dao` 写/查询链路的内置扩展点：
 
-- 前置事件同步执行，适合校验和拦截
-- 后置事件异步执行，适合通知和旁路处理
-- 通过上下文对象把 SQL、命令、结果和会话信息暴露给监听器
-- 开发者可以用统一监听器抽象，定制自己的审计、镜像、缓存、索引和校验逻辑
+- 前置事件同步执行，适合校验和拦截（异常透传，是否阻断由实现者决定）
+- 后置事件异步执行，适合通知和旁路处理（可控线程池 + 背压）
+- 事务感知后置事件，适合必须等提交后才执行的强一致副作用
+- 查询事件，适合读审计/慢查询/缓存预热
+- 函数式 callback，轻量注册免样板
+- 优先级、生命周期管理、执行结果回传等增强
 
-因此它特别适合作为：
-
-- ORM 层统一扩展机制
-- 多业务模块复用的领域钩子
-- 避免侵入核心 CRUD 实现的定制入口
+它特别适合作为：ORM 层统一扩展机制、多业务模块复用的领域钩子、避免侵入核心 CRUD 的定制入口。
 
 ## 推荐继续阅读
 

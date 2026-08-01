@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds" debug="false">
     <contextName>geelato-logback</contextName>
-    <property name="LOG_DIR" value="${LOG_DIR:-~/log}"/>
+    <property name="LOG_DIR" value="${LOG_DIR:-/log}"/>
     <property name="ROOT_LOG_LEVEL" value="${ROOT_LOG_LEVEL:-DEBUG}"/>
     <property name="FILE_LOG_LEVEL" value="${FILE_LOG_LEVEL:-DEBUG}"/>
     <property name="CONSOLE_LOG_LEVEL" value="${CONSOLE_LOG_LEVEL:-${ROOT_LOG_LEVEL}}"/>
     <property name="RESOLVE_LOG_LEVEL" value="${RESOLVE_LOG_LEVEL:-DEBUG}"/>
+    <!-- 运行错误日志保留的最低级别（运行期）：ERROR 或 WARN，默认 WARN -->
+    <property name="RUNTIME_LOG_LEVEL" value="${RUNTIME_LOG_LEVEL:-WARN}"/>
+    <!-- 启动日志保留天数（启动期完整记录，默认 30 天） -->
+    <property name="STARTUP_MAX_HISTORY" value="${STARTUP_MAX_HISTORY:-30}"/>
+    <!-- 运行错误日志保留天数，默认 7 天 -->
+    <property name="RUNTIME_MAX_HISTORY" value="${RUNTIME_MAX_HISTORY:-7}"/>
     <property name="LOG_PATTERN" value="${LOG_PATTERN:-%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n}"/>
     <!--输出到控制台-->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
@@ -58,8 +64,39 @@
             <level>${PLATFORM_EXCEPTION_FILE_LEVEL:-ERROR}</level>
         </filter>
     </appender>
-<!--    <appender name="custom" class="cn.geelato.logging.logback.SystemLoggingAppender">-->
-<!--    </appender>-->
+    <!--启动日志：仅在启动期（ApplicationReadyEvent 之前）记录全量日志，便于排查启动失败-->
+    <appender name="startupLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/startup/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>${STARTUP_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN}</pattern>
+        </layout>
+        <!--仅启动期写入，运行期 DENY（该过滤器返回 ACCEPT，故本 appender 不再叠加级别过滤）-->
+        <filter class="cn.geelato.logging.logback.StartupPhaseFilter"/>
+    </appender>
+    <!--运行错误日志：仅在运行期记录 WARN 及以上，启动期不写入-->
+    <appender name="runtimeLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/runtime/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>${RUNTIME_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN}</pattern>
+        </layout>
+        <!--先按阶段过滤：启动期 DENY，运行期 NEUTRAL 交由下面的级别过滤-->
+        <filter class="cn.geelato.logging.logback.RuntimePhaseFilter"/>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${RUNTIME_LOG_LEVEL}</level>
+        </filter>
+    </appender>
     <!--默认日志-->
     <appender name="logFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
@@ -177,13 +214,12 @@
         <appender-ref ref="platformExceptionLogFile"/>
         <appender-ref ref="console"/>
     </logger>
-<!--    <logger name="handler.cn.geelato.web.platform.PlatformExceptionHandler" additivity="false">-->
-<!--        <appender-ref ref="custom"/>-->
-<!--    </logger>-->
+    <!-- root 同时挂载启动日志与运行错误日志，由各 appender 上的阶段过滤器决定实际写入：
+         启动期 → startupLogFile 生效；运行期 → runtimeLogFile 生效（仅 WARN+）。 -->
     <root level="${ROOT_LOG_LEVEL}">
         <appender-ref ref="console"/>
-        <appender-ref ref="infoLogFile"/>
-        <appender-ref ref="errorLogFile"/>
+        <appender-ref ref="startupLogFile"/>
+        <appender-ref ref="runtimeLogFile"/>
     </root>
 
 </configuration>

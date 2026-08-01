@@ -150,6 +150,9 @@ iframe 地址统一构造为：
   - `data` 中携带 token 结果
 - `LOGIN_CLOSE`
   - 用户主动关闭或取消登录
+- `SET_LOCALE`
+  - 父页面主动控制嵌入态 `lite-login` 的显示语言
+  - 主要用于宿主页面统一管理多语言状态
 
 ### `LOGIN_SUCCESS` 数据契约
 
@@ -174,6 +177,84 @@ iframe 地址统一构造为：
 
 1. `accessToken`
 2. `token`
+
+### 嵌入态语言控制
+
+当 `lite-login` 通过 iframe 以 `display=embedded` 方式嵌入第三方应用时，语言切换入口不再由嵌入页自己暴露，而是由父页面统一控制。
+
+这样设计有两个目的：
+
+- 宿主页面可以统一维护自己的语言状态，不需要让 iframe 内外各自切换一次
+- 嵌入式登录通常只是宿主登录承接页的一部分，语言跟随宿主页面更自然
+
+当前约束如下：
+
+- 仅适用于 `/oauth2/lite-login?display=embedded`
+- 当前支持的语言值为 `zh-CN`、`en-US`
+- 传入非法值时，`lite-login` 会按系统现有逻辑回退到默认语言
+
+### 父页面如何切换嵌入页语言
+
+根据父页面与认证中心是否同源，分两种方式：
+
+#### 方式一：同源 iframe 直接调用
+
+如果父页面与 `lite-login` 同源，可直接调用子页面暴露的全局方法：
+
+```ts
+iframe.contentWindow?.setLiteLoginLocale?.('en-US')
+```
+
+这适合：
+
+- 宿主页面和 `lite-login` 共用同一域名
+- 或者通过反向代理把两者统一到了同源地址下
+
+#### 方式二：跨域 iframe 使用 `postMessage`
+
+如果父页面与 `lite-login` 不同源，则不能直接访问 `contentWindow.setLiteLoginLocale`，此时应通过 `postMessage` 下发语言切换消息：
+
+```ts
+iframe.contentWindow?.postMessage(
+  {
+    type: 'SET_LOCALE',
+    data: {locale: 'en-US'}
+  },
+  targetOrigin
+)
+```
+
+推荐做法：
+
+- `targetOrigin` 明确写成认证中心域名，不要使用 `*`
+- 父页面自己的语言切换动作完成后，再同步通知嵌入页切换语言
+
+### `SET_LOCALE` 消息契约
+
+跨域场景下，父页面发送给 `lite-login` 的消息结构如下：
+
+```json
+{
+  "type": "SET_LOCALE",
+  "data": {
+    "locale": "en-US"
+  }
+}
+```
+
+字段说明：
+
+- `type`
+  - 固定为 `SET_LOCALE`
+- `data.locale`
+  - 目标语言
+  - 当前推荐值：`zh-CN`、`en-US`
+
+安全要求：
+
+- `lite-login` 仍会校验消息来源
+- 父页面不要依赖“任意来源都可发消息”的宽松配置
+- 如果跨域部署，请确保认证中心侧已配置可信来源
 
 ### 登录成功后的正确处理
 
@@ -323,6 +404,38 @@ const handleSsoMessage = (event: MessageEvent) => {
 
 如果第三方应用希望立即让后端确认身份，也可以在登录成功后立刻请求自己的任意后端接口，但这不是统一强制要求。
 
+### 父页面语言控制参考伪代码
+
+如果宿主页面本身支持中英文切换，推荐把 iframe 语言同步也收敛到同一个语言切换动作里：
+
+```ts
+const syncLiteLoginLocale = (iframe: HTMLIFrameElement, locale: 'zh-CN' | 'en-US') => {
+  const childWindow = iframe.contentWindow
+  if (!childWindow) return
+
+  try {
+    childWindow.setLiteLoginLocale?.(locale)
+    return
+  } catch (error) {
+    // 跨域时会进入消息模式
+  }
+
+  childWindow.postMessage(
+    {
+      type: 'SET_LOCALE',
+      data: {locale}
+    },
+    liteSsoOrigin
+  )
+}
+```
+
+推荐接法：
+
+1. 宿主页面先更新自己的 i18n 状态
+2. 再调用 `syncLiteLoginLocale(iframe, locale)`
+3. 如果 iframe 尚未完成加载，可在 iframe `load` 后补发一次当前语言
+
 ## 后端参考伪代码
 
 ```java
@@ -370,6 +483,34 @@ public CurrentUser resolveCurrentUser(HttpServletRequest request) {
 - `/oauth2/userinfo` 是否仍按旧结构解析
 - 前端未授权兜底是否误把 `lite-login` 当成普通业务页
 
+### 为什么嵌入态看不到语言切换按钮
+
+这是预期行为。
+
+在 `display=embedded` 场景下，语言切换由父页面统一控制，嵌入页不再单独暴露语言切换 UI，避免宿主页面和嵌入页出现语言状态不一致。
+
+### 为什么跨域下不能直接调用 `contentWindow.setLiteLoginLocale`
+
+因为浏览器同源策略会限制父页面直接访问跨域 iframe 的运行时对象。
+
+这种情况下请改用：
+
+```ts
+iframe.contentWindow?.postMessage(
+  {
+    type: 'SET_LOCALE',
+    data: {locale: 'en-US'}
+  },
+  liteSsoOrigin
+)
+```
+
+### 为什么 `SET_LOCALE` 也必须校验来源
+
+因为它本质上仍然是跨窗口控制消息。
+
+如果不做来源校验，任意页面都可能伪造语言切换消息，造成集成行为不可控。即使这类消息不直接携带敏感凭证，也应保持与登录消息同一套安全要求。
+
 ### 为什么不能只信前端拿到的 token 和 user
 
 因为：
@@ -392,7 +533,7 @@ public CurrentUser resolveCurrentUser(HttpServletRequest request) {
 
 - 认证中心提供统一的 `lite-login`
 - 每个第三方应用保留自己的 `/login`
-- 每个第三方应用前端统一走：嵌入登录页、`postMessage`、token 暂存、请求时自动带 Bearer token
+- 每个第三方应用前端统一走：嵌入登录页、`postMessage`、父页面统一控制嵌入态语言、token 暂存、请求时自动带 Bearer token
 - 每个第三方应用后端统一走：Bearer token、`/oauth2/userinfo`、`data.user`、本应用自己的身份映射
 
 这样后续新增任意第三方应用时，只需替换：

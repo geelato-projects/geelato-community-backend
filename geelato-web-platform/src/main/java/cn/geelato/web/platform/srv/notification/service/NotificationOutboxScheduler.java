@@ -9,16 +9,20 @@ import cn.geelato.web.platform.srv.notification.config.NotificationProperties;
 import cn.geelato.web.platform.srv.notification.dto.ChannelResult;
 import cn.geelato.web.platform.srv.notification.enums.OutboxStatusEnum;
 import com.alibaba.fastjson2.JSON;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 通知投递 outbox 调度器。
@@ -31,6 +35,12 @@ import java.util.Map;
  *   <li>失败且达上限 → dead（死信）</li>
  * </ul>
  * 单渠道失败不影响其他渠道（每渠道独立 outbox 行）。
+ * <p>
+ * <b>调度方式</b>：使用自管理的 {@link ScheduledExecutorService}（守护线程），
+ * 而非 Spring 的 {@code @Scheduled} + {@code @EnableScheduling}。
+ * 原因：{@code @EnableScheduling} 是全局开关，会同时激活代码库里所有 {@code @Scheduled} 方法——
+ * 包括原本设计为按需开启、但因全局缺 {@code @EnableScheduling} 而一直休眠的邮件 IMAP 同步任务，
+ * 后者属于网络/DB 密集型操作，一旦被意外激活会拖慢整个平台。这里隔离调度，避免误伤。
  *
  * @author geelato
  */
@@ -42,6 +52,8 @@ public class NotificationOutboxScheduler {
     private final NotificationProperties properties;
     private final DeliveryChannelManager channelManager;
 
+    private ScheduledExecutorService scheduler;
+
     @Autowired
     public NotificationOutboxScheduler(@Qualifier("primaryDao") Dao dao,
                                        NotificationProperties properties,
@@ -51,7 +63,51 @@ public class NotificationOutboxScheduler {
         this.channelManager = channelManager;
     }
 
-    @Scheduled(fixedDelayString = "${geelato.notification.outbox.interval-ms:3000}")
+    @PostConstruct
+    public void start() {
+        long intervalMs = properties.getOutboxIntervalMs();
+        scheduler = Executors.newScheduledThreadPool(2, r -> {
+            Thread t = new Thread(r, "notification-outbox-scheduler");
+            t.setDaemon(true);
+            return t;
+        });
+        // fixedDelay 语义：上一轮结束后等 intervalMs 再开始下一轮（与 @Scheduled(fixedDelay) 一致）
+        scheduler.scheduleWithFixedDelay(this::safeProcess, intervalMs, intervalMs, TimeUnit.MILLISECONDS);
+        // 已完成行清理：低频，默认 6 小时一次
+        if (properties.getOutboxRetentionDays() > 0) {
+            long cleanupIntervalHours = properties.getOutboxCleanupIntervalHours();
+            long initialDelayMs = TimeUnit.MINUTES.toMillis(10); // 启动 10 分钟后首次清理
+            long periodMs = TimeUnit.HOURS.toMillis(cleanupIntervalHours);
+            scheduler.scheduleWithFixedDelay(this::safeCleanup, initialDelayMs, periodMs, TimeUnit.MILLISECONDS);
+            log.info("通知 outbox 清理任务已启动，间隔 {}h，保留 {} 天", cleanupIntervalHours, properties.getOutboxRetentionDays());
+        }
+        log.info("通知 outbox 调度器已启动，间隔 {}ms", intervalMs);
+    }
+
+    @PreDestroy
+    public void stop() {
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdown();
+            try {
+                if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    scheduler.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                scheduler.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    private void safeProcess() {
+        try {
+            process();
+        } catch (Throwable t) {
+            // 兜底：任何异常都不能让调度线程中断（scheduleWithFixedDelay 遇异常会停止后续调度）
+            log.error("通知 outbox 调度异常：{}", t.getMessage(), t);
+        }
+    }
+
     public void process() {
         List<NotificationOutbox> ready;
         try {
@@ -70,6 +126,33 @@ public class NotificationOutboxScheduler {
                 log.error("处理 outbox 项异常 id={}, channel={}: {}", outbox.getId(), outbox.getChannel(), e.getMessage(), e);
                 markForRetryOrDead(outbox, e.getMessage());
             }
+        }
+    }
+
+    private void safeCleanup() {
+        try {
+            cleanupFinished();
+        } catch (Throwable t) {
+            log.error("通知 outbox 清理异常：{}", t.getMessage(), t);
+        }
+    }
+
+    /**
+     * 物理删除超过保留期的已完成（success/dead）outbox 行，避免表无限膨胀。
+     * 扫描只命中 status=success/dead 的行，不影响 ready/processing 投递。
+     */
+    public void cleanupFinished() {
+        int retentionDays = properties.getOutboxRetentionDays();
+        if (retentionDays <= 0) {
+            return;
+        }
+        // retentionDays 为 int，直接拼字面量无注入风险；DATE_SUB 计算走数据库时间
+        int deleted = dao.getJdbcTemplate().update(
+                "DELETE FROM platform_notification_outbox "
+                        + "WHERE status IN (?, ?) AND update_at < DATE_SUB(NOW(), INTERVAL " + retentionDays + " DAY)",
+                OutboxStatusEnum.SUCCESS.value(), OutboxStatusEnum.DEAD.value());
+        if (deleted > 0) {
+            log.info("清理已完成通知 outbox 行 {} 条（保留 {} 天）", deleted, retentionDays);
         }
     }
 

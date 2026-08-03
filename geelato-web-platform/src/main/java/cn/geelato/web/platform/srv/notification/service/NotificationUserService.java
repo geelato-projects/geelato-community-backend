@@ -17,9 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 通知收件人状态服务。
@@ -44,34 +42,61 @@ public class NotificationUserService extends BaseService {
 
     /**
      * 站内信 fan-out：为每个 userId 写入一行未读收件人状态（已存在则跳过，靠 uk_notif_user 幂等）。
+     * 使用 batchUpdate 批量插入，群发 N 人仅需 1 次 DB 往返。
      */
     public void fanOutToInbox(String notificationId, List<String> userIds, String operator) {
         if (userIds == null || userIds.isEmpty() || Strings.isBlank(notificationId)) {
             return;
         }
         Date now = new Date();
+        Date defaultDeleteAt = DateUtils.defaultDeleteAt();
+        List<Object[]> batch = new ArrayList<>();
         for (String userId : userIds) {
             if (Strings.isBlank(userId)) {
                 continue;
             }
-            NotificationUser nu = new NotificationUser();
-            nu.setId(String.valueOf(UIDGenerator.generate()));
-            nu.setNotificationId(notificationId);
-            nu.setUserId(userId);
-            nu.setReadStatus(0);
-            nu.setStarred(0);
-            nu.setArchived(0);
-            nu.setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
-            nu.setDeleteAt(DateUtils.defaultDeleteAt());
-            nu.setCreateAt(now);
-            nu.setUpdateAt(now);
-            nu.setCreator(operator);
-            nu.setUpdater(operator);
-            try {
-                dao.save(nu);
-            } catch (Exception e) {
-                // 命中 uk_notif_user 唯一键（重复投递）属预期，降级为忽略
-                log.debug("收件人状态已存在，跳过：notificationId={}, userId={}", notificationId, userId);
+            batch.add(new Object[]{
+                    String.valueOf(UIDGenerator.generate()), notificationId, userId,
+                    0, null, 0, 0,
+                    ColumnDefault.DEL_STATUS_VALUE, now, operator, now, operator,
+                    defaultDeleteAt
+            });
+        }
+        if (batch.isEmpty()) {
+            return;
+        }
+        try {
+            dao.getJdbcTemplate().batchUpdate(
+                    "INSERT INTO platform_notification_user "
+                            + "(id, notification_id, user_id, read_status, read_at, starred, archived, "
+                            + "del_status, create_at, creator, update_at, updater, delete_at) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    batch);
+        } catch (Exception e) {
+            // 批量插入可能因部分行命中 uk_notif_user 唯一键而整体失败，降级为逐行插入以保证幂等
+            log.debug("批量插入收件人状态失败，降级逐行：notificationId={}, reason={}", notificationId, e.getMessage());
+            for (String userId : userIds) {
+                if (Strings.isBlank(userId)) {
+                    continue;
+                }
+                NotificationUser nu = new NotificationUser();
+                nu.setId(String.valueOf(UIDGenerator.generate()));
+                nu.setNotificationId(notificationId);
+                nu.setUserId(userId);
+                nu.setReadStatus(0);
+                nu.setStarred(0);
+                nu.setArchived(0);
+                nu.setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
+                nu.setDeleteAt(defaultDeleteAt);
+                nu.setCreateAt(now);
+                nu.setUpdateAt(now);
+                nu.setCreator(operator);
+                nu.setUpdater(operator);
+                try {
+                    dao.save(nu);
+                } catch (Exception ignored) {
+                    // 命中 uk_notif_user 唯一键（重复投递）属预期，忽略
+                }
             }
         }
     }
@@ -84,18 +109,14 @@ public class NotificationUserService extends BaseService {
     }
 
     /**
-     * 当前用户未读数。
+     * 当前用户未读数（铃铛角标）。
+     * 使用 COUNT(*) 而非全量拉取，走 idx_user_unread(user_id, read_status, archived) 索引。
      */
     public long countUnread(String userId) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("userId", userId);
-        params.put("readStatus", String.valueOf(0));
-        FilterGroup fg = new FilterGroup()
-                .addFilter("userId", userId)
-                .addFilter("readStatus", String.valueOf(0));
-        dao.setDefaultFilter(true, filterGroup);
-        List<NotificationUser> list = dao.queryList(NotificationUser.class, fg, "update_at DESC");
-        return list == null ? 0 : list.size();
+        Long count = dao.getJdbcTemplate().queryForObject(
+                "SELECT COUNT(*) FROM platform_notification_user WHERE del_status = 0 AND user_id = ? AND read_status = 0",
+                Long.class, userId);
+        return count == null ? 0 : count;
     }
 
     /**
@@ -123,25 +144,14 @@ public class NotificationUserService extends BaseService {
 
     /**
      * 标记当前用户所有未读为已读。
+     * 单条 UPDATE 批量更新，避免逐行 dao.save 的 N+1 写入。
      */
     public int markAllRead(String userId) {
-        FilterGroup fg = new FilterGroup()
-                .addFilter("userId", userId)
-                .addFilter("readStatus", String.valueOf(0));
-        dao.setDefaultFilter(true, filterGroup);
-        List<NotificationUser> list = dao.queryList(NotificationUser.class, fg, null);
-        if (list == null || list.isEmpty()) {
-            return 0;
-        }
         Date now = new Date();
-        for (NotificationUser nu : list) {
-            nu.setReadStatus(1);
-            nu.setReadAt(now);
-            nu.setUpdateAt(now);
-            nu.setUpdater(userId);
-            dao.save(nu);
-        }
-        return list.size();
+        return dao.getJdbcTemplate().update(
+                "UPDATE platform_notification_user SET read_status = 1, read_at = ?, update_at = ?, updater = ? "
+                        + "WHERE del_status = 0 AND user_id = ? AND read_status = 0",
+                now, now, userId, userId);
     }
 
     /**

@@ -29,4 +29,18 @@ public class NotificationProperties {
 
     /** 最大重试次数，达上限进入死信 */
     private int maxRetryCount = 5;
+
+    /** 已完成（success/dead）outbox 行的保留天数，超期物理删除；0 表示不清理 */
+    private int outboxRetentionDays = 7;
+
+    /** 清理已完成 outbox 行的间隔（小时），默认 6 小时一次 */
+    private int outboxCleanupIntervalHours = 6;
+
+    public int getOutboxRetentionDays() {
+        return outboxRetentionDays;
+    }
+
+    public int getOutboxCleanupIntervalHours() {
+        return outboxCleanupIntervalHours;
+    }
 }

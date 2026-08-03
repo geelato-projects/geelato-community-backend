@@ -14,10 +14,25 @@ import java.nio.file.Paths;
 public class PluginConfiguration {
     private SpringPluginManager springPluginManager;
 
+    /**
+     * 平台级插件状态提供者（基于共享卷 JSON）。
+     * 作为普通实例由 {@link #pluginManager(PluginConfigurationProperties)} 内部使用。
+     */
     @Bean
-    public SpringPluginManager pluginManager(PluginConfigurationProperties pluginConfigurationProperties) {
+    public FilePluginStatusProvider filePluginStatusProvider(PluginStatusPaths paths, PluginStatusJsonStore store) {
+        return new FilePluginStatusProvider(paths, store);
+    }
+
+    @Bean
+    public SpringPluginManager pluginManager(PluginConfigurationProperties pluginConfigurationProperties,
+                                             FilePluginStatusProvider filePluginStatusProvider) {
         Path pluginDirectory = normalizeDirectory(pluginConfigurationProperties.getPluginDirectory(), "plugins");
-        SpringPluginManager spm = new SpringPluginManager(pluginDirectory);
+        // pf4j 在构造期即调 createPluginStatusProvider()，需在 new 之前把 provider 放入 ThreadLocal
+        FileSpringPluginManager.PROVIDER_HOLDER.set(filePluginStatusProvider);
+        FileSpringPluginManager spm = new FileSpringPluginManager(pluginDirectory, filePluginStatusProvider,
+                pluginConfigurationProperties.isSignatureVerify());
+        // 构造器内已 remove；此处兜底再清一次，防异常路径泄漏
+        FileSpringPluginManager.PROVIDER_HOLDER.remove();
         springPluginManager = spm;
         return spm;
     }
@@ -47,4 +62,3 @@ public class PluginConfiguration {
         return path;
     }
 }
-

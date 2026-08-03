@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>实体三者同步校验工具</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; font-size: 13px; color: #333; background: #f5f7fa; }
+  header { background: #1f2d3d; color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 16px; font-weight: 500; }
+  header .actions { display: flex; gap: 8px; align-items: center; }
+  .desc { color: #97a8be; font-size: 12px; margin-left: 12px; }
+  button { cursor: pointer; border: 1px solid #dcdfe6; background: #fff; color: #606266; padding: 6px 14px; border-radius: 4px; font-size: 13px; transition: all .2s; }
+  button:hover { color: #409eff; border-color: #c6e2ff; background: #ecf5ff; }
+  button.primary { background: #409eff; border-color: #409eff; color: #fff; }
+  button.primary:hover { background: #66b1ff; }
+  button.danger { background: #f56c6c; border-color: #f56c6c; color: #fff; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .tabs { background: #fff; border-bottom: 1px solid #e4e7ed; display: flex; padding: 0 20px; }
+  .tab { padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: #606266; }
+  .tab.active { color: #409eff; border-bottom-color: #409eff; }
+  .container { padding: 16px 20px; }
+  .summary { display: flex; gap: 24px; margin-bottom: 14px; }
+  .stat { background: #fff; border-radius: 4px; padding: 12px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .stat .num { font-size: 22px; font-weight: 600; }
+  .stat .label { color: #909399; font-size: 12px; }
+  .stat.ok .num { color: #67c23a; }
+  .stat.warn .num { color: #e6a23c; }
+  .stat.err .num { color: #f56c6c; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #ebeef5; }
+  th { background: #fafafa; font-weight: 500; color: #909399; font-size: 12px; }
+  tr:hover td { background: #f5f7fa; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+  .badge.ok { background: #f0f9eb; color: #67c23a; }
+  .badge.no { background: #fef0f0; color: #f56c6c; }
+  .badge.gray { background: #f4f4f5; color: #909399; }
+  .row-detail { display: none; }
+  .row-detail.open { display: table-row; }
+  .row-detail td { background: #fafbfc; padding: 12px 20px; }
+  .diff-block { margin-bottom: 10px; }
+  .diff-block h4 { font-size: 12px; color: #606266; margin-bottom: 4px; }
+  .diff-block table { box-shadow: none; }
+  .empty { color: #c0c4cc; text-align: center; padding: 20px; }
+  select, input[type=text] { padding: 5px 8px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 13px; }
+  .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .code { background: #1e1e1e; color: #d4d4d4; padding: 14px; border-radius: 4px; font-family: Consolas, "Courier New", monospace; font-size: 12px; white-space: pre; overflow: auto; max-height: 500px; }
+  .panel { background: #fff; border-radius: 4px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 14px; }
+  .panel h3 { font-size: 14px; margin-bottom: 10px; color: #303133; }
+  .sql-list { max-height: 360px; overflow: auto; background: #fafafa; border: 1px solid #ebeef5; border-radius: 4px; }
+  .sql-item { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; font-family: Consolas, monospace; font-size: 12px; word-break: break-all; }
+  .hidden { display: none; }
+  .loading { color: #409eff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>实体三者同步校验工具<span class="desc">Java类 ↔ 实体定义(platform_dev_table) ↔ 物理表结构</span></h1>
+  </div>
+  <div class="actions">
+    <button class="primary" id="btnScan" onclick="scan()">重新扫描</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('report')">校验报告</div>
+  <div class="tab" onclick="switchTab('fix')">补偿操作</div>
+  <div class="tab" onclick="switchTab('codegen')">Java 源码预览</div>
+</div>
+
+<!-- Tab 1: 校验报告 -->
+<div id="tab-report" class="container">
+  <div class="summary" id="summary"></div>
+  <table id="reportTable">
+    <thead>
+      <tr>
+        <th>表名 / 实体</th>
+        <th>标题</th>
+        <th>Java类</th>
+        <th>实体定义</th>
+        <th>物理表</th>
+        <th>状态</th>
+      </tr>
+    </thead>
+    <tbody id="reportBody">
+      <tr><td colspan="6" class="empty">点击右上角"重新扫描"开始</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Tab 2: 补偿操作 -->
+<div id="tab-fix" class="container hidden">
+  <div class="panel">
+    <h3>选择实体</h3>
+    <div class="toolbar">
+      <select id="fixEntity" onchange="onFixEntityChange()" style="min-width:320px;"></select>
+      <span id="fixEntityDesc" style="color:#909399;"></span>
+      <button onclick="checkSingle()">复验此实体</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>补偿方向（默认 dry-run 预览，确认无误后点执行）</h3>
+    <div class="toolbar">
+      <select id="fixType">
+        <option value="table-to-meta">物理表 → 实体定义（platform_dev_column）</option>
+        <option value="java-to-meta">Java 类 → 实体定义（platform_dev_table/column）</option>
+      </select>
+      <button onclick="runFixPreview()">预览（dry-run）</button>
+      <button class="primary" onclick="runFixApply()">执行（写库）</button>
+    </div>
+    <div id="fixResult" class="sql-list hidden"></div>
+  </div>
+  <div class="panel hidden" id="singleCheckPanel">
+    <h3>单实体校验结果：<span id="singleCheckTitle"></span></h3>
+    <div id="singleCheckBody"></div>
+  </div>
+</div>
+
+<!-- Tab 3: Java 源码预览 -->
+<div id="tab-codegen" class="container hidden">
+  <div class="panel">
+    <h3>根据实体定义生成 Java 类源码</h3>
+    <div class="toolbar">
+      <select id="codegenEntity" style="min-width:320px;"></select>
+      <input type="text" id="codegenPkg" placeholder="包名(默认 cn.geelato.meta)" style="width:220px;">
+      <button class="primary" onclick="runCodegen()">生成源码</button>
+    </div>
+  </div>
+  <div id="codegenResult" class="hidden">
+    <div class="toolbar">
+      <button onclick="copyCode()">复制源码</button>
+    </div>
+    <pre class="code" id="codeOut"></pre>
+  </div>
+</div>
+
+<script>
+const BASE = '/api/meta-sync';
+function api(path){ return fetch(BASE + path).then(r=>r.json()); }
+function apiPost(path, body){
+  return fetch(BASE + path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})}).then(r=>r.json());
+}
+function unwrap(r){ return r && r.data !== undefined ? r.data : r; }
+
+let reports = [];
+
+function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function statusBadge(s, tag){
+  if(!s || !s.present) return '<span class="badge gray">'+tag+': 无</span>';
+  return '<span class="badge ok">'+tag+': '+s.fieldCount+'字段</span>';
+}
+
+function scan(){
+  let btn = document.getElementById('btnScan');
+  btn.disabled = true; btn.textContent = '扫描中...';
+  document.getElementById('reportBody').innerHTML = '<tr><td colspan="6" class="empty loading">扫描中，请稍候...</td></tr>';
+  api('/scan').then(res=>{
+    let data = unwrap(res);
+    reports = data.reports || [];
+    renderSummary(data.summary || {});
+    renderReports();
+    refreshEntityDropdowns();
+    btn.disabled = false; btn.textContent = '重新扫描';
+  }).catch(e=>{
+    document.getElementById('reportBody').innerHTML = '<tr><td colspan="6" class="empty">扫描失败：'+esc(e.message)+'</td></tr>';
+    btn.disabled = false; btn.textContent = '重新扫描';
+  });
+}
+
+function renderSummary(s){
+  let html = '<div class="stat"><div class="num">'+(s.total||0)+'</div><div class="label">实体总数</div></div>';
+  html += '<div class="stat ok"><div class="num">'+(s.consistent||0)+'</div><div class="label">一致</div></div>';
+  html += '<div class="stat warn"><div class="num">'+(s.inconsistent||0)+'</div><div class="label">存在差异</div></div>';
+  document.getElementById('summary').innerHTML = html;
+}
+
+function renderReports(){
+  if(reports.length===0){ document.getElementById('reportBody').innerHTML='<tr><td colspan="6" class="empty">无数据</td></tr>'; return; }
+  let html = '';
+  reports.forEach((r, i)=>{
+    let consistentBadge = r.consistent ? '<span class="badge ok">一致</span>' : '<span class="badge no">有差异</span>';
+    html += '<tr onclick="toggleDetail('+i+')" style="cursor:pointer;">';
+    html += '<td><b>'+esc(r.tableName)+'</b><br><span style="color:#909399;font-size:11px;">'+esc(r.entityName)+'</span></td>';
+    html += '<td>'+esc(r.title)+'</td>';
+    html += '<td>'+statusBadge(r.javaSource,'Java')+'</td>';
+    html += '<td>'+statusBadge(r.metaSource,'Meta')+'</td>';
+    html += '<td>'+statusBadge(r.tableSource,'Table')+'</td>';
+    html += '<td>'+consistentBadge+'</td>';
+    html += '</tr>';
+    html += '<tr class="row-detail" id="detail-'+i+'"><td colspan="6">'+renderDetail(r)+'</td></tr>';
+  });
+  document.getElementById('reportBody').innerHTML = html;
+}
+
+function renderDetail(r){
+  if(r.consistent) return '<div class="empty">三方一致，无差异</div>';
+  let html = '';
+  html += diffBlock('Java ↔ 实体定义', r.javaVsMeta);
+  html += diffBlock('实体定义 ↔ 物理表', r.metaVsTable);
+  html += diffBlock('Java ↔ 物理表', r.javaVsTable);
+  return html;
+}
+
+function diffBlock(title, diffs){
+  if(!diffs || diffs.length===0) return '';
+  let html = '<div class="diff-block"><h4>'+esc(title)+'（'+diffs.length+'项）</h4><table><thead><tr><th>列名</th><th>字段名</th><th>差异</th></tr></thead><tbody>';
+  diffs.forEach(d=>{
+    let detail = '';
+    if(d.onlyInJava) detail = '<span class="badge no">仅Java有</span>';
+    else if(d.onlyInMeta) detail = '<span class="badge no">仅实体定义有</span>';
+    else if(d.onlyInTable) detail = '<span class="badge no">仅物理表有</span>';
+    else if(d.typeDiff) detail = '<span class="badge no">类型冲突 java='+(d.typeDiff.javaType||'-')+' meta='+(d.typeDiff.metaType||'-')+' table='+(d.typeDiff.tableType||'-')+'</span>';
+    else if(d.lengthDiff) detail = '<span class="badge gray">长度差异 '+esc(d.lengthDiff)+'</span>';
+    html += '<tr><td>'+esc(d.columnName)+'</td><td>'+esc(d.fieldName)+'</td><td>'+detail+'</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function toggleDetail(i){
+  let el = document.getElementById('detail-'+i);
+  el.classList.toggle('open');
+}
+
+function switchTab(name){
+  ['report','fix','codegen'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
+  });
+  document.querySelectorAll('.tab').forEach((el,idx)=>{
+    el.classList.toggle('active', ['report','fix','codegen'][idx]===name);
+  });
+}
+
+function refreshEntityDropdowns(){
+  api('/entities').then(res=>{
+    let list = unwrap(res) || [];
+    let opts = list.map(e=>'<option value="'+esc(e.tableName)+'" data-entity="'+esc(e.entityName)+'" data-title="'+esc(e.title)+'">'+esc(e.tableName)+' ('+esc(e.title)+')</option>').join('');
+    document.getElementById('fixEntity').innerHTML = opts || '<option value="">无实体</option>';
+    document.getElementById('codegenEntity').innerHTML = opts || '<option value="">无实体</option>';
+    onFixEntityChange();
+  });
+}
+
+function onFixEntityChange(){
+  let sel = document.getElementById('fixEntity');
+  let opt = sel.options[sel.selectedIndex];
+  if(opt){
+    document.getElementById('fixEntityDesc').textContent = '实体名：' + (opt.dataset.entity||'') + ' | ' + (opt.dataset.title||'');
+  }
+}
+
+function getCurrentEntityName(){
+  let sel = document.getElementById('fixEntity');
+  let opt = sel.options[sel.selectedIndex];
+  return opt ? (opt.dataset.entity || sel.value) : null;
+}
+
+function renderFixResult(res){
+  let el = document.getElementById('fixResult');
+  el.classList.remove('hidden');
+  if(!res.previewSql || res.previewSql.length===0){
+    el.innerHTML = '<div class="sql-item" style="color:#67c23a;">无变更，或无需补偿</div>';
+    return;
+  }
+  el.innerHTML = res.previewSql.map(s=>'<div class="sql-item">'+esc(s)+'</div>').join('');
+}
+
+function runFixPreview(){
+  let tableName = document.getElementById('fixEntity').value;
+  let entityName = getCurrentEntityName();
+  let fixType = document.getElementById('fixType').value;
+  let body = {tableName: tableName, entityName: entityName, apply: false};
+  if(fixType==='java-to-meta'){ body.output='sql'; }
+  apiPost('/fix/'+fixType, body).then(res=>{
+    renderFixResult(unwrap(res));
+  }).catch(e=>alert('失败：'+e.message));
+}
+
+function runFixApply(){
+  if(!confirm('确认写库？此操作将修改 platform_dev_table/column 数据。')) return;
+  let tableName = document.getElementById('fixEntity').value;
+  let entityName = getCurrentEntityName();
+  let fixType = document.getElementById('fixType').value;
+  let body = {tableName: tableName, entityName: entityName, apply: true};
+  if(fixType==='java-to-meta'){ body.output='db'; }
+  apiPost('/fix/'+fixType, body).then(res=>{
+    let data = unwrap(res);
+    renderFixResult(data);
+    alert('执行完成，共 '+data.executed+' 条');
+    // 写库后自动复验该实体，直接 IO 查询最新状态
+    checkSingle();
+  }).catch(e=>alert('失败：'+e.message));
+}
+
+function checkSingle(){
+  let tableName = document.getElementById('fixEntity').value;
+  if(!tableName){ alert('请先选择实体'); return; }
+  let panel = document.getElementById('singleCheckPanel');
+  let body = document.getElementById('singleCheckBody');
+  let title = document.getElementById('singleCheckTitle');
+  panel.classList.remove('hidden');
+  title.textContent = tableName + ' （查询中...）';
+  body.innerHTML = '<div class="empty loading">复验中（直接查库）...</div>';
+  api('/check/'+encodeURIComponent(tableName)).then(res=>{
+    let r = unwrap(res);
+    title.textContent = r.tableName + (r.consistent ? ' —— 一致' : ' —— 存在差异');
+    body.innerHTML = renderSingleCheck(r);
+  }).catch(e=>{
+    body.innerHTML = '<div class="empty">复验失败：'+esc(e.message)+'</div>';
+  });
+}
+
+function renderSingleCheck(r){
+  let html = '<div class="toolbar" style="margin-bottom:8px;">';
+  html += statusBadge(r.javaSource,'Java') + '&nbsp;';
+  html += statusBadge(r.metaSource,'Meta') + '&nbsp;';
+  html += statusBadge(r.tableSource,'Table');
+  html += '</div>';
+  if(r.consistent){ return html + '<div class="empty">三方一致，无差异</div>'; }
+  html += diffBlock('Java ↔ 实体定义', r.javaVsMeta);
+  html += diffBlock('实体定义 ↔ 物理表', r.metaVsTable);
+  html += diffBlock('Java ↔ 物理表', r.javaVsTable);
+  return html;
+}
+
+function runCodegen(){
+  let sel = document.getElementById('codegenEntity');
+  let opt = sel.options[sel.selectedIndex];
+  if(!opt){ alert('请选择实体'); return; }
+  let entityName = opt.dataset.entity || sel.value;
+  let pkg = document.getElementById('codegenPkg').value.trim();
+  apiPost('/fix/gen-java', {entityName: entityName, packageName: pkg}).then(res=>{
+    let data = unwrap(res);
+    document.getElementById('codeOut').textContent = data.source || '';
+    document.getElementById('codegenResult').classList.remove('hidden');
+  }).catch(e=>alert('失败：'+e.message));
+}
+
+function copyCode(){
+  let code = document.getElementById('codeOut').textContent;
+  navigator.clipboard.writeText(code).then(()=>alert('已复制'));
+}
+</script>
+</body>
+</html>

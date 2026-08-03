@@ -116,7 +116,11 @@ public class SecurityInterceptorProperties {
                 // MQL Playground（在线调试与测试场景集，由 geelato.mql.playground.enabled 控制是否激活）
                 "/mql-playground.html",
                 "/mql-playground",
-                "/api/mql/**"
+                "/api/mql/**",
+                // 实体三者同步校验工具（由 geelato.meta.sync.enabled 控制是否激活）
+                "/meta-sync.html",
+                "/meta-sync",
+                "/api/meta-sync/**"
         ));
     }
 }

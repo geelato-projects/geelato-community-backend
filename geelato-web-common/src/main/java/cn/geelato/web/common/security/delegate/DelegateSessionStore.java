@@ -31,13 +31,13 @@ public interface DelegateSessionStore {
     void remove(String tokenKey);
 
     /**
-     * 移除某实际操作人（导师）发起的全部委托代办会话。
-     * 用于导师被禁用 / 全部委托关系失效等场景。
+     * 移除某实际操作人（代理人）发起的全部委托代办会话。
+     * 用于代理人被禁用 / 全部委托关系失效等场景。
      */
     void removeByOriginUser(String originUserId);
 
     /**
-     * 返回某实际操作人（导师）当前仍有效的委托代办会话（用于查询 / 踢出）。
+     * 返回某实际操作人（代理人）当前仍有效的委托代办会话（用于查询 / 踢出）。
      */
     Collection<DelegateSession> queryByOriginUser(String originUserId);
 }

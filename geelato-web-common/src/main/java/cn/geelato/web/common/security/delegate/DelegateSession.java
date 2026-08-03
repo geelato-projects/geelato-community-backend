@@ -4,11 +4,11 @@ package cn.geelato.web.common.security.delegate;
  * 委托代办会话。
  * <p>
  * 记录"某个登录态（以其原始 Authorization 头为 key）当前正以另一个用户身份操作"的关系，
- * 用于支持老带新场景：导师（origin）代新员工（target）查看/操作数据。
+ * 用于支持委托代办场景：代理人（origin）代委托人（target）查看/操作数据。
  * <ul>
- *   <li>{@code origin*} —— 实际操作人（被委托人/代理人，即导师）。切换后该信息注入到
+ *   <li>{@code origin*} —— 实际操作人（代理人/被委托人）。切换后该信息注入到
  *       {@code User.delegateUserId/delegateUserName} 供审计使用。</li>
- *   <li>{@code target*} —— 当前生效身份（委托人，即新员工）。切换后 SecurityContext 的
+ *   <li>{@code target*} —— 当前生效身份（委托人）。切换后 SecurityContext 的
  *       currentUser 即按此身份加载（菜单、数据权限、行级审计均按 target 计算）。</li>
  *   <li>{@code tokenKey} —— 关联的凭证 key，约定使用完整的原始 Authorization 头字符串
  *       （与 DefaultSecurityInterceptor.tokenContextCache 的 key 一致），不重签 token。</li>

@@ -357,7 +357,6 @@ public class MetaManager extends AbstractManager {
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Class));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
-            printEntityTree(entityMeta);
             if (log.isDebugEnabled()) {
                 log.debug("success in parsing class:{}", clazz.getName());
                 for (FieldMeta fm : entityMeta.getFieldMetas()) {
@@ -392,7 +391,6 @@ public class MetaManager extends AbstractManager {
                 removeLiteMeta(entityMeta.getEntityName());
                 entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
                 tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
-                printEntityTree(entityMeta);
             } else if (entityMetadataMap.containsKey(entityName)) {
                 entityMeta = entityMetadataMap.get(entityName);
                 if (entityMeta != null && entityMeta.getTableMeta() != null) {
@@ -417,7 +415,6 @@ public class MetaManager extends AbstractManager {
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
-            printEntityTree(entityMeta);
             return;
         }
         // 无冲突：正常注册在线实体
@@ -426,7 +423,6 @@ public class MetaManager extends AbstractManager {
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
-            printEntityTree(entityMeta);
         }
     }
 
@@ -447,7 +443,6 @@ public class MetaManager extends AbstractManager {
             removeLiteMeta(entityMeta.getEntityName());
             entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.View));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
-            printEntityTree(entityMeta);
         }
     }
 
@@ -480,27 +475,6 @@ public class MetaManager extends AbstractManager {
             removeLiteMeta(entityName);
         }
     }
-
-    private void printEntityTree(EntityMeta em) {
-        String title = em.getEntityTitle() == null ? "" : em.getEntityTitle();
-        String type = em.getEntityType() == null ? "" : em.getEntityType().name();
-        String catalog = em.getCatalog() == null ? "none" : em.getCatalog();
-        String head = em.getEntityName() + (Strings.isNotBlank(type) ? " [" + type + "]" : "") + (Strings.isNotBlank(catalog) ? " (catalog:" + catalog + ")" : "") + (Strings.isNotBlank(title) ? " (" + title + ")" : "");
-        log.info(head);
-        Collection<FieldMeta> fms = em.getFieldMetas();
-        if (fms != null && !fms.isEmpty()) {
-            int idx = 0;
-            int size = fms.size();
-            for (FieldMeta fm : fms) {
-                String prefix = (idx == size - 1) ? "  └─ " : "  ├─ ";
-                String javaType = fm.getFieldType() != null ? fm.getFieldType().getSimpleName() : "";
-                String colType = fm.getColumnMeta() != null ? (org.apache.logging.log4j.util.Strings.isNotBlank(fm.getColumnMeta().getType()) ? fm.getColumnMeta().getType() : fm.getColumnMeta().getDataType()) : "";
-                log.info("{}{} ({}) : {} ({})", prefix, fm.getFieldName(), javaType, fm.getColumnName(), colType);
-                idx++;
-            }
-        }
-    }
-
     /**
      * 移除轻量级实体元数据
      *

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        plugin-all 是 geelato 插件扩展点 API（接口 + DTO），主程序与插件实现共同依赖。
+        为保持本 jar 轻量纯净（仅含接口与 DTO，不引入 lombok/utils/core 等重依赖），
+        这里不继承 libs/pom.xml（geelato-plugins），而是独立声明坐标与编译参数，
+        与坐标 cn.geelato:plugin-all:0.0.1-SNAPSHOT 完全一致，可被现有 install:install-file 流程无缝替换。
+    -->
+    <groupId>cn.geelato</groupId>
+    <artifactId>plugin-all</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <description>geelato 插件扩展点 API（ExtensionPoint 接口与 DTO 定义）。主程序与插件实现共同依赖。</description>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <pf4j.version>3.12.0</pf4j.version>
+    </properties>
+
+    <dependencies>
+        <!-- pf4j 仅编译期需要：ExtensionPoint 来自 pf4j；运行时由主程序（geelato-web-platform）提供 -->
+        <dependency>
+            <groupId>org.pf4j</groupId>
+            <artifactId>pf4j</artifactId>
+            <version>${pf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>

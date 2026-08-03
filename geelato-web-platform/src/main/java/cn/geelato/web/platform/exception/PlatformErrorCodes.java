@@ -55,7 +55,17 @@ public enum PlatformErrorCodes implements ErrorCode {
     /** 12.7 文件内容为空。 */
     FILE_CONTENT_IS_EMPTY(1217, "12.7 File Content Is Empty Exception"),
     /** 12.8 文件内容读取失败。 */
-    FILE_CONTENT_READ_FAILED(1218, "12.8 File Content Read Failed Exception");
+    FILE_CONTENT_READ_FAILED(1218, "12.8 File Content Read Failed Exception"),
+
+    // ---- 插件治理（1001x 段，10001 为历史插件未找到，此处扩展治理相关码）----
+    /** 插件未对当前租户启用。 */
+    PLUGIN_NOT_ENABLED_FOR_TENANT(10010, "插件未对当前租户启用"),
+    /** 插件已被平台级禁用。 */
+    PLUGIN_PLATFORM_DISABLED(10011, "插件已被平台级禁用"),
+    /** 插件调用超时。 */
+    PLUGIN_INVOCATION_TIMEOUT(10012, "插件调用超时"),
+    /** 插件加载/启动失败。 */
+    PLUGIN_LOAD_FAILED(10013, "插件加载或启动失败");
 
     private final int code;
     private final String defaultMessage;

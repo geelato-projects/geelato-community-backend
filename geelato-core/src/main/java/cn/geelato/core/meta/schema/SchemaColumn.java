@@ -62,7 +62,7 @@ public class SchemaColumn implements Serializable {
         meta.setDataType(this.dataType);
         // meta.setExtra(this.extra);
         meta.setAutoIncrement(Strings.isNotEmpty(this.extra) && this.extra.toUpperCase(Locale.ENGLISH).indexOf("AUTO_INCREMENT") != -1);
-        meta.setUniqued(this.unique);
+        meta.setUniqued(Boolean.TRUE.equals(this.unique));
         meta.setDatetimePrecision(Strings.isBlank(this.datetimePrecision) ? 0 : Integer.parseInt(this.datetimePrecision));
         meta.setCharMaxLength(Strings.isBlank(this.characterMaximumLength) ? 0 : Long.parseLong(this.characterMaximumLength));
         if (MysqlDataTypeEnum.getDecimals().contains(dataType)) {

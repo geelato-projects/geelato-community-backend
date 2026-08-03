@@ -160,7 +160,7 @@ const sidebars: SidebarsConfig = {
       label: '📨 Geelato Message (消息中心)',
       collapsible: false,
       collapsed: false,
-      items: ['message/overview', 'message/integration'],
+      items: ['message/overview', 'message/integration', 'message/integration-management'],
     },
   ],
 };

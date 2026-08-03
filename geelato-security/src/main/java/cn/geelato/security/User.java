@@ -42,9 +42,9 @@ public class User extends UserCore{
     private String weixinUnionId;
     private String weixinWorkUserId;
 
-    // 委托代办（老带新）：当本次操作由被委托人代为执行时，记录实际操作人。
-    // 与 platform_user_r_delegate.delegate_user_id 同义：被委托人/代理人（如导师）。
-    // 为空表示本人操作。creator/updater 仍记录当前生效身份（被代办人，如新员工），
+    // 委托代办：当本次操作由代理人代为执行时，记录实际操作人。
+    // 与 platform_user_r_delegate.delegate_user_id 同义：代理人（被委托人）。
+    // 为空表示本人操作。creator/updater 仍记录当前生效身份（委托人），
     // delegateUserId/delegateUserName 仅供审计区分"是谁代替谁操作的"。
     private String delegateUserId;
     private String delegateUserName;

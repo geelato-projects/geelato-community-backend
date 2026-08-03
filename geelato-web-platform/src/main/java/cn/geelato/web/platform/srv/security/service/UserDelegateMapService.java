@@ -33,7 +33,7 @@ public class UserDelegateMapService extends BaseService {
     private UserService userService;
 
     /**
-     * 老带新代办业务范围标识：新员工把工作委托给导师，导师可切换到新员工身份代为操作。
+     * 委托代办业务范围标识：委托人把自己的工作委托给代理人，代理人可切换到委托人身份代为操作。
      * 与 periodic_report 等并列，作为 platform_user_r_delegate.scope 的一个取值。
      */
     public static final String SCOPE_MENTOR_ASSIST = "mentor_assist";
@@ -106,12 +106,12 @@ public class UserDelegateMapService extends BaseService {
     }
 
     /**
-     * 查询某代理人（导师）在「老带新代办」范围下，被委托代办的所有委托人（新员工）。
+     * 查询某代理人在「委托代办」范围下，可代为操作的所有委托人。
      * <p>
-     * 用于导师在右上角切换身份时，下拉展示可代办的新员工列表（一个老员工可带多个新员工）。
+     * 用于代理人在右上角切换身份时，下拉展示可代为操作的委托人列表（一个代理人可对应多个委托人）。
      * 条件：scope=mentor_assist、enable_status=1、未逻辑删除。按委托人去重（同一对关系多 scope 行只计一次）。
      *
-     * @param delegateUserId 代理人（导师）用户ID
+     * @param delegateUserId 代理人用户ID
      * @return 委托关系列表（含委托人ID/姓名/英文名等冗余字段）
      */
     public List<UserDelegateMap> queryDelegators(String delegateUserId) {
@@ -127,7 +127,7 @@ public class UserDelegateMapService extends BaseService {
         if (list == null || list.isEmpty()) {
             return new ArrayList<>();
         }
-        // 按 userId 去重：同一对(新员工->导师)在 mentor_assist 下理论上只一行，去重以防异常数据
+        // 按 userId 去重：同一对(委托人->代理人)在 mentor_assist 下理论上只一行，去重以防异常数据
         Map<String, UserDelegateMap> dedup = new java.util.LinkedHashMap<>();
         for (UserDelegateMap m : list) {
             if (m != null && m.getUserId() != null) {
@@ -138,7 +138,7 @@ public class UserDelegateMapService extends BaseService {
     }
 
     /**
-     * 判断代理人（导师）是否有权代办指定委托人（新员工）。
+     * 判断代理人是否有权代为操作指定委托人。
      * <p>
      * 用于 delegateAs 接口鉴权：必须存在 (user_id=userId, delegate_user_id=delegateUserId,
      * scope=mentor_assist, enable_status=1, 未删除) 的记录，否则拒绝切换，防越权。

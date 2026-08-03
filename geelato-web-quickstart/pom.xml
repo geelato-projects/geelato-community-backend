@@ -30,6 +30,14 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
+        <!-- 实体三者同步校验工具（Java类/实体定义/表结构 三者一致性校验与补偿）。
+             由 geelato.meta.sync.enabled=true 开启，默认关闭不激活。 -->
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-meta-sync</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
         <!-- sample runtime support -->
         <dependency>
             <groupId>com.mysql</groupId>

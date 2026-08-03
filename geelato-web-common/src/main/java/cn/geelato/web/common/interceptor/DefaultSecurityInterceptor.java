@@ -171,8 +171,8 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * 应用委托代办态：若当前凭证存在委托代办会话，则用目标身份（被委托人代为操作的对象，
-     * 如新员工）重新加载 SecurityContext，并注入实际操作人（被委托人/代理人，如导师）到
+     * 应用委托代办态：若当前凭证存在委托代办会话，则用目标身份（委托人）重新加载
+     * SecurityContext，并注入实际操作人（代理人）到
      * {@code User.delegateUserId/delegateUserName} 供审计使用。
      * <p>
      * token 全程不变，对业务模块透明；JWT 与 OAuth2 走同一条逻辑。

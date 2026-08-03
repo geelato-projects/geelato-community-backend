@@ -163,9 +163,9 @@ public class JWTAuthController extends BaseController {
     }
 
     /**
-     * 查询当前用户（导师/被委托人）在「老带新代办」范围下，可代为操作的委托人（新员工）列表。
+     * 查询当前用户（代理人）在「委托代办」范围下，可代为操作的委托人列表。
      * <p>
-     * 用于右上角用户菜单的委托代办切换下拉。一个老员工可带多个新员工。
+     * 用于右上角用户菜单的委托代办切换下拉。一个代理人可对应多个委托人。
      */
     @RequestMapping(value = "/delegators", method = RequestMethod.GET)
     public ApiResult<List<UserDelegateMap>> delegators() {
@@ -180,16 +180,16 @@ public class JWTAuthController extends BaseController {
     }
 
     /**
-     * 委托代办身份切换：当前用户（导师）切换为指定新员工身份进行操作。
+     * 委托代办身份切换：当前用户（代理人）切换为指定委托人身份进行操作。
      * <p>
      * 不重签任何 token（统一支持 JWT / OAuth2）：仅在服务端写入「凭证 -> 委托目标」会话映射，
      * 由 DefaultSecurityInterceptor.applyDelegation 在后续请求认证后统一应用——
-     * SecurityContext.currentUser 变为新员工（菜单/数据权限/行级审计按新员工计算），
-     * 同时注入 delegateUserId/delegateUserName=导师 供审计区分「谁代替谁操作」。
+     * SecurityContext.currentUser 变为委托人（菜单/数据权限/行级审计按委托人计算），
+     * 同时注入 delegateUserId/delegateUserName=代理人 供审计区分「谁代替谁操作」。
      * <p>
-     * 鉴权：必须存在 (user_id=targetUserId, delegate_user_id=导师, scope=mentor_assist, enable=1) 记录。
+     * 鉴权：必须存在 (user_id=targetUserId, delegate_user_id=当前代理人, scope=mentor_assist, enable=1) 记录。
      *
-     * @param targetUserId 目标新员工用户ID
+     * @param targetUserId 目标委托人用户ID
      */
     @RequestMapping(value = "/delegateAs", method = RequestMethod.GET)
     public ApiResult<User> delegateAs(String targetUserId) {
@@ -208,7 +208,7 @@ public class JWTAuthController extends BaseController {
         if (current.getUserId().equals(targetUserId)) {
             return ApiResult.fail("不能委托代办为自己");
         }
-        // 鉴权：校验存在有效的老带新委托关系
+        // 鉴权：校验存在有效的委托代办关系
         if (!userDelegateMapService.canAssist(targetUserId, current.getUserId())) {
             return ApiResult.fail("无权代办该用户");
         }
@@ -217,7 +217,7 @@ public class JWTAuthController extends BaseController {
             return ApiResult.fail("目标用户不存在");
         }
         String rawToken = this.getToken();
-        // 清除旧上下文缓存，避免下次请求被 tryRestoreFromCache 还原成导师身份
+        // 清除旧上下文缓存，避免下次请求被 tryRestoreFromCache 还原成代理人身份
         DefaultSecurityInterceptor.invalidateTokenContextCache(rawToken);
         // 写入委托代办会话（token 不变）
         DelegateSession session = new DelegateSession(
@@ -229,7 +229,7 @@ public class JWTAuthController extends BaseController {
     }
 
     /**
-     * 退出委托代办身份，恢复为导师本人。
+     * 退出委托代办身份，恢复为代理人本人。
      */
     @RequestMapping(value = "/exitDelegate", method = RequestMethod.GET)
     public ApiResult<NullResult> exitDelegate() {
@@ -238,7 +238,7 @@ public class JWTAuthController extends BaseController {
         }
         String rawToken = this.getToken();
         delegateSessionStore.remove(rawToken);
-        // 清除缓存中可能存在的「代办态上下文」，使下次请求重新以导师身份认证
+        // 清除缓存中可能存在的「代办态上下文」，使下次请求重新以代理人身份认证
         DefaultSecurityInterceptor.invalidateTokenContextCache(rawToken);
         return ApiResult.successNoResult();
     }

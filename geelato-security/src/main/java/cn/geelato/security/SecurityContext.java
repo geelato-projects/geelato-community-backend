@@ -84,4 +84,15 @@ public class SecurityContext {
         }
         return false;
     }
+
+    /**
+     * 当前线程是否以系统后台主体身份运行（定时任务等无 HTTP 上下文的场景）。
+     * <p>
+     * 判定依据：currentUser 的 systemPrincipal 标志为 true。
+     * 该值由后台任务在建立上下文时显式设置（如 {@code ScheduleHelper.wrapWithContext}）。
+     */
+    public static boolean isSystemPrincipal() {
+        User user = getCurrentUser();
+        return user != null && user.isSystemPrincipal();
+    }
 }

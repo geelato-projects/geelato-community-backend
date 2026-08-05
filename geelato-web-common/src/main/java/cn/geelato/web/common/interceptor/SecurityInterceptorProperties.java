@@ -112,6 +112,10 @@ public class SecurityInterceptorProperties {
                 "/oauth2/**",
                 // 监控页面
                 "/monitor/**",
+                // Spring Boot Actuator 监控端点（/actuator/prometheus、/actuator/health 等）
+                // Prometheus 抓取与 K8s 探针需匿名访问；生产如需收窄暴露面，应通过 management.endpoints.web.exposure.include
+                // 限定端点，或在前端反代加鉴权，而不是在此拦截器放行清单上收紧。
+                "/actuator/**",
                 "/wx/validate/**",
                 // MQL Playground（在线调试与测试场景集，由 geelato.mql.playground.enabled 控制是否激活）
                 "/mql-playground.html",

@@ -5,6 +5,11 @@
       "type": "java.lang.String",
       "description": "微信认证服务地址",
       "sourceType": "cn.geelato.web.platform.srv.security.WXConfiguration"
+    },
+    {
+      "name": "geelato.platform.monitoring",
+      "description": "平台 OpenMetrics 监控（actuator + micrometer）。引入依赖即生效，绝大多数参数已由 PlatformMetricsEnvironmentPostProcessor 注入默认值，无需配置。",
+      "sourceType": "cn.geelato.web.platform.run.monitor.metrics.PlatformMetricsProperties"
     }
   ],
   "properties": [
@@ -14,6 +19,26 @@
       "description": "微信认证服务地址",
       "sourceType": "cn.geelato.web.platform.srv.security.WXConfiguration",
       "defaultValue": "https://api.weixin.qq.com"
+    },
+    {
+      "name": "geelato.platform.monitoring.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用平台 OpenMetrics 监控装配（健康聚合 + 指标治理）。默认 true。设为 false 时仅平台自定义层失效，actuator/micrometer 本身的端点与默认指标仍可用。",
+      "sourceType": "cn.geelato.web.platform.run.monitor.metrics.PlatformMetricsProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "geelato.platform.monitoring.common-tags.application",
+      "type": "java.lang.String",
+      "description": "公共标签 application 取值。未设置时取 spring.application.name，再缺失则为 unknown。",
+      "sourceType": "cn.geelato.web.platform.run.monitor.metrics.PlatformMetricsProperties$CommonTags"
+    },
+    {
+      "name": "geelato.platform.monitoring.common-tags.module",
+      "type": "java.lang.String",
+      "description": "公共标签 module 取值，默认 geelato-web-platform。",
+      "sourceType": "cn.geelato.web.platform.run.monitor.metrics.PlatformMetricsProperties$CommonTags",
+      "defaultValue": "geelato-web-platform"
     }
   ]
 }

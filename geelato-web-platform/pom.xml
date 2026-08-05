@@ -276,5 +276,17 @@
             <artifactId>json-schema-validator</artifactId>
             <version>1.0.87</version>
         </dependency>
+
+        <!-- ===== OpenMetrics / 可观测性 ===== -->
+        <!-- actuator 提供 /actuator/prometheus、/actuator/health 等端点；micrometer 负责 HTTP/JVM/HikariCP 指标自动埋点。 -->
+        <!-- 依赖一加即生效，全部参数由 PlatformMetricsEnvironmentPostProcessor 注入合理默认（零配置）。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
     </dependencies>
 </project>

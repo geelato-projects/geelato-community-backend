@@ -58,6 +58,15 @@ public class User extends UserCore{
     private List<Permission> dataPermissions;
     private List<Permission> elementPermissions;
 
+    /**
+     * 是否为系统后台主体（定时任务等无 HTTP 上下文的场景）。
+     * <p>
+     * 为 true 时，{@code PlatformQueryFilterSupport.resolveOriginalWhere} 会跳过数据权限过滤，
+     * 即不追加默认的 {@code creator='<userId>'} 过滤条件，从而能查询到当前租户下的全部数据。
+     * 注意：租户隔离（tenantCode 过滤）仍然生效。
+     */
+    private boolean systemPrincipal;
+
     public List<Permission> getDataPermissionByEntity_temp(String entity) {
         return this.dataPermissions.stream().filter(x -> x.getEntity().equals(entity)).toList();
     }

@@ -1,0 +1,75 @@
+# geelato-platform Prometheus 抓取配置
+# 使用方式：prometheus --config.file=prometheus.yml --web.enable-lifecycle
+# 告警规则：另需 --config.file 同目录的 alerts.yml（rule_files 已引用）
+#
+# 端点：/actuator/prometheus（Spring Boot Actuator + Micrometer OpenMetrics 文本格式）
+# 健康探针：/actuator/health/live（liveness）、/actuator/health/ready（readiness）
+#
+# 主要指标（Micrometer → Prometheus 命名）：
+#   http_server_requests_seconds_bucket  HTTP API 耗时分布（RED：Rate/Error/Duration）
+#   hikaricp_connections_active/pending   数据库连接池饱和度（USE：Utilization/Saturation）
+#   jvm_memory_used_bytes                 JVM 堆/非堆内存
+#   jvm_gc_*                              GC 次数与耗时
+#   process_cpu_usage                     进程 CPU 使用率
+# 公共标签：application（spring.application.name）、module=geelato-web-platform
+
+global:
+  # 30s 抓取：平台 HTTP/连接池/JVM 指标变化平缓，30s 足够；流量约为 15s 间隔的一半。
+  # 与 alerts.yml 的 for: 5m/10m 窗口兼容（5m = 10 个样本，足够触发告警）。
+  scrape_interval: 30s
+  evaluation_interval: 15s
+  # 外部标签用于多集群/多环境区分，按需启用
+  # external_labels:
+  #   cluster: prod
+  #   env: prod
+
+rule_files:
+  - alerts.yml
+
+scrape_configs:
+  - job_name: geelato-platform
+    metrics_path: /actuator/prometheus
+    # 本地联调改为 localhost:8080；生产替换为实际地址
+    static_configs:
+      - targets: ["localhost:8080"]
+        labels:
+          env: local
+
+  # ---------- 多实例 / 服务发现示例（按需启用其一） ----------
+
+  # 方式一：多实例静态配置
+  # - job_name: geelato-platform
+  #   metrics_path: /actuator/prometheus
+  #   static_configs:
+  #     - targets: ["10.0.1.11:8080", "10.0.1.12:8080"]
+  #       labels:
+  #         env: prod
+
+  # 方式二：Kubernetes 服务发现（配合 Pod 注解 prometheus.io/scrape=true）
+  # - job_name: geelato-platform
+  #   metrics_path: /actuator/prometheus
+  #   kubernetes_sd_configs:
+  #     - role: pod
+  #   relabel_configs:
+  #     - source_labels: [__meta_kubernetes_pod_label_app]
+  #       regex: geelato-platform
+  #       action: keep
+  #     - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+  #       regex: "true"
+  #       action: keep
+  #     - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+  #       regex: ([^:]+)(?::\d+)?;(\d+)
+  #       replacement: $1:$2
+  #       target_label: __address__
+
+  # 方式三：Consul 服务发现
+  # - job_name: geelato-platform
+  #   metrics_path: /actuator/prometheus
+  #   consul_sd_configs:
+  #     - server: consul:8500
+  #       services: [geelato-platform]
+
+  # ---------- 鉴权示例（端点经反代加鉴权时启用） ----------
+  # authorization:
+  #   type: Bearer
+  #   credentials: <scrape-token>

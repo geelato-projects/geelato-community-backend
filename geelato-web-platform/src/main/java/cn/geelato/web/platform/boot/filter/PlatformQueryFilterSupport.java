@@ -5,6 +5,7 @@ import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.security.Permission;
 import cn.geelato.security.PermissionRuleUtils;
+import cn.geelato.security.SecurityContext;
 import org.springframework.util.StringUtils;
 
 import java.util.Objects;
@@ -48,6 +49,10 @@ final class PlatformQueryFilterSupport {
     }
 
     String resolveOriginalWhere(String entityName) {
+        // 系统后台主体（定时任务等）跳过数据权限过滤，仅保留租户隔离
+        if (SecurityContext.isSystemPrincipal()) {
+            return null;
+        }
         Permission dp = SessionCtx.getCurrentUser().getDataPermissionByEntity(entityName);
         if (dp == null) {
             return String.format("creator='%s'", SessionCtx.getCurrentUser().getUserId());

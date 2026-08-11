@@ -82,11 +82,20 @@ public class MetaReflex {
     }
 
     /**
-     * 基于类的title注解，解析出表元数据
+     * 基于类的title注解，解析出表元数据。
+     * <p>
+     * 仅回填 {@code @Entity(connectId)} 的显式指定值到 TableMeta.connectId（扫描期安全，不依赖外部注入）。
+     * {@code @Entity(catalog)} 的数据源映射不在此处解析——扫描期 catalogConnectIdMapping 可能尚未注入，
+     * 改由运行时 {@link MetaManager#resolveConnectId(String)} 在查询期即时解析，规避时序问题。
      */
     public static TableMeta getTableMeta(Class clazz) {
         Title title = (Title) clazz.getAnnotation(Title.class);
-        return new TableMeta(getTableName(clazz), title != null ? title.title() : "", getEntityName(clazz), title != null ? title.description() : "");
+        TableMeta tableMeta = new TableMeta(getTableName(clazz), title != null ? title.title() : "", getEntityName(clazz), title != null ? title.description() : "");
+        Entity entity = (Entity) clazz.getAnnotation(Entity.class);
+        if (entity != null && StringUtils.hasText(entity.connectId())) {
+            tableMeta.setConnectId(entity.connectId());
+        }
+        return tableMeta;
     }
 
     /**

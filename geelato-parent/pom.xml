@@ -54,6 +54,7 @@
         <geelato.workflow.version>0.0.1-SNAPSHOT</geelato.workflow.version>
         <geelato.svcp.version>0.0.1-SNAPSHOT</geelato.svcp.version>
         <geelato.market.version>0.0.1-SNAPSHOT</geelato.market.version>
+        <rapidocr4j.version>1.0.3</rapidocr4j.version>
     </properties>
 
     <licenses>
@@ -314,6 +315,12 @@
                 <groupId>cn.geelato</groupId>
                 <artifactId>geelato-workflow-engine</artifactId>
                 <version>${geelato.workflow.version}</version>
+            </dependency>
+            <!-- 发票 OCR（阶段一宿主直接实现）：rapidocr4j 自带 onnxruntime + opencv native + PP-OCRv4 模型 -->
+            <dependency>
+                <groupId>io.github.hzkitty</groupId>
+                <artifactId>rapidocr4j</artifactId>
+                <version>${rapidocr4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

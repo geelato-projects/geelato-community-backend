@@ -1,7 +1,6 @@
 package cn.geelato.datasource;
 
 import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.entity.EntityMeta;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -72,12 +71,9 @@ public class EntityDataSourceResolver {
 
     private String resolveFromMetaData(String entityName) {
         try {
-            EntityMeta entityMeta = metaManager.getByEntityName(entityName);
-            if (entityMeta != null) {
-                String dataSourceKey = entityMeta.getTableMeta().getConnectId();
-                if (dataSourceKey != null && dynamicDataSourceRegistry.containsDataSource(dataSourceKey)) {
-                    return dataSourceKey;
-                }
+            String dataSourceKey = metaManager.resolveConnectId(entityName);
+            if (dataSourceKey != null && dynamicDataSourceRegistry.containsDataSource(dataSourceKey)) {
+                return dataSourceKey;
             }
         } catch (Exception e) {
             log.debug("从数据库查询实体映射失败: {}", entityName, e);

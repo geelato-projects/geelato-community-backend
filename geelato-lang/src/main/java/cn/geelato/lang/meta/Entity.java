@@ -46,4 +46,14 @@ public @interface Entity {
      * @return *
      */
     String schema() default "";
+
+    /**
+     * (Optional) 数据源连接标识，对应动态数据源 key（platform_dev_db_connect 的 id）。
+     * <p>
+     * 作为实体数据源的显式声明，优先级高于 {@link #catalog()} 的映射。
+     * 默认空表示不显式指定，回退到 catalog 映射或数据库登记值（platform_dev_table.connect_id）。
+     *
+     * @return 数据源 key，默认空（走默认数据源）
+     */
+    String connectId() default "";
 }

@@ -11,6 +11,7 @@ import java.util.List;
  * 审计日志配置。
  *
  * <p>按方案约定：只有 {@link #enabled} 一个总开关，控制是否启用审计日志（同时控制第1层注解与第2层 ORM 兜底）。
+ * <b>默认关闭</b>（{@code enabled=false}），需显式配置 {@code geelato.platform.audit.enabled=true} 才启用。
  * 其余字段均为非开关的内部调参项，提供合理默认值。
  */
 @Data
@@ -18,8 +19,8 @@ import java.util.List;
 @ConfigurationProperties(prefix = "geelato.platform.audit")
 public class AuditLogProperties {
 
-    /** 唯一总开关：是否启用审计日志。关闭后第1层注解与第2层 ORM 兜底均不工作。 */
-    private boolean enabled = true;
+    /** 唯一总开关：是否启用审计日志。默认关闭，需显式配置 enabled=true 才开启。 */
+    private boolean enabled = false;
 
     // ===== ORM 兜底层调参（不可关停，仅作范围控制，避免噪音） =====
 

@@ -41,7 +41,6 @@ public final class SaveEventManager {
         registerAfterIfAbsent(new ReadonlyShadowTableListener());
     }
 
-    // ===== 注册（B1：按 order 升序插入） =====
 
     public static void registerBefore(BeforeSaveEventListener listener) {
         registerOrderedBefore(listener, false);
@@ -138,7 +137,6 @@ public final class SaveEventManager {
         list.add(insertAt, item);
     }
 
-    // ===== 触发 =====
 
     public static void fireBefore(SaveEventContext context) {
         if (log.isInfoEnabled()) {
@@ -177,8 +175,7 @@ public final class SaveEventManager {
         for (AfterSaveEventListener l : AFTER_LISTENERS) {
             if (l.enabled(context) && l.supports(context)) {
                 // A2：事务感知监听器——把回调登记到 context，由 Dao 侧在事务提交/回滚点触发
-                if (l instanceof TransactionalAfterSaveEventListener) {
-                    final TransactionalAfterSaveEventListener tl = (TransactionalAfterSaveEventListener) l;
+                if (l instanceof TransactionalAfterSaveEventListener tl) {
                     context.onCommit(() -> safeRunAfterCommit(tl, context));
                     context.onRollback(() -> safeRunAfterRollback(tl, context));
                 }
@@ -217,7 +214,6 @@ public final class SaveEventManager {
         }
     }
 
-    // ===== 线程池管理（A4） =====
 
     /**
      * 替换线程池。替换前会优雅关闭旧池，避免线程泄漏；加锁防并发竞态。
@@ -229,18 +225,18 @@ public final class SaveEventManager {
         synchronized (EXECUTOR_LOCK) {
             ExecutorService old = executor;
             executor = customExecutor;
-            gracefulShutdown(old, "save-event");
+            gracefulShutdown(old);
         }
     }
 
     /** 供容器销毁时优雅关闭线程池。 */
     public static void shutdown() {
         synchronized (EXECUTOR_LOCK) {
-            gracefulShutdown(executor, "save-event");
+            gracefulShutdown(executor);
         }
     }
 
-    private static void gracefulShutdown(ExecutorService pool, String name) {
+    private static void gracefulShutdown(ExecutorService pool) {
         if (pool == null) {
             return;
         }

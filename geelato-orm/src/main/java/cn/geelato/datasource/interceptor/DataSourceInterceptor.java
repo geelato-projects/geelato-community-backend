@@ -28,8 +28,6 @@ import java.lang.reflect.Method;
 @Component
 @Slf4j
 public class DataSourceInterceptor {
-
-    
     @Autowired
     private EntityDataSourceResolver entityDataSourceResolver;
     
@@ -44,15 +42,7 @@ public class DataSourceInterceptor {
     @Before("@within(cn.geelato.datasource.annotation.UseDynamicDataSource) " +
             "|| @annotation(cn.geelato.datasource.annotation.UseDynamicDataSource)")
     public void beforeTransaction(JoinPoint point) {
-        MethodSignature signature = (MethodSignature) point.getSignature();
-        Method method = signature.getMethod();
-
-        UseDynamicDataSource dataSourceAnnotation = method.getAnnotation(UseDynamicDataSource.class);
-        if (dataSourceAnnotation == null) {
-            dataSourceAnnotation = AnnotationUtils.findAnnotation(
-                    method.getDeclaringClass(), UseDynamicDataSource.class);
-        }
-
+        UseDynamicDataSource dataSourceAnnotation = resolveUseDynamicDataSource(point);
         if (dataSourceAnnotation != null) {
             String defaultDataSource = dataSourceAnnotation.value();
             DEFAULT_DATA_SOURCE.set(defaultDataSource);
@@ -61,65 +51,86 @@ public class DataSourceInterceptor {
     }
 
     /**
-     * 事务结束后的清理工作
+     * 方法结束后清理默认数据源上下文，避免线程复用时沿用上一次的默认值。
      */
-    @After("(@within(cn.geelato.datasource.annotation.UseDynamicDataSource) " +
-            "|| @annotation(cn.geelato.datasource.annotation.UseDynamicDataSource))" +
-            " && @annotation(org.springframework.transaction.annotation.Transactional)")
-    public void afterTransaction(JoinPoint point) {
+    @After("@within(cn.geelato.datasource.annotation.UseDynamicDataSource) " +
+            "|| @annotation(cn.geelato.datasource.annotation.UseDynamicDataSource)")
+    public void afterUseDynamicDataSource() {
         DEFAULT_DATA_SOURCE.remove();
-        DynamicDataSourceHolder.clearDataSourceKey();
-        log.debug("清理数据源上下文");
+        log.debug("清理默认数据源上下文");
     }
 
     @Around("execution(* cn.geelato.core.orm.Dao.*(..))")
     public Object aroundDaoMethod(ProceedingJoinPoint pjp) throws Throwable {
-        Object[] args = pjp.getArgs();
-        String entityName = null;
+        String entityName = resolveEntityName(pjp.getArgs());
+        String dataSourceKey = resolveDataSourceKey(entityName);
+        String previous = DynamicDataSourceHolder.getDataSourceKey();
+        try {
+            applyDataSourceKey(dataSourceKey);
+            return pjp.proceed();
+        } finally {
+            restorePreviousDataSource(previous);
+        }
+    }
+
+    private UseDynamicDataSource resolveUseDynamicDataSource(JoinPoint point) {
+        Method method = ((MethodSignature) point.getSignature()).getMethod();
+        UseDynamicDataSource annotation = method.getAnnotation(UseDynamicDataSource.class);
+        if (annotation != null) {
+            return annotation;
+        }
+        return AnnotationUtils.findAnnotation(method.getDeclaringClass(), UseDynamicDataSource.class);
+    }
+
+    private String resolveEntityName(Object[] args) {
         for (Object arg : args) {
             if (arg instanceof BoundPageSql bps) {
-                if (bps.getBoundSql() != null && bps.getBoundSql().getCommand() != null) {
-                    entityName = bps.getBoundSql().getCommand().getEntityName();
-                }
-                break;
-            } else if (arg instanceof BoundSql bs) {
-                if (bs.getCommand() != null) {
-                    entityName = bs.getCommand().getEntityName();
-                }
-                break;
-            } else if (arg instanceof Class<?> clazz) {
-                if (clazz.isAnnotationPresent(Entity.class)) {
-                    Entity entityAnnotation = clazz.getAnnotation(Entity.class);
-                    String name = entityAnnotation.name();
-                    if (!name.isEmpty()) {
-                        entityName = name;
-                    } else {
-                        entityName = clazz.getSimpleName();
-                    }
-                }
-                break;
+                return bps.getBoundSql() != null && bps.getBoundSql().getCommand() != null
+                        ? bps.getBoundSql().getCommand().getEntityName()
+                        : null;
+            }
+            if (arg instanceof BoundSql bs) {
+                return bs.getCommand() != null ? bs.getCommand().getEntityName() : null;
+            }
+            if (arg instanceof Class<?> clazz && clazz.isAnnotationPresent(Entity.class)) {
+                Entity entityAnnotation = clazz.getAnnotation(Entity.class);
+                return entityAnnotation.name().isEmpty() ? clazz.getSimpleName() : entityAnnotation.name();
             }
         }
-        String dataSourceKey;
-        if (entityName != null) {
-            dataSourceKey = entityDataSourceResolver.resolveDataSource(entityName);
-            if (dataSourceKey != null) {
-                DynamicDataSourceHolder.setDataSourceKey(dataSourceKey);
-                log.debug("根据实体 {} 切换到数据源: {}", entityName, dataSourceKey);
-            } else {
-                String defaultSource = DEFAULT_DATA_SOURCE.get();
-                if (defaultSource != null) {
-                    DynamicDataSourceHolder.setDataSourceKey(defaultSource);
-                    log.debug("实体 {} 未找到映射，使用默认数据源: {}", entityName, defaultSource);
-                }
-            }
-        } else {
-            String defaultSource = DEFAULT_DATA_SOURCE.get();
+        return null;
+    }
+
+    private String resolveDataSourceKey(String entityName) {
+        String defaultSource = DEFAULT_DATA_SOURCE.get();
+        if (entityName == null) {
             if (defaultSource != null) {
-                DynamicDataSourceHolder.setDataSourceKey(defaultSource);
                 log.debug("使用默认数据源: {}", defaultSource);
             }
+            return defaultSource;
         }
-        return pjp.proceed();
+
+        String dataSourceKey = entityDataSourceResolver.resolveDataSource(entityName);
+        if (dataSourceKey != null) {
+            log.debug("根据实体 {} 切换到数据源: {}", entityName, dataSourceKey);
+            return dataSourceKey;
+        }
+        if (defaultSource != null) {
+            log.debug("实体 {} 未找到映射，使用默认数据源: {}", entityName, defaultSource);
+        }
+        return defaultSource;
+    }
+
+    private void applyDataSourceKey(String dataSourceKey) {
+        if (dataSourceKey != null) {
+            DynamicDataSourceHolder.setDataSourceKey(dataSourceKey);
+        }
+    }
+
+    private void restorePreviousDataSource(String previous) {
+        if (previous != null) {
+            DynamicDataSourceHolder.setDataSourceKey(previous);
+        } else {
+            DynamicDataSourceHolder.clearDataSourceKey();
+        }
     }
 }

@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 审计日志自动装配。
  *
- * <p>当 {@code geelato.platform.audit.enabled=true}（默认）时：
+ * <p>仅当显式配置 {@code geelato.platform.audit.enabled=true} 时才装配（默认不装配，零开销）：
  * <ol>
  *   <li>构造共享 {@link AuditServices}，注册第2层 ORM 监听器到 {@code SaveEventManager}/{@code DeleteEventManager}；</li>
  *   <li>注册 {@link AuditOperationFilter}（通道A + 请求级上下文生命周期）；</li>
@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(prefix = "geelato.platform.audit", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "geelato.platform.audit", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class AuditLogAutoConfiguration {
 
     private final AuditLogProperties properties;

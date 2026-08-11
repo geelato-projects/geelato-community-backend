@@ -51,6 +51,11 @@
             <groupId>org.pf4j</groupId>
             <artifactId>pf4j-update</artifactId>
         </dependency>
+        <!-- 发票 OCR：rapidocr4j（传递依赖 onnxruntime 1.18.0 + openpnp opencv 4.6.0-0，含全平台 native + PP-OCRv4 中文模型） -->
+        <dependency>
+            <groupId>io.github.hzkitty</groupId>
+            <artifactId>rapidocr4j</artifactId>
+        </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-web-oss</artifactId>

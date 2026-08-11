@@ -28,7 +28,6 @@ public class DataSourceManager extends AbstractManager {
 
     private final static ConcurrentHashMap<Object, Object> lazyDynamicDataSourceMap =new ConcurrentHashMap<>();
     private volatile String defaultDataSourceKey;
-    // 框架层不再绑定 platform_dev_db_connect 表；默认实现由业务层（geelato-web-platform）通过 SPI 注入。
     private DataSourceDefinitionLoader definitionLoader = null;
 
     public static DataSourceManager singleInstance() {

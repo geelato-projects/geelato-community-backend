@@ -27,7 +27,8 @@ public class DynamicRoutingDataSource extends AbstractRoutingDataSource {
     }
 
     private void ensureDataSourceExists(String dataSourceKey) {
-        if (targetDataSourcesMap.containsKey(dataSourceKey)) {
+        if ("primary".equalsIgnoreCase(dataSourceKey) 
+            || targetDataSourcesMap.containsKey(dataSourceKey)) {
             return;
         }
         synchronized (this) {
@@ -50,7 +51,9 @@ public class DynamicRoutingDataSource extends AbstractRoutingDataSource {
     }
 
     public synchronized void refreshDataSource(String dataSourceKey) {
-        if (dataSourceKey == null || dataSourceKey.trim().isEmpty() || "primary".equalsIgnoreCase(dataSourceKey)) {
+        if (dataSourceKey == null
+                || dataSourceKey.trim().isEmpty()
+                || "primary".equalsIgnoreCase(dataSourceKey)) {
             return;
         }
         targetDataSourcesMap.remove(dataSourceKey);

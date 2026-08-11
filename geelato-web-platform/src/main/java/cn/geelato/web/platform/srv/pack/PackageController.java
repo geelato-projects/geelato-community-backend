@@ -30,6 +30,7 @@ import cn.geelato.pack.PackageConfigurationProperties;
 import cn.geelato.pack.PackageException;
 import cn.geelato.meta.AppVersion;
 import cn.geelato.web.platform.srv.pack.service.AppVersionService;
+import cn.geelato.web.platform.srv.pack.service.PackageService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -78,6 +79,8 @@ public class PackageController {
     private FileHandler fileHandler;
     @Resource
     AppVersionService appVersionService;
+    @Resource
+    private PackageService packageService;
 
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
@@ -98,6 +101,9 @@ public class PackageController {
     @ResponseBody
     public ApiResult<AppVersion> packetApp(@NotNull @PathVariable("appId") String appId, String version, String description,
                                            @RequestBody(required = false) Map<String, String> appointMetas) throws IOException {
+        if ("v2".equals(packageConfigurationProperties.getEngine())) {
+            return ApiResult.success(packageService.packetV2(appId, version, description, appointMetas));
+        }
         Map<String, String> appDataMap = new HashMap<>();
         Map<String, String> appMetaDataMap = AppMetaUtils.buildPackageAppMetaMap(appId);
         Map<String, String> appBizDataMap = appBizDataMap(appId, "package");
@@ -161,6 +167,9 @@ public class PackageController {
     @ResponseBody
     public ApiResult<AppVersion> packetMergeApp(String appId, String version, String description,
                                                 @RequestBody(required = false) Map<String, Map<String, String>> appointMetas) throws IOException {
+        if ("v2".equals(packageConfigurationProperties.getEngine())) {
+            return ApiResult.success(packageService.packetMergeV2(appId, version, description, appointMetas));
+        }
         String[] versionIds = appointMetas.keySet().toArray(new String[0]);
         List<AppPackData> appPackages = getAppointAppPackage(versionIds);
         AppPackData appPackage = PackageUtils.mergePackage(appPackages, appointMetas);
@@ -264,6 +273,9 @@ public class PackageController {
     @RequestMapping(value = {"/deploy/{versionId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     @ResponseBody
     public ApiResult<?> deployPackage(@PathVariable("versionId") String versionId) {
+        if ("v2".equals(packageConfigurationProperties.getEngine())) {
+            return packageService.deployV2(versionId);
+        }
         if ("init_source".equals(packageConfigurationProperties.getEnv())) {
             return ApiResult.fail("本环境无法部署任何应用，请联系管理员！");
         }
@@ -305,6 +317,15 @@ public class PackageController {
             }
         }
         return ApiResult.success(null, "应用部署成功！");
+    }
+
+    /*
+    回滚到最近一次备份版本（仅 v2）
+     */
+    @RequestMapping(value = {"/rollback/{appId}"}, method = RequestMethod.GET, produces = MediaTypes.APPLICATION_JSON_UTF_8)
+    @ResponseBody
+    public ApiResult<?> rollback(@PathVariable("appId") String appId) {
+        return packageService.rollbackV2(appId);
     }
 
     private void refreshApp(String appId) {

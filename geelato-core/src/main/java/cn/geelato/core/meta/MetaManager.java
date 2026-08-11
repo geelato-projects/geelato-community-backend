@@ -17,6 +17,8 @@ import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.ClassScanner;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
@@ -50,13 +52,10 @@ public class MetaManager extends AbstractManager {
      * 简化实体数据集合，标识，标题，类型
      */
     private final List<EntityLiteMeta> entityLiteMetaList = new ArrayList<>();
-    /**
-     * 实体类
-     */
-//    private final HashMap<String, Class> entityMetaClassMap = new HashMap<>();
     private Dao dao;
-    // 框架层不再绑定 platform_dev_* 表；默认实现由业务层（geelato-web-platform）通过 SPI 注入。
+    @Getter
     private MetaStore metaStore = null;
+    @Getter
     private MetaResourceProvider metaResourceProvider = new DefaultMetaResourceProvider();
     /**
      * 同名实体（Java类源 vs DB在线源）冲突时的合并策略：
@@ -66,6 +65,7 @@ public class MetaManager extends AbstractManager {
      * </ul>
      * catalog=platform 的系统内置实体始终以 Java 类为准，不受此配置影响。
      */
+    @Getter
     private ConflictStrategy conflictStrategy = ConflictStrategy.CLASS;
     /**
      * 冲突检测总开关，默认关闭。对应配置项 geelato.meta.conflict-detect.enabled。
@@ -74,7 +74,18 @@ public class MetaManager extends AbstractManager {
      * 开启时：才输出冲突 warn 日志、启用 diff 日志、按 conflictStrategy 处理同名冲突。
      * </p>
      */
+    @Getter
+    @Setter
     private boolean conflictDetectEnabled = false;
+    /**
+     * catalog（逻辑数据库分组）到数据源 connectId 的映射。
+     * <p>
+     * 实体的 {@code @Entity(catalog)} 值在此查表得到数据源 key，使 catalog 承担"划分数据库"的职责。
+     * 对应配置项 {@code geelato.orm.datasource.catalog-mapping}。默认空，表示不启用 catalog 路由。
+     * </p>
+     */
+    @Getter
+    private Map<String, String> catalogConnectIdMapping = new HashMap<>();
 
     private MetaManager() {
         log.info("MetaManager Instancing...");
@@ -511,18 +522,10 @@ public class MetaManager extends AbstractManager {
         return metaResourceProvider.getTableUpgradeColumns();
     }
 
-    public MetaStore getMetaStore() {
-        return metaStore;
-    }
-
     public void setMetaStore(MetaStore metaStore) {
         if (metaStore != null) {
             this.metaStore = metaStore;
         }
-    }
-
-    public MetaResourceProvider getMetaResourceProvider() {
-        return metaResourceProvider;
     }
 
     public void setMetaResourceProvider(MetaResourceProvider metaResourceProvider) {
@@ -531,22 +534,52 @@ public class MetaManager extends AbstractManager {
         }
     }
 
-    public ConflictStrategy getConflictStrategy() {
-        return conflictStrategy;
-    }
-
     public void setConflictStrategy(ConflictStrategy conflictStrategy) {
         if (conflictStrategy != null) {
             this.conflictStrategy = conflictStrategy;
         }
     }
 
-    public boolean isConflictDetectEnabled() {
-        return conflictDetectEnabled;
+    public void setCatalogConnectIdMapping(Map<String, String> catalogConnectIdMapping) {
+        if (catalogConnectIdMapping != null) {
+            this.catalogConnectIdMapping = catalogConnectIdMapping;
+        }
     }
 
-    public void setConflictDetectEnabled(boolean conflictDetectEnabled) {
-        this.conflictDetectEnabled = conflictDetectEnabled;
+    /**
+     * 运行时统一解析实体的数据源 connectId（查询期即时解析，规避扫描期 mapping 未注入的时序问题）。
+     * <p>优先级：</p>
+     * <ol>
+     *     <li>{@code TableMeta.connectId}：来自 @Entity(connectId) 或数据库登记值（platform_dev_table.connect_id）</li>
+     *     <li>{@code @Entity(catalog)} 在 catalogConnectIdMapping 中的映射值</li>
+     *     <li>返回 null，由调用方回退到默认数据源 primary</li>
+     * </ol>
+     *
+     * @param entityName 实体名称
+     * @return 数据源 key，未解析到返回 null
+     */
+    public String resolveConnectId(String entityName) {
+        if (!StringUtils.isNotBlank(entityName)) {
+            return null;
+        }
+        EntityMeta entityMeta = getByEntityName(entityName);
+        if (entityMeta == null) {
+            return null;
+        }
+        // 优先级1：TableMeta.connectId（@Entity(connectId) 显式指定 或 DB 登记值）
+        if (entityMeta.getTableMeta() != null
+                && StringUtils.isNotBlank(entityMeta.getTableMeta().getConnectId())) {
+            return entityMeta.getTableMeta().getConnectId();
+        }
+        // 优先级2：catalog 映射到数据源
+        String catalog = entityMeta.getCatalog();
+        if (StringUtils.isNotBlank(catalog)) {
+            String mappedConnectId = catalogConnectIdMapping.get(catalog);
+            if (StringUtils.isNotBlank(mappedConnectId)) {
+                return mappedConnectId;
+            }
+        }
+        return null;
     }
 
     /**

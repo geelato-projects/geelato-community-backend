@@ -120,6 +120,11 @@
             <artifactId>geelato-actuator</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-ob-integrate-api</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!-- sample dev and observability support -->
         <dependency>
             <groupId>org.springdoc</groupId>

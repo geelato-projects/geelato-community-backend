@@ -4,7 +4,6 @@ import cn.geelato.core.Fn;
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.mql.command.DeleteCommand;
 import cn.geelato.core.mql.command.QueryCommand;
@@ -137,13 +136,6 @@ public abstract class AbstractExecutionStrategySupport {
     }
 
     private String resolveEntityConnectId(String entityName) {
-        if (!StringUtils.hasText(entityName) || !metaManager.containsEntity(entityName)) {
-            return null;
-        }
-        EntityMeta entityMeta = metaManager.getByEntityName(entityName);
-        if (entityMeta == null || entityMeta.getTableMeta() == null) {
-            return null;
-        }
-        return entityMeta.getTableMeta().getConnectId();
+        return metaManager.resolveConnectId(entityName);
     }
 }

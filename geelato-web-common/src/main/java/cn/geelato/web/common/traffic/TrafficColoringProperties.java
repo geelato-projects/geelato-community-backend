@@ -31,6 +31,6 @@ public class TrafficColoringProperties {
     private boolean cookieHttpOnly = true;
     private boolean cookieSecure = false;
 
-    private boolean signingEnabled = true;
+    private boolean signingEnabled = false;
     private String signingSecret;
 }

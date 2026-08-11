@@ -186,7 +186,6 @@ public class Dao extends SqlKeyDao {
     }
 
     public List<Map<String, Object>> queryForMapList(BoundPageSql boundPageSql) {
-        log.info(boundPageSql.getBoundSql().getSql());
         QueryCommand command = (QueryCommand) boundPageSql.getBoundSql().getCommand();
         return convert(queryForMapListInner(boundPageSql.getBoundSql()), metaManager.getByEntityName(command.getEntityName()));
     }

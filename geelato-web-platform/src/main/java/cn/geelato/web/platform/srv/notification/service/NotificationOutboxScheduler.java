@@ -157,7 +157,6 @@ public class NotificationOutboxScheduler {
     }
 
     /** 取一批就绪项：status=ready，按 next_retry_at 升序，限制 batchSize */
-    @SuppressWarnings("unchecked")
     private List<NotificationOutbox> fetchReady() {
         String sql = "SELECT * FROM platform_notification_outbox WHERE del_status = 0 AND status = ? "
                 + "AND (next_retry_at IS NULL OR next_retry_at <= ?) "

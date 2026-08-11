@@ -52,9 +52,6 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
         securityInterceptor.setTrafficTagStrategy(trafficTagStrategy);
         securityInterceptor.setDelegateSessionStore(delegateSessionStore);
 
-        // 排除鉴权的路径：内置默认（SecurityInterceptorProperties.initDefaultExcludes）
-        // + 用户配置追加（geelato.security.interceptor.extra-excludes[*]）
-        // + 用户配置覆盖（geelato.security.interceptor.default-excludes[*] + override-default-excludes）
         java.util.List<String> excludes = securityInterceptorProperties.resolveEffectiveExcludes();
 
         registry.addInterceptor(securityInterceptor)

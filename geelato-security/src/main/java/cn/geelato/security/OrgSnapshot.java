@@ -17,7 +17,7 @@ public final class OrgSnapshot {
         return EMPTY;
     }
 
-    static OrgSnapshot from(Map<String, Org> orgById) {
+    public static OrgSnapshot from(Map<String, Org> orgById) {
         return new OrgSnapshot(Collections.unmodifiableMap(new LinkedHashMap<>(orgById)));
     }
 

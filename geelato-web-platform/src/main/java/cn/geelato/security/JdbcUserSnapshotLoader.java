@@ -101,12 +101,12 @@ public class JdbcUserSnapshotLoader implements UserSnapshotLoader {
             if (user.getUserRoles() == null) {
                 user.setUserRoles(Collections.emptyList());
             } else {
-                user.setUserRoles(Collections.unmodifiableList(new ArrayList<>(user.getUserRoles())));
+                user.setUserRoles(List.copyOf(user.getUserRoles()));
             }
             if (user.getUserOrgs() == null) {
                 user.setUserOrgs(Collections.emptyList());
             } else {
-                user.setUserOrgs(Collections.unmodifiableList(new ArrayList<>(user.getUserOrgs())));
+                user.setUserOrgs(List.copyOf(user.getUserOrgs()));
             }
         }
         return UserSnapshot.from(userById, extendIndex);

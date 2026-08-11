@@ -19,7 +19,7 @@ public final class UserSnapshot {
         return EMPTY;
     }
 
-    static UserSnapshot from(Map<String, User> userById, Map<String, Map<String, User>> userByExtendType) {
+    public static UserSnapshot from(Map<String, User> userById, Map<String, Map<String, User>> userByExtendType) {
         Map<String, Map<String, User>> extendIndex = new LinkedHashMap<>();
         for (Map.Entry<String, Map<String, User>> entry : userByExtendType.entrySet()) {
             extendIndex.put(entry.getKey(), Collections.unmodifiableMap(new LinkedHashMap<>(entry.getValue())));

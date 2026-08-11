@@ -195,12 +195,10 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
                 return;
             }
             actUser.setupOrgInfo(orgProvider);
-            // 注入实际操作人（被委托人/代理人），与 platform_user_r_delegate.delegate_user_id 同义
             actUser.setDelegateUserId(session.getOriginUserId());
             actUser.setDelegateUserName(session.getOriginUserName() != null ? session.getOriginUserName() : session.getOriginLoginName());
             SecurityContext.setCurrentUser(actUser);
             SecurityContext.setCurrentTenant(new Tenant(session.getTenantCode()));
-            // 将委托态上下文写入缓存，后续请求走 tryRestoreFromCache 直接还原
             cacheUserContext(rawToken, actUser, SecurityContext.getCurrentPassword(), buildShiroToken(actUser));
         } catch (Exception e) {
             log.warn("applyDelegation failed, fallback to origin identity, target:{}, err:{}",
@@ -209,7 +207,6 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     }
 
     private org.apache.shiro.authc.AuthenticationToken buildShiroToken(User user) {
-        // 复用目标身份重建 Shiro 会话；密码沿用当前上下文（仅用于 Shiro 校验链路，不改密码体系）
         String pwd = SecurityContext.getCurrentPassword();
         if (pwd == null || pwd.isEmpty()) {
             pwd = anonymousFixedPassword;

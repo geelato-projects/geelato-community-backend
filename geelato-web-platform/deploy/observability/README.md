@@ -1,8 +1,14 @@
-# geelato-platform 可观测性接入说明
+# geelato 可观测性统一接入说明
+
+本目录是 geelato 的**最终统一监控入口**。一份 `prometheus.yml` 同时抓取：
+- **平台服务** `geelato-platform`：`manage.geelato.cn`（HTTPS）
+- **消息中心** `geelato-message`：`message.ocean-bridges.com`（HTTP）
+
+`alerts.yml` 合并了两者的告警规则（平台 SRE 黄金信号 + 消息中心业务健康）。
 
 平台（`geelato-web-platform`）内置 Spring Boot Actuator + Micrometer + Prometheus，
 引入依赖即对外暴露 OpenMetrics 指标（`/actuator/prometheus`）与健康探针（`/actuator/health/live|ready`），
-**无需任何额外配置**。本目录提供 Prometheus 抓取、告警规则与 Grafana 面板示例。
+**无需任何额外配置**。
 
 ## 1. 零配置默认值
 
@@ -92,12 +98,15 @@ curl -s localhost:8080/actuator/prometheus | grep -E "http_server_requests|hikar
 
 ## 5. 启动 Prometheus + Alertmanager
 
+本目录的 `prometheus.yml` 与 `alerts.yml` 即 geelato 统一监控配置（平台 + 消息中心）。
+
 ```bash
-prometheus --config.file=deploy/observability/prometheus.yml --web.enable-lifecycle
+prometheus --config.file=geelato-web-platform/deploy/observability/prometheus.yml --web.enable-lifecycle
 ```
 
-打开 `http://<prometheus>:9090/targets` 确认 `geelato-platform` 的 **State = UP**。
-打开 `http://<prometheus>:9090/alerts` 确认告警规则已加载（`alerts.yml` 由 `prometheus.yml` 的 `rule_files` 引用）。
+该配置含两个 job：`geelato-platform`（manage.geelato.cn, HTTPS）与 `geelato-message`（message.ocean-bridges.com, HTTP）。
+打开 `http://<prometheus>:9090/targets` 确认两者的 **State = UP**。
+打开 `http://<prometheus>:9090/alerts` 确认告警规则已加载（`alerts.yml` 由 `prometheus.yml` 的 `rule_files` 引用，含 platform 黄金信号告警 + message 业务告警）。
 
 ## 6. 导入 Grafana 面板
 

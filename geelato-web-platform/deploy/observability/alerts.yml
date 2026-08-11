@@ -1,116 +1,169 @@
-# geelato-platform 告警规则（SRE 黄金信号：Latency / Traffic / Errors / Saturation）
+# geelato 统一告警规则
+# 引用方式：prometheus.yml 的 rule_files 已包含本文件
 #
-# 阈值依据：参考 Google SRE 建议（错误预算、饱和度、延迟目标），结合平台典型负载设定。
-# 所有规则假定 scrape_interval=30s、公共标签 application/module 已注入。
+# 分组：
+#   - geelato-platform.golden-signals  平台 SRE 黄金信号（Latency/Traffic/Errors/Saturation）
+#   - geelato-platform.availability    平台可用性（实例存活/连接池配置）
+#   - geelato-message.business         消息中心业务健康（死信/积压/拉取失败）
+#
 # severity: critical（需立即介入）/ warning（需关注，可能演变为 critical）
-#
-# 告警状态查询：Prometheus UI → Alerts
 
 groups:
+
+  # ==================== 平台服务：黄金信号 ====================
   - name: geelato-platform.golden-signals
     interval: 30s
     rules:
 
       # ===== Errors：API 错误率 =====
-      # 5xx 错误占比超过 5%（5 分钟窗口）
       - alert: PlatformApiHighErrorRate
         expr: |
-          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (application)
+          sum(rate(http_server_requests_seconds_count{job="geelato-platform", status=~"5.."}[5m])) by (application)
           /
-          clamp_min(sum(rate(http_server_requests_seconds_count[5m])) by (application), 1)
+          clamp_min(sum(rate(http_server_requests_seconds_count{job="geelato-platform"}[5m])) by (application), 1)
           > 0.05
         for: 5m
         labels:
           severity: critical
+          service: platform
           signal: errors
         annotations:
           summary: "平台 API 5xx 错误率过高 ({{ $labels.application }})"
           description: "5 分钟平均 5xx 错误占比 {{ $value | humanizePercentage }}，超过阈值 5%。可能存在服务端异常或下游不可用。"
 
-      # ===== Latency：API 延迟 =====
-      # p95 延迟超过 1 秒（5 分钟窗口）
+      # ===== Latency：API p95 延迟 =====
       - alert: PlatformApiHighLatencyP95
         expr: |
           histogram_quantile(0.95,
-            sum(rate(http_server_requests_seconds_bucket[5m])) by (le, application))
+            sum(rate(http_server_requests_seconds_bucket{job="geelato-platform"}[5m])) by (le, application))
           > 1
         for: 10m
         labels:
           severity: warning
+          service: platform
           signal: latency
         annotations:
           summary: "平台 API p95 延迟过高 ({{ $labels.application }})"
           description: "近 10 分钟 p95 延迟 {{ $value }}s 超过 1s SLO。可能原因：DB 慢查询、连接池耗尽、GC 抖动。"
 
       # ===== Saturation：数据库连接池饱和 =====
-      # 活跃连接 / 最大连接 > 80%（5 分钟），接近池耗尽
       - alert: PlatformDbPoolSaturation
         expr: |
-          hikaricp_connections_active
-          / clamp_min(hikaricp_connections_max, 1)
+          hikaricp_connections_active{job="geelato-platform"}
+          / clamp_min(hikaricp_connections_max{job="geelato-platform"}, 1)
           > 0.8
         for: 5m
         labels:
           severity: critical
+          service: platform
           signal: saturation
         annotations:
           summary: "数据库连接池饱和 ({{ $labels.pool }})"
           description: "HikariCP 连接池 {{ $labels.pool }} 活跃连接占比 {{ $value | humanizePercentage }} 超过 80%，持续 5 分钟。即将耗尽，请求将排队等待。"
 
       # ===== Saturation：JVM 堆内存 =====
-      # 堆使用率 > 85%（10 分钟），接近 OOM
       - alert: PlatformJvmHighHeap
         expr: |
-          sum(jvm_memory_used_bytes{area="heap"})
-          / clamp_min(sum(jvm_memory_max_bytes{area="heap"}), 1)
+          sum by (application) (jvm_memory_used_bytes{area="heap", job="geelato-platform"})
+          / clamp_min(sum by (application) (jvm_memory_max_bytes{area="heap", job="geelato-platform"}), 1)
           > 0.85
         for: 10m
         labels:
           severity: warning
+          service: platform
           signal: saturation
         annotations:
           summary: "JVM 堆内存使用率过高 ({{ $labels.application }})"
           description: "堆内存使用 {{ $value | humanizePercentage }} 超过 85%，持续 10 分钟。可能触发频繁 Full GC 甚至 OOM。"
 
-      # ===== 健康状态 =====
-      # 平台 platformHealth 指标非 UP。
-      # Spring Boot 把 HealthIndicator 的状态暴露为名为 "health" 的 Gauge：
-      #   health{health="<beanName>"} = Status 的数字编码（1=UP, 2=OUT_OF_SERVICE, 3=DOWN, 0=UNKNOWN, 自定义 DEGRAGED 另编码）。
-      # 平台 platformHealth 的 bean 名为 "platformHealth"，UP 时值为 1；非 1 即降级/异常。
+      # ===== 健康状态：平台 platformHealth 非 UP =====
+      # Spring Boot 把 HealthIndicator 状态暴露为名为 "health" 的 Gauge：
+      #   health{health="<beanName>"} = Status 数字编码（1=UP, 2=OUT_OF_SERVICE, 3=DOWN, 0=UNKNOWN, 自定义 DEGRADED 另编码）。
       - alert: PlatformHealthDegraded
-        expr: health{health="platformHealth"} != 1
+        expr: health{job="geelato-platform", health="platformHealth"} != 1
         for: 2m
         labels:
           severity: warning
+          service: platform
           signal: health
         annotations:
           summary: "平台健康状态降级 ({{ $labels.application }})"
           description: "platformHealth 指标显示非 UP 状态，存在异常模块。检查 /actuator/health 的 modules 详情定位具体模块。"
 
+  # ==================== 平台服务：可用性 ====================
   - name: geelato-platform.availability
     interval: 30s
     rules:
 
-      # ===== 实例存活 =====
-      # scrape 失败超过 1 分钟（实例宕机或网络不通）
+      # 实例存活（任一 job 的 scrape 失败）
       - alert: PlatformInstanceDown
         expr: up{job="geelato-platform"} == 0
         for: 1m
         labels:
           severity: critical
+          service: platform
           signal: availability
         annotations:
           summary: "平台实例不可达 ({{ $labels.instance }})"
           description: "Prometheus 连续 1 分钟无法抓取 {{ $labels.instance }} 的 /actuator/prometheus。实例可能已宕机或网络隔离。"
 
-      # ===== 连接池配置异常 =====
-      # max 连接为 0 或缺失（配置错误，活跃连接会被无限拒绝）
+      # 连接池 max 配置为 0（配置错误）
       - alert: PlatformDbPoolMaxZero
-        expr: hikaricp_connections_max == 0
+        expr: hikaricp_connections_max{job="geelato-platform"} == 0
         for: 5m
         labels:
           severity: warning
+          service: platform
           signal: saturation
         annotations:
           summary: "数据库连接池 max 配置为 0 ({{ $labels.pool }})"
           description: "HikariCP 连接池 {{ $labels.pool }} 的 maximumPoolSize 为 0，所有请求将无法获取连接。"
+
+  # ==================== 消息中心业务 ====================
+  - name: geelato-message.business
+    interval: 30s
+    rules:
+
+      # 死信增长（5 分钟增量 > 0，说明消息持续派发失败进入死信）
+      - alert: MessageDeadLetterIncrease
+        expr: increase(geelato_message_deadletter_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          service: message
+        annotations:
+          summary: "消息中心死信增长 ({{ $labels.application }})"
+          description: "近 5 分钟新增死信 {{ $value }} 条，部分消息派发失败已进入死信。检查渠道配置与下游可达性。"
+
+      # draft 积压超过阈值
+      - alert: MessageBacklogHigh
+        expr: geelato_message_queue_backlog{status="draft"} > 100
+        for: 10m
+        labels:
+          severity: warning
+          service: message
+        annotations:
+          summary: "消息中心 draft 积压过高"
+          description: "draft 状态积压 {{ $value }} 条持续 10 分钟，派发速度落后于入队速度。"
+
+      # 最老待发消息年龄超 5 分钟（积压导致消息滞留）
+      - alert: MessageOldestAgeHigh
+        expr: geelato_message_queue_oldest_age > 300
+        for: 5m
+        labels:
+          severity: warning
+          service: message
+        annotations:
+          summary: "消息中心最老待发消息滞留过久"
+          description: "最老 draft 消息已等待 {{ $value }} 秒（>5min），存在延迟风险。"
+
+      # 拉取源连续失败
+      - alert: MessagePullSourceFailing
+        expr: increase(geelato_message_pull_run_total{result="fail"}[10m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          service: message
+        annotations:
+          summary: "消息拉取源失败 ({{ $labels.source }})"
+          description: "拉取源 {{ $labels.source }} 近 10 分钟失败 {{ $value }} 次。检查源系统连通性与凭据。"

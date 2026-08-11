@@ -31,6 +31,7 @@ public class DynamicDataSourceRegistry {
     private final Map<String, Map<String, Object>> dataSourceConfigMap = new ConcurrentHashMap<>();
     private final DataSourceFactory dataSourceFactory;
     private final DynamicDataSourceProperties dynamicDataSourceProperties;
+    @Nullable
     private final DynamicDataSourceDefinitionLoader definitionLoader;
     
     /**
@@ -40,16 +41,20 @@ public class DynamicDataSourceRegistry {
     public DynamicDataSourceRegistry(@Qualifier("primaryJdbcTemplate") JdbcTemplate primaryJdbcTemplate,
                                      @Qualifier("secondaryJdbcTemplate") @Nullable JdbcTemplate secondaryJdbcTemplate,
                                      DataSourceFactory dataSourceFactory,
-                                     DynamicDataSourceDefinitionLoader definitionLoader,
+                                     @Nullable DynamicDataSourceDefinitionLoader definitionLoader,
                                      DynamicDataSourceProperties dynamicDataSourceProperties) {
         this.primaryJdbcTemplate = primaryJdbcTemplate;
-        this.secondaryJdbcTemplate=secondaryJdbcTemplate;
+        this.secondaryJdbcTemplate = secondaryJdbcTemplate;
         this.dataSourceFactory = dataSourceFactory;
         this.definitionLoader = definitionLoader;
         this.dynamicDataSourceProperties = dynamicDataSourceProperties == null ? new DynamicDataSourceProperties() : dynamicDataSourceProperties;
         try {
-            refreshAllDataSources();
-            log.info("For dynamic data sources has been search completed, with a total of {} data sources searched", dataSourceConfigMap.size());
+            int count = refreshAllDataSources();
+            if (definitionLoader == null) {
+                log.info("No DynamicDataSourceDefinitionLoader bean found, skip loading external dynamic data sources");
+            } else {
+                log.info("For dynamic data sources has been search completed, with a total of {} data sources searched", count);
+            }
         } catch (Exception e) {
             log.error("For dynamic data sources has been search failed", e);
         }
@@ -67,6 +72,9 @@ public class DynamicDataSourceRegistry {
      * 全量刷新数据源配置
      */
     public synchronized int refreshAllDataSources() {
+        if (definitionLoader == null) {
+            return 0;
+        }
         List<Map<String, Object>> dbConnectMaps = definitionLoader.loadAll();
         Set<String> latestKeys = new HashSet<>();
         for (Map<String, Object> dbConnectMap : dbConnectMaps) {
@@ -91,6 +99,9 @@ public class DynamicDataSourceRegistry {
      * 刷新数据源
      */
     public synchronized boolean refreshDataSource(String key) {
+        if (definitionLoader == null) {
+            return false;
+        }
         Map<String, Object> dbConnectMap = definitionLoader.loadOne(key);
         if (dbConnectMap == null || dbConnectMap.isEmpty()) {
             return false;

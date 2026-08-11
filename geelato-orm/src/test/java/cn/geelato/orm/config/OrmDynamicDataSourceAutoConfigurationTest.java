@@ -25,8 +25,18 @@ class OrmDynamicDataSourceAutoConfigurationTest {
             .withUserConfiguration(PrimaryJdbcTemplateConfiguration.class);
 
     @Test
-    void shouldAutoConfigureDynamicDataSourceBeansWhenPrimaryJdbcTemplatePresent() {
+    void shouldAutoConfigureDynamicDataSourceBeansWithoutDefinitionLoader() {
         contextRunner.run(context -> {
+            assertNotNull(context.getBean("dynamicDataSource", DynamicRoutingDataSource.class));
+            assertNotNull(context.getBean("dynamicJdbcTemplate", JdbcTemplate.class));
+            assertNotNull(context.getBean("dynamicDao"));
+            assertNotNull(context.getBean(DynamicDataSourceRegistry.class));
+        });
+    }
+
+    @Test
+    void shouldAlsoSupportExplicitDefinitionLoader() {
+        contextRunner.withUserConfiguration(DefinitionLoaderConfiguration.class).run(context -> {
             assertNotNull(context.getBean("dynamicDataSource", DynamicRoutingDataSource.class));
             assertNotNull(context.getBean("dynamicJdbcTemplate", JdbcTemplate.class));
             assertNotNull(context.getBean("dynamicDao"));
@@ -41,7 +51,10 @@ class OrmDynamicDataSourceAutoConfigurationTest {
             DataSource dataSource = mock(DataSource.class);
             return new JdbcTemplate(dataSource);
         }
+    }
 
+    @Configuration
+    static class DefinitionLoaderConfiguration {
         @Bean
         DynamicDataSourceDefinitionLoader dynamicDataSourceDefinitionLoader() {
             return new DynamicDataSourceDefinitionLoader() {
@@ -58,4 +71,3 @@ class OrmDynamicDataSourceAutoConfigurationTest {
         }
     }
 }
-

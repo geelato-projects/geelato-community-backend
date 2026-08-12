@@ -6,6 +6,7 @@ import cn.geelato.core.meta.spi.MetaStore;
 import cn.geelato.core.orm.Dao;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,12 +18,21 @@ import java.util.Map;
  * <p>本类位于业务层（geelato-web-platform），框架层（geelato-core）仅保留
  * {@link MetaStore} SPI 接口。保留原 package（cn.geelato.core.meta.support）
  * 以维持 import 一致性，由 {@code @ComponentScan(basePackages = {"cn.geelato"})} 发现。</p>
+ *
+ * <p>本实现从平台元数据表读取定义，因此自行通过构造器注入 {@link Dao}，
+ * 而非由 {@code MetaManager} 通过方法参数透传。</p>
  */
 @Component
 public class DefaultMetaStore implements MetaStore {
 
+    private final Dao dao;
+
+    public DefaultMetaStore(@Qualifier("primaryDao") Dao dao) {
+        this.dao = dao;
+    }
+
     @Override
-    public MetaDefinitionBundle load(Dao dao, Map<String, String> params) {
+    public MetaDefinitionBundle load(Map<String, String> params) {
         String sql = MetaDaoSql.SQL_TABLE_LIST;
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> entry : params.entrySet()) {
@@ -42,7 +52,7 @@ public class DefaultMetaStore implements MetaStore {
     }
 
     @Override
-    public MetaDefinitionBundle loadByEntityName(Dao dao, String entityName) {
+    public MetaDefinitionBundle loadByEntityName(String entityName) {
         String tableListSql = MetaDaoSql.SQL_TABLE_LIST;
         if (StringUtils.isNotBlank(entityName)) {
             tableListSql = String.format(MetaDaoSql.SQL_TABLE_LIST + " and entity_name='%s'", entityName);
@@ -65,7 +75,7 @@ public class DefaultMetaStore implements MetaStore {
     }
 
     @Override
-    public MetaDefinitionBundle loadByViewName(Dao dao, String viewName) {
+    public MetaDefinitionBundle loadByViewName(String viewName) {
         String viewListSql = MetaDaoSql.SQL_VIEW_LIST_BY_TABLE;
         if (Strings.isNotEmpty(viewName)) {
             viewListSql = String.format(MetaDaoSql.SQL_VIEW_LIST_BY_TABLE + " and view_name='%s'", viewName);

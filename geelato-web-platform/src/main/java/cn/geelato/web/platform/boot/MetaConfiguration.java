@@ -60,7 +60,7 @@ public class MetaConfiguration extends BaseConfiguration{
     }
 
     private void initDataBaseMeta() {
-        metaManager.parseDBMeta(dao);
+        metaManager.parseDBMeta();
         if (metaBootstrap != null) {
             metaBootstrap.bootstrap(metaManager, dao);
         }

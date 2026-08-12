@@ -87,11 +87,8 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
         if (StringUtils.hasText(command.getOrderBy())) {
             sb.append(" order by ");
-            String ob = resolveOrderBy(md, command.getOrderBy());
-            if (md.getTableAlias() != null) {
-                ob = decorateOriginalWhere(md, ob);
-            }
-            sb.append(ob);
+            // 别名在加引用符之前注入，避免 decorateOriginalWhere 把别名包进反引号内部
+            sb.append(resolveOrderBy(md, command.getOrderBy(), md.getTableAlias()));
         }
         if (command.isPagingQuery()) {
             sb.append(" limit ");
@@ -226,7 +223,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                         TableForeign tf = findForeignByMainField(md, mainField);
                         if (tf != null) {
                             EntityMeta foreignEm = metaManager.getByEntityName(tf.getForeignTable());
-                        String foreignAlias = buildTableAlias(foreignEm.getTableName());
+                            String foreignAlias = buildTableAlias(foreignAliasKey(tf));
                             FieldMeta selectedFm = null;
                             if (StringUtils.hasText(remoteField)) {
                                 if (foreignEm.containsField(remoteField)) {
@@ -315,6 +312,8 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         if (command.getForeignFields() == null) {
             return;
         }
+        // 按外键源字段去重：同一外键被多个 ref 引用只产生一个 JOIN；
+        // 不同外键即使指向同一张目标表也各自产生独立的 JOIN 与别名。
         LinkedHashMap<String, TableForeign> joinMap = new LinkedHashMap<>();
         for (String fieldName : command.getForeignFields()) {
             String mainField = fieldName;
@@ -324,16 +323,16 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             }
             TableForeign tf = findForeignByMainField(md, mainField);
             if (tf != null && tf.getEnableStatus() == 1) {
-                String foreignTable = tf.getForeignTable();
-                if (!joinMap.containsKey(foreignTable)) {
-                    joinMap.put(foreignTable, tf);
+                String joinKey = tf.getMainTableCol();
+                if (!joinMap.containsKey(joinKey)) {
+                    joinMap.put(joinKey, tf);
                 }
             }
         }
         for (Map.Entry<String, TableForeign> entry : joinMap.entrySet()) {
             TableForeign tf = entry.getValue();
             EntityMeta foreignEm = metaManager.getByEntityName(tf.getForeignTable());
-            String foreignAlias = buildTableAlias(foreignEm.getTableName());
+            String foreignAlias = buildTableAlias(foreignAliasKey(tf));
             sb.append(" left join ");
             sb.append(foreignEm.getTableName());
             sb.append(" ");
@@ -382,6 +381,19 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             }
         }
         return null;
+    }
+
+    /**
+     * 为外键关联生成独立的别名分配 key。
+     * <p>
+     * 别名按外键源字段（而非目标表名）分配，保证两个不同外键即使指向同一张目标表，
+     * 也能各自获得独立的 JOIN 别名（如 t1、t2），避免 SELECT 列引用到错误的 JOIN。
+     *
+     * @param tf 外键元数据
+     * @return 用于 buildTableAlias 的唯一 key
+     */
+    private String foreignAliasKey(TableForeign tf) {
+        return "fk::" + tf.getMainTableCol();
     }
 
     private FieldMeta chooseDisplayField(EntityMeta foreignEm) {

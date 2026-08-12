@@ -24,12 +24,15 @@ ORM 注解主要用于把 Java 类声明成框架可识别的元数据实体，�
 - 新增一个框架元数据实体
 - 需要让平台扫描并识别该类
 - 需要显式指定实体名或表名
+- 需要声明实体所属的数据源
 
 常用属性：
 
 - `name`：实体名（模型名）；未显式指定时，默认取类名
 - `table`：数据库表名；未显式指定时，默认沿用实体名
-- `catalog` / `schema`：用于补充目录和 schema 信息
+- `catalog`：逻辑数据库分组；配合 `geelato.datasource.dynamic.catalog-mapping` 配置可作为数据源路由依据（详见 [ORM / 数据源扩展](datasource-extension.md)）；其中 `catalog = "platform"` 具有系统实体保护语义（强制以 Java 类为准、禁止刷新、禁止移交）
+- `schema`：补充 schema 信息
+- `connectId`：显式声明实体所属的数据源 key（对应动态数据源名）；优先级高于 `catalog` 映射
 
 示例：
 

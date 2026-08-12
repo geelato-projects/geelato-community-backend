@@ -202,7 +202,7 @@ public class MetaDdlService {
                 Map<String, String> table = new HashMap<>();
                 table.put("app_id", appId);
                 table.put("tenant_code", tenantCode);
-                metaManager.parseDBMeta(primaryDao, table);
+                metaManager.parseDBMeta(table);
             }
         }
     }
@@ -273,7 +273,7 @@ public class MetaDdlService {
                 Map<String, String> table = new HashMap<>();
                 table.put("app_id", appId);
                 table.put("tenant_code", tenantCode);
-                metaManager.parseDBMeta(primaryDao, table);
+                metaManager.parseDBMeta(table);
             }
         }
     }
@@ -414,7 +414,7 @@ public class MetaDdlService {
         table.put("connect_id", params.get("connectId"));
         table.put("app_id", params.get("appId"));
         table.put("tenant_code", Strings.isNotBlank(params.get("tenantCode")) ? params.get("tenantCode") : SessionCtx.getCurrentTenantCode());
-        metaManager.parseDBMeta(primaryDao, table);
+        metaManager.parseDBMeta(table);
     }
 
     public void switchDbByConnectId(String connectId) {

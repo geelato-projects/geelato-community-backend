@@ -381,6 +381,20 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
     }
 
     protected String resolveOrderBy(EntityMeta em, String orderBy) {
+        return resolveOrderBy(em, orderBy, null);
+    }
+
+    /**
+     * 解析排序子句，解析字段名为列名并加上引用符（反引号/双引号/方括号）。
+     * <p>
+     * 当 alias 非空时，在列名引用符之前拼上表别名（{@code alias.}），从而生成形如
+     * {@code t0.`col` desc} 的片段，避免别名被错误地包进引用符内部。
+     *
+     * @param em      实体元数据，用于解析字段与确定引用符
+     * @param orderBy 排序子句原文，如 {@code update_at desc,create_at asc}
+     * @param alias   主表别名，可为 null（无别名/视图查询时不前置别名）
+     */
+    protected String resolveOrderBy(EntityMeta em, String orderBy, String alias) {
         String[] items = orderBy.split(",");
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < items.length; i++) {
@@ -393,6 +407,9 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             }
             String[] parts = item.split("\\s+");
             String columnName = resolveOrderByColumn(em, parts[0]);
+            if (alias != null && !columnName.contains(".")) {
+                result.append(alias).append(".");
+            }
             appendQuotedIdentifier(result, em, columnName);
             for (int j = 1; j < parts.length; j++) {
                 result.append(" ").append(parts[j]);

@@ -15,7 +15,6 @@ import cn.geelato.core.meta.model.entity.EntityLiteMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.ClassScanner;
 import lombok.Getter;
 import lombok.Setter;
@@ -52,7 +51,6 @@ public class MetaManager extends AbstractManager {
      * 简化实体数据集合，标识，标题，类型
      */
     private final List<EntityLiteMeta> entityLiteMetaList = new ArrayList<>();
-    private Dao dao;
     @Getter
     private MetaStore metaStore = null;
     @Getter
@@ -81,7 +79,7 @@ public class MetaManager extends AbstractManager {
      * catalog（逻辑数据库分组）到数据源 connectId 的映射。
      * <p>
      * 实体的 {@code @Entity(catalog)} 值在此查表得到数据源 key，使 catalog 承担"划分数据库"的职责。
-     * 对应配置项 {@code geelato.orm.datasource.catalog-mapping}。默认空，表示不启用 catalog 路由。
+     * 对应配置项 {@code geelato.datasource.dynamic.catalog-mapping}。默认空，表示不启用 catalog 路由。
      * </p>
      */
     @Getter
@@ -105,30 +103,25 @@ public class MetaManager extends AbstractManager {
     /**
      * 解析数据库元数据
      * <br>所有表，视图，字段，外键，检查
-     *
-     * @param dao 数据访问对象
      */
-    public void parseDBMeta(Dao dao) {
-        this.dao = dao;
-        parseDBMeta(dao, null);
+    public void parseDBMeta() {
+        parseDBMeta(null);
     }
 
     /**
      * 根据需求刷新模型和视图。
      * <br>根据传入的参数，从数据库中查询表信息、列信息和视图信息，并对这些信息进行处理以刷新模型和视图。
      *
-     * @param dao    数据访问对象，用于执行数据库操作
      * @param params 包含查询参数的Map，支持的参数包括appId、connectId、tableId和entityName
      */
-    public void parseDBMeta(Dao dao, Map<String, String> params) {
-        this.dao = dao;
+    public void parseDBMeta(Map<String, String> params) {
         // 业务层未提供 MetaStore 时（框架独立运行），跳过数据库元数据加载。
         if (metaStore == null) {
             log.info("parse meta data in database... skipped (no MetaStore provided)");
             return;
         }
         log.info("parse meta data in database...");
-        MetaDefinitionBundle definitionBundle = metaStore.load(dao, params);
+        MetaDefinitionBundle definitionBundle = metaStore.load(params);
         List<Map<String, Object>> tableList = definitionBundle.getTableList();
         List<Map<String, Object>> allColumnList = definitionBundle.getColumnList();
         List<Map<String, Object>> allViewList = definitionBundle.getViewList();
@@ -185,7 +178,7 @@ public class MetaManager extends AbstractManager {
      * @param viewName 视图名称
      */
     private void refreshViewMeta(String viewName) {
-        List<Map<String, Object>> viewList = metaStore.loadByViewName(dao, viewName).getViewList();
+        List<Map<String, Object>> viewList = metaStore.loadByViewName(viewName).getViewList();
         for (Map<String, Object> map : viewList) {
             removeOne(viewName);
             parseViewEntity(map);
@@ -198,7 +191,7 @@ public class MetaManager extends AbstractManager {
      * @param entityName 实体名称
      */
     private void refreshTableMeta(String entityName) {
-        MetaDefinitionBundle definitionBundle = metaStore.loadByEntityName(dao, entityName);
+        MetaDefinitionBundle definitionBundle = metaStore.loadByEntityName(entityName);
         List<Map<String, Object>> tableList = definitionBundle.getTableList();
         for (Map<String, Object> map : tableList) {
             List<Map<String, Object>> columnList = definitionBundle.getColumnList();

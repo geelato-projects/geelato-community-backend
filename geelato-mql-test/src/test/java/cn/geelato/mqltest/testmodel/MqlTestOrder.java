@@ -25,6 +25,11 @@ public class MqlTestOrder {
     @Col(name = "user_id", dataType = "BIGINT")
     private String userId;
 
+    @Title(title = "审批人")
+    @ForeignKey(fTable = MqlTestUser.class)
+    @Col(name = "approver_user_id", dataType = "BIGINT")
+    private String approverUserId;
+
     @Title(title = "机构")
     @ForeignKey(fTable = MqlTestOrg.class)
     @Col(name = "org_id", dataType = "BIGINT")

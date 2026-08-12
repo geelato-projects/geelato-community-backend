@@ -188,6 +188,15 @@ sidebar_label: 动态数据源
 
 这意味着平台实体一旦绑定了 `connectId`，ORM 执行时就能自动解析到对应数据源。
 
+除了从数据库元数据读取 `connectId`，实体还可以通过 `@Entity` 注解声明数据源，并由 `MetaManager.resolveConnectId` 统一解析。完整优先级（高 → 低）是：
+
+1. `@Entity(connectId)` 显式指定
+2. `@Entity(catalog)` 在 `catalog-mapping` 配置中的映射值
+3. 数据库元数据表 `platform_dev_table.connect_id` 登记值
+4. 默认数据源 `primary`
+
+也就是说，即使实体没有在平台表里登记 `connectId`，也可以仅凭 `@Entity(connectId=...)` 或 `@Entity(catalog=...)` + `catalog-mapping` 配置完成路由。注解声明方式的具体用法见 [ORM / 数据源扩展](../orm/datasource-extension.md)。
+
 同时它还提供了手工能力：
 
 - `addEntityMapping(...)`
@@ -237,8 +246,8 @@ sidebar_label: 动态数据源
 
 因此当前优先级可以概括为：
 
-- 优先按实体元数据解析数据源
-- 解析不到时再看注解指定的默认源
+- 优先按实体解析数据源（`@Entity(connectId)` → `@Entity(catalog)` 映射 → 数据库元数据 `connectId`）
+- 解析不到时再看 `@UseDynamicDataSource` 指定的默认源
 - 最终仍可回退到主数据源
 
 ## 懒加载和刷新机制
@@ -291,6 +300,7 @@ geelato.datasource.dynamic.*
 - `keepalive-time-ms`
 - `initialization-fail-timeout-ms`
 - `connection-test-query`
+- `catalog-mapping`：`catalog`（逻辑数据库分组）到数据源 key 的映射，配合 `@Entity(catalog)` 使用，详见 [ORM / 数据源扩展](../orm/datasource-extension.md)
 
 默认设计偏向：
 

@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import static cn.geelato.mqltest.support.MqlSqlAssertions.assertSqlContains;
 import static cn.geelato.mqltest.support.MqlSqlAssertions.assertSqlEquals;
+import static cn.geelato.mqltest.support.MqlSqlAssertions.assertSqlNotContains;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
@@ -21,6 +23,10 @@ class SelectJoinPageSqlTest extends MqlTestSupport {
 
     private BoundSql genUser(String body) {
         return generateSql(parse("{\"mql_test_user\":" + body + "}"));
+    }
+
+    private BoundSql genOrder(String body) {
+        return generateSql(parse("{\"mql_test_order\":" + body + "}"));
     }
 
     // ==================== SELECT 字段 ====================
@@ -86,6 +92,20 @@ class SelectJoinPageSqlTest extends MqlTestSupport {
             // 有 JOIN 时主表分配别名 t0
             assertSqlContains("mql_test_user t0", sql);
         }
+
+        @Test
+        @DisplayName("两个外键指向同一张表：生成两个独立 left join 与别名")
+        void twoFksSameTargetTable() {
+            // userId、approverUserId 都指向 mql_test_user
+            BoundSql sql = genOrder("{\"@fs\":\"ref(userId->name) un,ref(approverUserId->name) an\"}");
+            String normalized = MqlSqlAssertions.normalize(sql.getSql());
+            // 应生成两个 left join mql_test_user
+            int joinCount = normalized.split("left join mql_test_user", -1).length - 1;
+            assertEquals(2, joinCount, "应生成两个 left join，实际为：" + normalized);
+            // 两个独立的别名与各自的 ON 条件
+            assertSqlContains("left join mql_test_user t1 on t0.user_id=t1.id", sql);
+            assertSqlContains("left join mql_test_user t2 on t0.approver_user_id=t2.id", sql);
+        }
     }
 
     // ==================== ORDER BY ====================
@@ -117,6 +137,16 @@ class SelectJoinPageSqlTest extends MqlTestSupport {
             assertSqlContains("order by", sql);
             assertSqlContains("desc", sql);
             assertSqlContains("asc", sql);
+        }
+
+        @Test
+        @DisplayName("有 JOIN 时排序字段表别名与反引号正确")
+        void orderWithJoinAlias() {
+            // @order 与 ref() 组合：存在 JOIN，主表别名 t0 非空
+            BoundSql sql = genUser("{\"@fs\":\"ref(orgId->name) orgName\",\"@order\":\"age|-\"}");
+            // 反引号只包列名：t0.`age`，而非把别名包进反引号 `t0.age`
+            assertSqlContains("t0.`age`", sql);
+            assertSqlNotContains("`t0.age`", sql);
         }
     }
 

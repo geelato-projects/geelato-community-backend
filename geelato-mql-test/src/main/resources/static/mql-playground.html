@@ -53,6 +53,10 @@
         .result-section { margin-bottom: 10px; }
         .result-section-title { font-size: 12px; font-weight: 600; color: #4e5969; margin: 8px 0 4px; padding-left: 2px; border-left: 3px solid #165dff; padding-left: 8px; }
         .sql-block, .ast-block { background: #f7f8fa; padding: 10px; border-radius: 4px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; line-height: 1.6; margin: 4px; }
+        /* SQL 块 + 复制按钮 */
+        .sql-block-wrap { position: relative; margin: 4px; }
+        .sql-block-wrap > .sql-block { margin: 0; }
+        .sql-copy-btn { position: absolute; top: 6px; right: 6px; padding: 2px 8px; font-size: 11px; line-height: 1.4; }
         .param-item { display: flex; gap: 12px; padding: 4px 8px; background: #f7f8fa; border-radius: 3px; margin-bottom: 3px; font-size: 12px; font-family: monospace; }
         .param-idx { color: #86909c; min-width: 28px; }
         table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -89,6 +93,8 @@
         .scenario-detail pre.sql-block { color: #165dff; }
         .loading { color: #165dff; }
     </style>
+    <!-- SQL 美化：sql-formatter（本地，离线可用）。暴露全局 window.sqlFormatter.format(sql, opts) -->
+    <script src="lib/sql-formatter.min.js"></script>
 </head>
 <body>
     <div class="header">
@@ -558,7 +564,7 @@
         let html = '';
         // 生成 SQL
         html += '<div class="result-section"><div class="result-section-title">生成 SQL</div>';
-        html += `<pre class="sql-block">${esc(r.sql || '')}</pre></div>`;
+        html += sqlBlockHtml(r.sql || '') + '</div>';
         // 参数 + 类型
         html += '<div class="result-section"><div class="result-section-title">参数';
         if (r.params && r.params.length) html += ` (${r.params.length})`;
@@ -574,7 +580,7 @@
         // Count SQL（分页时）
         if (r.countSql) {
             html += '<div class="result-section"><div class="result-section-title">Count SQL</div>';
-            html += `<pre class="sql-block">${esc(r.countSql)}</pre></div>`;
+            html += sqlBlockHtml(r.countSql) + '</div>';
         }
         // 执行结果（仅 Execute 时有）
         if (r.rows !== undefined) {
@@ -614,6 +620,59 @@
         return t !== undefined && t !== null ? `${t} (${m[t] || '?'})` : '';
     }
     function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    /**
+     * 美化 SQL（缩进/换行）。依赖 sql-formatter（lib/sql-formatter.min.js，全局 window.sqlFormatter）。
+     * 格式化失败或库未加载时原样返回，保证渲染不中断。
+     * 注意：调用顺序需先 formatSql 再 esc，避免 HTML 转义破坏格式化。
+     */
+    function formatSql(sql) {
+        if (!sql) return '';
+        try {
+            const lib = window.sqlFormatter;
+            const fn = lib && (lib.format || (typeof lib === 'function' ? lib : null));
+            if (typeof fn !== 'function') return sql;
+            return fn.call(lib, sql, { language: 'mysql', indent: '  ' });
+        } catch (e) { return sql; }
+    }
+
+    /** 渲染 SQL 块（含“复制”按钮） */
+    function sqlBlockHtml(sql) {
+        return `<div class="sql-block-wrap"><button type="button" class="sm sql-copy-btn" onclick="copySqlFrom(this)" title="复制 SQL">复制</button><pre class="sql-block">${esc(formatSql(sql))}</pre></div>`;
+    }
+
+    /** 复制按钮：拷贝所在 SQL 块的文本（即页面显示的格式化 SQL） */
+    function copySqlFrom(btn) {
+        const wrap = btn.parentElement;
+        const pre = wrap && wrap.querySelector('.sql-block');
+        copyText(pre ? pre.textContent : '', btn);
+    }
+
+    /** 复制文本到剪贴板：优先 navigator.clipboard，降级 execCommand；带按钮反馈 */
+    function copyText(text, btn) {
+        const feedback = () => {
+            btn.textContent = '已复制 ✓';
+            btn.disabled = true;
+            setTimeout(() => { btn.textContent = '复制'; btn.disabled = false; }, 1200);
+        };
+        const fallback = () => {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.top = '-1000px';
+            document.body.appendChild(ta);
+            ta.select();
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+            return ok;
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(feedback, () => { if (fallback()) feedback(); else alert('复制失败，请手动选中 SQL 复制'); });
+        } else {
+            if (fallback()) feedback(); else alert('复制失败，请手动选中 SQL 复制');
+        }
+    }
 
     // ==================== 测试场景集 ====================
     let allScenarios = [];
@@ -690,7 +749,7 @@
             }
             if (r.sql) {
                 html += `<div class="detail-line"><span class="detail-label">生成 SQL:</span></div>`;
-                html += `<pre class="sql-block">${esc(r.sql)}</pre>`;
+                html += sqlBlockHtml(r.sql);
             }
         }
         html += '</div>';

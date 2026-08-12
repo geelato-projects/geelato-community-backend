@@ -224,76 +224,392 @@ geelato.orm.dao-bean-name=dynamicDao
 
 这样 Fluent DSL 默认就会走动态源能力，而不是每次都手工指定。
 
+### 方式 4：用 `@Entity` 注解声明实体所属数据源
+
+前三种方式都是在“调用时”或“组件级”决定走哪个数据源。如果你希望一个实体的数据源归属是**固定的、写在实体声明里**的，就用 `@Entity` 注解来声明。
+
+它适合：
+
+- 某个实体天然属于另一个库（如订单实体固定在订单库）
+- 一批实体按模块归到不同库（如 `email` 分组统一走邮件库）
+- 不想在每个 Service 或每条查询上重复指定数据源
+
+这种方式与前三种属于不同层级，可以叠加：注解声明的是实体“默认归属”，`.useDataSource(...)` 仍可在单次调用时覆盖。
+
+#### 路径 A：用 `connectId` 显式指定
+
+直接在实体上声明它走哪个数据源，优先级最高：
+
+```java
+@Entity(name = "demo_order", table = "t_demo_order", connectId = "order_db")
+public class DemoOrder {
+    // ...
+}
+```
+
+此后对该实体的所有 ORM 操作都会自动路由到 `order_db` 数据源，无需在调用处再切源。
+
+#### 路径 B：用 `catalog` 分组 + 配置映射
+
+如果一批实体同属一个库，逐个标 `connectId` 较繁琐。可以给它们标同一个 `catalog`，再通过配置把 `catalog` 映射到数据源：
+
+```java
+// 一组实体都标同一个 catalog
+@Entity(name = "demo_order", catalog = "business")
+public class DemoOrder { }
+
+@Entity(name = "demo_order_item", catalog = "business")
+public class DemoOrderItem { }
+```
+
+然后在配置里建立 `catalog` 到数据源的映射：
+
+```properties
+geelato.datasource.dynamic.catalog-mapping.platform=primary
+geelato.datasource.dynamic.catalog-mapping.business=order_db
+```
+
+等价的 YAML 写法：
+
+```yaml
+geelato:
+  datasource:
+    dynamic:
+      catalog-mapping:
+        platform: primary
+        business: order_db
+```
+
+这样的好处是：换库时只改配置，不改代码。`business` 分组下的所有实体一起切到新的数据源。
+
+#### 解析优先级
+
+实体最终走哪个数据源，按以下顺序确定（高 → 低）：
+
+1. `@Entity(connectId)` 显式指定
+2. `@Entity(catalog)` 在 `catalog-mapping` 中的映射值
+3. 数据库元数据表 `platform_dev_table.connect_id` 登记值
+4. 默认数据源 `primary`
+
+优先级在运行期由 `MetaManager.resolveConnectId` 即时解析，因此配置何时注入都不影响结果。
+
+#### 注意事项
+
+- 映射指向的数据源 key 必须是已注册的动态数据源（即在 `platform_dev_db_connect` 中登记，或通过自定义加载器提供）。
+- `catalog` 值为 `platform` 的系统实体，其既有保护逻辑不变（强制以 Java 类为准、禁止刷新、禁止移交）；建议在 `catalog-mapping` 中将 `platform` 映射到 `primary`，保持与系统库一致。
+- 解析在查询期即时完成，与实体扫描时序无关，无需关心框架启动阶段的先后顺序。
+
+## 为什么要抽象数据源来源
+
+和元数据来源（`MetaStore`）一样，动态数据源的**定义来源**也被抽象成了 SPI。理解它的设计动机，能帮你判断是否需要替换。
+
+### 之前：数据源定义硬绑平台表
+
+早期版本里，动态数据源的连接信息写死在 `platform_dev_db_connect` 表里——默认加载器直接 `select * from platform_dev_db_connect`，把每行转成一个数据源定义。这把框架层（`geelato-orm`）与具体表结构耦合在一起，带来三个真实痛点：
+
+| 痛点 | 场景 |
+| --- | --- |
+| **多环境难统一管控** | 开发 / 测试 / 生产的数据源配置散落在各自数据库里，改一个连接要登库改 SQL，没有审计、没有版本。 |
+| **配置中心用不上** | 想用 Nacos / Apollo 集中管理、动态推送数据源清单，得绕开框架自己造一套。 |
+| **轻量项目被迫上平台表** | 一个只想用多数据源能力的小服务，却要先引入一整套平台表，代价过高。 |
+
+### 设计决策：把“数据源从哪来”抽象成 SPI
+
+我们把加载逻辑抽象成 `DynamicDataSourceDefinitionLoader` SPI（位于 `geelato-orm` 的 `cn.geelato.datasource.spi` 包），“从平台表读”降级为默认实现 `PlatformDynamicDataSourceDefinitionLoader`（迁移到业务层 `geelato-web-platform`）。
+
+关键设计：`DynamicDataSourceRegistry` 对 loader 用 `@Nullable` 注入——**不提供任何 loader 时，框架只走 `primary` / `secondary`，仍可独立运行**。这与 `MetaStore` 的“可无 DB 运行”理念一致。
+
+## 对使用者有什么好处
+
+1. **配置中心统一管理**：Nacos / Apollo 管多环境数据源，改配置即生效（配合下面的热刷新），不用登库改 SQL。
+2. **零改框架**：实现接口 + `@Primary`，不动框架一行代码。
+3. **不必引入平台表**：文件 / 内存起步，按需升级。
+4. **运维友好**：换库、扩库不改代码、不重启（host 映射 + 两步热刷新）。
+5. **能力全继承**：懒加载建池、连接池调优、Seata / JTA、实体→数据源自动路由，换来源后**全部自动复用**。
+
 ## 默认数据源定义来源
 
-当前默认动态数据源定义加载器是：
+当前默认动态数据源定义加载器是 `PlatformDynamicDataSourceDefinitionLoader`（业务层 `geelato-web-platform`），它从 `platform_dev_db_connect` 表读取连接信息。
 
-- `PlatformDynamicDataSourceDefinitionLoader`
-
-它通过 `DynamicDataSourceConfiguration` 在宿主工程没有自定义实现时自动创建。
-
-这意味着如果你不替换它，当前默认定义来源仍然是平台表语义。
+因为加载器是可选注入的，**不提供自定义实现时默认走它；提供了就替换它**。
 
 ## 如何覆盖动态数据源定义来源
 
-宿主工程只要提供自己的：
+宿主工程只要提供自己的 `DynamicDataSourceDefinitionLoader`，就可以替换默认加载逻辑。
 
-- `DynamicDataSourceDefinitionLoader`
+### 让自定义实现生效：必须加 `@Primary`
 
-就可以替换默认加载逻辑。
+这与 [MetaStore 扩展](../reference/metastore-extension.md) 里的覆盖机制**完全同构**，也是最容易踩的坑：
 
-推荐按下面 3 步做。
+- 默认 `PlatformDynamicDataSourceDefinitionLoader` 是 `@Component`，且**没有** `@Primary`；
+- `DynamicDataSourceRegistry` 的注入点是构造器参数 `@Nullable DynamicDataSourceDefinitionLoader definitionLoader`，**无 `@Qualifier`**；
+- 直接写 `@Component implements DynamicDataSourceDefinitionLoader` → 容器里两个候选 → 启动报 `NoUniqueBeanDefinitionException`。
 
-### 第 1 步：确认你为什么要替换
-
-常见原因包括：
-
-- 想从配置中心读取动态源
-- 想从 YAML / 本地文件读取
-- 想从外部注册中心或服务发现系统读取
-
-### 第 2 步：实现加载器
-
-最小示例：
+正确写法是在你的实现上加 `@Primary`：
 
 ```java
-@Configuration
-public class MyDynamicDataSourceDefinitionConfiguration {
-    @Bean
-    public DynamicDataSourceDefinitionLoader dynamicDataSourceDefinitionLoader() {
-        return new DynamicDataSourceDefinitionLoader() {
-            @Override
-            public List<Map<String, Object>> loadAll() {
-                return List.of();
-            }
+@Component
+@Primary
+public class MyDataSourceDefinitionLoader implements DynamicDataSourceDefinitionLoader {
+    // ...
+}
+```
 
-            @Override
-            public Map<String, Object> loadOne(String key) {
-                return null;
-            }
-        };
+:::warning
+不要靠 Bean 同名覆盖（`spring.main.allow-bean-definition-overriding` 默认 `false`）。开全局覆盖有副作用，不推荐。
+:::
+
+### 契约：接口与 Map 字段约定
+
+```java
+public interface DynamicDataSourceDefinitionLoader {
+    List<Map<String, Object>> loadAll();   // 返回所有数据源定义；每个 Map 的 "id" 即路由 key
+    Map<String, Object> loadOne(String key); // 按路由 key 加载单个（用于热刷新）
+}
+```
+
+`loadAll()` 返回的每个 `Map<String, Object>` 必须包含以下字段（snake_case，与 `platform_dev_db_connect` 表字段一致）：
+
+| 字段 | 必需 | 说明 |
+| --- | --- | --- |
+| `id` | **必需** | 数据源路由 key（`.useDataSource(id)`、`@Entity(connectId)` 用的就是它） |
+| `db_type` | **必需** | 数据库类型，见下表 |
+| `db_hostname_ip` | **必需** | 主机地址（可被 [host 映射](../dynamic-datasource/host-mapping.md) 重定向） |
+| `db_port` | **必需** | 端口 |
+| `db_user_name` | **必需** | 用户名 |
+| `db_name` | **必需** | 库名 / 模式名 |
+| `db_password` | 可选 | 密码，见下方加密约定 |
+
+**`db_type` 支持的值**：
+
+| db_type | 驱动 | 说明 |
+| --- | --- | --- |
+| `mysql` | `com.mysql.cj.jdbc.Driver` | 大小写不敏感 |
+| `postgresql` / `postgres` | `org.postgresql.Driver` | 两种写法等价 |
+| 其他 | — | 抛 `UnsupportedOperationException: 不支持的数据库类型` |
+
+**密码加密约定**：明文可以直接写；若要加密，格式必须是 `算法:密文`，算法取值 `aes` / `rsa` / `sm2` / `sm4`（框架按前缀自动选择解密算法）。不带 `算法:` 前缀的值一律按明文透传。
+
+### 示例 A：内存构造（最小演示）
+
+> **解决场景**：快速验证“自定义来源是否被装配”，或做最小可运行 demo。
+
+```java
+package com.acme.platform.ds;
+
+import cn.geelato.datasource.spi.DynamicDataSourceDefinitionLoader;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Component
+@Primary
+public class InMemoryDataSourceLoader implements DynamicDataSourceDefinitionLoader {
+
+    @Override
+    public List<Map<String, Object>> loadAll() {
+        Map<String, Object> ds = new HashMap<>();
+        ds.put("id", "biz-mysql");            // 路由 key（必需）
+        ds.put("db_type", "mysql");           // 必需
+        ds.put("db_hostname_ip", "10.0.0.10");// 必需
+        ds.put("db_port", 3306);              // 必需
+        ds.put("db_user_name", "biz_user");   // 必需
+        ds.put("db_name", "biz_db");          // 必需
+        ds.put("db_password", "biz@psd");     // 可选，这里用明文
+        return List.of(ds);
+    }
+
+    @Override
+    public Map<String, Object> loadOne(String key) {
+        return loadAll().stream()
+                .filter(m -> key.equals(String.valueOf(m.get("id"))))
+                .findFirst().orElse(null);
     }
 }
 ```
 
-适合的场景包括：
+**预期结果**：启动后 `.useDataSource("biz-mysql")` 能路由到一个 HikariCP 连接池，日志可见 `HikariPool-... poolName=biz-mysql`。
 
-- 从配置中心读取动态源
-- 从文件或 YAML 读取动态源
-- 从外部服务注册中心读取动态源
+### 示例 B：从 JSON / YAML 文件加载（最常用）
 
-### 第 3 步：触发一次真实查询验证
+> **解决场景**：用文件管理数据源清单，随应用打包；多环境用不同 profile 的文件。
+
+先准备 `src/main/resources/datasource/biz-mysql.json`：
+
+```json
+{
+  "id": "biz-mysql",
+  "dbType": "mysql",
+  "host": "10.0.0.10",
+  "port": 3306,
+  "userName": "biz_user",
+  "dbName": "biz_db",
+  "password": "sm4:Y3yK9+...加密串..."
+}
+```
+
+再实现加载器，启动时把 `classpath:datasource/*.json` 全部读入：
+
+```java
+package com.acme.platform.ds;
+
+import cn.geelato.datasource.spi.DynamicDataSourceDefinitionLoader;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.stereotype.Component;
+
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+@Component
+@Primary
+public class JsonFileDataSourceLoader implements DynamicDataSourceDefinitionLoader {
+
+    private final List<Map<String, Object>> definitions = new ArrayList<>();
+
+    public JsonFileDataSourceLoader() throws Exception {
+        var resolver = new PathMatchingResourcePatternResolver();
+        for (Resource res : resolver.getResources("classpath:datasource/*.json")) {
+            try (InputStream in = res.getInputStream()) {
+                String text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                JSONObject json = JSON.parseObject(text);
+
+                // 注意：Map 的 key 必须是框架约定的 snake_case
+                Map<String, Object> ds = new HashMap<>();
+                ds.put("id", json.getString("id"));
+                ds.put("db_type", json.getString("dbType"));
+                ds.put("db_hostname_ip", json.getString("host"));
+                ds.put("db_port", json.getIntValue("port"));
+                ds.put("db_user_name", json.getString("userName"));
+                ds.put("db_name", json.getString("dbName"));
+                ds.put("db_password", json.getString("password")); // 支持 sm4:xxx 加密写法
+                definitions.add(ds);
+            }
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> loadAll() {
+        return definitions;
+    }
+
+    @Override
+    public Map<String, Object> loadOne(String key) {
+        return definitions.stream()
+                .filter(m -> key.equals(String.valueOf(m.get("id"))))
+                .findFirst().orElse(null);
+    }
+}
+```
+
+**预期结果**：把新的 `*.json` 丢进 `datasource/` 目录即自动成为可用数据源。
+
+### 示例 C：从外部 HTTP API 加载
+
+> **解决场景**：企业内部有统一的“数据库连接注册中心”，应用启动时拉取清单，保持单一事实源。
+
+```java
+package com.acme.platform.ds;
+
+import cn.geelato.datasource.spi.DynamicDataSourceDefinitionLoader;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 约定接口直接返回符合字段约定的数组：
+ * [{ "id": "biz-mysql", "db_type": "mysql", "db_hostname_ip": "...", ... }]
+ */
+@Component
+@Primary
+public class HttpApiDataSourceLoader implements DynamicDataSourceDefinitionLoader {
+
+    private final RestClient client = RestClient.builder()
+            .baseUrl("http://ds-registry.internal.svc")
+            .build();
+
+    @Override
+    public List<Map<String, Object>> loadAll() {
+        return client.get()
+                .uri("/api/datasources")
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+    }
+
+    @Override
+    public Map<String, Object> loadOne(String key) {
+        return loadAll().stream()
+                .filter(m -> key.equals(String.valueOf(m.get("id"))))
+                .findFirst().orElse(null);
+    }
+}
+```
+
+**预期结果**：注册中心新增一个数据源并发布后，应用重启或触发热刷新即可使用。
+
+### 验证：触发一次真实查询
 
 实现加载器后，不要只看 Spring 启动成功，建议立刻跑一条真实查询：
 
 ```java
 List<Map<String, Object>> rows = MetaFactory.query("DevDbConnect")
-        .useDataSource("portal")
+        .useDataSource("biz-mysql")
         .page(1, 1)
         .list();
 ```
 
 如果这里能成功执行，再说明“定义加载 + 数据源切换 + ORM 执行链路”是通的。
+
+## 运行时热刷新
+
+数据源定义变更后，**不必重启应用**。框架提供了两个刷新入口，**两步缺一不可**：
+
+```java
+@Autowired(required = false)
+private cn.geelato.datasource.DynamicDataSourceRegistry dynamicDataSourceRegistry;
+
+@Autowired(required = false)
+@org.springframework.beans.factory.annotation.Qualifier("dynamicDataSource")
+private cn.geelato.datasource.DynamicRoutingDataSource dynamicRoutingDataSource;
+
+public void refresh(String key) {
+    // 第 1 步：重建该 key 的配置与连接池
+    boolean ok = dynamicDataSourceRegistry.refreshDataSource(key);
+    // 第 2 步：刷新路由表，让 DynamicRoutingDataSource 感知到变化
+    if (ok) {
+        dynamicRoutingDataSource.refreshDataSource(key);
+    }
+}
+```
+
+- `DynamicDataSourceRegistry.refreshDataSource(key)` / `refreshAllDataSources()`：重建配置（必要时重建连接池）。
+- `DynamicRoutingDataSource.refreshDataSource(key)` / `refreshAllDataSources()`：重新组装路由表并让 Spring 重算。
+
+:::warning
+只调第一步、不调第二步，是“改了来源但切源没生效”的最常见原因——配置变了，路由表还指向旧池子。
+:::
+
+### 不想替换 loader？直接注册已构建的 DataSource
+
+如果你只是想在代码里临时加一个数据源（例如基于 `application.properties` 配置、或从连接池工厂直接拿到一个 `DataSource`），可以绕过 loader，直接注册：
+
+```java
+dynamicDataSourceRegistry.registerDataSource("my-key", alreadyBuiltDataSource);
+dynamicRoutingDataSource.refreshAllDataSources();
+```
+
+这种方式不依赖任何 loader 实现，适合“少量、静态、启动期可知”的数据源。
 
 ## 如何实现 SPI
 
@@ -406,6 +722,9 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 4. 看代码里是否真的调用了 `.useDataSource("...")` 或命中了 `@UseDynamicDataSource`
 5. 看同类 SPI 是否注册了多个实现
 6. 看 SPI 的 `isEnabled()` 是否返回 `true`
+7. 自定义 loader 启动报 `NoUniqueBeanDefinitionException` → 实现类漏了 `@Primary`
+8. 报 `UnsupportedOperationException: 不支持的数据库类型` → Map 的 `db_type` 不是 `mysql` / `postgresql`
+9. 改了来源但切源没生效 → 只刷了 `DynamicDataSourceRegistry`，没刷 `DynamicRoutingDataSource`（两步缺一不可）
 
 ## 推荐使用建议
 
@@ -415,11 +734,13 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 - 除非明确需要，否则不要默认开启 JTA / Seata
 - 单条链路切源优先用 `.useDataSource(...)`
 - 组件级切源再考虑 `@UseDynamicDataSource`
+- 实体数据源归属固定时，优先用 `@Entity(connectId/catalog)` 在实体上声明，而非每次调用切源
 - 平台级查询规则和字段规则优先用 SPI，不要散落在业务代码里
 
 ## 推荐继续阅读
 
 - [动态数据源](../dynamic-datasource/overview.md)
 - [ORM 总览](overview.md)
+- [MetaStore 扩展](../reference/metastore-extension.md)
 - [查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)
 - [新项目最小接入](../guide/minimal-integration.md)

@@ -50,7 +50,7 @@ public class MetaInitConfig {
         // 如果数据库连接可用，初始化数据库中的实体元数据
         if (dao != null) {
             try {
-                metaManager.parseDBMeta(dao);
+                metaManager.parseDBMeta();
                 if (metaBootstrap != null) {
                     metaBootstrap.bootstrap(metaManager, dao);
                 }

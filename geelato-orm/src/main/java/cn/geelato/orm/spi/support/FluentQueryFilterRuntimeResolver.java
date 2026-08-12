@@ -23,14 +23,24 @@ public final class FluentQueryFilterRuntimeResolver {
         if (injectorEntry == null) {
             return;
         }
-        String entityName = entityNameOf(query);
-        String beanName = injectorEntry.getKey();
         FluentQueryFilterInjector injector = injectorEntry.getValue();
+        String beanName = injectorEntry.getKey();
+        String entityName = entityNameOf(query);
         String beanClass = injector.getClass().getName();
         if (!injector.isEnabled()) {
             log.info("Skip Fluent query filter injection because injector is disabled. entityName={}, beanName={}, beanClass={}",
                     entityName, beanName, beanClass);
             return;
+        }
+        // 本次查询要求跳过注入过滤：仅当注入器未强制时才跳过
+        if (query != null && query.isDisableInjectFilter()) {
+            if (!injector.isForceInject()) {
+                log.info("Skip Fluent query filter injection because disableInjectFilter is set. entityName={}, beanName={}",
+                        entityName, beanName);
+                return;
+            }
+            log.info("disableInjectFilter is set but injector is forceInject; still applying. entityName={}, beanName={}",
+                    entityName, beanName);
         }
         log.info("Applying Fluent query filter injection. entityName={}, beanName={}, beanClass={}", entityName, beanName, beanClass);
         injector.inject(command, query);

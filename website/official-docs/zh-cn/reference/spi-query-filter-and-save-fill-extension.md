@@ -146,6 +146,15 @@ Fluent DSL 查询侧使用：
 public interface FluentQueryFilterInjector {
     boolean isEnabled();
     void inject(QueryCommand command, MetaQuery query);
+
+    /**
+     * 是否强制注入；默认 false。
+     * 返回 true 时，即使本次查询调用了 MetaQuery.disableInjectFilter() 也会照常注入。
+     * 实现类通常无需关心，自动继承默认值；仅在需要让某些注入器不可被单次查询绕过时覆盖返回 true。
+     */
+    default boolean isForceInject() {
+        return false;
+    }
 }
 ```
 
@@ -381,6 +390,26 @@ public class DemoMqlSaveFieldValueFiller implements MqlSaveFieldValueFiller {
 
 如果项目里确实存在多个候选实现，必须在宿主层先收敛成唯一启用实现。
 
+### 单次查询跳过注入（仅 Fluent DSL）
+
+Fluent DSL 查询支持按单次查询跳过注入过滤：在 `MetaQuery` 上调用 `disableInjectFilter()` 后，本次查询不会触发任何 `FluentQueryFilterInjector`，因此平台默认的租户隔离、数据权限等条件都不会附加。
+
+```java
+MetaFactory.query("platform_user")
+        .disableInjectFilter()
+        .list();
+```
+
+判定规则（在 `FluentQueryFilterRuntimeResolver.injectIfAvailable` 内）：
+
+- 查询未调用 `disableInjectFilter()`：正常注入
+- 调用了 `disableInjectFilter()` 且注入器 `isForceInject()=false`：**跳过**注入
+- 调用了 `disableInjectFilter()` 但注入器 `isForceInject()=true`：**照常注入**（强制覆盖）
+
+`isForceInject()` 是 `FluentQueryFilterInjector` 的 default 方法，默认 `false`，实现类无需关心。仅当某个注入器需要保证"永不被单次查询绕过"（例如租户隔离这类硬边界）时，在其实现中覆盖返回 `true`。
+
+> 注意：跳过注入会同时绕过租户隔离与数据权限，存在跨租户、越权读数风险，仅限可信场景（系统后台、定时任务、管理端等）按查询显式使用。
+
 ## 推荐的实操顺序
 
 如果你要在一个新项目里接入 SPI 扩展，推荐顺序是：
@@ -409,6 +438,7 @@ public class DemoMqlSaveFieldValueFiller implements MqlSaveFieldValueFiller {
 4. 再确认 `isEnabled()` 是否返回 `true`
 5. 再通过真实查询或保存链路触发一次
 6. 如果报出 `Multiple ... beans found`，优先检查是否同时注册了多个实现
+7. 如果查询"少了"预期的租户/权限过滤，确认调用方是否对本次查询调用了 `MetaQuery.disableInjectFilter()`，或注入器是否被 `isEnabled()` 关闭
 
 对字段值填充而言，还需要特别注意：
 

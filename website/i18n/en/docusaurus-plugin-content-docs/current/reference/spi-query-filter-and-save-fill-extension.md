@@ -146,6 +146,16 @@ Interface:
 public interface FluentQueryFilterInjector {
     boolean isEnabled();
     void inject(QueryCommand command, MetaQuery query);
+
+    /**
+     * Whether injection is forced; defaults to false.
+     * When true, injection still runs even if the query called MetaQuery.disableInjectFilter().
+     * Implementations usually do not need to care and inherit the default;
+     * override to return true only when an injector must never be bypassed by a single query.
+     */
+    default boolean isForceInject() {
+        return false;
+    }
 }
 ```
 
@@ -381,6 +391,26 @@ That means you should not enable more than one of the same SPI type, such as:
 
 If your project really has multiple candidates, merge the decision at the host layer and keep only one enabled implementation.
 
+### Skipping Injection for a Single Query (Fluent DSL only)
+
+A Fluent DSL query can skip injected filters per query: calling `disableInjectFilter()` on a `MetaQuery` prevents any `FluentQueryFilterInjector` from running for that query, so platform defaults such as tenant isolation and data permission are not appended.
+
+```java
+MetaFactory.query("platform_user")
+        .disableInjectFilter()
+        .list();
+```
+
+Resolution rules (inside `FluentQueryFilterRuntimeResolver.injectIfAvailable`):
+
+- `disableInjectFilter()` not called: inject normally
+- `disableInjectFilter()` called and the injector `isForceInject()=false`: **skip** injection
+- `disableInjectFilter()` called but the injector `isForceInject()=true`: **inject anyway** (forced override)
+
+`isForceInject()` is a default method on `FluentQueryFilterInjector`, defaulting to `false`; implementations do not need to care. Override it to return `true` only when an injector must never be bypassed by a single query (for example a hard boundary like tenant isolation).
+
+> Note: skipping injection also bypasses tenant isolation and data permission, which risks cross-tenant or unauthorized reads. Use it only in trusted scenarios (system back office, scheduled tasks, admin tools) and only per query.
+
 ## Recommended Implementation Order
 
 For a new project, this order usually works best:
@@ -409,6 +439,7 @@ If an SPI "does not take effect", check in this order:
 4. confirm `isEnabled()` returns `true`
 5. trigger a real query or save flow once
 6. if you see `Multiple ... beans found`, inspect duplicate registrations first
+7. if a query is "missing" expected tenant/permission filters, check whether the caller invoked `MetaQuery.disableInjectFilter()` for that query, or whether the injector was disabled via `isEnabled()`
 
 For save field filling, also note:
 

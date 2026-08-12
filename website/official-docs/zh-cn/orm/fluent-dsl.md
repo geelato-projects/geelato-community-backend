@@ -274,6 +274,18 @@ List<Map<String, Object>> rows = MetaFactory.query("DevDbConnect")
         .list();
 ```
 
+跳过注入过滤：
+
+```java
+// 跳过本次查询的注入过滤（租户隔离、数据权限等都不会附加）
+// 仅适用于系统后台、定时任务等可信场景；存在跨租户/越权读数风险
+List<Map<String, Object>> rows = MetaFactory.query("platform_user")
+        .disableInjectFilter()
+        .list();
+```
+
+`disableInjectFilter()` 会跳过本次查询的全部注入器。若某个注入器（如租户隔离）需要保证不可被单次查询绕过，可在其实现中将 `FluentQueryFilterInjector.isForceInject()` 覆盖为 `true`，此时 `disableInjectFilter()` 对该注入器失效。详见 [查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)。
+
 视图模板参数：
 
 ```java

@@ -34,6 +34,8 @@ public class MetaQuery extends MetaOperate<MetaQuery> {
     private Integer pageNum;
     private Integer pageSize;
     private WrapperResultFunction<?, ?> wrapperFunction;
+    /** 本次查询是否跳过注入过滤（可被注入器的 forceInject 覆盖） */
+    private boolean disableInjectFilter;
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final SqlManager sqlManager = SqlManager.singleInstance();
 
@@ -90,6 +92,17 @@ public class MetaQuery extends MetaOperate<MetaQuery> {
      */
     public MetaQuery where(Filter... filters) {
         this.filters.addAll(Arrays.asList(filters));
+        return this;
+    }
+
+    /**
+     * 跳过本次查询的注入过滤。
+     * 置位后，运行期注入器不会被调用（除非注入器本身 isForceInject()=true），
+     * 因此任何由注入器添加的过滤条件（如租户隔离、数据权限等）都不会附加到本次查询。
+     * @return MetaQuery 对象，支持链式调用
+     */
+    public MetaQuery disableInjectFilter() {
+        this.disableInjectFilter = true;
         return this;
     }
     

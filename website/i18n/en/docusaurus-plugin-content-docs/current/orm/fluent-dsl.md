@@ -162,6 +162,19 @@ List<Map<String, Object>> rows = MetaFactory.query("DevDbConnect")
         .list();
 ```
 
+Skip injected filters:
+
+```java
+// Skip injected filters for this query (tenant isolation, data permission, etc. are not appended).
+// Only for trusted scenarios such as system back office or scheduled tasks;
+// it risks cross-tenant / unauthorized reads.
+List<Map<String, Object>> rows = MetaFactory.query("platform_user")
+        .disableInjectFilter()
+        .list();
+```
+
+`disableInjectFilter()` skips all injectors for this query. If an injector (such as tenant isolation) must never be bypassed by a single query, override `FluentQueryFilterInjector.isForceInject()` to return `true` in its implementation; then `disableInjectFilter()` no longer affects that injector. See [Query Filter and Save Field Fill SPI](../reference/spi-query-filter-and-save-fill-extension.md).
+
 View parameters:
 
 ```java

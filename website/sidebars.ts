@@ -162,6 +162,13 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: ['message/overview', 'message/integration', 'message/integration-management'],
     },
+    {
+      type: 'category',
+      label: '📖 帮助中心',
+      collapsible: false,
+      collapsed: false,
+      items: ['help/glossary', 'help/faq', 'help/troubleshooting'],
+    },
   ],
 };
 

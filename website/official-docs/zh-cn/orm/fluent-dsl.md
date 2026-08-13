@@ -240,6 +240,48 @@ int affected = MetaFactory.delete("User")
         .delete();
 ```
 
+## 基于实体对象的便捷重载
+
+除了按字段名逐个 `.value(field, value)` 构建外，`MetaFactory` 还提供一组直接传入**实体对象**的重载：按实体对象的非空属性预填 SQL，省去手工拼字段值。需要切换数据源时，仍通过返回构建器的 `.useDataSource(...)` 链式指定。
+
+> 约定：仅采集实体对象中非 `null` 的映射属性；`null` 字段不参与写入/条件（插入回退默认值，更新不覆盖已有列）。实体需是带 getter/setter 的 JavaBean（例如继承 `IdEntity` 并补齐访问器）。
+
+直接保存（一行执行，自动判定插入/更新）：
+
+```java
+User user = new User();
+user.setName("测试用户");
+user.setMobilePhone("13800000000");
+// 主键为空 → 插入，主键由框架自动生成
+String id = MetaFactory.save(user);
+
+user.setId(id);
+user.setName("新名称");
+// 主键非空 → 按主键更新
+MetaFactory.save(user);
+```
+
+按实体对象构建（返回构建器，可继续链式）：
+
+```java
+// 插入构建器
+MetaFactory.insert(user).useDataSource("portal").save();
+
+// 更新构建器（主键非空时自动追加 where(主键)）
+MetaFactory.update(user).useDataSource("portal").save();
+
+// 按属性等值查询：非空字段作为条件
+List<Map<String, Object>> rows = MetaFactory.query(user)
+        .order(Order.desc("createAt"))
+        .list();
+```
+
+说明：
+
+- `save(entity)` 是唯一“一行直接执行”的便捷方法，返回主键；其余对象重载返回构建器，与 `insert(Class)` / `update(Class)` / `query(Class)` 一致
+- 主键判定：主键为空（`null` 或空白字符串）→ 插入；主键非空 → 按主键更新
+- 对象重载与字段名版底层完全等价，复用同一套默认字段填充、UID 生成、动态数据源能力
+
 ## 高级能力
 
 多表 join：

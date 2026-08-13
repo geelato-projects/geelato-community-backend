@@ -30,6 +30,26 @@ int affected = MetaFactory.delete("User")
         .delete();
 ```
 
+## 基于实体对象的便捷重载
+
+直接传入实体对象，按其非空属性构造并执行 SQL：
+
+```java
+// 一行保存：主键空 → 插入，主键非空 → 按主键更新
+User user = new User();
+user.setName("测试用户");
+String id = MetaFactory.save(user);
+
+user.setId(id);
+user.setName("新名称");
+MetaFactory.save(user);
+
+// 按属性等值查询（非空字段作为条件）
+List<Map<String, Object>> rows = MetaFactory.query(user).list();
+```
+
+`insert(entity)` / `update(entity)` / `delete(entity)` / `query(entity)` 返回构建器，可继续链式 `.useDataSource(...)`；`save(entity)` 直接执行并返回主键。约定：仅采集非空属性，`null` 字段跳过；实体需带 getter/setter。
+
 ## 独立 Spring Boot 工程最小接入
 - 引入依赖：
 
@@ -90,6 +110,7 @@ geelato:
 
 ## 主要能力
 - 支持 `query("Entity")` 与 `query(Entity.class)` 双入口
+- 支持基于实体对象的便捷重载：`save(entity)` 直接保存（自动判定插入/更新），`insert/update/delete/query(entity)` 按非空属性预填构建器
 - 支持分页、单条、单列、包装结果
 - 支持基于外键元数据的自动关联查询与自定义 join on
 - 支持 `groupBy`、`havingSql`、`selectExpr` 这类 join 场景常用能力

@@ -7,7 +7,7 @@ import cn.geelato.core.meta.MetaReflex;
 import cn.geelato.core.meta.schema.SchemaColumn;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.meta.Entity;
-import cn.geelato.utils.ClassScanner;
+import cn.geelato.utils.AnnotatedClassScanner;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.utils.SchemaUtils;
 import org.slf4j.Logger;
@@ -124,7 +124,7 @@ public class MetaSourceLoader {
 
     private void loadJavaSource() {
         try {
-            List<Class<?>> classes = ClassScanner.scan(scanPackage, true, Entity.class);
+            List<Class<?>> classes = AnnotatedClassScanner.scan(scanPackage, Entity.class);
             if (classes == null) {
                 return;
             }

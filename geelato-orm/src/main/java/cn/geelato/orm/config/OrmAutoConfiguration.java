@@ -94,12 +94,20 @@ public class OrmAutoConfiguration {
             return;
         }
 
+        MetaManager metaManager = MetaManager.singleInstance();
+        List<String> packagesToScan = basePackages.stream()
+                .filter(pkg -> !metaManager.isPackageAlreadyScanned(pkg))
+                .toList();
+        if (packagesToScan.isEmpty()) {
+            return;
+        }
+
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.setEnvironment(applicationContext.getEnvironment());
         scanner.setResourceLoader(applicationContext);
         scanner.addIncludeFilter(new AnnotationTypeFilter(Entity.class));
 
-        for (String basePackage : basePackages) {
+        for (String basePackage : packagesToScan) {
             for (BeanDefinition beanDefinition : scanner.findCandidateComponents(basePackage)) {
                 String className = beanDefinition.getBeanClassName();
                 if (!StringUtils.hasText(className)) {
@@ -107,7 +115,7 @@ public class OrmAutoConfiguration {
                 }
                 try {
                     Class<?> entityClass = ClassUtils.forName(className, applicationContext.getClassLoader());
-                    MetaManager.singleInstance().parseOne(entityClass);
+                    metaManager.parseOne(entityClass);
                 } catch (ClassNotFoundException ex) {
                     throw new IllegalStateException("Failed to load @Entity class: " + className, ex);
                 }

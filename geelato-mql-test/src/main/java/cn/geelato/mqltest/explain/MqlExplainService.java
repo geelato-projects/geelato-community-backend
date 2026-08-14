@@ -64,8 +64,9 @@ public class MqlExplainService {
                     return explainDelete(mqlJson);
                 case "query":
                 default:
-                    QueryCommand command = queryParser.parse(mqlJson);
-                    return doExplain(command);
+                    cn.geelato.core.mql.MqlQueryProcessor.ProcessedQuery processed =
+                            cn.geelato.core.mql.MqlQueryProcessor.getInstance().process(mqlJson);
+                    return doExplain(processed.getCommand(), processed.getBoundPageSql());
             }
         } catch (Exception e) {
             log.warn("MQL explain 解析失败: {}", e.getMessage());
@@ -134,7 +135,15 @@ public class MqlExplainService {
             BoundPageSql bps = new BoundPageSql();
             bps.setBoundSql(provider.generate(command));
             bps.setCountSql(provider.buildCountSql(command));
+            return doExplain(command, bps);
+        } catch (Exception e) {
+            log.warn("MQL explain SQL 生成失败: {}", e.getMessage());
+            return MqlExplainResult.fail(e.getMessage());
+        }
+    }
 
+    public MqlExplainResult doExplain(QueryCommand command, BoundPageSql bps) {
+        try {
             MqlExplainResult result = new MqlExplainResult();
             result.setEntityName(command.getEntityName());
             result.setSql(bps.getBoundSql().getSql());

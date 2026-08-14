@@ -30,6 +30,15 @@ public class FieldMeta implements Serializable {
         this.fieldName = fieldName;
     }
 
+    /**
+     * 用已装载好的 {@link ColumnMeta} 构造（字段均已填充，无需再逐字段设置）。
+     * 供数据库来源的强类型装载路径使用。
+     */
+    public FieldMeta(ColumnMeta columnMeta) {
+        this.columnMeta = columnMeta;
+        this.fieldName = columnMeta.getFieldName();
+    }
+
 
     public String getColumnName() {
         return columnMeta.getName();

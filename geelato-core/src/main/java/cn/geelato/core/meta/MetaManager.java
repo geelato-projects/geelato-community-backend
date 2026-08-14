@@ -13,9 +13,12 @@ import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.column.ColumnSelectType;
 import cn.geelato.core.meta.model.entity.EntityLiteMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.core.meta.model.entity.TableCheck;
+import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
-import cn.geelato.utils.ClassScanner;
+import cn.geelato.core.meta.model.view.TableView;
+import cn.geelato.utils.AnnotatedClassScanner;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -84,6 +88,12 @@ public class MetaManager extends AbstractManager {
      */
     @Getter
     private Map<String, String> catalogConnectIdMapping = new HashMap<>();
+    /**
+     * 已完成 classpath 实体扫描的包集合，用于跨组件去重（如 geelato-orm 的 OrmAutoConfiguration 重复扫描同一批 @Entity）。
+     * 判定子包关系：已扫包是请求包的祖先包时视为已覆盖。
+     */
+    @Getter
+    private final Set<String> scannedPackages = ConcurrentHashMap.newKeySet();
 
     private MetaManager() {
         log.info("MetaManager Instancing...");
@@ -122,32 +132,34 @@ public class MetaManager extends AbstractManager {
         }
         log.info("parse meta data in database...");
         MetaDefinitionBundle definitionBundle = metaStore.load(params);
-        List<Map<String, Object>> tableList = definitionBundle.getTableList();
-        List<Map<String, Object>> allColumnList = definitionBundle.getColumnList();
-        List<Map<String, Object>> allViewList = definitionBundle.getViewList();
-        List<Map<String, Object>> allCheckList = definitionBundle.getCheckList();
-        List<Map<String, Object>> allForeignList = definitionBundle.getForeignList();
-        for (Map<String, Object> map : tableList) {
-            String tableId = map.get("id") == null ? "" : map.get("id").toString();
-            String entityName = map.get("entity_name") == null ? "" : map.get("entity_name").toString();
-            String connectId = map.get("connect_id") == null ? "" : map.get("connect_id").toString();
+        List<TableMeta> tableList = definitionBundle.getTableList();
+        List<ColumnMeta> allColumnList = definitionBundle.getColumnList();
+        List<TableView> allViewList = definitionBundle.getViewList();
+        List<TableCheck> allCheckList = definitionBundle.getCheckList();
+        List<TableForeign> allForeignList = definitionBundle.getForeignList();
+        // 预建索引，避免对每张表在全量列/视图/检查/外键列表上做 O(n) 线性扫描（原为 O(T×C)）。
+        Map<String, List<ColumnMeta>> columnsByTableId = allColumnList.stream()
+                .collect(Collectors.groupingBy(x -> String.valueOf(x.getTableId())));
+        Map<String, List<TableView>> viewsByEntityConnect = allViewList.stream()
+                .filter(v -> v.getEntityName() != null && v.getConnectId() != null)
+                .collect(Collectors.groupingBy(v -> v.getEntityName() + "\0" + v.getConnectId()));
+        Map<String, List<TableCheck>> checksByTableId = allCheckList.stream()
+                .collect(Collectors.groupingBy(x -> String.valueOf(x.getTableId())));
+        Map<String, List<TableForeign>> foreignsByMainTable = allForeignList.stream()
+                .filter(f -> f.getMainTable() != null)
+                .collect(Collectors.groupingBy(TableForeign::getMainTable));
+        for (TableMeta tableMeta : tableList) {
+            String tableId = tableMeta.getId();
+            String entityName = tableMeta.getEntityName();
+            String connectId = tableMeta.getConnectId();
             if (StringUtils.isAnyBlank(tableId, entityName, connectId)) {
                 continue;
             }
-            List<Map<String, Object>> columnList = allColumnList.stream().filter(
-                    x -> x.get("table_id") != null && x.get("table_id").toString().equals(tableId)
-            ).collect(Collectors.toList());
-            List<Map<String, Object>> viewList = allViewList.stream().filter(
-                    x -> x.get("entity_name") != null && x.get("entity_name").toString().equals(entityName)
-                            && x.get("connect_id") != null && x.get("connect_id").toString().equals(connectId)
-            ).collect(Collectors.toList());
-            List<Map<String, Object>> checkList = allCheckList.stream().filter(
-                    x -> x.get("table_id") != null && x.get("table_id").toString().equals(tableId)
-            ).collect(Collectors.toList());
-            List<Map<String, Object>> foreignList = allForeignList.stream().filter(
-                    x -> x.get("main_table") != null && x.get("main_table").toString().equals(entityName)
-            ).collect(Collectors.toList());
-            parseTableEntity(map, columnList, viewList, checkList, foreignList);
+            List<ColumnMeta> columnList = columnsByTableId.getOrDefault(tableId, Collections.emptyList());
+            List<TableView> viewList = viewsByEntityConnect.getOrDefault(entityName + "\0" + connectId, Collections.emptyList());
+            List<TableCheck> checkList = checksByTableId.getOrDefault(tableId, Collections.emptyList());
+            List<TableForeign> foreignList = foreignsByMainTable.getOrDefault(entityName, Collections.emptyList());
+            parseTableEntity(tableMeta, columnList, viewList, checkList, foreignList);
             parseViewEntity(viewList);
             // 冲突检测开关开启时：同名实体输出 Java类源 与 DB源 的字段级差异，便于发现"在线实体被静默忽略"问题
             if (conflictDetectEnabled && entityMetadataMapFromClass.containsKey(entityName)) {
@@ -178,10 +190,10 @@ public class MetaManager extends AbstractManager {
      * @param viewName 视图名称
      */
     private void refreshViewMeta(String viewName) {
-        List<Map<String, Object>> viewList = metaStore.loadByViewName(viewName).getViewList();
-        for (Map<String, Object> map : viewList) {
+        List<TableView> viewList = metaStore.loadByViewName(viewName).getViewList();
+        for (TableView view : viewList) {
             removeOne(viewName);
-            parseViewEntity(map);
+            parseViewEntity(view);
         }
     }
 
@@ -192,14 +204,14 @@ public class MetaManager extends AbstractManager {
      */
     private void refreshTableMeta(String entityName) {
         MetaDefinitionBundle definitionBundle = metaStore.loadByEntityName(entityName);
-        List<Map<String, Object>> tableList = definitionBundle.getTableList();
-        for (Map<String, Object> map : tableList) {
-            List<Map<String, Object>> columnList = definitionBundle.getColumnList();
-            List<Map<String, Object>> viewList = definitionBundle.getViewList();
-            List<Map<String, Object>> checkList = definitionBundle.getCheckList();
-            List<Map<String, Object>> foreignList = definitionBundle.getForeignList();
+        List<TableMeta> tableList = definitionBundle.getTableList();
+        for (TableMeta tableMeta : tableList) {
+            List<ColumnMeta> columnList = definitionBundle.getColumnList();
+            List<TableView> viewList = definitionBundle.getViewList();
+            List<TableCheck> checkList = definitionBundle.getCheckList();
+            List<TableForeign> foreignList = definitionBundle.getForeignList();
             removeOne(entityName);
-            parseTableEntity(map, columnList, viewList, checkList, foreignList);
+            parseTableEntity(tableMeta, columnList, viewList, checkList, foreignList);
         }
     }
 
@@ -319,11 +331,35 @@ public class MetaManager extends AbstractManager {
 
 
     /**
+     * 判断给定包是否已被扫描覆盖（自身或其祖先包已扫描过）。
+     * 供 geelato-orm 等组件去重，避免对同一批 @Entity 重复进行 classpath 遍历与类加载。
+     *
+     * @param packageName 待判断的包名
+     * @return 已被覆盖返回 true
+     */
+    public boolean isPackageAlreadyScanned(String packageName) {
+        if (packageName == null || packageName.isEmpty()) {
+            return false;
+        }
+        for (String scanned : scannedPackages) {
+            if (packageName.equals(scanned) || packageName.startsWith(scanned + ".")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * 检索批定包名中包含所有的包javax.persistence.Entity的类，并进行解析
      */
     private void scanAndParse(String packageName) {
+        if (isPackageAlreadyScanned(packageName)) {
+            log.debug("包{}已被扫描覆盖，跳过重复扫描", packageName);
+            return;
+        }
         log.debug("开始从包{}中扫描到包含注解{}的实体......", packageName, Entity.class);
-        List<Class<?>> classes = ClassScanner.scan(packageName, true, Entity.class);
+        List<Class<?>> classes = AnnotatedClassScanner.scan(packageName, Entity.class);
+        scannedPackages.add(packageName);
         for (Class<?> clazz : classes) {
             parseOne(clazz);
         }
@@ -378,11 +414,11 @@ public class MetaManager extends AbstractManager {
         }
     }
 
-    public void parseTableEntity(Map<String, Object> map, List<Map<String, Object>> columnList, List<Map<String, Object>> viewList, List<Map<String, Object>> checkList, List<Map<String, Object>> foreignList) {
-        String entityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
+    public void parseTableEntity(TableMeta tableMeta, List<ColumnMeta> columnList, List<TableView> viewList, List<TableCheck> checkList, List<TableForeign> foreignList) {
+        String entityName = tableMeta.getEntityName();
         EntityMeta entityMeta = null;
         if (Strings.isNotBlank(entityName)) {
-            entityMeta = MetaReflex.getEntityMetaByTable(map, columnList, viewList, checkList, foreignList);
+            entityMeta = MetaReflex.getEntityMetaByTable(tableMeta, columnList, viewList, checkList, foreignList);
             entityMetadataMapFromDatabase.put(entityName, entityMeta);
         }
         if (Strings.isBlank(entityName)) {
@@ -398,7 +434,7 @@ public class MetaManager extends AbstractManager {
             } else if (entityMetadataMap.containsKey(entityName)) {
                 entityMeta = entityMetadataMap.get(entityName);
                 if (entityMeta != null && entityMeta.getTableMeta() != null) {
-                    entityMeta.setTableMeta(MetaReflex.getTableMeta(map));
+                    entityMeta.setTableMeta(tableMeta);
                 }
             }
             return;
@@ -430,17 +466,17 @@ public class MetaManager extends AbstractManager {
         }
     }
 
-    public void parseViewEntity(List<Map<String, Object>> viewList) {
-        for (Map<String, Object> view : viewList) {
+    public void parseViewEntity(List<TableView> viewList) {
+        for (TableView view : viewList) {
             parseViewEntity(view);
         }
     }
 
-    public void parseViewEntity(Map<String, Object> view) {
-        if (view == null || view.get("view_name") == null) {
+    public void parseViewEntity(TableView view) {
+        if (view == null || view.getViewName() == null) {
             return;
         }
-        String entityName = view.get("view_name").toString();
+        String entityName = view.getViewName();
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
             EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);

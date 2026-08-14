@@ -76,23 +76,23 @@ public abstract class MqlTestSupport {
                 + "{\"field_name\":\"status\",\"column_name\":\"status\",\"title\":\"状态\",\"data_type\":\"VARCHAR\"}"
                 + "]";
 
-        // view_construct：视图构造 SQL，含 @pf 模板参数 #{param}#
-        // 参数：statusFilter（状态过滤）、minAmount（最小金额过滤），空值时整段消除
+        // view_construct：视图构造 SQL，含 @pf 模板参数。
+        // 渲染规则：#...# 为一个 segment，segment 内含 {param} 且 param 为空时整段消除；
+        // segment 内无 {param} 时原样保留。故 where 1=1 独立成一个 segment 保证始终保留。
         String viewConstruct = "select o.id, o.order_no, o.user_id, o.amount, o.status "
                 + "from mql_test_order o "
-                + "#where 1=1"
-                + "{statusFilter} and o.status = {statusFilter}#"
-                + "{minAmount} and o.amount >= {minAmount}#"
-                + "#";
+                + "# where 1=1 # "
+                + "# {statusFilter} and o.status = {statusFilter} # "
+                + "# {minAmount} and o.amount >= {minAmount} #";
 
-        java.util.Map<String, Object> viewMap = new java.util.HashMap<>();
-        viewMap.put("view_name", viewName);
-        viewMap.put("title", "订单视图(测试)");
-        viewMap.put("view_type", ViewTypeEnum.DEFAULT.getCode());
-        viewMap.put("view_construct", viewConstruct);
-        viewMap.put("view_column", viewColumn);
+        cn.geelato.core.meta.model.view.TableView view = new cn.geelato.core.meta.model.view.TableView();
+        view.setViewName(viewName);
+        view.setTitle("订单视图(测试)");
+        view.setViewType(ViewTypeEnum.DEFAULT.getCode());
+        view.setViewConstruct(viewConstruct);
+        view.setViewColumn(viewColumn);
 
-        mm.parseViewEntity(viewMap);
+        mm.parseViewEntity(view);
 
         // 注册后强制设置 dbType=mysql（parseViewEntity 不会自动设）
         EntityMeta em = mm.getByEntityName(viewName);

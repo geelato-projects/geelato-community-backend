@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author geemeta
@@ -212,6 +213,68 @@ public class ColumnMeta extends BaseSortableEntity implements EntityEnableAble, 
     @Title(title = "标记修改前字段", description = "columnName")
     @Transient
     private String befColName;
+
+    public ColumnMeta() {
+    }
+
+    /**
+     * 从 platform_dev_column 行 Map 构造（收敛自 MetaReflex.getColumnFieldMetas(List&lt;Map&gt;) 的读取逻辑）。
+     * <p>仅做字段映射，不调用 {@link #afterSet()}，与原 Map 装载路径行为一致（避免重算 type/extra/defaultValue）。</p>
+     */
+    public ColumnMeta(Map<String, Object> map) {
+        String defaultValue = map.get("column_default") == null ? null : map.get("column_default").toString();
+        String comment = map.get("column_comment") == null ? null : map.get("column_comment").toString();
+        Boolean enableStatus = map.get("enable_status") == null ? null : Boolean.parseBoolean(map.get("enable_status").toString());
+
+        this.fieldName = map.get("field_name") == null ? null : map.get("field_name").toString();
+        this.title = map.get("title") == null ? null : map.get("title").toString();
+        this.name = map.get("column_name") == null ? null : map.get("column_name").toString();
+        this.selectType = map.get("select_type") == null ? null : map.get("select_type").toString().toUpperCase(Locale.ENGLISH);
+        this.typeExtra = map.get("type_extra") == null ? null : map.get("type_extra").toString();
+        this.extraValue = map.get("extra_value") == null ? null : map.get("extra_value").toString();
+        this.extraMap = map.get("extra_map") == null ? null : map.get("extra_map").toString();
+        this.dataType = map.get("data_type") == null ? null : map.get("data_type").toString().toUpperCase(Locale.ENGLISH);
+        this.defaultValue = Strings.isNotBlank(defaultValue) ? defaultValue : null;
+        this.description = map.get("description") == null ? null : map.get("description").toString();
+        this.type = map.get("column_type") == null ? null : map.get("column_type").toString();
+        if (map.get("character_maxinum_length") != null) {
+            this.charMaxLength = Long.parseLong(map.get("character_maxinum_length").toString());
+        }
+        if (map.get("datetime_precision") != null) {
+            this.datetimePrecision = Integer.parseInt(map.get("datetime_precision").toString());
+        }
+        this.setId(map.get("id") == null ? null : map.get("id").toString());
+        this.key = map.get("column_key") != null && Boolean.parseBoolean(map.get("column_key").toString());
+        if (map.get("linked") != null) {
+            this.linked = Integer.parseInt(map.get("linked").toString());
+        }
+        if (map.get("numeric_precision") != null) {
+            this.numericPrecision = Integer.parseInt(map.get("numeric_precision").toString());
+        }
+        this.numericSigned = map.get("numeric_signed") != null && Boolean.parseBoolean(map.get("numeric_signed").toString());
+        this.autoIncrement = map.get("auto_increment") != null && Boolean.parseBoolean(map.get("auto_increment").toString());
+        if (map.get("ordinal_position") != null) {
+            this.ordinalPosition = Integer.parseInt(map.get("ordinal_position").toString());
+        }
+        this.tableId = map.get("table_id") == null ? null : map.get("table_id").toString();
+        this.tableName = map.get("table_name") == null ? null : map.get("table_name").toString();
+        this.comment = Strings.isNotBlank(comment) ? comment : this.title;
+        if (map.get("numeric_scale") != null) {
+            this.numericScale = Integer.parseInt(map.get("numeric_scale").toString());
+        }
+        if (map.get("del_status") != null) {
+            this.setDelStatus(Integer.parseInt(map.get("del_status").toString()));
+        }
+        this.enableStatus = Boolean.TRUE.equals(enableStatus) ? 1 : 0;
+        this.autoName = map.get("auto_name") == null ? null : map.get("auto_name").toString();
+        this.autoAdd = map.get("auto_add") != null && Boolean.parseBoolean(map.get("auto_add").toString());
+        this.synced = map.get("synced") != null && Boolean.parseBoolean(map.get("synced").toString());
+        this.drawed = map.get("drawed") != null && Boolean.parseBoolean(map.get("drawed").toString());
+        this.encrypted = map.get("encrypted") != null && Boolean.parseBoolean(map.get("encrypted").toString());
+        this.marker = map.get("marker") == null ? null : map.get("marker").toString();
+        this.setTenantCode(map.get("tenant_code") == null ? null : map.get("tenant_code").toString());
+        this.appId = map.get("app_id") == null ? null : map.get("app_id").toString();
+    }
 
 
     @Override

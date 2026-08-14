@@ -85,16 +85,14 @@ public class MqlTestScenarioService {
 
     // ==================== 单次执行（不做比对） ====================
 
-    /**
-     * 执行单次 MQL 查询，返回真实结果行。
-     */
     public MqlExecuteResult executeMql(String mqlJson) {
         long start = System.currentTimeMillis();
         MqlExecuteResult result = new MqlExecuteResult();
         try {
-            QueryCommand command = queryParser.parse(mqlJson);
-            MetaQuerySqlProvider provider = new MetaQuerySqlProvider();
-            BoundSql boundSql = provider.generate(command);
+            cn.geelato.core.mql.MqlQueryProcessor.ProcessedQuery processed =
+                    cn.geelato.core.mql.MqlQueryProcessor.getInstance().process(mqlJson);
+            QueryCommand command = processed.getCommand();
+            cn.geelato.core.mql.execute.BoundSql boundSql = processed.getBoundPageSql().getBoundSql();
             result.setEntityName(command.getEntityName());
             result.setSql(boundSql.getSql());
             result.setParams(boundSql.getParams());
@@ -107,10 +105,9 @@ public class MqlTestScenarioService {
             result.setRows(rows);
             result.setRowCount(rows.size());
 
-            // 分页时额外查 count
+            // count SQL（分页时）
             if (command.isPagingQuery()) {
-                String countSql = provider.buildCountSql(command);
-                result.setCountSql(countSql);
+                result.setCountSql(processed.getBoundPageSql().getCountSql());
             }
             result.setSuccess(true);
         } catch (Exception e) {

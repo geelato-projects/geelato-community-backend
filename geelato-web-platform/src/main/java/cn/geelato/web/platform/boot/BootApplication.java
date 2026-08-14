@@ -19,6 +19,10 @@ import org.springframework.context.annotation.ComponentScan;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @ComponentScan(basePackages = {"cn.geelato"})
 @Slf4j
@@ -43,19 +47,53 @@ public class BootApplication implements CommandLineRunner {
         if (dataSourceDefinitionLoader != null) {
             DataSourceManager.singleInstance().setDefinitionLoader(dataSourceDefinitionLoader);
         }
-        DataSourceManager.singleInstance().parseDataSourceMeta(this.dao);
-        resolveSqlScript(args);
+        // Graal 上下文预热：默认后台异步，不阻塞启动主线程；运行期访问由 GraalManager.ensureInitialized() 兜底
         resolveGraalContext();
-        initEnvironment();
+        // 数据源定义 / SQL 脚本 / 系统环境 三者互相独立，并行加载以缩短启动时间
+        ExecutorService startupExecutor = Executors.newFixedThreadPool(3, r -> {
+            Thread t = new Thread(r, "startup-init");
+            t.setDaemon(true);
+            return t;
+        });
+        try {
+            CompletableFuture<Void> datasource = CompletableFuture.runAsync(
+                    () -> DataSourceManager.singleInstance().parseDataSourceMeta(this.dao), startupExecutor);
+            CompletableFuture<Void> sqlScript = CompletableFuture.runAsync(() -> {
+                try {
+                    resolveSqlScript(args);
+                } catch (IOException e) {
+                    throw new CompletionException(e);
+                }
+            }, startupExecutor);
+            CompletableFuture<Void> environment = CompletableFuture.runAsync(this::initEnvironment, startupExecutor);
+            try {
+                CompletableFuture.allOf(datasource, sqlScript, environment).join();
+            } catch (CompletionException ce) {
+                Throwable cause = ce.getCause();
+                while (cause instanceof CompletionException) {
+                    cause = cause.getCause();
+                }
+                if (cause instanceof Exception) {
+                    throw (Exception) cause;
+                }
+                throw ce;
+            }
+        } finally {
+            startupExecutor.shutdownNow();
+        }
         log.info("[start application]...finish");
         log.info("[application version is {}:{}]", Version.current.getEdition(), Version.current.getVersion());
     }
 
     private void resolveGraalContext() {
         String[] packageNames = getProperty("geelato.graal.scan-package-names", "cn.geelato").split(",");
-        for (String packageName : packageNames) {
-            GraalManager.singleInstance().initGraalService(packageName);
-            GraalManager.singleInstance().initGraalVariable(packageName);
+        // geelato.startup.graal-async-init=true（默认）：后台线程合并扫描 @GraalService/@GraalVariable，不阻塞启动；
+        // false：当前线程同步完成，与历史行为一致。
+        boolean asyncInit = Boolean.parseBoolean(getProperty("geelato.startup.graal-async-init", "true"));
+        if (asyncInit) {
+            GraalManager.singleInstance().initGraalContextAsync(packageNames);
+        } else {
+            GraalManager.singleInstance().initGraalContextSync(packageNames);
         }
     }
 

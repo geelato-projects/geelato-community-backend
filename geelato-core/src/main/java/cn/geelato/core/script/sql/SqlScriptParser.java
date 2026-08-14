@@ -24,7 +24,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
     private Map<String, String> sqlMap = null;
     public final static String VAL_FLAG = "$";
     public final static String VAL_NAME = "$";
-    //e.g. match $tableName or $tableName.item or $addList[i].type.XX.ZZ
     private final static Pattern PATTERN_VAL_FLAG = Pattern.compile("\\s*\\$\\.[\\w,\\[\\]]+[.]?\\w*[.]?\\w*[.]?\\w*");
 
     @Override
@@ -34,10 +33,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
         map.forEach((key, value) -> {
             try {
                 sqlMap.put(key, toJsFunction(key, parseTokens(value)));
-                if (log.isDebugEnabled()) {
-                    log.debug("-- @sql {}", key);
-                    log.debug("\r\n{}", sqlMap.get(key));
-                }
             } catch (Exception e) {
                 log.error("", e);
             }

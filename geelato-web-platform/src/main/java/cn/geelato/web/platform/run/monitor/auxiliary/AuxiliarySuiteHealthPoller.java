@@ -46,9 +46,11 @@ public class AuxiliarySuiteHealthPoller {
             t.setDaemon(true);
             return t;
         });
-        refreshNow();
         long interval = sanitizeInterval(properties.getPollIntervalSeconds());
-        scheduler.scheduleWithFixedDelay(this::refreshSafely, interval, interval, TimeUnit.SECONDS);
+        // 首次探测延迟执行，避免启动阶段同步发起 HTTP 健康检查（connect/read 超时）阻塞应用就绪。
+        // 健康数据仅在被查询时才需要，晚数秒可见不影响功能。
+        long initialDelay = Math.min(interval, 5L);
+        scheduler.scheduleWithFixedDelay(this::refreshSafely, initialDelay, interval, TimeUnit.SECONDS);
     }
 
     @PreDestroy

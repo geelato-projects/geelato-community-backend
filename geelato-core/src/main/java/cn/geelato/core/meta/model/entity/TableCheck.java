@@ -69,5 +69,8 @@ public class TableCheck extends BaseEntity implements EntityEnableAble {
         this.enableStatus = map.get("enable_status") == null ? 0 : Integer.parseInt(map.get("enable_status").toString());
         int synced = map.get("synced") == null ? 0 : Integer.parseInt(map.get("synced").toString());
         this.synced = synced == 1;
+        // 基类字段（原由 MetaReflex.getTableCheckMetas 构造后补，收敛至此）
+        this.setId(map.get("id") == null ? null : map.get("id").toString());
+        this.setDelStatus(map.get("del_status") == null ? 0 : Integer.parseInt(map.get("del_status").toString()));
     }
 }

@@ -57,7 +57,7 @@ public class RuleService {
 
     public Map<String, Object> queryForMap(String gql) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
-        processQueryCommandFunctions(command);
+        cn.geelato.core.mql.MqlQueryProcessor.getInstance().processQueryCommandFunctions(command);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
         if (!GlobalContext.getMetaQueryCacheOption()) {
             return dao.queryForMap(boundSql);
@@ -76,7 +76,7 @@ public class RuleService {
 
     public <T> T queryForObject(String gql, Class<T> requiredType) throws DataAccessException {
         QueryCommand command = gqlManager.generateQuerySql(gql);
-        processQueryCommandFunctions(command);
+        cn.geelato.core.mql.MqlQueryProcessor.getInstance().processQueryCommandFunctions(command);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
         if (!GlobalContext.getMetaQueryCacheOption()) {
             return dao.queryForObject(boundSql, requiredType);
@@ -103,10 +103,10 @@ public class RuleService {
     }
 
     public Map<String, Object> queryForMapList(String gql, boolean withMeta, Map<String, Map<String, Object>> queryParamsByEntity) {
-        QueryCommand command = gqlManager.generateQuerySql(gql);
-        applyViewTemplateParams(command, queryParamsByEntity);
-        processQueryCommandFunctions(command);
-        BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
+        cn.geelato.core.mql.MqlQueryProcessor.ProcessedQuery processed =
+                cn.geelato.core.mql.MqlQueryProcessor.getInstance().process(gql);
+        QueryCommand command = processed.getCommand();
+        BoundPageSql boundPageSql = processed.getBoundPageSql();
         Object meta = withMeta ? metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()) : null;
         if (!GlobalContext.getMetaQueryCacheOption()) {
             List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
@@ -189,7 +189,8 @@ public class RuleService {
         List<QueryCommand> commandList = gqlManager.generateMultiQuerySql(gql);
         boolean allCached = GlobalContext.getMetaQueryCacheOption();
         for (QueryCommand command : commandList) {
-            applyViewTemplateParams(command, queryParamsByEntity);
+            cn.geelato.core.mql.MqlQueryProcessor.getInstance().applyViewTemplateParams(command, queryParamsByEntity);
+            cn.geelato.core.mql.MqlQueryProcessor.getInstance().processQueryCommandFunctions(command);
             BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
             String kList = buildCacheKey(command, "list");
             String kTotal = buildCacheKey(command, "total");
@@ -258,34 +259,11 @@ public class RuleService {
         return result;
     }
 
-    private void applyViewTemplateParams(QueryCommand command, Map<String, Map<String, Object>> queryParamsByEntity) {
-        if (command == null || queryParamsByEntity == null || queryParamsByEntity.isEmpty()) {
-            return;
-        }
-        EntityMeta entityMeta = metaManager.getByEntityName(command.getEntityName());
-        if (entityMeta == null || entityMeta.getTableMeta() == null) {
-            return;
-        }
-        EntityType entityType = entityMeta.getEntityType();
-        if (EntityType.View != entityType) {
-            return;
-        }
-        ViewMeta viewMeta = entityMeta.getViewMeta(entityMeta.getTableName());
-        if (viewMeta != null
-                && StringUtils.isNotEmpty(viewMeta.getViewType())
-                && !ViewTypeEnum.DEFAULT.getCode().equalsIgnoreCase(viewMeta.getViewType())) {
-            return;
-        }
-        Map<String, Object> params = queryParamsByEntity.get(command.getEntityName());
-        if (params != null && !params.isEmpty()) {
-            command.setViewTemplateParams(params);
-        }
-    }
-
 
     public <T> List<T> queryForOneColumnList(String gql, Class<T> elementType) throws DataAccessException {
+        cn.geelato.core.mql.MqlQueryProcessor processor = cn.geelato.core.mql.MqlQueryProcessor.getInstance();
         QueryCommand command = gqlManager.generateQuerySql(gql);
-        processQueryCommandFunctions(command);
+        processor.processQueryCommandFunctions(command);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
         if (!GlobalContext.getMetaQueryCacheOption()) {
             return dao.queryForOneColumnList(boundSql, elementType);
@@ -302,36 +280,6 @@ public class RuleService {
         List<T> result = dao.queryForOneColumnList(boundSql, elementType);
         metaCache.putCache(key, result);
         return result;
-    }
-
-    /**
-     * 统一处理 QueryCommand 中 where 参数的函数变量，如 $fn.now / $fn.nowDate / $fn.nowDateTime。
-     */
-    private void processQueryCommandFunctions(QueryCommand command) {
-        if (command == null || command.getWhere() == null || command.getWhere().getParams() == null) {
-            return;
-        }
-        Map<String, Object> params = command.getWhere().getParams();
-        params.forEach((key, value) -> {
-            if (value != null) {
-                String valStr = value.toString();
-                if (valStr.startsWith(VARS_FN)) {
-                    String fnName = valStr.substring(VARS_FN.length() + 1);
-                    String newValue;
-                    switch (fnName) {
-                        case "now", "nowDateTime" -> newValue = Fn.nowDateTime();
-                        case "nowDate" -> newValue = Fn.nowDate();
-                        default -> newValue = null;
-                    }
-                    if (command.getWhere().getFilters() != null) {
-                        command.getWhere().getFilters().stream()
-                                .filter(filter -> value.equals(filter.getValue()))
-                                .forEach(filter -> filter.setValue(newValue));
-                    }
-                    params.replace(key, newValue);
-                }
-            }
-        });
     }
 
     //    @Transactional(

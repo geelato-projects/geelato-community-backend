@@ -1,9 +1,10 @@
 package cn.geelato.web.platform.srvlog.registry;
 
 import cn.geelato.web.common.annotation.ApiRestController;
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -26,7 +27,11 @@ public class ApiRestControllerSrvLogRegistry {
         this.handlerMapping = handlerMapping;
     }
 
-    @PostConstruct
+    /**
+     * 应用就绪后再扫描注册 ApiRestController 端点，避免在启动主线程遍历 handler 映射。
+     * 扫描完成前 {@link #resolveHandlerSignature(String)} 返回 null，仅影响该时段的服务日志归属。
+     */
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         Map<RequestMappingInfo, HandlerMethod> handlerMethods = handlerMapping.getHandlerMethods();
         for (Map.Entry<RequestMappingInfo, HandlerMethod> e : handlerMethods.entrySet()) {

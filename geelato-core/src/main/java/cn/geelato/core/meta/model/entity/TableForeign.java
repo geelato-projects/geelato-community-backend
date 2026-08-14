@@ -81,5 +81,8 @@ public class TableForeign extends BaseSortableEntity implements EntityEnableAble
         this.description = map.get("description") == null ? null : map.get("description").toString();
         this.deleteAction = map.get("delete_action") == null ? ColumnDefault.FOREIGN_ACTION_VALUE : map.get("delete_action").toString();
         this.updateAction = map.get("update_action") == null ? ColumnDefault.FOREIGN_ACTION_VALUE : map.get("update_action").toString();
+        // 基类字段（原由 MetaReflex.getTableForeignMetas 构造后补，收敛至此）
+        this.setId(map.get("id") == null ? null : map.get("id").toString());
+        this.setDelStatus(map.get("del_status") == null ? 0 : Integer.parseInt(map.get("del_status").toString()));
     }
 }

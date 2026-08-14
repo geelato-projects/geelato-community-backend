@@ -2,8 +2,9 @@ package cn.geelato.web.platform.srvlog.snapshot;
 
 import cn.geelato.web.common.annotation.ApiRestController;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,10 @@ public class ApiEndpointSnapshotWriter {
         this.environment = environment;
     }
 
-    @PostConstruct
+    /**
+     * 应用就绪后再生成 API 端点快照（磁盘写入），避免在启动主线程执行文件 IO。
+     */
+    @EventListener(ApplicationReadyEvent.class)
     public void writeSnapshot() {
         Path dir = resolveDir();
         if (dir == null) {

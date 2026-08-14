@@ -71,6 +71,9 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "缓存类型")
     @Col(name = "cache_type")
     private String cacheType="none";
+    @Title(title = "版本控制")
+    @Col(name = "version_control")
+    private Boolean versionControl;
     public TableMeta() {
     }
 
@@ -103,6 +106,14 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         this.acrossApp = map.get("across_app") != null && Boolean.parseBoolean(map.get("across_app").toString());
         this.acrossWorkflow = map.get("across_workflow") != null && Boolean.parseBoolean(map.get("across_workflow").toString());
         this.cacheType= map.get("cache_type") == null ? null : map.get("cache_type").toString();
+        // 基类字段与回退（原由 MetaReflex.getTableMeta(Map) 构造后补，收敛至此构造函数）
+        this.setId(map.get("id") == null ? null : map.get("id").toString());
+        this.setDelStatus(map.get("del_status") == null ? 0 : Integer.parseInt(map.get("del_status").toString()));
+        this.versionControl = map.get("version_control") != null && Boolean.parseBoolean(map.get("version_control").toString());
+        // title 回退：空时取 tableName，再空取 entityName
+        if (StringUtils.isBlank(this.title)) {
+            this.title = StringUtils.isBlank(this.tableName) ? this.entityName : this.tableName;
+        }
     }
 
     public String dbTableName() {

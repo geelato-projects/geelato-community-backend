@@ -11,7 +11,7 @@
     "mql": "{\"mql_test_order_view\":{}}",
     "expectRowCount": 2,
     "expectSqlContains": "from (",
-    "description": "视图查询依赖元数据中已注册 mql_test_order_view 实体（含view_construct模板）。首次使用需点击页面'注册测试元数据'按钮。"
+    "description": "DEFAULT视图生成派生表(from子查询)。视图实体 mql_test_order_view 在模块启动时自动注册。"
   },
   {
     "id": "view-template-filter",
@@ -24,6 +24,6 @@
     "teardown": ["DELETE FROM mql_test_order WHERE id IN (1,2)"],
     "mql": "{\"mql_test_order_view\":{\"@pf\":{\"statusFilter\":\"pending\"}}}",
     "expectRowCount": 1,
-    "description": "视图模板渲染 statusFilter=pending。注意 @pf 由 RuleService 层处理，直接解析需手动设置 viewTemplateParams。"
+    "description": "视图模板渲染 statusFilter=pending 过滤。注意 @pf 需配合 viewTemplateParams 使用。"
   }
 ]

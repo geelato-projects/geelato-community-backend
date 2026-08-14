@@ -4,11 +4,13 @@ package cn.geelato.core.meta;
 import cn.geelato.core.enums.MysqlDataTypeEnum;
 import cn.geelato.core.enums.MysqlToJavaEnum;
 import cn.geelato.core.mql.TypeConverter;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableCheck;
 import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
+import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.meta.model.view.ViewMeta;
 import cn.geelato.lang.meta.*;
 import cn.geelato.utils.DateUtils;
@@ -140,48 +142,88 @@ public class MetaReflex {
         return em;
     }
 
-    public static EntityMeta getEntityMetaByTable(Map tmap, List columnList, List viewList,List checkList, List foreignList) {
+    public static EntityMeta getEntityMetaByTable(TableMeta tableMeta, List<ColumnMeta> columnList,
+                                                  List<TableView> viewList, List<TableCheck> checkList,
+                                                  List<TableForeign> foreignList) {
         EntityMeta em = new EntityMeta();
-        em.setTableMeta(getTableMeta(tmap));
-        em.setEntityName(tmap.get("entity_name").toString());
-        em.setEntityTitle(em.getTableMeta().getTitle());
+        em.setTableMeta(tableMeta);
+        em.setEntityName(tableMeta.getEntityName());
+        em.setEntityTitle(tableMeta.getTitle());
         em.setEntityType(EntityType.Table);
-        if(tmap.get("version_control")!=null) {
-            em.setVersionControl(Boolean.parseBoolean(tmap.get("version_control").toString()));
+        if (tableMeta.getVersionControl() != null) {
+            em.setVersionControl(tableMeta.getVersionControl());
         }
-        if(tmap.get("cache_type")!=null) {
-            em.setCacheType(EntityCacheType.fromStringIgnoreCase(tmap.get("cache_type").toString()));
+        if (tableMeta.getCacheType() != null) {
+            em.setCacheType(EntityCacheType.fromStringIgnoreCase(tableMeta.getCacheType()));
         }
-        if(columnList==null ||columnList.isEmpty()){
+        if (columnList == null || columnList.isEmpty()) {
             throw new RuntimeException("column list is empty!");
-        }else {
+        } else {
             HashMap<String, FieldMeta> columnMap = getColumnFieldMetas(columnList);
             em.setFieldMetas(columnMap.values());
             em.setId(getPrimaryKey(columnMap));
         }
 
-        if(viewList!=null&&!viewList.isEmpty()){
+        if (viewList != null && !viewList.isEmpty()) {
             HashMap<String, ViewMeta> viewMap = getViewMetas(viewList);
             em.setViewMetas(viewMap.values());
         }
 
-        if(checkList!=null&&!checkList.isEmpty()){
-            List<TableCheck> checks = getTableCheckMetas(checkList);
-            em.setTableChecks(checks);
+        if (checkList != null && !checkList.isEmpty()) {
+            em.setTableChecks(getTableCheckMetas(checkList));
         }
 
-        if(foreignList!=null&&!foreignList.isEmpty()){
-            List<TableForeign> foreigns = getTableForeignMetas(foreignList);
-            em.setTableForeigns(foreigns);
+        if (foreignList != null && !foreignList.isEmpty()) {
+            em.setTableForeigns(getTableForeignMetas(foreignList));
         }
         return em;
     }
 
-    public static EntityMeta getEntityMetaByView(Map<String, Object> map) {
+    /**
+     * 兼容旧入口：接收 platform_dev_* 行 Map 列表，转为强类型后委托给主方法。
+     * <p>MetaSourceLoader 等仍在使用此入口。</p>
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static EntityMeta getEntityMetaByTable(Map tmap, List columnList, List viewList, List checkList, List foreignList) {
+        List<ColumnMeta> columns = new ArrayList<>();
+        if (columnList != null) {
+            for (Object o : columnList) {
+                columns.add(new ColumnMeta((Map<String, Object>) o));
+            }
+        }
+        List<TableView> views = new ArrayList<>();
+        if (viewList != null) {
+            for (Object o : viewList) {
+                views.add(new TableView((Map<String, Object>) o));
+            }
+        }
+        List<TableCheck> checks = new ArrayList<>();
+        if (checkList != null) {
+            for (Object o : checkList) {
+                checks.add(new TableCheck((Map<String, Object>) o));
+            }
+        }
+        List<TableForeign> foreigns = new ArrayList<>();
+        if (foreignList != null) {
+            for (Object o : foreignList) {
+                foreigns.add(new TableForeign((Map<String, Object>) o));
+            }
+        }
+        return getEntityMetaByTable(new TableMeta(tmap), columns, views, checks, foreigns);
+    }
+
+    public static EntityMeta getEntityMetaByView(TableView view) {
         EntityMeta em = new EntityMeta();
-        TableMeta tableMeta = getTableMeta(map);
-        String viewName = map.get("view_name").toString();
-        String subjectEntityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
+        // view 行与 table 行部分字段重叠，构造 TableMeta 时复制这些重叠字段
+        TableMeta tableMeta = new TableMeta();
+        tableMeta.setAppId(view.getAppId());
+        tableMeta.setConnectId(view.getConnectId());
+        tableMeta.setEntityName(view.getEntityName());
+        tableMeta.setTitle(view.getTitle());
+        tableMeta.setId(view.getId());
+        tableMeta.setDelStatus(view.getDelStatus());
+        String viewName = view.getViewName();
+        String subjectEntityName = view.getEntityName();
         if (StringUtils.hasText(subjectEntityName)) {
             EntityMeta subjectEntityMeta = MetaManager.singleInstance().getByEntityName(subjectEntityName);
             if (subjectEntityMeta != null && subjectEntityMeta.getTableMeta() != null) {
@@ -191,14 +233,14 @@ public class MetaReflex {
         tableMeta.setTableName(viewName);
         em.setTableMeta(tableMeta);
         em.setEntityName(viewName);
-        em.setEntityTitle(map.get("title").toString());
+        em.setEntityTitle(view.getTitle());
         em.setEntityType(EntityType.View);
-        ViewMeta viewMeta = buildViewMeta(map);
+        ViewMeta viewMeta = buildViewMeta(view);
         if (viewMeta != null) {
             em.setViewMetas(Collections.singletonList(viewMeta));
             ViewManager.singleInstance().addViewMeta(viewMeta.getViewName(), viewMeta);
         }
-        String columnDataStr = map.get("view_column").toString();
+        String columnDataStr = view.getViewColumn();
         if (StringUtils.hasText(columnDataStr)) {
             List<Map<String, Object>> list = new ArrayList<>();
             JSONArray columnData = JSONArray.parse(columnDataStr);
@@ -206,23 +248,27 @@ public class MetaReflex {
                 Map<String, Object> m = JSON.parseObject(x.toString(), Map.class);
                 list.add(m);
             });
-            HashMap<String, FieldMeta> columnMap = getColumnFieldMetas(list);
+            HashMap<String, FieldMeta> columnMap = getColumnFieldMetasFromMap(list);
             em.setFieldMetas(columnMap.values());
             em.setId(getPrimaryKey(columnMap));
         }
         return em;
     }
 
-    private static ViewMeta buildViewMeta(Map<String, Object> map) {
-        String viewName = map.get("view_name") == null ? null : map.get("view_name").toString();
+    /**
+     * 兼容旧入口：接收 view 行 Map，转为 {@link TableView} 后委托给主方法。
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static EntityMeta getEntityMetaByView(Map<String, Object> map) {
+        return getEntityMetaByView(new TableView(map));
+    }
+
+    private static ViewMeta buildViewMeta(TableView view) {
+        String viewName = view.getViewName();
         if (Strings.isBlank(viewName)) {
             return null;
         }
-        String viewConstruct = map.get("view_construct") == null ? null : map.get("view_construct").toString();
-        String viewColumn = map.get("view_column") == null ? null : map.get("view_column").toString();
-        String viewType = map.get("view_type") == null ? null : map.get("view_type").toString();
-        String entityName = map.get("entity_name") == null ? null : map.get("entity_name").toString();
-        return new ViewMeta(viewName, viewType, viewConstruct, viewColumn, entityName);
+        return new ViewMeta(viewName, view.getViewType(), view.getViewConstruct(), view.getViewColumn(), view.getEntityName());
     }
 
 
@@ -497,18 +543,14 @@ public class MetaReflex {
         return map;
     }
 
-    public static HashMap<String, ViewMeta> getViewMetas(List<HashMap> viewList) {
-        HashMap<String, ViewMeta> map = new HashMap<String, ViewMeta>();
+    public static HashMap<String, ViewMeta> getViewMetas(List<TableView> viewList) {
+        HashMap<String, ViewMeta> map = new HashMap<>();
         if (viewList != null && !viewList.isEmpty()) {
-            for (Map v_map : viewList) {
+            for (TableView view : viewList) {
                 try {
-                    String viewName = v_map.get("view_name") == null ? null : v_map.get("view_name").toString();
-                    String viewConstruct = v_map.get("view_construct") == null ? null : v_map.get("view_construct").toString();
-                    String viewColumn = v_map.get("view_column") == null ? null : v_map.get("view_column").toString();
-                    String viewType = v_map.get("view_type") == null ? null : v_map.get("view_type").toString();
-                    String entityName = v_map.get("entity_name") == null ? null : v_map.get("entity_name").toString();
+                    String viewName = view.getViewName();
                     if (Strings.isNotBlank(viewName) && !map.containsKey(viewName)) {
-                        ViewMeta vm = new ViewMeta(viewName, viewType, viewConstruct, viewColumn, entityName);
+                        ViewMeta vm = new ViewMeta(viewName, view.getViewType(), view.getViewConstruct(), view.getViewColumn(), view.getEntityName());
                         map.put(viewName, vm);
                         ViewManager.singleInstance().addViewMeta(viewName, vm);
                     }
@@ -517,88 +559,54 @@ public class MetaReflex {
                 }
             }
         }
-
         return map;
     }
 
-    public static HashMap<String, FieldMeta> getColumnFieldMetas(List<Map<String, Object>> columnList) {
+    /**
+     * 兼容入口：接收 view 行 Map 列表，转为 {@link TableView} 后委托给强类型主方法。
+     * <p>因类型擦除，List&lt;HashMap&gt; 与 List&lt;TableView&gt; 无法重载，故独立命名。</p>
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static HashMap<String, ViewMeta> getViewMetasFromMap(List<HashMap> viewList) {
+        List<TableView> list = new ArrayList<>();
+        if (viewList != null) {
+            for (Object o : viewList) {
+                list.add(new TableView((Map<String, Object>) o));
+            }
+        }
+        return getViewMetas(list);
+    }
+
+    public static HashMap<String, FieldMeta> getColumnFieldMetas(List<ColumnMeta> columnList) {
         HashMap<String, FieldMeta> map = new HashMap<>();
-        for (Map<String, Object> c_map : columnList) {
-            String fieldName = c_map.get("field_name") == null ? null : c_map.get("field_name").toString();
-            String title = c_map.get("title") == null ? null : c_map.get("title").toString();
-            String columnName = c_map.get("column_name") == null ? null : c_map.get("column_name").toString();
-
+        for (ColumnMeta cm : columnList) {
+            String fieldName = cm.getFieldName();
             if (Strings.isNotBlank(fieldName) && !map.containsKey(fieldName)) {
-                String selectType = c_map.get("select_type") == null ? null : c_map.get("select_type").toString().toUpperCase(Locale.ENGLISH);
-                String typeExtra = c_map.get("type_extra") == null ? null : c_map.get("type_extra").toString();
-                String extraValue = c_map.get("extra_value") == null ? null : c_map.get("extra_value").toString();
-                String extraMap = c_map.get("extra_map") == null ? null : c_map.get("extra_map").toString();
-                String dataType = c_map.get("data_type") == null ? null : c_map.get("data_type").toString().toUpperCase(Locale.ENGLISH);
-                String defaultValue = c_map.get("column_default") == null ? null : c_map.get("column_default").toString();
-                String comment = c_map.get("column_comment") == null ? null : c_map.get("column_comment").toString();
-                Boolean enableStatus = c_map.get("enable_status") == null ? null : Boolean.parseBoolean(c_map.get("enable_status").toString());
-
-                FieldMeta cfm = new FieldMeta(columnName, fieldName, title);
-                cfm.getColumnMeta().setFieldName(fieldName);
-                cfm.getColumnMeta().setUniqued(c_map.get("is_unique") != null && Boolean.parseBoolean(c_map.get("is_unique").toString()));
-                cfm.getColumnMeta().setNullable(c_map.get("is_nullable") == null || Boolean.parseBoolean(c_map.get("is_nullable").toString()));
-                cfm.getColumnMeta().setDefaultValue(Strings.isNotBlank(defaultValue) ? defaultValue : null);
-                cfm.getColumnMeta().setDescription(c_map.get("description") == null ? null : c_map.get("description").toString());
-                cfm.getColumnMeta().setType(c_map.get("column_type") == null ? null : c_map.get("column_type").toString());
-                cfm.getColumnMeta().setTitle(title);
-                if (c_map.get("character_maxinum_length") != null) {
-                    cfm.getColumnMeta().setCharMaxLength(Long.parseLong(c_map.get("character_maxinum_length").toString()));
-                }
-                if (c_map.get("datetime_precision") != null) {
-                    cfm.getColumnMeta().setDatetimePrecision(Integer.parseInt(c_map.get("datetime_precision").toString()));
-                }
-                cfm.getColumnMeta().setId(c_map.get("id") == null ? null : c_map.get("id").toString());
-                cfm.getColumnMeta().setKey(c_map.get("column_key") != null && Boolean.parseBoolean(c_map.get("column_key").toString()));
-                if (c_map.get("linked") != null) {
-                    cfm.getColumnMeta().setLinked(Integer.parseInt(c_map.get("linked").toString()));
-                }
-                if (c_map.get("numeric_precision") != null) {
-                    cfm.getColumnMeta().setNumericPrecision(Integer.parseInt(c_map.get("numeric_precision").toString()));
-                }
-                cfm.getColumnMeta().setNumericSigned(c_map.get("numeric_signed") != null && Boolean.parseBoolean(c_map.get("numeric_signed").toString()));
-                cfm.getColumnMeta().setAutoIncrement(c_map.get("auto_increment") != null && Boolean.parseBoolean(c_map.get("auto_increment").toString()));
-                cfm.getColumnMeta().setDataType(dataType);
-                cfm.getColumnMeta().setSelectType(selectType);
-                cfm.getColumnMeta().setTypeExtra(typeExtra);
-                cfm.getColumnMeta().setExtraValue(extraValue);
-                cfm.getColumnMeta().setExtraMap(extraMap);
-                if (c_map.get("ordinal_position") != null) {
-                    cfm.getColumnMeta().setOrdinalPosition(Integer.parseInt(c_map.get("ordinal_position").toString()));
-                }
-                cfm.getColumnMeta().setName(columnName);
-                cfm.getColumnMeta().setTableId(c_map.get("table_id") == null ? null : c_map.get("table_id").toString());
-                cfm.getColumnMeta().setTableName(c_map.get("table_name") == null ? null : c_map.get("table_name").toString());
-                cfm.getColumnMeta().setComment(Strings.isNotBlank(comment) ? comment : title);
-                if (c_map.get("numeric_scale") != null) {
-                    cfm.getColumnMeta().setNumericScale(Integer.parseInt(c_map.get("numeric_scale").toString()));
-                }
-                if (c_map.get("del_status") != null) {
-                    cfm.getColumnMeta().setDelStatus(Integer.parseInt(c_map.get("del_status").toString()));
-                }
-                cfm.getColumnMeta().setEnableStatus(Boolean.TRUE.equals(enableStatus) ? 1 : 0);
-                cfm.getColumnMeta().setAutoName(c_map.get("auto_name") == null ? null : c_map.get("auto_name").toString());
-                cfm.getColumnMeta().setAutoAdd(c_map.get("auto_add") != null && Boolean.parseBoolean(c_map.get("auto_add").toString()));
-                cfm.getColumnMeta().setSynced(c_map.get("synced") != null && Boolean.parseBoolean(c_map.get("synced").toString()));
-                cfm.getColumnMeta().setDrawed(c_map.get("drawed") != null && Boolean.parseBoolean(c_map.get("drawed").toString()));
-                cfm.getColumnMeta().setEncrypted(c_map.get("encrypted") != null && Boolean.parseBoolean(c_map.get("encrypted").toString()));
-                cfm.getColumnMeta().setMarker(c_map.get("marker") == null ? null : c_map.get("marker").toString());
-                cfm.getColumnMeta().setTenantCode(c_map.get("tenant_code") == null ? null : c_map.get("tenant_code").toString());
-                cfm.getColumnMeta().setAppId(c_map.get("app_id") == null ? null : c_map.get("app_id").toString());
-
+                FieldMeta cfm = new FieldMeta(cm);
+                String dataType = cm.getDataType();
+                // 派生：文本类型清空默认值；按 dataType 推导 Java 字段类型
                 if (MysqlDataTypeEnum.getTexts().contains(dataType)) {
-                    cfm.getColumnMeta().setDefaultValue(null);
+                    cm.setDefaultValue(null);
                 }
                 cfm.setFieldType(MysqlToJavaEnum.getJava(dataType));
                 map.put(fieldName, cfm);
             }
         }
-
         return map;
+    }
+
+    /**
+     * 兼容入口：接收 platform_dev_column 行 Map 列表，转为 {@link ColumnMeta} 后委托给强类型主方法。
+     * <p>view_column JSON 解析路径等仍在使用此入口。因类型擦除，List&lt;Map&gt; 与 List&lt;ColumnMeta&gt; 无法重载，故独立命名。</p>
+     */
+    public static HashMap<String, FieldMeta> getColumnFieldMetasFromMap(List<Map<String, Object>> columnList) {
+        List<ColumnMeta> list = new ArrayList<>();
+        if (columnList != null) {
+            for (Map<String, Object> map : columnList) {
+                list.add(new ColumnMeta(map));
+            }
+        }
+        return getColumnFieldMetas(list);
     }
 
     /**
@@ -621,44 +629,50 @@ public class MetaReflex {
         return fieldMeta;
     }
 
-    public static List<TableForeign> getTableForeignMetas(List<HashMap> foreignList) {
+    public static List<TableForeign> getTableForeignMetas(List<TableForeign> foreignList) {
         List<TableForeign> foreigns = new ArrayList<>();
         if (foreignList != null && !foreignList.isEmpty()) {
-            for (Map f_map : foreignList) {
-                try {
-                    int delStatus = f_map.get("del_status") == null ? 0 : Integer.parseInt(f_map.get("del_status").toString());
-                    String id = f_map.get("id") == null ? null : f_map.get("id").toString();
-                    TableForeign foreign = new TableForeign(f_map);
-                    foreign.setId(id);
-                    foreign.setDelStatus(delStatus);
-                    foreigns.add(foreign);
-                } catch (RuntimeException e) {
-                    throw e;
-                }
-            }
+            foreigns.addAll(foreignList);
         }
-
         return foreigns;
     }
 
-    public static List<TableCheck> getTableCheckMetas(List<HashMap> checkList) {
-        List<TableCheck> checks = new ArrayList<>();
-        if (checkList != null && !checkList.isEmpty()) {
-            for (Map f_map : checkList) {
-                try {
-                    int delStatus = f_map.get("del_status") == null ? 0 : Integer.parseInt(f_map.get("del_status").toString());
-                    String id = f_map.get("id") == null ? null : f_map.get("id").toString();
-                    TableCheck ck = new TableCheck(f_map);
-                    ck.setId(id);
-                    ck.setDelStatus(delStatus);
-                    checks.add(ck);
-                } catch (RuntimeException e) {
-                    throw e;
-                }
+    /**
+     * 兼容入口：接收外键行 Map 列表，转为 {@link TableForeign} 后委托给强类型主方法。
+     * <p>因类型擦除，List&lt;HashMap&gt; 与 List&lt;TableForeign&gt; 无法重载，故独立命名。</p>
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static List<TableForeign> getTableForeignMetasFromMap(List<HashMap> foreignList) {
+        List<TableForeign> list = new ArrayList<>();
+        if (foreignList != null) {
+            for (Object o : foreignList) {
+                list.add(new TableForeign((Map<String, Object>) o));
             }
         }
+        return getTableForeignMetas(list);
+    }
 
+    public static List<TableCheck> getTableCheckMetas(List<TableCheck> checkList) {
+        List<TableCheck> checks = new ArrayList<>();
+        if (checkList != null && !checkList.isEmpty()) {
+            checks.addAll(checkList);
+        }
         return checks;
+    }
+
+    /**
+     * 兼容入口：接收检查行 Map 列表，转为 {@link TableCheck} 后委托给强类型主方法。
+     * <p>因类型擦除，List&lt;HashMap&gt; 与 List&lt;TableCheck&gt; 无法重载，故独立命名。</p>
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static List<TableCheck> getTableCheckMetasFromMap(List<HashMap> checkList) {
+        List<TableCheck> list = new ArrayList<>();
+        if (checkList != null) {
+            for (Object o : checkList) {
+                list.add(new TableCheck((Map<String, Object>) o));
+            }
+        }
+        return getTableCheckMetas(list);
     }
 
     /**

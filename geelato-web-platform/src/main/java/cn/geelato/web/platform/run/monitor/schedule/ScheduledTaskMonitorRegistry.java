@@ -3,11 +3,15 @@ package cn.geelato.web.platform.run.monitor.schedule;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.io.Resource;
+import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
+import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.Schedules;
@@ -30,6 +34,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,6 +53,15 @@ public class ScheduledTaskMonitorRegistry {
     private final AtomicReference<String> lastErrorRef = new AtomicReference<>(null);
     private final AtomicLong scannedAtRef = new AtomicLong(0L);
     private final long applicationStartedAt = System.currentTimeMillis();
+    /**
+     * 启动期定时任务监控扫描的后台执行器。全量 .class 扫描 + 类加载耗时较大，
+     * 默认不在启动主线程同步执行，改到就绪后异步扫描；扫描完成前监控端点返回空快照。
+     */
+    private final ExecutorService scanExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "scheduled-task-monitor-scanner");
+        t.setDaemon(true);
+        return t;
+    });
 
     public ScheduledTaskMonitorRegistry(ApplicationContext applicationContext,
                                         ScheduledTaskRuntimeTracker runtimeTracker) {
@@ -56,7 +71,24 @@ public class ScheduledTaskMonitorRegistry {
 
     @PostConstruct
     public void init() {
-        scanNow();
+        // geelato.startup.schedule-monitor-async=false 时恢复启动期同步扫描的旧行为；
+        // 默认 true：不在启动主线程扫描，改由 onApplicationReady 异步触发，避免阻塞应用就绪。
+        boolean asyncScan = !Boolean.FALSE.toString()
+                .equalsIgnoreCase(applicationContext.getEnvironment().getProperty("geelato.startup.schedule-monitor-async", "true"));
+        if (!asyncScan) {
+            scanNow();
+        }
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        scanExecutor.submit(() -> {
+            try {
+                scanNow();
+            } catch (Exception e) {
+                log.error("scheduled task monitor async scan failed", e);
+            }
+        });
     }
 
     public synchronized ScheduledTaskMonitorSummary scanNow() {
@@ -113,6 +145,7 @@ public class ScheduledTaskMonitorRegistry {
         List<ScheduledTaskMonitorSnapshot> definitions = new ArrayList<>();
         Map<Class<?>, List<String>> beanNameMap = buildBeanNameMap();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        MetadataReaderFactory readerFactory = new CachingMetadataReaderFactory(resolver);
         String pattern = PathMatchingResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX
             + ClassUtils.convertClassNameToResourcePath(BASE_PACKAGE) + "/**/*.class";
         Resource[] resources = resolver.getResources(pattern);
@@ -120,13 +153,23 @@ public class ScheduledTaskMonitorRegistry {
             if (!resource.isReadable()) {
                 continue;
             }
-            MetadataReader metadataReader = new CachingMetadataReaderFactory(resolver).getMetadataReader(resource);
-            String className = metadataReader.getClassMetadata().getClassName();
+            String className;
             try {
-                Class<?> candidateClass = ClassUtils.forName(className, null);
-                if (!isSpringComponent(candidateClass)) {
+                MetadataReader metadataReader = readerFactory.getMetadataReader(resource);
+                AnnotationMetadata annotationMetadata = metadataReader.getAnnotationMetadata();
+                // 用字节码注解元数据预过滤：非 Spring 组件（无 @Component 及其派生注解）直接跳过，
+                // 避免 ClassUtils.forName 加载大量无关类（原实现对每个 .class 都加载）。
+                if (!annotationMetadata.getAnnotationTypes().contains(Component.class.getName())
+                        && !annotationMetadata.hasMetaAnnotation(Component.class.getName())) {
                     continue;
                 }
+                className = metadataReader.getClassMetadata().getClassName();
+            } catch (Throwable t) {
+                log.debug("skip unreadable resource [{}] during scheduled task scan: {}", resource, t.toString());
+                continue;
+            }
+            try {
+                Class<?> candidateClass = ClassUtils.forName(className, null);
                 collectMethodDefinitions(candidateClass, beanNameMap, definitions);
             } catch (ClassNotFoundException | LinkageError e) {
                 // 类本身或其方法签名引用的类型在当前 classpath 上不可解析（如混用了不同版本的依赖 jar），跳过该类，不影响整体扫描
@@ -138,13 +181,6 @@ public class ScheduledTaskMonitorRegistry {
             .thenComparing(ScheduledTaskMonitorSnapshot::getClassName, Comparator.nullsLast(String::compareTo))
             .thenComparing(ScheduledTaskMonitorSnapshot::getMethodName, Comparator.nullsLast(String::compareTo)));
         return definitions;
-    }
-
-    private boolean isSpringComponent(Class<?> candidateClass) {
-        if (candidateClass == null) {
-            return false;
-        }
-        return AnnotatedElementUtils.hasAnnotation(candidateClass, Component.class);
     }
 
     private void collectMethodDefinitions(Class<?> candidateClass,

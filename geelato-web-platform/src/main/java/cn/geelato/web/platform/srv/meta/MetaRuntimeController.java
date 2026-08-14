@@ -117,19 +117,7 @@ public class MetaRuntimeController extends BaseController {
     }
 
     private void extractPf(JSONObject root, Map<String, Map<String, Object>> paramsByEntity) {
-        if (root == null || root.isEmpty()) {
-            return;
-        }
-        root.forEach((entityName, value) -> {
-            if (!(value instanceof JSONObject entityBody)) {
-                return;
-            }
-            JSONObject pf = entityBody.getJSONObject("@pf");
-            if (pf != null) {
-                paramsByEntity.put(entityName, new HashMap<>(pf));
-                entityBody.remove("@pf");
-            }
-        });
+        cn.geelato.core.mql.MqlQueryProcessor.getInstance().extractPfAndSerialize(root, paramsByEntity);
     }
 
     @SuppressWarnings("unchecked")

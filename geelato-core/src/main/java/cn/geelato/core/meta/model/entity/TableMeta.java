@@ -71,9 +71,12 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "缓存类型")
     @Col(name = "cache_type")
     private String cacheType="none";
-    @Title(title = "版本控制")
-    @Col(name = "version_control")
-    private Boolean versionControl;
+    // 版本控制（暂缓启用：当前库结构 platform_dev_table 无 version_control 列）。
+    // 待数据库增加该列后，取消本字段注释、Map 构造函数中的读取、
+    // 以及 MetaReflex.getEntityMetaByTable 中的设置逻辑，三处同时启用即可。
+    // 按约定（无 @Col 时驼峰转下划线）versionControl 自动映射 version_control 列。
+    // @Title(title = "版本控制")
+    // private Boolean versionControl;
     public TableMeta() {
     }
 
@@ -109,7 +112,7 @@ public class TableMeta extends BaseSortableEntity implements EntityEnableAble {
         // 基类字段与回退（原由 MetaReflex.getTableMeta(Map) 构造后补，收敛至此构造函数）
         this.setId(map.get("id") == null ? null : map.get("id").toString());
         this.setDelStatus(map.get("del_status") == null ? 0 : Integer.parseInt(map.get("del_status").toString()));
-        this.versionControl = map.get("version_control") != null && Boolean.parseBoolean(map.get("version_control").toString());
+        // this.versionControl = map.get("version_control") != null && Boolean.parseBoolean(map.get("version_control").toString());
         // title 回退：空时取 tableName，再空取 entityName
         if (StringUtils.isBlank(this.title)) {
             this.title = StringUtils.isBlank(this.tableName) ? this.entityName : this.tableName;

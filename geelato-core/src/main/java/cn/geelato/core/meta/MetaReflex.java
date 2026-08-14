@@ -150,9 +150,9 @@ public class MetaReflex {
         em.setEntityName(tableMeta.getEntityName());
         em.setEntityTitle(tableMeta.getTitle());
         em.setEntityType(EntityType.Table);
-        if (tableMeta.getVersionControl() != null) {
-            em.setVersionControl(tableMeta.getVersionControl());
-        }
+        // if (tableMeta.getVersionControl() != null) {
+        //     em.setVersionControl(tableMeta.getVersionControl());
+        // }
         if (tableMeta.getCacheType() != null) {
             em.setCacheType(EntityCacheType.fromStringIgnoreCase(tableMeta.getCacheType()));
         }

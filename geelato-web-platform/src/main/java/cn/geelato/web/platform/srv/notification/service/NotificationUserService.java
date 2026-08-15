@@ -117,7 +117,7 @@ public class NotificationUserService extends BaseService {
      */
     @SuppressWarnings("unchecked")
     public ApiPagedResult pageQueryInbox(String userId, Integer readStatus, Integer archived,
-                                         String bizType, PageQueryRequest request) {
+                                         String bizType, String keyword, PageQueryRequest request) {
         int pageNum = Math.max(1, request.getPageNum());
         int pageSize = Math.min(Math.max(1, request.getPageSize()), 100);
 
@@ -132,15 +132,23 @@ public class NotificationUserService extends BaseService {
         }
         // bizType 属主体字段，先查主体 id 再 in 过滤
         if (Strings.isNotBlank(bizType)) {
-            List<String> subjectIds = MetaFactory.query(Notification.class)
-                    .disableInjectFilter()
-                    .select(new String[]{"id"})
-                    .where(Filter.eq("bizType", bizType.trim()), Filter.eq("delStatus", 0))
-                    .oneColumn(String.class);
-            if (subjectIds == null || subjectIds.isEmpty()) {
+            List<String> subjectIds = querySubjectIds(
+                    Filter.eq("bizType", bizType.trim()), Filter.eq("delStatus", 0));
+            if (subjectIds.isEmpty()) {
                 return new PageResult<Map<String, Object>>(pageNum, pageSize, 0).toApiPagedResult();
             }
             filters.add(Filter.in("notificationId", subjectIds.toArray()));
+        }
+        // 标题/内容模糊搜索（OR 语义：两次 like 预查后合并去重）
+        if (Strings.isNotBlank(keyword)) {
+            String kw = keyword.trim();
+            List<String> subjectIds = querySubjectIds(Filter.eq("delStatus", 0), Filter.like("title", kw));
+            subjectIds.addAll(querySubjectIds(Filter.eq("delStatus", 0), Filter.like("content", kw)));
+            List<String> distinctIds = subjectIds.stream().distinct().toList();
+            if (distinctIds.isEmpty()) {
+                return new PageResult<Map<String, Object>>(pageNum, pageSize, 0).toApiPagedResult();
+            }
+            filters.add(Filter.in("notificationId", distinctIds.toArray()));
         }
 
         PageResult<Map<String, Object>> page = MetaFactory.query(NotificationUser.class)
@@ -166,6 +174,15 @@ public class NotificationUserService extends BaseService {
                 .page(pageNum, pageSize)
                 .page();
         return page.toApiPagedResult();
+    }
+
+    private List<String> querySubjectIds(Filter... filters) {
+        List<String> ids = MetaFactory.query(Notification.class)
+                .disableInjectFilter()
+                .select(new String[]{"id"})
+                .where(filters)
+                .oneColumn(String.class);
+        return ids == null ? new ArrayList<>() : new ArrayList<>(ids);
     }
 
     /**
@@ -216,6 +233,30 @@ public class NotificationUserService extends BaseService {
                 "UPDATE platform_notification_user SET read_status = 1, read_at = ?, update_at = ?, updater = ? "
                         + "WHERE del_status = 0 AND user_id = ? AND read_status = 0",
                 now, now, userId, userId);
+    }
+
+    /**
+     * 删除当前用户收件箱中的一条通知（逻辑删收件人状态行，不影响其他收件人）。
+     *
+     * @return true 成功；false 不存在或不属于该用户
+     */
+    public boolean deleteInbox(String notificationUserId, String userId) {
+        boolean exists = MetaFactory.query(NotificationUser.class)
+                .disableInjectFilter()
+                .where(Filter.eq("id", notificationUserId),
+                        Filter.eq("userId", userId),
+                        Filter.eq("delStatus", 0))
+                .exists();
+        if (!exists) {
+            return false;
+        }
+        MetaFactory.update(NotificationUser.class)
+                .where(Filter.eq("id", notificationUserId), Filter.eq("userId", userId))
+                .value("delStatus", 1)
+                .value("deleteAt", new Date())
+                .value("updater", userId)
+                .save();
+        return true;
     }
 
     /**

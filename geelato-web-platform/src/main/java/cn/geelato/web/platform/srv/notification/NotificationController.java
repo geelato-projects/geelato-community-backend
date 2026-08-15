@@ -43,7 +43,7 @@ public class NotificationController extends BaseController {
 
     /**
      * 收件箱分页查询（当前用户）：收件人状态 JOIN 通知主体，返回含 title/content/actionUrl 的扁平行。
-     * 可选过滤：readStatus（0未读/1已读）、archived（0/1）、bizType。
+     * 可选过滤：readStatus（0未读/1已读）、archived（0/1）、bizType、keyword（标题/内容模糊）。
      */
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
@@ -55,7 +55,9 @@ public class NotificationController extends BaseController {
             Integer archived = parseInteger(body.get("archived"));
             String bizType = body.get("bizType") != null && Strings.isNotBlank(String.valueOf(body.get("bizType")))
                     ? String.valueOf(body.get("bizType")).trim() : null;
-            return notificationUserService.pageQueryInbox(userId, readStatus, archived, bizType, pageQueryRequest);
+            String keyword = body.get("keyword") != null && Strings.isNotBlank(String.valueOf(body.get("keyword")))
+                    ? String.valueOf(body.get("keyword")).trim() : null;
+            return notificationUserService.pageQueryInbox(userId, readStatus, archived, bizType, keyword, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
@@ -148,6 +150,24 @@ public class NotificationController extends BaseController {
             }
             String userId = currentUserId();
             boolean ok = notificationUserService.updateFlag(id, userId, field, value);
+            return ApiResult.success(ok);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ApiResult.fail(e.getMessage());
+        }
+    }
+
+    /**
+     * 删除当前用户收件箱中的一条通知（只影响本人，不影响其他收件人）。
+     */
+    @org.springframework.web.bind.annotation.DeleteMapping("/delete/{id}")
+    public ApiResult<Boolean> delete(@PathVariable String id) {
+        try {
+            if (Strings.isBlank(id)) {
+                return ApiResult.fail("通知ID不能为空");
+            }
+            String userId = currentUserId();
+            boolean ok = notificationUserService.deleteInbox(id, userId);
             return ApiResult.success(ok);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

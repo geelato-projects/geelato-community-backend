@@ -36,7 +36,6 @@ public class SqlScriptParser extends AbstractParser<SqlScriptLexer> {
             } catch (Exception e) {
                 log.error("", e);
             }
-            log.debug("sqlMap:{}", sqlMap.size());
         });
         return sqlMap;
     }

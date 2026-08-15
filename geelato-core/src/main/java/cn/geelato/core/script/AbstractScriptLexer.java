@@ -37,9 +37,6 @@ public abstract class AbstractScriptLexer {
             }
             Matcher matcher = getSplitPattern().matcher(line);
             if (matcher.find()) {
-                if (log.isDebugEnabled()) {
-                    log.debug("matcher:{}", matcher.group());
-                }
                 // 当前分行
                 if (statementId != null) {
                     // 新的语句行，先保存已有的TemplateStatement

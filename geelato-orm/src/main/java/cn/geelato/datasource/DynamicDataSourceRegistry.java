@@ -126,7 +126,6 @@ public class DynamicDataSourceRegistry {
         DataSource dataSource = dataSourceMap.get(key);
         closeIfNecessary(key, dataSource);
         dataSourceMap.remove(key);
-        log.debug("数据源销毁成功: {}", key);
     }
 
     /**

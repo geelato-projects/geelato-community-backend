@@ -130,9 +130,10 @@ public class NotificationUserService extends BaseService {
         if (archived != null) {
             filters.add(Filter.eq("archived", archived));
         }
-        // bizType 属主体字段：先按 DSL 查主体 id 集合，再以 in 条件过滤（保持纯 DSL，无字符串拼接）
+        // bizType 属主体字段，先查主体 id 再 in 过滤
         if (Strings.isNotBlank(bizType)) {
             List<String> subjectIds = MetaFactory.query(Notification.class)
+                    .disableInjectFilter()
                     .select(new String[]{"id"})
                     .where(Filter.eq("bizType", bizType.trim()), Filter.eq("delStatus", 0))
                     .oneColumn(String.class);
@@ -143,6 +144,7 @@ public class NotificationUserService extends BaseService {
         }
 
         PageResult<Map<String, Object>> page = MetaFactory.query(NotificationUser.class)
+                .disableInjectFilter()
                 .as("nu")
                 .select(new String[]{"id", "notificationId", "readStatus", "readAt", "starred", "archived"})
                 // 主体字段经 JOIN 带出；createAt 取主体创建时间（通知发生时间）
@@ -167,10 +169,12 @@ public class NotificationUserService extends BaseService {
     }
 
     /**
-     * 当前用户未读数（铃铛角标），MetaFactory DSL COUNT。
+     * 当前用户未读数（铃铛角标）。
+     * 行的 creator 是投递操作者而非收件人，需 disableInjectFilter 跳过数据权限注入。
      */
     public long countUnread(String userId) {
         return MetaFactory.query(NotificationUser.class)
+                .disableInjectFilter()
                 .where(
                         Filter.eq("userId", userId),
                         Filter.eq("readStatus", 0),

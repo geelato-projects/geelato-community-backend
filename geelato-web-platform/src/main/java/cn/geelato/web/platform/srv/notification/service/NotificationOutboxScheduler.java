@@ -116,7 +116,7 @@ public class NotificationOutboxScheduler {
             log.error("扫描通知 outbox 失败：{}", e.getMessage(), e);
             return;
         }
-        if (ready == null || ready.isEmpty()) {
+        if (ready.isEmpty()) {
             return;
         }
         for (NotificationOutbox outbox : ready) {
@@ -156,9 +156,12 @@ public class NotificationOutboxScheduler {
         }
     }
 
-    /** 取一批就绪项：status=ready，按 next_retry_at 升序，限制 batchSize */
+    /** 取一批就绪项：status=ready，按 next_retry_at 升序，限制 batchSize。列显式别名为驼峰，保证 fastjson 映射到实体字段 */
     private List<NotificationOutbox> fetchReady() {
-        String sql = "SELECT * FROM platform_notification_outbox WHERE del_status = 0 AND status = ? "
+        String sql = "SELECT id, notification_id AS notificationId, channel, "
+                + "recipient_json AS recipientJson, status, retry_count AS retryCount, "
+                + "next_retry_at AS nextRetryAt, error_msg AS errorMsg "
+                + "FROM platform_notification_outbox WHERE del_status = 0 AND status = ? "
                 + "AND (next_retry_at IS NULL OR next_retry_at <= ?) "
                 + "ORDER BY next_retry_at ASC, create_at ASC LIMIT ?";
         List<Map<String, Object>> rows = dao.getJdbcTemplate().queryForList(sql,
@@ -175,8 +178,13 @@ public class NotificationOutboxScheduler {
         if (!claim(outbox.getId())) {
             return;
         }
-        // 2. 取主体
-        Notification notification = dao.queryForObject(Notification.class, outbox.getNotificationId());
+        // 2. 取主体（防御：notificationId 映射异常时直接死信，避免 NPE 重试循环）
+        String notificationId = outbox.getNotificationId();
+        if (notificationId == null || notificationId.isBlank()) {
+            markDead(outbox, "outbox 行数据异常：notificationId 为空");
+            return;
+        }
+        Notification notification = dao.queryForObject(Notification.class, notificationId);
         if (notification == null) {
             log.warn("通知主体不存在，outbox 置死信：notificationId={}", outbox.getNotificationId());
             markDead(outbox, "通知主体不存在");
@@ -217,7 +225,6 @@ public class NotificationOutboxScheduler {
         return n > 0;
     }
 
-    @SuppressWarnings("unchecked")
     private List<String> parseRecipients(String json) {
         if (json == null || json.isBlank()) {
             return List.of();

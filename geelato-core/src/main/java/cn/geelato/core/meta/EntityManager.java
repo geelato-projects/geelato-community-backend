@@ -29,7 +29,15 @@ public class EntityManager extends AbstractManager {
     }
 
     public BoundSql generateSaveSql(IdEntity entity, SessionCtx sessionCtx) {
-        SaveCommand command = entitySaveParser.parse(entity, sessionCtx);
+        return generateSaveSql(entity, sessionCtx, null);
+    }
+
+    /**
+     * @param forcedType 强制指定的命令类型（Insert/Update），为 null 时按实体是否有 id 自动判定
+     * @see EntitySaveParser#parse(IdEntity, SessionCtx, CommandType)
+     */
+    public BoundSql generateSaveSql(IdEntity entity, SessionCtx sessionCtx, CommandType forcedType) {
+        SaveCommand command = entitySaveParser.parse(entity, sessionCtx, forcedType);
         if (command.getCommandType() == CommandType.Update) {
             return metaUpdateSqlProvider.generate(command);
         } else {

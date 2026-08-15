@@ -36,11 +36,4 @@ public class NotificationProperties {
     /** 清理已完成 outbox 行的间隔（小时），默认 6 小时一次 */
     private int outboxCleanupIntervalHours = 6;
 
-    public int getOutboxRetentionDays() {
-        return outboxRetentionDays;
-    }
-
-    public int getOutboxCleanupIntervalHours() {
-        return outboxCleanupIntervalHours;
-    }
 }

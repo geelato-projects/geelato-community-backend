@@ -7,7 +7,6 @@ import cn.geelato.meta.Notification;
 import cn.geelato.meta.NotificationOutbox;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.utils.DateUtils;
-import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.srv.notification.channel.DeliveryChannelManager;
 import cn.geelato.web.platform.srv.notification.config.NotificationProperties;
 import cn.geelato.web.platform.srv.notification.dto.NotifyRequest;
@@ -74,7 +73,9 @@ public class NotificationService extends BaseService {
             notification = existing;
             log.info("通知主体已存在（业务幂等），复用 id={}, bizType={}, bizId={}", existing.getId(), request.getBizType(), request.getBizId());
         } else {
-            dao.save(notification);
+            // 平台 ORM 以 id 是否为空决定 INSERT/UPDATE：新建实体不能预置 id，否则走 UPDATE 静默丢失；
+            // createModel 返回带平台生成 id 的新实体（传入对象 save 后 id 仍为空）
+            notification = createModel(notification);
         }
 
         // 2. 按渠道写 outbox（每渠道一行，独立投递/重试，单渠道失败不影响其他）
@@ -85,7 +86,7 @@ public class NotificationService extends BaseService {
                 continue;
             }
             NotificationOutbox outbox = new NotificationOutbox();
-            outbox.setId(String.valueOf(UIDGenerator.generate()));
+            // 不预置 id：id 为空才会走 INSERT（平台 ORM 语义）
             outbox.setNotificationId(notification.getId());
             outbox.setChannel(channel);
             outbox.setRecipientJson(JSON.toJSONString(recipients));
@@ -129,7 +130,6 @@ public class NotificationService extends BaseService {
         SenderTypeEnum senderType = request.resolveSenderType();
 
         Notification n = new Notification();
-        n.setId(String.valueOf(UIDGenerator.generate()));
         n.setTitle(request.getTitle());
         n.setContent(request.getContent());
         n.setSenderId(senderId);

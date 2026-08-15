@@ -321,9 +321,9 @@ public class PageCheckController extends BaseController {
             request.setStatus("pending");
             request.setCreateAt(new Date());
             request.setUpdateAt(new Date());
-            
-            // 保存接管请求
-            dao.save(request);
+
+            // 保存接管请求（实体带手工指定的 id，须显式插入，否则 save 会按 id 判定为更新）
+            dao.insert(request);
             
             // 这里可以添加Sse通知逻辑，通知目标用户
             

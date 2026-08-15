@@ -1,6 +1,5 @@
 package cn.geelato.web.platform.srv.notification;
 
-import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.mql.parser.PageQueryRequest;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
@@ -10,7 +9,6 @@ import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.notification.dto.NotifyRequest;
 import cn.geelato.web.platform.srv.notification.service.NotificationService;
 import cn.geelato.web.platform.srv.notification.service.NotificationUserService;
-import cn.geelato.meta.NotificationUser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +31,6 @@ import java.util.Map;
 @Slf4j
 public class NotificationController extends BaseController {
 
-    private static final Class<NotificationUser> USER_CLAZZ = NotificationUser.class;
-
     private final NotificationService notificationService;
     private final NotificationUserService notificationUserService;
 
@@ -46,7 +42,8 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 收件箱分页查询（当前用户）。支持 read_status / archived 等过滤。
+     * 收件箱分页查询（当前用户）：收件人状态 JOIN 通知主体，返回含 title/content/actionUrl 的扁平行。
+     * 可选过滤：readStatus（0未读/1已读）、archived（0/1）、bizType。
      */
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
@@ -54,13 +51,25 @@ public class NotificationController extends BaseController {
             String userId = currentUserId();
             Map<String, Object> body = this.getRequestBody();
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(body);
-            FilterGroup filterGroup = this.getFilterGroup(USER_CLAZZ, body, true);
-            // 强制限定为当前用户，防越权
-            filterGroup.addFilter("userId", userId);
-            return notificationUserService.pageQueryInbox(USER_CLAZZ, filterGroup, pageQueryRequest);
+            Integer readStatus = parseInteger(body.get("readStatus"));
+            Integer archived = parseInteger(body.get("archived"));
+            String bizType = body.get("bizType") != null && Strings.isNotBlank(String.valueOf(body.get("bizType")))
+                    ? String.valueOf(body.get("bizType")).trim() : null;
+            return notificationUserService.pageQueryInbox(userId, readStatus, archived, bizType, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
+        }
+    }
+
+    private Integer parseInteger(Object value) {
+        if (value == null || Strings.isBlank(String.valueOf(value))) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(String.valueOf(value).trim());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 

@@ -4,6 +4,7 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.spi.EntitySaveFieldValueFillContext;
 import cn.geelato.core.meta.spi.EntitySaveFieldValueFiller;
+import cn.geelato.core.mql.command.CommandType;
 import cn.geelato.core.mql.command.SaveCommand;
 import cn.geelato.core.test.support.TestSaveEntity;
 import cn.geelato.core.util.BeansUtils;
@@ -18,6 +19,7 @@ import org.springframework.context.support.StaticApplicationContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class EntitySaveParserTest {
 
@@ -78,6 +80,59 @@ class EntitySaveParserTest {
         assertEquals("U2001", command.getValueMap().get("updater"));
         assertEquals("entity-tester", command.getValueMap().get("updaterName"));
         assertNotNull(command.getValueMap().get("updateAt"));
+    }
+
+    @Test
+    void shouldForceInsertWithSpecifiedId() {
+        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        applicationContext.getBeanFactory().registerSingleton("filler", new TestEntitySaveFieldValueFiller());
+        new BeansUtils().setApplicationContext(applicationContext);
+
+        TestSaveEntity entity = new TestSaveEntity();
+        entity.setId("2001");
+        entity.setName("Carol");
+
+        SaveCommand command = new EntitySaveParser().parse(entity, new SessionCtx(), CommandType.Insert);
+
+        assertEquals(CommandType.Insert, command.getCommandType());
+        assertEquals("2001", command.getValueMap().get("id"));
+        assertNull(command.getWhere());
+        assertEquals("Carol", command.getValueMap().get("name"));
+        assertNotNull(command.getValueMap().get("createAt"));
+    }
+
+    @Test
+    void shouldForceInsertAndGenerateIdWhenBlank() {
+        TestSaveEntity entity = new TestSaveEntity();
+        entity.setName("Dave");
+
+        SaveCommand command = new EntitySaveParser().parse(entity, new SessionCtx(), CommandType.Insert);
+
+        assertEquals(CommandType.Insert, command.getCommandType());
+        assertNotNull(command.getValueMap().get("id"));
+    }
+
+    @Test
+    void shouldThrowWhenForceUpdateWithoutId() {
+        TestSaveEntity entity = new TestSaveEntity();
+        entity.setName("Eve");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new EntitySaveParser().parse(entity, new SessionCtx(), CommandType.Update));
+        assertEquals("显式更新要求实体主键非空: TestSaveEntity", ex.getMessage());
+    }
+
+    @Test
+    void shouldForceUpdateWithId() {
+        TestSaveEntity entity = new TestSaveEntity();
+        entity.setId("1002");
+        entity.setName("Frank");
+
+        SaveCommand command = new EntitySaveParser().parse(entity, new SessionCtx(), CommandType.Update);
+
+        assertEquals(CommandType.Update, command.getCommandType());
+        assertEquals("1002", command.getWhere().getFilters().get(0).getValue());
+        assertEquals("Frank", command.getValueMap().get("name"));
     }
 
     private static class TestEntitySaveFieldValueFiller implements EntitySaveFieldValueFiller {

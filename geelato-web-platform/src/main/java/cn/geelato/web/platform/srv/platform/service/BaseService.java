@@ -195,7 +195,7 @@ public class BaseService {
             model.setTenantCode(getSessionTenantCode());
         }
 
-        Map<String, Object> map = dao.save(model);
+        Map<String, Object> map = dao.insert(model);
         return (T) JSON.parseObject(JSON.toJSONString(map), model.getClass());
     }
 
@@ -205,7 +205,7 @@ public class BaseService {
      * 更新指定实体数据，包括设置删除状态为未删除、清空删除时间，并处理租户代码。
      *
      * @param model 实体数据对象，需要继承自BaseEntity
-     * @param <T>   实体数据的泛型类型
+     * @param <T>   泛型类型，表示实体数据的泛型类型
      * @return 更新后的实体数据对象
      */
     public <T extends BaseEntity> T updateModel(T model) {
@@ -215,7 +215,7 @@ public class BaseService {
             model.setTenantCode(getSessionTenantCode());
         }
 
-        Map<String, Object> map = dao.save(model);
+        Map<String, Object> map = dao.update(model);
         return (T) JSON.parseObject(JSON.toJSONString(map), model.getClass());
     }
 
@@ -230,7 +230,7 @@ public class BaseService {
     public <T extends BaseEntity> void isDeleteModel(T model) {
         model.setDelStatus(DeleteStatusEnum.IS.getValue());
         model.setDeleteAt(new Date());
-        dao.save(model);
+        dao.update(model);
     }
 
     /**

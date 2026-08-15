@@ -10,6 +10,7 @@ import cn.geelato.core.orm.event.SaveEventManager;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.command.QueryViewCommand;
 import cn.geelato.core.mql.command.SaveCommand;
+import cn.geelato.core.mql.command.CommandType;
 import cn.geelato.core.mql.command.DeleteCommand;
 import cn.geelato.core.mql.execute.BoundPageSql;
 import cn.geelato.core.mql.execute.BoundSql;
@@ -555,16 +556,37 @@ public class Dao extends SqlKeyDao {
     }
 
 
+    /**
+     * 保存实体：按 id 自动判定插入或更新——id 非空即 Update，id 为空即 Insert（自动生成主键）。
+     * 需要显式控制语句类型时（如指定 id 插入），请使用 {@link #insert(IdEntity)} 或 {@link #update(IdEntity)}。
+     */
     public <E extends IdEntity> Map save(E entity) {
+        return doSave(entity, null);
+    }
+
+    /**
+     * 插入实体：始终构造 INSERT 语句。实体已带 id 时保留该 id（用于指定主键的插入），id 为空时自动生成。
+     */
+    public <E extends IdEntity> Map insert(E entity) {
+        return doSave(entity, CommandType.Insert);
+    }
+
+    /**
+     * 更新实体：始终构造 UPDATE 语句，以实体的 id 作为 where 条件；id 为空时抛出 IllegalArgumentException。
+     */
+    public <E extends IdEntity> Map update(E entity) {
+        return doSave(entity, CommandType.Update);
+    }
+
+    private <E extends IdEntity> Map doSave(E entity, CommandType forcedType) {
         SessionCtx sessionCtx = new SessionCtx();
-        BoundSql boundSql = entityManager.generateSaveSql(entity, sessionCtx);
+        BoundSql boundSql = entityManager.generateSaveSql(entity, sessionCtx, forcedType);
         SaveCommand command = (SaveCommand) boundSql.getCommand();
         SaveEventContext context = new SaveEventContext(this, sessionCtx, entity, boundSql, command);
         SaveEventManager.fireBefore(context);
         try {
             executeVoid(context.getBoundSql(), () -> updateWithTypes(context.getBoundSql()));
         } catch (RuntimeException ex) {
-            // A1：回填执行结果
             context.setSuccess(false);
             context.setException(ex);
             throw ex;
@@ -573,7 +595,6 @@ public class Dao extends SqlKeyDao {
         Map<String, Object> valueMap = command.getValueMap();
         context.setResultValueMap(valueMap);
         SaveEventManager.fireAfter(context);
-        // A2：触发事务感知回调
         cn.geelato.core.orm.event.EventTransactionSupport.trigger(context);
         return valueMap;
     }

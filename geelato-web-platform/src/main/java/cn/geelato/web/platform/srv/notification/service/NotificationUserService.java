@@ -5,7 +5,12 @@ import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.core.mql.parser.PageQueryRequest;
+import cn.geelato.meta.Notification;
 import cn.geelato.meta.NotificationUser;
+import cn.geelato.orm.MetaFactory;
+import cn.geelato.orm.query.Filter;
+import cn.geelato.orm.query.Order;
+import cn.geelato.orm.page.PageResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.srv.platform.service.BaseService;
@@ -18,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 通知收件人状态服务。
@@ -80,7 +86,7 @@ public class NotificationUserService extends BaseService {
                     continue;
                 }
                 NotificationUser nu = new NotificationUser();
-                nu.setId(String.valueOf(UIDGenerator.generate()));
+                // 不预置 id：平台 ORM 以 id 是否为空决定 INSERT/UPDATE，预置会静默变 UPDATE
                 nu.setNotificationId(notificationId);
                 nu.setUserId(userId);
                 nu.setReadStatus(0);
@@ -102,21 +108,75 @@ public class NotificationUserService extends BaseService {
     }
 
     /**
-     * 收件箱分页查询（当前用户）。前端通常传入 read_status / archived 等过滤条件。
+     * 收件箱分页查询（当前用户）：收件人状态 JOIN 通知主体（MetaFactory DSL），返回可直接渲染的扁平行。
+     * <ul>
+     *   <li>userId 服务端强制，防越权</li>
+     *   <li>撤回语义：主体 del_status=1 的通知因 JOIN 条件自动从收件箱消失</li>
+     *   <li>排序固定主体创建时间倒序，不采纳客户端 orderBy（防注入）</li>
+     * </ul>
      */
-    public ApiPagedResult pageQueryInbox(Class<NotificationUser> entity, FilterGroup filter, PageQueryRequest request) {
-        return pageQueryModel(entity, filter, request);
+    @SuppressWarnings("unchecked")
+    public ApiPagedResult pageQueryInbox(String userId, Integer readStatus, Integer archived,
+                                         String bizType, PageQueryRequest request) {
+        int pageNum = Math.max(1, request.getPageNum());
+        int pageSize = Math.min(Math.max(1, request.getPageSize()), 100);
+
+        List<Filter> filters = new ArrayList<>();
+        filters.add(Filter.eq("userId", userId));
+        filters.add(Filter.eq("delStatus", 0));
+        if (readStatus != null) {
+            filters.add(Filter.eq("readStatus", readStatus));
+        }
+        if (archived != null) {
+            filters.add(Filter.eq("archived", archived));
+        }
+        // bizType 属主体字段：先按 DSL 查主体 id 集合，再以 in 条件过滤（保持纯 DSL，无字符串拼接）
+        if (Strings.isNotBlank(bizType)) {
+            List<String> subjectIds = MetaFactory.query(Notification.class)
+                    .select(new String[]{"id"})
+                    .where(Filter.eq("bizType", bizType.trim()), Filter.eq("delStatus", 0))
+                    .oneColumn(String.class);
+            if (subjectIds == null || subjectIds.isEmpty()) {
+                return new PageResult<Map<String, Object>>(pageNum, pageSize, 0).toApiPagedResult();
+            }
+            filters.add(Filter.in("notificationId", subjectIds.toArray()));
+        }
+
+        PageResult<Map<String, Object>> page = MetaFactory.query(NotificationUser.class)
+                .as("nu")
+                .select(new String[]{"id", "notificationId", "readStatus", "readAt", "starred", "archived"})
+                // 主体字段经 JOIN 带出；createAt 取主体创建时间（通知发生时间）
+                .selectExpr("n.title", "title")
+                .selectExpr("n.content", "content")
+                .selectExpr("n.sender_id", "senderId")
+                .selectExpr("n.sender_name", "senderName")
+                .selectExpr("n.sender_type", "senderType")
+                .selectExpr("n.biz_type", "bizType")
+                .selectExpr("n.biz_id", "bizId")
+                .selectExpr("n.action_url", "actionUrl")
+                .selectExpr("n.priority", "priority")
+                .selectExpr("n.create_at", "createAt")
+                .innerJoin(Notification.class, "n", on -> on
+                        .eqField("notificationId", "n.id")
+                        .raw("n.del_status = 0"))
+                .where(filters.toArray(new Filter[0]))
+                .order(Order.desc("createAt"))
+                .page(pageNum, pageSize)
+                .page();
+        return page.toApiPagedResult();
     }
 
     /**
-     * 当前用户未读数（铃铛角标）。
-     * 使用 COUNT(*) 而非全量拉取，走 idx_user_unread(user_id, read_status, archived) 索引。
+     * 当前用户未读数（铃铛角标），MetaFactory DSL COUNT。
      */
     public long countUnread(String userId) {
-        Long count = dao.getJdbcTemplate().queryForObject(
-                "SELECT COUNT(*) FROM platform_notification_user WHERE del_status = 0 AND user_id = ? AND read_status = 0",
-                Long.class, userId);
-        return count == null ? 0 : count;
+        return MetaFactory.query(NotificationUser.class)
+                .where(
+                        Filter.eq("userId", userId),
+                        Filter.eq("readStatus", 0),
+                        Filter.eq("delStatus", 0)
+                )
+                .count();
     }
 
     /**

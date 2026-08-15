@@ -27,7 +27,20 @@ public class EntitySaveParser {
     private final MetaManager metaManager = MetaManager.singleInstance();
 
     public SaveCommand parse(IdEntity object, SessionCtx sessionCtx) {
+        return parse(object, sessionCtx, null);
+    }
+
+    /**
+     * @param forcedType 强制指定的命令类型：
+     *                   Insert——始终构造插入语句，实体已带 id 时保留该 id（用于指定主键的插入）；
+     *                   Update——始终构造更新语句，要求 id 非空；
+     *                   null——按默认约定：id 非空即 Update，id 为空即 Insert（自动生成主键）
+     */
+    public SaveCommand parse(IdEntity object, SessionCtx sessionCtx, CommandType forcedType) {
         EntityMeta entityMeta = metaManager.get(object.getClass());
+        if (forcedType == CommandType.Update && Strings.isBlank(object.getId())) {
+            throw new IllegalArgumentException("显式更新要求实体主键非空: " + entityMeta.getEntityName());
+        }
         SaveCommand command = new SaveCommand();
         command.setEntityName(entityMeta.getEntityName());
 
@@ -38,13 +51,18 @@ public class EntitySaveParser {
                 entity.put(fm.getFieldName(), PropertyUtils.getProperty(object, fm.getFieldName()));
             }
             String PK = entityMeta.getId().getFieldName();
-            if (Strings.isNotBlank(object.getId())) {
+            boolean asUpdate;
+            if (forcedType != null) {
+                asUpdate = (forcedType == CommandType.Update);
+            } else {
+                asUpdate = Strings.isNotBlank(object.getId());
+            }
+            if (asUpdate) {
                 command.setCommandType(CommandType.Update);
 
                 FilterGroup fg = new FilterGroup();
                 fg.addFilter(PK, String.valueOf(entity.get(PK)));
                 command.setWhere(fg);
-                command.setCommandType(CommandType.Update);
                 EntitySaveFieldValueFillRuntimeResolver.fillIfAvailable(new EntitySaveFieldValueFillContext(
                         entityMeta.getEntityName(),
                         CommandType.Update,
@@ -61,7 +79,9 @@ public class EntitySaveParser {
                 command.setValueMap(entity);
             } else {
                 command.setCommandType(CommandType.Insert);
-                entity.put(PK, UIDGenerator.generate());
+                if (Strings.isBlank(object.getId())) {
+                    entity.put(PK, UIDGenerator.generate());
+                }
                 EntitySaveFieldValueFillRuntimeResolver.fillIfAvailable(new EntitySaveFieldValueFillContext(
                         entityMeta.getEntityName(),
                         CommandType.Insert,

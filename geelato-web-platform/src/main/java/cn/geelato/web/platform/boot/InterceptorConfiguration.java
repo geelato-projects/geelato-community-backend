@@ -41,6 +41,9 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
     @Autowired
     private cn.geelato.web.common.interceptor.SecurityInterceptorProperties securityInterceptorProperties;
 
+    @Autowired
+    private cn.geelato.web.common.interceptor.SystemTokenProperties systemTokenProperties;
+
     @Autowired(required = false)
     private cn.geelato.web.common.security.delegate.DelegateSessionStore delegateSessionStore;
 
@@ -51,6 +54,7 @@ public class InterceptorConfiguration extends BaseConfiguration implements WebMv
         securityInterceptor.setTrafficColoringProperties(trafficColoringProperties);
         securityInterceptor.setTrafficTagStrategy(trafficTagStrategy);
         securityInterceptor.setDelegateSessionStore(delegateSessionStore);
+        securityInterceptor.setSystemTokenProperties(systemTokenProperties);
 
         java.util.List<String> excludes = securityInterceptorProperties.resolveEffectiveExcludes();
 

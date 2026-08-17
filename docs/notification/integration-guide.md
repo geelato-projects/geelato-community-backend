@@ -134,7 +134,7 @@ import java.util.List;
 public class InAppClient {
 
     @Autowired
-    private InAppProperties properties; // community 地址配置，见 ⑦
+    private InAppProperties properties; // 站内信平台地址与密钥配置，见 ⑦
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -149,12 +149,12 @@ public class InAppClient {
             return;
         }
         // ===== 方式 A：HTTP 调用 community 落地接口 =====
-        String url = properties.getCommunityBaseUrl() + "/api/notification/send";
+        String url = properties.getInAppBaseUrl() + "/api/notification/send";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        if (properties.getCommunityToken() != null && !properties.getCommunityToken().isBlank()) {
-            headers.set("Authorization", "Bearer " + properties.getCommunityToken());
+        if (properties.getSystemToken() != null && !properties.getSystemToken().isBlank()) {
+            headers.set("Authorization", "SystemToken " + properties.getSystemToken());
         }
 
         // 构造 community 的 NotifyRequest 契约
@@ -293,8 +293,8 @@ VALUES ('geelato', 'inapp', '启用', 'enabled', 'true');
 **community 地址**（新增 `InAppProperties` 配置类）：
 ```properties
 # geelato-message 的 application.properties
-geelato.message.inapp.community-base-url=http://10.0.0.20:8080
-geelato.message.inapp.community-token=xxx     # 调 community 接口的鉴权 token（若需要）
+geelato.message.inapp.in-app-base-url=http://10.0.0.20:8080
+geelato.message.inapp.system-token=xxx     # 站内信平台的 SystemToken 固定密钥（见 2.3 节）
 ```
 
 ### 验证
@@ -374,6 +374,39 @@ String id = notificationService.dispatch(req);
 | POST | `/api/notification/recall/{id}` | 撤回（逻辑删主体，全员收件箱失效） |
 
 **实时推送**：前端订阅个人主题 `/subscribe/notice_user_<userId>`，收到 SSE 推送角标 +1。`SseController` 校验个人主题归属，禁止 A 订阅 B 的主题（403）。
+
+## 2.3 外部系统调用认证（SystemToken 固定令牌）
+
+`/api/notification/send` 这类接口**既能给前端调用（用户 token），也能给外部系统调用**。外部系统（dyn 模块、geelato-message）不具备传递本系统用户 token 的能力，使用**固定令牌**认证：
+
+```
+Authorization: SystemToken <固定密钥>
+```
+
+**平台侧机制**（community 已内置，无需开发）：
+
+- 机制默认开启。密钥默认内置（`SystemTokenProperties.DEFAULT_TOKEN`），生产环境应通过配置覆盖为随机长串：
+  ```properties
+  # community 的 application.properties（或环境变量 GEELATO_SYSTEM_TOKEN）
+  geelato.security.system-token.token=${GEELATO_SYSTEM_TOKEN}
+  ```
+- 固定令牌**只对标注了 `@AllowSystemAccess` 注解的方法生效**（`NotificationController.send()` 已标注）。未标注的接口带 SystemToken 访问一律 401——令牌泄露的影响面被限制在显式开放的接口内。
+- 认证通过后以**虚拟系统主体**身份运行（`systemPrincipal=true`、`userId=system`），不关联平台用户，站内信的 sender/审计可追溯到 `system`。
+- 前端调用完全不受影响（`JWTBearer` 用户 token 照常认证）。
+
+**外部系统侧接入**（以发送站内信为例）：
+
+```bash
+curl -X POST http://{community}/api/notification/send \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: SystemToken <与 community 一致的密钥>' \
+  -d '{"recipients":["u1","u2"],"title":"合同待审批","content":"请尽快审批","senderType":"system","bizType":"contract","bizId":"HT-001"}'
+```
+
+> ⚠️ 注意前缀是 `SystemToken ` 而不是 `Bearer `——`Bearer ` 会被 community 送 OAuth2 认证中心校验，固定密钥无法通过。
+> 生产环境建议：密钥用环境变量注入随机长串、全程 HTTPS。
+
+**开放新的外部调用接口**：给 Controller 方法加 `@cn.geelato.web.common.interceptor.annotation.AllowSystemAccess` 注解即可（与 `@IgnoreVerify` 同款用法，语义为"允许系统级访问"）。
 
 ---
 

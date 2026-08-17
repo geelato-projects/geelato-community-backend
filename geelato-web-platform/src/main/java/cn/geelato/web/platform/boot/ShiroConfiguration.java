@@ -96,16 +96,25 @@ public class ShiroConfiguration extends BaseConfiguration {
         return realm;
     }
 
+    @Bean(name = "systemTokenRealm")
+    public SystemTokenRealm systemTokenRealm(cn.geelato.web.common.interceptor.SystemTokenProperties systemTokenProperties,
+                                             EhCacheManager cacheManager) {
+        SystemTokenRealm realm = new SystemTokenRealm(systemTokenProperties);
+        realm.setCacheManager(cacheManager);
+        return realm;
+    }
+
     @Bean(name = "defaultSecurityManager")
     public DefaultWebSecurityManager defaultSecurityManager(
             @Qualifier("anonymousRealm") AnonymousRealm anonymousRealm,
             @Qualifier("oauth2Realm") OAuth2Realm oAuth2Realm,
             @Qualifier("weixinUnionIdRealm") WeixinUnionIdRealm weixinUnionIdRealm,
             @Qualifier("weixinWorkUserIdRealm") WeixinWorkUserIdRealm weixinWorkUserIdRealm,
+            @Qualifier("systemTokenRealm") SystemTokenRealm systemTokenRealm,
             @Qualifier("dbShiroRealm") DbRealm dbRealm,
             EhCacheManager cacheManager) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
-        defaultWebSecurityManager.setRealms(Arrays.asList(anonymousRealm, weixinUnionIdRealm, weixinWorkUserIdRealm, oAuth2Realm, dbRealm));
+        defaultWebSecurityManager.setRealms(Arrays.asList(anonymousRealm, weixinUnionIdRealm, weixinWorkUserIdRealm, oAuth2Realm, systemTokenRealm, dbRealm));
         defaultWebSecurityManager.setCacheManager(cacheManager);
         return defaultWebSecurityManager;
     }

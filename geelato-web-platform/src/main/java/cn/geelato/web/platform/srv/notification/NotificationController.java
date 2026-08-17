@@ -5,6 +5,7 @@ import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.web.common.annotation.ApiRestController;
+import cn.geelato.web.common.interceptor.annotation.AllowSystemAccess;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.web.platform.srv.notification.dto.NotifyRequest;
 import cn.geelato.web.platform.srv.notification.service.NotificationService;
@@ -177,7 +178,10 @@ public class NotificationController extends BaseController {
 
     /**
      * 主动发送通知（人工或系统）。走 dispatch 编排：写主体 + 按渠道写 outbox。
+     * 标注 @AllowSystemAccess：外部系统（如 dyn、geelato-message）可以
+     * Authorization: SystemToken <固定密钥> 调用本接口发送站内信。
      */
+    @AllowSystemAccess
     @PostMapping("/send")
     public ApiResult<String> send(@RequestBody NotifyRequest request) {
         try {

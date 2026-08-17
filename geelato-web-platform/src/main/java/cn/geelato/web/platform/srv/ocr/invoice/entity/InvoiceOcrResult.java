@@ -1,85 +1,70 @@
 package cn.geelato.web.platform.srv.ocr.invoice.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 发票 OCR 结构化识别结果。
- * <p>包含发票关键字段（阶段一覆盖：代码/号码/日期/金额/税额/价税合计/购销方/经办人），
- * 以及 OCR 原始文本行（raw）供排查。</p>
+ * 发票 OCR 结构化识别结果（对齐中国发票国家标准）。
+ *
+ * <h3>标准依据（优先级从高到低）</h3>
+ * <ol>
+ *   <li>GB/T 42965.1-2023《电子发票业务数据规范 第1部分：基本要素》（税务总局归口）</li>
+ *   <li>财政部《电子凭证会计数据标准·全面数字化的电子发票》元素清单（数电票 XML 字段名）</li>
+ * </ol>
+ *
+ * <h3>字段映射表</h3>
+ * <pre>
+ * | 票面栏次（中文名）   | 输出字段        | 数电票 XML 标签                 |
+ * |----------------------|-----------------|---------------------------------|
+ * | 发票号码             | invoiceNumber   | EInvoiceNumber（数电票 20 位）  |
+ * | 开票日期             | invoiceDate     | IssueDate                       |
+ * | 开票金额=价税合计    | totalAmount     | AmountTaxTotal（小写、含税）    |
+ * | 备注                 | remark          | Remark                          |
+ * | 购买方名称           | buyerName       | BuyerName                       |
+ * | 购买方纳税人识别号   | buyerTaxNo      | BuyerTaxRegistrationNumber      |
+ * | 销售方名称           | sellerName      | SellerName                      |
+ * | 销售方纳税人识别号   | sellerTaxNo     | SellerTaxRegistrationNumber     |
+ * | 项目清单             | items           | GoodsInformation（明细行）      |
+ * </pre>
+ *
+ * <p>"开票金额"语义 = 价税合计（小写、含税），与官方查验平台对数电票的录入口径一致
+ * （发票号码 + 开票日期 + 价税合计）。</p>
  *
  * @author geelato
  */
 @Data
 public class InvoiceOcrResult {
 
-    // ---- 票头基本信息 ----
-
-    /** 发票类型（如"增值税电子普通发票"，抽不到则为 null）。 */
-    private String invoiceType;
-
-    /** 发票代码。 */
-    private String invoiceCode;
-
-    /** 发票号码。 */
+    /** 发票号码（数电票为 20 位；EInvoiceNumber / fphm）。 */
     private String invoiceNumber;
 
-    /** 开票日期。 */
+    /** 开票日期（IssueDate / kprq；yyyy年mm月dd日 或 yyyy-mm-dd）。 */
     private String invoiceDate;
 
-    /** 校验码。 */
-    private String checkCode;
-
-    // ---- 金额 ----
-
-    /** 金额（不含税）。 */
-    private String amount;
-
-    /** 税额。 */
-    private String taxAmount;
-
-    /** 价税合计。 */
+    /** 开票金额 = 价税合计·小写·含税（AmountTaxTotal / jshj）。 */
     private String totalAmount;
 
-    // ---- 购方 ----
+    /** 备注（Remark / bz；票面价税合计行下方的底部区域，可跨多行）。 */
+    private String remark;
 
-    /** 购买方名称。 */
+    /** 购买方名称（BuyerName / gfmc）。 */
     private String buyerName;
 
-    /** 购买方纳税人识别号。 */
+    /** 购买方纳税人识别号（BuyerTaxRegistrationNumber / gfsbh；统一社会信用代码同位）。 */
     private String buyerTaxNo;
 
-    // ---- 销方 ----
-
-    /** 销售方名称。 */
+    /** 销售方名称（SellerName / xfmc）。 */
     private String sellerName;
 
-    /** 销售方纳税人识别号。 */
+    /** 销售方纳税人识别号（SellerTaxRegistrationNumber / xfsbh）。 */
     private String sellerTaxNo;
 
-    // ---- 经办人 ----
-
-    /** 收款人。 */
-    private String payee;
-
-    /** 复核。 */
-    private String reviewer;
-
-    /** 开票人。 */
-    private String drawer;
-
-    // ---- 明细（阶段一预留） ----
-
-    /** 货物明细列表（阶段一不填充）。 */
-    private List<InvoiceOcrItem> items = new ArrayList<>();
-
-    // ---- 原始结果（raw） ----
-
-    /** OCR 全文（各行用 \n 连接）。 */
-    private String fullText;
-
-    /** OCR 原始文本行（含坐标与置信度）。 */
-    private List<OcrLine> lines = new ArrayList<>();
+    /**
+     * 项目清单：货物或应税劳务、服务明细行（见 {@link InvoiceOcrItem}）。
+     * 仅当调用方传 parseItems=true 时填充；否则为 null 且不序列化（返回 JSON 中不出现 items 字段）。
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<InvoiceOcrItem> items;
 }

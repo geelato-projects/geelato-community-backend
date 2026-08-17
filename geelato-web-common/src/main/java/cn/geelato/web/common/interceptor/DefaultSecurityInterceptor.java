@@ -7,11 +7,13 @@ import cn.geelato.security.*;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.logging.LogContext;
 import cn.geelato.web.common.online.OnlineUserTracker;
+import cn.geelato.web.common.interceptor.annotation.AllowSystemAccess;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
 import cn.geelato.web.common.security.delegate.DelegateSession;
 import cn.geelato.web.common.security.delegate.DelegateSessionStore;
 import cn.geelato.web.common.shiro.OAuth2Token;
+import cn.geelato.web.common.shiro.SystemTokenToken;
 import cn.geelato.web.common.shiro.WeixinUnionIdToken;
 import cn.geelato.web.common.shiro.WeixinWorkUserIdToken;
 import cn.geelato.web.common.traffic.TrafficColoringProperties;
@@ -49,6 +51,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private static final String __AnonymousTokenTag__="Anonymous ";
     private static final String __WeixinUnionIdTokenTag__ = "WeixinUnionId ";
     private static final String __WeixinWorkUserIdTokenTag__ = "WeixinWorkUserId ";
+    private static final String __SystemTokenTag__ = "SystemToken ";
     private static final String anonymousFixedPassword = GlobalContext.getAnonymousPwd();
     private static final long CACHE_TTL_MILLIS = 30 * 60 * 1000L;
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
@@ -61,6 +64,8 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     private TrafficTagStrategy trafficTagStrategy;
     @Setter
     private DelegateSessionStore delegateSessionStore;
+    @Setter
+    private SystemTokenProperties systemTokenProperties;
 
     public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();
 
@@ -146,6 +151,16 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
         log.info("handle token:{}",token);
 
+        // SystemToken 固定令牌仅允许访问标注了 @AllowSystemAccess 的方法。该校验必须先于
+        // tryRestoreFromCache：否则同一令牌在已标注接口认证缓存成功后，被用于未标注
+        // 接口时会命中缓存还原上下文，绕过注解限制。
+        if (token.startsWith(__SystemTokenTag__)
+                && !handlerMethod.getMethod().isAnnotationPresent(AllowSystemAccess.class)) {
+            log.warn("unauthorized system token request, method not annotated with @AllowSystemAccess, method:{}, url:{}",
+                    request.getMethod(), buildRequestUrl(request));
+            throw new UnauthorizedException("未授权访问");
+        }
+
         if (tryRestoreFromCache(token, request, response)) {
             return true;
         }
@@ -157,6 +172,9 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
         if (!authenticated) {
             authenticated = tryExtendKeyAuthenticate(token, request, response);
+        }
+        if (!authenticated) {
+            authenticated = trySystemTokenAuthenticate(token, request, response);
         }
         if (!authenticated) {
             authenticated = tryOAuth2Authenticate(token, request, response);
@@ -411,6 +429,43 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             cacheUserContext(rawToken, currentUser, anonymousFixedPassword, authToken);
             applyTrafficTagAfterAuthenticated(currentUser, request, response);
             touchOnline(currentUser, request);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 外部系统固定令牌认证：Authorization: SystemToken <固定密钥>。
+     * <p>
+     * 适用于既能给前端调用、也能给不具备用户 token 的外部系统调用的接口
+     * （如 dyn 模块发送站内信）。仅对标注了 {@link AllowSystemAccess} 的方法生效，
+     * 注解校验已在 preHandle 前置完成。认证通过后以虚拟系统主体
+     * （systemPrincipal=true，userId=system）运行，不关联平台用户、不计入在线用户。
+     */
+    private boolean trySystemTokenAuthenticate(String rawToken, HttpServletRequest request, HttpServletResponse response) {
+        if (!rawToken.startsWith(__SystemTokenTag__) || systemTokenProperties == null) {
+            return false;
+        }
+        String token = rawToken.replace(__SystemTokenTag__, "");
+        if (!systemTokenProperties.matches(token)) {
+            return false;
+        }
+        try {
+            User currentUser = new User();
+            currentUser.setUserId("system");
+            currentUser.setLoginName("system");
+            currentUser.setUserName("system");
+            currentUser.setTenantCode(GlobalContext.getDefaultTenantCode());
+            currentUser.setSystemPrincipal(true);
+            SecurityContext.setCurrentUser(currentUser);
+            SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
+            SecurityContext.setCurrentPassword(token);
+            SystemTokenToken authToken = new SystemTokenToken(token);
+            Subject subject = SecurityUtils.getSubject();
+            subject.login(authToken);
+            cacheUserContext(rawToken, currentUser, token, authToken);
+            applyTrafficTagAfterAuthenticated(currentUser, request, response);
             return true;
         } catch (Exception e) {
             return false;

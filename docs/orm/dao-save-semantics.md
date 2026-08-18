@@ -36,7 +36,7 @@ Dao.save / insert / update
             └─ 按 commandType 路由 MetaInsertSqlProvider / MetaUpdateSqlProvider
 ```
 
-- `Dao.save(entity)` 即 `doSave(entity, null)`，三者的执行、事件（`SaveEventManager`）、字段填充 SPI 逻辑完全一致，仅 `forcedType` 不同。
+- `Dao.save(entity)` 即 `doSave(entity, null)`，三者的执行、事件（统一由 `OrmEventOperations` 模板编排）、字段填充 SPI 逻辑完全一致，仅 `forcedType` 不同。
 - `forcedType == null`：按 id 是否非空自动判定（原 save 行为）。
 - `forcedType == Insert`：始终 INSERT；仅在 id 为空时生成主键。
 - `forcedType == Update`：始终 UPDATE；id 为空时抛 `IllegalArgumentException`。

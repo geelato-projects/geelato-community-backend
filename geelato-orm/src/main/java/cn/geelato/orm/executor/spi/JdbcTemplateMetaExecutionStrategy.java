@@ -8,10 +8,10 @@ import cn.geelato.core.mql.execute.BoundSql;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.orm.event.DeleteEventContext;
-import cn.geelato.core.orm.event.DeleteEventManager;
+import cn.geelato.core.orm.event.OrmEventOperations;
 import cn.geelato.core.orm.event.SaveEventContext;
-import cn.geelato.core.orm.event.SaveEventManager;
 import cn.geelato.orm.executor.support.BoundSqlJdbcSupport;
+import lombok.Getter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -26,6 +26,7 @@ import java.util.Map;
  */
 public class JdbcTemplateMetaExecutionStrategy implements MetaExecutionStrategy {
 
+    @Getter
     private final JdbcTemplate jdbcTemplate;
     private final BoundSqlJdbcSupport jdbcSupport;
     private final Dao eventDao;
@@ -34,10 +35,6 @@ public class JdbcTemplateMetaExecutionStrategy implements MetaExecutionStrategy 
         this.jdbcTemplate = jdbcTemplate;
         this.jdbcSupport = new BoundSqlJdbcSupport(jdbcTemplate);
         this.eventDao = new Dao(jdbcTemplate);
-    }
-
-    public JdbcTemplate getJdbcTemplate() {
-        return jdbcTemplate;
     }
 
     @Override
@@ -99,12 +96,8 @@ public class JdbcTemplateMetaExecutionStrategy implements MetaExecutionStrategy 
     @Override
     public String save(BoundSql boundSql) {
         SaveCommand command = (SaveCommand) boundSql.getCommand();
-        SessionCtx sessionCtx = new SessionCtx();
-        SaveEventContext context = new SaveEventContext(eventDao, sessionCtx, null, boundSql, command);
-        SaveEventManager.fireBefore(context);
-        jdbcSupport.executeUpdate(context.getBoundSql());
-        context.setResultValueMap(command.getValueMap());
-        SaveEventManager.fireAfter(context);
+        SaveEventContext context = new SaveEventContext(eventDao, new SessionCtx(), null, boundSql, command);
+        OrmEventOperations.save(context, () -> jdbcSupport.executeUpdate(context.getBoundSql()));
         return command.getPK();
     }
 
@@ -116,12 +109,9 @@ public class JdbcTemplateMetaExecutionStrategy implements MetaExecutionStrategy 
         try {
             for (BoundSql boundSql : boundSqlList) {
                 SaveCommand command = (SaveCommand) boundSql.getCommand();
-                SessionCtx sessionCtx = new SessionCtx();
-                SaveEventContext context = new SaveEventContext(eventDao, sessionCtx, null, boundSql, command);
-                SaveEventManager.fireBefore(context);
-                jdbcSupport.executeUpdate(context.getBoundSql());
-                context.setResultValueMap(command.getValueMap());
-                SaveEventManager.fireAfter(context);
+                SaveEventContext context = new SaveEventContext(eventDao, new SessionCtx(), null, boundSql, command);
+                // 事件编排由模板统一（fireBefore 纳入 try，before 监听器异常同样走回填路径，回滚由本方法处理）
+                OrmEventOperations.save(context, () -> jdbcSupport.executeUpdate(context.getBoundSql()));
                 returnPks.add(command.getPK());
             }
             TransactionHelper.commitTransaction(transactionManager, status);
@@ -137,13 +127,8 @@ public class JdbcTemplateMetaExecutionStrategy implements MetaExecutionStrategy 
     @Override
     public int delete(BoundSql boundSql) {
         DeleteCommand command = (DeleteCommand) boundSql.getCommand();
-        SessionCtx sessionCtx = new SessionCtx();
-        DeleteEventContext context = new DeleteEventContext(eventDao, sessionCtx, boundSql, command);
-        DeleteEventManager.fireBefore(context);
-        int affectedRows = jdbcSupport.executeUpdate(context.getBoundSql());
-        context.setAffectedRows(affectedRows);
-        DeleteEventManager.fireAfter(context);
-        return affectedRows;
+        DeleteEventContext context = new DeleteEventContext(eventDao, new SessionCtx(), boundSql, command);
+        return OrmEventOperations.delete(context, () -> jdbcSupport.executeUpdate(context.getBoundSql()));
     }
 
     @Override

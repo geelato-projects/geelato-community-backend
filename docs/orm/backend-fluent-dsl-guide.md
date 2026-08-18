@@ -120,6 +120,8 @@ sequenceDiagram
 - 这条链路体现的是 `JdbcTemplateMetaExecutionStrategy` 的关键差异：
   - 主写入链路不再委托 `Dao.save(...)`
   - 但为了兼容事件监听器，仍保留一个“事件桥接用 `Dao`”
+  - 事件编排委托 `OrmEventOperations` 模板（与 `Dao` 路径共用同一实现），因此 fireBefore 纳入异常回填、
+    success/exception 回填、`EventTransactionSupport.trigger` 事务感知回调在两条路径上行为一致
 
 ```mermaid
 sequenceDiagram
@@ -132,6 +134,7 @@ sequenceDiagram
     participant SUP as AbstractExecutionStrategySupport
     participant SM as SqlManager
     participant ST as JdbcTemplateMetaExecutionStrategy
+    participant OPS as OrmEventOperations
     participant EVT as SaveEventManager
     participant DAO as 事件桥接Dao
     participant JDBC as JdbcTemplate
@@ -148,13 +151,16 @@ sequenceDiagram
     EX->>SM: generateSaveSql(command)
     SM-->>EX: BoundSql
     EX->>ST: save(boundSql)
-    ST->>EVT: fireBefore(context with eventDao)
+    ST->>OPS: save(context, jdbcAction)
+    OPS->>EVT: fireBefore(context with eventDao)
     EVT-->>ST: maybe mutate BoundSql
     ST->>JDBC: update(boundSql)
     JDBC->>DB: execute update
     DB-->>JDBC: affected rows
     JDBC-->>ST: affected rows
-    ST->>EVT: fireAfter(context)
+    OPS-->>OPS: 回填 success/affectedRows/resultValueMap
+    OPS->>EVT: fireAfter(context)
+    OPS->>EVT: EventTransactionSupport.trigger(context)
     EVT-->>DAO: listener 可继续通过 context.getDao() 做补充操作
     ST-->>EX: PK
     EX-->>MI: PK

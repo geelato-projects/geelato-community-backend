@@ -50,10 +50,6 @@ public class NotificationOutbox extends BaseEntity {
     @Col(name = "next_retry_at")
     private Date nextRetryAt;
 
-    @Title(title = "幂等键")
-    @Col(name = "idempotency_key", charMaxlength = 128)
-    private String idempotencyKey;
-
     @Title(title = "错误信息")
     @Col(name = "error_msg", charMaxlength = 512)
     private String errorMsg;

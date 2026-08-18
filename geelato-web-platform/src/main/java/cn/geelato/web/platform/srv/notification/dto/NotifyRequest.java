@@ -47,9 +47,6 @@ public class NotifyRequest {
     /** 优先级，默认 0 */
     private int priority;
 
-    /** 业务幂等键，为空时按 tenant+bizType+bizId 生成 */
-    private String idempotencyKey;
-
     public static NotifyRequest of(List<String> recipients, String title, String content) {
         NotifyRequest req = new NotifyRequest();
         req.recipients = recipients;

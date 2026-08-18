@@ -31,7 +31,7 @@ CREATE TABLE `platform_notification`  (
   `bu_id` varchar(32) NULL DEFAULT NULL COMMENT '业务单元/分公司ID',
   `dept_id` varchar(32) NULL DEFAULT NULL COMMENT '部门ID',
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `uk_notif_biz`(`tenant_code`, `biz_type`, `biz_id`) USING BTREE COMMENT '业务幂等：同一租户同一业务不重复创建'
+  INDEX `idx_notif_biz`(`tenant_code`, `biz_type`, `biz_id`) USING BTREE COMMENT '业务维度查询索引（非唯一：同业务允许多次通知）'
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '平台通知主体' ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;

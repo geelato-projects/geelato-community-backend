@@ -16,7 +16,6 @@ CREATE TABLE `platform_notification_outbox`  (
   `status` varchar(16) NULL DEFAULT 'ready' COMMENT '投递状态：ready | processing | success | fail | dead',
   `retry_count` int NULL DEFAULT 0 COMMENT '重试次数',
   `next_retry_at` datetime NULL DEFAULT NULL COMMENT '下次重试时间',
-  `idempotency_key` varchar(128) NULL DEFAULT NULL COMMENT '幂等键',
   `error_msg` varchar(512) NULL DEFAULT NULL COMMENT '错误信息',
   `tenant_code` varchar(32) NULL DEFAULT NULL COMMENT '租户编码',
   `del_status` int NOT NULL DEFAULT 0 COMMENT '逻辑删除状态，1：已删除、0：未删除',
@@ -30,7 +29,6 @@ CREATE TABLE `platform_notification_outbox`  (
   `bu_id` varchar(32) NULL DEFAULT NULL COMMENT '业务单元/分公司ID',
   `dept_id` varchar(32) NULL DEFAULT NULL COMMENT '部门ID',
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `uk_outbox_idem`(`tenant_code`, `idempotency_key`) USING BTREE COMMENT '投递幂等',
   INDEX `idx_outbox_ready`(`status`, `next_retry_at`) USING BTREE COMMENT '调度扫描就绪项',
   INDEX `idx_outbox_notif`(`notification_id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '通知投递发件箱' ROW_FORMAT = Dynamic;

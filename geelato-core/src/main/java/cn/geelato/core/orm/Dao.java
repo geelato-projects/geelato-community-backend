@@ -2,11 +2,9 @@ package cn.geelato.core.orm;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.core.orm.event.DeleteEventContext;
-import cn.geelato.core.orm.event.DeleteEventManager;
+import cn.geelato.core.orm.event.OrmEventOperations;
 import cn.geelato.core.orm.event.QueryEventContext;
-import cn.geelato.core.orm.event.QueryEventManager;
 import cn.geelato.core.orm.event.SaveEventContext;
-import cn.geelato.core.orm.event.SaveEventManager;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.command.QueryViewCommand;
 import cn.geelato.core.mql.command.SaveCommand;
@@ -126,40 +124,21 @@ public class Dao extends SqlKeyDao {
     }
 
     /**
-     * C2：触发查询前事件（无监听器时 fireBefore 内部快速返回，零开销）。
+     * C2：构造查询事件上下文（事件编排由 {@link OrmEventOperations#query} 统一，无监听器时零开销）。
      */
-    private QueryEventContext fireQueryBefore(BoundSql bs, Class<?> entityType) {
-        QueryEventContext ctx = new QueryEventContext(this, new SessionCtx(), bs,
+    private QueryEventContext buildQueryEventContext(BoundSql bs, Class<?> entityType) {
+        return new QueryEventContext(this, new SessionCtx(), bs,
                 bs.getCommand() instanceof cn.geelato.core.mql.command.QueryCommand
                         ? (cn.geelato.core.mql.command.QueryCommand) bs.getCommand() : null,
                 entityType);
-        QueryEventManager.fireBefore(ctx);
-        return ctx;
-    }
-
-    /** C2：触发查询后事件。 */
-    private void fireQueryAfter(QueryEventContext ctx, int rowCount, boolean success, Throwable ex) {
-        if (ctx == null) {
-            return;
-        }
-        ctx.setRowCount(rowCount);
-        ctx.setSuccess(success);
-        ctx.setException(ex);
-        QueryEventManager.fireAfter(ctx);
     }
 
     private List<Map<String, Object>> queryForMapListWithFilter(Class entityType, FilterGroup fg) {
         BoundSql bs = sqlManager.generateQueryForListSql(entityType, fg, null);
         // C2：查询事件触发（无监听器时快速返回，零开销）
-        QueryEventContext qCtx = fireQueryBefore(bs, entityType);
-        try {
-            List<Map<String, Object>> result = execute(bs, () -> jdbcTemplate.queryForList(bs.getSql(), bs.getParams()));
-            fireQueryAfter(qCtx, result == null ? 0 : result.size(), true, null);
-            return result;
-        } catch (RuntimeException ex) {
-            fireQueryAfter(qCtx, 0, false, ex);
-            throw ex;
-        }
+        QueryEventContext qCtx = buildQueryEventContext(bs, entityType);
+        return OrmEventOperations.queryList(qCtx,
+                () -> execute(bs, () -> jdbcTemplate.queryForList(bs.getSql(), bs.getParams())));
     }
 
     /**
@@ -278,22 +257,9 @@ public class Dao extends SqlKeyDao {
 
     public String save(BoundSql boundSql) {
         SaveCommand command = (SaveCommand) boundSql.getCommand();
-        SessionCtx sessionCtx = new SessionCtx();
-        SaveEventContext context = new SaveEventContext(this, sessionCtx, null, boundSql, command);
-        SaveEventManager.fireBefore(context);
-        try {
-            executeVoid(context.getBoundSql(), () -> updateWithTypes(context.getBoundSql()));
-        } catch (RuntimeException ex) {
-            // A1：失败时回填执行结果，before/after 调用方据此判定
-            context.setSuccess(false);
-            context.setException(ex);
-            throw ex;
-        }
-        context.setSuccess(true);
-        context.setResultValueMap(command.getValueMap());
-        SaveEventManager.fireAfter(context);
-        // A2：触发事务感知回调（有事务则提交后执行，无事务立即执行）
-        cn.geelato.core.orm.event.EventTransactionSupport.trigger(context);
+        SaveEventContext context = new SaveEventContext(this, new SessionCtx(), null, boundSql, command);
+        OrmEventOperations.save(context, () ->
+                executeVoid(context.getBoundSql(), () -> updateWithTypes(context.getBoundSql())));
         return command.getPK();
     }
 
@@ -309,26 +275,13 @@ public class Dao extends SqlKeyDao {
             paramsObjs.add(bs.getParams());
             SaveCommand saveCommand = (SaveCommand) bs.getCommand();
             returnPks.add(saveCommand.getPK());
-            SaveEventContext context = new SaveEventContext(this, sessionCtx, null, bs, saveCommand);
-            contexts.add(context);
-            SaveEventManager.fireBefore(context);
+            contexts.add(new SaveEventContext(this, sessionCtx, null, bs, saveCommand));
         }
         try {
-            jdbcTemplate.batchUpdate(boundSqlList.get(0).getSql(), paramsObjs);
+            OrmEventOperations.batchSave(contexts,
+                    () -> jdbcTemplate.batchUpdate(boundSqlList.get(0).getSql(), paramsObjs));
         } catch (DataAccessException dataAccessException) {
-            // A1：失败时回填执行结果
-            for (SaveEventContext context : contexts) {
-                context.setSuccess(false);
-                context.setException(dataAccessException);
-            }
             throw new SqlExecuteException(dataAccessException, boundSqlList.get(0).getSql());
-        }
-        for (SaveEventContext context : contexts) {
-            context.setSuccess(true);
-            context.setResultValueMap(context.getCommand().getValueMap());
-            SaveEventManager.fireAfter(context);
-            // A2：触发事务感知回调
-            cn.geelato.core.orm.event.EventTransactionSupport.trigger(context);
         }
         return returnPks;
     }
@@ -340,16 +293,11 @@ public class Dao extends SqlKeyDao {
         for (BoundSql bs : boundSqlList) {
             SaveCommand saveCommand = (SaveCommand) bs.getCommand();
             returnPks.add(saveCommand.getPK());
-            SessionCtx sessionCtx = new SessionCtx();
-            SaveEventContext context = new SaveEventContext(this, sessionCtx, null, bs, saveCommand);
+            SaveEventContext context = new SaveEventContext(this, new SessionCtx(), null, bs, saveCommand);
             try {
-                // A3：fireBefore 纳入 try，确保 before 监听器抛非 DataAccessException 时也能回滚、事务不悬挂
-                SaveEventManager.fireBefore(context);
-                updateWithTypes(bs);
+                // 事件编排（fireBefore→SQL→回填→fireAfter→事务回调）由模板统一；失败时模板回填后重抛，回滚留在本方法
+                OrmEventOperations.save(context, () -> updateWithTypes(bs));
             } catch (RuntimeException ex) {
-                // A1：回填执行结果
-                context.setSuccess(false);
-                context.setException(ex);
                 TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
                 returnPks.clear();
                 if (ex instanceof DataAccessException) {
@@ -357,11 +305,6 @@ public class Dao extends SqlKeyDao {
                 }
                 throw ex;
             }
-            context.setSuccess(true);
-            context.setResultValueMap(saveCommand.getValueMap());
-            SaveEventManager.fireAfter(context);
-            // A2：触发事务感知回调（此时事务尚未提交，trigger 会登记到 commit/rollback 点）
-            cn.geelato.core.orm.event.EventTransactionSupport.trigger(context);
         }
         TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
         return returnPks;
@@ -375,24 +318,8 @@ public class Dao extends SqlKeyDao {
      */
     public int delete(BoundSql boundSql) {
         DeleteCommand command = (DeleteCommand) boundSql.getCommand();
-        SessionCtx sessionCtx = new SessionCtx();
-        DeleteEventContext context = new DeleteEventContext(this, sessionCtx, boundSql, command);
-        DeleteEventManager.fireBefore(context);
-        int n;
-        try {
-            n = updateWithTypes(context.getBoundSql());
-        } catch (RuntimeException ex) {
-            // A1：回填执行结果
-            context.setSuccess(false);
-            context.setException(ex);
-            throw ex;
-        }
-        context.setSuccess(true);
-        context.setAffectedRows(n);
-        DeleteEventManager.fireAfter(context);
-        // A2：触发事务感知回调
-        cn.geelato.core.orm.event.EventTransactionSupport.trigger(context);
-        return n;
+        DeleteEventContext context = new DeleteEventContext(this, new SessionCtx(), boundSql, command);
+        return OrmEventOperations.delete(context, () -> updateWithTypes(context.getBoundSql()));
     }
 
     /**
@@ -407,29 +334,17 @@ public class Dao extends SqlKeyDao {
         int totalAffected = 0;
         for (BoundSql bs : boundSqlList) {
             DeleteCommand command = (DeleteCommand) bs.getCommand();
-            SessionCtx sessionCtx = new SessionCtx();
-            DeleteEventContext context = new DeleteEventContext(this, sessionCtx, bs, command);
-            int n;
+            DeleteEventContext context = new DeleteEventContext(this, new SessionCtx(), bs, command);
             try {
-                // A3：fireBefore 纳入 try，确保 before 监听器异常也能回滚
-                DeleteEventManager.fireBefore(context);
-                n = updateWithTypes(bs);
+                // 事件编排由模板统一；失败时模板回填后重抛，回滚留在本方法
+                totalAffected += OrmEventOperations.delete(context, () -> updateWithTypes(bs));
             } catch (RuntimeException ex) {
-                // A1：回填执行结果
-                context.setSuccess(false);
-                context.setException(ex);
                 TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
                 if (ex instanceof DataAccessException) {
                     throw new SqlExecuteException((DataAccessException) ex, bs.getSql(), bs.getParams());
                 }
                 throw ex;
             }
-            context.setSuccess(true);
-            context.setAffectedRows(n);
-            totalAffected += n;
-            DeleteEventManager.fireAfter(context);
-            // A2：触发事务感知回调
-            cn.geelato.core.orm.event.EventTransactionSupport.trigger(context);
         }
         TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
         return totalAffected;
@@ -583,20 +498,9 @@ public class Dao extends SqlKeyDao {
         BoundSql boundSql = entityManager.generateSaveSql(entity, sessionCtx, forcedType);
         SaveCommand command = (SaveCommand) boundSql.getCommand();
         SaveEventContext context = new SaveEventContext(this, sessionCtx, entity, boundSql, command);
-        SaveEventManager.fireBefore(context);
-        try {
-            executeVoid(context.getBoundSql(), () -> updateWithTypes(context.getBoundSql()));
-        } catch (RuntimeException ex) {
-            context.setSuccess(false);
-            context.setException(ex);
-            throw ex;
-        }
-        context.setSuccess(true);
-        Map<String, Object> valueMap = command.getValueMap();
-        context.setResultValueMap(valueMap);
-        SaveEventManager.fireAfter(context);
-        cn.geelato.core.orm.event.EventTransactionSupport.trigger(context);
-        return valueMap;
+        OrmEventOperations.save(context, () ->
+                executeVoid(context.getBoundSql(), () -> updateWithTypes(context.getBoundSql())));
+        return command.getValueMap();
     }
 
 
@@ -613,16 +517,10 @@ public class Dao extends SqlKeyDao {
     public <T> List<T> queryList(Class<T> entityType, FilterGroup filterGroup, String orderBy) {
         applyDefaultFilter(filterGroup);
         BoundSql bs = sqlManager.generateQueryForObjectOrMapSql(entityType, filterGroup, orderBy);
-        // C2：查询事件触发
-        QueryEventContext qCtx = fireQueryBefore(bs, entityType);
-        try {
-            List<T> result = execute(bs, () -> jdbcTemplate.query(bs.getSql(), new CommonRowMapper<>(), bs.getParams()));
-            fireQueryAfter(qCtx, result == null ? 0 : result.size(), true, null);
-            return result;
-        } catch (RuntimeException ex) {
-            fireQueryAfter(qCtx, 0, false, ex);
-            throw ex;
-        }
+        // C2：查询事件触发（fireBefore → 执行 → 回填 → fireAfter 由模板统一编排）
+        QueryEventContext qCtx = buildQueryEventContext(bs, entityType);
+        return OrmEventOperations.queryList(qCtx,
+                () -> execute(bs, () -> jdbcTemplate.query(bs.getSql(), new CommonRowMapper<>(), bs.getParams())));
     }
 
     /**
@@ -786,24 +684,8 @@ public class Dao extends SqlKeyDao {
         FilterGroup filterGroup = new FilterGroup().addFilter(fieldName, value.toString());
         BoundSql boundSql = sqlManager.generateDeleteSql(entityType, filterGroup);
         DeleteCommand command = (DeleteCommand) boundSql.getCommand();
-        SessionCtx sessionCtx = new SessionCtx();
-        DeleteEventContext context = new DeleteEventContext(this, sessionCtx, boundSql, command);
-        DeleteEventManager.fireBefore(context);
-        int n;
-        try {
-            n = updateWithTypes(context.getBoundSql());
-        } catch (RuntimeException ex) {
-            // A1：回填执行结果
-            context.setSuccess(false);
-            context.setException(ex);
-            throw ex;
-        }
-        context.setSuccess(true);
-        context.setAffectedRows(n);
-        DeleteEventManager.fireAfter(context);
-        // A2：触发事务感知回调
-        cn.geelato.core.orm.event.EventTransactionSupport.trigger(context);
-        return n;
+        DeleteEventContext context = new DeleteEventContext(this, new SessionCtx(), boundSql, command);
+        return OrmEventOperations.delete(context, () -> updateWithTypes(context.getBoundSql()));
     }
 
     /**

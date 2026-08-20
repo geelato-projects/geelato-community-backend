@@ -12,10 +12,10 @@ import java.util.Optional;
 public class WeixinWorkService {
 
     public String getCompanyWeixinWorkInfo(String orgId) {
-        Map<String, Object> row = MetaFactory.sql("SELECT weixin_work_info FROM platform_company WHERE org_id = ?")
+        Object value = MetaFactory.sql("SELECT weixin_work_info FROM platform_company WHERE org_id = ?")
                 .param(orgId)
                 .one();
-        return row == null ? null : Optional.ofNullable(row.get("weixin_work_info")).map(Object::toString).orElse(null);
+        return value == null ? null : value.toString();
     }
 
     public void updateUserWeixinWorkUserId(String weixinWorkUserId, String userId) {
@@ -40,17 +40,17 @@ public class WeixinWorkService {
     }
 
     public String getWeixinWorkUserIdByUserId(String userId) {
-        Map<String, Object> row = MetaFactory.sql("SELECT weixin_work_userId FROM platform_user WHERE id = ?")
+        Object value = MetaFactory.sql("SELECT weixin_work_userId FROM platform_user WHERE id = ?")
                 .param(userId)
                 .one();
-        return row == null ? null : Optional.ofNullable(row.get("weixin_work_userId")).map(Object::toString).orElse(null);
+        return value == null ? null : value.toString();
     }
 
     public String getWeixinConfig(String tenantId) {
-        Map<String, Object> row = MetaFactory.sql("SELECT weixin_config FROM platform_tenant WHERE id = ?")
+        Object value = MetaFactory.sql("SELECT weixin_config FROM platform_tenant WHERE id = ?")
                 .param(tenantId)
                 .one();
-        return row == null ? null : Optional.ofNullable(row.get("weixin_config")).map(Object::toString).orElse(null);
+        return value == null ? null : value.toString();
     }
 
     public int updateWeixinConfig(String tenantId, String weixinConfig) {

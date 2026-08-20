@@ -46,8 +46,8 @@ public class InvoiceOcrBackfillController {
     // ======== 一次性回填配置 ========
     /** 待修复的两张表。 */
     private static final List<String> TARGET_TABLES = List.of(
-            "il_invoice_req_file",
-            "il_payment_order_file");
+            "ob.il_invoice_req_file",
+            "ob.il_payment_order_file");
     /** 查询模板：file_id 为发票附件 id；仅四字段均为空的行才修复（幂等，可重跑）。 */
     private static final String BACKFILL_SQL_TEMPLATE =
             "SELECT id AS rowId, file_id AS fileId FROM {table}"

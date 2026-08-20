@@ -31,26 +31,23 @@ public class NoticeOrmService {
         return MetaFactory.query(Notice.class)
                 .where(filters.toArray(new Filter[0]))
                 .order(Order.desc("createAt"))
-                .wrapperResult(this::toNotice)
-                .list();
+                .list(Notice.class);
     }
 
     public Notice getById(String id) {
         return MetaFactory.query(Notice.class)
                 .where(Filter.eq("id", id))
-                .wrapperResult(this::toNotice)
-                .one();
+                .one(Notice.class);
     }
 
     public List<Notice> queryUserNotices(String receiver, Integer limit) {
         var query = MetaFactory.query(Notice.class)
                 .where(Filter.eq("delStatus", 0), Filter.like("receiver", receiver))
-                .order(Order.desc("createAt"))
-                .wrapperResult(this::toNotice);
+                .order(Order.desc("createAt"));
         if (limit != null && limit > 0) {
             query.page(1, limit);
         }
-        return query.list();
+        return query.list(Notice.class);
     }
 
     public long countUnreadByReceiver(String receiver) {
@@ -99,10 +96,6 @@ public class NoticeOrmService {
                 .value("updater", updater)
                 .value("updaterName", updaterName)
                 .save();
-    }
-
-    private Notice toNotice(Map<String, Object> row) {
-        return row == null || row.isEmpty() ? null : JSON.parseObject(JSON.toJSONString(row), Notice.class);
     }
 
     private Map<String, Object> toValueMap(Notice notice) {

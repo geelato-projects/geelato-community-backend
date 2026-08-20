@@ -226,12 +226,46 @@ List<String> ids = MetaFactory.query("User")
         .oneColumn(String.class);
 ```
 
-- 包装结果：
+- 查询结果类型（自动解包与显式类型）：
+
+未设置 `wrapperResult(...)` 时，若查询结果每行只有一列，`list()/one()/page()` 会自动返回该列裸值，不再包装成 Map：
 
 ```java
 List<String> names = MetaFactory.query("User")
         .select(new String[]{"name"})
-        .wrapperResult(row -> String.valueOf(row.get("name")))
+        .where(Filter.eq("delStatus", 0))
+        .list();
+```
+
+多列查询行为不变，仍返回 `Map<String, Object>`；裸值不做类型转换。受 Java 泛型擦除限制，无参 `list()` 无法感知声明类型，自动解包依据是结果集列数；需要类型转换或映射成对象时，使用显式类型重载 `list(Class)/one(Class)`：
+
+| 目标类型 | 行为 |
+| --- | --- |
+| 简单类型（String、数值、Boolean、Date、java.time 等） | 要求单列，并做值转换（如 Long 转 Integer/String） |
+| `Map.class` | 行 Map 原样返回 |
+| 自定义类（DTO/实体） | 行数据映射为对象实例，支持下划线列名到驼峰字段（`email_address` 转 `emailAddress`） |
+
+```java
+List<Integer> ages = MetaFactory.sql("select age from platform_user where del_status = ?")
+        .param(0)
+        .list(Integer.class);
+
+List<UserOrgDto> orgs = MetaFactory.sql("select o.id, o.name, oru.default_org as defaultOrg from platform_org_r_user oru ...")
+        .param("U1001")
+        .list(UserOrgDto.class);
+```
+
+`MetaFactory.sql(...) / MetaFactory.query(...) / MetaFactory.procedure(...)` 三个入口的 `list()/one()`（含分页 `page()` 的记录）均遵循以上规则；`oneColumn(Class)` 保留用于执行器层单列查询。设置了 `wrapperResult(...)` 时优先走 wrapper；单列查询若确实需要保留 Map，可用 `.wrapperResult(row -> row)`。
+
+- 包装结果（复杂转换仍推荐 `wrapperResult`）：
+
+```java
+List<UserSimpleDto> users = MetaFactory.query("User")
+        .where(Filter.eq("delStatus", 0))
+        .wrapperResult(row -> new UserSimpleDto(
+                String.valueOf(row.get("id")),
+                maskMobilePhone(String.valueOf(row.get("mobilePhone")))
+        ))
         .list();
 ```
 
@@ -497,11 +531,12 @@ int affected = MetaFactory.sql("update platform_notice set status = ? where id =
         .execute();
 ```
 
-- `list()` 返回 `List<Map<String, Object>>`
-- `one()` 返回单行 `Map<String, Object>`，若无结果返回 `null`
+- `list()` 多列查询返回 `List<Map<String, Object>>`；单列查询自动返回裸值列表（见“查询示例”一节的规则说明）
+- `one()` 多列查询返回单行 `Map<String, Object>`，单列查询返回裸值；若无结果返回 `null`
+- `list(Class)/one(Class)` 显式指定返回类型：简单类型做值转换，自定义类映射为对象（支持下划线列名到驼峰字段）
 - `queryForObject(Class<T>)` 适合查询单值，如 `Long`、`Integer`、`String`
 - `execute()` 适合执行 `update/delete/insert` 这类返回影响行数的 SQL
-- 若查询结果仍需转 DTO，可继续使用 `wrapperResult(...)`
+- 复杂转换仍可使用 `wrapperResult(...)`，设置后优先于自动解包
 
 ```java
 List<UserSimpleDto> users = MetaFactory.sql("select id, name from platform_user where del_status = ?")

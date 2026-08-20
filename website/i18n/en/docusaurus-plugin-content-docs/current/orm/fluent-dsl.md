@@ -85,12 +85,46 @@ List<String> ids = MetaFactory.query("User")
         .oneColumn(String.class);
 ```
 
-Result wrapping:
+Result types — auto unwrap and typed overloads:
+
+When `wrapperResult(...)` is not set and each result row has exactly one column, `list()/one()/page()` return the bare column value instead of wrapping it in a Map:
 
 ```java
 List<String> names = MetaFactory.query("User")
         .select(new String[]{"name"})
-        .wrapperResult(row -> String.valueOf(row.get("name")))
+        .where(Filter.eq("delStatus", 0))
+        .list();
+```
+
+Multi-column results are unchanged (still `Map<String, Object>`), and bare values are not type-converted. Java type erasure prevents a no-arg `list()` from knowing the declared element type, so the inference is based on the result-set shape; use the typed overloads `list(Class)/one(Class)` when you need conversion or object mapping:
+
+| Target type | Behavior |
+| --- | --- |
+| Simple types (String, numbers, Boolean, Date, java.time, ...) | requires a single column and converts the value (for example Long to Integer/String) |
+| `Map.class` | returns row maps as-is |
+| Custom classes (DTO/entity) | maps each row to an object instance, including snake_case columns to camelCase fields (`email_address` to `emailAddress`) |
+
+```java
+List<Integer> ages = MetaFactory.sql("select age from platform_user where del_status = ?")
+        .param(0)
+        .list(Integer.class);
+
+List<UserOrgDto> orgs = MetaFactory.sql("select o.id, o.name, oru.default_org as defaultOrg from platform_org_r_user oru ...")
+        .param("U1001")
+        .list(UserOrgDto.class);
+```
+
+These rules apply to `list()/one()` of `MetaFactory.sql(...)`, `MetaFactory.query(...)`, and `MetaFactory.procedure(...)`, as well as to `page()` records; `oneColumn(Class)` remains available for executor-level single-column queries. When `wrapperResult(...)` is set it takes precedence; to keep row maps for a single-column query, use `.wrapperResult(row -> row)`.
+
+Complex wrapping still uses `wrapperResult(...)`:
+
+```java
+List<UserSimpleDto> users = MetaFactory.query("User")
+        .where(Filter.eq("delStatus", 0))
+        .wrapperResult(row -> new UserSimpleDto(
+                String.valueOf(row.get("id")),
+                maskMobilePhone(String.valueOf(row.get("mobilePhone")))
+        ))
         .list();
 ```
 
@@ -312,10 +346,15 @@ Map<String, Object> row = MetaFactory.procedure("proc_query_user_orders")
         .one();
 ```
 
-Object wrapping still works:
+Object mapping works through the typed overloads, and complex wrapping still uses `wrapperResult(...)`:
 
 ```java
 List<OrderSimpleDto> rows = MetaFactory.procedure("proc_query_user_orders")
+        .in("userId", "U1001")
+        .in("status", 1)
+        .list(OrderSimpleDto.class);
+
+List<OrderSimpleDto> masked = MetaFactory.procedure("proc_query_user_orders")
         .in("userId", "U1001")
         .in("status", 1)
         .wrapperResult(row -> {
@@ -332,11 +371,18 @@ List<OrderSimpleDto> rows = MetaFactory.procedure("proc_query_user_orders")
 - use `MetaFactory.sql(...)` when the service already owns the final SQL and only wants to reuse the execution chain
 - this path provides datasource switching, parameter binding, and terminal execution methods
 - it does not add metadata-aware joins, default audit fields, or expression conversion
+- single-column results are auto-unwrapped to bare values, and `list(Class)/one(Class)` support typed conversion and DTO mapping (see Query Examples)
 
 ```java
 Map<String, Object> row = MetaFactory.sql("select id, name from platform_user where id = ?")
         .param("U1001")
         .one();
+```
+
+```java
+List<String> emails = MetaFactory.sql("select email_address from platform_user_email_account where user_id = ?")
+        .param("U1001")
+        .list();
 ```
 
 ```java

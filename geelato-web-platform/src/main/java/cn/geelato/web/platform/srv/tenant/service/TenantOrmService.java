@@ -30,22 +30,19 @@ public class TenantOrmService {
         return MetaFactory.query(Tenant.class)
                 .where(filters.toArray(new Filter[0]))
                 .order(Order.desc("createAt"))
-                .wrapperResult(this::toTenant)
-                .list();
+                .list(Tenant.class);
     }
 
     public Tenant getById(String id) {
         return MetaFactory.query(Tenant.class)
                 .where(Filter.eq("id", id))
-                .wrapperResult(this::toTenant)
-                .one();
+                .one(Tenant.class);
     }
 
     public Tenant getByCode(String code) {
         return MetaFactory.query(Tenant.class)
                 .where(Filter.eq("code", code), Filter.eq("delStatus", 0))
-                .wrapperResult(this::toTenant)
-                .one();
+                .one(Tenant.class);
     }
 
     public String create(Tenant tenant) {
@@ -67,10 +64,6 @@ public class TenantOrmService {
         return MetaFactory.update(Tenant.class)
                 .where(Filter.eq("id", id))
                 .save();
-    }
-
-    private Tenant toTenant(Map<String, Object> row) {
-        return row == null || row.isEmpty() ? null : JSON.parseObject(JSON.toJSONString(row), Tenant.class);
     }
 
     private Map<String, Object> toValueMap(Tenant tenant) {

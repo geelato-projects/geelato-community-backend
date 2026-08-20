@@ -214,6 +214,8 @@
         <appender-ref ref="platformExceptionLogFile"/>
         <appender-ref ref="console"/>
     </logger>
+    <!-- 业务扩展模块可通过 classpath include 追加独立日志路由 -->
+    <include resource="geelato-ob-integrate-api-logback.xml"/>
     <!-- root 同时挂载启动日志与运行错误日志，由各 appender 上的阶段过滤器决定实际写入：
          启动期 → startupLogFile 生效；运行期 → runtimeLogFile 生效（仅 WARN+）。 -->
     <root level="${ROOT_LOG_LEVEL}">

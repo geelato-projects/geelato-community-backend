@@ -1,6 +1,7 @@
 package cn.geelato.orm.query;
 
 import cn.geelato.orm.function.WrapperResultFunction;
+import cn.geelato.orm.support.QueryResultMapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,20 +51,46 @@ public class MetaNativeSql extends MetaOperate<MetaNativeSql> {
     public <R> List<R> list() {
         List<Map<String, Object>> rows = executor().nativeQueryForMapList(sql, resolveParams(), getConnectId());
         if (wrapperFunction == null) {
-            return (List<R>) rows;
+            return QueryResultMapper.unwrapSingleColumn(rows);
         }
         return rows.stream()
                 .map(row -> (R) ((WrapperResultFunction<Map<String, Object>, ?>) wrapperFunction).apply(row))
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 按显式类型返回结果列表：简单类型要求单列并做值转换；Map 原样返回；自定义类经 JSON 映射为对象。
+     */
+    public <R> List<R> list(Class<R> elementType) {
+        List<Map<String, Object>> rows = executor().nativeQueryForMapList(sql, resolveParams(), getConnectId());
+        if (wrapperFunction != null) {
+            return rows.stream()
+                    .map(row -> QueryResultMapper.mapWrapped(
+                            ((WrapperResultFunction<Map<String, Object>, ?>) wrapperFunction).apply(row), elementType))
+                    .collect(Collectors.toList());
+        }
+        return QueryResultMapper.mapRows(rows, elementType);
+    }
+
     @SuppressWarnings("unchecked")
     public <R> R one() {
         Map<String, Object> row = executor().nativeQueryForMap(sql, resolveParams(), getConnectId());
         if (wrapperFunction == null) {
-            return (R) row;
+            return QueryResultMapper.unwrapSingleColumn(row);
         }
         return (R) ((WrapperResultFunction<Map<String, Object>, ?>) wrapperFunction).apply(row);
+    }
+
+    /**
+     * 按显式类型返回单行：简单类型要求单列并做值转换；Map 原样返回；自定义类经 JSON 映射为对象。
+     */
+    public <R> R one(Class<R> elementType) {
+        Map<String, Object> row = executor().nativeQueryForMap(sql, resolveParams(), getConnectId());
+        if (wrapperFunction != null) {
+            return QueryResultMapper.mapWrapped(
+                    ((WrapperResultFunction<Map<String, Object>, ?>) wrapperFunction).apply(row), elementType);
+        }
+        return QueryResultMapper.mapRow(row, elementType);
     }
 
     public <T> T queryForObject(Class<T> requiredType) {

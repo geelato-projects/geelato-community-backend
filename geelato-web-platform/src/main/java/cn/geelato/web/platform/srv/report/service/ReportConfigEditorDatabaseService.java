@@ -219,10 +219,10 @@ public class ReportConfigEditorDatabaseService {
                 + "WHERE del_status = 0 AND report_type_id = ? AND target_id = ? AND tenant_code = ? "
                 + "ORDER BY update_at DESC LIMIT 1";
         try {
-            Map<String, Object> row = MetaFactory.sql(sql)
+            Object id = MetaFactory.sql(sql)
                     .params(reportTypeId, customerId, blankToDefault(tenantCode, DEFAULT_TENANT))
                     .one();
-            return row == null ? null : asString(row, "id");
+            return id == null ? null : String.valueOf(id);
         } catch (Exception e) {
             log.warn("resolve customer config id failed", e);
             return null;

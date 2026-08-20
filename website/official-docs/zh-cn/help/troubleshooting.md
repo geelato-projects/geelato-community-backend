@@ -79,7 +79,7 @@ sidebar_label: 报障排查
 
 ### p6spy SQL 代理日志
 
-平台通过 p6spy 记录实际执行的 SQL，关键配置（见 [系统配置](../system-config/overview.md)）：
+平台通过 p6spy 记录实际执行的 SQL，关键配置（见 [系统配置](../system-config/overview)）：
 
 - `decorator.datasource.p6spy.enable-logging=true`
 - `decorator.datasource.p6spy.log-file=/log/p6spy-sql.log`
@@ -88,7 +88,7 @@ sidebar_label: 报障排查
 
 ### Fluent DSL 调试
 
-后端 Fluent DSL 可在不执行的情况下预览生成的 SQL（见 [Fluent DSL 指引](../orm/fluent-dsl.md)）：
+后端 Fluent DSL 可在不执行的情况下预览生成的 SQL（见 [Fluent DSL 指引](../orm/fluent-dsl)）：
 
 - `toSql()`：预览查询 SQL。
 - `toCountSql()`：预览计数 SQL。
@@ -118,7 +118,7 @@ geelato.mql.playground.enabled=true
 业务异常通过 `CoreException` 体系统一管理，异常响应会携带：
 
 - `errorCode`、默认文案。
-- `docUrl`：指向排障文档。未声明 `docSlug` 时指向 [错误码参考](../reference/error-codes.md) 对应锚点；声明 `docSlug` 时指向独立详情页（如 [SQL 执行异常](../reference/error-codes/sql-execute.md)）。
+- `docUrl`：指向排障文档。未声明 `docSlug` 时指向 [错误码参考](../reference/error-codes) 对应锚点；声明 `docSlug` 时指向独立详情页（如 [SQL 执行异常](../reference/error-codes/sql-execute)）。
 - `logTag`：用于按上文工作流反查日志。
 
 通过 `docUrl` 可从前端错误提示直接跳转到对应排障文档。
@@ -132,7 +132,7 @@ geelato.mql.playground.enabled=true
 
 适用于通过公网、VPN 或 SSH Tunnel 连接生产库的场景。
 
-详见 [动态数据源：内网 Host/Port 映射](../dynamic-datasource/host-mapping.md)。
+详见 [动态数据源：内网 Host/Port 映射](../dynamic-datasource/host-mapping)。
 
 ## 常见症状对照
 
@@ -150,9 +150,9 @@ geelato.mql.playground.enabled=true
 
 ## 相关文档
 
-- [错误码参考](../reference/error-codes.md)
+- [错误码参考](../reference/error-codes)
 - [术语表](glossary.md)
 - [常见问题](faq.md)
-- [MQL 使用指引](../mql/usage.md)
-- [Fluent DSL 指引](../orm/fluent-dsl.md)
-- [动态数据源：内网 Host/Port 映射](../dynamic-datasource/host-mapping.md)
+- [MQL 使用指引](../mql/usage)
+- [Fluent DSL 指引](../orm/fluent-dsl)
+- [动态数据源：内网 Host/Port 映射](../dynamic-datasource/host-mapping)

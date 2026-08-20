@@ -13,19 +13,19 @@ sidebar_label: 术语表
 
 平台侧基于 JSON 的元数据查询与操作协议，面向前端页面、低代码界面与平台通用数据接口，提供统一的数据访问表达方式。与后端 Java 侧的 Fluent DSL 解决不同层级的问题。
 
-详见 [MQL](../mql/overview.md)、[MQL 使用指引](../mql/usage.md)。
+详见 [MQL](../mql/overview)、[MQL 使用指引](../mql/usage)。
 
 ### ORM
 
 Object-Relational Mapping（对象关系映射）。在 Geelato 中并非单一 API，而是围绕"元数据 + 查询协议 + Java DSL + 扩展机制"组织的体系，分为注解层、协议层（MQL）、Java API 层（Fluent DSL）与扩展层。
 
-详见 [ORM](../orm/overview.md)。
+详见 [ORM](../orm/overview)。
 
 ### Fluent DSL
 
 后端 Java 服务的元数据 CRUD 入口，通过 `MetaFactory` 的链式 API 完成查询、保存、更新、删除、关联、过程调用与原生 SQL。它是面向 Java 服务代码的独立入口，而非 MQL 的字符串包装。
 
-详见 [Fluent DSL 指引](../orm/fluent-dsl.md)。
+详见 [Fluent DSL 指引](../orm/fluent-dsl)。
 
 ### MetaFactory
 
@@ -43,7 +43,7 @@ MQL 的核心处理类，暴露平台通用数据接口（`/api/meta/list`、`/a
 
 `@Entity(connectId=...)` 属性，显式声明实体所属的动态数据源 key，是实体到数据源的核心绑定点。解析优先级：`@Entity(connectId)` > `@Entity(catalog)` 映射 > 数据库元数据 `connect_id` > 默认主库。
 
-详见 [动态数据源](../dynamic-datasource/overview.md)、[ORM 注解说明](../orm/annotations.md)。
+详见 [动态数据源](../dynamic-datasource/overview)、[ORM 注解说明](../orm/annotations)。
 
 ## 元数据
 
@@ -51,7 +51,7 @@ MQL 的核心处理类，暴露平台通用数据接口（`/api/meta/list`、`/a
 
 定义"元数据从哪里来"的 SPI（`cn.geelato.core.meta.spi`）。默认实现 `DefaultMetaStore` 从平台设计时表读取表/列/视图/校验/外键定义。属 Spring 风格 SPI，非 JDK `ServiceLoader`。
 
-详见 [MetaStore 扩展](../reference/metastore-extension.md)。
+详见 [MetaStore 扩展](../reference/metastore-extension)。
 
 ### MetaConfiguration
 
@@ -87,7 +87,7 @@ MQL 的核心处理类，暴露平台通用数据接口（`/api/meta/list`、`/a
 
 标记不参与持久化的运行时属性，仍可参与 Java 业务逻辑，但不映射到数据库列。
 
-详见 [ORM 注解说明](../orm/annotations.md)。
+详见 [ORM 注解说明](../orm/annotations)。
 
 ## 运行时与上下文
 
@@ -95,31 +95,31 @@ MQL 的核心处理类，暴露平台通用数据接口（`/api/meta/list`、`/a
 
 Geelato Web 平台的运行时应用壳，基于共享底座 `geelato-web-platform` 启动，面向业务执行场景。Spring Boot 启动类，继承 `BootApplication`。
 
-详见 [PlatformWebRuntime](../runtime/platform-web-runtime.md)。
+详见 [PlatformWebRuntime](../runtime/platform-web-runtime)。
 
 ### BootApplication
 
 `cn.geelato.web.platform.boot.BootApplication`，Geelato Runtime 的启动编排器（非 Spring Boot 最外层入口）。其 `run(...)` 完成数据源定义缓存、SQL/DB 脚本、Graal 上下文、环境配置缓存的收尾初始化。业务启动类继承它。
 
-详见 [启动过程](../reference/startup-process.md)。
+详见 [启动过程](../reference/startup-process)。
 
 ### SecurityContext
 
 请求级（线程级）安全上下文。硬约束：安全主体只能在鉴权成功后由安全链路内部写入。
 
-详见 [SecurityContext 生命周期](../runtime/security-context-lifecycle.md)。
+详见 [SecurityContext 生命周期](../runtime/security-context-lifecycle)。
 
 ### GlobalContext
 
 `cn.geelato.core.GlobalContext`，平台底层全局运行参数入口，承载环境标识、密级、列加密/API 加密开关、加密算法与密钥读取等。
 
-详见 [全局上下文](../platform-capabilities/global-context.md)。
+详见 [全局上下文](../platform-capabilities/global-context)。
 
 ### TrafficTag（流量染色）
 
 为每次请求生成并透出的统一流量标记 `trafficTag`，用于灰度标识、链路透传、日志关联与在线用户观察。默认两档语义：`default`、`gray`。当前仅做标记，不内置网关分流。
 
-详见 [流量染色](../platform-capabilities/traffic-tagging.md)。
+详见 [流量染色](../platform-capabilities/traffic-tagging)。
 
 ### tenantCode（租户）
 
@@ -136,13 +136,13 @@ Geelato Web 平台的运行时应用壳，基于共享底座 `geelato-web-platfo
 
 运行时统一规则：0 个实现跳过、1 个实现按 `isEnabled()` 生效、多个实现直接报错。
 
-详见 [查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)。
+详见 [查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension)。
 
 ### PF4J / 插件机制
 
 插件机制基于 PF4J 实现，宿主工程仅依赖扩展点接口（`PluginExtensionPoint` 继承自 `org.pf4j.ExtensionPoint`），插件实现可独立打包、按需启停，由 `SpringPluginManager` 管理并通过 `PluginBeanProvider` 调用。
 
-详见 [插件机制概览](../plugin-mechanism/overview.md)。
+详见 [插件机制概览](../plugin-mechanism/overview)。
 
 ## 交付
 
@@ -150,13 +150,13 @@ Geelato Web 平台的运行时应用壳，基于共享底座 `geelato-web-platfo
 
 框架采用 `BOM + Starter` 模式交付：`geelato-framework-bom` 负责版本对齐，`geelato-framework-starter` 是推荐的最小框架底座统一入口。
 
-详见 [BOM 与 Starter](../reference/bom-and-starter.md)。
+详见 [BOM 与 Starter](../reference/bom-and-starter)。
 
 ### App Scaffold（脚手架）
 
 基于 `geelato-app-scaffold-starter` 的"胖脚手架"，开箱即用提供登录、组织、用户、角色、字典、文件上传、MQL 与自动建表，适合从零开始的新项目。与"瘦启动"最小化接入（`geelato-framework-starter`，零建表）相对。
 
-详见 [脚手架快速启动指南](../guide/app-scaffold-starter-project-guide.md)、[快速开始](../guide/quick-start.md)。
+详见 [脚手架快速启动指南](../guide/app-scaffold-starter-project-guide)、[快速开始](../guide/quick-start)。
 
 ## 接口与报障
 
@@ -164,13 +164,13 @@ Geelato Web 平台的运行时应用壳，基于共享底座 `geelato-web-platfo
 
 从源码静态扫描控制器、生成逐 Controller Markdown 的接口补充说明，用于补充尚未完全 OpenAPI 化的端点。与 OpenAPI、MQL 构成"标准契约 / 静态补充 / 平台协议"的双轨/三轨关系。
 
-详见 [API 参考](../api/reference.md)、[SrvExplain API 目录](../api/srvexplain-catalog.md)。
+详见 [API 参考](../api/reference)、[SrvExplain API 目录](../api/srvexplain-catalog)。
 
 ### CoreException
 
 平台业务异常的统一基类体系。每个错误码对应一个 `CoreException` 子类，异常响应会携带错误码、文案以及 `docUrl` 文档链接与 `logTag` 关联键，便于排障定位。
 
-详见 [错误码参考](../reference/error-codes.md)。
+详见 [错误码参考](../reference/error-codes)。
 
 ### docUrl
 

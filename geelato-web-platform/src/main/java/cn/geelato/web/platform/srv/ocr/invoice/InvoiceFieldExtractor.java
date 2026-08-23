@@ -6,6 +6,8 @@ import cn.geelato.web.platform.srv.ocr.invoice.entity.OcrLine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.DateTimeException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -113,7 +115,7 @@ public class InvoiceFieldExtractor {
         for (OcrLine l : lines) {
             Matcher m = DATE.matcher(l.getText());
             if (l.getText().contains("开票日期") && m.find()) {
-                result.setInvoiceDate(m.group(1).replaceAll("\\s+", ""));
+                result.setInvoiceDate(normalizeInvoiceDate(m.group(1)));
                 break;
             }
         }
@@ -121,7 +123,7 @@ public class InvoiceFieldExtractor {
             for (OcrLine l : lines) {
                 Matcher m = DATE.matcher(l.getText());
                 if (m.find()) {
-                    result.setInvoiceDate(m.group(1).replaceAll("\\s+", ""));
+                    result.setInvoiceDate(normalizeInvoiceDate(m.group(1)));
                     break;
                 }
             }
@@ -605,6 +607,28 @@ public class InvoiceFieldExtractor {
             list.add(m.group(1).replace(",", "").replace(" ", ""));
         }
         return list;
+    }
+
+    /** 开票日期统一归一为 yyyy-MM-dd，避免回写时混入中文日期或斜杠格式。 */
+    private String normalizeInvoiceDate(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        String compact = raw.replaceAll("\\s+", "");
+        Matcher matcher = Pattern.compile("(\\d{4})\\D+(\\d{1,2})\\D+(\\d{1,2})").matcher(compact);
+        if (!matcher.find()) {
+            return compact;
+        }
+        try {
+            return LocalDate.of(
+                    Integer.parseInt(matcher.group(1)),
+                    Integer.parseInt(matcher.group(2)),
+                    Integer.parseInt(matcher.group(3))
+            ).toString();
+        } catch (DateTimeException | NumberFormatException e) {
+            log.warn("发票日期标准化失败，保留原值: {}", compact, e);
+            return compact;
+        }
     }
 
     /** 数值单元格清洗：去 ¥ 与逗号（保留 % 由税率单独处理）。 */

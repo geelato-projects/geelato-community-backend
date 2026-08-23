@@ -3,14 +3,17 @@ package cn.geelato.web.platform.boot;
 
 import cn.geelato.core.orm.Dao;
 import cn.geelato.web.common.shiro.*;
+import jakarta.servlet.DispatcherType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -29,6 +32,23 @@ public class ShiroConfiguration extends BaseConfiguration {
         filterChainDefinitionMap.put("/**", "anon");
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
         return shiroFilterFactoryBean;
+    }
+
+    /**
+     * 显式注册 shiroFilter 并加入 ASYNC 分发类型。
+     * Boot 自动注册的 Filter 默认只拦截 REQUEST 分发；SseEmitter（/api/ai/ask、/subscribe/**）
+     * 结束后的 ASYNC 二次分发不经过 Shiro 过滤器，线程上无 SecurityManager，
+     * FrameworkServlet 发布请求处理事件时经 ShiroHttpServletRequest.getUserPrincipal()
+     * 抛 UnavailableSecurityManagerException。此注册使 ASYNC 分发同样绑定 Subject，消除该异常。
+     */
+    @Bean
+    public FilterRegistrationBean<AbstractShiroFilter> shiroFilterRegistration(AbstractShiroFilter shiroFilter) {
+        FilterRegistrationBean<AbstractShiroFilter> registration = new FilterRegistrationBean<>(shiroFilter);
+        registration.addUrlPatterns("/*");
+        registration.setName("shiroFilter");
+        registration.setDispatcherTypes(DispatcherType.REQUEST, DispatcherType.ASYNC);
+        registration.setOrder(0);
+        return registration;
     }
 
     @Bean

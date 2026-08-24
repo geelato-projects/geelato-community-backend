@@ -19,7 +19,7 @@
     <dependencies>
         <dependency>
             <groupId>cn.geelato</groupId>
-            <artifactId>geelato-web-runtime</artifactId>
+            <artifactId>geelato-web-platform</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>

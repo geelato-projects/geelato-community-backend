@@ -59,11 +59,9 @@ public final class FluentQueryFilterRuntimeResolver {
             log.info("No FluentQueryFilterInjector bean found. Skip Fluent query filter injection. entityName={}", entityName);
             return null;
         }
-        // 只在“启用”的注入器之间判定唯一性：被禁用（isEnabled()=false）的 Bean 视为不存在，不参与冲突。
-        // 这样允许同时注册多个注入器（如平台默认 + 应用自定义），只要运行期至多有一个处于启用态。
         List<Entry<String, FluentQueryFilterInjector>> enabledEntries = beans.entrySet().stream()
                 .filter(entry -> entry.getValue().isEnabled())
-                .collect(Collectors.toList());
+                .toList();
         if (enabledEntries.isEmpty()) {
             log.info("No enabled FluentQueryFilterInjector among {} bean(s). Skip Fluent query filter injection. entityName={}, beanNames={}",
                     beans.size(), entityName, beans.keySet());

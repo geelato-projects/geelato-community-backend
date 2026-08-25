@@ -63,8 +63,6 @@ public class PackageController {
     @Autowired
     @Qualifier("primaryDao")
     protected Dao dao;
-    private DataSourceTransactionManager dataSourceTransactionManager;
-    private TransactionStatus transactionStatus;
     private final String defaultPackageName = "geelatoApp";
     private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.ATTACH.getValue();
 
@@ -293,7 +291,8 @@ public class PackageController {
                     appPackageData = ZipUtils.readPackageData(file, ".gdp");
                 }
             } catch (IOException ex) {
-                throw new PackageException(ex.getMessage());
+                log.error("读取应用包文件失败，versionId: {}, packagePath: {}", versionId, appVersion.getPackagePath(), ex);
+                throw new PackageException("读取应用包文件失败（" + appVersion.getPackagePath() + "）：" + rootMsg(ex));
             }
 
             AppPackData appPackage = PackageUtils.resolveAppPackageData(appPackageData);
@@ -302,15 +301,18 @@ public class PackageController {
                     if(PackageUtils.validatePackageData(appPackage,metaManager.getAll())){
                         backupCurrentVersion(appVersion.getAppId());
                         deployAppPackageData(appPackage);
-                        refreshApp(appVersion.getAppId());
                     }else {
                         throw new PackageException("应用包校验不通过,请先更新平台应用geelato_admin至版本" + appPackage.getBasePlatformVersion());
                     }
                 } catch (Exception ex) {
-                    if (transactionStatus != null) {
-                        dataSourceTransactionManager.rollback(transactionStatus);
-                    }
-                    return ApiResult.fail(ex.getMessage());
+                    log.error("应用部署失败，versionId: {}, appId: {}", versionId, appVersion.getAppId(), ex);
+                    return ApiResult.fail("应用部署失败：" + rootMsg(ex));
+                }
+                try {
+                    refreshApp(appVersion.getAppId());
+                } catch (Exception ex) {
+                    log.error("应用数据已部署成功，但刷新应用元数据缓存失败，appId: {}", appVersion.getAppId(), ex);
+                    return ApiResult.fail("应用数据已部署成功，但刷新应用元数据缓存失败：" + rootMsg(ex));
                 }
             } else {
                 throw new PackageException("无法读取到应用包数据，请检查应用包");
@@ -437,53 +439,82 @@ public class PackageController {
 
     private void deployAppPackageData(AppPackData appPackage) {
         log.info("----------------------deploy start--------------------");
-        dataSourceTransactionManager = new DataSourceTransactionManager(dao.getJdbcTemplate().getDataSource());
-        transactionStatus = TransactionHelper.beginTransaction(dataSourceTransactionManager);
-        deleteCurrentVersion(appPackage.getSourceAppId());
-        for (AppMeta appMeta : appPackage.getAppMetaList()) {
-            log.info("开始处理元数据：{}", appMeta.getMetaName());
-            Map<String, Object> metaData = new HashMap<>();
-            ArrayList<Map<String, Object>> metaDataArray = new ArrayList<>();
-            String appMetaName = appMeta.getMetaName();
-            Object appMetaData = appMeta.getMetaData();
-            EntityMeta entityMeta = metaManager.getByEntityName(appMetaName);
-            String tableName = entityMeta.getTableName();
-            boolean increment = incrementMetas.contains(tableName);
-            List<String> ids = null;
-            if (increment) {
-                ids = incrementMetaIds.get(tableName);
-            }
-            JSONArray jsonArray = JSONArray.parseArray(JSONObject.toJSONString(appMetaData));
-            for (int i = 0; i < jsonArray.size(); i++) {
-                JSONObject jo = jsonArray.getJSONObject(i);
-                Map<String, Object> columnMap = new HashMap<>();
-                boolean upgradeToTarget = true;
-                for (String key : jo.keySet()) {
-                    FieldMeta fieldMeta = entityMeta.getFieldMetaByColumn(key);
-                    if ("id".equals(key)) {
-                        if (increment) {
-                            if (ids.contains(jo.get(key).toString())) {
-                                upgradeToTarget = false;
-                            }
-                        }
-                        columnMap.put("forceId", jo.get(key));
-                    } else {
-                        columnMap.put(fieldMeta.getFieldName(), jo.get(key));
-                    }
+        DataSourceTransactionManager transactionManager = new DataSourceTransactionManager(dao.getJdbcTemplate().getDataSource());
+        TransactionStatus status = TransactionHelper.beginTransaction(transactionManager);
+        try {
+            deleteCurrentVersion(appPackage.getSourceAppId());
+            List<AppMeta> appMetaList = appPackage.getAppMetaList();
+            for (int idx = 0; idx < appMetaList.size(); idx++) {
+                AppMeta appMeta = appMetaList.get(idx);
+                log.info("开始处理元数据：{}（第 {}/{} 个）", appMeta.getMetaName(), idx + 1, appMetaList.size());
+                try {
+                    deployAppMetaData(appMeta);
+                } catch (Exception ex) {
+                    log.error("处理元数据 [{}] 失败（第 {}/{} 个）", appMeta.getMetaName(), idx + 1, appMetaList.size(), ex);
+                    throw new PackageException("处理元数据 [" + appMeta.getMetaName() + "] 失败：" + rootMsg(ex));
                 }
-                if (upgradeToTarget) {
-                    metaDataArray.add(columnMap);
-                }
+                log.info("结束处理元数据：{}", appMeta.getMetaName());
             }
-            metaData.put(appMeta.getMetaName(), metaDataArray);
-            List<SaveCommand> saveCommandList = jsonTextSaveParser.parseBatch(JSONObject.toJSONString(metaData), new SessionCtx());
-            for (SaveCommand saveCommand : saveCommandList) {
-                BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
-                dao.save(boundSql);
+            TransactionHelper.commitTransaction(transactionManager, status);
+        } catch (Exception ex) {
+            if (!status.isCompleted()) {
+                TransactionHelper.rollbackTransaction(transactionManager, status);
+                log.info("部署事务已回滚，appId: {}", appPackage.getSourceAppId());
             }
-            log.info("结束处理元数据：{}", appMeta.getMetaName());
+            throw ex;
         }
-        TransactionHelper.commitTransaction(dataSourceTransactionManager, transactionStatus);
         log.info("----------------------deploy end--------------------");
+    }
+
+    private void deployAppMetaData(AppMeta appMeta) {
+        Map<String, Object> metaData = new HashMap<>();
+        ArrayList<Map<String, Object>> metaDataArray = new ArrayList<>();
+        String appMetaName = appMeta.getMetaName();
+        Object appMetaData = appMeta.getMetaData();
+        EntityMeta entityMeta = metaManager.getByEntityName(appMetaName);
+        if (entityMeta == null) {
+            throw new PackageException("元数据 [" + appMetaName + "] 在当前平台不存在（平台版本过低），无法部署");
+        }
+        String tableName = entityMeta.getTableName();
+        boolean increment = incrementMetas.contains(tableName);
+        List<String> ids = null;
+        if (increment) {
+            ids = incrementMetaIds.get(tableName);
+        }
+        JSONArray jsonArray = JSONArray.parseArray(JSONObject.toJSONString(appMetaData));
+        for (int i = 0; i < jsonArray.size(); i++) {
+            JSONObject jo = jsonArray.getJSONObject(i);
+            Map<String, Object> columnMap = new HashMap<>();
+            boolean upgradeToTarget = true;
+            for (String key : jo.keySet()) {
+                FieldMeta fieldMeta = entityMeta.getFieldMetaByColumn(key);
+                if ("id".equals(key)) {
+                    if (increment) {
+                        if (ids.contains(jo.get(key).toString())) {
+                            upgradeToTarget = false;
+                        }
+                    }
+                    columnMap.put("forceId", jo.get(key));
+                } else {
+                    if (fieldMeta == null) {
+                        throw new PackageException("应用包中的字段 [" + key + "] 在元数据 [" + appMetaName + "] 中不存在（平台版本不匹配），无法部署");
+                    }
+                    columnMap.put(fieldMeta.getFieldName(), jo.get(key));
+                }
+            }
+            if (upgradeToTarget) {
+                metaDataArray.add(columnMap);
+            }
+        }
+        metaData.put(appMeta.getMetaName(), metaDataArray);
+        List<SaveCommand> saveCommandList = jsonTextSaveParser.parseBatch(JSONObject.toJSONString(metaData), new SessionCtx());
+        for (SaveCommand saveCommand : saveCommandList) {
+            BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
+            dao.save(boundSql);
+        }
+    }
+
+    private String rootMsg(Throwable ex) {
+        return StringUtils.isEmpty(ex.getMessage()) ? ex.toString() : ex.getMessage();
     }
 }

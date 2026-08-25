@@ -245,6 +245,8 @@ public class ColumnMeta extends BaseSortableEntity implements EntityEnableAble, 
         }
         this.setId(map.get("id") == null ? null : map.get("id").toString());
         this.key = map.get("column_key") != null && Boolean.parseBoolean(map.get("column_key").toString());
+        this.nullable = map.get("is_nullable") == null || Boolean.parseBoolean(map.get("is_nullable").toString());
+        this.uniqued = map.get("is_unique") != null && Boolean.parseBoolean(map.get("is_unique").toString());
         if (map.get("linked") != null) {
             this.linked = Integer.parseInt(map.get("linked").toString());
         }

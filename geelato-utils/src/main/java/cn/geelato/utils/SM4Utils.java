@@ -1,97 +1,49 @@
 package cn.geelato.utils;
 
 import lombok.SneakyThrows;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.crypto.engines.SM4Engine;
+import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
+import org.bouncycastle.crypto.params.KeyParameter;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.SecureRandom;
-import java.security.Security;
 import java.util.Base64;
 
 public class SM4Utils {
-    static {
-        try {
-            if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-                Security.insertProviderAt(new BouncyCastleProvider(), 1);
-            }
-            printBcProviderDiagnostics("after-register");
-        } catch (Exception e) {
-            throw new RuntimeException("BouncyCastle注册失败", e);
-        }
-    }
-
-    private static final String ALGORITHM_NAME = "SM4";
-    private static final String ALGORITHM_MODE = "SM4/ECB/PKCS5Padding";
-
+    /**
+     * 说明：
+     * 当前实现刻意保持与历史版本一致的“SM4 + ECB + Padding”兼容语义，
+     * 目的是保证已入库密文仍可正常解密。
+     *
+     * 这不是新的推荐方案。后续若要提升安全性，应升级为带随机 IV 的模式
+     * （如 CBC/GCM），并同步调整密文存储格式，避免直接切换导致历史数据失效。
+     */
     @SneakyThrows
     public static String encrypt(String data, String keyStr) {
         byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
-        byte[] key = keyStr.getBytes(StandardCharsets.UTF_8);
-        SecretKeySpec secretKeySpec = new SecretKeySpec(key, ALGORITHM_NAME);
-        Cipher cipher = Cipher.getInstance(ALGORITHM_MODE, "BC");
-        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
-        byte[] encryptedBytes = cipher.doFinal(dataBytes);
+        byte[] encryptedBytes = process(true, dataBytes, keyStr);
         return Base64.getEncoder().encodeToString(encryptedBytes);
     }
 
     @SneakyThrows
     public static String decrypt(String encryptedData, String keyStr) {
         byte[] encryptedBytes = Base64.getDecoder().decode(encryptedData);
-        byte[] key = keyStr.getBytes(StandardCharsets.UTF_8);
-        SecretKeySpec secretKeySpec = new SecretKeySpec(key, ALGORITHM_NAME);
-        printBcProviderDiagnostics("before-decrypt-cipher");
-        Cipher cipher = Cipher.getInstance(ALGORITHM_MODE, "BC");
-        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);
-        byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+        byte[] decryptedBytes = process(false, encryptedBytes, keyStr);
         return new String(decryptedBytes, StandardCharsets.UTF_8);
     }
 
-    private static void printBcProviderDiagnostics(String stage) {
-        java.security.Provider provider = Security.getProvider("BC");
-        System.out.println("[SM4Utils] " + stage + " BC provider = " + provider);
-        System.out.println("[SM4Utils] " + stage + " BC classLoader = " + (provider == null ? null : provider.getClass().getClassLoader()));
-        System.out.println("[SM4Utils] " + stage + " BC codeSource = " + (provider == null ? null : provider.getClass().getProtectionDomain().getCodeSource()));
-    }
+    @SneakyThrows
+    private static byte[] process(boolean encrypt, byte[] input, String keyStr) {
+        // 这里使用 BC lightweight API，绕开 JCE Provider 验签链路，
+        // 避免在部分 fat-jar / 特定 JDK 运行时触发 "JCE cannot authenticate the provider BC"。
+        PaddedBufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new SM4Engine());
+        cipher.init(encrypt, new KeyParameter(keyStr.getBytes(StandardCharsets.UTF_8)));
 
+        byte[] output = new byte[cipher.getOutputSize(input.length)];
+        int length = cipher.processBytes(input, 0, input.length, output, 0);
+        length += cipher.doFinal(output, length);
 
-    public static void main(String[] args) throws Exception {
-//        generateKey();
-        try {
-            String plainText = "{\n" +
-                    "\t\"demo_entity\": {\n" +
-                    "\t\t\"name\": \"n_v\",\n" +
-                    "\t\t\"code\": \"c_v\",\n" +
-                    "\t\t\"remark\": \"r_v\"\n" +
-                    "\t},\n" +
-                    "\t\"@biz\": \"0\"\n" +
-                    "}";
-            // 假设这里有一个有效的 16 字节（128 位）密钥字符串
-            String keyStr = "b76278495b7f4df3";
-            String encryptedBase64 = SM4Utils.encrypt(plainText, keyStr);
-            System.out.println("Encrypted: " + encryptedBase64);
-
-            String decryptedText = SM4Utils.decrypt(encryptedBase64, keyStr);
-            System.out.println("Decrypted: " + decryptedText);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void generateKey() {
-        SecureRandom secureRandom = new SecureRandom();
-        byte[] key = new byte[16];
-        secureRandom.nextBytes(key);
-        StringBuilder result = new StringBuilder();
-        for (byte b : key) {
-            result.append(String.format("%02x", b));
-        }
-        System.out.println(result.toString());
+        byte[] result = new byte[length];
+        System.arraycopy(output, 0, result, 0, length);
+        return result;
     }
 }

@@ -1,11 +1,11 @@
 package cn.geelato.meta;
 
 import cn.geelato.core.constants.ColumnDefault;
+import cn.geelato.core.meta.model.entity.BaseEntity;
+import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.lang.meta.Col;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.lang.meta.Title;
-import cn.geelato.core.meta.model.entity.BaseEntity;
-import cn.geelato.core.meta.model.entity.EntityEnableAble;
 import cn.geelato.utils.StringUtils;
 import lombok.Getter;
 import lombok.Setter;
@@ -52,6 +52,9 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
     @Title(title = "元数据")
     @Col(name = "business_meta_data")
     private String businessMetaData;// 元数据
+    @Title(title = "WYSIWYG 可视化布局 JSON")
+    @Col(name = "canvas_layout_data")
+    private String canvasLayoutData;// 元数据
 
     @Title(title = "状态")
     private String template2;
@@ -69,6 +72,26 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
     private String template8;
     @Title(title = "状态")
     private String template9;
+    @Title(title = "状态")
+    private String template10;
+    @Title(title = "状态")
+    private String template11;
+    @Title(title = "状态")
+    private String template12;
+    @Title(title = "状态")
+    private String template13;
+    @Title(title = "状态")
+    private String template14;
+    @Title(title = "状态")
+    private String template15;
+    @Title(title = "状态")
+    private String template16;
+    @Title(title = "状态")
+    private String template17;
+    @Title(title = "状态")
+    private String template18;
+    @Title(title = "状态")
+    private String template19;
 
     /**
      * 根据索引获取对应的模板字符串
@@ -88,6 +111,16 @@ public class ExportTemplate extends BaseEntity implements EntityEnableAble {
             case "7" -> this.template7;
             case "8" -> this.template8;
             case "9" -> this.template9;
+            case "10" -> this.template10;
+            case "11" -> this.template11;
+            case "12" -> this.template12;
+            case "13" -> this.template13;
+            case "14" -> this.template14;
+            case "15" -> this.template15;
+            case "16" -> this.template16;
+            case "17" -> this.template17;
+            case "18" -> this.template18;
+            case "19" -> this.template19;
             default -> throw new RuntimeException("模板索引超出范围！");
         };
     }

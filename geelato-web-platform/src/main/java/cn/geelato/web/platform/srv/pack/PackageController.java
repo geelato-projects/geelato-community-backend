@@ -102,6 +102,9 @@ public class PackageController {
         if ("v2".equals(packageConfigurationProperties.getEngine())) {
             return ApiResult.success(packageService.packetV2(appId, version, description, appointMetas));
         }
+        long startTime = System.currentTimeMillis();
+        log.info("====================== v1 pack start ======================");
+        log.info("打包应用：appId={}, 指定元数据={}", appId, appointMetas == null ? "全部" : appointMetas.keySet());
         Map<String, String> appDataMap = new HashMap<>();
         Map<String, String> appMetaDataMap = AppMetaUtils.buildPackageAppMetaMap(appId);
         Map<String, String> appBizDataMap = appBizDataMap(appId, "package");
@@ -109,12 +112,18 @@ public class PackageController {
         appDataMap.putAll(appBizDataMap);
         AppPackData appPackage = new AppPackData();
         List<AppMeta> appMetaList = new ArrayList<>();
+        Map<String, List<String>> inconsistentTables = new LinkedHashMap<>();
         String basePlatformVersion = dao.getJdbcTemplate().queryForMap("select version_info from platform_app where code='geelato_admin'").
                 get("version_info").toString();
         appPackage.setBasePlatformVersion(basePlatformVersion);
         for (String key : appDataMap.keySet()) {
             String value = appDataMap.get(key);
             List<Map<String, Object>> metaData = dao.getJdbcTemplate().queryForList(value);
+            List<String> unknownColumns = packageService.findUnknownColumns(key, metaData);
+            if (!unknownColumns.isEmpty()) {
+                inconsistentTables.put(key, unknownColumns);
+            }
+            log.info("打包表 [{}]：{} 行", key, metaData.size());
             if ("platform_app".equals(key) && !metaData.isEmpty()) {
                 appPackage.setAppCode(metaData.get(0).get("code").toString());
                 appPackage.setAppName(metaData.get(0).get("name").toString());
@@ -133,7 +142,9 @@ public class PackageController {
 
             }
         }
+        packageService.assertColumnsConsistent(inconsistentTables);
         if (StringUtils.isEmpty(appPackage.getAppCode())) {
+            log.warn("打包失败：找不到可打包的应用，appId={}", appId);
             return ApiResult.fail("找不到可打包的应用");
         }
         appPackage.setAppMetaList(appMetaList);
@@ -157,6 +168,9 @@ public class PackageController {
         av.setPacketTime(new Date());
         String filePath = writePackageData(av, appPackage);
         av.setPackagePath(filePath);
+        log.info("打包完成：appCode={}, 版本={}, 基准平台版本={}, 元数据 {} 张, 包文件={}, 耗时 {} ms",
+                appPackage.getAppCode(), packageVersion, appPackage.getBasePlatformVersion(),
+                appMetaList.size(), filePath, System.currentTimeMillis() - startTime);
 
         return ApiResult.success(appVersionService.createModel(av));
     }
@@ -168,7 +182,10 @@ public class PackageController {
         if ("v2".equals(packageConfigurationProperties.getEngine())) {
             return ApiResult.success(packageService.packetMergeV2(appId, version, description, appointMetas));
         }
+        long startTime = System.currentTimeMillis();
         String[] versionIds = appointMetas.keySet().toArray(new String[0]);
+        log.info("====================== v1 pack merge start ======================");
+        log.info("合并打包：appId={}, 版本ids={}", appId, Arrays.toString(versionIds));
         List<AppPackData> appPackages = getAppointAppPackage(versionIds);
         AppPackData appPackage = PackageUtils.mergePackage(appPackages, appointMetas);
         AppVersion av = new AppVersion();
@@ -189,6 +206,10 @@ public class PackageController {
         av.setPacketTime(new Date());
         String filePath = writePackageData(av, appPackage);
         av.setPackagePath(filePath);
+        log.info("合并打包完成：appCode={}, 元数据 {} 张, 包文件={}, 耗时 {} ms",
+                appPackage.getAppCode(),
+                appPackage.getAppMetaList() == null ? 0 : appPackage.getAppMetaList().size(),
+                filePath, System.currentTimeMillis() - startTime);
         return ApiResult.success(appVersionService.createModel(av));
     }
 
@@ -277,9 +298,11 @@ public class PackageController {
         if ("init_source".equals(packageConfigurationProperties.getEnv())) {
             return ApiResult.fail("本环境无法部署任何应用，请联系管理员！");
         }
+        long startTime = System.currentTimeMillis();
         AppVersion appVersion = appVersionService.getModel(AppVersion.class, versionId);
         String appPackageData;
         if (appVersion != null && !StringUtils.isEmpty(appVersion.getPackagePath())) {
+            log.info("应用部署开始：versionId={}, appId={}, 包文件={}", versionId, appVersion.getAppId(), appVersion.getPackagePath());
             try {
                 if (appVersion.getPackagePath().contains(".zgdp")) {
                     appPackageData = ZipUtils.readPackageData(appVersion.getPackagePath(), ".gdp");
@@ -297,6 +320,8 @@ public class PackageController {
 
             AppPackData appPackage = PackageUtils.resolveAppPackageData(appPackageData);
             if (appPackage != null && !appPackage.getAppMetaList().isEmpty()) {
+                log.info("应用包解析完成：appCode={}, 基准平台版本={}, 元数据 {} 张",
+                        appPackage.getAppCode(), appPackage.getBasePlatformVersion(), appPackage.getAppMetaList().size());
                 try {
                     if(PackageUtils.validatePackageData(appPackage,metaManager.getAll())){
                         backupCurrentVersion(appVersion.getAppId());
@@ -306,7 +331,7 @@ public class PackageController {
                     }
                 } catch (Exception ex) {
                     log.error("应用部署失败，versionId: {}, appId: {}", versionId, appVersion.getAppId(), ex);
-                    return ApiResult.fail("应用部署失败：" + rootMsg(ex));
+                    return ApiResult.fail("应用部署失败：" + PackageService.withFieldMetaHint(rootMsg(ex)));
                 }
                 try {
                     refreshApp(appVersion.getAppId());
@@ -314,6 +339,7 @@ public class PackageController {
                     log.error("应用数据已部署成功，但刷新应用元数据缓存失败，appId: {}", appVersion.getAppId(), ex);
                     return ApiResult.fail("应用数据已部署成功，但刷新应用元数据缓存失败：" + rootMsg(ex));
                 }
+                log.info("应用部署成功：versionId={}, appId={}, 耗时 {} ms", versionId, appVersion.getAppId(), System.currentTimeMillis() - startTime);
             } else {
                 throw new PackageException("无法读取到应用包数据，请检查应用包");
             }
@@ -331,13 +357,15 @@ public class PackageController {
     }
 
     private void refreshApp(String appId) {
+        int refreshed = 0;
         List<EntityMeta> allEntityMeta = MetaManager.singleInstance().getAll().stream().toList();
         for (EntityMeta entityMeta : allEntityMeta) {
             if (entityMeta.getTableMeta().getAppId() != null && entityMeta.getTableMeta().getAppId().equals(appId)) {
                 MetaManager.singleInstance().refreshDBMeta(entityMeta.getEntityName());
+                refreshed++;
             }
         }
-
+        log.info("刷新应用元数据缓存完成：appId={}, 刷新实体 {} 个", appId, refreshed);
     }
 
     // todo

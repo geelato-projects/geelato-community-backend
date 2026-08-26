@@ -4,14 +4,10 @@
     <property name="LOG_DIR" value="${LOG_DIR:-/log}"/>
     <property name="ROOT_LOG_LEVEL" value="${ROOT_LOG_LEVEL:-DEBUG}"/>
     <property name="FILE_LOG_LEVEL" value="${FILE_LOG_LEVEL:-DEBUG}"/>
-    <property name="CONSOLE_LOG_LEVEL" value="${CONSOLE_LOG_LEVEL:-${ROOT_LOG_LEVEL}}"/>
-    <property name="RESOLVE_LOG_LEVEL" value="${RESOLVE_LOG_LEVEL:-DEBUG}"/>
-    <!-- 运行错误日志保留的最低级别（运行期）：ERROR 或 WARN，默认 WARN -->
-    <property name="RUNTIME_LOG_LEVEL" value="${RUNTIME_LOG_LEVEL:-WARN}"/>
-    <!-- 启动日志保留天数（启动期完整记录，默认 30 天） -->
+    <property name="CONSOLE_LOG_LEVEL" value="${CONSOLE_LOG_LEVEL:-DEBUG}"/>
+    <property name="RUNTIME_LOG_LEVEL" value="${RUNTIME_LOG_LEVEL:-DEBUG}"/>
     <property name="STARTUP_MAX_HISTORY" value="${STARTUP_MAX_HISTORY:-30}"/>
-    <!-- 运行错误日志保留天数，默认 7 天 -->
-    <property name="RUNTIME_MAX_HISTORY" value="${RUNTIME_MAX_HISTORY:-7}"/>
+    <property name="RUNTIME_MAX_HISTORY" value="${RUNTIME_MAX_HISTORY:-30}"/>
     <property name="LOG_PATTERN" value="${LOG_PATTERN:-%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n}"/>
     <!--输出到控制台-->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
@@ -33,7 +29,7 @@
             <pattern>${LOG_PATTERN}</pattern>
         </layout>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>${ERROR_FILE_LOG_LEVEL:-ERROR}</level>
+            <level>ERROR</level>
         </filter>
     </appender>
     <appender name="infoLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -157,35 +153,24 @@
             <pattern>${LOG_PATTERN}</pattern>
         </layout>
     </appender>
-    <!--请求记录日志-->
-    <appender name="requestLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!--应用打包(pack)模块日志：按包名路由，打包/部署/合并打包/打包前校验全量进独立文件-->
+    <appender name="packLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <FileNamePattern>${LOG_DIR}/request/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <FileNamePattern>${LOG_DIR}/pack/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
             <maxFileSize>1000MB</maxFileSize>
             <maxHistory>2</maxHistory>
         </rollingPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{HH:mm:ss} - %msg%n</pattern>
-        </layout>
-    </appender>
-    <!--解析接口日志-->
-    <appender name="resolveLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <Prudent>true</Prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <FileNamePattern>${LOG_DIR}/resolve/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
-            <maxFileSize>1000MB</maxFileSize>
-            <maxHistory>7</maxHistory>
-        </rollingPolicy>
-        <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>${LOG_PATTERN}</pattern>
         </layout>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>${RESOLVE_LOG_LEVEL}</level>
-        </filter>
     </appender>
     <logger name="cn.geelato.schedule" additivity="false">
         <appender-ref ref="scheduleLogFile"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.web.platform.srv.pack" additivity="false">
+        <appender-ref ref="packLogFile"/>
         <appender-ref ref="console"/>
     </logger>
     <logger name="cn.geelato.auth" additivity="false">
@@ -198,20 +183,6 @@
     </logger>
     <logger name="cn.geelato.web.common.interceptor" additivity="false">
         <appender-ref ref="interceptorLogFile"/>
-        <appender-ref ref="console"/>
-    </logger>
-    <logger name="cn.geelato.web.platform.boot.interceptor" additivity="false">
-        <appender-ref ref="requestLogFile"/>
-        <appender-ref ref="console"/>
-    </logger>
-    <logger name="cn.geelato.web.platform.resolve" level="${RESOLVE_LOG_LEVEL}" additivity="false">
-        <appender-ref ref="resolveLogFile"/>
-    </logger>
-    <logger name="cn.geelato.web.platform.srv.resolve" level="${RESOLVE_LOG_LEVEL}" additivity="false">
-        <appender-ref ref="resolveLogFile"/>
-    </logger>
-    <logger name="cn.geelato.web.platform.run.PlatformExceptionHandler" level="${PLATFORM_EXCEPTION_LOG_LEVEL:-ERROR}" additivity="false">
-        <appender-ref ref="platformExceptionLogFile"/>
         <appender-ref ref="console"/>
     </logger>
     <!-- 业务扩展模块可通过 classpath include 追加独立日志路由 -->

@@ -121,9 +121,28 @@
         </connection>
     </appender>
 
+    <!--应用打包(pack)模块日志：按包名路由，打包/部署/合并打包/打包前校验全量进独立文件，本地落盘-->
+    <property name="LOG_DIR" value="${LOG_DIR:-/log}"/>
+    <property name="LOG_PATTERN" value="${LOG_PATTERN:-%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n}"/>
+    <appender name="packLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/pack/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN}</pattern>
+        </layout>
+    </appender>
+
     <!-- category loggers mirroring geelato-logback.xml -->
     <logger name="cn.geelato.schedule" additivity="false">
         <appender-ref ref="ELASTIC_SCHEDULE"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.web.platform.srv.pack" additivity="false">
+        <appender-ref ref="packLogFile"/>
         <appender-ref ref="console"/>
     </logger>
     <logger name="cn.geelato.auth" additivity="false">

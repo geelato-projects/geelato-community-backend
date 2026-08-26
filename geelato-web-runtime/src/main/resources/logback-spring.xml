@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    应用打包（pack）模块日志配置：
+    - 控制台输出保持 Spring Boot 默认行为不变；
+    - cn.geelato.web.platform.srv.pack 包（打包/部署/合并打包/打包前校验）单独写入 logs/pack.log
+      （按天滚动，保留 30 天，总量上限 1GB），additivity=false，不重复输出到默认文件；
+    - 若配置了 logging.file.path，则 pack.log 写入该目录下。
+-->
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <property name="PACK_LOG_HOME" value="${LOG_PATH:-logs}"/>
+
+    <appender name="PACK_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${PACK_LOG_HOME}/pack.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${PACK_LOG_HOME}/pack.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <logger name="cn.geelato.web.platform.srv.pack" level="INFO" additivity="false">
+        <appender-ref ref="PACK_FILE"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

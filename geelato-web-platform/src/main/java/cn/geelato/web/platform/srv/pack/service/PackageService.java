@@ -45,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -54,6 +55,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 /**
@@ -109,8 +111,12 @@ public class PackageService extends BaseService {
      * @return 创建的应用版本
      */
     public AppVersion packetV2(String appId, String version, String description, Map<String, String> appointMetas) {
+        long startTime = System.currentTimeMillis();
+        log.info("====================== v2 pack start ======================");
+        log.info("打包应用：appId={}, 指定元数据={}", appId, appointMetas == null ? "全部" : appointMetas.keySet());
         AppPackData appPackage = buildAppPackDataV2(appId, appointMetas);
         if (StringUtils.isEmpty(appPackage.getAppCode())) {
+            log.warn("打包失败：找不到可打包的应用，appId={}", appId);
             throw new PackageException("找不到可打包的应用");
         }
 
@@ -127,14 +133,22 @@ public class PackageService extends BaseService {
 
         String filePath = writePackageDataV2(av, appPackage);
         av.setPackagePath(filePath);
-        return createModel(av);
+        AppVersion created = createModel(av);
+        log.info("打包完成：appCode={}, 版本={}, 基准平台版本={}, 元数据 {} 张, 包文件={}, 耗时 {} ms",
+                appPackage.getAppCode(), packageVersion, appPackage.getBasePlatformVersion(),
+                appPackage.getAppMetaList() == null ? 0 : appPackage.getAppMetaList().size(),
+                filePath, System.currentTimeMillis() - startTime);
+        return created;
     }
 
     /**
      * 合并多个版本打包（v2）。
      */
     public AppVersion packetMergeV2(String appId, String version, String description, Map<String, Map<String, String>> appointMetas) {
+        long startTime = System.currentTimeMillis();
         String[] versionIds = appointMetas.keySet().toArray(new String[0]);
+        log.info("====================== v2 pack merge start ======================");
+        log.info("合并打包：appId={}, 版本ids={}", appId, Arrays.toString(versionIds));
         List<AppPackData> appPackages = getAppointAppPackageV2(versionIds);
         AppPackData appPackage = cn.geelato.pack.utils.PackageUtils.mergePackage(appPackages, appointMetas);
 
@@ -149,7 +163,12 @@ public class PackageService extends BaseService {
 
         String filePath = writePackageDataV2(av, appPackage);
         av.setPackagePath(filePath);
-        return createModel(av);
+        AppVersion created = createModel(av);
+        log.info("合并打包完成：appCode={}, 元数据 {} 张, 包文件={}, 耗时 {} ms",
+                appPackage.getAppCode(),
+                appPackage.getAppMetaList() == null ? 0 : appPackage.getAppMetaList().size(),
+                filePath, System.currentTimeMillis() - startTime);
+        return created;
     }
 
     // ======================================================================
@@ -165,6 +184,8 @@ public class PackageService extends BaseService {
      * @return 操作结果
      */
     public ApiResult<?> deployV2(String versionId) {
+        long startTime = System.currentTimeMillis();
+        log.info("v2 应用部署开始：versionId={}", versionId);
         if ("init_source".equals(packageConfigurationProperties.getEnv())) {
             return ApiResult.fail("本环境无法部署任何应用，请联系管理员！");
         }
@@ -173,6 +194,7 @@ public class PackageService extends BaseService {
         if (appVersion == null || StringUtils.isEmpty(appVersion.getPackagePath())) {
             throw new PackageException("无法读取到应用版本信息，请检查应用版本");
         }
+        log.info("v2 应用部署：appId={}, 包文件={}", appVersion.getAppId(), appVersion.getPackagePath());
 
         // 1. 读包（事务外）
         String appPackageData = readPackageDataV2(appVersion);
@@ -180,10 +202,19 @@ public class PackageService extends BaseService {
         if (appPackage == null || appPackage.getAppMetaList() == null || appPackage.getAppMetaList().isEmpty()) {
             throw new PackageException("无法读取到应用包数据，请检查应用包");
         }
+        log.info("v2 应用包解析完成：appCode={}, 基准平台版本={}, 元数据 {} 张",
+                appPackage.getAppCode(), appPackage.getBasePlatformVersion(), appPackage.getAppMetaList().size());
 
         // 2. 校验（事务外）
-        if (!cn.geelato.pack.utils.PackageUtils.validatePackageData(appPackage, metaManager.getAll())) {
-            throw new PackageException("应用包校验不通过,请先更新平台应用geelato_admin至版本" + appPackage.getBasePlatformVersion());
+        try {
+            if (!cn.geelato.pack.utils.PackageUtils.validatePackageData(appPackage, metaManager.getAll())) {
+                throw new PackageException("应用包校验不通过,请先更新平台应用geelato_admin至版本" + appPackage.getBasePlatformVersion());
+            }
+        } catch (PackageException pe) {
+            throw pe;
+        } catch (Exception e) {
+            log.error("v2 应用包校验异常：versionId={}, appId={}", versionId, appVersion.getAppId(), e);
+            throw new PackageException("应用部署失败：" + withFieldMetaHint(rootMsg(e)));
         }
 
         // 3. 备份当前版本（独立提交，部署失败时备份仍在）。已是 backup 版本则跳过，避免递归。
@@ -204,6 +235,7 @@ public class PackageService extends BaseService {
         // 6. 刷新缓存
         refreshAppV2(appVersion.getAppId());
 
+        log.info("v2 应用部署成功：versionId={}, appId={}, 耗时 {} ms", versionId, appVersion.getAppId(), System.currentTimeMillis() - startTime);
         return ApiResult.success(null, "应用部署成功！");
     }
 
@@ -264,6 +296,7 @@ public class PackageService extends BaseService {
 
         AppPackData appPackage = new AppPackData();
         List<AppMeta> appMetaList = new ArrayList<>();
+        Map<String, List<String>> inconsistentTables = new LinkedHashMap<>();
 
         // 基础平台版本
         String basePlatformVersion = dao.getJdbcTemplate()
@@ -274,6 +307,11 @@ public class PackageService extends BaseService {
         for (Map.Entry<String, String> entry : appDataMap.entrySet()) {
             String metaName = entry.getKey();
             List<Map<String, Object>> metaData = dao.getJdbcTemplate().queryForList(entry.getValue(), appId);
+            List<String> unknownColumns = findUnknownColumns(metaName, metaData);
+            if (!unknownColumns.isEmpty()) {
+                inconsistentTables.put(metaName, unknownColumns);
+            }
+            log.info("v2 打包表 [{}]：{} 行", metaName, metaData.size());
             if (PlatformTableConstant.APP.equals(metaName) && !metaData.isEmpty()) {
                 appPackage.setAppCode(String.valueOf(metaData.get(0).get("code")));
                 appPackage.setAppName(String.valueOf(metaData.get(0).get("name")));
@@ -289,8 +327,72 @@ public class PackageService extends BaseService {
             }
         }
 
+        assertColumnsConsistent(inconsistentTables);
+
         appPackage.setAppMetaList(appMetaList);
         return appPackage;
+    }
+
+    /**
+     * 打包前校验：返回物理表中存在、但实体定义中没有的列（select * 查询结果的列集合即物理列集合）。
+     * <p>物理表与实体定义不同步时打出的应用包，部署校验时必然抛 unfound FieldMeta 失败，故打包前拦截。</p>
+     *
+     * @param metaName 实体名（平台表与表名一致）
+     * @param metaData select * 查询结果
+     * @return 多余的物理列名（排序）；实体未注册、无数据或无不一致时返回空列表
+     */
+    public List<String> findUnknownColumns(String metaName, List<Map<String, Object>> metaData) {
+        if (metaData == null || metaData.isEmpty()) {
+            return Collections.emptyList();
+        }
+        EntityMeta entityMeta = metaManager.getByEntityName(metaName);
+        if (entityMeta == null || entityMeta.getFieldMetas() == null || entityMeta.getFieldMetas().isEmpty()) {
+            return Collections.emptyList();
+        }
+        Set<String> knownColumns = new HashSet<>();
+        for (FieldMeta fm : entityMeta.getFieldMetas()) {
+            knownColumns.add(fm.getColumnName());
+        }
+        Set<String> unknownColumns = new TreeSet<>();
+        for (Map<String, Object> row : metaData) {
+            for (String col : row.keySet()) {
+                if (!knownColumns.contains(col)) {
+                    unknownColumns.add(col);
+                }
+            }
+        }
+        return new ArrayList<>(unknownColumns);
+    }
+
+    /**
+     * 打包前校验：存在物理表与实体定义不一致的表时抛出异常，阻止打包。
+     *
+     * @param inconsistentTables key:实体名，value:该表物理列中实体定义没有的字段
+     */
+    public void assertColumnsConsistent(Map<String, List<String>> inconsistentTables) {
+        if (inconsistentTables == null || inconsistentTables.isEmpty()) {
+            return;
+        }
+        StringBuilder message = new StringBuilder("打包校验失败：物理表与实体定义不一致，禁止打包。");
+        for (Map.Entry<String, List<String>> entry : inconsistentTables.entrySet()) {
+            message.append("实体 [").append(entry.getKey()).append("] 的物理表中存在实体定义没有的字段：")
+                    .append(entry.getValue()).append("；");
+        }
+        message.append("请确保两侧一致。");
+        log.error(message.toString());
+        throw new PackageException(message.toString());
+    }
+
+    /** 部署报错增强：unfound FieldMeta 时追加原因说明，便于定位版本/结构不一致问题。 */
+    public static String withFieldMetaHint(String message) {
+        if (message != null && message.contains("unfound FieldMeta")) {
+            return message + "（该字段在目标平台实体定义中不存在，通常为源/目标平台版本不一致，或源环境物理表与实体定义不同步所致）";
+        }
+        return message;
+    }
+
+    private static String rootMsg(Throwable ex) {
+        return StringUtils.isEmpty(ex.getMessage()) ? ex.toString() : ex.getMessage();
     }
 
     /**

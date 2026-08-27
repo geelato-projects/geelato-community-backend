@@ -41,7 +41,7 @@ public class DictQueryTool extends BaseMcpTool {
             if (jdbcTemplate == null) {
                 return JSON.toJSONString(createErrorResponse("数据库连接不可用，无法查询字典数据"));
             }
-            
+
             String sql = "SELECT id, dict_code, dict_name, dict_name_en, dict_remark FROM platform_dict WHERE enable_status = 1 AND del_status = 0 ORDER BY seq_no";
             List<Map<String, Object>> dicts = jdbcTemplate.queryForList(sql);
 
@@ -71,7 +71,7 @@ public class DictQueryTool extends BaseMcpTool {
             if (jdbcTemplate == null) {
                 return JSON.toJSONString(createErrorResponse("数据库连接不可用，无法查询字典数据"));
             }
-            
+
             // 先查询字典 ID
             String dictSql = "SELECT id FROM platform_dict WHERE dict_code = ? AND enable_status = 1 AND del_status = 0";
             List<Map<String, Object>> dicts = jdbcTemplate.queryForList(dictSql, dictCode);
@@ -82,7 +82,7 @@ public class DictQueryTool extends BaseMcpTool {
             String dictId = dicts.get(0).get("id").toString();
 
             // 查询字典项
-            String itemSql = "SELECT id, item_code, item_name, item_name_en, item_color, item_tag, item_remark, seq_no FROM platform_dict_item WHERE dict_id = ? AND enable_status = 1 AND del_status = 0 ORDER BY seq_no";
+            String itemSql = "SELECT id, item_code, item_name, item_name_en, item_color, item_tag, item_remark, item_extra, seq_no FROM platform_dict_item WHERE dict_id = ? AND enable_status = 1 AND del_status = 0 ORDER BY seq_no";
             List<Map<String, Object>> items = jdbcTemplate.queryForList(itemSql, dictId);
 
             List<Map<String, Object>> result = new ArrayList<>();
@@ -95,6 +95,7 @@ public class DictQueryTool extends BaseMcpTool {
                 itemInfo.put("itemColor", item.get("item_color"));
                 itemInfo.put("itemTag", item.get("item_tag"));
                 itemInfo.put("itemRemark", item.get("item_remark"));
+                itemInfo.put("itemExtra", item.get("item_extra"));
                 itemInfo.put("seqNo", item.get("seq_no"));
                 result.add(itemInfo);
             }
@@ -114,7 +115,7 @@ public class DictQueryTool extends BaseMcpTool {
             if (jdbcTemplate == null) {
                 return JSON.toJSONString(createErrorResponse("数据库连接不可用，无法查询字典数据"));
             }
-            
+
             // 先查询字典 ID
             String dictSql = "SELECT id FROM platform_dict WHERE dict_code = ? AND enable_status = 1 AND del_status = 0";
             List<Map<String, Object>> dicts = jdbcTemplate.queryForList(dictSql, dictCode);
@@ -158,7 +159,7 @@ public class DictQueryTool extends BaseMcpTool {
             if (jdbcTemplate == null) {
                 return JSON.toJSONString(createErrorResponse("数据库连接不可用，无法查询字典数据"));
             }
-            
+
             // 查询字典
             String dictSql = "SELECT id, dict_code, dict_name, dict_name_en, dict_remark, dict_color FROM platform_dict WHERE dict_code = ? AND enable_status = 1 AND del_status = 0";
             List<Map<String, Object>> dicts = jdbcTemplate.queryForList(dictSql, dictCode);
@@ -197,7 +198,7 @@ public class DictQueryTool extends BaseMcpTool {
             if (jdbcTemplate == null) {
                 return JSON.toJSONString(createErrorResponse("数据库连接不可用，无法查询字典数据"));
             }
-            
+
             String sql = "SELECT COUNT(*) as count FROM platform_dict WHERE dict_code = ? AND enable_status = 1 AND del_status = 0";
             Long count = jdbcTemplate.queryForObject(sql, Long.class, dictCode);
             boolean exists = count != null && count > 0;

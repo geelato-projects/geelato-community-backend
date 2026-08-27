@@ -27,6 +27,8 @@ public class TreeNode extends BaseSortableEntity {
     private String pid;
     @Title(title = "节点类型")
     private String type;
+    @Title(title = "节点图标")
+    private String icon;
     @Title(title = "节点标题")
     private String text;
     @Title(title = "节点图标")

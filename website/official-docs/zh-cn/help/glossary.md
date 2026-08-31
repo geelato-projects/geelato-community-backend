@@ -37,7 +37,7 @@ MQL 的核心处理类，暴露平台通用数据接口（`/api/meta/list`、`/a
 
 ### Dao / dynamicDao / primaryDao
 
-`Dao` 封装 `JdbcTemplate` 承载 ORM 执行。`primaryDao` 绑定主数据源，`dynamicDao` 基于路由数据源。存在多个 `Dao` 时通过 `geelato.orm.dao-bean-name=dynamicDao` 指定，兼容回退顺序为 `dynamicDao` → `primaryDao`。
+`Dao` 封装 `JdbcTemplate` 承载 ORM 执行。`primaryDao` 绑定主数据源，`dynamicDao` 基于路由数据源。ORM 自动解析优先绑定 `dynamicDao`（它是唯一能支撑 `useDataSource` 切库的 Dao），不存在时回退 `primaryDao`，再回退唯一的 Dao Bean；无需显式配置，`geelato.orm.dao-bean-name` 仅用于绑定其他自定义 Dao。
 
 ### connectId
 

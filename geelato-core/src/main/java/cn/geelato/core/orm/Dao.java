@@ -64,11 +64,12 @@ public class Dao extends SqlKeyDao {
     //========================================================
 
     /**
-     * 统一异常转换模板：将 DataAccessException 转为 SqlExecuteException
+     * 统一异常转换模板：将 DataAccessException 转为 SqlExecuteException；
+     * 转换前先经 {@link JdbcRetryExecutor} 对连接类瞬时故障做透明重试（事务内不重试）。
      */
     private <T> T execute(BoundSql bs, Supplier<T> action) {
         try {
-            return action.get();
+            return JdbcRetryExecutor.execute(action);
         } catch (DataAccessException e) {
             throw new SqlExecuteException(e, bs.getSql(), bs.getParams());
         }
@@ -76,7 +77,7 @@ public class Dao extends SqlKeyDao {
 
     private void executeVoid(BoundSql bs, Runnable action) {
         try {
-            action.run();
+            JdbcRetryExecutor.executeVoid(action);
         } catch (DataAccessException e) {
             throw new SqlExecuteException(e, bs.getSql(), bs.getParams());
         }
@@ -172,7 +173,7 @@ public class Dao extends SqlKeyDao {
 
     public List<Map<String, Object>> callForMapList(String callSql, Object[] params) {
         try {
-            return jdbcTemplate.query(callSql, new DecryptingRowMapper(), params);
+            return JdbcRetryExecutor.execute(() -> jdbcTemplate.query(callSql, new DecryptingRowMapper(), params));
         } catch (DataAccessException dataAccessException) {
             throw new SqlExecuteException(dataAccessException, callSql, params);
         }
@@ -185,7 +186,7 @@ public class Dao extends SqlKeyDao {
 
     public List<Map<String, Object>> nativeQueryForMapList(String sql, Object[] params) {
         try {
-            return jdbcTemplate.query(sql, new DecryptingRowMapper(), params);
+            return JdbcRetryExecutor.execute(() -> jdbcTemplate.query(sql, new DecryptingRowMapper(), params));
         } catch (DataAccessException dataAccessException) {
             throw new SqlExecuteException(dataAccessException, sql, params);
         }
@@ -198,7 +199,7 @@ public class Dao extends SqlKeyDao {
 
     public <T> T nativeQueryForObject(String sql, Object[] params, Class<T> requiredType) {
         try {
-            return jdbcTemplate.queryForObject(sql, requiredType, params);
+            return JdbcRetryExecutor.execute(() -> jdbcTemplate.queryForObject(sql, requiredType, params));
         } catch (DataAccessException dataAccessException) {
             throw new SqlExecuteException(dataAccessException, sql, params);
         }
@@ -206,7 +207,7 @@ public class Dao extends SqlKeyDao {
 
     public int nativeExecute(String sql, Object[] params) {
         try {
-            return jdbcTemplate.update(sql, params);
+            return JdbcRetryExecutor.execute(() -> jdbcTemplate.update(sql, params));
         } catch (DataAccessException dataAccessException) {
             throw new SqlExecuteException(dataAccessException, sql, params);
         }
@@ -214,7 +215,8 @@ public class Dao extends SqlKeyDao {
 
     public Long queryTotal(BoundPageSql boundPageSql) {
         BoundSql boundSql = boundPageSql.getBoundSql();
-        return queryForLong(boundPageSql.getCountSql(), boundSql.getParams(), boundSql.getTypes());
+        return JdbcRetryExecutor.execute(() ->
+                queryForLong(boundPageSql.getCountSql(), boundSql.getParams(), boundSql.getTypes()));
     }
 
     private List<Map<String, Object>> convert(List<Map<String, Object>> data, EntityMeta entityMeta) {
@@ -279,7 +281,7 @@ public class Dao extends SqlKeyDao {
         }
         try {
             OrmEventOperations.batchSave(contexts,
-                    () -> jdbcTemplate.batchUpdate(boundSqlList.get(0).getSql(), paramsObjs));
+                    () -> JdbcRetryExecutor.executeVoid(() -> jdbcTemplate.batchUpdate(boundSqlList.get(0).getSql(), paramsObjs)));
         } catch (DataAccessException dataAccessException) {
             throw new SqlExecuteException(dataAccessException, boundSqlList.get(0).getSql());
         }
@@ -569,10 +571,12 @@ public class Dao extends SqlKeyDao {
         BoundSql bs = sqlManager.generatePageQuerySql(command, entityType, true, filterGroup, null);
         BoundSql countBs = sqlManager.generateCountSql(command, entityType, filterGroup);
         try{
-            List<T> pageQueryList = jdbcTemplate.query(bs.getSql(), new CommonRowMapper<>(), bs.getParams());
-            long total = queryForLong(countBs.getSql(), countBs.getParams(), countBs.getTypes());
-            int dataSize = pageQueryList.size();
-            return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
+            return JdbcRetryExecutor.execute(() -> {
+                List<T> pageQueryList = jdbcTemplate.query(bs.getSql(), new CommonRowMapper<>(), bs.getParams());
+                long total = queryForLong(countBs.getSql(), countBs.getParams(), countBs.getTypes());
+                int dataSize = pageQueryList.size();
+                return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
+            });
         }catch (DataAccessException dataAccessException){
             throw new SqlExecuteException(dataAccessException, bs.getSql(), bs.getParams());
         }
@@ -674,7 +678,7 @@ public class Dao extends SqlKeyDao {
         command.setViewName(viewName);
         BoundSql boundSql = sqlManager.generatePageQuerySql(command, entityName, true, filterGroup, null);
         try{
-            return jdbcTemplate.queryForList(boundSql.getSql());
+            return JdbcRetryExecutor.execute(() -> jdbcTemplate.queryForList(boundSql.getSql()));
         }catch (DataAccessException dataAccessException){
             throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
         }

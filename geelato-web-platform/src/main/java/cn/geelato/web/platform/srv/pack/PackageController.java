@@ -358,14 +358,19 @@ public class PackageController {
 
     private void refreshApp(String appId) {
         int refreshed = 0;
+        int skippedPlatform = 0;
         List<EntityMeta> allEntityMeta = MetaManager.singleInstance().getAll().stream().toList();
         for (EntityMeta entityMeta : allEntityMeta) {
             if (entityMeta.getTableMeta().getAppId() != null && entityMeta.getTableMeta().getAppId().equals(appId)) {
+                if ("platform".equalsIgnoreCase(entityMeta.getCatalog())) {
+                    skippedPlatform++;
+                    continue;
+                }
                 MetaManager.singleInstance().refreshDBMeta(entityMeta.getEntityName());
                 refreshed++;
             }
         }
-        log.info("刷新应用元数据缓存完成：appId={}, 刷新实体 {} 个", appId, refreshed);
+        log.info("刷新应用元数据缓存完成：appId={}, 刷新实体 {} 个, 跳过平台实体 {} 个", appId, refreshed, skippedPlatform);
     }
 
     // todo

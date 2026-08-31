@@ -4,7 +4,7 @@ import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
-import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
+import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
 import cn.geelato.orm.query.MetaNativeSql;
 import cn.geelato.orm.support.OrmTestSupport;
 import org.junit.jupiter.api.AfterEach;
@@ -107,7 +107,7 @@ public class MetaNativeSqlTest extends OrmTestSupport {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.execute("create table if not exists test_user(id varchar(32) primary key, name varchar(64))");
         jdbcTemplate.update("merge into test_user(id, name) key(id) values(?, ?)", "1001", "Alice");
-        DefaultMetaCommandExecutor executor = new DefaultMetaCommandExecutor(new JdbcTemplateMetaExecutionStrategy(jdbcTemplate));
+        DefaultMetaCommandExecutor executor = new DefaultMetaCommandExecutor(new DaoMetaExecutionStrategy(new Dao(jdbcTemplate)));
 
         int affected = executor.nativeExecute(
                 "update test_user set name = ? where id = ?",

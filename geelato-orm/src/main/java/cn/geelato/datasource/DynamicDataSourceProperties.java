@@ -23,6 +23,16 @@ public class DynamicDataSourceProperties {
     private Long initializationFailTimeoutMs = 0L;
     private String connectionTestQuery = "SELECT 1";
     /**
+     * TCP 建连超时（毫秒），追加到 JDBC URL。
+     */
+    private Long connectTimeoutMs = 5000L;
+    /**
+     * socket 读超时（毫秒），追加到 JDBC URL；超过该时长的查询会被驱动掐断。
+     * <p>历史值 60000ms 硬编码于 DataSourceFactory，为支持慢业务查询放宽为 300000ms，
+     * 与 primary 数据源默认对齐；存量部署可通过配置还原。</p>
+     */
+    private Long socketTimeoutMs = 300000L;
+    /**
      * catalog（逻辑数据库分组）到数据源 connectId 的映射。
      * <p>
      * 对应配置：

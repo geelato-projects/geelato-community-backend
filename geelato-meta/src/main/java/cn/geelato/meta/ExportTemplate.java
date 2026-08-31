@@ -16,7 +16,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@Entity(name = "platform_export_template")
+@Entity(name = "platform_export_template", catalog = "platform")
 @Title(title = "导出文件模板")
 public class ExportTemplate extends BaseEntity implements EntityEnableAble {
     @Title(title = "状态")

@@ -25,8 +25,14 @@ public class PlatformErrorResult {
     private String logTag;
     @Getter
     private final int errorCode;
+    /**
+     * 下发给前端的错误文案。
+     * <p>默认取 {@link CoreException#getUserMessage()}（用户可见的友好文案，不含 SQL/参数等技术详情）；
+     * 开发模式（{@code GlobalContext.getLogStack()} 为 true）下由异常处理器回填完整技术文案。</p>
+     */
+    @Setter
     @Getter
-    private final String errorMsg;
+    private String errorMsg;
     @Getter
     private final String occurUserId;
     @Getter
@@ -39,7 +45,7 @@ public class PlatformErrorResult {
     public PlatformErrorResult(CoreException coreException) {
         this.coreException = coreException;
         this.errorCode = coreException.getErrorCode();
-        this.errorMsg = coreException.getErrorMsg();
+        this.errorMsg = coreException.getUserMessage();
         User user = SecurityContext.getCurrentUser();
         this.occurUserId = user != null ? user.getUserId() : "anonymous";
         this.occurTime = LocalDateTime.now();

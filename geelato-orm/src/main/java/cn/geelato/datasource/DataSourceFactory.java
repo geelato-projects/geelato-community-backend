@@ -90,14 +90,16 @@ public class DataSourceFactory {
         if ("mysql".equals(params.dbType())) {
             String commonParams = "useUnicode=true&characterEncoding=utf-8&useSSL=false&allowMultiQueries=true"
                     + "&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true"
-                    + "&connectTimeout=5000&socketTimeout=60000"
+                    + "&connectTimeout=" + properties.getConnectTimeoutMs() + "&socketTimeout=" + properties.getSocketTimeoutMs()
                     + "&rewriteBatchedStatements=true&cachePrepStmts=true"
                     + "&prepStmtCacheSize=256&prepStmtCacheSqlLimit=2048&useServerPrepStmts=true";
             ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
             ds.setJdbcUrl(String.format("jdbc:mysql://%s:%s/%s?%s", params.host(), params.port(), params.dbName(), commonParams));
             ds.setConnectionTestQuery(properties.getConnectionTestQuery());
         } else if ("postgresql".equals(params.dbType()) || "postgres".equals(params.dbType())) {
-            String commonParams = "sslmode=disable&connectTimeout=5&socketTimeout=60&ApplicationName=geelato";
+            // PG 驱动的 connectTimeout/socketTimeout 单位是秒
+            String commonParams = "sslmode=disable&connectTimeout=" + properties.getConnectTimeoutMs() / 1000
+                    + "&socketTimeout=" + properties.getSocketTimeoutMs() / 1000 + "&ApplicationName=geelato";
             ds.setDriverClassName("org.postgresql.Driver");
             ds.setJdbcUrl(String.format("jdbc:postgresql://%s:%s/%s?%s", params.host(), params.port(), params.dbName(), commonParams));
             ds.setConnectionTestQuery("SELECT 1");

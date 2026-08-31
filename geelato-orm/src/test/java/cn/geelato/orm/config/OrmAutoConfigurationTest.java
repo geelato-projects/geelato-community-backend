@@ -6,7 +6,6 @@ import cn.geelato.core.util.BeansUtils;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
 import cn.geelato.orm.executor.MetaCommandExecutor;
 import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
-import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
 import cn.geelato.orm.executor.spi.MetaExecutionStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -68,8 +67,21 @@ class OrmAutoConfigurationTest {
     }
 
     @Test
-    void shouldFallbackToPrimaryDaoForCompatibility() {
+    void shouldPreferDynamicDaoWhenPresent() {
         contextRunner.withUserConfiguration(MultiDaoConfiguration.class)
+                .run(context -> {
+                    MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
+                    assertNotNull(executor);
+                    Dao dynamicDao = context.getBean("dynamicDao", Dao.class);
+                    MetaExecutionStrategy executionStrategy = extractExecutionStrategy(executor);
+                    assertInstanceOf(DaoMetaExecutionStrategy.class, executionStrategy);
+                    assertEquals(dynamicDao, ((DaoMetaExecutionStrategy) executionStrategy).getDao());
+                });
+    }
+
+    @Test
+    void shouldFallbackToPrimaryDaoWhenDynamicDaoAbsent() {
+        contextRunner.withUserConfiguration(PrimaryAndDbGenerateDaoConfiguration.class)
                 .run(context -> {
                     MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
                     assertNotNull(executor);
@@ -77,6 +89,19 @@ class OrmAutoConfigurationTest {
                     MetaExecutionStrategy executionStrategy = extractExecutionStrategy(executor);
                     assertInstanceOf(DaoMetaExecutionStrategy.class, executionStrategy);
                     assertEquals(primaryDao, ((DaoMetaExecutionStrategy) executionStrategy).getDao());
+                });
+    }
+
+    @Test
+    void shouldBindDynamicDaoForQuickstartBeanCombination() {
+        contextRunner.withUserConfiguration(QuickstartDaoCombinationConfiguration.class)
+                .run(context -> {
+                    MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
+                    assertNotNull(executor);
+                    Dao dynamicDao = context.getBean("dynamicDao", Dao.class);
+                    MetaExecutionStrategy executionStrategy = extractExecutionStrategy(executor);
+                    assertInstanceOf(DaoMetaExecutionStrategy.class, executionStrategy);
+                    assertEquals(dynamicDao, ((DaoMetaExecutionStrategy) executionStrategy).getDao());
                 });
     }
 
@@ -114,36 +139,15 @@ class OrmAutoConfigurationTest {
     }
 
     @Test
-    void shouldUseJdbcTemplateBackendWhenConfigured() {
-        contextRunner
-                .withPropertyValues(
-                        "geelato.orm.execution-mode=jdbc-template",
-                        "geelato.orm.default-data-source-key=primary"
-                )
-                .withUserConfiguration(JdbcTemplateOnlyConfiguration.class)
+    void shouldUseDaoStrategyByDefaultWithoutExecutionModeConfigured() {
+        contextRunner.withUserConfiguration(SingleDaoConfiguration.class)
                 .run(context -> {
                     MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
                     assertNotNull(executor);
                     MetaExecutionStrategy executionStrategy = extractExecutionStrategy(executor);
-                    assertInstanceOf(JdbcTemplateMetaExecutionStrategy.class, executionStrategy);
-                });
-    }
-
-    @Test
-    void shouldUseConfiguredJdbcTemplateBeanName() {
-        contextRunner
-                .withPropertyValues(
-                        "geelato.orm.execution-mode=jdbc-template",
-                        "geelato.orm.jdbc-template-bean-name=portalJdbcTemplate"
-                )
-                .withUserConfiguration(MultiJdbcTemplateConfiguration.class)
-                .run(context -> {
-                    MetaCommandExecutor executor = context.getBean(MetaCommandExecutor.class);
-                    assertNotNull(executor);
-                    MetaExecutionStrategy executionStrategy = extractExecutionStrategy(executor);
-                    assertInstanceOf(JdbcTemplateMetaExecutionStrategy.class, executionStrategy);
-                    assertEquals(context.getBean("portalJdbcTemplate", JdbcTemplate.class),
-                            ((JdbcTemplateMetaExecutionStrategy) executionStrategy).getJdbcTemplate());
+                    assertInstanceOf(DaoMetaExecutionStrategy.class, executionStrategy);
+                    assertEquals(context.getBean("primaryDao", Dao.class),
+                            ((DaoMetaExecutionStrategy) executionStrategy).getDao());
                 });
     }
 
@@ -202,34 +206,38 @@ class OrmAutoConfigurationTest {
     }
 
     @Configuration
-    static class JdbcTemplateOnlyConfiguration {
+    static class PrimaryAndDbGenerateDaoConfiguration {
         @Bean
-        DataSource primaryDataSource() {
-            return mock(DataSource.class);
+        Dao primaryDao() {
+            return new Dao(mock(JdbcTemplate.class));
         }
 
         @Bean
-        JdbcTemplate primaryJdbcTemplate() {
-            JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
-            org.mockito.Mockito.when(jdbcTemplate.getDataSource()).thenReturn(primaryDataSource());
-            return jdbcTemplate;
+        Dao dbGenerateDao() {
+            return new Dao(mock(JdbcTemplate.class));
         }
     }
 
     @Configuration
-    static class MultiJdbcTemplateConfiguration {
+    static class QuickstartDaoCombinationConfiguration {
         @Bean
-        JdbcTemplate primaryJdbcTemplate() {
-            JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
-            org.mockito.Mockito.when(jdbcTemplate.getDataSource()).thenReturn(mock(DataSource.class));
-            return jdbcTemplate;
+        Dao primaryDao() {
+            return new Dao(mock(JdbcTemplate.class));
         }
 
         @Bean
-        JdbcTemplate portalJdbcTemplate() {
-            JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
-            org.mockito.Mockito.when(jdbcTemplate.getDataSource()).thenReturn(mock(DataSource.class));
-            return jdbcTemplate;
+        Dao secondaryDao() {
+            return new Dao(mock(JdbcTemplate.class));
+        }
+
+        @Bean
+        Dao dbGenerateDao() {
+            return new Dao(mock(JdbcTemplate.class));
+        }
+
+        @Bean
+        Dao dynamicDao() {
+            return new Dao(mock(JdbcTemplate.class));
         }
     }
 

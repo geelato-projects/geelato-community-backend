@@ -1,10 +1,11 @@
 package cn.geelato.orm;
 
 import cn.geelato.core.ds.DataSourceManager;
+import cn.geelato.core.orm.Dao;
 import cn.geelato.core.util.BeansUtils;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
-import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
+import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
 import cn.geelato.orm.page.PageResult;
 import cn.geelato.orm.query.Filter;
 import cn.geelato.orm.runtime.OrmRuntimeProvider;
@@ -105,7 +106,7 @@ class MetaResultMappingTest extends OrmTestSupport {
         OrmRuntimeProvider runtimeProvider = Mockito.mock(OrmRuntimeProvider.class);
         Mockito.when(applicationContext.getBean(OrmRuntimeProvider.class)).thenReturn(runtimeProvider);
         Mockito.when(runtimeProvider.metaCommandExecutor())
-                .thenReturn(new DefaultMetaCommandExecutor(new JdbcTemplateMetaExecutionStrategy(jdbcTemplate)));
+                .thenReturn(new DefaultMetaCommandExecutor(new DaoMetaExecutionStrategy(new Dao(jdbcTemplate))));
         new BeansUtils().setApplicationContext(applicationContext);
         // 其他测试类可能在 DataSourceManager 单例中残留 mock primary 数据源（getConnection() 返回 null，
         // 会让 MetaQuery 生成 SQL 解析 dbType 时抛 NPE）。这里覆盖为一个 getConnection() 抛 SQLException 的

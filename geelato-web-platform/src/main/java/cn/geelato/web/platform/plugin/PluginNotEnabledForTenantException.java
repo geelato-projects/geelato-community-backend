@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.plugin;
 
 import cn.geelato.lang.exception.CoreException;
-import cn.geelato.web.platform.exception.PlatformErrorCodes;
 
 /**
  * 插件未对当前租户启用（或已被平台级禁用）时抛出。
@@ -12,27 +11,21 @@ import cn.geelato.web.platform.exception.PlatformErrorCodes;
  */
 public class PluginNotEnabledForTenantException extends CoreException {
 
+    /** 租户级未启用。 */
+    public static final int ERROR_CODE = 40002;
+    /** 平台级禁用。 */
+    public static final int ERROR_CODE_PLATFORM_DISABLED = 40003;
+
     public PluginNotEnabledForTenantException() {
-        super(PlatformErrorCodes.PLUGIN_NOT_ENABLED_FOR_TENANT);
-    }
-
-    public PluginNotEnabledForTenantException(String msg) {
-        super(PlatformErrorCodes.PLUGIN_NOT_ENABLED_FOR_TENANT, msg);
-    }
-
-    public PluginNotEnabledForTenantException(String msg, Throwable cause) {
-        super(PlatformErrorCodes.PLUGIN_NOT_ENABLED_FOR_TENANT, msg, cause);
+        super(ERROR_CODE, "插件未对当前租户启用");
     }
 
     /**
      * 按平台级/租户级区分的错误码构造。
      *
-     * @param platformDisabled true 表示平台级禁用（用 {@link PlatformErrorCodes#PLUGIN_PLATFORM_DISABLED}），
-     *                         false 表示租户级未启用（用 {@link PlatformErrorCodes#PLUGIN_NOT_ENABLED_FOR_TENANT}）
+     * @param platformDisabled true 表示平台级禁用，false 表示租户级未启用
      */
     public PluginNotEnabledForTenantException(boolean platformDisabled, String msg) {
-        super(platformDisabled
-                ? PlatformErrorCodes.PLUGIN_PLATFORM_DISABLED
-                : PlatformErrorCodes.PLUGIN_NOT_ENABLED_FOR_TENANT, msg);
+        super(platformDisabled ? ERROR_CODE_PLATFORM_DISABLED : ERROR_CODE, msg);
     }
 }

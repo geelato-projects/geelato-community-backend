@@ -1,80 +1,45 @@
 package cn.geelato.lang.exception;
 
 
-import lombok.Getter;
-
-/**
- * 平台异常抽象基类。
- * <p>持有 {@link ErrorCode} 作为错误码元数据的唯一事实源（业务码值、默认文案、HTTP 状态码、文档 slug）。
- * 同时保留 {@link #errorCode}（int）与 {@link #errorMsg}（String）字段以向后兼容已有调用方。</p>
- *
- * <h3>构造方式</h3>
- * <ul>
- *   <li>推荐：以 {@link ErrorCode} 构造（{@link #CoreException(ErrorCode)} /
- *       {@link #CoreException(ErrorCode, String)} /
- *       {@link #CoreException(ErrorCode, String, Throwable)}）。</li>
- *   <li>兼容：以 {@code (int code, String msg)} 构造，内部包装为匿名 {@link ErrorCode}，
- *       供尚未枚举化的历史子类过渡使用。</li>
- * </ul>
- *
- * @author geelato
- */
-@Getter
 public abstract class CoreException extends RuntimeException {
-    private final String errorMsg;
     private final int errorCode;
-    private final ErrorCode error;
 
-    /**
-     * 以 {@link ErrorCode} 构造，文案使用 errorCode 的默认文案。
-     */
-    public CoreException(ErrorCode ec) {
-        this(ec, ec.getDefaultMessage(), null);
+    public CoreException(int errorCode, String msg) {
+        this(errorCode, msg, null);
     }
 
-    /**
-     * 以 {@link ErrorCode} 构造，自定义文案。
-     */
-    public CoreException(ErrorCode ec, String msg) {
-        this(ec, msg, null);
-    }
-
-    /**
-     * 以 {@link ErrorCode} 构造，自定义文案与异常链。
-     */
-    public CoreException(ErrorCode ec, String msg, Throwable cause) {
+    public CoreException(int errorCode, String msg, Throwable cause) {
         super(msg, cause);
-        this.error = ec;
-        this.errorMsg = msg != null ? msg : ec.getDefaultMessage();
-        this.errorCode = ec.getCode();
+        this.errorCode = errorCode;
+    }
+
+    /** 业务错误码。 */
+    public int getErrorCode() {
+        return errorCode;
+    }
+
+    /** 错误文案，等价于 {@link #getMessage()}（保留历史 API）。 */
+    public String getErrorMsg() {
+        return getMessage();
+    }
+
+    /** 对应 HTTP 响应状态码，默认 500；鉴权类子类按语义覆写（401/403/400）。 */
+    public int getHttpStatus() {
+        return 500;
+    }
+
+    /** 在线文档 slug，默认 null（docUrl 指向错误码参考页锚点）；子类按需覆写。 */
+    public String getDocSlug() {
+        return null;
     }
 
     /**
-     * 兼容构造器：以裸 int code 与文案构造。
-     * <p>内部包装为匿名 {@link ErrorCode}（默认 HTTP 500、无 docSlug），
-     * 供尚未枚举化的历史子类过渡使用，新代码不应使用。</p>
+     * 返回给前端的用户可见文案。
+     * <p>默认与 {@link #getErrorMsg()} 一致（业务异常的文案本身就是面向用户的，如"验证码错误"）；
+     * 技术类子类（如 SQL 执行异常）可覆写本方法，将 SQL 语句、参数等技术详情屏蔽在服务端日志中，
+     * 避免原始错误信息直接暴露给最终用户。</p>
      */
-    public CoreException(int code, String msg) {
-        this(code, msg, null);
-    }
-
-    /**
-     * 兼容构造器：以裸 int code、文案与异常链构造。
-     */
-    public CoreException(int code, String msg, Throwable cause) {
-        super(msg, cause);
-        this.errorMsg = msg;
-        this.errorCode = code;
-        this.error = new ErrorCode() {
-            @Override
-            public int getCode() {
-                return code;
-            }
-
-            @Override
-            public String getDefaultMessage() {
-                return msg;
-            }
-        };
+    public String getUserMessage() {
+        return getErrorMsg();
     }
 }

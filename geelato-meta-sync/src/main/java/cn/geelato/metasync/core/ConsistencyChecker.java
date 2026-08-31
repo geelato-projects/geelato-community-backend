@@ -12,13 +12,19 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * 三方一致性校验编排：对每个 tableName 做两两对比，产出 {@link EntitySyncReport}。
+ * 三方一致性校验编排（星型基准对比）。
  * <p>
- * 依赖 {@link MetaSourceLoader} 的直接 IO 快照，不依赖 MetaManager 全局缓存。
+ * 选定一个基准源（java/meta/table），另外两个源各自与基准对比，
+ * 差异标记在<b>非基准源</b>的列上（缺列/多列/类型不匹配/长度差异）。
+ * 依赖 {@link MetaSourceLoader} 的直接 IO 快照。
  *
  * @author geemeta
  */
 public class ConsistencyChecker {
+
+    public static final String BASELINE_JAVA = "java";
+    public static final String BASELINE_META = "meta";
+    public static final String BASELINE_TABLE = "table";
 
     private final MetaSourceLoader loader;
 
@@ -26,44 +32,59 @@ public class ConsistencyChecker {
         this.loader = loader;
     }
 
+    /** 校验基准参数，非法值回退默认 table。 */
+    public static String normalizeBaseline(String baseline) {
+        if (BASELINE_JAVA.equalsIgnoreCase(baseline)) {
+            return BASELINE_JAVA;
+        }
+        if (BASELINE_META.equalsIgnoreCase(baseline)) {
+            return BASELINE_META;
+        }
+        return BASELINE_TABLE;
+    }
+
     /**
-     * 全量校验：执行装载后，对所有表生成报告。
+     * 全量校验：装载后，对所有表按指定基准生成报告。
      */
-    public List<EntitySyncReport> checkAll() {
+    public List<EntitySyncReport> checkAll(String baseline) {
+        String bl = normalizeBaseline(baseline);
         loader.load();
         List<EntitySyncReport> reports = new ArrayList<>();
         for (String tableName : loader.getAllTableNames()) {
-            reports.add(check(tableName));
+            reports.add(check(tableName, bl));
         }
         return reports;
     }
 
     /**
-     * 单实体校验：只装载并校验指定 tableName（不全量扫描，补后立即复验）。
+     * 单实体校验：只装载并校验指定 tableName（不全量扫描）。
      */
-    public EntitySyncReport checkSingle(String tableName) {
+    public EntitySyncReport checkSingle(String tableName, String baseline) {
+        String bl = normalizeBaseline(baseline);
         loader.loadSingle(tableName);
-        return check(tableName);
+        return check(tableName, bl);
     }
 
     /**
-     * 对单个 tableName 生成报告（从已装载的快照取三方 EntityMeta）。
+     * 对单个 tableName 按基准生成报告（从已装载的快照取三方 EntityMeta）。
      */
-    public EntitySyncReport check(String tableName) {
+    public EntitySyncReport check(String tableName, String baseline) {
+        String bl = normalizeBaseline(baseline);
         EntityMeta javaEm = loader.getJavaEntity(tableName);
         EntityMeta metaEm = loader.getMetaEntity(tableName);
         EntityMeta tableEm = loader.getPhysicalEntity(tableName);
 
         EntitySyncReport report = new EntitySyncReport();
         report.setTableName(tableName);
-        String entityName = pickEntityName(javaEm, metaEm, tableEm);
-        report.setEntityName(entityName);
+        report.setBaseline(bl);
+        report.setTableType(loader.isView(tableName) ? "view" : "entity");
+        report.setEntityName(pickEntityName(javaEm, metaEm, tableEm));
         report.setTitle(pickTitle(javaEm, metaEm, tableEm));
 
         String javaClassName = loader.getJavaClassName(tableName);
         report.setJavaSource(javaEm != null
                 ? new EntitySyncReport.SourceStatus(true, countFields(javaEm),
-                javaClassName != null ? javaClassName : (javaEm.getEntityName()))
+                javaClassName != null ? javaClassName : javaEm.getEntityName())
                 : EntitySyncReport.SourceStatus.absent());
         report.setMetaSource(metaEm != null
                 ? new EntitySyncReport.SourceStatus(true, countFields(metaEm), metaEm.getEntityName())
@@ -72,78 +93,126 @@ public class ConsistencyChecker {
                 ? new EntitySyncReport.SourceStatus(true, countFields(tableEm), tableName)
                 : EntitySyncReport.SourceStatus.absent());
 
-        report.setJavaVsMeta(diff(javaEm, metaEm, "java", "meta"));
-        report.setMetaVsTable(diff(metaEm, tableEm, "meta", "table"));
-        report.setJavaVsTable(diff(javaEm, tableEm, "java", "table"));
+        // 基准源
+        EntityMeta baseEm = pick(bl, javaEm, metaEm, tableEm);
+        // 另外两个源各自与基准对比，差异标记在本源上
+        for (String tag : new String[]{BASELINE_JAVA, BASELINE_META, BASELINE_TABLE}) {
+            if (tag.equals(bl)) {
+                continue;
+            }
+            EntityMeta sourceEm = pick(tag, javaEm, metaEm, tableEm);
+            report.addDiffs(tag, diffVsBaseline(baseEm, sourceEm));
+        }
 
-        report.setConsistent(isEmpty(report.getJavaVsMeta()) && isEmpty(report.getMetaVsTable()) && isEmpty(report.getJavaVsTable()));
+        // 一致性：三源都存在且所有非基准源无差异
+        boolean consistent = javaEm != null && metaEm != null && tableEm != null;
+        if (consistent) {
+            for (List<FieldDiff> diffs : report.getDiffsBySource().values()) {
+                if (diffs != null && !diffs.isEmpty()) {
+                    consistent = false;
+                    break;
+                }
+            }
+        }
+        report.setConsistent(consistent);
         return report;
     }
 
+    private EntityMeta pick(String tag, EntityMeta javaEm, EntityMeta metaEm, EntityMeta tableEm) {
+        switch (tag) {
+            case BASELINE_JAVA:
+                return javaEm;
+            case BASELINE_META:
+                return metaEm;
+            case BASELINE_TABLE:
+                return tableEm;
+            default:
+                return null;
+        }
+    }
+
     /**
-     * 两个来源的字段差异（以 columnName 为 key）。
+     * 某源相对基准的差异：以基准列集为参照，差异标记在本源的列上。
+     * <ul>
+     *   <li>基准有、本源无 → MISSING（本源缺列）</li>
+     *   <li>基准无、本源有 → EXTRA（本源多列）</li>
+     *   <li>同列基础类型不同 → TYPE_MISMATCH</li>
+     *   <li>长度/精度差异 → LENGTH_DIFF（告警）</li>
+     * </ul>
+     *
+     * @param base   基准源（可能为 null：基准整体缺失时所有本源列均标记 EXTRA）
+     * @param source 本源（可能为 null：标记为整体缺失，不产出列级差异）
      */
-    private List<FieldDiff> diff(EntityMeta left, EntityMeta right, String leftTag, String rightTag) {
+    private List<FieldDiff> diffVsBaseline(EntityMeta base, EntityMeta source) {
         List<FieldDiff> diffs = new ArrayList<>();
-        if (left == null && right == null) {
+        if (source == null) {
+            // 本源整体缺失（不产出列级差异，由 SourceStatus.absent 表达；保持空列表）
             return diffs;
         }
-        Map<String, FieldMeta> leftMap = indexByColumn(left);
-        Map<String, FieldMeta> rightMap = indexByColumn(right);
-        Map<String, Boolean> keys = new LinkedHashMap<>();
-        if (leftMap != null) {
-            for (String k : leftMap.keySet()) {
-                keys.put(k, true);
-            }
-        }
-        if (rightMap != null) {
-            for (String k : rightMap.keySet()) {
-                keys.put(k, true);
-            }
-        }
-        for (String col : keys.keySet()) {
-            FieldMeta lf = leftMap == null ? null : leftMap.get(col);
-            FieldMeta rf = rightMap == null ? null : rightMap.get(col);
-            if (lf != null && rf == null) {
-                diffs.add(onlyDiff(col, lf, leftTag));
-            } else if (lf == null && rf != null) {
-                diffs.add(onlyDiff(col, rf, rightTag));
-            } else if (lf != null) {
-                String lt = normalizeBaseType(lf);
-                String rt = normalizeBaseType(rf);
-                if (!Objects.equals(lt, rt)) {
+        Map<String, FieldMeta> baseMap = indexByColumn(base);
+        Map<String, FieldMeta> srcMap = indexByColumn(source);
+        // 1. 基准有、本源无 → 本源缺列
+        if (baseMap != null) {
+            for (Map.Entry<String, FieldMeta> e : baseMap.entrySet()) {
+                String col = e.getKey();
+                if (srcMap == null || !srcMap.containsKey(col)) {
+                    FieldMeta bfm = e.getValue();
                     FieldDiff d = new FieldDiff();
                     d.setColumnName(col);
-                    d.setFieldName(pickFieldName(lf, rf));
-                    d.setTypeDiff(buildTypeDiff(lt, rt, leftTag, rightTag));
+                    d.setFieldName(bfm.getFieldName());
+                    d.setStatus(FieldDiff.Status.MISSING);
+                    diffs.add(d);
+                }
+            }
+        }
+        if (srcMap == null) {
+            return diffs;
+        }
+        // 2. 本源有、基准无 → 本源多列
+        for (Map.Entry<String, FieldMeta> e : srcMap.entrySet()) {
+            String col = e.getKey();
+            if (baseMap == null || !baseMap.containsKey(col)) {
+                FieldMeta sfm = e.getValue();
+                FieldDiff d = new FieldDiff();
+                d.setColumnName(col);
+                d.setFieldName(sfm.getFieldName());
+                d.setStatus(FieldDiff.Status.EXTRA);
+                diffs.add(d);
+            }
+        }
+        // 3. 两边都有的列：比基础类型、长度
+        if (baseMap != null) {
+            for (Map.Entry<String, FieldMeta> e : srcMap.entrySet()) {
+                String col = e.getKey();
+                FieldMeta sfm = e.getValue();
+                FieldMeta bfm = baseMap.get(col);
+                if (bfm == null || bfm.getColumnMeta() == null || sfm.getColumnMeta() == null) {
+                    continue;
+                }
+                String bt = normalizeBaseType(bfm);
+                String st = normalizeBaseType(sfm);
+                if (!Objects.equals(bt, st)) {
+                    FieldDiff d = new FieldDiff();
+                    d.setColumnName(col);
+                    d.setFieldName(pickFieldName(sfm, bfm));
+                    d.setStatus(FieldDiff.Status.TYPE_MISMATCH);
+                    d.setBaselineType(bt);
+                    d.setSourceType(st);
                     diffs.add(d);
                     continue;
                 }
-                String lenDiff = lengthDiff(lf, rf);
+                String lenDiff = lengthDiff(bfm, sfm);
                 if (lenDiff != null) {
                     FieldDiff d = new FieldDiff();
                     d.setColumnName(col);
-                    d.setFieldName(pickFieldName(lf, rf));
+                    d.setFieldName(pickFieldName(sfm, bfm));
+                    d.setStatus(FieldDiff.Status.LENGTH_DIFF);
                     d.setLengthDiff(lenDiff);
                     diffs.add(d);
                 }
             }
         }
         return diffs;
-    }
-
-    private FieldDiff onlyDiff(String col, FieldMeta fm, String presentTag) {
-        FieldDiff d = new FieldDiff();
-        d.setColumnName(col);
-        d.setFieldName(fm.getFieldName());
-        if ("java".equals(presentTag)) {
-            d.setOnlyInJava(true);
-        } else if ("meta".equals(presentTag)) {
-            d.setOnlyInMeta(true);
-        } else if ("table".equals(presentTag)) {
-            d.setOnlyInTable(true);
-        }
-        return d;
     }
 
     /**
@@ -184,27 +253,16 @@ public class ConsistencyChecker {
         return t;
     }
 
-    private FieldDiff.TypeDiff buildTypeDiff(String left, String right, String leftTag, String rightTag) {
-        FieldDiff.TypeDiff td = new FieldDiff.TypeDiff(null, null, null);
-        if ("java".equals(leftTag)) td.setJavaType(left);
-        else if ("meta".equals(leftTag)) td.setMetaType(left);
-        else if ("table".equals(leftTag)) td.setTableType(left);
-        if ("java".equals(rightTag)) td.setJavaType(right);
-        else if ("meta".equals(rightTag)) td.setMetaType(right);
-        else if ("table".equals(rightTag)) td.setTableType(right);
-        return td;
-    }
-
-    private String lengthDiff(FieldMeta lf, FieldMeta rf) {
-        long lc = lf.getColumnMeta().getCharMaxLength();
-        long rc = rf.getColumnMeta().getCharMaxLength();
-        int lp = lf.getColumnMeta().getNumericPrecision();
-        int rp = rf.getColumnMeta().getNumericPrecision();
-        int ls = lf.getColumnMeta().getNumericScale();
-        int rs = rf.getColumnMeta().getNumericScale();
-        if (lc != rc) return "charMaxLength: " + lc + " vs " + rc;
-        if (lp != rp) return "numericPrecision: " + lp + " vs " + rp;
-        if (ls != rs) return "numericScale: " + ls + " vs " + rs;
+    private String lengthDiff(FieldMeta bf, FieldMeta sf) {
+        long bc = bf.getColumnMeta().getCharMaxLength();
+        long sc = sf.getColumnMeta().getCharMaxLength();
+        int bp = bf.getColumnMeta().getNumericPrecision();
+        int sp = sf.getColumnMeta().getNumericPrecision();
+        int bs = bf.getColumnMeta().getNumericScale();
+        int ss = sf.getColumnMeta().getNumericScale();
+        if (bc != sc) return "charMaxLength: 基准" + bc + " vs 本源" + sc;
+        if (bp != sp) return "numericPrecision: 基准" + bp + " vs 本源" + sp;
+        if (bs != ss) return "numericScale: 基准" + bs + " vs 本源" + ss;
         return null;
     }
 
@@ -227,10 +285,6 @@ public class ConsistencyChecker {
 
     private int countFields(EntityMeta em) {
         return em == null || em.getFieldMetas() == null ? 0 : em.getFieldMetas().size();
-    }
-
-    private boolean isEmpty(List<FieldDiff> diffs) {
-        return diffs == null || diffs.isEmpty();
     }
 
     private String pickEntityName(EntityMeta javaEm, EntityMeta metaEm, EntityMeta tableEm) {

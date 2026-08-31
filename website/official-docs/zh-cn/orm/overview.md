@@ -256,15 +256,6 @@ public class OrmDaoConfiguration {
 元数据准备：
 
 - 默认会扫描 Spring Boot 启动类所在包及子包内的 `@Entity` 并注册到元数据管理器
-- 可通过配置关闭或限定扫描范围：
-
-```yaml
-geelato:
-  orm:
-    entity-auto-scan-enabled: true
-    entity-scan-base-packages:
-      - com.example.demo.entity
-```
 
 ## 自动装配包含什么
 

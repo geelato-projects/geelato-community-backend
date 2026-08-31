@@ -1,10 +1,10 @@
 package cn.geelato.orm.runtime;
 
+import cn.geelato.orm.config.MetaExecutorMode;
 import cn.geelato.orm.config.OrmProperties;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
 import cn.geelato.orm.executor.MetaCommandExecutor;
 import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
-import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
 import cn.geelato.orm.executor.spi.MetaExecutionStrategy;
 import org.springframework.context.ApplicationContext;
 
@@ -47,9 +47,19 @@ public class OrmRuntimeProvider {
     }
 
     private MetaExecutionStrategy createExecutionStrategy() {
-        if (ormProperties != null && ormProperties.getExecutionMode() == cn.geelato.orm.config.MetaExecutorMode.JDBC_TEMPLATE) {
-            return new JdbcTemplateMetaExecutionStrategy(OrmJdbcTemplateResolver.resolve(applicationContext, ormProperties));
-        }
-        return new DaoMetaExecutionStrategy(OrmDaoResolver.resolve(applicationContext, ormProperties));
+        return createExecutionStrategy(applicationContext, ormProperties);
+    }
+
+    /**
+     * 按 {@code geelato.orm.execution-mode} 装配执行策略的唯一入口，
+     * 自动配置与 DSL 回退路径共用，避免分支逻辑两处漂移。
+     * 新增 {@link MetaExecutorMode} 枚举值时必须在此补齐分支，箭头 switch
+     * 表达式在缺少分支时编译失败（穷尽性校验），不会静默回退到 DAO。
+     */
+    public static MetaExecutionStrategy createExecutionStrategy(ApplicationContext applicationContext, OrmProperties ormProperties) {
+        MetaExecutorMode mode = ormProperties == null ? MetaExecutorMode.DAO : ormProperties.getExecutionMode();
+        return switch (mode) {
+            case DAO -> new DaoMetaExecutionStrategy(OrmDaoResolver.resolve(applicationContext, ormProperties));
+        };
     }
 }

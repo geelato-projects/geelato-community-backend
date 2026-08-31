@@ -49,8 +49,7 @@ sidebar_label: 新项目最小接入
 
 - `geelato-framework-starter`
 - H2 内存数据库
-- `geelato.orm.dao-bean-name=dynamicDao`
-- 默认关闭 JTA / Seata 代理
+- 默认关闭 JTA / Seata 代理（ORM 自动绑定 `dynamicDao`，无需额外配置）
 
 这条链路的目的不是展示平台全能力，而是验证框架底座可以被独立消费。
 

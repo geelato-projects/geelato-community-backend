@@ -165,7 +165,6 @@ spring.datasource.primary.username=${GEELATO_PRIMARY_JDBCUSER:acme_user}
 spring.datasource.primary.password=${GEELATO_PRIMARY_JDBCPASSWORD:acme@psd}
 spring.datasource.primary.driver-class-name=com.mysql.cj.jdbc.Driver
 
-geelato.orm.dao-bean-name=dynamicDao
 geelato.datasource.dynamic.enable-jta-transaction=false
 geelato.datasource.dynamic.enable-seata-proxy=false
 

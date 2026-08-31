@@ -95,27 +95,17 @@ public class OrmDaoConfiguration {
 
 ### 多 Dao 场景如何选
 
-当容器存在多个 `Dao` 时，建议显式指定 ORM 绑定的 Bean 名称：
+自动解析优先绑定 `dynamicDao`（只有它能支撑 `useDataSource(connectId)` 切库），不存在时回退 `primaryDao`，再回退唯一的 Dao Bean，无需显式配置。仅当需要绑定其他自定义 Dao 时：
 
 ```yaml
 geelato:
   orm:
-    dao-bean-name: dynamicDao
+    dao-bean-name: myDao
 ```
 
 ### 元数据准备（@Entity）
 
 默认会扫描 Spring Boot 启动类所在包及子包内所有 `@Entity` 类并注册元数据。
-
-可通过配置开关与限定范围：
-
-```yaml
-geelato:
-  orm:
-    entity-auto-scan-enabled: true
-    entity-scan-base-packages:
-      - com.example.demo.entity
-```
 
 ### 动态数据源
 

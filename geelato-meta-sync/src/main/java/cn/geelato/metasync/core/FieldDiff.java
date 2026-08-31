@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 两个字段来源之间的差异。
+ * 某个源相对<b>基准源</b>的单列差异（差异标记在非基准源的列上）。
  * <p>
  * 来源标识：java=Java类，meta=实体定义(platform_dev_column)，table=物理表(INFORMATION_SCHEMA)。
  *
@@ -13,35 +13,40 @@ import lombok.Setter;
 @Getter
 @Setter
 public class FieldDiff {
-    /** 字段名（优先 columnName，回退 fieldName），作为对比 key */
+    /** 列名（对比 key，优先 columnName） */
     private String columnName;
     /** Java 属性名（驼峰） */
     private String fieldName;
-    /** 类型差异：两侧 dataType（小写归一）不同时填充，否则为 null */
-    private TypeDiff typeDiff;
-    /** Java 有、对比侧无 → 标记本字段仅 Java 存在 */
-    private boolean onlyInJava;
-    /** 实体定义有、对比侧无 */
-    private boolean onlyInMeta;
-    /** 物理表有、对比侧无 */
-    private boolean onlyInTable;
-    /** 长度/精度差异（仅告警，不阻断） */
+    /** 差异类型 */
+    private Status status;
+    /** 基准侧归一化基础类型（TYPE_MISMATCH 时填充，如 varchar） */
+    private String baselineType;
+    /** 本源侧归一化基础类型（TYPE_MISMATCH 时填充，如 int） */
+    private String sourceType;
+    /** 长度/精度差异描述（LENGTH_DIFF 时填充，仅告警不阻断） */
     private String lengthDiff;
 
-    @Getter
-    @Setter
-    public static class TypeDiff {
-        /** java 侧基础类型（如 varchar/int），可能为 null（无 Java 源时） */
-        private String javaType;
-        /** meta 侧基础类型 */
-        private String metaType;
-        /** table 侧基础类型 */
-        private String tableType;
+    /**
+     * 差异类型枚举。
+     */
+    public enum Status {
+        /** 基准有、本源无 → 本源缺列 */
+        MISSING("缺列"),
+        /** 基准无、本源有 → 本源多列 */
+        EXTRA("多列"),
+        /** 同列基础类型不同 */
+        TYPE_MISMATCH("类型不匹配"),
+        /** 长度/精度差异（告警级） */
+        LENGTH_DIFF("长度差异");
 
-        public TypeDiff(String javaType, String metaType, String tableType) {
-            this.javaType = javaType;
-            this.metaType = metaType;
-            this.tableType = tableType;
+        private final String label;
+
+        Status(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
         }
     }
 }

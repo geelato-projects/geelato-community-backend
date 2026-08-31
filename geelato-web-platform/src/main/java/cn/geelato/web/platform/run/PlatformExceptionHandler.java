@@ -4,7 +4,6 @@ import cn.geelato.core.GlobalContext;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.exception.CoreException;
-import cn.geelato.lang.exception.ErrorCode;
 import cn.geelato.utils.BeanValidators;
 import cn.geelato.utils.UIDGenerator;
 import com.alibaba.fastjson.JSON;
@@ -28,6 +27,12 @@ import java.util.Map;
 @Slf4j
 public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
 
+    /**
+     * 兜底系统错误码与文案（50001 / 系统繁忙）：未归类异常统一返回，无对应异常类，登记于官方文档错误码参考页。
+     */
+    private static final int SYSTEM_BUSY_CODE = 50001;
+    private static final String SYSTEM_BUSY_MESSAGE = "系统繁忙，请稍后重试";
+
     private final ErrorDocResolver errorDocResolver = new ErrorDocResolver();
 
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {ConstraintViolationException.class})
@@ -43,13 +48,24 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {CoreException.class})
     public final ResponseEntity<?> handleException(CoreException ex, WebRequest request) {
         PlatformErrorResult errorResult = coreException2PlatformErrorResult(ex);
+        // 前端仅见友好文案（getUserMessage，不含 SQL/参数/堆栈等技术详情），末尾追加错误码与反馈凭据，
+        // 用户报障时凭截图即可在服务端日志中检索 logTag 对应的完整技术详情。
+        String userMessage = ex.getUserMessage() != null ? ex.getUserMessage() : "系统异常";
         ApiResult<PlatformErrorResult> apiResult = ApiResult.fail(errorResult,
-                ex.getErrorMsg() != null ? ex.getErrorMsg() : "系统异常");
+                buildFeedbackMessage(userMessage, errorResult));
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
         // 按 ErrorCode 声明的 HTTP 状态码返回（鉴权类 401/403/400，其余默认 500）
         HttpStatus httpStatus = HttpStatus.resolve(resolveHttpStatus(ex));
         return handleExceptionInternal(ex, apiResult, headers, httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR, request);
+    }
+
+    /**
+     * 在友好文案末尾追加排障凭据（错误码 + logTag），格式如：
+     * {@code 数据操作失败，请稍后重试（错误码 10010，反馈凭据 123456789）}。
+     */
+    private String buildFeedbackMessage(String userMessage, PlatformErrorResult errorResult) {
+        return userMessage + "（错误码 " + errorResult.getErrorCode() + "，反馈凭据 " + errorResult.getLogTag() + "）";
     }
 
     private PlatformErrorResult coreException2PlatformErrorResult(CoreException coreException) {
@@ -61,20 +77,19 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
         errorResult.setDocUrl(errorDocResolver.resolve(coreException));
         if (!GlobalContext.getLogStack()) {
             errorResult.setCoreException(null);
+        } else {
+            // 开发模式：回填完整技术文案（SQL/参数等）便于浏览器端直接排障；生产默认关闭
+            errorResult.setErrorMsg(coreException.getErrorMsg());
         }
         return errorResult;
     }
 
     /**
-     * 从 {@link ErrorCode} 读取声明的 HTTP 状态码；异常未持有 ErrorCode 时回退到 500。
+     * 从异常读取声明的 HTTP 状态码（{@link CoreException#getHttpStatus()} 默认 500，鉴权类覆写为 401/403/400）。
      */
     private int resolveHttpStatus(CoreException ex) {
-        ErrorCode ec = ex.getError();
-        if (ec == null) {
-            return HttpStatus.INTERNAL_SERVER_ERROR.value();
-        }
-        int status = ec.getHttpStatus();
-        // 仅放行标准可用的 4xx/5xx 状态码，避免异常类误声明非法值导致 ResponseEntity 构造失败
+        int status = ex.getHttpStatus();
+        // 仅放行标准可用的 4xx/5xx 状态码，避免子类误覆写非法值导致 ResponseEntity 构造失败
         if (status >= 400 && status <= 599) {
             return status;
         }
@@ -86,12 +101,28 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @org.springframework.web.bind.annotation.ExceptionHandler
     public final ResponseEntity<?> handleOtherException(Exception ex, WebRequest request) {
-        // 兜底异常此前只包装返回、不打日志，导致“前端能看到错误、服务端控制台却无任何记录”，无法定位。
-        // 这里统一记录堆栈；请求描述由 WebRequest 提供（如 uri=/xxx;client=ip）。
-        log.error("Unhandled exception on [{}]: {}", request.getDescription(false), ex.getMessage(), ex);
+        // 兜底异常：补生成 logTag 并记录完整堆栈（前端能看到错误、服务端有据可查）；
+        // 前端仅返回友好分类文案 + 反馈凭据，不再透出原始 ex.getMessage()。
+        // HTTP 状态保持 400（历史行为，避免影响前端按状态码的分支处理）。
+        String logTag = Long.toString(UIDGenerator.generate());
+        log.error("logTag=" + logTag + "|Unhandled exception on [{}]: {}", request.getDescription(false), ex.getMessage(), ex);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
-        ApiResult<Object> apiResult = ApiResult.fail(ex.getMessage() != null ? ex.getMessage() : "系统异常");
+        PlatformErrorResult errorResult = new PlatformErrorResult(SYSTEM_BUSY_CODE, SYSTEM_BUSY_MESSAGE);
+        errorResult.setLogTag(logTag);
+        ApiResult<PlatformErrorResult> apiResult = ApiResult.fail(errorResult,
+                buildFeedbackMessage(fallbackUserMessage(ex), errorResult));
         return handleExceptionInternal(ex, apiResult, headers, HttpStatus.BAD_REQUEST, request);
+    }
+
+    /**
+     * 兜底异常的用户文案：带业务语义的参数类异常（通常已是可读中文）保留原消息，
+     * 其余技术异常（NPE、未包装的数据访问异常等）统一为“系统繁忙”。
+     */
+    private String fallbackUserMessage(Exception ex) {
+        if (ex instanceof IllegalArgumentException || ex instanceof IllegalStateException) {
+            return ex.getMessage() != null ? ex.getMessage() : SYSTEM_BUSY_MESSAGE;
+        }
+        return SYSTEM_BUSY_MESSAGE;
     }
 }

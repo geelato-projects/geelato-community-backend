@@ -4,7 +4,6 @@ import cn.geelato.core.orm.Dao;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
 import cn.geelato.orm.executor.MetaCommandExecutor;
 import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
-import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
 import cn.geelato.orm.executor.spi.MetaExecutionStrategy;
 import cn.geelato.orm.runtime.OrmRuntimeProvider;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
-import javax.sql.DataSource;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -51,7 +51,9 @@ class OrmRuntimeProviderTest {
         when(applicationContext.getBeanProvider(MetaExecutionStrategy.class)).thenReturn(strategyProvider);
         when(beanProvider.getIfAvailable()).thenReturn(null);
         when(strategyProvider.getIfAvailable()).thenReturn(null);
-        when(applicationContext.getBean(Dao.class)).thenReturn(primaryDao);
+        when(applicationContext.containsBean("dynamicDao")).thenReturn(false);
+        when(applicationContext.containsBean("primaryDao")).thenReturn(false);
+        when(applicationContext.getBeansOfType(Dao.class)).thenReturn(Map.of("primaryDao", primaryDao));
 
         OrmRuntimeProvider provider = new OrmRuntimeProvider(applicationContext, new OrmProperties());
         MetaCommandExecutor executor = provider.metaCommandExecutor();
@@ -61,36 +63,6 @@ class OrmRuntimeProviderTest {
         assertInstanceOf(DaoMetaExecutionStrategy.class, ((DefaultMetaCommandExecutor) executor).getExecutionStrategy());
         assertEquals(primaryDao, ((DaoMetaExecutionStrategy) ((DefaultMetaCommandExecutor) executor).getExecutionStrategy()).getDao());
         assertEquals(executor, provider.metaCommandExecutor());
-    }
-
-    @Test
-    void shouldCreateJdbcTemplateFallbackExecutorWhenConfigured() {
-        ApplicationContext applicationContext = mock(ApplicationContext.class);
-        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
-        when(jdbcTemplate.getDataSource()).thenReturn(mock(DataSource.class));
-        @SuppressWarnings("unchecked")
-        ObjectProvider<MetaCommandExecutor> executorProvider = mock(ObjectProvider.class);
-        @SuppressWarnings("unchecked")
-        ObjectProvider<MetaExecutionStrategy> strategyProvider = mock(ObjectProvider.class);
-        when(applicationContext.getBeanProvider(MetaCommandExecutor.class)).thenReturn(executorProvider);
-        when(applicationContext.getBeanProvider(MetaExecutionStrategy.class)).thenReturn(strategyProvider);
-        when(executorProvider.getIfAvailable()).thenReturn(null);
-        when(strategyProvider.getIfAvailable()).thenReturn(null);
-        when(applicationContext.containsBean("portalJdbcTemplate")).thenReturn(true);
-        when(applicationContext.getBean("portalJdbcTemplate", JdbcTemplate.class)).thenReturn(jdbcTemplate);
-
-        OrmProperties properties = new OrmProperties();
-        properties.setExecutionMode(MetaExecutorMode.JDBC_TEMPLATE);
-        properties.setJdbcTemplateBeanName("portalJdbcTemplate");
-
-        OrmRuntimeProvider provider = new OrmRuntimeProvider(applicationContext, properties);
-        MetaCommandExecutor executor = provider.metaCommandExecutor();
-
-        assertNotNull(executor);
-        assertInstanceOf(DefaultMetaCommandExecutor.class, executor);
-        assertInstanceOf(JdbcTemplateMetaExecutionStrategy.class, ((DefaultMetaCommandExecutor) executor).getExecutionStrategy());
-        assertEquals(jdbcTemplate,
-                ((JdbcTemplateMetaExecutionStrategy) ((DefaultMetaCommandExecutor) executor).getExecutionStrategy()).getJdbcTemplate());
     }
 
     @Configuration

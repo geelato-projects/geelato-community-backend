@@ -49,17 +49,18 @@ public class MetaSyncApiController {
     @Value("${geelato.meta.scan-package-names:cn.geelato}")
     private String scanPackage;
 
-    /** GET /api/meta-sync/scan — 全量扫描三方，返回实体清单与状态（直接 IO，每次查库） */
+    /** GET /api/meta-sync/scan?baseline=table|java|meta — 全量扫描三方，按基准对比（直接 IO，每次查库） */
     @RequestMapping(value = {"/scan"}, method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult<?> scan() {
+    public ApiResult<?> scan(@org.springframework.web.bind.annotation.RequestParam(value = "baseline", required = false, defaultValue = "table") String baseline) {
         try {
             metaSourceLoader.setScanPackage(scanPackage);
-            List<EntitySyncReport> reports = consistencyChecker.checkAll();
+            List<EntitySyncReport> reports = consistencyChecker.checkAll(baseline);
             Map<String, Object> summary = new HashMap<>();
             summary.put("total", reports.size());
             summary.put("consistent", reports.stream().filter(EntitySyncReport::isConsistent).count());
             summary.put("inconsistent", reports.stream().filter(r -> !r.isConsistent()).count());
             Map<String, Object> result = new HashMap<>();
+            result.put("baseline", cn.geelato.metasync.core.ConsistencyChecker.normalizeBaseline(baseline));
             result.put("summary", summary);
             result.put("reports", reports);
             return ApiResult.success(result);
@@ -70,26 +71,28 @@ public class MetaSyncApiController {
     }
 
     /**
-     * GET /api/meta-sync/check/{tableName} — 单实体校验。
+     * GET /api/meta-sync/check/{tableName}?baseline=... — 单实体校验（按基准）。
      * <p>直接 IO 重新查询该实体的三个源，不全量扫描；补偿后立即调本接口即可看到最新结果。
      */
     @GetMapping(value = {"/check/{tableName}"}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult<?> checkSingle(@PathVariable("tableName") String tableName) {
+    public ApiResult<?> checkSingle(@PathVariable("tableName") String tableName,
+                                    @org.springframework.web.bind.annotation.RequestParam(value = "baseline", required = false, defaultValue = "table") String baseline) {
         try {
             metaSourceLoader.setScanPackage(scanPackage);
-            return ApiResult.success(consistencyChecker.checkSingle(tableName));
+            return ApiResult.success(consistencyChecker.checkSingle(tableName, baseline));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
     }
 
-    /** GET /api/meta-sync/diff/{tableName} — 单个实体的三方差异明细（直接 IO 单实体装载） */
+    /** GET /api/meta-sync/diff/{tableName}?baseline=... — 单个实体的差异明细（按基准，直接 IO 单实体装载） */
     @GetMapping(value = {"/diff/{tableName}"}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
-    public ApiResult<?> diff(@PathVariable("tableName") String tableName) {
+    public ApiResult<?> diff(@PathVariable("tableName") String tableName,
+                             @org.springframework.web.bind.annotation.RequestParam(value = "baseline", required = false, defaultValue = "table") String baseline) {
         try {
             metaSourceLoader.setScanPackage(scanPackage);
-            return ApiResult.success(consistencyChecker.checkSingle(tableName));
+            return ApiResult.success(consistencyChecker.checkSingle(tableName, baseline));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
@@ -116,6 +119,7 @@ public class MetaSyncApiController {
                         ? metaEm.getEntityTitle()
                         : (javaEm != null && StringUtils.isNotBlank(javaEm.getEntityTitle()) ? javaEm.getEntityTitle() : tableName);
                 item.put("title", title);
+                item.put("tableType", metaSourceLoader.isView(tableName) ? "view" : "entity");
                 list.add(item);
             }
             return ApiResult.success(list);
@@ -125,11 +129,14 @@ public class MetaSyncApiController {
         }
     }
 
-    /** POST /api/meta-sync/fix/table-to-meta — 物理表→实体定义 */
+    /** POST /api/meta-sync/fix/table-to-meta — 物理表→实体定义（视图不可补偿） */
     @PostMapping(value = {"/fix/table-to-meta"}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> fixTableToMeta(@RequestBody Map<String, Object> body) {
         try {
             String tableName = str(body, "tableName");
+            if (metaSourceLoader.isView(tableName)) {
+                return ApiResult.fail("「" + tableName + "」是视图，视图不支持补偿");
+            }
             String entityName = str(body, "entityName");
             boolean apply = bool(body, "apply", false);
             TableToMetaFixer.FixResult r = tableToMetaFixer.syncTableToMeta(tableName, entityName, null, apply);
@@ -160,10 +167,14 @@ public class MetaSyncApiController {
         }
     }
 
-    /** POST /api/meta-sync/fix/java-to-meta — Java类→实体定义 */
+    /** POST /api/meta-sync/fix/java-to-meta — Java类→实体定义（视图不可补偿） */
     @PostMapping(value = {"/fix/java-to-meta"}, produces = MediaTypes.APPLICATION_JSON_UTF_8)
     public ApiResult<?> fixJavaToMeta(@RequestBody Map<String, Object> body) {
         try {
+            String tableName = str(body, "tableName");
+            if (metaSourceLoader.isView(tableName)) {
+                return ApiResult.fail("「" + tableName + "」是视图，视图不支持补偿");
+            }
             String entityName = str(body, "entityName");
             String output = str(body, "output");
             if (StringUtils.isBlank(output)) {

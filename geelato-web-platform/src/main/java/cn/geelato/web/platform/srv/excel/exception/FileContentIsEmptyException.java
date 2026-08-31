@@ -1,18 +1,18 @@
 package cn.geelato.web.platform.srv.excel.exception;
 
-import cn.geelato.web.platform.exception.PlatformErrorCodes;
-
 /**
  * @author diabl
- * 12.7 文件内容为空异常
+ * 文件内容为空异常
  */
 public class FileContentIsEmptyException extends FileException {
 
+    public static final int ERROR_CODE = 30017;
+
     public FileContentIsEmptyException() {
-        super(PlatformErrorCodes.FILE_CONTENT_IS_EMPTY);
+        super(ERROR_CODE, "文件内容为空");
     }
 
     public FileContentIsEmptyException(String detailMessage) {
-        super(PlatformErrorCodes.FILE_CONTENT_IS_EMPTY, String.format("%s：%s", PlatformErrorCodes.FILE_CONTENT_IS_EMPTY.getDefaultMessage(), detailMessage));
+        super(ERROR_CODE, String.format("文件内容为空：%s", detailMessage));
     }
 }

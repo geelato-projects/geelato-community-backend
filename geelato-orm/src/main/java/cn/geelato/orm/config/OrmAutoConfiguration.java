@@ -7,11 +7,7 @@ import cn.geelato.core.util.BeansUtils;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.orm.executor.DefaultMetaCommandExecutor;
 import cn.geelato.orm.executor.MetaCommandExecutor;
-import cn.geelato.orm.executor.spi.DaoMetaExecutionStrategy;
-import cn.geelato.orm.executor.spi.JdbcTemplateMetaExecutionStrategy;
 import cn.geelato.orm.executor.spi.MetaExecutionStrategy;
-import cn.geelato.orm.runtime.OrmDaoResolver;
-import cn.geelato.orm.runtime.OrmJdbcTemplateResolver;
 import cn.geelato.orm.runtime.OrmRuntimeProvider;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -28,10 +24,8 @@ import org.springframework.util.ClassUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Configuration
 @EnableConfigurationProperties(OrmProperties.class)
@@ -52,10 +46,7 @@ public class OrmAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(value = {MetaExecutionStrategy.class, MetaCommandExecutor.class})
     public MetaExecutionStrategy metaExecutionStrategy(ApplicationContext applicationContext, OrmProperties ormProperties) {
-        if (ormProperties != null && ormProperties.getExecutionMode() == MetaExecutorMode.JDBC_TEMPLATE) {
-            return new JdbcTemplateMetaExecutionStrategy(OrmJdbcTemplateResolver.resolve(applicationContext, ormProperties));
-        }
-        return new DaoMetaExecutionStrategy(OrmDaoResolver.resolve(applicationContext, ormProperties));
+        return OrmRuntimeProvider.createExecutionStrategy(applicationContext, ormProperties);
     }
 
     @Bean
@@ -66,8 +57,8 @@ public class OrmAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(name = "ormEntityMetadataInitializer")
-    public SmartInitializingSingleton ormEntityMetadataInitializer(ApplicationContext applicationContext, OrmProperties ormProperties) {
-        return () -> scanAndParseEntities(applicationContext, ormProperties);
+    public SmartInitializingSingleton ormEntityMetadataInitializer(ApplicationContext applicationContext) {
+        return () -> scanAndParseEntities(applicationContext);
     }
 
     @Bean
@@ -84,12 +75,13 @@ public class OrmAutoConfiguration {
         };
     }
 
-    private void scanAndParseEntities(ApplicationContext applicationContext, OrmProperties ormProperties) {
-        if (ormProperties != null && Boolean.FALSE.equals(ormProperties.getEntityAutoScanEnabled())) {
+    private void scanAndParseEntities(ApplicationContext applicationContext) {
+        List<String> basePackages;
+        try {
+            basePackages = AutoConfigurationPackages.get(applicationContext);
+        } catch (IllegalStateException ex) {
             return;
         }
-
-        List<String> basePackages = resolveEntityScanBasePackages(applicationContext, ormProperties);
         if (basePackages.isEmpty()) {
             return;
         }
@@ -120,19 +112,6 @@ public class OrmAutoConfiguration {
                     throw new IllegalStateException("Failed to load @Entity class: " + className, ex);
                 }
             }
-        }
-    }
-
-    private List<String> resolveEntityScanBasePackages(ApplicationContext applicationContext, OrmProperties ormProperties) {
-        if (ormProperties != null && ormProperties.getEntityScanBasePackages() != null && ormProperties.getEntityScanBasePackages().length > 0) {
-            return Arrays.stream(ormProperties.getEntityScanBasePackages())
-                    .filter(StringUtils::hasText)
-                    .collect(Collectors.toList());
-        }
-        try {
-            return AutoConfigurationPackages.get(applicationContext);
-        } catch (IllegalStateException ex) {
-            return List.of();
         }
     }
 

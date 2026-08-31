@@ -85,28 +85,11 @@ public class OrmDaoConfiguration {
 
 - 元数据准备：
   - 默认会扫描 `@SpringBootApplication` 所在包及子包下所有 `@Entity` 类并自动 `MetaManager.parseOne(...)`
-  - 可通过配置关闭或限定扫描范围：
-
-```yaml
-geelato:
-  orm:
-    execution-mode: dao
-    entity-auto-scan-enabled: true
-    entity-scan-base-packages:
-      - com.example.demo.entity
-```
 
 - 执行策略说明：
-  - 默认 `execution-mode: dao`，由 ORM 统一门面委托 `Dao` ExecutionStrategy 执行
-  - 可切换为 `execution-mode: jdbc-template`，继续复用 `SqlManager` 构造 SQL，但主执行链不再调用 `Dao.query/save/delete`
-  - 多 `JdbcTemplate` 场景建议显式配置：
-
-```yaml
-geelato:
-  orm:
-    execution-mode: jdbc-template
-    jdbc-template-bean-name: primaryJdbcTemplate
-```
+  - 执行模式默认 `dao`（无需配置 `execution-mode`），由 ORM 统一门面委托 `DaoMetaExecutionStrategy` 执行；该枚举为后续扩展其他执行模式预留
+  - Dao 自动解析优先级：`dynamicDao` → `primaryDao` → 唯一的 Dao Bean，无需显式配置。`dynamicDao` 基于 `DynamicRoutingDataSource`，是唯一能支撑 `useDataSource(connectId)` / 实体 `connectId` 切库的 Dao；绑定 `primaryDao` 时切库不生效，因此只要容器中存在 `dynamicDao`，ORM 必绑定它
+  - 仅当需要绑定其他自定义 Dao 时才配置 `geelato.orm.dao-bean-name`（显式配置优先于自动解析）
 
 ## 主要能力
 - 支持 `query("Entity")` 与 `query(Entity.class)` 双入口

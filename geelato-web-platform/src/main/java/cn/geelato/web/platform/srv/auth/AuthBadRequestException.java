@@ -1,19 +1,21 @@
 package cn.geelato.web.platform.srv.auth;
 
 import cn.geelato.lang.exception.CoreException;
-import cn.geelato.web.platform.exception.PlatformErrorCodes;
 
 public class AuthBadRequestException extends CoreException {
 
-    public AuthBadRequestException() {
-        super(PlatformErrorCodes.AUTH_BAD_REQUEST);
-    }
+    public static final int ERROR_CODE = 20003;
 
     public AuthBadRequestException(String message) {
-        super(PlatformErrorCodes.AUTH_BAD_REQUEST, message);
+        super(ERROR_CODE, message);
     }
 
     public AuthBadRequestException(String message, Throwable cause) {
-        super(PlatformErrorCodes.AUTH_BAD_REQUEST, message, cause);
+        super(ERROR_CODE, message, cause);
+    }
+
+    @Override
+    public int getHttpStatus() {
+        return 400;
     }
 }

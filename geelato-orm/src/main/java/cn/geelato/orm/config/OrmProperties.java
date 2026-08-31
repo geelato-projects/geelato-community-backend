@@ -13,7 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class OrmProperties {
     /**
      * 元数据执行模式。
-     * 默认走 Dao 执行策略，可切换为直接基于 JdbcTemplate 的执行策略。
+     * 当前仅支持 DAO 执行策略，预留后续扩展其他执行模式。
      */
     private MetaExecutorMode executionMode = MetaExecutorMode.DAO;
 
@@ -23,25 +23,9 @@ public class OrmProperties {
     private String daoBeanName;
 
     /**
-     * 显式指定 JDBC_TEMPLATE 模式下绑定的 JdbcTemplate Bean 名称。
-     */
-    private String jdbcTemplateBeanName;
-
-    /**
      * 默认 ORM 数据源键。
      * 未显式 useDataSource 且实体元数据未声明 connectId 时，回退使用该数据源。
      */
     private String defaultDataSourceKey;
-
-    /**
-     * 是否启用 @Entity 自动扫描并注册到 MetaManager。
-     */
-    private Boolean entityAutoScanEnabled = Boolean.TRUE;
-
-    /**
-     * 注解 @Entity 自动扫描的 base packages。
-     * 为空时将使用 Spring Boot 的 AutoConfigurationPackages。
-     */
-    private String[] entityScanBasePackages;
 
 }

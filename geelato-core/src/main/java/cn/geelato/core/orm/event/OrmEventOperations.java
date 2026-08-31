@@ -6,17 +6,12 @@ import java.util.function.ToIntFunction;
 /**
  * ORM 操作的事件编排模板——触发顺序的唯一事实来源。
  *
- * <p>此前同一套触发样板（构造 ctx → fireBefore → 执行 SQL → 结果回填 → fireAfter → 事务回调）
- * 在 {@code Dao} 与 {@code JdbcTemplateMetaExecutionStrategy} 中手写了 20 余遍，且两条路径已出现
- * 行为漂移（success 回填缺失、trigger 缺失、fireBefore 在 try 外导致事务悬挂）。本模板把编排顺序
- * 收敛为单一实现（对标 Hibernate {@code SessionImpl#fire*} 的收敛方式与 Spring
  * {@code TransactionTemplate#execute} 的模板方法），所有执行路径委托至此：
  * <ol>
  *   <li>fireBefore（纳入 try，A3：before 监听器异常与 SQL 异常走同一条回填路径，调用方据此回滚）</li>
  *   <li>执行 SQL 动作</li>
  *   <li>结果回填（A1：success / exception / affectedRows / rowCount）</li>
  *   <li>fireAfter（仅成功路径；after 异步执行，异常仅记日志）</li>
- *   <li>{@link EventTransactionSupport#trigger}（事务感知回调，A2；查询无事务语义除外）</li>
  * </ol>
  *
  * <p>事务边界（begin / commit / rollback）由调用方管理，本模板只负责事件编排与结果回填。

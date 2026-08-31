@@ -54,6 +54,9 @@ public class MetaSourceLoader {
     /** 物理表源：tableName(小写) → List<SchemaColumn> */
     private final Map<String, List<SchemaColumn>> physicalSchemaMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
+    /** 视图表名集合（实体定义 table_type=view，或物理库 TABLE_TYPE='VIEW'） */
+    private final Map<String, Boolean> viewTableNames = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
     /** 物理库 schema 名 */
     private String physicalSchema;
 
@@ -117,6 +120,7 @@ public class MetaSourceLoader {
         javaClassNameMap.clear();
         metaSourceMap.clear();
         physicalSchemaMap.clear();
+        viewTableNames.clear();
         loaded = false;
     }
 
@@ -256,6 +260,11 @@ public class MetaSourceLoader {
                     tableName = ename.toString();
                 }
                 metaSourceMap.put(tableName, em);
+                // 记录视图（table_type=view）
+                Object tableType = tmap.get("table_type");
+                if (tableType != null && "view".equalsIgnoreCase(tableType.toString().trim())) {
+                    viewTableNames.put(tableName, true);
+                }
             } catch (Exception e) {
                 log.debug("解析实体定义失败：{}", e.getMessage());
             }
@@ -276,6 +285,7 @@ public class MetaSourceLoader {
         }
         String sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME, ORDINAL_POSITION";
         fillPhysical(jdbc.queryForList(sql, physicalSchema));
+        loadPhysicalViews(null);
         log.info("物理表结构装载完成：{} 张表", physicalSchemaMap.size());
     }
 
@@ -286,6 +296,33 @@ public class MetaSourceLoader {
         }
         String sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION";
         fillPhysical(jdbc.queryForList(sql, physicalSchema, tableName));
+        loadPhysicalViews(tableName);
+    }
+
+    /**
+     * 查询物理库视图名（INFORMATION_SCHEMA.TABLES TABLE_TYPE='VIEW'），记录到视图集合。
+     * INFORMATION_SCHEMA.COLUMNS 中视图的列也会出现，需由此区分表/视图。
+     */
+    private void loadPhysicalViews(String singleTable) {
+        try {
+            String sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'VIEW'";
+            List<Map<String, Object>> rows;
+            if (StringUtils.isNotBlank(singleTable)) {
+                rows = jdbc.queryForList(sql + " AND TABLE_NAME = ?", physicalSchema, singleTable);
+            } else {
+                rows = jdbc.queryForList(sql, physicalSchema);
+            }
+            if (rows != null) {
+                for (Map<String, Object> r : rows) {
+                    Object name = r.get("TABLE_NAME");
+                    if (name != null) {
+                        viewTableNames.put(name.toString(), true);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("查询物理视图失败：{}", e.getMessage());
+        }
     }
 
     private void resolveSchema() {
@@ -321,6 +358,14 @@ public class MetaSourceLoader {
     }
 
     // =================== 公共 ===================
+
+    /**
+     * 是否为视图（实体定义 table_type=view，或物理库 TABLE_TYPE='VIEW'）。
+     */
+    public boolean isView(String tableName) {
+        ensureLoaded();
+        return StringUtils.isNotBlank(tableName) && viewTableNames.containsKey(tableName);
+    }
 
     /**
      * 三方 tableName 并集。

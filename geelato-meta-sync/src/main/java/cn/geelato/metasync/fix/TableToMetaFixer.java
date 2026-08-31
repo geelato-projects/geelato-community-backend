@@ -121,11 +121,11 @@ public class TableToMetaFixer {
                     result.executed++;
                 }
             } else {
-                // update（仅当 dataType/column_type 不一致时）
+                // update（仅当归一化基础类型或 nullable 有真实差异时；格式差异忽略）
                 Map<String, Object> exist = existing.get(colLower);
                 if (needUpdate(exist, cm)) {
                     String existId = exist.get("id") == null ? null : exist.get("id").toString();
-                    String sql = buildUpdateSql(existId, cm);
+                    String sql = buildUpdateSql(exist, existId, cm);
                     result.previewSql.add(sql);
                     if (apply) {
                         jdbc.execute(sql);
@@ -137,16 +137,64 @@ public class TableToMetaFixer {
         return result;
     }
 
+    /**
+     * 是否需要更新：按归一化基础类型比较（int 族/varchar 族等同组视为一致），
+     * 完整 column_type 串不作为依据（afterSet 重拼的 INT(10) 与物理库 int 是格式差异，非缺陷）。
+     */
     private boolean needUpdate(Map<String, Object> exist, ColumnMeta cm) {
-        Object existType = exist.get("column_type");
         String existDataType = exist.get("data_type") == null ? null : exist.get("data_type").toString();
-        if (existType != null && !existType.toString().equalsIgnoreCase(cm.getType())) {
+        // 真实类型冲突（如 varchar vs int）
+        if (existDataType != null && cm.getDataType() != null
+                && !normalizeBaseType(existDataType).equals(normalizeBaseType(cm.getDataType()))) {
             return true;
         }
-        if (existDataType != null && cm.getDataType() != null && !existDataType.equalsIgnoreCase(cm.getDataType())) {
+        // nullable 约束差异
+        boolean existNullable = parseBoolean(exist.get("is_nullable"), true);
+        if (existNullable != cm.isNullable()) {
             return true;
         }
         return false;
+    }
+
+    /**
+     * 归一化基础类型：同族类型视为一致（与 ConsistencyChecker 的分组一致）。
+     * 如 int/integer/tinyint → int；char/varchar/text → varchar；decimal/numeric/double/float → decimal。
+     */
+    private static String normalizeBaseType(String dataType) {
+        if (dataType == null) {
+            return null;
+        }
+        String t = dataType.toLowerCase(Locale.ENGLISH).trim();
+        if (t.equals("int") || t.equals("integer") || t.equals("tinyint") || t.equals("smallint") || t.equals("mediumint")) {
+            return "int";
+        }
+        if (t.equals("char") || t.equals("varchar") || t.equals("text") || t.equals("tinytext") || t.equals("mediumtext") || t.equals("longtext") || t.equals("json")) {
+            return "varchar";
+        }
+        if (t.equals("decimal") || t.equals("numeric") || t.equals("double") || t.equals("float")) {
+            return "decimal";
+        }
+        if (t.equals("blob") || t.equals("tinyblob") || t.equals("mediumblob") || t.equals("longblob")) {
+            return "blob";
+        }
+        if (t.equals("datetime") || t.equals("timestamp")) {
+            return "datetime";
+        }
+        return t;
+    }
+
+    private static boolean parseBoolean(Object v, boolean def) {
+        if (v == null) {
+            return def;
+        }
+        String s = v.toString().trim();
+        if ("1".equals(s) || "true".equalsIgnoreCase(s)) {
+            return true;
+        }
+        if ("0".equals(s) || "false".equalsIgnoreCase(s)) {
+            return false;
+        }
+        return def;
     }
 
     private String buildInsertSql(String tableId, String entityName, String tableName, SchemaColumn sc, ColumnMeta cm) {
@@ -187,16 +235,34 @@ public class TableToMetaFixer {
         return sb.toString();
     }
 
-    private String buildUpdateSql(String existId, ColumnMeta cm) {
-        StringBuilder sb = new StringBuilder("UPDATE platform_dev_column SET ");
-        sb.append("data_type='").append(cm.getDataType() == null ? "" : cm.getDataType()).append("', ");
-        sb.append("column_type='").append(cm.getType() == null ? "" : escape(cm.getType())).append("', ");
-        sb.append("is_nullable=").append(cm.isNullable() ? 1 : 0).append(", ");
-        sb.append("character_maxinum_length=").append(cm.getCharMaxLength()).append(", ");
-        sb.append("numeric_precision=").append(cm.getNumericPrecision()).append(", ");
-        sb.append("numeric_scale=").append(cm.getNumericScale()).append(" ");
-        sb.append("WHERE id='").append(existId).append("'");
-        return sb.toString();
+    /**
+     * 构造 UPDATE：逐字段比较，只 SET 真正有差异的字段。
+     * 精度/长度（charMaxLength/precision/scale）不自动补偿——显示宽度 MySQL 8 已废弃、
+     * ColumnMeta 默认值与物理真实值天然不同，写回只会刷库制造噪音。
+     */
+    private String buildUpdateSql(Map<String, Object> exist, String existId, ColumnMeta cm) {
+        StringBuilder sets = new StringBuilder();
+        String existDataType = exist.get("data_type") == null ? null : exist.get("data_type").toString();
+        // 类型差异：data_type 与 column_type 一起更新为物理侧规范值
+        if (existDataType != null && cm.getDataType() != null
+                && !normalizeBaseType(existDataType).equals(normalizeBaseType(cm.getDataType()))) {
+            if (sets.length() > 0) {
+                sets.append(", ");
+            }
+            sets.append("data_type='").append(cm.getDataType()).append("'");
+            if (cm.getType() != null) {
+                sets.append(", column_type='").append(escape(cm.getType())).append("'");
+            }
+        }
+        // nullable 差异
+        boolean existNullable = parseBoolean(exist.get("is_nullable"), true);
+        if (existNullable != cm.isNullable()) {
+            if (sets.length() > 0) {
+                sets.append(", ");
+            }
+            sets.append("is_nullable=").append(cm.isNullable() ? 1 : 0);
+        }
+        return "UPDATE platform_dev_column SET " + sets + " WHERE id='" + existId + "'";
     }
 
     private String escape(String s) {

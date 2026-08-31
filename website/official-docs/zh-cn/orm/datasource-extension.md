@@ -55,13 +55,11 @@ public class OrmDaoConfiguration {
 
 ### 第 2 步：确认 ORM 绑定的是哪一个 `Dao`
 
-如果你的工程里有多套 `Dao`，建议显式配置：
+ORM 自动解析优先绑定 `dynamicDao`（只有它能支撑 `.useDataSource(...)` 切库），不存在时回退 `primaryDao`，再回退唯一的 Dao Bean——多 `Dao` 场景无需显式配置。仅当需要绑定其他自定义 `Dao` 时才配置：
 
 ```properties
-geelato.orm.dao-bean-name=dynamicDao
+geelato.orm.dao-bean-name=myDao
 ```
-
-这样 Fluent DSL 最终执行时，绑定关系更清晰，也更利于排障。
 
 ### 第 3 步：再决定是否需要动态数据源
 
@@ -75,18 +73,13 @@ geelato.orm.dao-bean-name=dynamicDao
 
 ## ORM 绑定哪个 Dao
 
-当前显式属性是：
+未配置时，ORM 自动解析优先级是：
 
-```properties
-geelato.orm.dao-bean-name=dynamicDao
-```
-
-如果宿主工程配置了这个属性，ORM 会优先绑定指定名称的 `Dao` Bean。
-
-如果未配置且存在多个 `Dao`，当前兼容回退顺序是：
-
-1. `dynamicDao`
+1. `dynamicDao`（基于路由数据源，唯一能支撑 `.useDataSource(...)` / 实体 `connectId` 切库的 Dao）
 2. `primaryDao`
+3. 唯一的 Dao Bean
+
+即只要容器中存在 `dynamicDao`，ORM 必绑定它；多 `Dao` 场景无需显式配置。若宿主工程配置了 `geelato.orm.dao-bean-name`，则显式配置优先，用于绑定其他自定义 `Dao` Bean。
 
 ## Starter 默认创建哪些 JDBC Bean
 
@@ -216,13 +209,7 @@ public class SyncService {
 
 ### 方式 3：让 ORM 默认绑定动态源的 `Dao`
 
-如果你的项目里大多数 ORM 操作都应落到动态源链路，建议把 ORM 绑定的 `Dao` 指到 `dynamicDao`：
-
-```properties
-geelato.orm.dao-bean-name=dynamicDao
-```
-
-这样 Fluent DSL 默认就会走动态源能力，而不是每次都手工指定。
+如果你的项目里大多数 ORM 操作都应落到动态源链路，无需任何配置：只要容器中存在 `dynamicDao`，ORM 会自动绑定它，Fluent DSL 默认就会走动态源能力（`useDataSource` 切库生效），而不是每次都手工指定。
 
 ### 方式 4：用 `@Entity` 注解声明实体所属数据源
 
@@ -700,7 +687,7 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 如果你要在一个新项目里同时接 ORM、动态数据源和平台规则，推荐顺序是：
 
 1. 先把 `primaryDao` 或其他基础 `Dao` 跑通
-2. 再确认 `geelato.orm.dao-bean-name` 绑定正确
+2. 再确认 ORM 自动绑定到了 `dynamicDao`（存在时必绑定；绑定 `primaryDao` 时切库不生效）
 3. 再启用动态数据源并验证 `.useDataSource(...)`
 4. 再视需要补 `@UseDynamicDataSource`
 5. 最后再实现查询过滤和字段填充 SPI
@@ -717,7 +704,7 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 如果你感觉“切源没生效”或“SPI 没生效”，建议按这个顺序查：
 
 1. 看容器里是否真的存在 `primaryDao` / `dynamicDao`
-2. 看 `geelato.orm.dao-bean-name` 是否绑定到了你预期的 Bean
+2. 看 ORM 绑定的是否是 `dynamicDao`（未显式配置 `geelato.orm.dao-bean-name` 时应自动绑定它）
 3. 看动态源定义是否真的能加载出目标 key
 4. 看代码里是否真的调用了 `.useDataSource("...")` 或命中了 `@UseDynamicDataSource`
 5. 看同类 SPI 是否注册了多个实现
@@ -730,7 +717,7 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 
 - 常规后端 CRUD 优先使用 ORM
 - 动态源定义来源优先通过扩展点覆盖，不要硬改默认实现
-- 宿主项目若有多套 `Dao`，建议显式配置 `geelato.orm.dao-bean-name`
+- 多 `Dao` 场景无需配置，ORM 自动优先绑定 `dynamicDao`；仅绑定其他自定义 `Dao` 时配置 `geelato.orm.dao-bean-name`
 - 除非明确需要，否则不要默认开启 JTA / Seata
 - 单条链路切源优先用 `.useDataSource(...)`
 - 组件级切源再考虑 `@UseDynamicDataSource`

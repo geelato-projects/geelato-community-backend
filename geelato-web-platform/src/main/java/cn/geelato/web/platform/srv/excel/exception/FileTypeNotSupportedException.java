@@ -1,18 +1,18 @@
 package cn.geelato.web.platform.srv.excel.exception;
 
-import cn.geelato.web.platform.exception.PlatformErrorCodes;
-
 /**
  * @author diabl
- * 12.3 文件类型不支持异常
+ * 文件类型不支持异常
  */
 public class FileTypeNotSupportedException extends FileException {
 
+    public static final int ERROR_CODE = 30013;
+
     public FileTypeNotSupportedException() {
-        super(PlatformErrorCodes.FILE_TYPE_NOT_SUPPORTED);
+        super(ERROR_CODE, "文件类型不支持");
     }
 
     public FileTypeNotSupportedException(String detailMessage) {
-        super(PlatformErrorCodes.FILE_TYPE_NOT_SUPPORTED, String.format("%s：%s", PlatformErrorCodes.FILE_TYPE_NOT_SUPPORTED.getDefaultMessage(), detailMessage));
+        super(ERROR_CODE, String.format("文件类型不支持：%s", detailMessage));
     }
 }

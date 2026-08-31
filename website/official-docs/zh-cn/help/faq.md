@@ -70,7 +70,7 @@ sidebar_label: 常见问题
 
 ### Q9. 有多个 `Dao` 时 ORM 绑定哪一个？
 
-通过 `geelato.orm.dao-bean-name=dynamicDao` 显式指定。若未设置且存在多个 `Dao` Bean，兼容回退顺序为 `dynamicDao` → `primaryDao`。
+自动解析优先绑定 `dynamicDao`（只有它能支撑 `useDataSource(connectId)` 切库），不存在时回退 `primaryDao`，再回退唯一的 Dao Bean——多 `Dao` 场景无需显式配置。`geelato.orm.dao-bean-name` 仅在绑定其他自定义 Dao 时使用。
 
 详见 [Fluent DSL 指引](../orm/fluent-dsl)、[ORM / 数据源扩展](../orm/datasource-extension)。
 

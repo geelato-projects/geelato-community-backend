@@ -1,19 +1,16 @@
 package cn.geelato.web.common.oauth2;
 
 import cn.geelato.lang.exception.CoreException;
-import cn.geelato.web.common.exception.WebCommonErrorCodes;
 
 public class InvalidTokenException extends CoreException {
 
+    public static final int ERROR_CODE = 20002;
+
     public InvalidTokenException() {
-        super(WebCommonErrorCodes.INVALID_TOKEN);
+        this("令牌校验异常，请重新登录");
     }
 
     public InvalidTokenException(String message) {
-        super(WebCommonErrorCodes.INVALID_TOKEN, message);
-    }
-
-    public InvalidTokenException(String message, Throwable throwable) {
-        super(WebCommonErrorCodes.INVALID_TOKEN, message, throwable);
+        super(ERROR_CODE, message);
     }
 }

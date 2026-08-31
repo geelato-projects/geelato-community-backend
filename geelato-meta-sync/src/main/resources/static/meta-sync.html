@@ -35,6 +35,8 @@
   .badge.ok { background: #f0f9eb; color: #67c23a; }
   .badge.no { background: #fef0f0; color: #f56c6c; }
   .badge.gray { background: #f4f4f5; color: #909399; }
+  .badge.base { background: #ecf5ff; color: #409eff; }
+  .tag.view { background: #fdf6ec; color: #e6a23c; border-radius: 8px; padding: 1px 6px; font-size: 11px; }
   .row-detail { display: none; }
   .row-detail.open { display: table-row; }
   .row-detail td { background: #fafbfc; padding: 12px 20px; }
@@ -51,6 +53,17 @@
   .sql-item { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; font-family: Consolas, monospace; font-size: 12px; word-break: break-all; }
   .hidden { display: none; }
   .loading { color: #409eff; }
+  /* 可检索下拉组件 */
+  .combo { position: relative; display: inline-block; }
+  .combo input { width: 340px; }
+  .combo-list { position: absolute; top: 100%; left: 0; z-index: 100; background: #fff; border: 1px solid #dcdfe6; border-radius: 4px; max-height: 260px; overflow: auto; min-width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,.15); display: none; }
+  .combo.open .combo-list { display: block; }
+  .combo-item { padding: 6px 10px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+  .combo-item:hover { background: #ecf5ff; }
+  .combo-item.disabled { color: #c0c4cc; cursor: not-allowed; background: #fafafa; }
+  .combo-item .tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 8px; font-size: 11px; background: #f4f4f5; color: #909399; }
+  .combo-item .tag.view { background: #fdf6ec; color: #e6a23c; }
+  .combo-empty { padding: 8px 10px; color: #c0c4cc; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -72,6 +85,15 @@
 
 <!-- Tab 1: 校验报告 -->
 <div id="tab-report" class="container">
+  <div class="toolbar" style="margin-bottom:12px;">
+    <span style="color:#606266;">校验基准：</span>
+    <select id="baseline" onchange="onBaselineChange()">
+      <option value="table">物理表（表结构为基准）</option>
+      <option value="java">Java 类（类定义为基准）</option>
+      <option value="meta">实体定义（platform_dev_table 为基准）</option>
+    </select>
+    <span style="color:#909399;font-size:12px;">差异将标记在另外两个源的列上</span>
+  </div>
   <div class="summary" id="summary"></div>
   <table id="reportTable">
     <thead>
@@ -81,7 +103,7 @@
         <th>Java类</th>
         <th>实体定义</th>
         <th>物理表</th>
-        <th>状态</th>
+        <th>操作</th>
       </tr>
     </thead>
     <tbody id="reportBody">
@@ -93,9 +115,12 @@
 <!-- Tab 2: 补偿操作 -->
 <div id="tab-fix" class="container hidden">
   <div class="panel">
-    <h3>选择实体</h3>
+    <h3>选择实体（输入关键字检索）</h3>
     <div class="toolbar">
-      <select id="fixEntity" onchange="onFixEntityChange()" style="min-width:320px;"></select>
+      <div class="combo" id="fixEntityCombo">
+        <input type="text" id="fixEntityInput" placeholder="输入表名/实体名/标题检索..." autocomplete="off">
+        <div class="combo-list" id="fixEntityList"></div>
+      </div>
       <span id="fixEntityDesc" style="color:#909399;"></span>
       <button onclick="checkSingle()">复验此实体</button>
     </div>
@@ -107,8 +132,8 @@
         <option value="table-to-meta">物理表 → 实体定义（platform_dev_column）</option>
         <option value="java-to-meta">Java 类 → 实体定义（platform_dev_table/column）</option>
       </select>
-      <button onclick="runFixPreview()">预览（dry-run）</button>
-      <button class="primary" onclick="runFixApply()">执行（写库）</button>
+      <button id="btnFixPreview" onclick="runFixPreview()">预览（dry-run）</button>
+      <button id="btnFixApply" class="primary" onclick="runFixApply()">执行（写库）</button>
     </div>
     <div id="fixResult" class="sql-list hidden"></div>
   </div>
@@ -123,7 +148,10 @@
   <div class="panel">
     <h3>根据实体定义生成 Java 类源码</h3>
     <div class="toolbar">
-      <select id="codegenEntity" style="min-width:320px;"></select>
+      <div class="combo" id="codegenEntityCombo">
+        <input type="text" id="codegenEntityInput" placeholder="输入表名/实体名/标题检索..." autocomplete="off">
+        <div class="combo-list" id="codegenEntityList"></div>
+      </div>
       <input type="text" id="codegenPkg" placeholder="包名(默认 cn.geelato.meta)" style="width:220px;">
       <button class="primary" onclick="runCodegen()">生成源码</button>
     </div>
@@ -153,11 +181,21 @@ function statusBadge(s, tag){
   return '<span class="badge ok">'+tag+': '+s.fieldCount+'字段</span>';
 }
 
+const SOURCE_NAMES = {java:'Java类', meta:'实体定义', table:'物理表'};
+
+function currentBaseline(){
+  return document.getElementById('baseline').value || 'table';
+}
+
+function onBaselineChange(){
+  scan();
+}
+
 function scan(){
   let btn = document.getElementById('btnScan');
   btn.disabled = true; btn.textContent = '扫描中...';
   document.getElementById('reportBody').innerHTML = '<tr><td colspan="6" class="empty loading">扫描中，请稍候...</td></tr>';
-  api('/scan').then(res=>{
+  api('/scan?baseline='+currentBaseline()).then(res=>{
     let data = unwrap(res);
     reports = data.reports || [];
     renderSummary(data.summary || {});
@@ -181,39 +219,94 @@ function renderReports(){
   if(reports.length===0){ document.getElementById('reportBody').innerHTML='<tr><td colspan="6" class="empty">无数据</td></tr>'; return; }
   let html = '';
   reports.forEach((r, i)=>{
-    let consistentBadge = r.consistent ? '<span class="badge ok">一致</span>' : '<span class="badge no">有差异</span>';
+    let isView = r.tableType==='view';
     html += '<tr onclick="toggleDetail('+i+')" style="cursor:pointer;">';
-    html += '<td><b>'+esc(r.tableName)+'</b><br><span style="color:#909399;font-size:11px;">'+esc(r.entityName)+'</span></td>';
+    html += '<td><b>'+esc(r.tableName)+'</b>'+(isView?' <span class="tag view">视图</span>':'')+'<br><span style="color:#909399;font-size:11px;">'+esc(r.entityName)+'</span></td>';
     html += '<td>'+esc(r.title)+'</td>';
-    html += '<td>'+statusBadge(r.javaSource,'Java')+'</td>';
-    html += '<td>'+statusBadge(r.metaSource,'Meta')+'</td>';
-    html += '<td>'+statusBadge(r.tableSource,'Table')+'</td>';
-    html += '<td>'+consistentBadge+'</td>';
+    html += '<td>'+sourceCell(r,'java')+'</td>';
+    html += '<td>'+sourceCell(r,'meta')+'</td>';
+    html += '<td>'+sourceCell(r,'table')+'</td>';
+    html += '<td>'+actionCell(r, isView)+'</td>';
     html += '</tr>';
     html += '<tr class="row-detail" id="detail-'+i+'"><td colspan="6">'+renderDetail(r)+'</td></tr>';
   });
   document.getElementById('reportBody').innerHTML = html;
 }
 
+/** 源单元格：基准列蓝色标记；非基准列显示差异数（红）/一致（绿）/缺失（灰） */
+function sourceCell(r, tag){
+  let statusMap = {java:r.javaSource, meta:r.metaSource, table:r.tableSource};
+  let s = statusMap[tag];
+  if(!s || !s.present){
+    return r.baseline===tag ? '<span class="badge gray">基准缺失</span>' : '<span class="badge no">缺失</span>';
+  }
+  if(r.baseline===tag){
+    return '<span class="badge base">基准·'+s.fieldCount+'字段</span>';
+  }
+  let diffs = (r.diffsBySource||{})[tag]||[];
+  if(diffs.length===0){ return '<span class="badge ok">✓ 一致('+s.fieldCount+')</span>'; }
+  return '<span class="badge no">'+diffs.length+'处差异</span>';
+}
+
+/** 是否存在需要处理的差异（任一非基准源有差异，或任一源整体缺失） */
+function hasAnyDiff(r){
+  for(let tag in (r.diffsBySource||{})){
+    if((r.diffsBySource[tag]||[]).length>0){ return true; }
+  }
+  return !r.javaSource.present || !r.metaSource.present || !r.tableSource.present;
+}
+
+/** 操作单元格：视图禁用补偿；无差异显示"无需补偿"；有差异可点"补偿"跳转补偿Tab */
+function actionCell(r, isView){
+  if(isView){ return '<button disabled title="视图不支持补偿">补偿</button>'; }
+  if(!hasAnyDiff(r)){ return '<span class="badge ok">无需补偿</span>'; }
+  return '<button class="primary" onclick="event.stopPropagation();goFix(\''+esc(r.tableName)+'\')">补偿</button>';
+}
+
+/** 从报告行进入补偿操作：切换Tab并带上该实体，自动复验展示差异 */
+function goFix(tableName){
+  switchTab('fix');
+  let apply = ()=> {
+    selectedFixEntity = findEntity(tableName);
+    renderComboSelection('fix');
+    checkSingle();
+  };
+  if(entitiesCache.length===0){
+    refreshEntityDropdowns();
+    setTimeout(apply, 800);
+  } else {
+    apply();
+  }
+}
+
 function renderDetail(r){
-  if(r.consistent) return '<div class="empty">三方一致，无差异</div>';
-  let html = '';
-  html += diffBlock('Java ↔ 实体定义', r.javaVsMeta);
-  html += diffBlock('实体定义 ↔ 物理表', r.metaVsTable);
-  html += diffBlock('Java ↔ 物理表', r.javaVsTable);
+  if(r.consistent) return '<div class="empty">与基准（'+SOURCE_NAMES[r.baseline]+'）一致，无差异</div>';
+  let html = '<div style="margin-bottom:6px;color:#606266;">基准：<b>'+SOURCE_NAMES[r.baseline]+'</b>，差异标记在以下非基准源：</div>';
+  let hasAny = false;
+  for(let tag in (r.diffsBySource||{})){
+    let diffs = r.diffsBySource[tag]||[];
+    if(diffs.length>0){ hasAny = true; }
+    html += diffBlock(SOURCE_NAMES[tag]+'（相对基准'+(diffs.length>0?'，'+diffs.length+'项差异':'，无差异')+'）', diffs);
+  }
+  if(!hasAny && (!r.javaSource.present || !r.metaSource.present || !r.tableSource.present)){
+    html += '<div class="empty">存在整体缺失的源（见上方状态徽章）</div>';
+  }
   return html;
 }
 
 function diffBlock(title, diffs){
-  if(!diffs || diffs.length===0) return '';
-  let html = '<div class="diff-block"><h4>'+esc(title)+'（'+diffs.length+'项）</h4><table><thead><tr><th>列名</th><th>字段名</th><th>差异</th></tr></thead><tbody>';
+  let html = '<div class="diff-block"><h4>'+esc(title)+'</h4>';
+  if(!diffs || diffs.length===0){
+    html += '<div style="color:#67c23a;font-size:12px;">✓ 一致</div></div>';
+    return html;
+  }
+  html += '<table><thead><tr><th>列名</th><th>字段名</th><th>差异</th></tr></thead><tbody>';
   diffs.forEach(d=>{
     let detail = '';
-    if(d.onlyInJava) detail = '<span class="badge no">仅Java有</span>';
-    else if(d.onlyInMeta) detail = '<span class="badge no">仅实体定义有</span>';
-    else if(d.onlyInTable) detail = '<span class="badge no">仅物理表有</span>';
-    else if(d.typeDiff) detail = '<span class="badge no">类型冲突 java='+(d.typeDiff.javaType||'-')+' meta='+(d.typeDiff.metaType||'-')+' table='+(d.typeDiff.tableType||'-')+'</span>';
-    else if(d.lengthDiff) detail = '<span class="badge gray">长度差异 '+esc(d.lengthDiff)+'</span>';
+    if(d.status==='MISSING') detail = '<span class="badge no">缺列（基准有，本源无）</span>';
+    else if(d.status==='EXTRA') detail = '<span class="badge no">多列（基准无，本源有）</span>';
+    else if(d.status==='TYPE_MISMATCH') detail = '<span class="badge no">类型不匹配：基准 '+(d.baselineType||'-')+' → 本源 '+(d.sourceType||'-')+'</span>';
+    else if(d.status==='LENGTH_DIFF') detail = '<span class="badge gray">'+esc(d.lengthDiff)+'</span>';
     html += '<tr><td>'+esc(d.columnName)+'</td><td>'+esc(d.fieldName)+'</td><td>'+detail+'</td></tr>';
   });
   html += '</tbody></table></div>';
@@ -234,28 +327,98 @@ function switchTab(name){
   });
 }
 
+// ============ 可检索实体下拉（combo 组件） ============
+let entitiesCache = [];
+let selectedFixEntity = null;
+let selectedCodegenEntity = null;
+
+function findEntity(tableName){
+  return entitiesCache.find(e=>e.tableName===tableName) || null;
+}
+
 function refreshEntityDropdowns(){
   api('/entities').then(res=>{
-    let list = unwrap(res) || [];
-    let opts = list.map(e=>'<option value="'+esc(e.tableName)+'" data-entity="'+esc(e.entityName)+'" data-title="'+esc(e.title)+'">'+esc(e.tableName)+' ('+esc(e.title)+')</option>').join('');
-    document.getElementById('fixEntity').innerHTML = opts || '<option value="">无实体</option>';
-    document.getElementById('codegenEntity').innerHTML = opts || '<option value="">无实体</option>';
-    onFixEntityChange();
+    entitiesCache = unwrap(res) || [];
+    if(selectedFixEntity){ selectedFixEntity = findEntity(selectedFixEntity.tableName); }
+    if(selectedCodegenEntity){ selectedCodegenEntity = findEntity(selectedCodegenEntity.tableName); }
+    renderComboSelection('fix');
+    renderComboSelection('codegen');
   });
 }
 
-function onFixEntityChange(){
-  let sel = document.getElementById('fixEntity');
-  let opt = sel.options[sel.selectedIndex];
-  if(opt){
-    document.getElementById('fixEntityDesc').textContent = '实体名：' + (opt.dataset.entity||'') + ' | ' + (opt.dataset.title||'');
+function comboRender(prefix){
+  let combo = document.getElementById(prefix+'EntityCombo');
+  let input = document.getElementById(prefix+'EntityInput');
+  let list = document.getElementById(prefix+'EntityList');
+  let kw = input.value.trim().toLowerCase();
+  let items = entitiesCache.filter(e=>{
+    return !kw || (e.tableName||'').toLowerCase().includes(kw)
+      || (e.entityName||'').toLowerCase().includes(kw)
+      || (e.title||'').toLowerCase().includes(kw);
+  });
+  let html = '';
+  if(items.length===0){
+    html = '<div class="combo-empty">无匹配实体</div>';
+  } else {
+    items.slice(0,300).forEach(e=>{
+      let view = e.tableType==='view';
+      html += '<div class="combo-item'+(view?' disabled':'')+'" data-table="'+esc(e.tableName)+'">'
+        + esc(e.tableName)+'（'+esc(e.title||'')+'）'
+        + (view?'<span class="tag view">视图·不可补偿</span>':'')
+        + '</div>';
+    });
   }
+  list.innerHTML = html;
+  list.querySelectorAll('.combo-item').forEach(el=>{
+    el.onclick = function(){ comboSelect(prefix, this.dataset.table); };
+  });
+  combo.classList.add('open');
+}
+
+function comboSelect(prefix, tableName){
+  let e = findEntity(tableName);
+  if(prefix==='fix'){ selectedFixEntity = e; } else { selectedCodegenEntity = e; }
+  document.getElementById(prefix+'EntityInput').value = e ? e.tableName : '';
+  document.getElementById(prefix+'EntityCombo').classList.remove('open');
+  if(prefix==='fix'){ onFixEntityChange(); }
+}
+
+function renderComboSelection(prefix){
+  let sel = prefix==='fix' ? selectedFixEntity : selectedCodegenEntity;
+  document.getElementById(prefix+'EntityInput').value = sel ? sel.tableName : '';
+  if(prefix==='fix'){ onFixEntityChange(); }
+}
+
+// 点击组件外关闭下拉
+document.addEventListener('click', function(ev){
+  document.querySelectorAll('.combo').forEach(c=>{
+    if(!c.contains(ev.target)) c.classList.remove('open');
+  });
+});
+// 绑定输入事件（focus/input 打开并过滤）
+['fix','codegen'].forEach(prefix=>{
+  let input = document.getElementById(prefix+'EntityInput');
+  if(input){
+    input.addEventListener('focus', ()=>comboRender(prefix));
+    input.addEventListener('input', ()=>comboRender(prefix));
+  }
+});
+
+function onFixEntityChange(){
+  let e = selectedFixEntity;
+  let desc = document.getElementById('fixEntityDesc');
+  let isView = !!(e && e.tableType==='view');
+  if(!e){
+    desc.textContent = '';
+  } else {
+    desc.textContent = '实体名：'+(e.entityName||'')+' | '+(e.title||'')+(isView?' ⚠ 视图不支持补偿':'');
+  }
+  document.getElementById('btnFixPreview').disabled = isView;
+  document.getElementById('btnFixApply').disabled = isView;
 }
 
 function getCurrentEntityName(){
-  let sel = document.getElementById('fixEntity');
-  let opt = sel.options[sel.selectedIndex];
-  return opt ? (opt.dataset.entity || sel.value) : null;
+  return selectedFixEntity ? (selectedFixEntity.entityName || selectedFixEntity.tableName) : null;
 }
 
 function renderFixResult(res){
@@ -269,7 +432,8 @@ function renderFixResult(res){
 }
 
 function runFixPreview(){
-  let tableName = document.getElementById('fixEntity').value;
+  if(!selectedFixEntity){ alert('请先选择实体'); return; }
+  let tableName = selectedFixEntity.tableName;
   let entityName = getCurrentEntityName();
   let fixType = document.getElementById('fixType').value;
   let body = {tableName: tableName, entityName: entityName, apply: false};
@@ -280,8 +444,9 @@ function runFixPreview(){
 }
 
 function runFixApply(){
+  if(!selectedFixEntity){ alert('请先选择实体'); return; }
   if(!confirm('确认写库？此操作将修改 platform_dev_table/column 数据。')) return;
-  let tableName = document.getElementById('fixEntity').value;
+  let tableName = selectedFixEntity.tableName;
   let entityName = getCurrentEntityName();
   let fixType = document.getElementById('fixType').value;
   let body = {tableName: tableName, entityName: entityName, apply: true};
@@ -296,17 +461,17 @@ function runFixApply(){
 }
 
 function checkSingle(){
-  let tableName = document.getElementById('fixEntity').value;
-  if(!tableName){ alert('请先选择实体'); return; }
+  if(!selectedFixEntity){ alert('请先选择实体'); return; }
+  let tableName = selectedFixEntity.tableName;
   let panel = document.getElementById('singleCheckPanel');
   let body = document.getElementById('singleCheckBody');
   let title = document.getElementById('singleCheckTitle');
   panel.classList.remove('hidden');
   title.textContent = tableName + ' （查询中...）';
   body.innerHTML = '<div class="empty loading">复验中（直接查库）...</div>';
-  api('/check/'+encodeURIComponent(tableName)).then(res=>{
+  api('/check/'+encodeURIComponent(tableName)+'?baseline='+currentBaseline()).then(res=>{
     let r = unwrap(res);
-    title.textContent = r.tableName + (r.consistent ? ' —— 一致' : ' —— 存在差异');
+    title.textContent = r.tableName + '（基准：'+SOURCE_NAMES[r.baseline]+'）' + (r.consistent ? ' —— 一致' : ' —— 存在差异');
     body.innerHTML = renderSingleCheck(r);
   }).catch(e=>{
     body.innerHTML = '<div class="empty">复验失败：'+esc(e.message)+'</div>';
@@ -319,18 +484,20 @@ function renderSingleCheck(r){
   html += statusBadge(r.metaSource,'Meta') + '&nbsp;';
   html += statusBadge(r.tableSource,'Table');
   html += '</div>';
-  if(r.consistent){ return html + '<div class="empty">三方一致，无差异</div>'; }
-  html += diffBlock('Java ↔ 实体定义', r.javaVsMeta);
-  html += diffBlock('实体定义 ↔ 物理表', r.metaVsTable);
-  html += diffBlock('Java ↔ 物理表', r.javaVsTable);
+  if(r.consistent){ return html + '<div class="empty">与基准一致，无差异</div>'; }
+  for(let tag in (r.diffsBySource||{})){
+    let diffs = r.diffsBySource[tag]||[];
+    html += diffBlock(SOURCE_NAMES[tag]+'（相对基准）', diffs);
+  }
+  if(!r.javaSource.present || !r.metaSource.present || !r.tableSource.present){
+    html += '<div class="empty">存在整体缺失的源（见上方状态徽章）</div>';
+  }
   return html;
 }
 
 function runCodegen(){
-  let sel = document.getElementById('codegenEntity');
-  let opt = sel.options[sel.selectedIndex];
-  if(!opt){ alert('请选择实体'); return; }
-  let entityName = opt.dataset.entity || sel.value;
+  if(!selectedCodegenEntity){ alert('请先选择实体'); return; }
+  let entityName = selectedCodegenEntity.entityName || selectedCodegenEntity.tableName;
   let pkg = document.getElementById('codegenPkg').value.trim();
   apiPost('/fix/gen-java', {entityName: entityName, packageName: pkg}).then(res=>{
     let data = unwrap(res);

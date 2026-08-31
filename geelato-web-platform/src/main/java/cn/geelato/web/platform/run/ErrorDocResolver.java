@@ -2,17 +2,16 @@ package cn.geelato.web.platform.run;
 
 import cn.geelato.core.GlobalContext;
 import cn.geelato.lang.exception.CoreException;
-import cn.geelato.lang.exception.ErrorCode;
 
 /**
  * 错误码 → 在线文档 URL 解析器。
- * <p>根据 {@link CoreException} 持有的 {@link ErrorCode} 拼装可定位到在线文档的 URL，
- * 注入到异常响应的 {@code docUrl} 字段，供前端展示"查看文档"入口。</p>
+ * <p>根据 {@link CoreException} 声明的错误码与 docSlug（{@link CoreException#getDocSlug()}）
+ * 拼装可定位到在线文档的 URL，注入到异常响应的 {@code docUrl} 字段，供前端展示"查看文档"入口。</p>
  *
  * <h3>映射规则</h3>
  * <ul>
- *   <li>{@link ErrorCode#getDocSlug()} 非空：{@code {baseUrl}/docs/reference/error-codes/{slug}}（独立详情页）</li>
- *   <li>{@link ErrorCode#getDocSlug()} 为空：{@code {baseUrl}/docs/reference/error-codes#{code}}（汇总页锚点）</li>
+ *   <li>{@link CoreException#getDocSlug()} 非空：{@code {baseUrl}/docs/reference/error-codes/{slug}}（独立详情页）</li>
+ *   <li>{@link CoreException#getDocSlug()} 为空：{@code {baseUrl}/docs/reference/error-codes#{code}}（汇总页锚点）</li>
  * </ul>
  *
  * <p>当 {@link GlobalContext#getDocUrlEnabled()} 为 false 时返回 null（全局关闭文档跳转）。</p>
@@ -33,14 +32,10 @@ public class ErrorDocResolver {
         if (ex == null || !GlobalContext.getDocUrlEnabled()) {
             return null;
         }
-        ErrorCode ec = ex.getError();
-        if (ec == null) {
-            return null;
-        }
         String base = GlobalContext.getDocBaseUrl();
-        String slug = ec.getDocSlug();
+        String slug = ex.getDocSlug();
         return base + ERROR_DOCS_PATH + (slug != null && !slug.isEmpty()
                 ? "/" + slug
-                : "#" + ec.getCode());
+                : "#" + ex.getErrorCode());
     }
 }

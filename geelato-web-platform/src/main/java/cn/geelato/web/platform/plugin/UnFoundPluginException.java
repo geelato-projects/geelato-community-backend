@@ -1,19 +1,12 @@
 package cn.geelato.web.platform.plugin;
 
 import cn.geelato.lang.exception.CoreException;
-import cn.geelato.web.platform.exception.PlatformErrorCodes;
 
 public class UnFoundPluginException extends CoreException {
 
+    public static final int ERROR_CODE = 40001;
+
     public UnFoundPluginException() {
-        super(PlatformErrorCodes.PLUGIN_NOT_FOUND);
-    }
-
-    public UnFoundPluginException(String msg) {
-        super(PlatformErrorCodes.PLUGIN_NOT_FOUND, msg);
-    }
-
-    public UnFoundPluginException(String msg, Throwable cause) {
-        super(PlatformErrorCodes.PLUGIN_NOT_FOUND, msg, cause);
+        super(ERROR_CODE, "插件未找到");
     }
 }

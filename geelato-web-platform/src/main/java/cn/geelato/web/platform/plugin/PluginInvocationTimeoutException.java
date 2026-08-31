@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.plugin;
 
 import cn.geelato.lang.exception.CoreException;
-import cn.geelato.web.platform.exception.PlatformErrorCodes;
 
 /**
  * 插件调用超时时抛出。
@@ -12,15 +11,9 @@ import cn.geelato.web.platform.exception.PlatformErrorCodes;
  */
 public class PluginInvocationTimeoutException extends CoreException {
 
-    public PluginInvocationTimeoutException() {
-        super(PlatformErrorCodes.PLUGIN_INVOCATION_TIMEOUT);
-    }
-
-    public PluginInvocationTimeoutException(String msg) {
-        super(PlatformErrorCodes.PLUGIN_INVOCATION_TIMEOUT, msg);
-    }
+    public static final int ERROR_CODE = 40004;
 
     public PluginInvocationTimeoutException(String msg, Throwable cause) {
-        super(PlatformErrorCodes.PLUGIN_INVOCATION_TIMEOUT, msg, cause);
+        super(ERROR_CODE, msg, cause);
     }
 }

@@ -736,11 +736,19 @@ public class PackageService extends BaseService {
      */
     private void refreshAppV2(String appId) {
         Collection<EntityMeta> allEntityMeta = metaManager.getAll();
+        int refreshed = 0;
+        int skippedPlatform = 0;
         for (EntityMeta entityMeta : allEntityMeta) {
             String metaAppId = entityMeta.getTableMeta().getAppId();
             if (metaAppId != null && metaAppId.equals(appId)) {
+                if ("platform".equalsIgnoreCase(entityMeta.getCatalog())) {
+                    skippedPlatform++;
+                    continue;
+                }
                 metaManager.refreshDBMeta(entityMeta.getEntityName());
+                refreshed++;
             }
         }
+        log.info("刷新应用元数据缓存完成：appId={}, 刷新实体 {} 个, 跳过平台实体 {} 个", appId, refreshed, skippedPlatform);
     }
 }

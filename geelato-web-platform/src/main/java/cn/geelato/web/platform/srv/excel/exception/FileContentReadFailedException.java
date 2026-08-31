@@ -1,18 +1,18 @@
 package cn.geelato.web.platform.srv.excel.exception;
 
-import cn.geelato.web.platform.exception.PlatformErrorCodes;
-
 /**
  * @author diabl
- * 12.8 文件内容读取失败异常
+ * 文件内容读取失败异常
  */
 public class FileContentReadFailedException extends FileException {
 
+    public static final int ERROR_CODE = 30018;
+
     public FileContentReadFailedException() {
-        super(PlatformErrorCodes.FILE_CONTENT_READ_FAILED);
+        super(ERROR_CODE, "文件内容读取失败");
     }
 
     public FileContentReadFailedException(String detailMessage) {
-        super(PlatformErrorCodes.FILE_CONTENT_READ_FAILED, String.format("%s：%s", PlatformErrorCodes.FILE_CONTENT_READ_FAILED.getDefaultMessage(), detailMessage));
+        super(ERROR_CODE, String.format("文件内容读取失败：%s", detailMessage));
     }
 }

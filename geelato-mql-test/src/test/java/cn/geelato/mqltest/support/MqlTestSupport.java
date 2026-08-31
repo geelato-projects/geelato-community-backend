@@ -57,7 +57,7 @@ public abstract class MqlTestSupport {
     }
 
     /**
-     * 编程式注册视图实体 mql_test_order_view（DEFAULT 类型，带 @pf 模板）。
+     * 编程式注册视图实体 mql_test_order_view（VIRTUAL 虚拟视图，带 @pf 模板）。
      * <p>
      * 通过 {@link MetaManager#parseViewEntity(java.util.Map)} 注册，
      * 提供 view_column 列定义（JSON 字符串格式）与 view_construct 模板。
@@ -88,7 +88,7 @@ public abstract class MqlTestSupport {
         cn.geelato.core.meta.model.view.TableView view = new cn.geelato.core.meta.model.view.TableView();
         view.setViewName(viewName);
         view.setTitle("订单视图(测试)");
-        view.setViewType(ViewTypeEnum.DEFAULT.getCode());
+        view.setViewType(ViewTypeEnum.VIRTUAL.getCode());
         view.setViewConstruct(viewConstruct);
         view.setViewColumn(viewColumn);
 

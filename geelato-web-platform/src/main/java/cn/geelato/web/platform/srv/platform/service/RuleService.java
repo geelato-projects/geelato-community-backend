@@ -104,7 +104,7 @@ public class RuleService {
 
     public Map<String, Object> queryForMapList(String gql, boolean withMeta, Map<String, Map<String, Object>> queryParamsByEntity) {
         cn.geelato.core.mql.MqlQueryProcessor.ProcessedQuery processed =
-                cn.geelato.core.mql.MqlQueryProcessor.getInstance().process(gql);
+                cn.geelato.core.mql.MqlQueryProcessor.getInstance().process(gql, queryParamsByEntity);
         QueryCommand command = processed.getCommand();
         BoundPageSql boundPageSql = processed.getBoundPageSql();
         Object meta = withMeta ? metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()) : null;

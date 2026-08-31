@@ -224,12 +224,7 @@ public class MetaDdlService {
             if (viewMetas == null || viewMetas.isEmpty()) {
                 return ApiMetaResult.successNoResult();
             }
-            viewMetas.sort(new Comparator<TableView>() {
-                @Override
-                public int compare(TableView o1, TableView o2) {
-                    return o1.getViewName().compareToIgnoreCase(o2.getViewName());
-                }
-            });
+            viewMetas.sort((o1, o2) -> o1.getViewName().compareToIgnoreCase(o2.getViewName()));
             for (TableView meta : viewMetas) {
                 tableResult.put(meta.getViewName(), false);
             }

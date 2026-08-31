@@ -25,9 +25,10 @@ import java.util.Map;
  * <p>
  * 处理步骤（与原 RuleService.queryForMapList 前半段完全一致）：
  * <ol>
- *   <li>{@link #extractPfAndSerialize}：从 MQL JSON 抽取 {@code @pf}（视图模板参数）并从 JSON 移除</li>
+ *   <li>{@link #extractPfAndSerialize}：从 MQL JSON 抽取 {@code @pf}（视图模板参数）并从 JSON 移除；
+ *       经 {@link #process(String, Map)} 入口时，先与外部传入参数合并（外部优先）再进入后续步骤</li>
  *   <li>{@link MetaQLManager#generateQuerySql}：解析 JSON 为 QueryCommand（含 SPI 注入器）</li>
- *   <li>{@link #applyViewTemplateParams}：将 @pf 参数设到 command（视图实体）</li>
+ *   <li>{@link #applyViewTemplateParams}：将 @pf 参数设到 command（仅虚拟视图 VIRTUAL 生效）</li>
  *   <li>{@link #processQueryCommandFunctions}：处理 {@code $fn.now} 等函数变量</li>
  *   <li>{@link SqlManager#generatePageQuerySql}：生成 BoundPageSql（SQL + count）</li>
  * </ol>
@@ -82,9 +83,35 @@ public class MqlQueryProcessor {
      * @return 处理结果（含 command 和 boundPageSql）
      */
     public ProcessedQuery process(String mqlJson) {
+        return process(mqlJson, null);
+    }
+
+    /**
+     * 完整处理（支持外部注入 @pf 参数）：MQL JSON → QueryCommand → BoundPageSql（含 count）。
+     * <p>
+     * 适用于调用方（如 /meta/list 的 Controller）已预先抽取 @pf 并从 JSON 移除的场景：
+     * 此时 mqlJson 中已无 @pf，由 externalParamsByEntity 提供视图模板参数。
+     * mqlJson 中仍含 @pf 时两者合并，外部参数优先（同 key 覆盖）。
+     *
+     * @param mqlJson                MQL JSON（可含 @pf，也可为已移除 @pf 的净化 JSON）
+     * @param externalParamsByEntity 外部视图模板参数（实体名 → 参数），可为 null
+     * @return 处理结果（含 command、boundPageSql 和合并后的参数）
+     */
+    public ProcessedQuery process(String mqlJson, Map<String, Map<String, Object>> externalParamsByEntity) {
         JSONObject root = JSON.parseObject(mqlJson);
         Map<String, Map<String, Object>> paramsByEntity = new HashMap<>();
         String cleanGql = extractPfAndSerialize(root, paramsByEntity);
+        if (externalParamsByEntity != null && !externalParamsByEntity.isEmpty()) {
+            externalParamsByEntity.forEach((entityName, params) -> {
+                if (params == null) {
+                    return;
+                }
+                paramsByEntity.merge(entityName, new HashMap<>(params), (extracted, external) -> {
+                    extracted.putAll(external);
+                    return extracted;
+                });
+            });
+        }
         QueryCommand command = gqlManager.generateQuerySql(cleanGql);
         applyViewTemplateParams(command, paramsByEntity);
         processQueryCommandFunctions(command);
@@ -118,29 +145,36 @@ public class MqlQueryProcessor {
     }
 
     /**
-     * 将视图模板参数设到 QueryCommand（仅对 DEFAULT 视图实体生效）。
+     * 将视图模板参数设到 QueryCommand（仅对虚拟视图 VIRTUAL 生效）。
+     * <p>
+     * 虚拟视图不落库（见 MetaDdlService：虚拟视图无需创建），查询时由 view_construct
+     * 动态构造派生表，@pf 模板参数因此可注入；其他视图（DEFAULT/COMPLEX/CUSTOM，或无
+     * 视图元数据的物理 DB 视图）已被物化或不含模板，收到非空 @pf 参数时抛出
+     * {@link ViewTemplateParamException}，不静默丢弃。
      */
     public void applyViewTemplateParams(QueryCommand command, Map<String, Map<String, Object>> paramsByEntity) {
         if (command == null || paramsByEntity == null || paramsByEntity.isEmpty()) {
             return;
         }
+        Map<String, Object> params = paramsByEntity.get(command.getEntityName());
+        if (params == null || params.isEmpty()) {
+            return;
+        }
         EntityMeta entityMeta = metaManager.getByEntityName(command.getEntityName());
         if (entityMeta == null || entityMeta.getTableMeta() == null) {
-            return;
+            throw new ViewTemplateParamException(command.getEntityName(), params.keySet(), "实体元数据缺失");
         }
         if (EntityType.View != entityMeta.getEntityType()) {
-            return;
+            throw new ViewTemplateParamException(command.getEntityName(), params.keySet(), "该实体不是视图实体");
         }
         ViewMeta viewMeta = entityMeta.getViewMeta(entityMeta.getTableName());
-        if (viewMeta != null
-                && StringUtils.hasText(viewMeta.getViewType())
-                && !ViewTypeEnum.DEFAULT.getCode().equalsIgnoreCase(viewMeta.getViewType())) {
-            return;
+        if (viewMeta == null || !StringUtils.hasText(viewMeta.getViewType())
+                || !ViewTypeEnum.VIRTUAL.getCode().equalsIgnoreCase(viewMeta.getViewType())) {
+            String reason = viewMeta == null ? "该视图无平台视图元数据（物理DB视图）"
+                    : "视图类型为" + viewMeta.getViewType();
+            throw new ViewTemplateParamException(command.getEntityName(), params.keySet(), reason);
         }
-        Map<String, Object> params = paramsByEntity.get(command.getEntityName());
-        if (params != null && !params.isEmpty()) {
-            command.setViewTemplateParams(params);
-        }
+        command.setViewTemplateParams(params);
     }
 
     /**

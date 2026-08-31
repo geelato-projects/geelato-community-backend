@@ -87,7 +87,7 @@ public class MqlTestModelRegistrar {
         TableView view = new TableView();
         view.setViewName(viewName);
         view.setTitle("订单视图(测试)");
-        view.setViewType(ViewTypeEnum.DEFAULT.getCode());
+        view.setViewType(ViewTypeEnum.VIRTUAL.getCode());
         view.setViewConstruct(viewConstruct);
         view.setViewColumn(viewColumn);
 

@@ -1,7 +1,7 @@
 [
   {
     "id": "view-default-derived",
-    "name": "DEFAULT视图-派生表查询",
+    "name": "虚拟视图-派生表查询",
     "category": "视图",
     "setup": [
       "INSERT INTO mql_test_order (id, order_no, user_id, amount, status, tenant_code) VALUES (1, 'NO1', 1, 100, 'pending', 'test')",
@@ -11,7 +11,7 @@
     "mql": "{\"mql_test_order_view\":{}}",
     "expectRowCount": 2,
     "expectSqlContains": "from (",
-    "description": "DEFAULT视图生成派生表(from子查询)。视图实体 mql_test_order_view 在模块启动时自动注册。"
+    "description": "虚拟视图(VIRTUAL)生成派生表(from子查询)。视图实体 mql_test_order_view 在模块启动时自动注册。"
   },
   {
     "id": "view-template-filter",

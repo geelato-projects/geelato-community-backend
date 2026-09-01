@@ -15,6 +15,7 @@ import cn.geelato.web.platform.common.FileHandler;
 import cn.geelato.web.platform.srv.BaseController;
 import cn.geelato.meta.AppVersion;
 import cn.geelato.web.platform.srv.pack.service.AppVersionService;
+import cn.geelato.web.platform.srv.pack.exception.PackException;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -84,34 +86,29 @@ public class AppVersionController extends BaseController {
 
     @RequestMapping(value = "/package/{id}", method = RequestMethod.GET)
     public ApiResult<AppPackData> getPackage(@PathVariable String id) {
+        // 异常统一抛出（带 60xxx 错误码），由 PlatformExceptionHandler 接管，不再本地吞成 fail
         try {
             AppVersion appVersion = appVersionService.getModel(CLAZZ, id);
             Assert.notNull(appVersion, "AppVersion does not exist");
-            if (!StringUtils.isEmpty(appVersion.getPackagePath())) {
-                String appPackageData = "";
-                if (appVersion.getPackagePath().contains(".zgdp")) {
-                    appPackageData = ZipUtils.readPackageData(appVersion.getPackagePath(), ".gdp");
-                } else {
-                    File file = fileHandler.toFile(appVersion.getPackagePath());
-                    if (file != null) {
-                        appPackageData = ZipUtils.readPackageData(file, ".gdp");
-                    } else {
-                        throw new RuntimeException("AppVersion package file does not exist");
-                    }
-                }
-                AppPackData appPackage = null;
-                if (!StringUtils.isEmpty(appPackageData)) {
-                    appPackage = JSONObject.parseObject(appPackageData, AppPackData.class);
-                    return ApiResult.success(appPackage);
-                } else {
-                    throw new RuntimeException("*.gdp file read failed");
-                }
-            } else {
-                throw new RuntimeException("AppVersion package path does not exist");
+            if (StringUtils.isEmpty(appVersion.getPackagePath())) {
+                throw new PackException(PackException.ERROR_CODE_PACKAGE_INVALID, "AppVersion package path does not exist");
             }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ApiResult.fail(e.getMessage());
+            String appPackageData;
+            if (appVersion.getPackagePath().contains(".zgdp")) {
+                appPackageData = ZipUtils.readPackageData(appVersion.getPackagePath(), ".gdp");
+            } else {
+                File file = fileHandler.toFile(appVersion.getPackagePath());
+                if (file == null) {
+                    throw new PackException(PackException.ERROR_CODE_PACKAGE_INVALID, "AppVersion package file does not exist");
+                }
+                appPackageData = ZipUtils.readPackageData(file, ".gdp");
+            }
+            if (StringUtils.isEmpty(appPackageData)) {
+                throw new PackException(PackException.ERROR_CODE_PACKAGE_IO, "*.gdp file read failed");
+            }
+            return ApiResult.success(JSONObject.parseObject(appPackageData, AppPackData.class));
+        } catch (IOException ex) {
+            throw new PackException(PackException.ERROR_CODE_PACKAGE_IO, ex.getMessage());
         }
     }
 

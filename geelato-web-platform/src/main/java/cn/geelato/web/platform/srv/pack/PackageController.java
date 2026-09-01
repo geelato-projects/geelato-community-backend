@@ -27,7 +27,7 @@ import cn.geelato.web.platform.srv.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.srv.file.param.FileParam;
 import cn.geelato.web.platform.utils.FileParamUtils;
 import cn.geelato.pack.PackageConfigurationProperties;
-import cn.geelato.pack.PackageException;
+import cn.geelato.web.platform.srv.pack.exception.PackException;
 import cn.geelato.meta.AppVersion;
 import cn.geelato.web.platform.srv.pack.service.AppVersionService;
 import cn.geelato.web.platform.srv.pack.service.PackageService;
@@ -145,7 +145,7 @@ public class PackageController {
         packageService.assertColumnsConsistent(inconsistentTables);
         if (StringUtils.isEmpty(appPackage.getAppCode())) {
             log.warn("打包失败：找不到可打包的应用，appId={}", appId);
-            return ApiResult.fail("找不到可打包的应用");
+            throw new PackException(PackException.ERROR_CODE_APP_NOT_FOUND, "找不到可打包的应用");
         }
         appPackage.setAppMetaList(appMetaList);
         AppVersion av = new AppVersion();
@@ -231,7 +231,7 @@ public class PackageController {
                         appPackageData = ZipUtils.readPackageData(file, ".gdp");
                     }
                 } catch (IOException ex) {
-                    throw new PackageException(ex.getMessage());
+                    throw new PackException(PackException.ERROR_CODE_PACKAGE_IO, ex.getMessage());
                 }
                 AppPackData appPackage =PackageUtils.resolveAppPackageData(appPackageData);
                 appPackageList.add(appPackage);
@@ -296,7 +296,7 @@ public class PackageController {
             return packageService.deployV2(versionId);
         }
         if ("init_source".equals(packageConfigurationProperties.getEnv())) {
-            return ApiResult.fail("本环境无法部署任何应用，请联系管理员！");
+            throw new PackException(PackException.ERROR_CODE_NOT_ALLOWED, "本环境无法部署任何应用，请联系管理员！");
         }
         long startTime = System.currentTimeMillis();
         AppVersion appVersion = appVersionService.getModel(AppVersion.class, versionId);
@@ -315,7 +315,7 @@ public class PackageController {
                 }
             } catch (IOException ex) {
                 log.error("读取应用包文件失败，versionId: {}, packagePath: {}", versionId, appVersion.getPackagePath(), ex);
-                throw new PackageException("读取应用包文件失败（" + appVersion.getPackagePath() + "）：" + rootMsg(ex));
+                throw new PackException(PackException.ERROR_CODE_PACKAGE_IO, "读取应用包文件失败（" + appVersion.getPackagePath() + "）：" + rootMsg(ex));
             }
 
             AppPackData appPackage = PackageUtils.resolveAppPackageData(appPackageData);
@@ -327,21 +327,26 @@ public class PackageController {
                         backupCurrentVersion(appVersion.getAppId());
                         deployAppPackageData(appPackage);
                     }else {
-                        throw new PackageException("应用包校验不通过,请先更新平台应用geelato_admin至版本" + appPackage.getBasePlatformVersion());
+                        throw new PackException(PackException.ERROR_CODE_PLATFORM_MISMATCH,
+                                "应用包校验不通过,请先更新平台应用geelato_admin至版本" + appPackage.getBasePlatformVersion());
                     }
+                } catch (PackException pe) {
+                    throw pe;
                 } catch (Exception ex) {
                     log.error("应用部署失败，versionId: {}, appId: {}", versionId, appVersion.getAppId(), ex);
-                    return ApiResult.fail("应用部署失败：" + PackageService.withFieldMetaHint(rootMsg(ex)));
+                    throw new PackException(PackException.ERROR_CODE_DEPLOY_DATA_FAILED,
+                            "应用部署失败：" + PackageService.withFieldMetaHint(rootMsg(ex)));
                 }
                 try {
                     refreshApp(appVersion.getAppId());
                 } catch (Exception ex) {
                     log.error("应用数据已部署成功，但刷新应用元数据缓存失败，appId: {}", appVersion.getAppId(), ex);
-                    return ApiResult.fail("应用数据已部署成功，但刷新应用元数据缓存失败：" + rootMsg(ex));
+                    throw new PackException(PackException.ERROR_CODE_REFRESH_CACHE_FAILED,
+                            "应用数据已部署成功，但刷新应用元数据缓存失败：" + rootMsg(ex));
                 }
                 log.info("应用部署成功：versionId={}, appId={}, 耗时 {} ms", versionId, appVersion.getAppId(), System.currentTimeMillis() - startTime);
             } else {
-                throw new PackageException("无法读取到应用包数据，请检查应用包");
+                throw new PackException(PackException.ERROR_CODE_PACKAGE_INVALID, "无法读取到应用包数据，请检查应用包");
             }
         }
         return ApiResult.success(null, "应用部署成功！");
@@ -450,7 +455,7 @@ public class PackageController {
             writer.write(jsonStr);
             writer.close();
         } catch (IOException ex) {
-            throw new PackageException(ex.getMessage());
+            throw new PackException(PackException.ERROR_CODE_PACKAGE_IO, ex.getMessage());
         }
         return compressAppPackage(packageConfigurationProperties.getPath() + tempFolderPath, appVersion, appPackage);
     }
@@ -484,7 +489,7 @@ public class PackageController {
                     deployAppMetaData(appMeta);
                 } catch (Exception ex) {
                     log.error("处理元数据 [{}] 失败（第 {}/{} 个）", appMeta.getMetaName(), idx + 1, appMetaList.size(), ex);
-                    throw new PackageException("处理元数据 [" + appMeta.getMetaName() + "] 失败：" + rootMsg(ex));
+                    throw new PackException(PackException.ERROR_CODE_DEPLOY_DATA_FAILED, "处理元数据 [" + appMeta.getMetaName() + "] 失败：" + rootMsg(ex));
                 }
                 log.info("结束处理元数据：{}", appMeta.getMetaName());
             }
@@ -506,7 +511,7 @@ public class PackageController {
         Object appMetaData = appMeta.getMetaData();
         EntityMeta entityMeta = metaManager.getByEntityName(appMetaName);
         if (entityMeta == null) {
-            throw new PackageException("元数据 [" + appMetaName + "] 在当前平台不存在（平台版本过低），无法部署");
+            throw new PackException(PackException.ERROR_CODE_META_NOT_FOUND, "元数据 [" + appMetaName + "] 在当前平台不存在（平台版本过低），无法部署");
         }
         String tableName = entityMeta.getTableName();
         boolean increment = incrementMetas.contains(tableName);
@@ -530,7 +535,8 @@ public class PackageController {
                     columnMap.put("forceId", jo.get(key));
                 } else {
                     if (fieldMeta == null) {
-                        throw new PackageException("应用包中的字段 [" + key + "] 在元数据 [" + appMetaName + "] 中不存在（平台版本不匹配），无法部署");
+                        throw new PackException(PackException.ERROR_CODE_META_NOT_FOUND,
+                                "应用包中的字段 [" + key + "] 在元数据 [" + appMetaName + "] 中不存在（平台版本不匹配），无法部署");
                     }
                     columnMap.put(fieldMeta.getFieldName(), jo.get(key));
                 }

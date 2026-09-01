@@ -15,7 +15,8 @@ sidebar_label: 错误码参考
 | 20xxx | 认证 / 授权 / 会话 | 登录、令牌、权限、租户 |
 | 30xxx | 文件处理 | 文件上传、校验、读取 |
 | 40xxx | 插件 | 插件治理与调用 |
-| 50xxx | 系统通用 | 兜底系统异常 |
+| 50xxx | 系统通用 | 兜底系统异常（透出详细错误消息） |
+| 60xxx | 应用打包与部署 | 低代码应用的打包、部署、回滚 |
 
 同类错误跨模块归入同一段，模块重构不影响码段；前端可凭段位判断错误大类。
 
@@ -35,14 +36,22 @@ public class UnauthorizedException extends CoreException {
 
 - `CoreException` 仅持有码值；HTTP 状态码（`getHttpStatus()`，默认 500）与文档 slug（`getDocSlug()`，默认 null）通过可覆写方法按需提供
 - 无参构造传入的文案即用户可见文案（`getUserMessage()` 默认取 errorMsg）
-- 用户文案末尾由 `PlatformExceptionHandler` 追加排障凭据，如：`数据操作失败，请稍后重试（错误码 10002，反馈凭据 123456789012345678）`——用户报障截图后，运维在 `${LOG_DIR}/error/` 检索 `logTag=` 即可取到完整技术详情
+- 用户文案末尾由 `PlatformExceptionHandler` 追加排障凭据，如：`数据操作失败，请稍后重试（错误码 10002，反馈凭据 123456789012345678）`
+
+## 错误响应三层结构（msg 友好 / errorMsg 友好 / stackTraceDetail 技术详情）
+
+异常响应（`ApiResult`）按职责分层，用户看到友好文案的同时技术详情可直接取到：
+
+- **`msg`**（前端直接展示）：`CoreException.getUserMessage()` 友好文案 + 排障凭据
+- **`data.errorMsg`**：同友好文案（不含 SQL/参数/堆栈）
+- **`data.stackTraceDetail`**：技术详情 = 异常技术消息（如 SQL 执行异常的"原因/执行SQL/参数/数据库错误码"）+ 完整堆栈，默认随响应下发；`GlobalContext.setLogStack(false)` 可关闭（仅隐藏本字段，不影响 msg/errorMsg）
+- **反馈凭据即 `logTag`**：技术详情同时写入服务端错误日志（`${LOG_DIR}/error/`，凭 `logTag=` 检索）；响应内 `stackTraceDetail` 与服务端日志双通道，报障时无需登服务器
 
 ## 错误码治理规则
 
 - 错误码定义在各异常类的 `ERROR_CODE` 常量中；**本页码表为登记清单，新增错误码必须同步登记**（新增码在对应类别段段尾顺延）。
 - 码值全局唯一性靠本页登记表约束（无编译期/运行期强制检测）；新增前先查本页避免重复。
-- **码值是前后端契约**：前端存在按码值的分支逻辑（如 20005 弹租户选择、30016 下载错误文件、20002 静默处理），调整码值必须前后端同步发布，并同步更新本页。
-- SQL 执行异常（10002）等场景，开发模式（`GlobalContext.getLogStack()=true`）下响应 `data.errorMsg` 保留完整技术文案便于本地排障；生产默认只返回友好文案。
+- **码值是前后端契约**：前端存在按码值的分支逻辑（如 20001 弹租户选择、30016 下载错误文件、20002 静默处理），调整码值必须前后端同步发布，并同步更新本页。
 - 体系外异常（`McpException`、`ScriptExecutionException`）暂不纳入本表，后续单独治理。
 
 ## 错误码与文档链接规则
@@ -64,12 +73,13 @@ public class UnauthorizedException extends CoreException {
 | 10002 | `cn.geelato.core.orm.SqlExecuteException` | 数据操作失败，请稍后重试（docSlug=sql-execute，独立详情页：[`sql-execute`](/docs/reference/error-codes/sql-execute)，用户文案按根因分类） |
 | 10003 | `cn.geelato.core.sql.InvalidFilterFieldException` | 查询条件包含不存在的字段 |
 | 10004 | `cn.geelato.web.platform.utils.GqlResolveException` | 请求解析失败，请检查表达式 |
+| 10006 | `cn.geelato.lang.exception.UnSupportedVersionException` | 当前版本不支持该操作 |
 
 ## 20xxx 认证/授权/会话类
 
 | 码值 | 异常类 | HTTP 状态 | 默认文案 |
 |---|---|---|---|
-| 20001 | `cn.geelato.web.platform.srv.auth.LoginMultiTenantException` | 500 | 请选择租户（历史码值不变；前端凭此码弹出租户选择框） |
+| 20001 | `cn.geelato.web.platform.srv.auth.LoginMultiTenantException` | 500 | 请选择租户（前端凭此码弹出租户选择框） |
 | 20002 | `cn.geelato.web.common.oauth2.InvalidTokenException` | 500 | 令牌校验异常，请重新登录 |
 | 20003 | `cn.geelato.web.platform.srv.auth.AuthBadRequestException` | 400 | 请求参数错误 |
 | 20004 | `cn.geelato.web.platform.srv.auth.AccountOperationForbiddenException` | 403 | 无权操作该用户 |
@@ -98,48 +108,32 @@ public class UnauthorizedException extends CoreException {
 | 40003 | `PluginNotEnabledForTenantException`（平台级禁用形态） | 插件已被平台级禁用 |
 | 40004 | `PluginInvocationTimeoutException` | 插件调用超时 |
 
-（40005 段位空缺：原枚举项 PLUGIN_LOAD_FAILED 无对应异常类，2026-08 常量化时移除，码值不复用。）
+（40005 段位暂未使用。）
 
 ## 50xxx 系统通用类
 
 | 码值 | 异常类 | 默认文案 |
 |---|---|---|
-| 50001 | ——（`PlatformExceptionHandler.handleOtherException` 兜底，常量定义于 handler） | 系统繁忙，请稍后重试（响应携带 logTag，凭反馈凭据可定位服务端日志） |
+| 50001 | ——（`PlatformExceptionHandler.handleOtherException` 兜底，常量定义于 handler） | 兜底透出详细错误消息（`ex.getMessage()`；无消息时"系统异常：异常类名"），响应携带 logTag |
 
-## 历史保留
+## 60xxx 应用打包与部署类
 
-| 码值 | 异常类 | 默认文案 |
+错误码常量集中定义在 `cn.geelato.web.platform.srv.pack.exception.PackException`（一个类 + 场景常量，v1/v2 打包部署链路共用）。
+
+| 码值 | 常量 | 场景 |
 |---|---|---|
-| 10006 | `cn.geelato.lang.exception.UnSupportedVersionException` | 当前版本不支持该操作 |
+| 60001 | `ERROR_CODE_APP_NOT_FOUND` | 打包-应用不存在 |
+| 60002 | `ERROR_CODE_COLUMN_INCONSISTENT` | 打包前校验-物理表与实体定义列不一致（pre-pack gate） |
+| 60003 | `ERROR_CODE_PACKAGE_INVALID` | 部署-版本/包数据缺失或损坏 |
+| 60004 | `ERROR_CODE_PLATFORM_MISMATCH` | 部署前校验-平台版本/元数据不匹配 |
+| 60005 | `ERROR_CODE_META_NOT_FOUND` | 部署中-元数据或字段在目标平台不存在 |
+| 60006 | `ERROR_CODE_DEPLOY_DATA_FAILED` | 部署中-包数据写入失败（事务回滚） |
+| 60007 | `ERROR_CODE_ILLEGAL_TABLE_NAME` | 表名非法（防注入校验） |
+| 60008 | `ERROR_CODE_PACKAGE_IO` | 应用包文件读写失败（IO） |
+| 60009 | `ERROR_CODE_REFRESH_CACHE_FAILED` | 部署成功但元数据缓存刷新失败 |
+| 60010 | `ERROR_CODE_NOT_ALLOWED` | 环境限制不允许操作 / 回滚无备份版本 |
 
----
-
-## 旧码 → 新码映射（2026-08 错误码重划）
-
-> **重要**：码值是前后端契约，本次重划涉及前端 2 个依赖点（10007→20002、1216→30016）；多租户 20001 为历史码值保持不变，**前后端必须同步发布**。
-
-| 旧码 | 错误 | 新码 |
-|---|---|---|
-| 10001 | PLUGIN_NOT_FOUND | 40001 |
-| 10003 | GQL_RESOLVE | 10004 |
-| 10006 | UNSUPPORTED_VERSION | 10006（不变） |
-| 10007 | INVALID_TOKEN | 20002 |
-| 10008 | MQL_JSON_PARSE | 10001 |
-| 10010 | SQL_EXECUTE | 10002 |
-| 10010 | PLUGIN_NOT_ENABLED_FOR_TENANT | 40002 |
-| 10011 | INVALID_FILTER_FIELD | 10003 |
-| 10011 | PLUGIN_PLATFORM_DISABLED | 40003 |
-| 10012 | PLUGIN_INVOCATION_TIMEOUT | 40004 |
-| 10013 | PLUGIN_LOAD_FAILED | ——（已移除） |
-| 10099 | SYSTEM_BUSY | 50001 |
-| 400 | AUTH_BAD_REQUEST | 20003 |
-| 401 | UNAUTHORIZED | 20005 |
-| 403 | ACCOUNT_OPERATION_FORBIDDEN | 20004 |
-| 1200 | FILE | 30000 |
-| 1213-1218 | FILE_TYPE_NOT_SUPPORTED ... FILE_CONTENT_READ_FAILED | 30013-30018 |
-| 20001 | LOGIN_MULTI_TENANT | 20001（不变） |
-
----
+> 说明：外部依赖 geelato-package 的 `PackageException` 保留给 market 等外部链路，平台内打包部署链路统一使用 `PackException`。
 
 ## 已知限制
 

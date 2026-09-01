@@ -1,8 +1,10 @@
 package cn.geelato.web.platform.run;
 
+import cn.geelato.core.GlobalContext;
 import cn.geelato.core.orm.SqlExecuteException;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.platform.srv.auth.AuthBadRequestException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.UncategorizedDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,11 @@ class PlatformExceptionHandlerTest {
 
     private final PlatformExceptionHandler handler = new PlatformExceptionHandler();
     private final ServletWebRequest request = new ServletWebRequest(new MockHttpServletRequest());
+
+    @AfterEach
+    void restoreLogStack() {
+        GlobalContext.setLogStack(true);
+    }
 
     @Test
     @SuppressWarnings("unchecked")
@@ -44,11 +51,33 @@ class PlatformExceptionHandlerTest {
         assertTrue(body.getMsg().contains("反馈凭据"));
         assertFalse(body.getMsg().contains("select * from"));
         assertFalse(body.getMsg().contains("123"));
-        // data：logTag 已生成且与 msg 中凭据一致；errorMsg 为友好文案（logStack 默认关闭）
+        // data：logTag 已生成且与 msg 中凭据一致；errorMsg 为友好文案（不含 SQL/参数）
         assertNotNull(body.getData().getLogTag());
         assertTrue(body.getMsg().contains(body.getData().getLogTag()));
         assertFalse(body.getData().getErrorMsg().contains("select * from"));
         assertTrue(body.getData().getErrorMsg().contains("数据操作失败"));
+        // stackTraceDetail：LogStack 默认开启，技术详情（含 SQL 的异常消息）+ 完整堆栈随响应下发
+        assertTrue(body.getData().getStackTraceDetail().contains("select * from platform_dev_table"));
+        assertTrue(body.getData().getStackTraceDetail().contains("\tat "));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void logStackDisabledHidesStackTraceDetailOnly() {
+        SqlExecuteException ex = new SqlExecuteException(
+                new UncategorizedDataAccessException("query failed",
+                        new SQLException("You have an error in your SQL syntax", "42000", 1064)) {
+                },
+                "select * from platform_dev_table where id = ?", new Object[]{"123"});
+        GlobalContext.setLogStack(false);
+
+        ApiResult<PlatformErrorResult> body = (ApiResult<PlatformErrorResult>) handler.handleException(ex, request).getBody();
+
+        assertNotNull(body);
+        // 关闭开关：仅隐藏 stackTraceDetail；msg（友好文案+凭据）不受影响
+        assertEquals("", body.getData().getStackTraceDetail());
+        assertTrue(body.getMsg().contains("数据操作失败，请稍后重试"));
+        assertTrue(body.getMsg().contains("反馈凭据"));
     }
 
     @Test
@@ -70,20 +99,31 @@ class PlatformExceptionHandlerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void fallbackExceptionReturnsSystemBusyWithLogTag() {
+    void fallbackExceptionReturnsDetailedMessageWithLogTag() {
         ResponseEntity<?> entity = handler.handleOtherException(new NullPointerException("secret internal detail"), request);
 
         // 兜底保持历史 HTTP 400
         assertEquals(HttpStatus.BAD_REQUEST, entity.getStatusCode());
         ApiResult<PlatformErrorResult> body = (ApiResult<PlatformErrorResult>) entity.getBody();
         assertNotNull(body);
-        assertTrue(body.getMsg().contains("系统繁忙，请稍后重试"));
+        // 兜底透出详细错误消息（不再吞成"系统繁忙"），并追加反馈凭据
+        assertTrue(body.getMsg().contains("secret internal detail"));
         assertTrue(body.getMsg().contains("反馈凭据"));
-        // 不透出原始异常消息
-        assertFalse(body.getMsg().contains("secret internal detail"));
         assertEquals(50001, body.getData().getErrorCode());
         assertNotNull(body.getData().getLogTag());
         assertTrue(body.getMsg().contains(body.getData().getLogTag()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void fallbackExceptionWithoutMessageExposesExceptionClassName() {
+        ResponseEntity<?> entity = handler.handleOtherException(new NullPointerException(), request);
+
+        ApiResult<PlatformErrorResult> body = (ApiResult<PlatformErrorResult>) entity.getBody();
+        assertNotNull(body);
+        // 无消息异常（如裸 NPE）透出"系统异常：类名"，提供定位线索
+        assertTrue(body.getMsg().contains("系统异常：NullPointerException"));
+        assertTrue(body.getMsg().contains("反馈凭据"));
     }
 
     @Test

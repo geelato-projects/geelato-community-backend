@@ -84,6 +84,8 @@ public class SecurityInterceptorProperties {
                 api + "/auth/login",
                 // 静态资源
                 "/assets/**",
+                // 登录页(geelato-auth-login)静态资源，宿主同源直供
+                "/static/**",
                 // 错误页面
                 "/error/**",
                 // swagger-ui 相关

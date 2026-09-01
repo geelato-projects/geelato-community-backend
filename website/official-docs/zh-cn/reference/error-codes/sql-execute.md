@@ -3,7 +3,7 @@
 `SqlExecuteException` 在 ORM 层执行 SQL 失败时抛出。这是平台中最常见、排障信息最丰富的异常之一，因此提供独立详情页。
 
 - **错误码**：`10002`
-- **错误码常量**：`SqlExecuteException.ERROR_CODE`（旧码 10010，2026-08 错误码重划时变更）
+- **错误码常量**：`SqlExecuteException.ERROR_CODE`
 - **所在类**：`cn.geelato.core.orm.SqlExecuteException`
 - **文档 slug**：`sql-execute`（docUrl 指向本页）
 - **抛出位置**：`Dao.execute(...)` 模板方法捕获 Spring `DataAccessException` 后统一包装抛出，全工程 `Dao` 中约 16 处。
@@ -26,9 +26,9 @@
 
 示例：`数据操作失败，请稍后重试（错误码 10002，反馈凭据 123456789012345678）`。开发模式（`GlobalContext.getLogStack()=true`）下，`data.errorMsg` 保留下方完整技术文案，便于本地排障。
 
-### 服务端日志中的技术详情
+### 技术详情（stackTraceDetail 与服务端日志双通道）
 
-异常对象的技术文案（随 `log.error` 写入 `${LOG_DIR}/error/`，凭 logTag 检索）包含结构化排障信息：
+技术详情（含下方结构化信息）默认随异常响应的 `data.stackTraceDetail` 下发（`GlobalContext` LogStack 开关，默认开启，可关闭），同时写入服务端错误日志（`${LOG_DIR}/error/`，凭 logTag 检索）——报障时无需登服务器即可定位：
 
 ```
 SQL执行异常

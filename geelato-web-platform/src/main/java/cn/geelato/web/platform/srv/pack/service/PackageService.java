@@ -13,7 +13,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.meta.AppVersion;
 import cn.geelato.meta.Attachment;
 import cn.geelato.pack.PackageConfigurationProperties;
-import cn.geelato.pack.PackageException;
+import cn.geelato.web.platform.srv.pack.exception.PackException;
 import cn.geelato.pack.PlatformTableConstant;
 import cn.geelato.pack.entity.AppMeta;
 import cn.geelato.pack.entity.AppPackData;
@@ -117,7 +117,7 @@ public class PackageService extends BaseService {
         AppPackData appPackage = buildAppPackDataV2(appId, appointMetas);
         if (StringUtils.isEmpty(appPackage.getAppCode())) {
             log.warn("打包失败：找不到可打包的应用，appId={}", appId);
-            throw new PackageException("找不到可打包的应用");
+            throw new PackException(PackException.ERROR_CODE_APP_NOT_FOUND, "找不到可打包的应用");
         }
 
         AppVersion av = new AppVersion();
@@ -187,12 +187,12 @@ public class PackageService extends BaseService {
         long startTime = System.currentTimeMillis();
         log.info("v2 应用部署开始：versionId={}", versionId);
         if ("init_source".equals(packageConfigurationProperties.getEnv())) {
-            return ApiResult.fail("本环境无法部署任何应用，请联系管理员！");
+            throw new PackException(PackException.ERROR_CODE_NOT_ALLOWED, "本环境无法部署任何应用，请联系管理员！");
         }
 
         AppVersion appVersion = appVersionService.getModel(AppVersion.class, versionId);
         if (appVersion == null || StringUtils.isEmpty(appVersion.getPackagePath())) {
-            throw new PackageException("无法读取到应用版本信息，请检查应用版本");
+            throw new PackException(PackException.ERROR_CODE_PACKAGE_INVALID, "无法读取到应用版本信息，请检查应用版本");
         }
         log.info("v2 应用部署：appId={}, 包文件={}", appVersion.getAppId(), appVersion.getPackagePath());
 
@@ -200,7 +200,7 @@ public class PackageService extends BaseService {
         String appPackageData = readPackageDataV2(appVersion);
         AppPackData appPackage = cn.geelato.pack.utils.PackageUtils.resolveAppPackageData(appPackageData);
         if (appPackage == null || appPackage.getAppMetaList() == null || appPackage.getAppMetaList().isEmpty()) {
-            throw new PackageException("无法读取到应用包数据，请检查应用包");
+            throw new PackException(PackException.ERROR_CODE_PACKAGE_INVALID, "无法读取到应用包数据，请检查应用包");
         }
         log.info("v2 应用包解析完成：appCode={}, 基准平台版本={}, 元数据 {} 张",
                 appPackage.getAppCode(), appPackage.getBasePlatformVersion(), appPackage.getAppMetaList().size());
@@ -208,13 +208,14 @@ public class PackageService extends BaseService {
         // 2. 校验（事务外）
         try {
             if (!cn.geelato.pack.utils.PackageUtils.validatePackageData(appPackage, metaManager.getAll())) {
-                throw new PackageException("应用包校验不通过,请先更新平台应用geelato_admin至版本" + appPackage.getBasePlatformVersion());
+                throw new PackException(PackException.ERROR_CODE_PLATFORM_MISMATCH,
+                        "应用包校验不通过,请先更新平台应用geelato_admin至版本" + appPackage.getBasePlatformVersion());
             }
-        } catch (PackageException pe) {
+        } catch (PackException pe) {
             throw pe;
         } catch (Exception e) {
             log.error("v2 应用包校验异常：versionId={}, appId={}", versionId, appVersion.getAppId(), e);
-            throw new PackageException("应用部署失败：" + withFieldMetaHint(rootMsg(e)));
+            throw new PackException(PackException.ERROR_CODE_PLATFORM_MISMATCH, "应用部署失败：" + withFieldMetaHint(rootMsg(e)));
         }
 
         // 3. 备份当前版本（独立提交，部署失败时备份仍在）。已是 backup 版本则跳过，避免递归。
@@ -252,7 +253,7 @@ public class PackageService extends BaseService {
         params.put("delStatus", 0);
         List<AppVersion> backups = queryModel(AppVersion.class, params, "create_at DESC");
         if (backups == null || backups.isEmpty()) {
-            return ApiResult.fail("未找到应用 " + appId + " 的备份版本，无法回滚");
+            throw new PackException(PackException.ERROR_CODE_NOT_ALLOWED, "未找到应用 " + appId + " 的备份版本，无法回滚");
         }
         AppVersion backupVersion = backups.get(0);
         // 回滚 = 用备份版本部署，备份版本部署时不再生成新备份，避免递归。
@@ -380,7 +381,7 @@ public class PackageService extends BaseService {
         }
         message.append("请确保两侧一致。");
         log.error(message.toString());
-        throw new PackageException(message.toString());
+        throw new PackException(PackException.ERROR_CODE_COLUMN_INCONSISTENT, message.toString());
     }
 
     /** 部署报错增强：unfound FieldMeta 时追加原因说明，便于定位版本/结构不一致问题。 */
@@ -456,7 +457,7 @@ public class PackageService extends BaseService {
                 return ZipUtils.readPackageData(file, PACKAGE_FILE_SUFFIX);
             }
         } catch (IOException ex) {
-            throw new PackageException(ex.getMessage());
+            throw new PackException(PackException.ERROR_CODE_PACKAGE_IO, ex.getMessage());
         }
     }
 
@@ -468,7 +469,7 @@ public class PackageService extends BaseService {
     /**
      * 写出应用包数据为 .gdp 并压缩为 .zgdp，返回附件ID（v2）。
      */
-    private String writePackageDataV2(AppVersion appVersion, AppPackData appPackage) throws PackageException {
+    private String writePackageDataV2(AppVersion appVersion, AppPackData appPackage) throws PackException {
         JSON.config(JSONWriter.Feature.LargeObject, true);
         String jsonStr = JSONObject.toJSONString(appPackage);
         String dataFileName = StringUtils.isEmpty(appPackage.getAppCode()) ? DEFAULT_PACKAGE_NAME : appPackage.getAppCode();
@@ -476,17 +477,17 @@ public class PackageService extends BaseService {
         String tempFolderPath = dataFileName + "/";
         File file = new File(packageConfigurationProperties.getPath() + tempFolderPath + fileName);
         if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
-            throw new PackageException("创建打包临时目录失败: " + file.getParentFile().getAbsolutePath());
+            throw new PackException(PackException.ERROR_CODE_PACKAGE_IO, "创建打包临时目录失败: " + file.getParentFile().getAbsolutePath());
         }
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(jsonStr);
         } catch (IOException ex) {
-            throw new PackageException(ex.getMessage());
+            throw new PackException(PackException.ERROR_CODE_PACKAGE_IO, ex.getMessage());
         }
         return compressAppPackageV2(packageConfigurationProperties.getPath() + tempFolderPath, appVersion, appPackage);
     }
 
-    private String compressAppPackageV2(String sourcePackageFolder, AppVersion appVersion, AppPackData appPackage) throws PackageException {
+    private String compressAppPackageV2(String sourcePackageFolder, AppVersion appVersion, AppPackData appPackage) throws PackException {
         String appPackageName = StringUtils.isEmpty(appPackage.getAppCode()) ? DEFAULT_PACKAGE_NAME : appPackage.getAppCode();
         String appPackageFullName = (Strings.isNotBlank(appVersion.getVersion()) ? appVersion.getVersion() : appPackageName) + COMPRESS_PACKAGE_FILE_SUFFIX;
         String targetZipPath;
@@ -494,10 +495,10 @@ public class PackageService extends BaseService {
             targetZipPath = UploadService.getRootSavePath(SAVE_TABLE_TYPE, SessionCtx.getCurrentTenantCode(),
                     appPackage.getSourceAppId(), appPackageFullName, true);
         } catch (IOException e) {
-            throw new PackageException("获取打包存储路径失败: " + e.getMessage());
+            throw new PackException(PackException.ERROR_CODE_PACKAGE_IO, "获取打包存储路径失败: " + e.getMessage());
         }
         // 注意：ZipUtils.compressDirectory 内部吞掉 IOException（与 v1 行为一致），无需在此捕获；
-        // fileHandler.save 声明 throws IOException，需包装为 PackageException。
+        // fileHandler.save 声明 throws IOException，需包装为 PackException。
         ZipUtils.compressDirectory(sourcePackageFolder, targetZipPath);
         File file = new File(targetZipPath);
         FileParam fileParam = FileParamUtils.byLocal(SAVE_TABLE_TYPE, "package", appPackage.getSourceAppId(), appVersion.getTenantCode());
@@ -505,7 +506,7 @@ public class PackageService extends BaseService {
             Attachment attachment = fileHandler.save(file, appPackageFullName, targetZipPath, fileParam);
             return attachment.getId();
         } catch (IOException e) {
-            throw new PackageException("保存应用包附件失败: " + e.getMessage());
+            throw new PackException(PackException.ERROR_CODE_PACKAGE_IO, "保存应用包附件失败: " + e.getMessage());
         }
     }
 
@@ -539,7 +540,7 @@ public class PackageService extends BaseService {
         // 记录增量表已存在 id
         for (String table : ctx.incrementMetas) {
             if (!VALID_TABLE_NAME.matcher(table).matches()) {
-                throw new PackageException("非法的增量表名: " + table);
+                throw new PackException(PackException.ERROR_CODE_ILLEGAL_TABLE_NAME, "非法的增量表名: " + table);
             }
             List<String> ids = dao.getJdbcTemplate().queryForList(
                     String.format("select id from %s where app_id = ?", table), String.class, appId);
@@ -621,7 +622,7 @@ public class PackageService extends BaseService {
         for (Map<String, Object> row : metaData) {
             String tableName = String.valueOf(row.get("table_name"));
             if (!VALID_TABLE_NAME.matcher(tableName).matches()) {
-                throw new PackageException("非法的业务表名: " + tableName);
+                throw new PackException(PackException.ERROR_CODE_ILLEGAL_TABLE_NAME, "非法的业务表名: " + tableName);
             }
             bizDataSqlMap.put(tableName, String.format("%s %s where app_id = ?", preOperateSql, tableName));
         }

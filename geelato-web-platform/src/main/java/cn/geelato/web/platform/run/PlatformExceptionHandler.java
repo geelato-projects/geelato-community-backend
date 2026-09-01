@@ -75,11 +75,9 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
         log.error(logMessage, coreException);
         errorResult.setLogTag(logTag);
         errorResult.setDocUrl(errorDocResolver.resolve(coreException));
+        // LogStack（默认开启）仅控制 stackTraceDetail（技术详情+堆栈）是否下发；msg/errorMsg 恒为友好文案
         if (!GlobalContext.getLogStack()) {
-            errorResult.setCoreException(null);
-        } else {
-            // 开发模式：回填完整技术文案（SQL/参数等）便于浏览器端直接排障；生产默认关闭
-            errorResult.setErrorMsg(coreException.getErrorMsg());
+            errorResult.setException(null);
         }
         return errorResult;
     }
@@ -109,20 +107,25 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
         PlatformErrorResult errorResult = new PlatformErrorResult(SYSTEM_BUSY_CODE, SYSTEM_BUSY_MESSAGE);
+        errorResult.setException(ex);
         errorResult.setLogTag(logTag);
+        // 兜底异常同样受 LogStack 控制：关闭时不下发堆栈，msg 仍透出详细错误消息
+        if (!GlobalContext.getLogStack()) {
+            errorResult.setException(null);
+        }
         ApiResult<PlatformErrorResult> apiResult = ApiResult.fail(errorResult,
                 buildFeedbackMessage(fallbackUserMessage(ex), errorResult));
         return handleExceptionInternal(ex, apiResult, headers, HttpStatus.BAD_REQUEST, request);
     }
 
     /**
-     * 兜底异常的用户文案：带业务语义的参数类异常（通常已是可读中文）保留原消息，
-     * 其余技术异常（NPE、未包装的数据访问异常等）统一为“系统繁忙”。
+     * 兜底异常的用户文案：详细消息优先——直接透出异常消息便于排障与自助处理；
+     * 无消息的异常（NPE 等）用"系统异常：类名"提供定位线索。
      */
     private String fallbackUserMessage(Exception ex) {
-        if (ex instanceof IllegalArgumentException || ex instanceof IllegalStateException) {
-            return ex.getMessage() != null ? ex.getMessage() : SYSTEM_BUSY_MESSAGE;
+        if (ex.getMessage() != null) {
+            return ex.getMessage();
         }
-        return SYSTEM_BUSY_MESSAGE;
+        return "系统异常：" + ex.getClass().getSimpleName();
     }
 }

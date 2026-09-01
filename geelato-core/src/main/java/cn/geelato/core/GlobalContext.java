@@ -25,7 +25,11 @@ public class GlobalContext {
     protected final static String __RsaPrivateKey__ = "";
     protected final static String __Environment__ = "development";
     protected final static Boolean __CACHE__ = __Environment__.equals("product");
-    protected final static Boolean __LogStack__=false;
+    /**
+     * 异常响应是否携带 stackTraceDetail（技术详情+堆栈）。
+     * 默认开启；如对外暴露场景不希望下发堆栈，可运行期调用 {@link #setLogStack(Boolean)} 关闭。
+     */
+    protected static Boolean __LogStack__ = true;
     protected final static Boolean __POLYGLOT_DEBUGGER__ =false;
     protected final static Boolean __MetaQueryCache__ = false;
     /*
@@ -88,6 +92,12 @@ public class GlobalContext {
     }
     public static Boolean getLogStack(){
         return __LogStack__;
+    }
+
+    public static void setLogStack(Boolean logStack) {
+        if (logStack != null) {
+            __LogStack__ = logStack;
+        }
     }
     public static Boolean getMetaQueryCacheOption() {
         return __MetaQueryCache__;

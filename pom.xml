@@ -25,7 +25,7 @@
         <module>geelato-web-designer</module>
         <module>geelato-web-platform</module>
         <module>geelato-app-scaffold-starter</module>
-        <module>geelato-mail</module>
+<!--        <module>geelato-mail</module>-->
         <module>geelato-web-quickstart</module>
         <module>geelato-mql-test</module>
         <module>geelato-meta-sync</module>

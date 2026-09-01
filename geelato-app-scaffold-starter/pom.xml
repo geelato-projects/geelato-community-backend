@@ -22,10 +22,10 @@
             <artifactId>geelato-web-platform</artifactId>
         </dependency>
         <!-- 邮件模块（个人邮箱客户端，IMAP/SMTP）：默认作为脚手架一部分，宿主不需要时 pom exclusion 排除 -->
-        <dependency>
-            <groupId>cn.geelato</groupId>
-            <artifactId>geelato-mail</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>cn.geelato</groupId>-->
+<!--            <artifactId>geelato-mail</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

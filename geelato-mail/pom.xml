@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>geelato-parent</artifactId>
+        <groupId>cn.geelato</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../geelato-parent/pom.xml</relativePath>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>geelato-mail</artifactId>
+    <packaging>jar</packaging>
+    <name>geelato-mail</name>
+    <description>Geelato 邮件模块：个人邮箱客户端（IMAP 收信 / SMTP 发信 / 过滤器 / 标签 / 签名 / 假期回复 / 联系人），
+        由 geelato-app-scaffold-starter 默认聚合，宿主不需要时通过 pom exclusion 排除。
+        数据表位于专属 mail 库（实体 @Entity(catalog="mail")）。</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-lang</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-orm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-web-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- GreenMail: 内嵌 IMAP/SMTP 邮件服务器，邮件模块真实协议全链路集成测试（test scope）。
+             锁 2.0.1：2.1.x 引用 org.eclipse.angus.mail.* 新包名实现类，与 Boot 3.0 BOM 管理的
+             org.eclipse.angus:jakarta.mail:1.0.0（com.sun.mail.* 包名）冲突 -->
+        <dependency>
+            <groupId>com.icegreen</groupId>
+            <artifactId>greenmail-junit5</artifactId>
+            <version>2.0.1</version>
+            <scope>test</scope>
+            <exclusions>
+                <!-- 与生产链路同源：com.sun.mail:jakarta.mail 与 angus jakarta.mail 1.0.0 类名全同，
+                     排除传递依赖，统一由 compile  scope 的 org.eclipse.angus:jakarta.mail 提供 -->
+                <exclusion>
+                    <groupId>com.sun.mail</groupId>
+                    <artifactId>jakarta.mail</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

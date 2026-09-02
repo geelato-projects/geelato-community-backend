@@ -59,14 +59,11 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {CoreException.class})
     public final ResponseEntity<?> handleException(CoreException ex, WebRequest request) {
         PlatformErrorResult errorResult = coreException2PlatformErrorResult(ex, request);
-        // 前端仅见友好文案（getUserMessage，不含 SQL/参数/堆栈等技术详情），末尾追加错误码与反馈凭据，
-        // 用户报障时凭截图即可在服务端日志中检索 logTag 对应的完整技术详情。
         String userMessage = ex.getUserMessage() != null ? ex.getUserMessage() : "系统异常";
         ApiResult<PlatformErrorResult> apiResult = ApiResult.fail(errorResult,
                 buildFeedbackMessage(userMessage, errorResult));
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
-        // 按 ErrorCode 声明的 HTTP 状态码返回（鉴权类 401/403/400，其余默认 500）
         HttpStatus httpStatus = HttpStatus.resolve(resolveHttpStatus(ex));
         return handleExceptionInternal(ex, apiResult, headers, httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
@@ -86,7 +83,6 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
         log.error(logMessage, coreException);
         errorResult.setLogTag(logTag);
         errorResult.setDocUrl(errorDocResolver.resolve(coreException));
-        // LogStack（默认开启）仅控制 stackTraceDetail（技术详情+堆栈）是否下发；msg/errorMsg 恒为友好文案
         if (!GlobalContext.getLogStack()) {
             errorResult.setException(null);
         }

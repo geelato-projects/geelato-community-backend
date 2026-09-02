@@ -64,7 +64,7 @@ public class ExceptionLogController {
     }
 
     /** 剥除列表中的 exceptionStacktrace（大字段）。 */
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"rawtypes"})
     private void stripStackTrace(ApiPagedResult result) {
         Object data = result.getData();
         if (data instanceof List list) {

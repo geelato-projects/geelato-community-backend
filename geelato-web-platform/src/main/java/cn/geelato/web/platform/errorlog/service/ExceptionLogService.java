@@ -25,15 +25,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 平台错误日志服务：把全局异常处理器生成的记录（id=logTag 反馈凭据）异步落库
  * {@code platform_exception_log}（catalog=platform-log，经 dynamicDao 按 catalog 路由）。
  *
- * <p>运行在异常处理路径上，**任何情况下不得抛出**：落库失败降级写独立 logger
- * {@code geelato.platform.errorlog.fallback}，线程池拒绝时同样降级。</p>
  */
 @Slf4j
 @Service
 public class ExceptionLogService {
 
-    /** 文件降级日志的 logger 名（按需在 logback 配置独立输出）。 */
-    private static final org.slf4j.Logger FALLBACK_LOG = LoggerFactory.getLogger("geelato.platform.errorlog.fallback");
     private static final AtomicInteger THREAD_SEQ = new AtomicInteger();
 
     private final Dao dao;
@@ -55,20 +51,14 @@ public class ExceptionLogService {
         if (record == null) {
             return;
         }
-        try {
-            executor.submit(() -> {
-                try {
-                    dao.save(record);
-                } catch (Exception e) {
-                    log.warn("错误日志落库失败，降级写文件: logTag={}", record.getId(), e);
-                    FALLBACK_LOG.warn("[ERRORLOG-FALLBACK] logTag={} code={} class={} msg={}",
-                            record.getId(), record.getExceptionCode(), record.getExceptionClass(),
-                            record.getExceptionStacktrace());
-                }
-            });
-        } catch (RejectedExecutionException e) {
-            FALLBACK_LOG.warn("[ERRORLOG-FALLBACK] 线程池已关闭或饱和，错误日志未落库: logTag={}", record.getId());
-        }
+        executor.submit(() -> {
+            try {
+                dao.insert(record);
+            } catch (Exception e) {
+                log.warn("错误日志落库失败，降级写文件: logTag={}", record.getId(), e);
+            }
+        });
+
     }
 
     /**

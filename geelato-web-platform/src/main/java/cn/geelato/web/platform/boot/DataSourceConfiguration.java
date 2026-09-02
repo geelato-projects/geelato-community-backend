@@ -1,22 +1,16 @@
 package cn.geelato.web.platform.boot;
 
-import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.orm.Dao;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
-import java.util.Map;
 
 
-/**
- * @author geelato
- */
 @SuppressWarnings("ConfigurationProperties")
 @Configuration
 public class DataSourceConfiguration extends BaseConfiguration {

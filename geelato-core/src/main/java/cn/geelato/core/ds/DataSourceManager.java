@@ -57,8 +57,8 @@ public class DataSourceManager extends AbstractManager {
         }
     }
 
-    public DataSource getDataSource(String connectId) {
-        return connectId == null ? null : dataSourceMap.get(connectId);
+    public DataSource getRegisteredDataSource(String key) {
+        return key == null ? null : dataSourceMap.get(key);
     }
 
     /**

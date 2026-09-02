@@ -7,6 +7,7 @@ import cn.geelato.meta.Notification;
 import cn.geelato.meta.NotificationOutbox;
 import cn.geelato.security.SecurityContext;
 import cn.geelato.utils.DateUtils;
+import cn.geelato.web.platform.srv.notification.channel.DeliveryChannel;
 import cn.geelato.web.platform.srv.notification.channel.DeliveryChannelManager;
 import cn.geelato.web.platform.srv.notification.config.NotificationProperties;
 import cn.geelato.web.platform.srv.notification.dto.NotifyRequest;

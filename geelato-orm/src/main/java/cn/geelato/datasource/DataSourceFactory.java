@@ -97,7 +97,6 @@ public class DataSourceFactory {
             ds.setJdbcUrl(String.format("jdbc:mysql://%s:%s/%s?%s", params.host(), params.port(), params.dbName(), commonParams));
             ds.setConnectionTestQuery(properties.getConnectionTestQuery());
         } else if ("postgresql".equals(params.dbType()) || "postgres".equals(params.dbType())) {
-            // PG 驱动的 connectTimeout/socketTimeout 单位是秒
             String commonParams = "sslmode=disable&connectTimeout=" + properties.getConnectTimeoutMs() / 1000
                     + "&socketTimeout=" + properties.getSocketTimeoutMs() / 1000 + "&ApplicationName=geelato";
             ds.setDriverClassName("org.postgresql.Driver");

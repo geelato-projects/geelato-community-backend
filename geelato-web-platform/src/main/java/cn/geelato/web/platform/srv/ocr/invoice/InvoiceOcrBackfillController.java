@@ -4,38 +4,37 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.srv.ocr.invoice.entity.InvoiceOcrResult;
 import cn.geelato.web.platform.srv.ocr.invoice.service.InvoiceOcrService;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.math.BigDecimal;
+import java.time.DateTimeException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * 批量发票回填（一次性工具）：修复 il_invoice_req_file / il_payment_order_file 两表的
- * invoice_no（发票号码）、invoice_date（开票时间）、invoice_amount（发票金额）、remark（备注）。
+ * 批量发票核对（一次性工具）：对 il_invoice_req_file / il_payment_order_file 两表的
+ * invoice_no（发票号码）、invoice_date（开票日期）、invoice_amount（发票金额）、remark（备注）
+ * 逐行重新识别并比对，只标记差异、不修改数据库。
  *
- * <p>流程：查待修复行（file_id）→ {@link InvoiceOcrService#recognizeByFileId} 识别
- * （PDF 自动走文本层、图片走 OCR）→ 先记日志再参数化 UPDATE。</p>
+ * <p>流程：查所有 file_id 非空的行（连同四字段当前值）→ {@link InvoiceOcrService#recognizeByFileId}
+ * 识别（PDF 自动走文本层、图片走 OCR）→ 四字段逐一按类型归一化比对。</p>
  *
- * <p>修复条件：四个字段均为空的行才处理（SQL WHERE 固定），可安全重跑。
- * 每行修改前把 {表名, id, fileId, 旧值, 新值} 追加写入日志文件（JSON Lines），
- * {@code /rollback} 按日志把旧值（含 NULL）写回并打回滚标记。</p>
+ * <p>比对规则：字段值相同则跳过；不同则记为一条异常，输出
+ * {列名, 中文名, 当前值(dbValue), 解析值(ocrValue)}。全程不执行任何 UPDATE，可安全重跑。</p>
  *
  * @author geelato
  */
@@ -43,27 +42,22 @@ import java.util.Map;
 @Slf4j
 public class InvoiceOcrBackfillController {
 
-    // ======== 一次性回填配置 ========
-    /** 待修复的两张表。 */
+    // ======== 一次性核对配置 ========
+    /** 待核对的两张表。 */
     private static final List<String> TARGET_TABLES = List.of(
             "il_invoice_req_file",
             "il_payment_order_file");
-    /** 查询模板：file_id 为发票附件 id；仅四字段均为空的行才修复（幂等，可重跑）。 */
-    private static final String BACKFILL_SQL_TEMPLATE =
-            "SELECT id AS rowId, file_id AS fileId FROM {table}"
-                    + " WHERE invoice_no IS NULL AND invoice_date IS NULL"
-                    + " AND invoice_amount IS NULL AND remark IS NULL";
-    /** 识别字段 → 目标列名。 */
-    private static final Map<String, String> COLUMN_MAPPING = Map.of(
-            "invoiceNumber", "invoice_no",
-            "invoiceDate", "invoice_date",
-            "totalAmount", "invoice_amount",
-            "remark", "remark");
-    /** 回填日志文件（JSON Lines，相对工作目录）。 */
-    private static final String LOG_FILE = "logs/ocr-backfill.jsonl";
+    /**
+     * 查询模板：file_id 为发票附件 id；取所有 file_id 非空的行，并带出四个受控字段的当前值。
+     * 列使用别名（invoiceNo/invoiceDate/invoiceAmount/remark），取值走大小写不敏感的 {@link #pick}。
+     */
+    private static final String VERIFY_SQL_TEMPLATE =
+            "SELECT id AS rowId, file_id AS fileId, invoice_no AS invoiceNo,"
+                    + " invoice_date AS invoiceDate, invoice_amount AS invoiceAmount, remark"
+                    + " FROM {table} WHERE file_id IS NOT NULL AND file_id <> ''";
+    /** 日期归一化：从任意分隔的 yyyy-MM-dd 文本抽出年月日。 */
+    private static final Pattern DATE_PATTERN = Pattern.compile("(\\d{4})\\D+(\\d{1,2})\\D+(\\d{1,2})");
     // ===============================
-
-    private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final JdbcTemplate jdbcTemplate;
     private final InvoiceOcrService invoiceOcrService;
@@ -75,17 +69,27 @@ public class InvoiceOcrBackfillController {
         this.invoiceOcrService = invoiceOcrService;
     }
 
+    /** 字段比对类型：决定归一化方式。 */
+    private enum FieldType {
+        /** 文本：首尾去空白后比对（发票号码、备注）。 */
+        TEXT,
+        /** 日期：统一归一为 yyyy-MM-dd 后比对。 */
+        DATE,
+        /** 金额：转 BigDecimal、按数值（忽略标度）比对。 */
+        AMOUNT
+    }
+
     /**
-     * 执行回填（两张表依次处理）。逐条：解析发票 → 记日志（旧值落盘）→ UPDATE。
+     * 执行核对（两张表依次处理）。逐条：解析发票 → 四字段归一化比对 → 收集差异（不改库）。
      *
-     * @return {batchNo, results:[{table,total,success,failed,failures}]}
+     * @return {batchNo, results:[{table,total,matched,mismatched,failed,mismatches,failures}]}
      */
     @PostMapping("/backfill")
     public ApiResult<?> backfill() {
         String batchNo = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now());
         List<Map<String, Object>> tableResults = new ArrayList<>();
         for (String table : TARGET_TABLES) {
-            tableResults.add(backfillTable(batchNo, table));
+            tableResults.add(verifyTable(table));
         }
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("batchNo", batchNo);
@@ -93,11 +97,12 @@ public class InvoiceOcrBackfillController {
         return ApiResult.success(summary);
     }
 
-    private Map<String, Object> backfillTable(String batchNo, String table) {
+    private Map<String, Object> verifyTable(String table) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                BACKFILL_SQL_TEMPLATE.replace("{table}", table));
+                VERIFY_SQL_TEMPLATE.replace("{table}", table));
+        List<Map<String, Object>> mismatches = new ArrayList<>();
         List<Map<String, String>> failures = new ArrayList<>();
-        int success = 0;
+        int matched = 0;
         for (Map<String, Object> row : rows) {
             Object rowId = pick(row, "rowId");
             Object fileId = pick(row, "fileId");
@@ -107,22 +112,21 @@ public class InvoiceOcrBackfillController {
             }
             try {
                 InvoiceOcrResult result = invoiceOcrService.recognizeByFileId(String.valueOf(fileId), false);
-                Map<String, Object> newValues = toColumnValues(result);
-                if (newValues.isEmpty()) {
-                    failures.add(failure(table, rowId, fileId, "未识别到任何可回填字段"));
-                    continue;
-                }
-                Map<String, Object> oldValues = queryOldValues(table, newValues.keySet(), rowId);
-                // 先留痕（表名+id+旧值落盘）再改库
-                appendLog(batchNo, table, String.valueOf(rowId), String.valueOf(fileId), oldValues, newValues);
-                int updated = executeUpdate(table, newValues, rowId);
-                if (updated > 0) {
-                    success++;
+                List<Map<String, Object>> diffs = compareRow(result, row);
+                if (diffs.isEmpty()) {
+                    matched++;
                 } else {
-                    failures.add(failure(table, rowId, fileId, "UPDATE 影响 0 行（主键 " + rowId + " 不存在？）"));
+                    log.warn("发票字段差异 table={} rowId={} fileId={} 差异字段数={}",
+                            table, rowId, fileId, diffs.size());
+                    Map<String, Object> mismatch = new LinkedHashMap<>();
+                    mismatch.put("table", table);
+                    mismatch.put("rowId", String.valueOf(rowId));
+                    mismatch.put("fileId", String.valueOf(fileId));
+                    mismatch.put("diffs", diffs);
+                    mismatches.add(mismatch);
                 }
             } catch (Exception e) {
-                log.error("回填失败 table={} rowId={} fileId={}", table, rowId, fileId, e);
+                log.error("发票识别失败 table={} rowId={} fileId={}", table, rowId, fileId, e);
                 failures.add(failure(table, rowId, fileId,
                         e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
@@ -130,165 +134,130 @@ public class InvoiceOcrBackfillController {
         Map<String, Object> r = new LinkedHashMap<>();
         r.put("table", table);
         r.put("total", rows.size());
-        r.put("success", success);
+        r.put("matched", matched);
+        r.put("mismatched", mismatches.size());
         r.put("failed", failures.size());
+        r.put("mismatches", mismatches);
         r.put("failures", failures);
         return r;
     }
 
+    // ---- 比对逻辑 ----
+
     /**
-     * 回滚：按日志把旧值（含 NULL）写回对应表。已回滚的记录跳过，防重复。
-     *
-     * @param batchNo 可选；缺省取最近一个未回滚批次
-     * @return {batchNo, restored}
+     * 对四个受控字段逐一比对，返回不一致的字段列表。
+     * 每条差异含 {column, label, dbValue(当前值), ocrValue(解析值)}，值均为归一化后的可读形式。
      */
-    @PostMapping("/rollback")
-    public ApiResult<?> rollback(@RequestParam(value = "batchNo", required = false) String batchNo) {
-        try {
-            List<JSONObject> entries = readLog();
-            if (entries.isEmpty()) {
-                return ApiResult.success(Map.of("restored", 0, "message", "日志为空，无可回滚记录"));
-            }
-            if (batchNo == null || batchNo.isBlank()) {
-                for (int i = entries.size() - 1; i >= 0; i--) {
-                    if (!entries.get(i).getBooleanValue("rolledBack")) {
-                        batchNo = entries.get(i).getString("batchNo");
-                        break;
-                    }
-                }
-            }
-            if (batchNo == null) {
-                return ApiResult.success(Map.of("restored", 0, "message", "没有未回滚的批次"));
-            }
-            int restored = 0;
-            String now = TS.format(LocalDateTime.now());
-            for (JSONObject entry : entries) {
-                if (!batchNo.equals(entry.getString("batchNo")) || entry.getBooleanValue("rolledBack")) {
-                    continue;
-                }
-                JSONObject oldValues = entry.getJSONObject("oldValues");
-                if (oldValues != null && !oldValues.isEmpty()) {
-                    executeUpdate(entry.getString("tableName"), oldValues, entry.get("rowId"));
-                }
-                entry.put("rolledBack", true);
-                entry.put("rollbackTime", now);
-                restored++;
-            }
-            rewriteLog(entries);
-            Map<String, Object> summary = new LinkedHashMap<>();
-            summary.put("batchNo", batchNo);
-            summary.put("restored", restored);
-            return ApiResult.success(summary);
-        } catch (Exception e) {
-            log.error("回滚失败", e);
-            return ApiResult.fail("回滚失败：" + e.getMessage());
-        }
+    private List<Map<String, Object>> compareRow(InvoiceOcrResult ocr, Map<String, Object> dbRow) {
+        List<Map<String, Object>> diffs = new ArrayList<>();
+        compareField(diffs, "invoice_no", "发票号码",
+                pick(dbRow, "invoiceNo"), ocr.getInvoiceNumber(), FieldType.TEXT);
+        compareField(diffs, "invoice_date", "开票日期",
+                pick(dbRow, "invoiceDate"), ocr.getInvoiceDate(), FieldType.DATE);
+        compareField(diffs, "invoice_amount", "发票金额",
+                pick(dbRow, "invoiceAmount"), ocr.getTotalAmount(), FieldType.AMOUNT);
+        compareField(diffs, "remark", "备注",
+                pick(dbRow, "remark"), ocr.getRemark(), FieldType.TEXT);
+        return diffs;
     }
 
-    // ---- 内部逻辑 ----
-
-    /** 识别结果 → 目标列值（仅四字段中有值的）。 */
-    private Map<String, Object> toColumnValues(InvoiceOcrResult result) {
-        Map<String, Object> values = new LinkedHashMap<>();
-        putMapped(values, "invoiceNumber", result.getInvoiceNumber());
-        putMapped(values, "invoiceDate", result.getInvoiceDate());
-        putMapped(values, "totalAmount", result.getTotalAmount());
-        putMapped(values, "remark", result.getRemark());
-        return values;
-    }
-
-    /** 识别字段有值且在映射中 → 写入目标列。 */
-    private void putMapped(Map<String, Object> values, String field, String value) {
-        if (value == null || value.isBlank()) {
+    /** 单字段比对：按类型归一化后判等，不等则追加一条差异记录。 */
+    private void compareField(List<Map<String, Object>> diffs, String column, String label,
+                              Object dbRaw, Object ocrRaw, FieldType type) {
+        String dbValue = canonical(dbRaw, type);
+        String ocrValue = canonical(ocrRaw, type);
+        if (Objects.equals(dbValue, ocrValue)) {
             return;
         }
-        String column = COLUMN_MAPPING.get(field);
-        if (column != null) {
-            values.put(column, value);
-        }
+        Map<String, Object> diff = new LinkedHashMap<>();
+        diff.put("column", column);
+        diff.put("label", label);
+        diff.put("dbValue", dbValue);
+        diff.put("ocrValue", ocrValue);
+        diffs.add(diff);
     }
 
-    /** 查询目标行旧值（仅将被修改的列）。 */
-    private Map<String, Object> queryOldValues(String table, java.util.Set<String> columns, Object rowId) {
-        String cols = String.join(", ", columns);
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT " + cols + " FROM " + table + " WHERE id = ?", rowId);
-        if (rows.isEmpty()) {
-            throw new IllegalStateException("目标行不存在：" + table + "#" + rowId);
+    /** 按字段类型把值归一为可比对、可读的字符串（null 表示空值）。 */
+    private String canonical(Object v, FieldType type) {
+        if (v == null) {
+            return null;
         }
-        Map<String, Object> old = new LinkedHashMap<>();
-        for (String col : columns) {
-            old.put(col, pick(rows.get(0), col));
-        }
-        return old;
+        return switch (type) {
+            case DATE -> canonicalDate(v);
+            case AMOUNT -> canonicalAmount(v);
+            case TEXT -> canonicalText(v);
+        };
     }
 
-    /** 参数化 UPDATE：SET 列=? ... WHERE id=?（值可为 null）。 */
-    private int executeUpdate(String table, Map<String, Object> values, Object rowId) {
-        StringBuilder sql = new StringBuilder("UPDATE ").append(table).append(" SET ");
-        List<Object> params = new ArrayList<>();
-        int i = 0;
-        for (Map.Entry<String, Object> e : values.entrySet()) {
-            if (i++ > 0) {
-                sql.append(", ");
+    /** 文本归一：首尾去空白，空串视为 null。 */
+    private String canonicalText(Object v) {
+        String s = String.valueOf(v).trim();
+        return s.isEmpty() ? null : s;
+    }
+
+    /**
+     * 日期归一为 yyyy-MM-dd：兼容 JDBC 可能返回的 java.sql.Date/Timestamp、
+     * LocalDate/LocalDateTime、java.util.Date，以及字符串（含中文/斜杠日期）。
+     */
+    private String canonicalDate(Object v) {
+        if (v instanceof java.sql.Date d) {
+            return d.toLocalDate().toString();
+        }
+        if (v instanceof java.sql.Timestamp t) {
+            return t.toLocalDateTime().toLocalDate().toString();
+        }
+        if (v instanceof LocalDate ld) {
+            return ld.toString();
+        }
+        if (v instanceof LocalDateTime ldt) {
+            return ldt.toLocalDate().toString();
+        }
+        if (v instanceof java.util.Date d) {
+            return d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString();
+        }
+        return normalizeDateString(String.valueOf(v));
+    }
+
+    /** 从任意分隔的日期文本抽出 yyyy-MM-dd；无法解析时原样返回（比对时自然判不等）。 */
+    private String normalizeDateString(String raw) {
+        String s = raw.trim();
+        if (s.isEmpty()) {
+            return null;
+        }
+        Matcher m = DATE_PATTERN.matcher(s);
+        if (m.find()) {
+            try {
+                return LocalDate.of(Integer.parseInt(m.group(1)),
+                        Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3))).toString();
+            } catch (DateTimeException | NumberFormatException e) {
+                log.warn("发票日期归一化失败，保留原值: {}", s);
             }
-            sql.append(e.getKey()).append(" = ?");
-            params.add(e.getValue());
         }
-        sql.append(" WHERE id = ?");
-        params.add(rowId);
-        return jdbcTemplate.update(sql.toString(), params.toArray());
+        return s;
     }
 
-    // ---- 日志文件（JSON Lines） ----
-
-    private void appendLog(String batchNo, String table, String rowId, String fileId,
-                           Map<String, Object> oldValues, Map<String, Object> newValues) throws Exception {
-        JSONObject entry = new JSONObject();
-        entry.put("batchNo", batchNo);
-        entry.put("tableName", table);
-        entry.put("rowId", rowId);
-        entry.put("fileId", fileId);
-        entry.put("time", TS.format(LocalDateTime.now()));
-        entry.put("oldValues", oldValues);
-        entry.put("newValues", newValues);
-        entry.put("rolledBack", false);
-        entry.put("rollbackTime", null);
-        Path path = logPath();
-        Files.write(path, (JSON.toJSONString(entry) + System.lineSeparator()).getBytes(StandardCharsets.UTF_8),
-                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-    }
-
-    private List<JSONObject> readLog() throws Exception {
-        Path path = logPath();
-        if (!Files.exists(path)) {
-            return new ArrayList<>();
-        }
-        List<JSONObject> entries = new ArrayList<>();
-        for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
-            if (line.isBlank()) {
-                continue;
+    /**
+     * 金额归一：转 BigDecimal 后去尾随零（忽略标度差异，如 100 与 100.00 视为相等）。
+     * 兼容 BigDecimal、其它 Number，以及含 ¥/￥/逗号/空白的字符串；无法解析时原样返回。
+     */
+    private String canonicalAmount(Object v) {
+        try {
+            BigDecimal bd;
+            if (v instanceof BigDecimal b) {
+                bd = b;
+            } else if (v instanceof Number n) {
+                bd = new BigDecimal(n.toString());
+            } else {
+                String s = String.valueOf(v).replaceAll("[¥￥,\\s]", "");
+                if (s.isEmpty()) {
+                    return null;
+                }
+                bd = new BigDecimal(s);
             }
-            entries.add(JSON.parseObject(line));
+            return bd.stripTrailingZeros().toPlainString();
+        } catch (NumberFormatException e) {
+            return canonicalText(v);
         }
-        return entries;
-    }
-
-    private void rewriteLog(List<JSONObject> entries) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        for (JSONObject entry : entries) {
-            sb.append(JSON.toJSONString(entry)).append(System.lineSeparator());
-        }
-        Files.write(logPath(), sb.toString().getBytes(StandardCharsets.UTF_8),
-                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-    }
-
-    private Path logPath() throws Exception {
-        Path path = Paths.get(LOG_FILE);
-        if (path.getParent() != null) {
-            Files.createDirectories(path.getParent());
-        }
-        return path;
     }
 
     // ---- 小工具 ----

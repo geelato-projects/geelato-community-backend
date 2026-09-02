@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.srv.ocr.service;
 
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.column.ColumnMeta;
@@ -9,6 +8,7 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
+import cn.geelato.datasource.PlatformDataSources;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.meta.Dict;
 import cn.geelato.meta.DictItem;
@@ -289,7 +289,7 @@ public class OcrUtils {
         if (entityMeta == null || entityMeta.getTableMeta() == null || org.apache.commons.lang3.StringUtils.isBlank(entityMeta.getTableMeta().getConnectId())) {
             throw new RuntimeException("The model does not exist in memory");
         }
-        DataSource ds = DataSourceManager.singleInstance().getDataSource(entityMeta.getTableMeta().getConnectId());
+        DataSource ds = PlatformDataSources.getDataSource(entityMeta.getTableMeta().getConnectId());
         JdbcTemplate jdbcTemplate = new JdbcTemplate();
         jdbcTemplate.setDataSource(ds);
         return new Dao(jdbcTemplate);

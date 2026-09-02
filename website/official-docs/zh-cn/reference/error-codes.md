@@ -45,7 +45,7 @@ public class UnauthorizedException extends CoreException {
 - **`msg`**（前端直接展示）：`CoreException.getUserMessage()` 友好文案 + 排障凭据
 - **`data.errorMsg`**：同友好文案（不含 SQL/参数/堆栈）
 - **`data.stackTraceDetail`**：技术详情 = 异常技术消息（如 SQL 执行异常的"原因/执行SQL/参数/数据库错误码"）+ 完整堆栈，默认随响应下发；`GlobalContext.setLogStack(false)` 可关闭（仅隐藏本字段，不影响 msg/errorMsg）
-- **反馈凭据即 `logTag`**：技术详情同时写入服务端错误日志（`${LOG_DIR}/error/`，凭 `logTag=` 检索）；响应内 `stackTraceDetail` 与服务端日志双通道，报障时无需登服务器
+- **反馈凭据即 `logTag`**：技术详情同时写入服务端错误日志（`${LOG_DIR}/error/`，凭 `logTag=` 检索），并**异步持久化到 `platform_exception_log` 表**（catalog=platform-log，默认主库，可配置独立日志库）——运维凭 `GET /api/exceptionLog/byTag/{logTag}` 直接查询该次异常的完整详情（结构化前缀 + 技术消息 + 堆栈），无需登服务器；`GET /api/exceptionLog/page` 支持按错误码/应用/租户/时间分页排查
 
 ## 错误码治理规则
 
@@ -73,6 +73,7 @@ public class UnauthorizedException extends CoreException {
 | 10002 | `cn.geelato.core.orm.SqlExecuteException` | 数据操作失败，请稍后重试（docSlug=sql-execute，独立详情页：[`sql-execute`](/docs/reference/error-codes/sql-execute)，用户文案按根因分类） |
 | 10003 | `cn.geelato.core.sql.InvalidFilterFieldException` | 查询条件包含不存在的字段 |
 | 10004 | `cn.geelato.web.platform.utils.GqlResolveException` | 请求解析失败，请检查表达式 |
+| 10005 | `cn.geelato.core.mql.parser.InvalidPageParamException` | 分页参数非法（非整数、非正数或超出上限，文案含参数名与实际值；HTTP 400） |
 | 10006 | `cn.geelato.lang.exception.UnSupportedVersionException` | 当前版本不支持该操作 |
 
 ## 20xxx 认证/授权/会话类

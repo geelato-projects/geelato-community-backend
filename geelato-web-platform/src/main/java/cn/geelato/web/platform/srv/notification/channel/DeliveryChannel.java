@@ -15,7 +15,6 @@ import java.util.List;
  * </ul>
  * 新增渠道只需实现本接口并注册为 Spring Bean。
  *
- * @author geelato
  */
 public interface DeliveryChannel {
 

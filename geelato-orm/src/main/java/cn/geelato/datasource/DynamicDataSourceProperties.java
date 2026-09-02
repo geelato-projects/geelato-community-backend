@@ -13,8 +13,8 @@ public class DynamicDataSourceProperties {
     private boolean delayLoadDataSource = true;
     private boolean enableJtaTransaction = false;
     private boolean enableSeataProxy = false;
-    private Integer minimumIdle = 1;
-    private Integer maximumPoolSize = 10;
+    private Integer minimumIdle = 5;
+    private Integer maximumPoolSize = 20;
     private Long idleTimeoutMs = 600000L;
     private Long maxLifetimeMs = 1800000L;
     private Long connectionTimeoutMs = 5000L;

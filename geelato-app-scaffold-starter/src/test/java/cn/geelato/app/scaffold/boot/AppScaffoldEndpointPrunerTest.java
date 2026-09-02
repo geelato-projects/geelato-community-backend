@@ -23,7 +23,7 @@ public class AppScaffoldEndpointPrunerTest {
 
         DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
         registerController(registry, "allowedJwt", "cn.geelato.web.platform.srv.auth.JWTAuthController");
-        registerController(registry, "allowedMql", "cn.geelato.web.platform.srv.meta.MetaRuntimeController");
+        registerController(registry, "allowedMql", "cn.geelato.web.platform.srv.meta.MetaController");
         registerController(registry, "allowedNotice", "cn.geelato.web.platform.srv.notice.NoticeController");
         registerController(registry, "disallowedAi", "cn.geelato.web.platform.srv.ai.AiController");
 

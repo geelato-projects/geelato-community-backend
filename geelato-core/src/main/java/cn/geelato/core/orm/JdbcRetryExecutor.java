@@ -1,36 +1,32 @@
 package cn.geelato.core.orm;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.TransientDataAccessException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.sql.SQLException;
-import java.util.Locale;
 import java.util.function.Supplier;
 
 /**
- * JDBC 连接类故障的透明重试执行器，供 {@link Dao} 及其族类在包装 {@link SqlExecuteException} 之前调用。
+ * JDBC 连接获取失败的透明重试执行器，供 {@link Dao} 及其族类在包装 {@link SqlExecuteException} 之前调用。
  * <p>
- * 目标：数据库短暂重启、网络抖动、空闲连接被 wait_timeout 杀掉等场景下，
- * 无事务的请求自动重试成功，前端无感知。仅覆盖 primary 与动态数据源共用的 {@link Dao} 路径。
+ * 目标：数据库短暂重启、网络抖动导致连接池短暂借不出连接时，无事务的请求自动重试成功，前端无感知。
+ * 覆盖 primary 与动态数据源共用的 {@link Dao} 路径，与连接池 keepalive/借出校验配套。
  * </p>
  *
- * <h3>重试判定（保守）</h3>
- * <ul>
- *   <li>{@link CannotGetJdbcConnectionException}：未从连接池拿到连接，SQL 必然未执行，重试绝对安全；</li>
- *   <li>{@link TransientDataAccessException}：Spring 约定的瞬时故障（连接中断、死锁回滚等）；</li>
- *   <li>根因 {@link SQLException} 的 sqlState 以 {@code 08} 开头（JDBC 连接异常类）；</li>
- *   <li>根因消息含 {@code Communications link failure} / {@code Connection refused} /
- *       {@code The last packet successfully received}（MySQL 断连典型消息）。</li>
- * </ul>
+ * <h3>重试判定（绝对安全子集）</h3>
+ * <p>仅当 {@link CannotGetJdbcConnectionException}——从连接池<b>获取连接失败</b>，SQL 必然未发送到数据库，
+ * 重新执行不可能产生任何副作用（不会重复写入、不会干扰事务内的连接绑定与多数据源路由）。
+ * 连接池参数（connectionTimeout）内 Hikari 已自行多次尝试，仍失败才抛出该异常，本类再补两个重试窗口。</p>
  *
  * <h3>不重试的场景</h3>
  * <ul>
  *   <li>当前线程存在活动事务（{@link TransactionSynchronizationManager#isActualTransactionActive()}）：
- *       事务内可能已执行部分写入，重试会导致重复执行，应交由上层回滚；</li>
+ *       事务内的连接绑定与多数据源路由语义（如 batchSave 按目标库开事务、事务内切换数据源）
+ *       不允许在 Dao 层擅自重新获取连接；</li>
+ *   <li>执行中途的连接断开（TransientDataAccessException、sqlState 08xxx、Communications link failure 等）：
+ *       SQL 可能已发送甚至已提交，重试有重复执行风险——这类故障由异常分类（{@link SqlExecuteException#of}，
+ *       10021 等）转为友好提示，交由用户重试；</li>
  *   <li>非连接类故障（语法错误、约束冲突、权限等）：重试无意义。</li>
  * </ul>
  *
@@ -51,8 +47,8 @@ public final class JdbcRetryExecutor {
     }
 
     /**
-     * 执行 action，连接类故障时按固化策略透明重试；重试耗尽或故障不可重试时抛出最后一次的 {@link DataAccessException}，
-     * 由调用方包装为 {@link SqlExecuteException}。
+     * 执行 action，仅当"未从连接池获得连接"（CannotGetJdbcConnectionException）且无活动事务时透明重试；
+     * 重试耗尽或故障不可重试时抛出最后一次的 {@link DataAccessException}，由调用方包装为 {@link SqlExecuteException}。
      */
     public static <T> T execute(Supplier<T> action) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
@@ -62,7 +58,7 @@ public final class JdbcRetryExecutor {
         for (int attempt = 0; attempt <= DEFAULT_MAX_ATTEMPTS; attempt++) {
             if (attempt > 0) {
                 long waitMillis = DEFAULT_BACKOFF[Math.min(attempt - 1, DEFAULT_BACKOFF.length - 1)];
-                log.warn("JDBC连接类异常，进行第 {}/{} 次重试（退避 {}ms），原因：{}",
+                log.warn("JDBC获取连接失败，进行第 {}/{} 次重试（退避 {}ms），原因：{}",
                         attempt, DEFAULT_MAX_ATTEMPTS, waitMillis, summarize(last));
                 if (!sleep(waitMillis)) {
                     throw last;
@@ -91,27 +87,10 @@ public final class JdbcRetryExecutor {
     }
 
     /**
-     * 判断 DataAccessException 是否属于连接类瞬时故障（可安全重试）。
+     * 判断是否属于可安全重试的故障：仅"未从连接池获得连接"（SQL 必然未执行）。
      */
     public static boolean isRetryable(DataAccessException e) {
-        if (e instanceof CannotGetJdbcConnectionException || e instanceof TransientDataAccessException) {
-            return true;
-        }
-        Throwable root = NestedExceptionUtils.getRootCause(e);
-        if (root instanceof SQLException sqlException) {
-            String sqlState = sqlException.getSQLState();
-            if (sqlState != null && sqlState.startsWith("08")) {
-                return true;
-            }
-        }
-        String message = root != null && root.getMessage() != null ? root.getMessage() : e.getMessage();
-        if (message != null) {
-            String lower = message.toLowerCase(Locale.ROOT);
-            return lower.contains("communications link failure")
-                    || lower.contains("connection refused")
-                    || lower.contains("the last packet successfully received");
-        }
-        return false;
+        return e instanceof CannotGetJdbcConnectionException;
     }
 
     private static boolean sleep(long millis) {
@@ -125,8 +104,7 @@ public final class JdbcRetryExecutor {
     }
 
     private static String summarize(DataAccessException e) {
-        Throwable root = NestedExceptionUtils.getMostSpecificCause(e);
-        String message = root.getMessage();
+        String message = e.getMessage();
         if (message != null && message.length() > REASON_MAX_LENGTH) {
             message = message.substring(0, REASON_MAX_LENGTH) + "...";
         }

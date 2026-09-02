@@ -1,30 +1,33 @@
-# 10002 SQL执行异常
+# 10002 SQL执行异常（根码，1002x 子类细分）
 
 `SqlExecuteException` 在 ORM 层执行 SQL 失败时抛出。这是平台中最常见、排障信息最丰富的异常之一，因此提供独立详情页。
 
-- **错误码**：`10002`
+- **错误码**：`10002`（根码，兜底未分类 SQL 错误，如语法错误、权限不足）
 - **错误码常量**：`SqlExecuteException.ERROR_CODE`
 - **所在类**：`cn.geelato.core.orm.SqlExecuteException`
-- **文档 slug**：`sql-execute`（docUrl 指向本页）
-- **抛出位置**：`Dao.execute(...)` 模板方法捕获 Spring `DataAccessException` 后统一包装抛出，全工程 `Dao` 中约 16 处。
+- **文档 slug**：`sql-execute`（docUrl 指向本页；子类继承同一 slug）
+- **抛出位置**：`Dao` / `BaseDao` 捕获 Spring `DataAccessException` 后经 `SqlExecuteException.of(...)` 分类工厂包装抛出
 
 ## 错误含义
 
-底层 JDBC 执行 SQL 时抛出异常（语法错误、约束冲突、连接失败、字段不存在、死锁等），由 `geelato-core` 的 ORM 模板统一捕获并包装为 `SqlExecuteException`。
+底层 JDBC 执行 SQL 时抛出异常（语法错误、约束冲突、连接失败、字段不存在、死锁等），由 `geelato-core` 的 ORM 模板统一捕获，`of(...)` 工厂按根因包装为对应子类（各持独立错误码），未归类返回根类。
 
-### 前端看到的文案（getUserMessage）
+### 前端看到的文案（getUserMessage）与错误码细分
 
 默认（生产）不再向前端下发 SQL 语句与参数，`msg` 为按根因分类的友好文案，末尾追加错误码与反馈凭据（logTag）：
 
-| 分类 | 判定依据 | 文案 |
-|---|---|---|
-| 连接中断 | `CannotGetJdbcConnectionException`、sqlState `08xxx`、`Communications link failure`/`Connection refused` | 数据库连接中断，系统正在自动恢复，请稍后重试 |
-| 死锁/锁等待 | MySQL `1213/1205`、sqlState `40001`、PG `40P01` | 当前数据正被其他操作占用，请稍后重试 |
-| 唯一键冲突 | MySQL `1062`、PG `23505` | 数据已存在，无法重复提交 |
-| 外键/约束 | MySQL `1451/1452`、sqlState `23xxx` | 数据存在关联引用或不符合约束，请检查后重试 |
-| 其他 | — | 数据操作失败，请稍后重试 |
+| 分类 | 错误码 | 异常类 | 判定依据 | 文案 |
+|---|---|---|---|---|
+| 连接中断 | 10021 | `SqlConnectionException` | `CannotGetJdbcConnectionException`、sqlState `08xxx`（PG 08001/08003/08006）、`Communications link failure`/`Connection refused` | 数据库连接中断，系统正在自动恢复，请稍后重试 |
+| 死锁/锁等待 | 10022 | `SqlLockConflictException` | MySQL `1213/1205`、sqlState `40001`、PG `40P01`（死锁）/`55P03`（锁不可用，NOWAIT/lock_timeout） | 当前数据正被其他操作占用，请稍后重试 |
+| 唯一键冲突 | 10023 | `SqlDuplicateKeyException` | MySQL `1062`、PG `23505` | 数据已存在，无法重复提交 |
+| 外键/约束 | 10024 | `SqlConstraintViolationException` | MySQL `1451/1452`、sqlState `23xxx`（PG `23503` 外键/`23502` 非空/`23514` CHECK） | 数据存在关联引用或不符合约束，请检查后重试 |
+| 其他（根码） | 10002 | `SqlExecuteException` | 未命中上述分类（语法错误、字段不存在等） | 数据操作失败，请稍后重试 |
 
-示例：`数据操作失败，请稍后重试（错误码 10002，反馈凭据 123456789012345678）`。开发模式（`GlobalContext.getLogStack()=true`）下，`data.errorMsg` 保留下方完整技术文案，便于本地排障。
+> PostgreSQL 说明：PG 驱动的 `getErrorCode()` 恒为 0，PG 判定全部依赖 sqlState。
+> 兼容性：子类均继承 `SqlExecuteException`（`is-a` 成立，与 `FileException` 家族同模式），既有 `catch (SqlExecuteException)` 代码不受影响。
+
+示例：`数据已存在，无法重复提交（错误码 10023，反馈凭据 123456789012345678）`。开发模式（`GlobalContext.getLogStack()=true`）下，`data.errorMsg` 保留下方完整技术文案，便于本地排障。
 
 ### 技术详情（stackTraceDetail 与服务端日志双通道）
 
@@ -49,7 +52,12 @@ SQL状态码：<SQLState，如 23000>
 
 ### 连接类故障的自动重试
 
-`Dao` 执行 SQL 前经 `JdbcRetryExecutor` 对连接类瞬时故障（取连接失败、sqlState `08xxx`、`Communications link failure` 等）做透明重试：固化策略为重试 2 次（退避 300ms/800ms），与连接池 keepalive 配套、属平台必然行为，不设外部开关。**活动事务内不重试**（避免部分写入被重复执行），由上层事务回滚后交由用户重试。
+`Dao` 执行 SQL 前经 `JdbcRetryExecutor` 做**有限范围的透明重试**：仅当"从连接池获取连接失败"（`CannotGetJdbcConnectionException`，SQL 必然未发送到数据库，重新执行绝对安全）且无活动事务时，按固化策略重试 2 次（退避 300ms/800ms）。
+
+以下情况**不重试**：
+
+- 执行中途的连接断开（`Communications link failure`、sqlState `08xxx`、Transient 瞬时故障等）——SQL 可能已发送甚至已提交，重试有重复执行风险，由错误码细分（10021）+ 友好文案承接，交由用户重试；
+- 活动事务内（`@Transactional`、`batchSave` 事务模式等）——事务连接绑定与多数据源路由语义不允许 Dao 层擅自重新获取连接。
 
 ## 常见原因
 

@@ -501,7 +501,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             }
             DataSource dataSource = null;
             try {
-                dataSource = DataSourceManager.singleInstance().getDataSource("primary");
+                dataSource = DataSourceManager.singleInstance().getRegisteredDataSource("primary");
             } catch (Exception e) {
                 logger.debug("primary data source not available when resolving dbType", e);
             }

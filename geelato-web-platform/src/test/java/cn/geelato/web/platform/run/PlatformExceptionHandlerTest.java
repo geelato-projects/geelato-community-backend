@@ -3,6 +3,7 @@ package cn.geelato.web.platform.run;
 import cn.geelato.core.GlobalContext;
 import cn.geelato.core.orm.SqlExecuteException;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.web.platform.errorlog.service.ExceptionLogService;
 import cn.geelato.web.platform.srv.auth.AuthBadRequestException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlatformExceptionHandlerTest {
 
-    private final PlatformExceptionHandler handler = new PlatformExceptionHandler();
+    private final PlatformExceptionHandler handler = new PlatformExceptionHandler(org.mockito.Mockito.mock(ExceptionLogService.class));
     private final ServletWebRequest request = new ServletWebRequest(new MockHttpServletRequest());
 
     @AfterEach

@@ -2,6 +2,7 @@ package cn.geelato.web.platform.srv.platform.service;
 
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.mql.filter.FilterGroup;
+import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.meta.model.entity.BaseSortableEntity;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
@@ -83,39 +84,50 @@ public class BaseSortableService extends BaseService {
      * 创建一条数据
      * <p>
      * 该方法用于在数据库中创建一条新的数据记录。如果传入的实体数据的序列号大于0，则使用该序列号；否则，使用默认序列号。
+     * <p>
+     * 覆写（而非重载）父类泛型方法：若以更窄的参数边界声明（如 T extends BaseSortableEntity），
+     * 会与父类方法构成重载，通过 BaseService 静态类型调用（如 BaseController 模板）将绑定父类版本，
+     * 绕过序列号初始化。
      *
-     * @param model 要创建的实体数据对象，必须继承自BaseSortableEntity类
-     * @param <T>   泛型类型，表示实体数据的类型，必须继承自BaseSortableEntity类
+     * @param model 要创建的实体数据对象
+     * @param <T>   泛型类型，表示实体数据的类型
      * @return 返回创建后的实体数据对象
      */
-    public <T extends BaseSortableEntity> T createModel(T model) {
-        model.setSeqNo(model.getSeqNo() > 0 ? model.getSeqNo() : ColumnDefault.SEQ_NO_VALUE);
+    @Override
+    public <T extends BaseEntity> T createModel(T model) {
+        if (model instanceof BaseSortableEntity sortable) {
+            sortable.setSeqNo(sortable.getSeqNo() > 0 ? sortable.getSeqNo() : ColumnDefault.SEQ_NO_VALUE);
+        }
         return super.createModel(model);
     }
 
     /**
      * 更新一条数据
      * <p>
-     * 该方法用于更新指定实体数据，调用了父类的updateModel方法进行处理。
+     * 覆写父类方法以保证经任何静态类型调用均分派到本类逻辑（消除重载分裂）。
      *
-     * @param model 实体数据对象，需要继承自BaseSortableEntity
+     * @param model 实体数据对象
      * @param <T>   实体数据的泛型类型
      * @return 更新后的实体数据对象
      */
-    public <T extends BaseSortableEntity> T updateModel(T model) {
+    @Override
+    public <T extends BaseEntity> T updateModel(T model) {
         return super.updateModel(model);
     }
 
     /**
      * 逻辑删除
      * <p>
-     * 将指定的模型对象进行逻辑删除操作。
+     * 将指定的模型对象进行逻辑删除操作（sortable 实体同时标记删除序号）。
      *
-     * @param model 要进行逻辑删除的模型对象，该对象必须继承自BaseSortableEntity类
-     * @param <T>   泛型类型，表示模型对象的类型，必须继承自BaseSortableEntity
+     * @param model 要进行逻辑删除的模型对象
+     * @param <T>   泛型类型，表示模型对象的类型
      */
-    public <T extends BaseSortableEntity> void isDeleteModel(T model) {
-        model.setSeqNo(ColumnDefault.SEQ_NO_DELETE);
+    @Override
+    public <T extends BaseEntity> void isDeleteModel(T model) {
+        if (model instanceof BaseSortableEntity sortable) {
+            sortable.setSeqNo(ColumnDefault.SEQ_NO_DELETE);
+        }
         super.isDeleteModel(model);
     }
 }

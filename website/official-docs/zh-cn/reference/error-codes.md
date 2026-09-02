@@ -70,11 +70,22 @@ public class UnauthorizedException extends CoreException {
 | 码值 | 异常类 | 默认文案（用户可见） |
 |---|---|---|
 | 10001 | `cn.geelato.core.mql.parser.JsonParseException` | 请求解析失败，请检查数据格式 |
-| 10002 | `cn.geelato.core.orm.SqlExecuteException` | 数据操作失败，请稍后重试（docSlug=sql-execute，独立详情页：[`sql-execute`](/docs/reference/error-codes/sql-execute)，用户文案按根因分类） |
+| 10002 | `cn.geelato.core.orm.SqlExecuteException`（根码） | 数据操作失败，请稍后重试（兜底未分类 SQL 错误；docSlug=sql-execute，独立详情页：[`sql-execute`](/docs/reference/error-codes/sql-execute)） |
 | 10003 | `cn.geelato.core.sql.InvalidFilterFieldException` | 查询条件包含不存在的字段 |
 | 10004 | `cn.geelato.web.platform.utils.GqlResolveException` | 请求解析失败，请检查表达式 |
 | 10005 | `cn.geelato.core.mql.parser.InvalidPageParamException` | 分页参数非法（非整数、非正数或超出上限，文案含参数名与实际值；HTTP 400） |
 | 10006 | `cn.geelato.lang.exception.UnSupportedVersionException` | 当前版本不支持该操作 |
+
+### 1002x SQL 异常子类（10002 的细分，由 `SqlExecuteException.of` 分类工厂按根因包装）
+
+| 码值 | 异常类 | 判定依据 | 用户文案 |
+|---|---|---|---|
+| 10021 | `SqlConnectionException` | 取连接失败、sqlState `08xxx`（PG 08001/08003/08006）、`Communications link failure`/`Connection refused` | 数据库连接中断，系统正在自动恢复，请稍后重试 |
+| 10022 | `SqlLockConflictException` | MySQL 1213/1205、sqlState `40001`、PG `40P01`（死锁）/`55P03`（锁不可用） | 当前数据正被其他操作占用，请稍后重试 |
+| 10023 | `SqlDuplicateKeyException` | MySQL 1062、PG `23505` | 数据已存在，无法重复提交 |
+| 10024 | `SqlConstraintViolationException` | MySQL 1451/1452、sqlState `23xxx` 段（PG `23503` 外键/`23502` 非空/`23514` CHECK） | 数据存在关联引用或不符合约束，请检查后重试 |
+
+> PostgreSQL 说明：PG 驱动的 `getErrorCode()` 恒为 0，上述 PG 判定全部依赖 sqlState。子类 docSlug 继承根类（同一详情页）。
 
 ## 20xxx 认证/授权/会话类
 

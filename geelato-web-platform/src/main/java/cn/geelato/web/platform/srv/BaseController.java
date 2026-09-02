@@ -69,6 +69,7 @@ public class BaseController extends ParameterOperator {
      */
     @ModelAttribute
     public void setReqAndRes(HttpServletRequest request, HttpServletResponse response) {
+        this.request = request;
         this.response = response;
     }
 

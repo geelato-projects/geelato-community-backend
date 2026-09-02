@@ -27,6 +27,7 @@ public class AuditLogProperties {
     /** ORM 兜底层排除的表名清单（这些表的写操作不记审计）。 */
     private List<String> ormFallbackExcludeTables = Arrays.asList(
             "platform_audit_log", "audit_event",
+            "platform_exception_log",
             "platform_dict", "platform_dict_item",
             "platform_dev_column", "platform_dev_table", "platform_dev_table_check",
             "platform_dev_table_foreign", "platform_dev_view", "platform_dev_db_connect");

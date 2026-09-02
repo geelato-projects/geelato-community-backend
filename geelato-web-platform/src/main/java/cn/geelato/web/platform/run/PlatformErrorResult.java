@@ -67,9 +67,13 @@ public class PlatformErrorResult {
      * 无异常引用时返回空串。
      */
     public String getStackTraceDetail() {
-        if (exception == null) {
-            return "";
-        }
+        return exception == null ? "" : buildStackTraceDetail(exception);
+    }
+
+    /**
+     * 技术详情（异常消息 + 完整堆栈）：供响应字段与错误日志落库（platform_exception_log）共用。
+     */
+    public static String buildStackTraceDetail(Throwable exception) {
         StringBuilder sb = new StringBuilder();
         sb.append(exception.getMessage()).append("\n");
         for (StackTraceElement element : exception.getStackTrace()) {

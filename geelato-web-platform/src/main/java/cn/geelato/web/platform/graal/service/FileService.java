@@ -1,9 +1,9 @@
 package cn.geelato.web.platform.graal.service;
 
-import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.core.orm.Dao;
+import cn.geelato.datasource.PlatformDataSources;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.meta.Attach;
 import cn.geelato.meta.Attachment;
@@ -40,7 +40,7 @@ public class FileService {
     }
 
     private Dao initDefaultDao() {
-        DataSource ds = (DataSource) DataSourceManager.singleInstance().getDynamicDataSourceMap().get("primary");
+        DataSource ds = PlatformDataSources.getPrimaryDataSource();
         JdbcTemplate jdbcTemplate = new JdbcTemplate();
         jdbcTemplate.setDataSource(ds);
         return new Dao(jdbcTemplate);

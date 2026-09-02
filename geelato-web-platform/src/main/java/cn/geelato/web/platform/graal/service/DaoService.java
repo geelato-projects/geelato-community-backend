@@ -1,6 +1,5 @@
 package cn.geelato.web.platform.graal.service;
 
-import cn.geelato.core.ds.DataSourceManager;
 import cn.geelato.core.graal.GraalFunction;
 import cn.geelato.core.graal.GraalService;
 import cn.geelato.core.meta.MetaManager;
@@ -8,6 +7,7 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.script.sql.SqlScriptParser;
+import cn.geelato.datasource.PlatformDataSources;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.meta.DictItem;
@@ -31,7 +31,7 @@ public class DaoService extends RuleService {
         if (StringUtils.isBlank(connectId)) {
             connectId = getPrimaryConnectId();
         }
-        DataSource ds = DataSourceManager.singleInstance().getDataSource(connectId);
+        DataSource ds = PlatformDataSources.getDataSource(connectId);
         JdbcTemplate jdbcTemplate = new JdbcTemplate();
         jdbcTemplate.setDataSource(ds);
         return new Dao(jdbcTemplate);

@@ -71,7 +71,7 @@ public class Dao extends SqlKeyDao {
         try {
             return JdbcRetryExecutor.execute(action);
         } catch (DataAccessException e) {
-            throw new SqlExecuteException(e, bs.getSql(), bs.getParams());
+            throw SqlExecuteException.of(e, bs.getSql(), bs.getParams());
         }
     }
 
@@ -79,7 +79,7 @@ public class Dao extends SqlKeyDao {
         try {
             JdbcRetryExecutor.executeVoid(action);
         } catch (DataAccessException e) {
-            throw new SqlExecuteException(e, bs.getSql(), bs.getParams());
+            throw SqlExecuteException.of(e, bs.getSql(), bs.getParams());
         }
     }
 
@@ -175,7 +175,7 @@ public class Dao extends SqlKeyDao {
         try {
             return JdbcRetryExecutor.execute(() -> jdbcTemplate.query(callSql, new DecryptingRowMapper(), params));
         } catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, callSql, params);
+            throw SqlExecuteException.of(dataAccessException, callSql, params);
         }
     }
 
@@ -188,7 +188,7 @@ public class Dao extends SqlKeyDao {
         try {
             return JdbcRetryExecutor.execute(() -> jdbcTemplate.query(sql, new DecryptingRowMapper(), params));
         } catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, sql, params);
+            throw SqlExecuteException.of(dataAccessException, sql, params);
         }
     }
 
@@ -201,7 +201,7 @@ public class Dao extends SqlKeyDao {
         try {
             return JdbcRetryExecutor.execute(() -> jdbcTemplate.queryForObject(sql, requiredType, params));
         } catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, sql, params);
+            throw SqlExecuteException.of(dataAccessException, sql, params);
         }
     }
 
@@ -209,7 +209,7 @@ public class Dao extends SqlKeyDao {
         try {
             return JdbcRetryExecutor.execute(() -> jdbcTemplate.update(sql, params));
         } catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, sql, params);
+            throw SqlExecuteException.of(dataAccessException, sql, params);
         }
     }
 
@@ -283,7 +283,7 @@ public class Dao extends SqlKeyDao {
             OrmEventOperations.batchSave(contexts,
                     () -> JdbcRetryExecutor.executeVoid(() -> jdbcTemplate.batchUpdate(boundSqlList.get(0).getSql(), paramsObjs)));
         } catch (DataAccessException dataAccessException) {
-            throw new SqlExecuteException(dataAccessException, boundSqlList.get(0).getSql());
+            throw SqlExecuteException.of(dataAccessException, boundSqlList.get(0).getSql());
         }
         return returnPks;
     }
@@ -303,7 +303,7 @@ public class Dao extends SqlKeyDao {
                 TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
                 returnPks.clear();
                 if (ex instanceof DataAccessException) {
-                    throw new SqlExecuteException((DataAccessException) ex, bs.getSql(), bs.getParams());
+                    throw SqlExecuteException.of((DataAccessException) ex, bs.getSql(), bs.getParams());
                 }
                 throw ex;
             }
@@ -343,7 +343,7 @@ public class Dao extends SqlKeyDao {
             } catch (RuntimeException ex) {
                 TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);
                 if (ex instanceof DataAccessException) {
-                    throw new SqlExecuteException((DataAccessException) ex, bs.getSql(), bs.getParams());
+                    throw SqlExecuteException.of((DataAccessException) ex, bs.getSql(), bs.getParams());
                 }
                 throw ex;
             }
@@ -578,7 +578,7 @@ public class Dao extends SqlKeyDao {
                 return ApiPagedResult.success(new DataItems<>(pageQueryList, total), request.getPageNum(), request.getPageSize(), dataSize, total);
             });
         }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, bs.getSql(), bs.getParams());
+            throw SqlExecuteException.of(dataAccessException, bs.getSql(), bs.getParams());
         }
     }
 
@@ -680,7 +680,7 @@ public class Dao extends SqlKeyDao {
         try{
             return JdbcRetryExecutor.execute(() -> jdbcTemplate.queryForList(boundSql.getSql()));
         }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException, boundSql.getSql(), boundSql.getParams());
+            throw SqlExecuteException.of(dataAccessException, boundSql.getSql(), boundSql.getParams());
         }
     }
 

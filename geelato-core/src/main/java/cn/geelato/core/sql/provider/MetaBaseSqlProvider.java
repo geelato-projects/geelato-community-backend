@@ -488,23 +488,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         if (!StringUtils.hasText(connectId)) {
             return null;
         }
-        try {
-            DataSource dataSource = DataSourceManager.singleInstance().getDataSource(connectId);
-            if (dataSource == null) {
-                return null;
-            }
-            try (Connection connection = dataSource.getConnection()) {
-                DatabaseMetaData metaData = connection.getMetaData();
-                String dbType = normalizeDbType(metaData == null ? null : metaData.getDatabaseProductName());
-                if (!StringUtils.hasText(dbType) && metaData != null) {
-                    dbType = normalizeDbType(metaData.getURL());
-                }
-                return dbType;
-            }
-        } catch (Exception e) {
-            logger.debug("resolve dbType by connectId failed, connectId={}", connectId, e);
-            return null;
-        }
+        return normalizeDbType(DataSourceManager.singleInstance().getDataSourceDbType(connectId));
     }
 
     private String resolvePrimaryDbType() {

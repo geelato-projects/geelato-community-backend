@@ -18,7 +18,7 @@ public class AppScaffoldControllerCatalog {
         )));
 
         map.put(AppScaffoldCapability.MQL, new LinkedHashSet<>(Set.of(
-                "cn.geelato.web.platform.srv.meta.MetaRuntimeController"
+                "cn.geelato.web.platform.srv.meta.MetaController"
         )));
 
         map.put(AppScaffoldCapability.DICTIONARY, new LinkedHashSet<>(Set.of(

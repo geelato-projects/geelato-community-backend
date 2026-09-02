@@ -41,7 +41,7 @@ public class BaseDao {
                 return jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new DecryptingRowMapper());
             });
         }catch (DataAccessException dataAccessException){
-            throw new SqlExecuteException(dataAccessException,boundSql.getSql(),boundSql.getParams());
+            throw SqlExecuteException.of(dataAccessException,boundSql.getSql(),boundSql.getParams());
         }
 
     }

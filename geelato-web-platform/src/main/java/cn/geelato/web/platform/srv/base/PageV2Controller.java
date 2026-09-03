@@ -46,7 +46,7 @@ import java.util.function.Supplier;
 @Slf4j
 public class PageV2Controller extends BaseController {
 
-    /** 页面查询并行执行线程池（CallerRuns 语义，池满退化为调用线程执行，见 GlPageExecutor） */
+    /** 页面查询并行执行线程池（CallerRuns 语义，池满退化为调用线程执行，见 GlPageExecutorConfiguration） */
     @Autowired
     @Qualifier("glPageExecutor")
     private Executor glPageExecutor;

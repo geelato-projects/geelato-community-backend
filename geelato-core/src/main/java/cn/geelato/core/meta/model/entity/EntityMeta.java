@@ -64,12 +64,13 @@ public class EntityMeta {
     private final Map<String, TableForeign> tableForeignsMap = new HashMap<>();
     // 不更新的字段
     private final Map<String, Boolean> ignoreUpdateFieldMap;
+    // 加密列名,懒计算一次
+    private transient volatile Set<String> encryptedColumnNames;
 
     @Setter
     @Getter
     private Boolean versionControl=false;
 
-    @Getter
     @Setter
     private EntityCacheType cacheType;
     public EntityMeta() {
@@ -90,6 +91,7 @@ public class EntityMeta {
         if (fieldMetas == null) {
             return;
         }
+        this.encryptedColumnNames = null;
         FieldMeta idMeta = null;
         FieldMeta titleMeta = null;
         FieldMeta nameMeta = null;
@@ -207,6 +209,43 @@ public class EntityMeta {
         meta.setExtraValue(fm.getColumnMeta().getExtraValue());
         meta.setExtraMap(fm.getColumnMeta().getExtraMap());
         return meta;
+    }
+
+    /** 该实体的全部加密列名,懒计算一次;字段集合变更(setFieldMetas)后重算 */
+    public Set<String> getEncryptedColumnNames() {
+        Set<String> cached = encryptedColumnNames;
+        if (cached != null) {
+            return cached;
+        }
+        synchronized (this) {
+            if (encryptedColumnNames == null) {
+                Set<String> names = new HashSet<>();
+                if (fieldMetas != null) {
+                    for (FieldMeta fm : fieldMetas) {
+                        if (fm.getColumnMeta() != null && fm.getColumnMeta().isEncrypted()
+                                && fm.getColumnName() != null) {
+                            names.add(fm.getColumnName());
+                        }
+                    }
+                }
+                encryptedColumnNames = names.isEmpty() ? Set.of() : Collections.unmodifiableSet(names);
+            }
+            return encryptedColumnNames;
+        }
+    }
+
+    /** cache_type 以 TableMeta(dev_table 设计器配置)为准,实时读取 */
+    public EntityCacheType getCacheType() {
+        if (tableMeta == null || tableMeta.getCacheType() == null) {
+            return null;
+        }
+        return EntityCacheType.fromStringIgnoreCase(tableMeta.getCacheType());
+    }
+
+    /** 查询结果缓存门控:cache_type ∈ {BackEnd, BackEndAndFrontEnd} */
+    public boolean isBackEndCacheEnabled() {
+        EntityCacheType type = getCacheType();
+        return type != null && type.backEndEnabled();
     }
 
     public String getTableName() {

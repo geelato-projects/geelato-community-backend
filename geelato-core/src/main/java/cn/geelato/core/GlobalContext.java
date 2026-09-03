@@ -31,7 +31,8 @@ public class GlobalContext {
      */
     protected static Boolean __LogStack__ = true;
     protected final static Boolean __POLYGLOT_DEBUGGER__ =false;
-    protected final static Boolean __MetaQueryCache__ = false;
+    /** MQL 查询结果缓存全局开关;实体级门控见 EntityMeta.isBackEndCacheEnabled,两级同时开启才缓存 */
+    protected final static Boolean __MetaQueryCache__ = true;
     /*
     在线文档站根地址，用于异常响应中拼接错误码文档链接（docUrl）。
     代码固化，如需替换部署域名，直接修改此处常量。

@@ -59,7 +59,7 @@ public class RuleService {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         cn.geelato.core.mql.MqlQueryProcessor.getInstance().processQueryCommandFunctions(command);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
-        if (!GlobalContext.getMetaQueryCacheOption()) {
+        if (!cacheEnabledFor(command)) {
             return dao.queryForMap(boundSql);
         }
         String key = buildCacheKey(command, "map");
@@ -78,7 +78,7 @@ public class RuleService {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         cn.geelato.core.mql.MqlQueryProcessor.getInstance().processQueryCommandFunctions(command);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
-        if (!GlobalContext.getMetaQueryCacheOption()) {
+        if (!cacheEnabledFor(command)) {
             return dao.queryForObject(boundSql, requiredType);
         }
         String key = buildCacheKey(command, "obj:" + requiredType.getSimpleName());
@@ -108,9 +108,9 @@ public class RuleService {
         QueryCommand command = processed.getCommand();
         BoundPageSql boundPageSql = processed.getBoundPageSql();
         Object meta = withMeta ? metaManager.getByEntityName(command.getEntityName()).getSimpleFieldMetas(command.getFields()) : null;
-        if (!GlobalContext.getMetaQueryCacheOption()) {
+        if (!cacheEnabledFor(command)) {
             List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
-            Long total = dao.queryTotal(boundPageSql);
+            Long total = resolvePageTotal(command, boundPageSql, list);
             return createPageResult(list, command.getPageNum(), command.getPageSize(), total, meta, false);
         }
         String kList = buildCacheKey(command, "list");
@@ -121,9 +121,11 @@ public class RuleService {
             return createPageResult(cachedList, command.getPageNum(), command.getPageSize(), cachedTotal, meta, true);
         }
         List<Map<String, Object>> list = dao.queryForMapList(boundPageSql);
-        Long total = dao.queryTotal(boundPageSql);
-        metaCache.putCache(kList, list);
-        metaCache.putCache(kTotal, total);
+        Long total = resolvePageTotal(command, boundPageSql, list);
+        if (isCacheableResult(command, list)) {
+            metaCache.putCache(kList, list);
+            metaCache.putCache(kTotal, total);
+        }
         return createPageResult(list, command.getPageNum(), command.getPageSize(), total, meta, false);
     }
 
@@ -187,23 +189,25 @@ public class RuleService {
     public Map<String, Object> queryForMultiMapList(String gql, boolean withMeta, Map<String, Map<String, Object>> queryParamsByEntity) {
         Map<String, Map<String, Object>> dataMap = new HashMap<>();
         List<QueryCommand> commandList = gqlManager.generateMultiQuerySql(gql);
-        boolean allCached = GlobalContext.getMetaQueryCacheOption();
+        // cache=true 要求全部实体启用缓存且全部命中
+        boolean allCached = true;
         for (QueryCommand command : commandList) {
             cn.geelato.core.mql.MqlQueryProcessor.getInstance().applyViewTemplateParams(command, queryParamsByEntity);
             cn.geelato.core.mql.MqlQueryProcessor.getInstance().processQueryCommandFunctions(command);
             BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
+            boolean entityCacheEnabled = cacheEnabledFor(command);
             String kList = buildCacheKey(command, "list");
             String kTotal = buildCacheKey(command, "total");
             List<Map<String, Object>> list;
             Long total;
-            if (GlobalContext.getMetaQueryCacheOption() && metaCache.exists(kList) && metaCache.exists(kTotal)) {
+            if (entityCacheEnabled && metaCache.exists(kList) && metaCache.exists(kTotal)) {
                 list = (List<Map<String, Object>>) metaCache.getCache(kList);
                 total = (Long) metaCache.getCache(kTotal);
             } else {
                 allCached = false;
                 list = dao.queryForMapList(boundPageSql);
-                total = dao.queryTotal(boundPageSql);
-                if (GlobalContext.getMetaQueryCacheOption()) {
+                total = resolvePageTotal(command, boundPageSql, list);
+                if (entityCacheEnabled && isCacheableResult(command, list)) {
                     metaCache.putCache(kList, list);
                     metaCache.putCache(kTotal, total);
                 }
@@ -243,6 +247,48 @@ public class RuleService {
         return "mql:" + tenantSeg + ":" + command.getEntityName() + ":" + hash + ":" + suffix;
     }
 
+    /** 无分页全量查询防灌爆:仅分页查询或结果行数受限时才回填缓存 */
+    private static final int MAX_CACHEABLE_ROWS = 500;
+
+    /** 两级门控:全局开关开启且实体 cache_type 为 BackEnd/BackEndAndFrontEnd */
+    static boolean cacheEnabledFor(QueryCommand command) {
+        return GlobalContext.getMetaQueryCacheOption()
+                && backEndCacheEnabled(command == null ? null : command.getEntityName());
+    }
+
+    /** 实体未注册或 cacheType 为 null/None/FrontEnd 时不缓存 */
+    static boolean backEndCacheEnabled(String entityName) {
+        if (entityName == null || entityName.isEmpty()) {
+            return false;
+        }
+        EntityMeta entityMeta = MetaManager.singleInstance().getByEntityName(entityName);
+        return entityMeta != null && entityMeta.isBackEndCacheEnabled();
+    }
+
+    /** 分页查询恒可入;非分页仅限小结果集 */
+    static boolean isCacheableResult(QueryCommand command, List<?> result) {
+        if (command.isPagingQuery()) {
+            return true;
+        }
+        return result == null || result.size() <= MAX_CACHEABLE_ROWS;
+    }
+
+    /**
+     * total 可从数据行精确推导时直接派生（全量查询 / 主键等值检索 / 首页未满，见
+     * {@link cn.geelato.core.orm.PageTotalStrategy}），跳过 count SQL；推导不出（非首页、
+     * 首页恰好取满且无主键条件等）仍执行 count，保证 total 恒等于真实总数。
+     */
+    private Long resolvePageTotal(QueryCommand command, BoundPageSql boundPageSql, List<Map<String, Object>> list) {
+        int rowNum = list != null ? list.size() : 0;
+        boolean uniqueKeyBounded = cn.geelato.core.orm.PageTotalStrategy.uniqueKeyBounded(command, metaManager);
+        if (cn.geelato.core.orm.PageTotalStrategy.totalDerivable(uniqueKeyBounded, command, rowNum)) {
+            log.debug("meta list count skipped: entity={}, pageNum={}, pageSize={}, rows={}",
+                    command.getEntityName(), command.getPageNum(), command.getPageSize(), rowNum);
+            return (long) rowNum;
+        }
+        return dao.queryTotal(boundPageSql);
+    }
+
     private Map<String, Object> createPageResult(List<Map<String, Object>> list, long page, int size, Long total, Object meta, boolean cache) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("data", list);
@@ -265,7 +311,7 @@ public class RuleService {
         QueryCommand command = gqlManager.generateQuerySql(gql);
         processor.processQueryCommandFunctions(command);
         BoundSql boundSql = sqlManager.generateQuerySql(command);
-        if (!GlobalContext.getMetaQueryCacheOption()) {
+        if (!cacheEnabledFor(command)) {
             return dao.queryForOneColumnList(boundSql, elementType);
         }
         String key = buildCacheKey(command, "col:" + elementType.getSimpleName());
@@ -278,7 +324,9 @@ public class RuleService {
             }
         }
         List<T> result = dao.queryForOneColumnList(boundSql, elementType);
-        metaCache.putCache(key, result);
+        if (isCacheableResult(command, result)) {
+            metaCache.putCache(key, result);
+        }
         return result;
     }
 

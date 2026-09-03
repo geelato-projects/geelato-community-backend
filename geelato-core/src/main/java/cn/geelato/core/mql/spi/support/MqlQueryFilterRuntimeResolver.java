@@ -14,11 +14,7 @@ import java.util.Map.Entry;
 public final class MqlQueryFilterRuntimeResolver {
     private static final Logger log = LoggerFactory.getLogger(MqlQueryFilterRuntimeResolver.class);
 
-    /**
-     * 注入器 bean 每个ApplicationContext 实例只解析一次（无热部署注册场景）。
-     * 缓存绑定容器实例身份：容器不变则永久复用，容器更换（如单测逐用例换 StaticApplicationContext）自动重解析。
-     * 上下文未就绪（如 core 模块无容器的单测环境）每次直查且不缓存，避免把"未找到"空结果永久化。
-     */
+    /** 每个 ApplicationContext 实例只解析一次;容器未就绪时不缓存,逐次直查 */
     private static volatile BeansSnapshot<MqlQueryFilterInjector> cachedSnapshot;
 
     private static final class BeansSnapshot<T> {

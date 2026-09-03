@@ -36,7 +36,6 @@ public class BaseDao {
 
     protected List<Map<String, Object>> queryForMapListInner(BoundSql boundSql) throws DataAccessException {
         try {
-            // 每查询解析一次加密列集合（主实体+join 实体）；解析不出即空集——元数据不可用时加密侧从未加密过，不解密
             Set<String> encryptedColumns = EncryptedColumns.from(boundSql);
             return JdbcRetryExecutor.execute(() -> {
                 if (boundSql.getTypes() != null && boundSql.getTypes().length > 0) {
@@ -52,10 +51,7 @@ public class BaseDao {
 }
 
 class DecryptingRowMapper implements RowMapper<Map<String, Object>> {
-    /**
-     * 仅对集合内（元数据标记加密）的列尝试解密；空集即无加密列，不做任何解密。
-     * 与加密侧 EncryptInner 的元数据门控对称：解密需要元数据明确背书。
-     */
+    /** 仅对集合内(元数据标记加密)的列尝试解密,与加密侧门控对称 */
     private final Set<String> encryptedColumns;
 
     DecryptingRowMapper(Set<String> encryptedColumns) {

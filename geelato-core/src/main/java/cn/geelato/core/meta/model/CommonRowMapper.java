@@ -93,10 +93,7 @@ public class CommonRowMapper<T> implements RowMapper<T> {
         return null;
     }
 
-    /**
-     * 与加密侧 EncryptInner 的元数据门控对称：解密需要元数据明确背书，仅对标记加密的列尝试解密。
-     * 列不在元数据内（fm 为 null，如元数据缺失的兜底路径）则不解密——元数据不可用时平台从未加密过该数据。
-     */
+    /** 仅对元数据标记加密的列解密;未匹配到字段元数据的列原样返回 */
     private static Object decryptIfMarked(Object value, FieldMeta fm) {
         if (!(value instanceof String stringValue)) {
             return value;

@@ -175,7 +175,6 @@ public class Dao extends SqlKeyDao {
 
     public List<Map<String, Object>> callForMapList(String callSql, Object[] params) {
         try {
-            // 裸 SQL/存储过程无元数据，无加密列可解——与加密侧对称（无元数据则从未加密过）
             return JdbcRetryExecutor.execute(() -> jdbcTemplate.query(callSql, new DecryptingRowMapper(Set.of()), params));
         } catch (DataAccessException dataAccessException) {
             throw SqlExecuteException.of(dataAccessException, callSql, params);
@@ -189,7 +188,6 @@ public class Dao extends SqlKeyDao {
 
     public List<Map<String, Object>> nativeQueryForMapList(String sql, Object[] params) {
         try {
-            // 裸 SQL 无元数据，无加密列可解——与加密侧对称（无元数据则从未加密过）
             return JdbcRetryExecutor.execute(() -> jdbcTemplate.query(sql, new DecryptingRowMapper(Set.of()), params));
         } catch (DataAccessException dataAccessException) {
             throw SqlExecuteException.of(dataAccessException, sql, params);

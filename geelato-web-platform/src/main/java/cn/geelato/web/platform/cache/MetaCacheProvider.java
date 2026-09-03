@@ -11,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("All")
 public class MetaCacheProvider<T> implements CacheProvider<T> {
     private static final String __Region__ = "metaquery";
+    /** 无 j2cache 时的本地降级容量护栏(无 TTL,超限整体清空) */
+    private static final int LOCAL_CACHE_MAX_ENTRIES = 5000;
     private final Map<String, Object> localCache = new ConcurrentHashMap<>();
     private static CacheValueAdapter adapter = new DefaultCacheValueAdapter();
 
@@ -31,6 +33,9 @@ public class MetaCacheProvider<T> implements CacheProvider<T> {
         if (cache != null) {
             cache.set(__Region__, key, adapted);
             return;
+        }
+        if (localCache.size() > LOCAL_CACHE_MAX_ENTRIES) {
+            localCache.clear();
         }
         localCache.put(key, adapted);
     }

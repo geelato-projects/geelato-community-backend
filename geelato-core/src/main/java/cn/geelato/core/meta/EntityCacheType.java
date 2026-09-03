@@ -6,6 +6,11 @@ public enum EntityCacheType {
     FrontEnd,
     BackEndAndFrontEnd;
 
+    /** 服务端缓存启用:BackEnd / BackEndAndFrontEnd */
+    public boolean backEndEnabled() {
+        return this == BackEnd || this == BackEndAndFrontEnd;
+    }
+
     public static EntityCacheType fromStringIgnoreCase(String value) {
         if (value == null) {
             throw new IllegalArgumentException("EntityCacheType is must not null");

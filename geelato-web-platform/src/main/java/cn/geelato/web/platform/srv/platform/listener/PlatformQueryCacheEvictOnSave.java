@@ -19,6 +19,7 @@ public class PlatformQueryCacheEvictOnSave implements AfterSaveEventListener {
         if (entityName == null || entityName.isEmpty()) {
             return;
         }
-        metaCache.removeCacheByPattern("query:" + entityName + "*");
+        // 缓存 key 形如 mql:{tenant}:{entity}:{md5}:{suffix},":entity:" 冒号定界精确匹配实体段
+        metaCache.removeCacheByPattern("*:" + entityName + ":*");
     }
 }

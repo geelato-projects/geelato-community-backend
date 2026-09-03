@@ -31,7 +31,8 @@ public final class SafeJ2CacheSupport {
             }
             try {
                 cacheChannel = J2Cache.getChannel();
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
+                // j2cache 初始化失败(含 Error)只降级为本地缓存,不打断查询链路
                 log.warn("J2Cache is unavailable, fallback to local in-memory cache where supported: {}", ex.getMessage());
             } finally {
                 initialized = true;

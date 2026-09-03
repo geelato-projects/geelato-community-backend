@@ -22,7 +22,12 @@
 | 死锁/锁等待 | 10022 | `SqlLockConflictException` | MySQL `1213/1205`、sqlState `40001`、PG `40P01`（死锁）/`55P03`（锁不可用，NOWAIT/lock_timeout） | 当前数据正被其他操作占用，请稍后重试 |
 | 唯一键冲突 | 10023 | `SqlDuplicateKeyException` | MySQL `1062`、PG `23505` | 数据已存在，无法重复提交 |
 | 外键/约束 | 10024 | `SqlConstraintViolationException` | MySQL `1451/1452`、sqlState `23xxx`（PG `23503` 外键/`23502` 非空/`23514` CHECK） | 数据存在关联引用或不符合约束，请检查后重试 |
+| 数据超长 | 10025 | `SqlDataTooLongException` | MySQL `1406`、sqlState `22001` | 字段[字段名]的内容超出长度限制，请缩短后重试 |
+| 数值超范围 | 10026 | `SqlDataOutOfRangeException` | MySQL `1690`、sqlState `22003` | 字段[字段名]的数值超出允许范围，请调整后重试 |
+| 数据格式不正确 | 10027 | `SqlDataFormatException` | MySQL `1366`/`1292`、sqlState `22007`/`22008` | 字段[字段名]的数据格式不正确，请检查填写内容后重试 |
 | 其他（根码） | 10002 | `SqlExecuteException` | 未命中上述分类（语法错误、字段不存在等） | 数据操作失败，请稍后重试 |
+
+> 10025-10027 的用户文案中的"字段名"提取自数据库根因消息（MySQL 格式 `... for column 'xxx' at row 1`）；PG 消息通常不含字段名，退回通用文案（如"数据内容超出字段长度限制"）。
 
 > PostgreSQL 说明：PG 驱动的 `getErrorCode()` 恒为 0，PG 判定全部依赖 sqlState。
 > 兼容性：子类均继承 `SqlExecuteException`（`is-a` 成立，与 `FileException` 家族同模式），既有 `catch (SqlExecuteException)` 代码不受影响。

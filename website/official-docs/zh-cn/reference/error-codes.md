@@ -84,6 +84,9 @@ public class UnauthorizedException extends CoreException {
 | 10022 | `SqlLockConflictException` | MySQL 1213/1205、sqlState `40001`、PG `40P01`（死锁）/`55P03`（锁不可用） | 当前数据正被其他操作占用，请稍后重试 |
 | 10023 | `SqlDuplicateKeyException` | MySQL 1062、PG `23505` | 数据已存在，无法重复提交 |
 | 10024 | `SqlConstraintViolationException` | MySQL 1451/1452、sqlState `23xxx` 段（PG `23503` 外键/`23502` 非空/`23514` CHECK） | 数据存在关联引用或不符合约束，请检查后重试 |
+| 10025 | `SqlDataTooLongException` | MySQL 1406、sqlState `22001`（PG string_data_right_truncation） | 字段[字段名]的内容超出长度限制，请缩短后重试（文案含从根因消息提取的字段名） |
+| 10026 | `SqlDataOutOfRangeException` | MySQL 1690、sqlState `22003`（PG numeric_value_out_of_range） | 字段[字段名]的数值超出允许范围，请调整后重试 |
+| 10027 | `SqlDataFormatException` | MySQL 1366（值/字符集非法）、1292（日期非法）、sqlState `22007`/`22008` | 字段[字段名]的数据格式不正确，请检查填写内容后重试 |
 
 > PostgreSQL 说明：PG 驱动的 `getErrorCode()` 恒为 0，上述 PG 判定全部依赖 sqlState。子类 docSlug 继承根类（同一详情页）。
 

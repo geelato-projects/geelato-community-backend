@@ -46,7 +46,6 @@ public class DataSourceManager extends AbstractManager {
         if (dao.getJdbcTemplate().getDataSource() != null) {
             dataSourceMap.put("primary", dao.getJdbcTemplate().getDataSource());
         }
-        // 业务层未提供 DataSourceDefinitionLoader 时（框架独立运行），跳过动态数据源加载。
         if (definitionLoader == null) {
             return;
         }
@@ -61,11 +60,6 @@ public class DataSourceManager extends AbstractManager {
         return key == null ? null : dataSourceMap.get(key);
     }
 
-    /**
-     * 按 connectId 查询配置的数据源类型（platform_dev_db_connect.db_type）。
-     *
-     * @return 配置缺失或 db_type 为空时返回 null
-     */
     public String getDataSourceDbType(String connectId) {
         Map<String, Object> config = connectId == null ? null : dataSourceConfigMap.get(connectId);
         if (config == null) {

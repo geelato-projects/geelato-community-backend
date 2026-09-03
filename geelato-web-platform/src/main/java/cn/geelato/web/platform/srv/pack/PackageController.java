@@ -36,7 +36,6 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -84,11 +83,18 @@ public class PackageController {
     private final SqlManager sqlManager = SqlManager.singleInstance();
     private final JsonTextSaveParser jsonTextSaveParser = new JsonTextSaveParser();
 
-    protected HttpServletRequest request;
     protected HttpServletResponse response;
-    @ModelAttribute
-    public void setReqAndRes(HttpServletRequest request, HttpServletResponse response) {
-        this.request = request;
+
+    /**
+     * 通过Spring框架的@Autowired注解自动注入HttpServletResponse代理对象
+     * 该代理按线程路由到当前请求的响应，单例Controller并发下线程安全。
+     * 注意：不要在每请求回调（如@ModelAttribute）中把原始request/response写入实例字段，
+     * 并发请求会互相覆盖导致串号。
+     *
+     * @param response Servlet响应代理对象，用于获取响应相关的信息
+     */
+    @Autowired
+    public void setHttpServletResponse(HttpServletResponse response) {
         this.response = response;
     }
 

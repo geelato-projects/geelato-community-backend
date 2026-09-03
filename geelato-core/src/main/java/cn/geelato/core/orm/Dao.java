@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.function.Supplier;
@@ -152,10 +153,11 @@ public class Dao extends SqlKeyDao {
     //                  基于元数据  gql                      ==
     //========================================================
     public Map<String, Object> queryForMap(BoundSql boundSql) throws DataAccessException {
+        Set<String> encryptedColumns = EncryptedColumns.from(boundSql);
         return execute(boundSql, () -> {
             List<Map<String, Object>> rows = boundSql.getTypes() != null && boundSql.getTypes().length > 0
-                    ? jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), boundSql.getTypes(), new DecryptingRowMapper())
-                    : jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new DecryptingRowMapper());
+                    ? jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), boundSql.getTypes(), new DecryptingRowMapper(encryptedColumns))
+                    : jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), new DecryptingRowMapper(encryptedColumns));
             return rows.isEmpty() ? null : rows.get(0);
         });
     }
@@ -173,7 +175,8 @@ public class Dao extends SqlKeyDao {
 
     public List<Map<String, Object>> callForMapList(String callSql, Object[] params) {
         try {
-            return JdbcRetryExecutor.execute(() -> jdbcTemplate.query(callSql, new DecryptingRowMapper(), params));
+            // 裸 SQL/存储过程无元数据，无加密列可解——与加密侧对称（无元数据则从未加密过）
+            return JdbcRetryExecutor.execute(() -> jdbcTemplate.query(callSql, new DecryptingRowMapper(Set.of()), params));
         } catch (DataAccessException dataAccessException) {
             throw SqlExecuteException.of(dataAccessException, callSql, params);
         }
@@ -186,7 +189,8 @@ public class Dao extends SqlKeyDao {
 
     public List<Map<String, Object>> nativeQueryForMapList(String sql, Object[] params) {
         try {
-            return JdbcRetryExecutor.execute(() -> jdbcTemplate.query(sql, new DecryptingRowMapper(), params));
+            // 裸 SQL 无元数据，无加密列可解——与加密侧对称（无元数据则从未加密过）
+            return JdbcRetryExecutor.execute(() -> jdbcTemplate.query(sql, new DecryptingRowMapper(Set.of()), params));
         } catch (DataAccessException dataAccessException) {
             throw SqlExecuteException.of(dataAccessException, sql, params);
         }

@@ -12,6 +12,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class EncryptUtils {
+    /** 密文形如 "algorithm:cipherText"，冒号前为算法名；decrypt 对每个 String 单元格调用，必须预编译 */
+    private static final Pattern ENCRYPT_MARKER = Pattern.compile("^([a-zA-Z0-9_]+):(.+)$");
+
     public static String encrypt(String data) {
         String encryptType = GlobalContext.getEncryptType();
         String encryptData = switch (encryptType.toLowerCase()) {
@@ -26,9 +29,7 @@ public class EncryptUtils {
 
     public static String decrypt(String data) {
         String decryptData;
-        String regex = "^([a-zA-Z0-9_]+):(.+)$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(data);
+        Matcher matcher = ENCRYPT_MARKER.matcher(data);
         if (matcher.find()) {
             String algorithm = matcher.group(1);
             String encryptData = matcher.group(2);

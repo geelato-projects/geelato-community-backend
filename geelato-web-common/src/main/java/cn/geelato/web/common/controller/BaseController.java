@@ -13,8 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.reactive.function.server.ServerRequest;
 
 import java.io.BufferedReader;
@@ -64,14 +64,24 @@ public class BaseController {
 
 
     /**
-     * 通过Spring框架的@ModelAttribute注解自动注入HttpServletResponse对象
-     * 这个方法主要用于设置HttpServletResponse对象，以便在类内部使用
-     *
-     * @param response Servlet响应对象，用于获取响应相关的信息
+     * 通过Spring框架的@Autowired注解自动注入HttpServletRequest/Response代理对象
+     * 该代理按线程路由到当前请求，单例Controller并发下线程安全；
+     * reactor环境下无可注入的Servlet对象，保持null以走serverRequest回退路径。
+     * 注意：不要在每请求回调（如@ModelAttribute）中把原始request/response写入实例字段，
+     * 并发请求会互相覆盖导致串号。
      */
-    @ModelAttribute
-    public void setReqAndRes(HttpServletRequest request, HttpServletResponse response) {
-        this.request=request;
+    @Autowired(required = false)
+    public void setHttpServletRequest(HttpServletRequest request) {
+        this.request = request;
+    }
+
+    /**
+     * 通过Spring框架的@Autowired注解自动注入HttpServletResponse代理对象
+     *
+     * @param response Servlet响应代理对象，用于获取响应相关的信息
+     */
+    @Autowired(required = false)
+    public void setHttpServletResponse(HttpServletResponse response) {
         this.response = response;
     }
 

@@ -136,12 +136,11 @@ public class MetaController extends BaseController {
             return new QueryPayload(JSON.toJSONString(root), paramsByEntity);
         }
         JSONObject root = JSON.parseObject(gql);
-        extractPf(root, paramsByEntity);
-        return new QueryPayload(JSON.toJSONString(root), paramsByEntity);
+        return new QueryPayload(extractPf(root, paramsByEntity), paramsByEntity);
     }
 
-    private void extractPf(JSONObject root, Map<String, Map<String, Object>> paramsByEntity) {
-        cn.geelato.core.mql.MqlQueryProcessor.getInstance().extractPfAndSerialize(root, paramsByEntity);
+    private String extractPf(JSONObject root, Map<String, Map<String, Object>> paramsByEntity) {
+        return cn.geelato.core.mql.MqlQueryProcessor.getInstance().extractPfAndSerialize(root, paramsByEntity);
     }
 
     @SuppressWarnings("unchecked")

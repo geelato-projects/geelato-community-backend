@@ -243,11 +243,7 @@ public class MetaManager extends AbstractManager {
         if (entityMetadataMap.containsKey(entityName)) {
             return entityMetadataMap.get(entityName);
         } else {
-            Iterator<String> it = entityMetadataMap.keySet().iterator();
-            log.warn("Key({}) not found in entityMetadataMap by entityName", entityName);
-            while (it.hasNext()) {
-                log.warn(it.next());
-            }
+            log.warn("Key({}) not found in entityMetadataMap by entityName, registered={}", entityName, entityMetadataMap.size());
             return null;
         }
     }
@@ -264,11 +260,7 @@ public class MetaManager extends AbstractManager {
         if (tableNameMetadataMap.containsKey(tableName)) {
             return tableNameMetadataMap.get(tableName);
         } else {
-            Iterator<String> it = tableNameMetadataMap.keySet().iterator();
-            log.warn("Key({}) not found in tableNameMetadataMap by tableName", tableName);
-            while (it.hasNext()) {
-                log.warn(it.next());
-            }
+            log.warn("Key({}) not found in tableNameMetadataMap by tableName, registered={}", tableName, tableNameMetadataMap.size());
             return null;
         }
     }

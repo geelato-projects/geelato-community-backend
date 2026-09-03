@@ -14,7 +14,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -62,14 +61,15 @@ public class BaseController extends ParameterOperator {
     }
 
     /**
-     * 通过Spring框架的@ModelAttribute注解自动注入HttpServletResponse对象
-     * 这个方法主要用于设置HttpServletResponse对象，以便在类内部使用
+     * 通过Spring框架的@Autowired注解自动注入HttpServletResponse代理对象
+     * 该代理按线程路由到当前请求的响应，单例Controller并发下线程安全。
+     * 注意：不要在每请求回调（如@ModelAttribute）中把原始request/response写入实例字段，
+     * 并发请求会互相覆盖导致串号（见commit 5b35fe5e引入的并发缺陷）。
      *
-     * @param response Servlet响应对象，用于获取响应相关的信息
+     * @param response Servlet响应代理对象，用于获取响应相关的信息
      */
-    @ModelAttribute
-    public void setReqAndRes(HttpServletRequest request, HttpServletResponse response) {
-        this.request = request;
+    @Autowired
+    protected void setHttpServletResponse(HttpServletResponse response) {
         this.response = response;
     }
 

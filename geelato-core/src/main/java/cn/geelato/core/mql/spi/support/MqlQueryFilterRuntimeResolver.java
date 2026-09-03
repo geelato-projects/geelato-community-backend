@@ -14,6 +14,23 @@ import java.util.Map.Entry;
 public final class MqlQueryFilterRuntimeResolver {
     private static final Logger log = LoggerFactory.getLogger(MqlQueryFilterRuntimeResolver.class);
 
+    /**
+     * 注入器 bean 每个ApplicationContext 实例只解析一次（无热部署注册场景）。
+     * 缓存绑定容器实例身份：容器不变则永久复用，容器更换（如单测逐用例换 StaticApplicationContext）自动重解析。
+     * 上下文未就绪（如 core 模块无容器的单测环境）每次直查且不缓存，避免把"未找到"空结果永久化。
+     */
+    private static volatile BeansSnapshot<MqlQueryFilterInjector> cachedSnapshot;
+
+    private static final class BeansSnapshot<T> {
+        final org.springframework.context.ApplicationContext context;
+        final Map<String, T> beans;
+
+        BeansSnapshot(org.springframework.context.ApplicationContext context, Map<String, T> beans) {
+            this.context = context;
+            this.beans = beans;
+        }
+    }
+
     private MqlQueryFilterRuntimeResolver() {
     }
 
@@ -24,17 +41,17 @@ public final class MqlQueryFilterRuntimeResolver {
         }
         MqlQueryFilterInjector injector = injectorEntry.getValue();
         boolean enabled = injector.isEnabled();
-        log.info("Resolved MQL query filter injector. entityName={}, beanName={}, beanClass={}, enabled={}",
+        log.debug("Resolved MQL query filter injector. entityName={}, beanName={}, beanClass={}, enabled={}",
                 command.getEntityName(), injectorEntry.getKey(), injector.getClass().getName(), enabled);
         if (!enabled) {
-            log.info("Skip MQL query filter injection because injector is disabled. entityName={}, beanName={}",
+            log.debug("Skip MQL query filter injection because injector is disabled. entityName={}, beanName={}",
                     command.getEntityName(), injectorEntry.getKey());
             return;
         }
-        log.info("Applying MQL query filter injection. entityName={}, beanName={}, beanClass={}",
+        log.debug("Applying MQL query filter injection. entityName={}, beanName={}, beanClass={}",
                 command.getEntityName(), injectorEntry.getKey(), injector.getClass().getName());
         injector.inject(command);
-        log.info("Completed MQL query filter injection. entityName={}, beanName={}",
+        log.debug("Completed MQL query filter injection. entityName={}, beanName={}",
                 command.getEntityName(), injectorEntry.getKey());
     }
 
@@ -44,18 +61,36 @@ public final class MqlQueryFilterRuntimeResolver {
     }
 
     static Entry<String, MqlQueryFilterInjector> resolveUniqueInjectorEntry(QueryCommand command) {
-        Map<String, MqlQueryFilterInjector> beans = BeansUtils.getBeansOfType(MqlQueryFilterInjector.class);
+        Map<String, MqlQueryFilterInjector> beans = resolveBeansOnce();
         if (beans.isEmpty()) {
-            log.info("No MqlQueryFilterInjector bean found. Skip MQL query filter injection. entityName={}",
+            log.debug("No MqlQueryFilterInjector bean found. Skip MQL query filter injection. entityName={}",
                     command == null ? null : command.getEntityName());
             return null;
         }
         if (beans.size() > 1) {
             List<String> beanNames = new ArrayList<>(beans.keySet());
-            log.info("Detected multiple MqlQueryFilterInjector beans. entityName={}, beanNames={}",
-                    command == null ? null : command.getEntityName(), beanNames);
             throw new IllegalStateException("Multiple MqlQueryFilterInjector beans found: " + beanNames + ". Expected 0 or 1.");
         }
         return beans.entrySet().iterator().next();
+    }
+
+    private static Map<String, MqlQueryFilterInjector> resolveBeansOnce() {
+        org.springframework.context.ApplicationContext context = BeansUtils.getApplicationContext();
+        if (context == null) {
+            return BeansUtils.getBeansOfType(MqlQueryFilterInjector.class);
+        }
+        BeansSnapshot<MqlQueryFilterInjector> snapshot = cachedSnapshot;
+        if (snapshot != null && snapshot.context == context) {
+            return snapshot.beans;
+        }
+        synchronized (MqlQueryFilterRuntimeResolver.class) {
+            snapshot = cachedSnapshot;
+            if (snapshot == null || snapshot.context != context) {
+                snapshot = new BeansSnapshot<>(context, java.util.Collections.unmodifiableMap(
+                        new java.util.LinkedHashMap<>(BeansUtils.getBeansOfType(MqlQueryFilterInjector.class))));
+                cachedSnapshot = snapshot;
+            }
+            return snapshot.beans;
+        }
     }
 }

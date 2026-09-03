@@ -24,6 +24,9 @@ import java.util.Objects;
  *   <li>{@link SqlLockConflictException}（10022）—— 死锁 / 锁等待超时</li>
  *   <li>{@link SqlDuplicateKeyException}（10023）—— 唯一键冲突</li>
  *   <li>{@link SqlConstraintViolationException}（10024）—— 外键 / 完整性约束</li>
+ *   <li>{@link SqlDataTooLongException}（10025）—— 数据超长（用户文案含字段名）</li>
+ *   <li>{@link SqlDataOutOfRangeException}（10026）—— 数值超出范围（用户文案含字段名）</li>
+ *   <li>{@link SqlDataFormatException}（10027）—— 数据格式不正确（用户文案含字段名）</li>
  * </ul>
  */
 @Getter
@@ -83,6 +86,19 @@ public class SqlExecuteException extends CoreException {
                 || (sqlState != null && sqlState.startsWith("23"))) {
             return new SqlConstraintViolationException(dae, sql, params);
         }
+        // 数据超长（MySQL 1406、标准/PG 22001）——高频错误，用户文案携带字段名
+        if (dbErrorCode == 1406 || "22001".equals(sqlState)) {
+            return new SqlDataTooLongException(dae, sql, params);
+        }
+        // 数值超出范围（MySQL 1690、标准/PG 22003）
+        if (dbErrorCode == 1690 || "22003".equals(sqlState)) {
+            return new SqlDataOutOfRangeException(dae, sql, params);
+        }
+        // 数据格式不正确（MySQL 1366 字符/值非法、1292 日期非法；标准/PG 22007/22008）
+        if (dbErrorCode == 1366 || dbErrorCode == 1292
+                || "22007".equals(sqlState) || "22008".equals(sqlState)) {
+            return new SqlDataFormatException(dae, sql, params);
+        }
         return new SqlExecuteException(dae, sql, params);
     }
 
@@ -129,6 +145,26 @@ public class SqlExecuteException extends CoreException {
     @Override
     public String getDocSlug() {
         return "sql-execute";
+    }
+
+    /**
+     * 从根因 SQLException 消息中提取字段名（MySQL 格式：{@code ... for column 'xxx' at row 1}），
+     * 供数据值类子类在用户文案中直接指明出错字段；提取不到返回 null。
+     */
+    protected String extractColumnName() {
+        if (originalSqlException == null || originalSqlException.getMessage() == null) {
+            return null;
+        }
+        String message = originalSqlException.getMessage();
+        int idx = message.indexOf("for column '");
+        if (idx >= 0) {
+            int start = idx + "for column '".length();
+            int end = message.indexOf('\'', start);
+            if (end > start) {
+                return message.substring(start, end).trim();
+            }
+        }
+        return null;
     }
 
     /**

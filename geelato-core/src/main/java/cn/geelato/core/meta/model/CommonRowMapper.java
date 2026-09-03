@@ -49,12 +49,10 @@ public class CommonRowMapper<T> implements RowMapper<T> {
                 bean = (T) em.getClassType().getDeclaredConstructor().newInstance();
                 for (int _iterator = 0; _iterator < resultSetMetaData.getColumnCount(); _iterator++) {
                     String columnName = resultSetMetaData.getColumnName(_iterator + 1);
-                    Object columnValue = decryptIfString(resultSet.getObject(_iterator + 1));
-                    for (FieldMeta fm : em.getFieldMetas()) {
-                        if (columnName.equals(fm.getColumnName())) {
-                            BeanUtils.setProperty(bean, fm.getFieldName(), columnValue);
-                            break;
-                        }
+                    FieldMeta fm = findFieldMeta(em, columnName);
+                    Object columnValue = decryptIfMarked(resultSet.getObject(_iterator + 1), fm);
+                    if (fm != null) {
+                        BeanUtils.setProperty(bean, fm.getFieldName(), columnValue);
                     }
                 }
                 return bean;
@@ -76,24 +74,34 @@ public class CommonRowMapper<T> implements RowMapper<T> {
         Map<String, Object> map = new LinkedHashMap<>();
         for (int index = 1; index <= metaData.getColumnCount(); index++) {
             String columnName = metaData.getColumnName(index);
-            map.put(resolveMapKey(em, columnName), decryptIfString(resultSet.getObject(index)));
+            FieldMeta fm = em == null ? null : findFieldMeta(em, columnName);
+            String mapKey = fm != null ? fm.getFieldName() : columnName;
+            map.put(mapKey, decryptIfMarked(resultSet.getObject(index), fm));
         }
         return map;
     }
 
-    private String resolveMapKey(EntityMeta em, String columnName) {
-        if (em != null && em.getFieldMetas() != null) {
-            for (FieldMeta fm : em.getFieldMetas()) {
-                if (columnName.equals(fm.getColumnName())) {
-                    return fm.getFieldName();
-                }
+    private static FieldMeta findFieldMeta(EntityMeta em, String columnName) {
+        if (em.getFieldMetas() == null) {
+            return null;
+        }
+        for (FieldMeta fm : em.getFieldMetas()) {
+            if (columnName.equals(fm.getColumnName())) {
+                return fm;
             }
         }
-        return columnName;
+        return null;
     }
 
-    // 对字符串类型字段进行解密，与 DecryptingRowMapper 行为保持一致
-    private Object decryptIfString(Object value) {
-        return value instanceof String ? EncryptUtils.decrypt((String) value) : value;
+    /**
+     * 与加密侧 EncryptInner 的元数据门控对称：解密需要元数据明确背书，仅对标记加密的列尝试解密。
+     * 列不在元数据内（fm 为 null，如元数据缺失的兜底路径）则不解密——元数据不可用时平台从未加密过该数据。
+     */
+    private static Object decryptIfMarked(Object value, FieldMeta fm) {
+        if (!(value instanceof String stringValue)) {
+            return value;
+        }
+        boolean marked = fm != null && fm.getColumnMeta() != null && fm.getColumnMeta().isEncrypted();
+        return marked ? EncryptUtils.decrypt(stringValue) : stringValue;
     }
 }

@@ -59,9 +59,14 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(value = {CoreException.class})
     public final ResponseEntity<?> handleException(CoreException ex, WebRequest request) {
         PlatformErrorResult errorResult = coreException2PlatformErrorResult(ex, request);
+        // 前端仅见友好文案（getUserMessage，不含 SQL/参数/堆栈等技术详情）；
+        // 记录日志的异常末尾追加错误码与反馈凭据（凭截图可在服务端日志检索 logTag），
+        // 不记录日志的异常（shouldLog()==false，如鉴权类常规事件）无凭据可言，返回纯文案。
         String userMessage = ex.getUserMessage() != null ? ex.getUserMessage() : "系统异常";
-        ApiResult<PlatformErrorResult> apiResult = ApiResult.fail(errorResult,
-                buildFeedbackMessage(userMessage, errorResult));
+        String msg = errorResult.getLogTag() != null
+                ? buildFeedbackMessage(userMessage, errorResult)
+                : userMessage;
+        ApiResult<PlatformErrorResult> apiResult = ApiResult.fail(errorResult, msg);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(MediaTypes.APPLICATION_JSON_UTF_8));
         HttpStatus httpStatus = HttpStatus.resolve(resolveHttpStatus(ex));
@@ -78,15 +83,22 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
 
     private PlatformErrorResult coreException2PlatformErrorResult(CoreException coreException, WebRequest request) {
         PlatformErrorResult errorResult = new PlatformErrorResult(coreException);
-        String logTag = Long.toString(UIDGenerator.generate());
-        String logMessage = "logTag=" + logTag + "|userId=" + errorResult.getOccurUserId() + "|occurTime=" + errorResult.getOccurTime();
-        log.error(logMessage, coreException);
-        errorResult.setLogTag(logTag);
+        // 是否记录日志由异常类型声明（CoreException.shouldLog，默认 true）：
+        // 常规业务事件（鉴权不通过、令牌过期等）不写 error 日志、不落 platform_exception_log、不生成反馈凭据。
+        if (coreException.shouldLog()) {
+            String logTag = Long.toString(UIDGenerator.generate());
+            String logMessage = "logTag=" + logTag + "|userId=" + errorResult.getOccurUserId() + "|occurTime=" + errorResult.getOccurTime();
+            log.error(logMessage, coreException);
+            errorResult.setLogTag(logTag);
+            recordExceptionLog(logTag, coreException, errorResult);
+        } else {
+            log.debug("业务事件异常（按异常类型约定不记录日志）: code={}, class={}, msg={}",
+                    coreException.getErrorCode(), coreException.getClass().getSimpleName(), coreException.getMessage());
+        }
         errorResult.setDocUrl(errorDocResolver.resolve(coreException));
         if (!GlobalContext.getLogStack()) {
             errorResult.setException(null);
         }
-        recordExceptionLog(logTag, coreException, errorResult, request);
         return errorResult;
     }
 
@@ -94,7 +106,7 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
      * 异常持久化到 platform_exception_log（id=logTag，异步落库，运维凭反馈凭据查询）。
      * 落库不受前端 LogStack 开关影响（运维数据始终全量）；本方法自身兜底，绝不影响响应返回。
      */
-    private void recordExceptionLog(String logTag, Throwable ex, PlatformErrorResult errorResult, WebRequest request) {
+    private void recordExceptionLog(String logTag, Throwable ex, PlatformErrorResult errorResult) {
         try {
             User user = SecurityContext.getCurrentUser();
             String userId = user != null ? user.getUserId() : null;
@@ -108,12 +120,8 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
             record.setHappenedTime(new java.util.Date());
             record.setExceptionClass(ex.getClass().getName());
             record.setExceptionCode(String.valueOf(errorResult.getErrorCode()));
-            record.setExceptionStacktrace("logTag=" + logTag
-                    + "|userId=" + userId
-                    + "|tenantCode=" + tenantCode
-                    + "|uri=" + (request != null ? request.getDescription(false) : "")
-                    + "|occurTime=" + errorResult.getOccurTime() + "\n"
-                    + PlatformErrorResult.buildStackTraceDetail(ex));
+            // 纯技术详情（异常消息+堆栈）：logTag/userId/tenantCode/时间等已各有独立列，不再拼前缀
+            record.setExceptionStacktrace(PlatformErrorResult.buildStackTraceDetail(ex));
             record.setAppId(app != null ? app.getId() : null);
             record.setTenantCode(tenantCode);
             record.setCreator(actorId);
@@ -157,7 +165,7 @@ public class PlatformExceptionHandler extends ResponseEntityExceptionHandler {
         if (!GlobalContext.getLogStack()) {
             errorResult.setException(null);
         }
-        recordExceptionLog(logTag, ex, errorResult, request);
+        recordExceptionLog(logTag, ex, errorResult);
         ApiResult<PlatformErrorResult> apiResult = ApiResult.fail(errorResult,
                 buildFeedbackMessage(fallbackUserMessage(ex), errorResult));
         return handleExceptionInternal(ex, apiResult, headers, HttpStatus.BAD_REQUEST, request);

@@ -5,6 +5,8 @@ import cn.geelato.core.mql.parser.PageQueryRequest;
 import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,8 +28,9 @@ public class ParameterOperator extends RequestOperator {
     private static final String[] PAGE_NUM_PARAM_NAMES = {"pageNum", "current", "page"};
     private static final String[] PAGE_SIZE_PARAM_NAMES = {"pageSize", "limit"};
     private static final String[] ORDER_BY_PARAM_NAMES = {"orderBy", "order"};
-    /** 单页大小上限，超出直接拒绝（硬失败），防止恶意超大页拖垮查询。 */
+    /** 单页大小上限，数值越界（含 <1）一律钳制到 [1, 上限] 不报错，防止恶意超大页拖垮查询。 */
     private static final int MAX_PAGE_SIZE = 1000;
+    private static final Logger logger = LoggerFactory.getLogger(ParameterOperator.class);
 
 
     protected Map<String, Object> getQueryParameters(Class elementType) {
@@ -98,7 +101,7 @@ public class ParameterOperator extends RequestOperator {
         String[] pageNum = findParam(request, PAGE_NUM_PARAM_NAMES);
         queryRequest.setPageNum(pageNum == null ? -1 : requirePageNum(pageNum));
         String[] pageSize = findParam(request, PAGE_SIZE_PARAM_NAMES);
-        queryRequest.setPageSize(pageSize == null ? -1 : requirePageSize(pageSize));
+        queryRequest.setPageSize(pageSize == null ? -1 : clampPageSize(pageSize));
         String[] orderBy = findParam(request, ORDER_BY_PARAM_NAMES);
         queryRequest.setOrderBy(normalizeOrderBy(orderBy == null ? null : orderBy[1]));
 
@@ -133,7 +136,7 @@ public class ParameterOperator extends RequestOperator {
             String[] pageNum = findParam(requestBodyMap, PAGE_NUM_PARAM_NAMES);
             queryRequest.setPageNum(pageNum == null ? DEFAULT_PAGE_NUM : requirePageNum(pageNum));
             String[] pageSize = findParam(requestBodyMap, PAGE_SIZE_PARAM_NAMES);
-            queryRequest.setPageSize(pageSize == null ? DEFAULT_PAGE_SIZE : requirePageSize(pageSize));
+            queryRequest.setPageSize(pageSize == null ? DEFAULT_PAGE_SIZE : clampPageSize(pageSize));
             String[] orderBy = findParam(requestBodyMap, ORDER_BY_PARAM_NAMES);
             queryRequest.setOrderBy(normalizeOrderBy(orderBy == null ? null : orderBy[1]));
         }
@@ -179,15 +182,13 @@ public class ParameterOperator extends RequestOperator {
         return value;
     }
 
-    private int requirePageSize(String[] pageSize) {
+    private int clampPageSize(String[] pageSize) {
         int value = parseInt(pageSize);
-        if (value < 1) {
-            throw new InvalidPageParamException(String.format("分页参数 %s=%s 必须为正整数", pageSize[0], pageSize[1]));
+        int clamped = Math.max(1, Math.min(value, MAX_PAGE_SIZE));
+        if (clamped != value) {
+            logger.info("分页参数 {}={} 越界，已钳制为 {}", pageSize[0], pageSize[1], clamped);
         }
-        if (value > MAX_PAGE_SIZE) {
-            throw new InvalidPageParamException(String.format("分页参数 %s=%s 超出上限 %d", pageSize[0], pageSize[1], MAX_PAGE_SIZE));
-        }
-        return value;
+        return clamped;
     }
 
     private int parseInt(String[] param) {

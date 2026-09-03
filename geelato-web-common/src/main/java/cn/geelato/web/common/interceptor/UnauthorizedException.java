@@ -22,4 +22,10 @@ public class UnauthorizedException extends CoreException {
     public int getHttpStatus() {
         return 401;
     }
+
+    /** 常规业务事件（前端自动跳转登录），不记录服务端日志、不落异常表。 */
+    @Override
+    public boolean shouldLog() {
+        return false;
+    }
 }

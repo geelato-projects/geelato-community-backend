@@ -13,4 +13,10 @@ public class InvalidTokenException extends CoreException {
     public InvalidTokenException(String message) {
         super(ERROR_CODE, message);
     }
+
+    /** 常规业务事件（令牌过期/校验失败，前端自动跳转登录），不记录服务端日志、不落异常表。 */
+    @Override
+    public boolean shouldLog() {
+        return false;
+    }
 }

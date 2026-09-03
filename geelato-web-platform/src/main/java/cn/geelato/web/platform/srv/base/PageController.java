@@ -23,9 +23,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 页面配置接口 V1（原始实现，保留作为回退参照）。
+ * 当前线上路径已由性能优化版 {@link PageV2Controller}（/page）接管，本类挂载在 /page_v1。
+ *
  * @author itechgee@126.com
  */
-@ApiRestController("/page")
+@ApiRestController("/page_v1")
 @Slf4j
 public class PageController extends BaseController {
 

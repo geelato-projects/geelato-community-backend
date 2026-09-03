@@ -3,6 +3,9 @@ package cn.geelato.web.platform.run;
 import cn.geelato.core.GlobalContext;
 import cn.geelato.core.orm.SqlExecuteException;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.lang.exception.CoreException;
+import cn.geelato.meta.PlatformExceptionLog;
+import cn.geelato.web.common.interceptor.UnauthorizedException;
 import cn.geelato.web.platform.errorlog.service.ExceptionLogService;
 import cn.geelato.web.platform.srv.auth.AuthBadRequestException;
 import org.junit.jupiter.api.AfterEach;
@@ -18,11 +21,18 @@ import java.sql.SQLException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class PlatformExceptionHandlerTest {
 
-    private final PlatformExceptionHandler handler = new PlatformExceptionHandler(org.mockito.Mockito.mock(ExceptionLogService.class));
+    private final ExceptionLogService exceptionLogService = mock(ExceptionLogService.class);
+    private final PlatformExceptionHandler handler = new PlatformExceptionHandler(exceptionLogService);
     private final ServletWebRequest request = new ServletWebRequest(new MockHttpServletRequest());
 
     @AfterEach
@@ -83,7 +93,43 @@ class PlatformExceptionHandlerTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void loggedExceptionRecordsToExceptionLog() {
+        SqlExecuteException ex = new SqlExecuteException(
+                new UncategorizedDataAccessException("query failed",
+                        new SQLException("You have an error in your SQL syntax", "42000", 1064)) {
+                },
+                "select * from platform_dev_table where id = ?", new Object[]{"123"});
+
+        handler.handleException(ex, request);
+
+        // shouldLog 默认 true：异常落库恰好一次
+        verify(exceptionLogService, times(1)).record(any(PlatformExceptionLog.class));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void businessCoreExceptionKeepsOriginalMessageWithFeedbackTag() {
+        // 默认 shouldLog()==true 的业务异常（匿名子类）：文案原样保留，末尾追加错误码与凭据
+        CoreException ex = new CoreException(50099, "自定义业务错误") {
+        };
+
+        ResponseEntity<?> entity = handler.handleException(ex, request);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, entity.getStatusCode());
+        ApiResult<PlatformErrorResult> body = (ApiResult<PlatformErrorResult>) entity.getBody();
+        assertNotNull(body);
+        assertTrue(body.getMsg().contains("自定义业务错误"));
+        assertTrue(body.getMsg().contains("错误码 50099"));
+        assertTrue(body.getMsg().contains("反馈凭据"));
+        assertNotNull(body.getData().getLogTag());
+        verify(exceptionLogService, times(1)).record(any(PlatformExceptionLog.class));
+    }
+
+    // ==================== shouldLog()==false：鉴权类常规事件不记录日志 ====================
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void authBadRequestSkipsLoggingAndFeedbackTag() {
         AuthBadRequestException ex = new AuthBadRequestException("验证码错误");
 
         ResponseEntity<?> entity = handler.handleException(ex, request);
@@ -91,11 +137,26 @@ class PlatformExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, entity.getStatusCode());
         ApiResult<PlatformErrorResult> body = (ApiResult<PlatformErrorResult>) entity.getBody();
         assertNotNull(body);
-        // 业务异常文案原样保留，末尾追加排障凭据
-        assertTrue(body.getMsg().contains("验证码错误"));
-        assertTrue(body.getMsg().contains("错误码 20003"));
-        assertTrue(body.getMsg().contains("反馈凭据"));
-        assertNotNull(body.getData().getLogTag());
+        // msg 为纯文案：无错误码后缀、无反馈凭据（没有日志可关联）
+        assertEquals("验证码错误", body.getMsg());
+        assertNull(body.getData().getLogTag());
+        // 不写 error 日志、不落 platform_exception_log
+        verifyNoInteractions(exceptionLogService);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void unauthorizedSkipsLoggingAndFeedbackTag() {
+        UnauthorizedException ex = new UnauthorizedException();
+
+        ResponseEntity<?> entity = handler.handleException(ex, request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, entity.getStatusCode());
+        ApiResult<PlatformErrorResult> body = (ApiResult<PlatformErrorResult>) entity.getBody();
+        assertNotNull(body);
+        assertEquals("未授权访问，请重新登录", body.getMsg());
+        assertNull(body.getData().getLogTag());
+        verifyNoInteractions(exceptionLogService);
     }
 
     @Test

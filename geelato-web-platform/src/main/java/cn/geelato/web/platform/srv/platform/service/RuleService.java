@@ -227,11 +227,11 @@ public class RuleService {
      * 构建 MQL 查询缓存 Key（platform 层）。
      * <p>
      * 格式：mql:{tenantCode}:{entityName}:{md5(tenant|entity|signature)}:{suffix}
-     * </p>
      * <p>
      * 设计：
      * <ul>
-     *   <li>core 层的 {@link QueryCommand#signatureString()} 提供查询规范化签名（不含缓存概念）</li>
+     *   <li>core 层的 {@link QueryCommand#signatureString()} 提供查询规范化签名（不含缓存概念），
+     *       其中 where 覆盖租户过滤、owhere 覆盖数据权限规则——数据权限不同的用户天然不同 key</li>
      *   <li>platform 层在此叠加 tenant 维度并做 md5 压缩，所有缓存语义集中在本方法</li>
      *   <li>tenantCode 既作前缀又纳入 md5 输入，多租户双重隔离</li>
      * </ul>
@@ -239,7 +239,7 @@ public class RuleService {
      * @param command 查询命令（parse + SPI 注入 + @pf 填充应已完成）
      * @param suffix  返回形态后缀，如 "list" / "total" / "map" / "obj:String" / "col:String"
      */
-    private String buildCacheKey(QueryCommand command, String suffix) {
+    String buildCacheKey(QueryCommand command, String suffix) {
         String tenant = SessionCtx.getCurrentTenantCode();
         String tenantSeg = (tenant == null || tenant.isEmpty()) ? "_" : tenant;
         String sig = tenantSeg + "|" + command.getEntityName() + "|" + command.signatureString();

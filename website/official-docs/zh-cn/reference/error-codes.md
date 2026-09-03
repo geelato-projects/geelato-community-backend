@@ -37,6 +37,7 @@ public class UnauthorizedException extends CoreException {
 - `CoreException` 仅持有码值；HTTP 状态码（`getHttpStatus()`，默认 500）与文档 slug（`getDocSlug()`，默认 null）通过可覆写方法按需提供
 - 无参构造传入的文案即用户可见文案（`getUserMessage()` 默认取 errorMsg）
 - 用户文案末尾由 `PlatformExceptionHandler` 追加排障凭据，如：`数据操作失败，请稍后重试（错误码 10002，反馈凭据 123456789012345678）`
+- **是否记录日志由异常类定义者决定**（`shouldLog()`，默认 `true`）：覆写为 `false` 的异常属常规业务事件（如鉴权不通过），处理器跳过 `log.error` 与 `platform_exception_log` 落库，响应不带反馈凭据、msg 为纯文案——见 [20xxx 认证/授权/会话类](#20xxx-认证授权会话类)
 
 ## 错误响应三层结构（msg 友好 / errorMsg 友好 / stackTraceDetail 技术详情）
 
@@ -91,6 +92,8 @@ public class UnauthorizedException extends CoreException {
 > PostgreSQL 说明：PG 驱动的 `getErrorCode()` 恒为 0，上述 PG 判定全部依赖 sqlState。子类 docSlug 继承根类（同一详情页）。
 
 ## 20xxx 认证/授权/会话类
+
+本段异常均覆写 `shouldLog()` 为 `false`：属常规业务事件（过期会话、无权访问、登录流程），不是服务端错误——不写 error 日志、不落 `platform_exception_log`、响应不带反馈凭据（msg 为纯文案）。
 
 | 码值 | 异常类 | HTTP 状态 | 默认文案 |
 |---|---|---|---|

@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * 统一分页参数解析测试：别名兼容、默认值、非法值硬失败、defaultOrder 修复。
+ * 统一分页参数解析测试：别名兼容、默认值、非整数硬失败、pageSize 数值越界钳制、defaultOrder 修复。
  */
 class ParameterOperatorTest {
 
@@ -91,20 +91,28 @@ class ParameterOperatorTest {
     }
 
     @Test
-    void bodyNegativePageSizeFailsHard() {
-        Map<String, Object> body = new HashMap<>();
-        body.put("pageSize", -5);
-        assertThrows(InvalidPageParamException.class, () -> operator.getPageQueryParameters(body));
+    void bodyNonPositivePageSizeClampedToOne() {
+        Map<String, Object> zero = new HashMap<>();
+        zero.put("pageSize", 0);
+        assertEquals(1, operator.getPageQueryParameters(zero).getPageSize());
+
+        Map<String, Object> negative = new HashMap<>();
+        negative.put("pageSize", -5);
+        assertEquals(1, operator.getPageQueryParameters(negative).getPageSize());
     }
 
     @Test
-    void bodyPageSizeOverLimitFailsHard() {
+    void bodyPageSizeOverLimitClampedToMax() {
         Map<String, Object> body = new HashMap<>();
         body.put("pageSize", 5000);
-        InvalidPageParamException ex = assertThrows(InvalidPageParamException.class,
-                () -> operator.getPageQueryParameters(body));
-        assertTrue(ex.getMessage().contains("5000"), ex.getMessage());
-        assertTrue(ex.getMessage().contains("1000"), ex.getMessage());
+        assertEquals(1000, operator.getPageQueryParameters(body).getPageSize());
+    }
+
+    @Test
+    void bodyPageSizeAtLimitPassesThrough() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("pageSize", 1000);
+        assertEquals(1000, operator.getPageQueryParameters(body).getPageSize());
     }
 
     // ===== defaultOrder（修复：仅在未传排序时应用默认排序）=====
@@ -157,6 +165,13 @@ class ParameterOperatorTest {
         InvalidPageParamException ex = assertThrows(InvalidPageParamException.class,
                 () -> operator.getPageQueryParameters(request));
         assertTrue(ex.getMessage().contains("pageSize=ten"), ex.getMessage());
+    }
+
+    @Test
+    void getPageSizeOverLimitClampedToMax() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setParameter("pageSize", "1001");
+        assertEquals(1000, operator.getPageQueryParameters(request).getPageSize());
     }
 
     @Test

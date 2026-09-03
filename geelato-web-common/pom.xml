@@ -43,13 +43,6 @@
       <artifactId>jackson-databind</artifactId>
     </dependency>
 
-    <!-- Spring WebFlux for Reactive support (optional) -->
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-webflux</artifactId>
-      <optional>true</optional>
-    </dependency>
-
     <dependency>
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
@@ -100,12 +93,6 @@
       <artifactId>geelato-security</artifactId>
     </dependency>
 
-    
-    <!-- Reactor Core for Reactive support -->
-    <dependency>
-      <groupId>io.projectreactor</groupId>
-      <artifactId>reactor-core</artifactId>
-    </dependency>
     
     <!-- FastJSON2 for JSON processing -->
     <dependency>

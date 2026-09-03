@@ -42,4 +42,14 @@ public abstract class CoreException extends RuntimeException {
     public String getUserMessage() {
         return getErrorMsg();
     }
+
+    /**
+     * 该类异常是否需要记录服务端错误日志并落库（platform_exception_log）。
+     * <p>默认 true。属于常规业务事件、非服务端错误的异常（如鉴权不通过、令牌过期、需选择租户），
+     * 由异常类的定义者覆写为 false：全局异常处理器将跳过 log.error 与异常落库，
+     * 响应也不再生成反馈凭据（logTag）——没有日志可关联，凭据无意义。</p>
+     */
+    public boolean shouldLog() {
+        return true;
+    }
 }

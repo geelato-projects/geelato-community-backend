@@ -18,4 +18,10 @@ public class AuthBadRequestException extends CoreException {
     public int getHttpStatus() {
         return 400;
     }
+
+    /** 鉴权链路的参数错误（如验证码错误），用户输入问题非服务端错误，不记录服务端日志、不落异常表。 */
+    @Override
+    public boolean shouldLog() {
+        return false;
+    }
 }

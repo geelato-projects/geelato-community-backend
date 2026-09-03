@@ -10,4 +10,10 @@ public class LoginMultiTenantException extends CoreException {
     public LoginMultiTenantException() {
         super(DEFAULT_CODE, "请选择租户");
     }
+
+    /** 常规登录流程事件（前端凭 20001 弹出租户选择框），非服务端错误，不记录服务端日志、不落异常表。 */
+    @Override
+    public boolean shouldLog() {
+        return false;
+    }
 }

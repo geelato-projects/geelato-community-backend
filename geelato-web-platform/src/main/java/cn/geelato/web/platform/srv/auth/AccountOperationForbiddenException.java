@@ -14,4 +14,10 @@ public class AccountOperationForbiddenException extends CoreException {
     public int getHttpStatus() {
         return 403;
     }
+
+    /** 无权操作属用户权限范畴（前端提示即可），非服务端错误，不记录服务端日志、不落异常表。 */
+    @Override
+    public boolean shouldLog() {
+        return false;
+    }
 }

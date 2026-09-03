@@ -51,14 +51,18 @@ public class ExceptionLogService {
         if (record == null) {
             return;
         }
-        executor.submit(() -> {
-            try {
-                dao.insert(record);
-            } catch (Exception e) {
-                log.warn("错误日志落库失败，降级写文件: logTag={}", record.getId(), e);
-            }
-        });
-
+        try {
+            executor.submit(() -> {
+                try {
+                    dao.insert(record);
+                } catch (Exception e) {
+                    log.warn("错误日志落库失败，降级写文件: logTag={}", record.getId(), e);
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            // 线程池已关闭（应用停机中），降级写文件，绝不抛出
+            log.warn("错误日志线程池已关闭，降级写文件: logTag={}", record.getId(), e);
+        }
     }
 
     /**

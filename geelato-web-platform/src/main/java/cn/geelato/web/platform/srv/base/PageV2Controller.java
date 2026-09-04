@@ -2,6 +2,9 @@ package cn.geelato.web.platform.srv.base;
 
 import cn.geelato.core.SessionCtx;
 import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.security.App;
+import cn.geelato.security.SecurityContext;
+import cn.geelato.security.Tenant;
 import cn.geelato.security.User;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
@@ -35,7 +38,9 @@ import java.util.function.Supplier;
  * 1. getPageAndCustom 运行时路径的 pageLang/pageCustom/pagePerms 三段并行查询
  *    （V1 为 page→pageLang→pageCustom→pagePerms 四次串行 DB 往返，冷缓存时是接口耗时的大头）；
  * 2. 运行时路径 releaseContent 以原生 JSON 对象返回，消除 JSON 字符串内嵌 JSON 的双重转义膨胀
- *    与前端二次解析（前端 GlPageViewer.parseReleaseContent 已做字符串/对象双形态兼容）。
+ *    与前端二次解析（前端 GlPageViewer.parseReleaseContent 已做字符串/对象双形态兼容）；
+ * 3. 并行任务通过 withRequestContext 在池线程重建请求线程的安全上下文
+ *    （SecurityContext 用户/租户/应用 + primary 数据源），任务结束清理。
  * <p>
  * 旧实现保留在 {@link PageController}（/page_v1）作为回退参照：
  * 回退时把本类类级标记改回 /page_v1、PageController 改回 /page 即可，无需改配置。
@@ -230,16 +235,21 @@ public class PageV2Controller extends BaseController {
 
             // 运行时路径：page 查询完成后，pageLang/pageCustom/pagePerms 三段并行组装
             // （三段均只依赖 pageId+user，pagePerms 额外需要 page.appId；page 不存在时三段自动跳过，不产生多余查询）
-            CompletableFuture<AppPage> pageFuture = CompletableFuture.supplyAsync(() -> queryPage(byPageId, id), glPageExecutor);
+            // SecurityContext/DynamicDataSourceHolder 均为 ThreadLocal，不随线程池传递：
+            // 每个任务先在主线程捕获用户/租户/应用，进任务时重建、结束时清理，避免池内线程残留上下文
+            Tenant tenant = SecurityContext.getCurrentTenant();
+            App appCtx = SecurityContext.getCurrentApp();
+            CompletableFuture<AppPage> pageFuture = CompletableFuture.supplyAsync(
+                    () -> withRequestContext(user, tenant, appCtx, () -> queryPage(byPageId, id)), glPageExecutor);
             CompletableFuture<Object> langFuture = pageFuture.thenApplyAsync(
-                    p -> p == null ? null : safely(() -> queryPageLang(p.getId(), locale)), glPageExecutor);
+                    p -> p == null ? null : withRequestContext(user, tenant, appCtx, () -> safely(() -> queryPageLang(p.getId(), locale))), glPageExecutor);
             CompletableFuture<Object> customFuture = Boolean.TRUE.equals(withCustomConfig)
                     ? pageFuture.thenApplyAsync(
-                    p -> p == null ? null : safely(() -> queryPageCustom(p.getId(), user)), glPageExecutor)
+                    p -> p == null ? null : withRequestContext(user, tenant, appCtx, () -> safely(() -> queryPageCustom(p.getId(), user))), glPageExecutor)
                     : CompletableFuture.completedFuture("");
             CompletableFuture<Object> permsFuture = Boolean.TRUE.equals(withPermission)
                     ? pageFuture.thenApplyAsync(
-                    p -> p == null ? null : safely(() -> queryPagePerms(p.getId(), p.getAppId(), user)), glPageExecutor)
+                    p -> p == null ? null : withRequestContext(user, tenant, appCtx, () -> safely(() -> queryPagePerms(p.getId(), p.getAppId(), user))), glPageExecutor)
                     : CompletableFuture.completedFuture("");
 
             AppPage page;
@@ -301,6 +311,33 @@ public class PageV2Controller extends BaseController {
         } catch (Exception e) {
             log.error("页面配置并行查询出错！", e);
             return null;
+        }
+    }
+
+    /**
+     * 在线程池任务中重建请求线程的上下文后执行任务。
+     *
+     * SecurityContext（用户/租户/应用）与 DynamicDataSourceHolder 均为 ThreadLocal，
+     * 不会随线程池传递；而 DAO 命名 SQL 模板参数（如 $.tenantCode）与 MQL 规则解析
+     * 依赖当前用户/租户，缺失会导致权限 SQL 查不到数据、租户过滤失效。
+     * 任务结束后统一清理，避免池内线程残留上一个请求的上下文。
+     */
+    private <T> T withRequestContext(User user, Tenant tenant, App app, Supplier<T> task) {
+        try {
+            if (user != null) {
+                SecurityContext.setCurrentUser(user);
+            }
+            if (tenant != null) {
+                SecurityContext.setCurrentTenant(tenant);
+            }
+            if (app != null) {
+                SecurityContext.setCurrentApp(app);
+            }
+            DynamicDataSourceHolder.setDataSourceKey("primary");
+            return task.get();
+        } finally {
+            SecurityContext.clear();
+            DynamicDataSourceHolder.clearDataSourceKey();
         }
     }
 

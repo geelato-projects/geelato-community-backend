@@ -19,7 +19,7 @@
         <springframework.version>6.0.0</springframework.version>
         <spring-boot.version>3.0.0</spring-boot.version>
         <lomok.version>1.18.30</lomok.version>
-        <fastjson2.version>2.0.19</fastjson2.version>
+        <fastjson2.version>2.0.40</fastjson2.version>
         <jackson.version>2.14.1</jackson.version>
         <resource.delimiter>@</resource.delimiter> <!-- delimiter that doesn't clash with Spring ${} placeholders -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

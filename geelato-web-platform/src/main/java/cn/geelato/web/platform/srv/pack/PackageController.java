@@ -31,8 +31,6 @@ import cn.geelato.web.platform.srv.pack.exception.PackException;
 import cn.geelato.meta.AppVersion;
 import cn.geelato.web.platform.srv.pack.service.AppVersionService;
 import cn.geelato.web.platform.srv.pack.service.PackageService;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
 import jakarta.annotation.Resource;
@@ -64,6 +62,8 @@ public class PackageController {
     protected Dao dao;
     private final String defaultPackageName = "geelatoApp";
     private static final String SAVE_TABLE_TYPE = AttachmentSourceEnum.ATTACH.getValue();
+    /** 部署落库分批大小：限制单次 toJSONString 的缓冲规模，避免整表序列化。 */
+    private static final int SAVE_BATCH_SIZE = 500;
 
     private final ArrayList<String> incrementMetas = new ArrayList<>();
 
@@ -446,8 +446,7 @@ public class PackageController {
     }
 
     private String writePackageData(AppVersion appVersion, AppPackData appPackage) throws IOException {
-        JSON.config(JSONWriter.Feature.LargeObject,true);
-        String jsonStr = JSONObject.toJSONString(appPackage);
+        String jsonStr = JSONObject.toJSONString(appPackage, JSONWriter.Feature.LargeObject);
         String packageSuffix = ".gdp";
         String dataFileName = StringUtils.isEmpty(appPackage.getAppCode()) ? defaultPackageName : appPackage.getAppCode();
         String fileName = dataFileName + packageSuffix;
@@ -511,7 +510,6 @@ public class PackageController {
     }
 
     private void deployAppMetaData(AppMeta appMeta) {
-        Map<String, Object> metaData = new HashMap<>();
         ArrayList<Map<String, Object>> metaDataArray = new ArrayList<>();
         String appMetaName = appMeta.getMetaName();
         Object appMetaData = appMeta.getMetaData();
@@ -525,12 +523,20 @@ public class PackageController {
         if (increment) {
             ids = incrementMetaIds.get(tableName);
         }
-        JSONArray jsonArray = JSONArray.parseArray(JSONObject.toJSONString(appMetaData));
-        for (int i = 0; i < jsonArray.size(); i++) {
-            JSONObject jo = jsonArray.getJSONObject(i);
+        // metaData 反序列化后即为 List<Map>，直接遍历；禁止整表 toJSONString->parseArray 往返，
+        // 大表会撑破 fastjson2 写缓冲上限（maxArraySize）抛 OutOfMemoryError
+        if (!(appMetaData instanceof List<?> rowList)) {
+            throw new PackException(PackException.ERROR_CODE_PACKAGE_INVALID, "应用包元数据 [" + appMetaName + "] 数据结构非法：期望行数组，实际为 "
+                    + (appMetaData == null ? "null" : appMetaData.getClass().getName()));
+        }
+        for (Object rowObj : rowList) {
+            if (!(rowObj instanceof Map<?, ?> jo)) {
+                throw new PackException(PackException.ERROR_CODE_PACKAGE_INVALID, "应用包元数据 [" + appMetaName + "] 存在非对象行，无法部署");
+            }
             Map<String, Object> columnMap = new HashMap<>();
             boolean upgradeToTarget = true;
-            for (String key : jo.keySet()) {
+            for (Object keyObj : jo.keySet()) {
+                String key = String.valueOf(keyObj);
                 FieldMeta fieldMeta = entityMeta.getFieldMetaByColumn(key);
                 if ("id".equals(key)) {
                     if (increment) {
@@ -551,11 +557,23 @@ public class PackageController {
                 metaDataArray.add(columnMap);
             }
         }
-        metaData.put(appMeta.getMetaName(), metaDataArray);
-        List<SaveCommand> saveCommandList = jsonTextSaveParser.parseBatch(JSONObject.toJSONString(metaData), new SessionCtx());
-        for (SaveCommand saveCommand : saveCommandList) {
-            BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
-            dao.save(boundSql);
+        saveBatch(appMeta.getMetaName(), metaDataArray);
+    }
+
+    /**
+     * 分批写入目标库。禁止对整表做 toJSONString：大表会撑破 fastjson2 写缓冲上限（maxArraySize）抛 OutOfMemoryError；
+     * LargeObject 按次传入以抬高单批上限，不做 JVM 级全局配置。
+     */
+    private void saveBatch(String metaName, List<Map<String, Object>> rows) {
+        for (int from = 0; from < rows.size(); from += SAVE_BATCH_SIZE) {
+            Map<String, Object> metaData = new HashMap<>();
+            metaData.put(metaName, rows.subList(from, Math.min(from + SAVE_BATCH_SIZE, rows.size())));
+            List<SaveCommand> saveCommandList = jsonTextSaveParser.parseBatch(
+                    JSONObject.toJSONString(metaData, JSONWriter.Feature.LargeObject), new SessionCtx());
+            for (SaveCommand saveCommand : saveCommandList) {
+                BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
+                dao.save(boundSql);
+            }
         }
     }
 

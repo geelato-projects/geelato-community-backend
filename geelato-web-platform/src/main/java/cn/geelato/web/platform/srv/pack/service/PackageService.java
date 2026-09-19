@@ -27,8 +27,6 @@ import cn.geelato.web.platform.srv.base.service.UploadService;
 import cn.geelato.web.platform.srv.file.enums.AttachmentSourceEnum;
 import cn.geelato.web.platform.srv.file.param.FileParam;
 import cn.geelato.web.platform.utils.FileParamUtils;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
 import lombok.extern.slf4j.Slf4j;
@@ -82,6 +80,8 @@ public class PackageService extends BaseService {
     private static final String PACKAGE_FILE_SUFFIX = ".gdp";
     private static final String COMPRESS_PACKAGE_FILE_SUFFIX = ".zgdp";
     private static final String DEFAULT_PACKAGE_NAME = "geelatoApp";
+    /** 部署落库分批大小：限制单次 toJSONString 的缓冲规模，避免整表序列化。 */
+    private static final int SAVE_BATCH_SIZE = 500;
     /** 业务表名合法性校验：仅允许标准数据库标识符，防 SQL 注入。 */
     private static final Pattern VALID_TABLE_NAME = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
 
@@ -470,8 +470,7 @@ public class PackageService extends BaseService {
      * 写出应用包数据为 .gdp 并压缩为 .zgdp，返回附件ID（v2）。
      */
     private String writePackageDataV2(AppVersion appVersion, AppPackData appPackage) throws PackException {
-        JSON.config(JSONWriter.Feature.LargeObject, true);
-        String jsonStr = JSONObject.toJSONString(appPackage);
+        String jsonStr = JSONObject.toJSONString(appPackage, JSONWriter.Feature.LargeObject);
         String dataFileName = StringUtils.isEmpty(appPackage.getAppCode()) ? DEFAULT_PACKAGE_NAME : appPackage.getAppCode();
         String fileName = dataFileName + PACKAGE_FILE_SUFFIX;
         String tempFolderPath = dataFileName + "/";
@@ -658,12 +657,8 @@ public class PackageService extends BaseService {
             } else if (appMetaData instanceof Map) {
                 rows = Collections.singletonList((Map<String, Object>) appMetaData);
             } else {
-                // 兜底：未知类型走 fastjson 解析
-                JSONArray jsonArray = JSONArray.parseArray(JSONObject.toJSONString(appMetaData));
-                rows = new ArrayList<>();
-                for (int i = 0; i < jsonArray.size(); i++) {
-                    rows.add(jsonArray.getJSONObject(i));
-                }
+                throw new PackException(PackException.ERROR_CODE_PACKAGE_INVALID, "v2 元数据 [" + appMetaName + "] 数据结构非法：期望行数组，实际为 "
+                        + (appMetaData == null ? "null" : appMetaData.getClass().getName()));
             }
 
             List<Map<String, Object>> columnMaps = new ArrayList<>();
@@ -687,14 +682,25 @@ public class PackageService extends BaseService {
                 columnMaps.add(columnMap);
             }
 
+            saveBatchV2(appMetaName, columnMaps);
+            log.info("v2 结束处理元数据：{}", appMetaName);
+        }
+    }
+
+    /**
+     * 分批写入目标库。禁止对整表做 toJSONString：大表会撑破 fastjson2 写缓冲上限（maxArraySize）抛 OutOfMemoryError；
+     * LargeObject 按次传入以抬高单批上限，不做 JVM 级全局配置。
+     */
+    private void saveBatchV2(String metaName, List<Map<String, Object>> rows) {
+        for (int from = 0; from < rows.size(); from += SAVE_BATCH_SIZE) {
             Map<String, Object> metaData = new HashMap<>();
-            metaData.put(appMetaName, columnMaps);
-            List<SaveCommand> saveCommandList = jsonTextSaveParser.parseBatch(JSONObject.toJSONString(metaData), new SessionCtx());
+            metaData.put(metaName, rows.subList(from, Math.min(from + SAVE_BATCH_SIZE, rows.size())));
+            List<SaveCommand> saveCommandList = jsonTextSaveParser.parseBatch(
+                    JSONObject.toJSONString(metaData, JSONWriter.Feature.LargeObject), new SessionCtx());
             for (SaveCommand saveCommand : saveCommandList) {
                 BoundSql boundSql = sqlManager.generateSaveSql(saveCommand);
                 dao.save(boundSql);
             }
-            log.info("v2 结束处理元数据：{}", appMetaName);
         }
     }
 

@@ -4,6 +4,7 @@ import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.meta.Dict;
 import cn.geelato.meta.DictItem;
+import cn.geelato.utils.LocalBoundedCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,7 +15,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 字典翻译解析器（带本地缓存）。
@@ -34,8 +34,8 @@ public class DictDisplayResolver {
 
     private final Dao dao;
 
-    /** dictCode -> (加载时间戳, itemCode -> itemName) */
-    private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
+    /** dictCode -> (itemCode -> itemName)，TTL 5 分钟 */
+    private final LocalBoundedCache<String, Map<String, String>> cache = new LocalBoundedCache<>("dict-display", CACHE_TTL_MS, 1_000);
 
     @Autowired
     public DictDisplayResolver(@Qualifier("primaryDao") Dao dao) {
@@ -60,10 +60,9 @@ public class DictDisplayResolver {
     /** 加载某字典组的 itemCode -> itemName 映射（带缓存）。 */
     @SuppressWarnings("unchecked")
     private Map<String, String> loadGroup(String dictCode) {
-        CacheEntry cached = cache.get(dictCode);
-        long now = System.currentTimeMillis();
-        if (cached != null && now - cached.loadedAt < CACHE_TTL_MS) {
-            return cached.items;
+        Map<String, String> cached = cache.get(dictCode);
+        if (cached != null) {
+            return cached;
         }
         try {
             // 先按 dictCode 查 Dict 拿 dictId
@@ -71,7 +70,7 @@ public class DictDisplayResolver {
             dictFg.addFilter("dictCode", FilterGroup.Operator.eq, dictCode);
             List<Dict> dicts = dao.queryList(Dict.class, dictFg, "");
             if (dicts == null || dicts.isEmpty()) {
-                cache.put(dictCode, new CacheEntry(now, Collections.emptyMap()));
+                cache.put(dictCode, Collections.emptyMap());
                 return Collections.emptyMap();
             }
             String dictId = dicts.get(0).getId();
@@ -89,7 +88,7 @@ public class DictDisplayResolver {
                     }
                 }
             }
-            cache.put(dictCode, new CacheEntry(now, map));
+            cache.put(dictCode, map);
             return map;
         } catch (Exception e) {
             log.warn("审计字典翻译加载失败 dictCode={}, 降级为不翻译", dictCode, e);
@@ -100,15 +99,5 @@ public class DictDisplayResolver {
     /** 失效缓存（字典维护后可调用）。 */
     public void evict(String dictCode) {
         cache.remove(dictCode);
-    }
-
-    private static class CacheEntry {
-        final long loadedAt;
-        final Map<String, String> items;
-
-        CacheEntry(long loadedAt, Map<String, String> items) {
-            this.loadedAt = loadedAt;
-            this.items = items;
-        }
     }
 }

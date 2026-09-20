@@ -4,6 +4,7 @@ package cn.geelato.core.env;
 import cn.geelato.core.AbstractManager;
 import cn.geelato.core.env.entity.SysConfig;
 import cn.geelato.security.*;
+import cn.geelato.utils.LocalBoundedCache;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 环境与安全数据的内存缓存管理器。
@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EnvManager  extends AbstractManager {
     // 内存缓存相关
     private static final long USER_CACHE_EXPIRE_MILLIS = 30 * 60 * 1000; // 30分钟
-    private final Map<String, CachedUser> userCache = new ConcurrentHashMap<>();
+    private final LocalBoundedCache<String, User> userCache = new LocalBoundedCache<>("env-user", USER_CACHE_EXPIRE_MILLIS, 100_000);
 
     private final Map<String ,Map<String , SysConfig>> sysConfigClassifyMap;
     private final Map<String ,SysConfig> sysConfigMap;
@@ -130,10 +130,9 @@ public class EnvManager  extends AbstractManager {
             return null;
         }
         String cacheKey = loginName + ":" + tenantCode;
-        CachedUser cachedUser = userCache.get(cacheKey);
-        if (cachedUser != null && !cachedUser.isExpired()) {
+        User cachedUserData = userCache.get(cacheKey);
+        if (cachedUserData != null) {
             log.debug("从缓存中获取用户信息: {}", loginName);
-            User cachedUserData = cachedUser.getUser();
             // 权限信息每次都需要从数据库重新加载
             loadUserPermission(cachedUserData);
             return cachedUserData;
@@ -157,7 +156,7 @@ public class EnvManager  extends AbstractManager {
             loadUserRole(user);
 
             // 将用户基本信息放入缓存（不包含权限信息）
-            userCache.put(cacheKey, new CachedUser(user));
+            userCache.put(cacheKey, user);
             log.debug("用户信息已缓存: {}", loginName);
 
             // 权限信息每次都需要从数据库重新加载
@@ -219,7 +218,7 @@ public class EnvManager  extends AbstractManager {
      * 清理过期的用户缓存
      */
     public void clearExpiredUserCache() {
-        userCache.entrySet().removeIf(entry -> entry.getValue().isExpired());
+        userCache.purgeExpired();
         log.debug("已清理过期的用户缓存");
     }
 
@@ -248,24 +247,6 @@ public class EnvManager  extends AbstractManager {
      */
     public int getCachedUserCount() {
         return userCache.size();
-    }
-
-    /**
-     * 缓存的用户数据包装类
-     */
-    private static class CachedUser {
-        @Getter
-        private final User user;
-        private final long expireTime;
-
-        public CachedUser(User user) {
-            this.user = user;
-            this.expireTime = System.currentTimeMillis() + USER_CACHE_EXPIRE_MILLIS;
-        }
-
-        public boolean isExpired() {
-            return System.currentTimeMillis() > expireTime;
-        }
     }
 
 }

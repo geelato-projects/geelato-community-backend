@@ -2,6 +2,7 @@ package cn.geelato.web.platform.srv.file;
 
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.meta.Attachment;
+import cn.geelato.utils.LocalBoundedCache;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.platform.common.OSSFileHelper;
 import cn.geelato.web.platform.common.FileHandler;
@@ -41,7 +42,10 @@ public class OssController extends BaseController {
         volatile String errorMessage;
     }
 
-    private final Map<String, VerifyTask> verifyTasks = new ConcurrentHashMap<>();
+    /**
+     * 核对任务结果保留 30 分钟（轮询查询窗口），超期或超量由护栏回收
+     */
+    private final LocalBoundedCache<String, VerifyTask> verifyTasks = new LocalBoundedCache<>("oss-verify-task", 30 * 60 * 1000L, 1_000);
     private final ExecutorService verifyExecutor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "oss-verify");
         t.setDaemon(true);

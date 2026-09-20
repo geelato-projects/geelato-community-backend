@@ -1,18 +1,20 @@
 package cn.geelato.web.platform.cache;
 
+import cn.geelato.utils.LocalBoundedCache;
 import cn.geelato.web.common.cache.CacheProvider;
 import net.oschina.j2cache.CacheChannel;
 import net.oschina.j2cache.CacheObject;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("All")
 public class DefaultCacheProvider<T> implements CacheProvider<T> {
 
     private static final String __Region__ = "default";
-    private final Map<String, T> localCache = new ConcurrentHashMap<>();
+    /**
+     * j2cache 不可用时的本地降级缓存，TTL/容量对齐 ehcache3.xml default 模板（ttl=1800s, heap=1000）
+     */
+    private final LocalBoundedCache<String, T> localCache = new LocalBoundedCache<>("j2cache-default-fallback", 1_800_000L, 1_000);
 
     private CacheChannel cache() {
         return SafeJ2CacheSupport.getChannel();
@@ -62,7 +64,7 @@ public class DefaultCacheProvider<T> implements CacheProvider<T> {
         if (cache != null) {
             return cache.exists(__Region__, key);
         }
-        return localCache.containsKey(key);
+        return localCache.exists(key);
     }
 
     @Override
@@ -73,7 +75,7 @@ public class DefaultCacheProvider<T> implements CacheProvider<T> {
 
         try {
             CacheChannel cache = cache();
-            Collection<String> keys = cache != null ? cache.keys(__Region__) : localCache.keySet();
+            Collection<String> keys = cache != null ? cache.keys(__Region__) : localCache.liveKeys();
             if (keys == null || keys.isEmpty()) {
                 return 0;
             }

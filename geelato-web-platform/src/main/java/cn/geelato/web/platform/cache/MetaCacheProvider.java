@@ -1,23 +1,30 @@
 package cn.geelato.web.platform.cache;
 
+import cn.geelato.utils.LocalBoundedCache;
 import cn.geelato.web.common.cache.CacheProvider;
 import net.oschina.j2cache.CacheChannel;
 import net.oschina.j2cache.CacheObject;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("All")
 public class MetaCacheProvider<T> implements CacheProvider<T> {
     private static final String __Region__ = "metaquery";
-    /** 无 j2cache 时的本地降级容量护栏(无 TTL,超限整体清空) */
-    private static final int LOCAL_CACHE_MAX_ENTRIES = 5000;
-    private final Map<String, Object> localCache = new ConcurrentHashMap<>();
+    /**
+     * j2cache 不可用时的本地降级缓存，TTL/容量对齐 ehcache3.xml metaQueryTemplate（ttl=60s, heap=2000）。
+     * 必须 static：RuleService 与两个失效监听器各持一个 Provider 实例，降级模式下只有共享同一份
+     * localCache，removeCacheByPattern 的失效才能互通（对齐 j2cache 同 region 的语义）。
+     */
+    private static final LocalBoundedCache<String, Object> localCache = new LocalBoundedCache<>("j2cache-metaquery-fallback", 60_000L, 2_000);
     private static CacheValueAdapter adapter = new DefaultCacheValueAdapter();
 
     private CacheChannel cache() {
         return SafeJ2CacheSupport.getChannel();
+    }
+
+    /** 仅测试用：localCache 为 static 共享，用例间需显式清空隔离 */
+    static void clearLocalCacheForTest() {
+        localCache.clear();
     }
 
     public static void setAdapter(CacheValueAdapter newAdapter) {
@@ -33,9 +40,6 @@ public class MetaCacheProvider<T> implements CacheProvider<T> {
         if (cache != null) {
             cache.set(__Region__, key, adapted);
             return;
-        }
-        if (localCache.size() > LOCAL_CACHE_MAX_ENTRIES) {
-            localCache.clear();
         }
         localCache.put(key, adapted);
     }
@@ -75,7 +79,7 @@ public class MetaCacheProvider<T> implements CacheProvider<T> {
         if (cache != null) {
             return cache.exists(__Region__, key);
         }
-        return localCache.containsKey(key);
+        return localCache.exists(key);
     }
 
     @Override
@@ -85,7 +89,7 @@ public class MetaCacheProvider<T> implements CacheProvider<T> {
         }
         try {
             CacheChannel cache = cache();
-            Collection<String> keys = cache != null ? cache.keys(__Region__) : localCache.keySet();
+            Collection<String> keys = cache != null ? cache.keys(__Region__) : localCache.liveKeys();
             if (keys == null || keys.isEmpty()) {
                 return 0;
             }

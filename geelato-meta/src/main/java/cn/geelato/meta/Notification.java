@@ -56,7 +56,7 @@ public class Notification extends BaseEntity {
     @Col(name = "channels", charMaxlength = 256)
     private String channels;
 
-    @Title(title = "优先级")
+    @Title(title = "重要级别", description = "0普通 1提醒 2重要 3紧急")
     @Col(name = "priority")
     private int priority;
 }

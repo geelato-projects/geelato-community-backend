@@ -13,6 +13,7 @@ import cn.geelato.orm.query.Order;
 import cn.geelato.orm.page.PageResult;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.utils.UIDGenerator;
+import cn.geelato.web.platform.srv.notification.enums.NotificationPriorityEnum;
 import cn.geelato.web.platform.srv.platform.service.BaseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -112,12 +113,18 @@ public class NotificationUserService extends BaseService {
      * <ul>
      *   <li>userId 服务端强制，防越权</li>
      *   <li>撤回语义：主体 del_status=1 的通知因 JOIN 条件自动从收件箱消失</li>
-     *   <li>排序固定主体创建时间倒序，不采纳客户端 orderBy（防注入）</li>
+     *   <li>排序：默认主体创建时间倒序；orderByPriority=true 时按主体级别从高到低、同级别内时间倒序。
+     *       不采纳客户端任意 orderBy（防注入），排序字段白名单受控</li>
      * </ul>
+     *
+     * @param priorityGe     重要级别下限（>=该级别），null 表示不过滤
+     * @param title          标题模糊检索（仅匹配标题；与 keyword 的"标题+内容"OR 检索独立并存，可同用取交集）
+     * @param orderByPriority true 时按 n.priority desc, n.create_at desc 排序
      */
     @SuppressWarnings("unchecked")
     public ApiPagedResult pageQueryInbox(String userId, Integer readStatus, Integer archived,
-                                         String bizType, String keyword, PageQueryRequest request) {
+                                         String bizType, String keyword, Integer priorityGe,
+                                         boolean orderByPriority, String title, PageQueryRequest request) {
         int pageNum = Math.max(1, request.getPageNum());
         int pageSize = Math.min(Math.max(1, request.getPageSize()), 100);
 
@@ -139,6 +146,19 @@ public class NotificationUserService extends BaseService {
             }
             filters.add(Filter.in("notificationId", subjectIds.toArray()));
         }
+        // 重要级别下限（>=该级别）属主体字段，同样预查主体 id 再 in 过滤
+        if (priorityGe != null) {
+            if (!NotificationPriorityEnum.isValid(priorityGe)) {
+                throw new IllegalArgumentException("通知重要级别过滤值非法：" + priorityGe
+                        + "，合法值为 " + NotificationPriorityEnum.valueRange());
+            }
+            List<String> subjectIds = querySubjectIds(
+                    Filter.ge("priority", priorityGe), Filter.eq("delStatus", 0));
+            if (subjectIds.isEmpty()) {
+                return new PageResult<Map<String, Object>>(pageNum, pageSize, 0).toApiPagedResult();
+            }
+            filters.add(Filter.in("notificationId", subjectIds.toArray()));
+        }
         // 标题/内容模糊搜索（OR 语义：两次 like 预查后合并去重）
         if (Strings.isNotBlank(keyword)) {
             String kw = keyword.trim();
@@ -149,6 +169,14 @@ public class NotificationUserService extends BaseService {
                 return new PageResult<Map<String, Object>>(pageNum, pageSize, 0).toApiPagedResult();
             }
             filters.add(Filter.in("notificationId", distinctIds.toArray()));
+        }
+        // 标题模糊检索（仅标题，与 keyword 独立：两者同传时语义为交集）
+        if (Strings.isNotBlank(title)) {
+            List<String> subjectIds = querySubjectIds(Filter.eq("delStatus", 0), Filter.like("title", title.trim()));
+            if (subjectIds.isEmpty()) {
+                return new PageResult<Map<String, Object>>(pageNum, pageSize, 0).toApiPagedResult();
+            }
+            filters.add(Filter.in("notificationId", subjectIds.toArray()));
         }
 
         PageResult<Map<String, Object>> page = MetaFactory.query(NotificationUser.class)
@@ -170,7 +198,10 @@ public class NotificationUserService extends BaseService {
                         .eqField("notificationId", "n.id")
                         .raw("n.del_status = 0"))
                 .where(filters.toArray(new Filter[0]))
-                .order(Order.desc("createAt"))
+                // orderByPriority 时主体字段排序（n. 前缀由 SQL provider 分段引用）；默认收件人状态行创建时间倒序
+                .order(orderByPriority
+                        ? new Order[]{Order.desc("n.priority"), Order.desc("n.create_at")}
+                        : new Order[]{Order.desc("createAt")})
                 .page(pageNum, pageSize)
                 .page();
         return page.toApiPagedResult();
@@ -190,13 +221,34 @@ public class NotificationUserService extends BaseService {
      * 行的 creator 是投递操作者而非收件人，需 disableInjectFilter 跳过数据权限注入。
      */
     public long countUnread(String userId) {
+        return countUnread(userId, null);
+    }
+
+    /**
+     * 当前用户未读数，可按重要级别下限过滤（如 priorityGe=2 统计"重要及以上"未读角标）。
+     *
+     * @param priorityGe 重要级别下限（>=该级别），null 表示全部
+     */
+    public long countUnread(String userId, Integer priorityGe) {
+        List<Filter> filters = new ArrayList<>();
+        filters.add(Filter.eq("userId", userId));
+        filters.add(Filter.eq("readStatus", 0));
+        filters.add(Filter.eq("delStatus", 0));
+        if (priorityGe != null) {
+            if (!NotificationPriorityEnum.isValid(priorityGe)) {
+                throw new IllegalArgumentException("通知重要级别过滤值非法：" + priorityGe
+                        + "，合法值为 " + NotificationPriorityEnum.valueRange());
+            }
+            List<String> subjectIds = querySubjectIds(
+                    Filter.ge("priority", priorityGe), Filter.eq("delStatus", 0));
+            if (subjectIds.isEmpty()) {
+                return 0L;
+            }
+            filters.add(Filter.in("notificationId", subjectIds.toArray()));
+        }
         return MetaFactory.query(NotificationUser.class)
                 .disableInjectFilter()
-                .where(
-                        Filter.eq("userId", userId),
-                        Filter.eq("readStatus", 0),
-                        Filter.eq("delStatus", 0)
-                )
+                .where(filters.toArray(new Filter[0]))
                 .count();
     }
 

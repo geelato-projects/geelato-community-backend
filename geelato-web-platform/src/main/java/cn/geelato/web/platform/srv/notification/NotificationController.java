@@ -44,7 +44,9 @@ public class NotificationController extends BaseController {
 
     /**
      * 收件箱分页查询（当前用户）：收件人状态 JOIN 通知主体，返回含 title/content/actionUrl 的扁平行。
-     * 可选过滤：readStatus（0未读/1已读）、archived（0/1）、bizType、keyword（标题/内容模糊）。
+     * 可选过滤：readStatus（0未读/1已读）、archived（0/1）、bizType、keyword（标题/内容模糊）、
+     * title（仅标题模糊检索）、priorityGe（重要级别下限，0普通/1提醒/2重要/3紧急，>=该级别）。
+     * 可选排序：orderByPriority=true 时按级别从高到低（同级别内时间倒序）；默认时间倒序。
      */
     @RequestMapping(value = "/pageQuery", method = RequestMethod.POST)
     public ApiPagedResult pageQuery() {
@@ -54,11 +56,17 @@ public class NotificationController extends BaseController {
             PageQueryRequest pageQueryRequest = this.getPageQueryParameters(body);
             Integer readStatus = parseInteger(body.get("readStatus"));
             Integer archived = parseInteger(body.get("archived"));
+            Integer priorityGe = parseInteger(body.get("priorityGe"));
+            boolean orderByPriority = body.get("orderByPriority") != null
+                    && Boolean.parseBoolean(String.valueOf(body.get("orderByPriority")));
             String bizType = body.get("bizType") != null && Strings.isNotBlank(String.valueOf(body.get("bizType")))
                     ? String.valueOf(body.get("bizType")).trim() : null;
             String keyword = body.get("keyword") != null && Strings.isNotBlank(String.valueOf(body.get("keyword")))
                     ? String.valueOf(body.get("keyword")).trim() : null;
-            return notificationUserService.pageQueryInbox(userId, readStatus, archived, bizType, keyword, pageQueryRequest);
+            String title = body.get("title") != null && Strings.isNotBlank(String.valueOf(body.get("title")))
+                    ? String.valueOf(body.get("title")).trim() : null;
+            return notificationUserService.pageQueryInbox(userId, readStatus, archived, bizType, keyword,
+                    priorityGe, orderByPriority, title, pageQueryRequest);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiPagedResult.fail(e.getMessage());
@@ -78,12 +86,13 @@ public class NotificationController extends BaseController {
 
     /**
      * 当前用户未读数（铃铛角标）。
+     * 可选 priorityGe（重要级别下限，0普通/1提醒/2重要/3紧急，>=该级别）：如 priorityGe=2 统计"重要及以上"未读数。
      */
     @GetMapping("/unread-count")
-    public ApiResult<Long> unreadCount() {
+    public ApiResult<Long> unreadCount(@org.springframework.web.bind.annotation.RequestParam(required = false) Integer priorityGe) {
         try {
             String userId = currentUserId();
-            long count = notificationUserService.countUnread(userId);
+            long count = notificationUserService.countUnread(userId, priorityGe);
             return ApiResult.success(count);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

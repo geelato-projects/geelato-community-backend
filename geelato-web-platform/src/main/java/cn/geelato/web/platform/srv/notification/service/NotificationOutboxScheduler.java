@@ -14,6 +14,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -41,12 +42,23 @@ import java.util.concurrent.TimeUnit;
  * 原因：{@code @EnableScheduling} 是全局开关，会同时激活代码库里所有 {@code @Scheduled} 方法——
  * 包括原本设计为按需开启、但因全局缺 {@code @EnableScheduling} 而一直休眠的邮件 IMAP 同步任务，
  * 后者属于网络/DB 密集型操作，一旦被意外激活会拖慢整个平台。这里隔离调度，避免误伤。
+ * <p>
+ * <b>多宿主开关</b>：{@code geelato.notification.outbox-enabled}（默认关闭，显式 {@code true} 才装配）。
+ * 本调度器是通知库的唯一消费方，一套 {@code platform_notification*} 库只应有一个应用开启扫描——
+ * 与平台共用通知库的脚手架应用保持默认关闭即可（投递归口平台，发送不受影响）；
+ * 独立拥有通知库的应用（平台自身、独立库脚手架）必须显式置 {@code true}，
+ * 否则通知滞留 outbox 无人投递。开关只管消费方（扫描投递+清理），
+ * 写入方（{@code NotificationService.dispatch}、REST send、事件监听）不受影响。
  *
  * @author geelato
  */
 @Component
+@ConditionalOnProperty(name = "geelato.notification.outbox-enabled", havingValue = "true")
 @Slf4j
 public class NotificationOutboxScheduler {
+
+    /** processing 超时回收阈值（分钟）：claim 后超此时长未完成的行视为投递实例崩溃残留 */
+    private static final int STALE_PROCESSING_MINUTES = 10;
 
     private final Dao dao;
     private final NotificationProperties properties;
@@ -109,6 +121,7 @@ public class NotificationOutboxScheduler {
     }
 
     public void process() {
+        reclaimStaleProcessing();
         List<NotificationOutbox> ready;
         try {
             ready = fetchReady();
@@ -134,6 +147,22 @@ public class NotificationOutboxScheduler {
             cleanupFinished();
         } catch (Throwable t) {
             log.error("通知 outbox 清理异常：{}", t.getMessage(), t);
+        }
+    }
+
+    /**
+     * 回收超时的 processing 行：投递实例在 claim 后崩溃会使该行永卡 processing
+     * （扫描只挑 ready，无人回收），多实例部署下重启更频繁、风险放大。
+     * 阈值远大于单次投递时长（秒级），正常投递中行不会被误伤；
+     * 即使误回收导致重复投递，收件箱 uk_notif_user 唯一键兜底。
+     */
+    private void reclaimStaleProcessing() {
+        int reclaimed = dao.getJdbcTemplate().update(
+                "UPDATE platform_notification_outbox SET status = ?, update_at = ? "
+                        + "WHERE status = ? AND update_at < DATE_SUB(NOW(), INTERVAL " + STALE_PROCESSING_MINUTES + " MINUTE)",
+                OutboxStatusEnum.READY.value(), new Date(), OutboxStatusEnum.PROCESSING.value());
+        if (reclaimed > 0) {
+            log.warn("回收超时 processing 的 outbox 行 {} 条（疑似投递实例崩溃，已重置为 ready 待重投）", reclaimed);
         }
     }
 

@@ -12,6 +12,7 @@ import cn.geelato.web.platform.srv.notification.channel.DeliveryChannelManager;
 import cn.geelato.web.platform.srv.notification.config.NotificationProperties;
 import cn.geelato.web.platform.srv.notification.dto.NotifyRequest;
 import cn.geelato.web.platform.srv.notification.enums.NotificationChannelEnum;
+import cn.geelato.web.platform.srv.notification.enums.NotificationPriorityEnum;
 import cn.geelato.web.platform.srv.notification.enums.OutboxStatusEnum;
 import cn.geelato.web.platform.srv.notification.enums.SenderTypeEnum;
 import cn.geelato.web.platform.srv.platform.service.BaseService;
@@ -103,6 +104,7 @@ public class NotificationService extends BaseService {
         if (Strings.isBlank(request.getTitle())) {
             throw new IllegalArgumentException("通知标题不能为空");
         }
+        NotificationPriorityEnum.of(request.getPriority());
     }
 
     private Notification buildNotification(NotifyRequest request, String tenantCode, List<String> channels) {

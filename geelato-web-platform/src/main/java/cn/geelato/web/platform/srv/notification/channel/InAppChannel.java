@@ -3,6 +3,7 @@ package cn.geelato.web.platform.srv.notification.channel;
 import cn.geelato.meta.Notification;
 import cn.geelato.web.platform.srv.notification.dto.ChannelResult;
 import cn.geelato.web.platform.srv.notification.enums.NotificationChannelEnum;
+import cn.geelato.web.platform.srv.notification.enums.NotificationPriorityEnum;
 import cn.geelato.web.platform.srv.notification.service.NotificationUserService;
 import cn.geelato.web.platform.sse.SseHelper;
 import cn.geelato.web.platform.sse.SseMessage;
@@ -89,6 +90,10 @@ public class InAppChannel implements DeliveryChannel {
         payload.put("bizType", notification.getBizType());
         payload.put("bizId", notification.getBizId());
         payload.put("actionUrl", notification.getActionUrl());
+        // 重要级别 + 中文标签（前端免维护值域映射）；存量脏值不阻断推送，仅缺省标签字段
+        payload.put("priority", notification.getPriority());
+        NotificationPriorityEnum.tryOf(notification.getPriority())
+                .ifPresent(p -> payload.put("priorityLabel", p.label()));
         payload.put("createAt", notification.getCreateAt());
         // 标记为站内信推送事件，前端据此区分
         payload.put("EVENT", "NotifyPush");

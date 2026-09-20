@@ -44,7 +44,7 @@ public class NotifyRequest {
     /** 点击跳转地址（前端 router.push / window.open） */
     private String actionUrl;
 
-    /** 优先级，默认 0 */
+    /** 重要级别：0普通（默认）/1提醒/2重要/3紧急，非法值拒绝 */
     private int priority;
 
     public static NotifyRequest of(List<String> recipients, String title, String content) {

@@ -159,7 +159,15 @@ Delete:
 ```java
 int affected = MetaFactory.delete("User")
         .where(Filter.eq("id", "1912345678901234567"))
-        .delete();
+        .execute();
+```
+
+By default `delete(...)` performs a logical delete (`update ... set del_status = 1, delete_at = ...`). The effective mode resolves as call-level `MetaFactory.physicalDelete(...)` (or MQL `"@physicalDelete": true`) > entity-level `@Entity(deleteMode = LOGIC | PHYSICAL)` > global default (the `GEELATO_DELETE_MODE` env variable, read once at class load by `GlobalContext` and then fixed; default `logic`). A physical delete generates `delete from ...`:
+
+```java
+int affected = MetaFactory.physicalDelete("User")
+        .where(Filter.eq("id", "1912345678901234567"))
+        .execute();
 ```
 
 ## Object-Based Convenience Overloads

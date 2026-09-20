@@ -261,8 +261,19 @@ String userId = MetaFactory.update("User")
 ```java
 int affected = MetaFactory.delete("User")
         .where(Filter.eq("id", "1912345678901234567"))
-        .delete();
+        .execute();
 ```
+
+删除模式（逻辑删除 / 物理删除）：`delete(...)` 默认按三级优先级解析——调用级 `MetaFactory.physicalDelete(...)`（或 MQL `"@physicalDelete": true`）＞ 实体级 `@Entity(deleteMode = DeleteMode.LOGIC | DeleteMode.PHYSICAL)` ＞ 全局默认（环境变量 `GEELATO_DELETE_MODE`，`GlobalContext` 类加载时读取一次固化，默认 `logic`，运行期不可变）。逻辑删除生成 `update ... set del_status=1, delete_at=...`，物理删除生成 `delete from ...`：
+
+```java
+// 物理删除：工厂入口显式指定，构建与执行分离（可先 toSql() 预览再 execute()）
+int affected = MetaFactory.physicalDelete("User")
+        .where(Filter.eq("id", "1912345678901234567"))
+        .execute();
+```
+
+若最终解析为逻辑删除但实体缺少 `delStatus` 字段（如精简 `IdEntity` 实体配默认全局 logic），删除会直接报错并提示三条出路（实体配置物理删除 / 调用级 physicalDelete / 全局配 physical）。
 
 ## 基于实体对象的便捷重载
 

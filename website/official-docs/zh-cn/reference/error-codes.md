@@ -153,6 +153,20 @@ public class UnauthorizedException extends CoreException {
 
 > 说明：外部依赖 geelato-package 的 `PackageException` 保留给 market 等外部链路，平台内打包部署链路统一使用 `PackException`。
 
+## 70xxx 数据归档类
+
+错误码常量集中定义在 `cn.geelato.archive.exception.ArchiveException`（geelato-archive-policy 模块）。
+归档引擎以"确保不误删数据"为第一目标：所有对账类失败均为硬失败中止（源库未动或整批回滚，重跑安全），
+错误信息包含表名/批次/游标/期望与实际行数等上下文，支持精确诊断（详见 `platform_archive_run.error_json`）。
+
+| 码值 | 常量 | 场景 |
+|---|---|---|
+| 70001 | `VALIDATION_ERROR` | 策略校验失败（源表/列不存在、归档库连接不可达、WHERE 条件语法或安全校验不通过、保留期低于平台最小值、目标类型不支持、保护名单、同库目标同名等） |
+| 70002 | `SCHEMA_DRIFT` | 归档目标表列结构漂移（源表存在而目标缺少列，禁止静默跳列） |
+| 70003 | `TARGET_WRITE_MISMATCH` | 归档目标写入对账不一致（载入行数或目标复核数与本批期望不符；源库未动，零丢失，修复后重跑安全） |
+| 70004 | `SOURCE_DELETE_MISMATCH` | 源表删除对账不一致（整批已回滚，归档库数据完整，重跑安全） |
+| 70005 | `POLICY_RUNNING_CONFLICT` | 策略并发冲突（同策略已有运行中的 run，或运行中禁止停用/删除/修改） |
+
 ## 已知限制
 
 - **体系外异常**：`McpException`（字符串型 errorCode）、`ScriptExecutionException` 暂未纳入 `CoreException` 体系，其异常响应不会输出 `docUrl`。后续单独治理时再补充。

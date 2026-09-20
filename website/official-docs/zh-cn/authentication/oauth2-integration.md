@@ -9,6 +9,8 @@ sidebar_label: OAuth2 业务系统接入
 
 本文档介绍接入的前提条件、交互时序，以及获取 Token 与用户数据的核心步骤。
 
+> 如果您的场景**没有用户参与**（服务端之间的集成、定时任务、调用开放 API），无需走 OAuth2 重定向流程，请直接阅读 [机器对机器接入（client_credentials）](client-credentials-integration.md)，使用 `client_id` + `client_secret` 获取机器令牌。
+
 ## 接入前提：申请应用凭证
 
 集成前，外部业务系统管理员需向统一认证中心管理员申请应用接入凭证，并妥善保管以下信息：

@@ -2,23 +2,25 @@
 
 > **Note: Unified Authentication is not considered a built-in core framework capability. It is essentially an independent Unified Authentication Center (Auth Server) service.**
 >
-> It primarily provides two integration capabilities:
+> It primarily provides three integration capabilities:
 > 1. **Standardized OAuth2 integration**
 > 2. **Lightweight lite-login integration**
+> 3. **Machine-to-machine integration (client_credentials)**
 >
 > This chapter focuses on how internal and external business systems integrate with this independent auth center, delegating user login and identity recognition to it.
 
 ## Integration Methods: Comparison & Selection
 
-The Auth Center provides two integration methods. External business systems can choose flexibly based on their tech stack and frontend interaction requirements:
+The Auth Center provides three integration methods. External business systems can choose flexibly based on their tech stack and frontend interaction requirements:
 
-| Dimension | Method 1: Lightweight `lite-login` | Method 2: Standard OAuth2 |
-| --- | --- | --- |
-| **Core Mechanism** | The Auth Center provides a ready-to-use frontend login facade (`lite-login`), pushing the token to the business frontend via cross-domain `postMessage`. | Uses the standard OAuth2 Authorization Code Flow, exchanging tokens via server-to-server redirects. |
-| **Frontend Interaction** | The business system embeds `lite-login` via iframe or opens it in a new window. **No need** for the business system to write a login UI; the UX is seamless. | A **full-page browser redirect** occurs, jumping to the Auth Center's unified login page, then redirecting back to the business system. |
-| **Integration Complexity** | **Very Low**. Primarily frontend integration. The business backend only needs an interceptor to validate the Bearer token. | **Medium**. Requires the business backend to support a complete OAuth2 client protocol stack. |
-| **Use Cases** | 1. Modern frontend-backend separated architectures (Vue/React, etc.)<br/>2. Wanting to pop up a login box directly within the business system (without leaving the page)<br/>3. Pure frontend SPA applications | 1. **Any application with an independent backend**<br/>2. Strict security requirements where tokens must never be exposed to the browser<br/>3. Existing external systems with built-in standard OAuth2 Client modules |
-| **How to Integrate** | 👉 [Read the lite-login Integration Guide](lite-login-integration.md) | 👉 [Read the Standard OAuth2 Integration Guide](oauth2-integration.md) |
+| Dimension | Method 1: Lightweight `lite-login` | Method 2: Standard OAuth2 | Method 3: Machine-to-Machine |
+| --- | --- | --- | --- |
+| **Core Mechanism** | The Auth Center provides a ready-to-use frontend login facade (`lite-login`), pushing the token to the business frontend via cross-domain `postMessage`. | Uses the standard OAuth2 Authorization Code Flow, exchanging tokens via server-to-server redirects. | Exchanges `client_id` + `client_secret` directly for a machine token (client_credentials), with no user interaction. |
+| **Frontend Interaction** | The business system embeds `lite-login` via iframe or opens it in a new window. **No need** for the business system to write a login UI; the UX is seamless. | A **full-page browser redirect** occurs, jumping to the Auth Center's unified login page, then redirecting back to the business system. | No frontend involvement; pure server-side calls. |
+| **Integration Complexity** | **Very Low**. Primarily frontend integration. The business backend only needs an interceptor to validate the Bearer token. | **Medium**. Requires the business backend to support a complete OAuth2 client protocol stack. | **Very Low**. A single HTTP call to obtain a token. |
+| **Use Cases** | 1. Modern frontend-backend separated architectures (Vue/React, etc.)<br/>2. Wanting to pop up a login box directly within the business system (without leaving the page)<br/>3. Pure frontend SPA applications | 1. **Any application with an independent backend**<br/>2. Strict security requirements where tokens must never be exposed to the browser<br/>3. Existing external systems with built-in standard OAuth2 Client modules | 1. Server-to-server integration and scheduled jobs without user participation<br/>2. Integrators self-managing roles/users/permissions via the Open API (`/api/open/v1/**`) |
+| **Token Identity** | Logged-in user | Logged-in user | The application itself (`client_id`), representing no user |
+| **How to Integrate** | 👉 [Read the lite-login Integration Guide](lite-login-integration.md) | 👉 [Read the Standard OAuth2 Integration Guide](oauth2-integration.md) | 👉 [Read the Machine-to-Machine Integration Guide](client-credentials-integration.md) |
 
 ## What Unified Authentication Solves
 
@@ -127,5 +129,8 @@ Each third-party application should still keep its own `/login` page as the entr
 
 1. [lite-login Integration Guide](lite-login-integration.md)
 2. [Standard OAuth2 Integration Guide](oauth2-integration.md)
-3. To understand how the framework consumes Tokens, see [Platform Capabilities: Authentication](security-authentication.md)
-4. To understand the security context, see [Platform Capabilities: SecurityContext Lifecycle](../runtime/security-context-lifecycle.md)
+3. For server-side scenarios without user interaction, see the [Machine-to-Machine Integration Guide](client-credentials-integration.md)
+4. To integrate unified permission management (mirror tables / data-permission injection), see the [Permission Integration Guide](permission-integration.md)
+5. To self-manage your system's data (roles / users / organizations / sessions) and build your own admin UI via the Open API, see the [Open Management API](open-api-management.md)
+6. To understand how the framework consumes Tokens, see [Platform Capabilities: Authentication](security-authentication.md)
+7. To understand the security context, see [Platform Capabilities: SecurityContext Lifecycle](../runtime/security-context-lifecycle.md)

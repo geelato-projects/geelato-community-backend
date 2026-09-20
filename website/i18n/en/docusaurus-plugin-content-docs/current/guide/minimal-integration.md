@@ -78,5 +78,4 @@ The shortest successful path should verify:
 ## Suggested Reading
 
 - If you want to build a real business project with ready-to-use backend services, read [App Scaffold Quickstart](app-scaffold-starter-project-guide.md)
-- [BOM and Starter](../reference/bom-and-starter.md)
 - [MetaStore Extension](../reference/metastore-extension.md)

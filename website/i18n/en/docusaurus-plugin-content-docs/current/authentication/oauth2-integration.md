@@ -10,6 +10,8 @@ For **any application with an independent backend**, or external business system
 
 This document introduces the prerequisites, the interaction sequence, and the core steps for obtaining the token and user data.
 
+> If your scenario involves **no user participation** (server-to-server integration, scheduled jobs, calling the Open API), you do not need the OAuth2 redirect flow. Read the [Machine-to-Machine Integration (client_credentials)](client-credentials-integration.md) guide instead and obtain a machine token using `client_id` + `client_secret`.
+
 ## 1. Prerequisites: Apply for Credentials
 
 Before starting the integration, the administrator of the external business system must apply for application integration credentials from the Auth Center administrator. You need to obtain and securely store the following information:

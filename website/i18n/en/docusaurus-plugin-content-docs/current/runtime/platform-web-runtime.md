@@ -106,5 +106,4 @@ There is no code-level "switch" between runtime and designer mode. The two jars 
 - [PlatformDesginer](../designer/platform-desginer.md)
 - [Startup Process](../reference/startup-process.md)
 - [Runtime / Designer Deployment and Dependencies](../operations/runtime-designer-deployment.md)
-- [BOM and Starter](../reference/bom-and-starter.md)
 - [SecurityContext Lifecycle](security-context-lifecycle.md)

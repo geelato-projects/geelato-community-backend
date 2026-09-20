@@ -12,6 +12,12 @@ If your goal is not just to understand the built-in behavior but to replace the 
 
 - [ORM / Datasource Extension](../orm/datasource-extension.md)
 
+This chapter has four pages; this one is the overview and the other three expand by topic:
+
+- [Binding & Priority](entity-binding.md) — how entities bind to datasources and the full priority chain
+- [Configuration](configuration.md) — connection definitions, module properties, the default datasource and refresh
+- [Switching](switching.md) — automatic/manual switching, nested semantics and transaction limits
+
 ## Module Position
 
 `geelato-dynamic-datasource` is not just a standalone connection-pool helper. It is the framework module that provides dynamic routing around the ORM and `Dao` execution chain.
@@ -189,6 +195,14 @@ So the key mapping is:
 
 This means once an entity is bound with `connectId`, ORM execution can route to the matching datasource automatically.
 
+Besides reading `connectId` from database metadata, an entity can also declare its datasource via the `@Entity` annotation, adjudicated uniformly by `MetaManager.resolveConnectId`. The resolution rules (high → low) are:
+
+1. `TableMeta.connectId` is non-blank — note that an explicit `@Entity(connectId)` and a registered `platform_dev_table.connect_id` value write into the **same slot** (runtime registration merges later and can overwrite the annotation value for non-platform entities); they are not two priority levels
+2. the mapping of `@Entity(catalog)` in `catalog-mapping`
+3. neither → null, handed over to the fallback chain at Dao-call time
+
+In other words, even without a registered `connectId` in the platform table, routing works through `@Entity(connectId=...)` alone or `@Entity(catalog=...)` plus `catalog-mapping`. See [Binding & Priority](entity-binding.md) for the dedicated coverage of binding styles and the full priority chain.
+
 It also provides manual operations such as:
 
 - `addEntityMapping(...)`
@@ -224,23 +238,28 @@ The aspect wraps:
 
 - `cn.geelato.core.orm.Dao.*(..)`
 
-and tries to extract entity information from:
+and tries to extract entity information from the arguments in order (unrecognized arguments are skipped):
 
-- `BoundSql`
-- `BoundPageSql`
+- `BoundPageSql` / `BoundSql` (the entityName carried by the command)
 - entity classes annotated with `@Entity`
+- non-empty `List` (batchSave / multiSave / multiDelete — the first element is recognized with the same rules)
+- entity instances annotated with `@Entity` (insert / save / update)
 
 Once the entity name is resolved, it calls:
 
 - `EntityDataSourceResolver.resolveDataSource(entityName)`
 
-If resolution succeeds, it switches to the entity datasource. If not, it falls back to the default datasource defined by `@UseDynamicDataSource`.
+If resolution succeeds, it switches to the entity datasource; if not, the fallback chain applies, and the outer key is restored after the call (protecting nested switching semantics).
 
-So the current priority is:
+So the current priority is (high → low):
 
-- prefer datasource resolution from entity metadata
-- if not found, use the annotation default
-- then still fall back to the primary datasource as the routing base
+- entity mapping (`TableMeta.connectId`, annotation and DB registration share one slot → `@Entity(catalog)` mapping)
+- the class/method-level `@UseDynamicDataSource` default
+- the outer explicit key (thread-context value set by `switchDbByConnectId` / `useDataSource` etc.)
+- the platform default key (written into `DataSourceManager` at startup by `OrmAutoConfiguration`)
+- the `primary` hard fallback
+
+See [Switching](switching.md) for the dedicated coverage of switching styles and transaction limits.
 
 ## Lazy Loading and Refresh
 
@@ -356,6 +375,9 @@ then continue with:
 
 ## Suggested Reading
 
+- [Binding & Priority](entity-binding.md)
+- [Configuration](configuration.md)
+- [Switching](switching.md)
 - [ORM / Datasource Extension](../orm/datasource-extension.md)
 - [ORM Overview](../orm/overview.md)
 - [Fluent DSL Guide](../orm/fluent-dsl.md)

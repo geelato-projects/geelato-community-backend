@@ -72,5 +72,4 @@ sidebar_label: 新项目最小接入
 ## 下一步
 
 - 基于 starter 创建业务工程并需要基础后台能力：[基于 app-scaffold-starter 创建业务项目](app-scaffold-starter-project-guide.md)
-- 理解交付入口：[BOM 与 Starter](../reference/bom-and-starter.md)
 - 扩展元数据能力：[MetaStore 扩展](../reference/metastore-extension.md)

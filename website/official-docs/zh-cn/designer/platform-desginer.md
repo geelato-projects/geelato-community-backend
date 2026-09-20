@@ -112,5 +112,4 @@ java -jar geelato-web-designer/target/geelato-web-designer-1.0.0-SNAPSHOT-exec.j
 - [PlatformWebRuntime](../runtime/platform-web-runtime.md)
 - [启动过程](../reference/startup-process.md)
 - [普通部署](../operations/runtime-designer-deployment.md)
-- [BOM 与 Starter](../reference/bom-and-starter.md)
 - [SecurityContext 生命周期](../runtime/security-context-lifecycle.md)

@@ -273,12 +273,11 @@ geelato:
 
 实体最终走哪个数据源，按以下顺序确定（高 → 低）：
 
-1. `@Entity(connectId)` 显式指定
+1. `TableMeta.connectId` 非空——`@Entity(connectId)` 显式指定与 `platform_dev_table.connect_id` 登记值写入的是**同一个槽位**（运行期登记后到合并，非 platform 实体可覆盖注解值），它们不是两级优先级
 2. `@Entity(catalog)` 在 `catalog-mapping` 中的映射值
-3. 数据库元数据表 `platform_dev_table.connect_id` 登记值
-4. 默认数据源 `primary`
+3. 都没有则交由 Dao 调用期兜底链决定（注解默认 > 外层显式 key > 平台默认 > `primary`）
 
-优先级在运行期由 `MetaManager.resolveConnectId` 即时解析，因此配置何时注入都不影响结果。
+优先级在运行期由 `MetaManager.resolveConnectId` 即时解析，因此配置何时注入都不影响结果。完整优先级链与决策流程见[实体绑定与优先级](../dynamic-datasource/entity-binding.md)。
 
 #### 注意事项
 

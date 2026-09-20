@@ -7,23 +7,25 @@ sidebar_label: 统一认证中心
 
 > **说明：统一认证不属于框架底座的内置能力，而是一个独立的统一认证中心（Auth Server）服务。**
 >
-> 统一认证中心对外提供两种集成能力：
+> 统一认证中心对外提供三种集成能力：
 > 1. **标准 OAuth2 集成**
 > 2. **轻量化 lite-login 集成**
+> 3. **机器对机器接入（client_credentials）**
 >
 > 本节说明内外部业务系统如何接入该统一认证中心，由认证中心集中提供用户登录与身份识别能力。
 
-## 两种集成方式对比与选择
+## 集成方式对比与选择
 
-认证中心对外提供两种接入方式，外部业务系统可根据自身的技术栈和前端交互需求进行灵活选择：
+认证中心对外提供三种接入方式，外部业务系统可根据自身的技术栈和前端交互需求进行灵活选择：
 
-| 维度 | 方式一：轻量化 lite-login 集成 | 方式二：标准 OAuth2 集成 |
-| --- | --- | --- |
-| **核心机制** | 认证中心提供现成的前端登录门面（`lite-login`），通过跨域 `postMessage` 机制向业务系统前端下发 token。 | 走标准的 OAuth2 授权码模式（Authorization Code Flow），通过后端服务器间的重定向交换 token。 |
-| **前端交互** | 业务系统以 iframe 嵌入或新开窗口拉起 `lite-login` 页面，**无需**业务系统自己写登录 UI，用户体验无缝；嵌入态下支持由宿主页面统一控制显示语言。 | 浏览器发生**全页重定向**，跳到认证中心的统一登录页，登录后再重定向回业务系统。 |
-| **对接复杂度** | **极低**。纯前端对接为主，业务系统后端只需增加拦截器来验证拿到的 Bearer token 即可。 | **中等**。需要业务系统后端支持完整的 OAuth2 客户端协议栈能力。 |
-| **适用场景** | 1. 现代的前后端分离架构 (Vue/React 等)<br/>2. 希望在业务系统内部直接弹出登录框（不离开当前页面）<br/>3. 纯前端 SPA 应用 | 1. **拥有独立后端的任意应用**<br/>2. 强安全要求，token 绝对不能暴露给浏览器前端<br/>3. 现有的外部系统已经内置了标准 OAuth2 Client 模块 |
-| **如何接入** | 👉 [阅读 lite-login 业务系统接入指南](lite-login-integration.md) | 👉 [阅读标准 OAuth2 业务系统接入指南](oauth2-integration.md) |
+| 维度 | 方式一：轻量化 lite-login 集成 | 方式二：标准 OAuth2 集成 | 方式三：机器对机器接入 |
+| --- | --- | --- | --- |
+| **核心机制** | 认证中心提供现成的前端登录门面（`lite-login`），通过跨域 `postMessage` 机制向业务系统前端下发 token。 | 走标准的 OAuth2 授权码模式（Authorization Code Flow），通过后端服务器间的重定向交换 token。 | 使用 `client_id` + `client_secret` 直接换取机器令牌（client_credentials），无任何用户交互。 |
+| **前端交互** | 业务系统以 iframe 嵌入或新开窗口拉起 `lite-login` 页面，**无需**业务系统自己写登录 UI，用户体验无缝；嵌入态下支持由宿主页面统一控制显示语言。 | 浏览器发生**全页重定向**，跳到认证中心的统一登录页，登录后再重定向回业务系统。 | 无前端参与，纯服务端调用。 |
+| **对接复杂度** | **极低**。纯前端对接为主，业务系统后端只需增加拦截器来验证拿到的 Bearer token 即可。 | **中等**。需要业务系统后端支持完整的 OAuth2 客户端协议栈能力。 | **极低**。一个 HTTP 调用获取令牌即可。 |
+| **适用场景** | 1. 现代的前后端分离架构 (Vue/React 等)<br/>2. 希望在业务系统内部直接弹出登录框（不离开当前页面）<br/>3. 纯前端 SPA 应用 | 1. **拥有独立后端的任意应用**<br/>2. 强安全要求，token 绝对不能暴露给浏览器前端<br/>3. 现有的外部系统已经内置了标准 OAuth2 Client 模块 | 1. 无用户参与的服务端集成、定时任务<br/>2. 集成方经开放 API（`/api/open/v1/**`）自助管理角色/用户/权限等数据 |
+| **令牌代表身份** | 登录用户 | 登录用户 | 应用本身（`client_id`），不代表任何用户 |
+| **如何接入** | 👉 [阅读 lite-login 业务系统接入指南](lite-login-integration.md) | 👉 [阅读标准 OAuth2 业务系统接入指南](oauth2-integration.md) | 👉 [阅读机器对机器接入指南](client-credentials-integration.md) |
 
 ## 统一认证解决什么问题
 
@@ -134,5 +136,8 @@ https://<auth-host>/lite-login
 1. [lite-login 业务系统接入指南](lite-login-integration.md)
 2. [标准 OAuth2 业务系统接入指南](oauth2-integration.md)
    - 如果你采用 iframe 嵌入 `lite-login`，并希望语言跟随宿主页面，请重点查看其中的“嵌入态语言控制”章节
-3. 了解框架如何消费 Token，请看 [平台能力：认证鉴权](security-authentication.md)
-4. 了解安全上下文，请看 [平台能力：SecurityContext 生命周期](../runtime/security-context-lifecycle.md)
+3. 纯服务端、无用户交互的场景，请看 [机器对机器接入指南](client-credentials-integration.md)
+4. 接入统一权限管理（镜像表 / 数据权限注入），请看 [权限接入指南](permission-integration.md)
+5. 经开放 API 自助管理本系统数据（角色 / 用户 / 组织 / 会话）并自建管理 UI，请看 [开放管理 API](open-api-management.md)
+6. 了解框架如何消费 Token，请看 [平台能力：认证鉴权](security-authentication.md)
+7. 了解安全上下文，请看 [平台能力：SecurityContext 生命周期](../runtime/security-context-lifecycle.md)

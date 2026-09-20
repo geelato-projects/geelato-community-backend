@@ -32,7 +32,6 @@ const sidebars: SidebarsConfig = {
             'designer/platform-desginer',
             'reference/core-modules',
             'reference/startup-process',
-            'reference/bom-and-starter',
           ],
         },
         {
@@ -48,6 +47,9 @@ const sidebars: SidebarsConfig = {
                 'orm/fluent-dsl',
                 'orm/event-features',
                 'dynamic-datasource/overview',
+                'dynamic-datasource/entity-binding',
+                'dynamic-datasource/configuration',
+                'dynamic-datasource/switching',
                 'dynamic-datasource/host-mapping',
               ],
             },
@@ -153,6 +155,9 @@ const sidebars: SidebarsConfig = {
         'authentication/overview',
         'authentication/lite-login-integration',
         'authentication/oauth2-integration',
+        'authentication/permission-integration',
+        'authentication/client-credentials-integration',
+        'authentication/open-api-management',
       ],
     },
     {

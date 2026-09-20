@@ -7,6 +7,12 @@ sidebar_label: 动态数据源
 
 本页说明 `geelato-dynamic-datasource` 模块提供的动态数据源能力及其运行机制，包括数据源定义加载、实例构建、路由切换、实体到数据源的解析以及事务相关预留能力。
 
+本章共四页，本页是总览，其余三页按主题展开：
+
+- [实体绑定与优先级](entity-binding.md) —— 实体如何与数据源绑定，完整优先级链
+- [配置方式](configuration.md) —— 连接定义、模块参数、默认数据源与刷新
+- [切换方式](switching.md) —— 自动/手工切换、嵌套语义与事务限制
+
 如需替换默认定义来源或做深度扩展，请阅读 [ORM / 数据源扩展](../orm/datasource-extension.md)。
 
 ## 模块定位
@@ -188,14 +194,13 @@ sidebar_label: 动态数据源
 
 这意味着平台实体一旦绑定了 `connectId`，ORM 执行时就能自动解析到对应数据源。
 
-除了从数据库元数据读取 `connectId`，实体还可以通过 `@Entity` 注解声明数据源，并由 `MetaManager.resolveConnectId` 统一解析。完整优先级（高 → 低）是：
+除了从数据库元数据读取 `connectId`，实体还可以通过 `@Entity` 注解声明数据源，并由 `MetaManager.resolveConnectId` 统一解析。解析规则（高 → 低）是：
 
-1. `@Entity(connectId)` 显式指定
+1. `TableMeta.connectId` 非空——注意 `@Entity(connectId)` 显式指定与数据库元数据表 `platform_dev_table.connect_id` 登记值写入的是**同一个槽位**（运行期登记后到合并，非 platform 实体可覆盖注解值），它们不是两级优先级
 2. `@Entity(catalog)` 在 `catalog-mapping` 配置中的映射值
-3. 数据库元数据表 `platform_dev_table.connect_id` 登记值
-4. 默认数据源 `primary`
+3. 都没有则返回 null，交由 Dao 调用期的兜底链决定
 
-也就是说，即使实体没有在平台表里登记 `connectId`，也可以仅凭 `@Entity(connectId=...)` 或 `@Entity(catalog=...)` + `catalog-mapping` 配置完成路由。注解声明方式的具体用法见 [ORM / 数据源扩展](../orm/datasource-extension.md)。
+也就是说，即使实体没有在平台表里登记 `connectId`，也可以仅凭 `@Entity(connectId=...)` 或 `@Entity(catalog=...)` + `catalog-mapping` 配置完成路由。绑定方式与完整优先级链的专门说明见 [实体绑定与优先级](entity-binding.md)，注解声明方式的具体用法见 [ORM / 数据源扩展](../orm/datasource-extension.md)。
 
 同时它还提供了手工能力：
 
@@ -232,23 +237,28 @@ sidebar_label: 动态数据源
 
 - `cn.geelato.core.orm.Dao.*(..)`
 
-并从参数里尝试提取：
+并从参数里按顺序尝试提取（识别失败继续看下一个参数）：
 
-- `BoundSql`
-- `BoundPageSql`
+- `BoundPageSql` / `BoundSql`（命令携带 entityName）
 - 带 `@Entity` 注解的实体类
+- 非空 `List`（batchSave / multiSave / multiDelete 等，取首元素按同样规则识别）
+- 带 `@Entity` 注解的实体实例（insert / save / update）
 
 拿到实体名后，再调用：
 
 - `EntityDataSourceResolver.resolveDataSource(entityName)`
 
-如果解析成功，就切换到实体对应的数据源；如果解析不到，则回退到 `@UseDynamicDataSource` 指定的默认源。
+如果解析成功，就切换到实体对应的数据源；解析不到则走兜底链，并在调用结束后恢复外层的 key（保护嵌套切库语义）。
 
-因此当前优先级可以概括为：
+因此当前优先级可以概括为（高 → 低）：
 
-- 优先按实体解析数据源（`@Entity(connectId)` → `@Entity(catalog)` 映射 → 数据库元数据 `connectId`）
-- 解析不到时再看 `@UseDynamicDataSource` 指定的默认源
-- 最终仍可回退到主数据源
+- 实体映射（`TableMeta.connectId`，注解与 DB 登记同槽位 → `@Entity(catalog)` 映射）
+- 类/方法级 `@UseDynamicDataSource` 指定的默认源
+- 外层已显式设置的 key（`switchDbByConnectId` / `useDataSource` 等设置的线程上下文值）
+- 平台默认 key（启动时由 `OrmAutoConfiguration` 写入 `DataSourceManager`）
+- `primary` 硬兜底
+
+切换方式与事务限制的专门说明见 [切换方式](switching.md)。
 
 ## 懒加载和刷新机制
 
@@ -365,6 +375,9 @@ geelato.datasource.dynamic.*
 
 ## 推荐继续阅读
 
+- [实体绑定与优先级](entity-binding.md)
+- [配置方式](configuration.md)
+- [切换方式](switching.md)
 - [ORM / 数据源扩展](../orm/datasource-extension.md)
 - [ORM 总览](../orm/overview.md)
 - [Fluent DSL 指引](../orm/fluent-dsl.md)

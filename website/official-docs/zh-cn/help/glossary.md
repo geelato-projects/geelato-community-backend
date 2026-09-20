@@ -146,12 +146,6 @@ Geelato Web 平台的运行时应用壳，基于共享底座 `geelato-web-platfo
 
 ## 交付
 
-### BOM / Starter
-
-框架采用 `BOM + Starter` 模式交付：`geelato-framework-bom` 负责版本对齐，`geelato-framework-starter` 是推荐的最小框架底座统一入口。
-
-详见 [BOM 与 Starter](../reference/bom-and-starter)。
-
 ### App Scaffold（脚手架）
 
 基于 `geelato-app-scaffold-starter` 的"胖脚手架"，开箱即用提供登录、组织、用户、角色、字典、文件上传、MQL 与自动建表，适合从零开始的新项目。与"瘦启动"最小化接入（`geelato-framework-starter`，零建表）相对。

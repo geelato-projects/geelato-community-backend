@@ -8,6 +8,7 @@ import lombok.Setter;
 @Setter
 public class Permission {
 
+    private String code;
     private String entity;
     private String name;
     private String rule;

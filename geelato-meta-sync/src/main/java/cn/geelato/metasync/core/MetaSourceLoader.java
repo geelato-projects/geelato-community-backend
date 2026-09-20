@@ -37,7 +37,6 @@ public class MetaSourceLoader {
 
     private static final Logger log = LoggerFactory.getLogger(MetaSourceLoader.class);
 
-    private final Dao dao;
     private final JdbcTemplate jdbc;
 
     /** Java 类扫描包名 */
@@ -64,7 +63,6 @@ public class MetaSourceLoader {
     private volatile boolean loaded = false;
 
     public MetaSourceLoader(Dao dao) {
-        this.dao = dao;
         this.jdbc = dao.getJdbcTemplate();
     }
 
@@ -129,9 +127,6 @@ public class MetaSourceLoader {
     private void loadJavaSource() {
         try {
             List<Class<?>> classes = AnnotatedClassScanner.scan(scanPackage, Entity.class);
-            if (classes == null) {
-                return;
-            }
             for (Class<?> clazz : classes) {
                 try {
                     EntityMeta em = MetaReflex.getEntityMeta(clazz);
@@ -206,7 +201,7 @@ public class MetaSourceLoader {
                     "select * from platform_dev_table where del_status = %d and table_name = '%s'",
                     ColumnDefault.DEL_STATUS_VALUE, escape(tableName));
             List<Map<String, Object>> tableList = jdbc.queryForList(tableSql);
-            if (tableList == null || tableList.isEmpty()) {
+            if (tableList.isEmpty()) {
                 return;
             }
             // 该表的列
@@ -230,7 +225,6 @@ public class MetaSourceLoader {
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private void buildMetaSource(List<Map<String, Object>> tableList, List<Map<String, Object>> allColumns) {
         if (tableList == null) {
             return;
@@ -260,7 +254,6 @@ public class MetaSourceLoader {
                     tableName = ename.toString();
                 }
                 metaSourceMap.put(tableName, em);
-                // 记录视图（table_type=view）
                 Object tableType = tmap.get("table_type");
                 if (tableType != null && "view".equalsIgnoreCase(tableType.toString().trim())) {
                     viewTableNames.put(tableName, true);

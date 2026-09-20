@@ -38,6 +38,14 @@ public interface UserProvider {
         return user.getUserOrgs();
     }
 
+    default List<UserOrgRole> getUserOrgRoles(String userId) {
+        User user = getUser(userId);
+        if (user == null || user.getUserOrgRoles() == null) {
+            return Collections.emptyList();
+        }
+        return user.getUserOrgRoles();
+    }
+
     default String normalizeType(String type) {
         if (type == null || type.isEmpty()) {
             return "";

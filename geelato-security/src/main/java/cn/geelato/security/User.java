@@ -3,6 +3,7 @@ package cn.geelato.security;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +55,7 @@ public class User extends UserCore{
 
     private List<UserOrg> userOrgs;
     private List<UserRole> userRoles;
+    private List<UserOrgRole> userOrgRoles;
 
     private List<Permission> dataPermissions;
     private List<Permission> elementPermissions;
@@ -66,6 +68,27 @@ public class User extends UserCore{
      * 注意：租户隔离（tenantCode 过滤）仍然生效。
      */
     private boolean systemPrincipal;
+
+    /**
+     * 生效角色 = 直挂角色（userRoles）∪ 组织挂靠角色（userOrgRoles），按角色 code 去重。
+     * 契约生效语义的统一入口；历史消费方（如 SecurityContext.isAdmin）继续只看 userRoles，行为不变。
+     */
+    public List<Role> getEffectiveRoles() {
+        List<Role> effectiveRoles = new ArrayList<>();
+        if (this.userRoles != null) {
+            effectiveRoles.addAll(this.userRoles);
+        }
+        if (this.userOrgRoles != null) {
+            for (UserOrgRole userOrgRole : this.userOrgRoles) {
+                boolean duplicated = effectiveRoles.stream()
+                        .anyMatch(r -> r.getCode() != null && r.getCode().equals(userOrgRole.getCode()));
+                if (!duplicated) {
+                    effectiveRoles.add(userOrgRole);
+                }
+            }
+        }
+        return effectiveRoles;
+    }
 
     public List<Permission> getDataPermissionByEntity_temp(String entity) {
         return this.dataPermissions.stream().filter(x -> x.getEntity().equals(entity)).toList();

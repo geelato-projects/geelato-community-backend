@@ -6,7 +6,7 @@ package cn.geelato.security;
  */
 public interface UserOrgInfoEnricher {
 
-    User enrich(User user);
+    void enrich(User user);
 
-    UserOrg enrich(UserOrg userOrg);
+    void enrich(UserOrg userOrg);
 }

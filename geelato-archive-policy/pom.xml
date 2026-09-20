@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>geelato-parent</artifactId>
+    <groupId>cn.geelato</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath/>
+  </parent>
+
+  <artifactId>geelato-archive-policy</artifactId>
+  <packaging>jar</packaging>
+  <name>geelato-archive-policy</name>
+  <description>数据归档·策略管理（定制模块，不属于平台标准件/脚手架，按项目显式引入）：归档策略实体、门禁校验、预置模板、REST 接口（自包含，引入即用）</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-lang</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-orm</artifactId>
+    </dependency>
+    <!-- 仅用 @ApiRestController 等 web 注解与拦截器语义；不依赖 geelato-web-platform -->
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-web-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+</project>

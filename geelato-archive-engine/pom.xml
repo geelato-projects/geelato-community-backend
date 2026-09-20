@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>geelato-parent</artifactId>
+    <groupId>cn.geelato</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath/>
+  </parent>
+
+  <artifactId>geelato-archive-engine</artifactId>
+  <packaging>jar</packaging>
+  <name>geelato-archive-engine</name>
+  <description>数据归档·引擎（定制模块，不属于平台标准件/脚手架，按项目显式引入）：表结构核对、两阶段对账搬移（SERVER/LOCAL_FILE/JDBC）、调度、运行记录、回迁（自包含，引入即用）</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>cn.geelato</groupId>
+      <artifactId>geelato-archive-policy</artifactId>
+      <version>${geelato.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-tx</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.alibaba.fastjson2</groupId>
+      <artifactId>fastjson2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+</project>

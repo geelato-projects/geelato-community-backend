@@ -64,7 +64,7 @@ class MqlQueryProcessorPfTest extends MqlTestSupport {
     @Test
     @DisplayName("虚拟视图（VIRTUAL）Controller 预提取后经外部参数注入，@pf 渲染进视图构造 SQL")
     void pfRenderedWithExternalParams() {
-        // 模拟 MetaRuntimeController.resolveQueryPayload：预提取 @pf 并从 JSON 移除
+        // 模拟 MetaController.resolveQueryPayload：预提取 @pf 并从 JSON 移除
         Map<String, Map<String, Object>> paramsByEntity = new HashMap<>();
         JSONObject root = JSON.parseObject(MQL_WITH_PF);
         String cleanGql = MqlQueryProcessor.getInstance().extractPfAndSerialize(root, paramsByEntity);

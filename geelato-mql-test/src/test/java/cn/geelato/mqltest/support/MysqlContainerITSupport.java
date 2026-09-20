@@ -77,6 +77,20 @@ public abstract class MysqlContainerITSupport extends MqlTestSupport {
         jdbcTemplate.execute("CREATE FUNCTION IF NOT EXISTS gfn_increment(val BIGINT, step INT) RETURNS BIGINT "
                 + "DETERMINISTIC NO SQL RETURN val + step");
 
+        // gfn_fuzzymatch：与生产 geelato.gfn_fuzzymatch 函数体逐行一致（多关键词 OR 正则包含，
+        // 全角逗号/连续逗号清洗、仅转义 \ 与 .）。等价改写与检索路由的等价性 IT 以此为基准。
+        jdbcTemplate.execute("CREATE FUNCTION IF NOT EXISTS gfn_fuzzymatch(field_val TEXT, search_str TEXT) RETURNS TINYINT(1) "
+                + "DETERMINISTIC SQL SECURITY INVOKER BEGIN "
+                + "DECLARE clean_search TEXT; "
+                + "DECLARE regex_pattern TEXT; "
+                + "DECLARE match_result TINYINT DEFAULT 0; "
+                + "IF field_val IS NULL OR field_val = '' OR search_str IS NULL OR search_str = '' THEN RETURN 0; END IF; "
+                + "SET clean_search = TRIM(REPLACE(REPLACE(search_str, '，', ','), ',,', ',')); "
+                + "IF clean_search = '' THEN RETURN 0; END IF; "
+                + "SET regex_pattern = REPLACE(REPLACE(REPLACE(clean_search, '\\\\', '\\\\\\\\'), '.', '\\\\.'), ',', '|'); "
+                + "IF field_val REGEXP regex_pattern THEN SET match_result = 1; END IF; "
+                + "RETURN match_result; END");
+
         // 建表 DDL（与测试实体 @Col 注解对应）
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS mql_test_org ("
                 + "  id BIGINT PRIMARY KEY,"

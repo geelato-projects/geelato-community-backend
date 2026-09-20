@@ -7,17 +7,32 @@ import java.util.Arrays;
 
 /**
  * 元数据删除构建器
- * 提供流式API构建SQL删除语句
+ * 提供流式API构建SQL删除语句，收尾统一 {@link #execute()}
  */
 public class MetaDelete extends MetaOperate<MetaDelete> {
     private final SqlManager sqlManager = SqlManager.singleInstance();
+    /**
+     * 调用级显式物理删除标记（经 {@code MetaFactory.physicalDelete(...)} 构建），
+     * 优先级高于实体级 @Entity(deleteMode) 与全局配置。
+     */
+    private final boolean physical;
 
     public MetaDelete(String entityName) {
-        this.entityName = entityName;
+        this(entityName, false);
     }
 
     public MetaDelete(Class<?> entityClass) {
+        this(entityClass, false);
+    }
+
+    public MetaDelete(String entityName, boolean physical) {
+        this.entityName = entityName;
+        this.physical = physical;
+    }
+
+    public MetaDelete(Class<?> entityClass, boolean physical) {
         this.entityClass = entityClass;
+        this.physical = physical;
     }
 
     /**
@@ -29,7 +44,7 @@ public class MetaDelete extends MetaOperate<MetaDelete> {
         this.filters.add(filter);
         return this;
     }
-    
+
     /**
      * 添加多个过滤条件
      * @param filters 过滤条件数组
@@ -44,11 +59,17 @@ public class MetaDelete extends MetaOperate<MetaDelete> {
         return sqlManager.generateDeleteSql(DeleteCommandAdapter.from(this)).getSql();
     }
 
-    public int delete() {
+    /**
+     * 执行删除，返回受影响行数。
+     * 模式由构建入口决定：{@code MetaFactory.delete(...)} 按三级优先级解析（通常是逻辑删除），
+     * {@code MetaFactory.physicalDelete(...)} 固定物理删除（生成 delete from）。
+     */
+    public int execute() {
         return executor().delete(DeleteCommandAdapter.from(this), getConnectId());
     }
 
-    public int execute() {
-        return delete();
+    /* 适配器读取调用级物理删除标记 */
+    public boolean isPhysical() {
+        return physical;
     }
 }

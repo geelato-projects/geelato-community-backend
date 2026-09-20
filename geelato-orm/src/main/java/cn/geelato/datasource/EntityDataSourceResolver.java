@@ -1,6 +1,7 @@
 package cn.geelato.datasource;
 
 import cn.geelato.core.meta.MetaManager;
+import cn.geelato.utils.LocalBoundedCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,15 +17,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class EntityDataSourceResolver {
     MetaManager metaManager=MetaManager.singleInstance();
-    
+
     @Autowired
     private DynamicDataSourceRegistry dynamicDataSourceRegistry;
-    
+
     /**
      * 实体与数据源的映射缓存
-     * Key: 实体名称, Value: 数据源键
+     * Key: 实体名称, Value: 数据源键（失效由读方校验数据源存在性驱动，不设 TTL）
      */
-    private final Map<String, String> entityDataSourceCache = new ConcurrentHashMap<>();
+    private final LocalBoundedCache<String, String> entityDataSourceCache = new LocalBoundedCache<>("entity-datasource", 0L, 10_000);
     
     /**
      * 根据实体名称解析数据源
@@ -122,6 +123,10 @@ public class EntityDataSourceResolver {
      * 获取所有实体数据源映射
      */
     public Map<String, String> getAllMappings() {
-        return new ConcurrentHashMap<>(entityDataSourceCache);
+        Map<String, String> mappings = new ConcurrentHashMap<>();
+        for (String entityName : entityDataSourceCache.liveKeys()) {
+            mappings.put(entityName, entityDataSourceCache.get(entityName));
+        }
+        return mappings;
     }
 }

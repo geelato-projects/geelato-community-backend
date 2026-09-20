@@ -72,12 +72,12 @@ public class Filter {
     
     // IS NULL
     public static Filter isNull(String field) {
-        return new Filter(field, "IS NULL", null);
+        return new Filter(field, "IS NULL", "true");
     }
-    
+
     // IS NOT NULL
     public static Filter isNotNull(String field) {
-        return new Filter(field, "IS NOT NULL", null);
+        return new Filter(field, "IS NOT NULL", "false");
     }
     
     // OR连接

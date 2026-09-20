@@ -126,7 +126,7 @@ public class MetaFactory {
     public static MetaDelete delete(String entityName) {
         return new MetaDelete(entityName);
     }
-    
+
     /**
      * 创建删除构建器
      * @param entityClass 实体类
@@ -134,6 +134,39 @@ public class MetaFactory {
      */
     public static MetaDelete delete(Class<?> entityClass) {
         return new MetaDelete(entityClass);
+    }
+
+    /**
+     * 创建物理删除构建器（生成 delete from），调用级显式指定，优先级最高，
+     * 压过实体级 @Entity(deleteMode) 与全局默认（GlobalContext，可由环境变量 GEELATO_DELETE_MODE 固化）。
+     * @param entityName 实体名称
+     * @return MetaDelete删除构建器，链式调用 .execute() 执行
+     */
+    public static MetaDelete physicalDelete(String entityName) {
+        return new MetaDelete(entityName, true);
+    }
+
+    /**
+     * 创建物理删除构建器（生成 delete from），调用级显式指定，优先级最高，
+     * 压过实体级 @Entity(deleteMode) 与全局默认（GlobalContext，可由环境变量 GEELATO_DELETE_MODE 固化）。
+     * @param entityClass 实体类
+     * @return MetaDelete删除构建器，链式调用 .execute() 执行
+     */
+    public static MetaDelete physicalDelete(Class<?> entityClass) {
+        return new MetaDelete(entityClass, true);
+    }
+
+    /**
+     * 按实体对象的非空属性创建物理删除构建器（等值条件，生成 delete from）。
+     * @param entity 实体对象，非空属性作为等值删除条件
+     * @return MetaDelete删除构建器，链式调用 .execute() 执行
+     */
+    public static MetaDelete physicalDelete(Object entity) {
+        MetaDelete delete = new MetaDelete(entity.getClass(), true);
+        for (Filter filter : extractFilters(entity)) {
+            delete.where(filter);
+        }
+        return delete;
     }
 
     /**
@@ -210,10 +243,12 @@ public class MetaFactory {
      * 按实体对象的非空属性构建删除构建器（等值条件）。
      * <p>
      * 使用示例：
-     * // 删除（可链式切换数据源）
-     * MetaFactory.delete(entity).useDataSource("biz").delete();
+     * // 删除（可链式切换数据源，按三级优先级解析删除模式）
+     * MetaFactory.delete(entity).useDataSource("biz").execute();
+     * // 物理删除（调用级显式，一步构建，execute() 执行）
+     * MetaFactory.physicalDelete(entity).useDataSource("biz").execute();
      * @param entity 实体对象，非空属性作为等值删除条件
-     * @return MetaDelete删除构建器，链式调用 .delete() 执行
+     * @return MetaDelete删除构建器，链式调用 .execute() 执行
      */
     public static MetaDelete delete(Object entity) {
         MetaDelete delete = new MetaDelete(entity.getClass());

@@ -52,6 +52,31 @@ public class QueryCommandAdapterTest extends OrmTestSupport {
         assertEquals("geelato", command.getViewTemplateParams().get("tenantCode"));
     }
 
+    /**
+     * 核心 nil 操作符按 value 渲染（"1"/"true" → is NULL，否则 is NOT NULL），IS NULL 与
+     * IS NOT NULL 均映射 Operator.nil、语义仅由 value 区分——isNull/isNotNull 及裸构造
+     * 都必须在适配后携带可区分的 value，否则语义反转（isNull 渲染成 is NOT NULL）。
+     */
+    @Test
+    public void shouldAdaptNullOperatorsWithDistinguishingValues() {
+        QueryCommand command = QueryCommandAdapter.forList(
+                MetaFactory.query(TestUserEntity.class)
+                        .where(Filter.isNull("parentId"),
+                                Filter.isNotNull("updateBy"),
+                                new Filter("remark", "IS NULL", null))
+        );
+
+        assertNotNull(command.getWhere());
+        java.util.List<FilterGroup.Filter> filters = command.getWhere().getFilters();
+        assertEquals(3, filters.size());
+        assertEquals(FilterGroup.Operator.nil, filters.get(0).getOperator());
+        assertEquals("true", filters.get(0).getValue());
+        assertEquals(FilterGroup.Operator.nil, filters.get(1).getOperator());
+        assertEquals("false", filters.get(1).getValue());
+        assertEquals(FilterGroup.Operator.nil, filters.get(2).getOperator());
+        assertEquals("true", filters.get(2).getValue());
+    }
+
     @Test
     public void shouldAdaptJoinAndProcedureRelatedQueryOptions() {
         QueryCommand command = QueryCommandAdapter.forList(

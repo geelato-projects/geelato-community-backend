@@ -5,6 +5,7 @@ import cn.geelato.orm.query.Filter;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -33,12 +34,28 @@ public final class FilterAdapter {
 
     private static FilterGroup.Filter createFilter(Filter source) {
         FilterGroup.Filter fgFilter = new FilterGroup.Filter(
-                source.getField(), mapOperator(source.getOperator()), stringifyValue(source));
+                source.getField(), mapOperator(source.getOperator()), normalizeValue(source));
         Object rawValue = source.getValue();
         if (rawValue != null && !(rawValue instanceof String) && !(rawValue instanceof Collection)) {
             fgFilter.setRawValue(rawValue);
         }
         return fgFilter;
+    }
+
+    /**
+     * 核心 nil 操作符按 value 渲染（"1"/"true" → is NULL，否则 is NOT NULL），且 IS NULL 与
+     * IS NOT NULL 映射到同一 Operator.nil，语义只由 value 区分——适配时统一规范化，
+     * 裸构造 {@code new Filter(field, "IS NULL", null)} 缺省值也不会反转语义。
+     */
+    private static String normalizeValue(Filter filter) {
+        String operator = filter.getOperator() == null ? "" : filter.getOperator().trim().toUpperCase(Locale.ROOT);
+        if ("IS NULL".equals(operator)) {
+            return "true";
+        }
+        if ("IS NOT NULL".equals(operator)) {
+            return "false";
+        }
+        return stringifyValue(filter);
     }
 
     private static FilterGroup.Operator mapOperator(String operator) {

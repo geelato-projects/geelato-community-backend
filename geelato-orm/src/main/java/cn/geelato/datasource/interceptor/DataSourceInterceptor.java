@@ -133,7 +133,7 @@ public class DataSourceInterceptor {
 
     /**
      * 解析数据源 key，保证返回非 null 的具体 key。
-     * <p>解析优先级：类/方法级注解值 &gt; 实体映射 &gt; 外层已显式设置的 key &gt; 平台默认 key &gt; primary。
+     * <p>解析优先级：实体映射 &gt; 类/方法级注解值 &gt; 外层已显式设置的 key &gt; 平台默认 key &gt; primary。
      * <p>字段级@UseDynamicDataSource仅为注入标记，不产生注解作用域默认值，
      * 因此{@link #DEFAULT_DATA_SOURCE}在纯字段注解场景下为空，由后续兜底链接管。
      */

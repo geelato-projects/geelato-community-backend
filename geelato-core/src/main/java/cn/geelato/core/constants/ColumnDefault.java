@@ -22,9 +22,22 @@ public class ColumnDefault {
     public static final String DELETE_AT_FIELD = "deleteAt";
     public static final String DELETE_AT_COLUMN = "delete_at";
     /**
+     * 是否删除 默认值 - 已删除[1]
+     */
+    public static final int DEL_STATUS_DELETED_VALUE = DeleteStatusEnum.IS.getValue();
+    /**
      * 是否删除 默认值 - 未删除[0]
      */
     public static final int DEL_STATUS_VALUE = DeleteStatusEnum.NO.getValue();
+    /**
+     * 更新时间,更新人 字段名称（逻辑删除时随 delStatus 一并维护）
+     */
+    public static final String UPDATE_AT_FIELD = "updateAt";
+    public static final String UPDATE_AT_COLUMN = "update_at";
+    public static final String UPDATER_FIELD = "updater";
+    public static final String UPDATER_COLUMN = "updater";
+    public static final String UPDATER_NAME_FIELD = "updaterName";
+    public static final String UPDATER_NAME_COLUMN = "updater_name";
     /**
      * 启用状态 字段名称
      */

@@ -5,12 +5,14 @@ import cn.geelato.core.enums.ViewTypeEnum;
 import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.execute.BoundPageSql;
+import cn.geelato.core.mql.spi.support.MqlFuzzymatchRouteResolver;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.view.ViewMeta;
 import cn.geelato.core.sql.SqlManager;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import lombok.Getter;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -56,6 +58,7 @@ public class MqlQueryProcessor {
     /**
      * MQL 处理结果。
      */
+    @Getter
     public static class ProcessedQuery {
         private final QueryCommand command;
         private final BoundPageSql boundPageSql;
@@ -68,9 +71,6 @@ public class MqlQueryProcessor {
             this.paramsByEntity = paramsByEntity;
         }
 
-        public QueryCommand getCommand() { return command; }
-        public BoundPageSql getBoundPageSql() { return boundPageSql; }
-        public Map<String, Map<String, Object>> getParamsByEntity() { return paramsByEntity; }
     }
 
     /**
@@ -115,6 +115,8 @@ public class MqlQueryProcessor {
         QueryCommand command = gqlManager.generateQuerySql(cleanGql);
         applyViewTemplateParams(command, paramsByEntity);
         processQueryCommandFunctions(command);
+        // fuzzymatch 条件优先路由到检索引擎（替换为 id-in）；未装配/不适用时由 SQL 层 REGEXP 等价改写兜底
+        MqlFuzzymatchRouteResolver.routeIfAvailable(command);
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(command);
         return new ProcessedQuery(command, boundPageSql, paramsByEntity);
     }

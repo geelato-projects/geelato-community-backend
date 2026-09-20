@@ -125,7 +125,6 @@ public class MetaManager extends AbstractManager {
      * @param params 包含查询参数的Map，支持的参数包括appId、connectId、tableId和entityName
      */
     public void parseDBMeta(Map<String, String> params) {
-        // 业务层未提供 MetaStore 时（框架独立运行），跳过数据库元数据加载。
         if (metaStore == null) {
             log.info("parse meta data in database... skipped (no MetaStore provided)");
             return;
@@ -137,7 +136,6 @@ public class MetaManager extends AbstractManager {
         List<TableView> allViewList = definitionBundle.getViewList();
         List<TableCheck> allCheckList = definitionBundle.getCheckList();
         List<TableForeign> allForeignList = definitionBundle.getForeignList();
-        // 预建索引，避免对每张表在全量列/视图/检查/外键列表上做 O(n) 线性扫描（原为 O(T×C)）。
         Map<String, List<ColumnMeta>> columnsByTableId = allColumnList.stream()
                 .collect(Collectors.groupingBy(x -> String.valueOf(x.getTableId())));
         Map<String, List<TableView>> viewsByEntityConnect = allViewList.stream()

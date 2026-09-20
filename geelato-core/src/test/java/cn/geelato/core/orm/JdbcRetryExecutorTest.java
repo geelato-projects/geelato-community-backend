@@ -36,7 +36,7 @@ class JdbcRetryExecutorTest {
         };
     }
 
-    // ==================== isRetryable 判定 ====================
+    // ==================== isRetryable 判定（绝对安全子集：仅"未拿到连接"） ====================
 
     @Test
     void cannotGetJdbcConnectionIsRetryable() {
@@ -44,27 +44,21 @@ class JdbcRetryExecutorTest {
     }
 
     @Test
-    void transientDataAccessIsRetryable() {
-        assertTrue(JdbcRetryExecutor.isRetryable(new TransientDataAccessResourceException("connection reset")));
+    void transientFailureIsNotRetryable() {
+        // 执行中途断开：SQL 可能已发送甚至已提交，重试有重复执行风险
+        assertFalse(JdbcRetryExecutor.isRetryable(new TransientDataAccessResourceException("connection reset")));
     }
 
     @Test
-    void sqlState08IsRetryable() {
+    void sqlState08IsNotRetryable() {
         SQLException sqlException = new SQLException("Connection refused", "08S01", 1042);
-        assertTrue(JdbcRetryExecutor.isRetryable(wrapping(sqlException)));
+        assertFalse(JdbcRetryExecutor.isRetryable(wrapping(sqlException)));
     }
 
     @Test
-    void communicationsLinkFailureMessageIsRetryable() {
+    void communicationsLinkFailureMessageIsNotRetryable() {
         SQLException sqlException = new SQLException("Communications link failure due to underlying exception");
-        assertTrue(JdbcRetryExecutor.isRetryable(wrapping(sqlException)));
-    }
-
-    @Test
-    void connectionRefusedMessageWithoutCauseIsRetryable() {
-        DataAccessException noCause = new DataAccessException("Connection refused") {
-        };
-        assertTrue(JdbcRetryExecutor.isRetryable(noCause));
+        assertFalse(JdbcRetryExecutor.isRetryable(wrapping(sqlException)));
     }
 
     @Test
@@ -94,7 +88,7 @@ class JdbcRetryExecutorTest {
     }
 
     @Test
-    void retriesAndSucceedsOnConnectionFailure() {
+    void retriesAndSucceedsOnConnectionAcquisitionFailure() {
         AtomicInteger attempts = new AtomicInteger();
 
         String result = JdbcRetryExecutor.execute(() -> {
@@ -106,6 +100,17 @@ class JdbcRetryExecutorTest {
 
         assertEquals("recovered", result);
         assertEquals(3, attempts.get());
+    }
+
+    @Test
+    void doesNotRetryMidExecutionTransientFailure() {
+        AtomicInteger attempts = new AtomicInteger();
+
+        assertThrows(TransientDataAccessResourceException.class, () -> JdbcRetryExecutor.execute(() -> {
+            attempts.incrementAndGet();
+            throw new TransientDataAccessResourceException("connection reset during execution");
+        }));
+        assertEquals(1, attempts.get());
     }
 
     @Test

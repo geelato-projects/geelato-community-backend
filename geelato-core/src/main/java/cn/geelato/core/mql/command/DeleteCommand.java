@@ -1,8 +1,10 @@
 package cn.geelato.core.mql.command;
 
+import cn.geelato.lang.meta.DeleteMode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -16,6 +18,8 @@ public class DeleteCommand extends BaseCommand<DeleteCommand> {
 
     public DeleteCommand(){
         setCommandType(CommandType.Delete);
+        this.valueMap = new HashMap<>();
+        setFields(new String[0]);
     }
 
     /**
@@ -23,6 +27,8 @@ public class DeleteCommand extends BaseCommand<DeleteCommand> {
      *  与fields同步，冗余
      */
     private Map<String, Object> valueMap;
+
+    private DeleteMode deleteMode;
 
 
 }

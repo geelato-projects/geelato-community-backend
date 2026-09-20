@@ -27,7 +27,6 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("rawtypes")
 public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
-    protected Boolean LogicDelete = true;  // 是否开启软删除
     protected Boolean PermissionControl = true;
     protected static final HashedMap keywordsMap = new HashedMap();
     protected static final Map<FilterGroup.Operator, String> enumToSignString = new HashMap<FilterGroup.Operator, String>();
@@ -94,7 +93,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             Object[] params = buildParams(command);
             boundSql.setParams(params);
             boundSql.setTypes(buildTypes(command));
-            logger.info("final-sql: {}", command.getFinalSql());
+            logger.debug("final-sql: {}", command.getFinalSql());
             if (command.getCommands() != null) {
                 command.getCommands().forEach(item -> {
                     BoundSql subBoundSql = generate((E)item);
@@ -410,7 +409,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             if (alias != null && !columnName.contains(".")) {
                 result.append(alias).append(".");
             }
-            appendQuotedIdentifier(result, em, columnName);
+            appendQualifiedIdentifier(result, em, columnName);
             for (int j = 1; j < parts.length; j++) {
                 result.append(" ").append(parts[j]);
             }
@@ -434,6 +433,25 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             // 回退为原始字段，交给调用方按字面值输出
         }
         return fieldOrColumn;
+    }
+
+    /**
+     * 为（可能带表别名的）标识符加引用符。
+     * 含 "." 的多段标识符（如 JOIN 查询中的 {@code n.priority}）按段分别引用为
+     * {@code n.`priority`}，避免整体包裹成 {@code `n.priority`} 而被当作单个列名。
+     */
+    protected void appendQualifiedIdentifier(StringBuilder sb, EntityMeta em, String identifier) {
+        if (!identifier.contains(".")) {
+            appendQuotedIdentifier(sb, em, identifier);
+            return;
+        }
+        String[] segments = identifier.split("\\.");
+        for (int i = 0; i < segments.length; i++) {
+            if (i > 0) {
+                sb.append(".");
+            }
+            appendQuotedIdentifier(sb, em, segments[i]);
+        }
     }
 
     /**

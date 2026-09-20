@@ -4,6 +4,7 @@ package cn.geelato.core.meta.model.entity;
 import cn.geelato.core.meta.DictDataSource;
 import cn.geelato.core.meta.EntityCacheType;
 import cn.geelato.core.meta.EntityType;
+import cn.geelato.lang.meta.DeleteMode;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.SimpleFieldMeta;
 import cn.geelato.core.meta.model.view.ViewMeta;
@@ -66,10 +67,23 @@ public class EntityMeta {
     private final Map<String, Boolean> ignoreUpdateFieldMap;
     // 加密列名,懒计算一次
     private transient volatile Set<String> encryptedColumnNames;
+    // JSON 列字段名+列名集合,懒计算一次;字段集合变更后重算
+    private transient volatile Set<String> jsonFieldKeys;
 
     @Setter
     @Getter
     private Boolean versionControl=false;
+
+    /**
+     * 删除模式（实体级配置，来自 @Entity(deleteMode)）。
+     * <p>
+     * AUTO 表示未显式指定，删除时跟随全局默认（GlobalContext.getDefaultDeleteMode，环境变量 GEELATO_DELETE_MODE 类加载时读取一次固化）；
+     * 最终解析收敛在 DeleteCommands.resolve，
+     * 优先级：调用级显式（MetaFactory.physicalDelete(...)/MQL @physicalDelete）＞ 实体级 ＞ 全局默认。
+     */
+    @Setter
+    @Getter
+    private DeleteMode deleteMode = DeleteMode.AUTO;
 
     @Setter
     private EntityCacheType cacheType;
@@ -92,6 +106,7 @@ public class EntityMeta {
             return;
         }
         this.encryptedColumnNames = null;
+        this.jsonFieldKeys = null;
         FieldMeta idMeta = null;
         FieldMeta titleMeta = null;
         FieldMeta nameMeta = null;
@@ -231,6 +246,33 @@ public class EntityMeta {
                 encryptedColumnNames = names.isEmpty() ? Set.of() : Collections.unmodifiableSet(names);
             }
             return encryptedColumnNames;
+        }
+    }
+
+    /**
+     * 该实体所有 JSON 类型字段的键集合（同时包含 fieldName 和 columnName），懒计算一次。
+     * 用于 Dao.convert 快速判定某列是否需要 JSON 解析，避免逐行逐列查 FieldMeta。
+     */
+    public Set<String> getJsonFieldKeys() {
+        Set<String> cached = jsonFieldKeys;
+        if (cached != null) {
+            return cached;
+        }
+        synchronized (this) {
+            if (jsonFieldKeys == null) {
+                Set<String> keys = new HashSet<>();
+                if (fieldMetas != null) {
+                    for (FieldMeta fm : fieldMetas) {
+                        if (fm.getColumnMeta() != null
+                                && "JSON".equalsIgnoreCase(fm.getColumnMeta().getDataType())) {
+                            if (fm.getFieldName() != null) keys.add(fm.getFieldName());
+                            if (fm.getColumnName() != null) keys.add(fm.getColumnName());
+                        }
+                    }
+                }
+                jsonFieldKeys = keys.isEmpty() ? Set.of() : Collections.unmodifiableSet(keys);
+            }
+            return jsonFieldKeys;
         }
     }
 

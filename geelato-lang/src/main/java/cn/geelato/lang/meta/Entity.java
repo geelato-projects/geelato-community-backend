@@ -56,4 +56,16 @@ public @interface Entity {
      * @return 数据源 key，默认空（走默认数据源）
      */
     String connectId() default "";
+
+    /**
+     * (Optional) 删除模式，控制 delete 语句生成逻辑删除（update 置 delStatus）还是物理删除（delete from）。
+     * <p>
+     * 优先级：调用级显式（MetaFactory {@code physicalDelete(...)} / MQL {@code @physicalDelete}）最高，
+     * 其次为该实体级配置，{@link DeleteMode#AUTO}（默认）表示跟随全局默认
+     * （core 的 GlobalContext，环境变量 GEELATO_DELETE_MODE 类加载时读取一次固化，默认 logic）。
+     * 显式 {@link DeleteMode#LOGIC} 时实体必须含 delStatus 字段，否则删除时硬失败。
+     *
+     * @return 删除模式，默认 {@link DeleteMode#AUTO}
+     */
+    DeleteMode deleteMode() default DeleteMode.AUTO;
 }

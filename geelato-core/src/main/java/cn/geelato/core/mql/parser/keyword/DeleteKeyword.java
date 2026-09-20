@@ -18,6 +18,17 @@ public enum DeleteKeyword implements KeyWordHandler {
             List<FilterGroup> childFilterGroup = parseKWBrackets(validator, jo, key);
             fg.setChildFilterGroup(childFilterGroup);
         }
+    },
+    /**
+     * 调用级显式物理删除标记（true|false）。
+     * 值合法性与模式应用在 JsonTextDeleteParser.parse 前置完成（peekPhysicalDelete），
+     * 此处仅消费该关键字，避免进入"不支持"分支。
+     */
+    PHYSICAL_DELETE("@physicalDelete") {
+        @Override
+        public void handle(JSONObject jo, String key, String value, BaseCommand command, CommandValidator validator, FilterGroup fg, String entityName) {
+            // no-op：已在解析默认删除字段前应用
+        }
     };
 
     private final String key;

@@ -47,14 +47,14 @@ public class DataSourceManagerTest {
     }
 
     @Test
-    public void getDataSourceOnlyReturnsRegisteredDataSource() {
+    public void getRegisteredDataSourceOnlyReturnsRegisteredDataSource() {
         // 未注册的 connectId 不再懒加载建池，直接返回 null
-        assertNull(manager.getDataSource("ds-test-mysql"));
+        assertNull(manager.getRegisteredDataSource("ds-test-mysql"));
 
         HikariDataSource dataSource = new HikariDataSource();
         manager.registerDataSource("ds-test-registered", dataSource);
         try {
-            assertSame(dataSource, manager.getDataSource("ds-test-registered"));
+            assertSame(dataSource, manager.getRegisteredDataSource("ds-test-registered"));
         } finally {
             dataSource.close();
         }

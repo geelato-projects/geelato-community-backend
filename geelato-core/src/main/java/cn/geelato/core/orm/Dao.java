@@ -20,7 +20,6 @@ import cn.geelato.lang.meta.IgnoreType;
 import cn.geelato.core.meta.model.CommonRowMapper;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.IdEntity;
-import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.lang.api.DataItems;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -28,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 
@@ -163,9 +163,15 @@ public class Dao extends SqlKeyDao {
     }
 
     public <T> T queryForObject(BoundSql boundSql, Class<T> requiredType) throws DataAccessException {
-        return execute(boundSql, () -> boundSql.getTypes() != null && boundSql.getTypes().length > 0
-                ? jdbcTemplate.queryForObject(boundSql.getSql(), requiredType, boundSql.getParams(), boundSql.getTypes())
-                : jdbcTemplate.queryForObject(boundSql.getSql(), requiredType, boundSql.getParams()));
+        // 必须走 (sql, args, argTypes, RowMapper) 重载：JdbcTemplate 无 (sql, Class, args, argTypes) 签名，
+        // 若写成 queryForObject(sql, requiredType, params, types) 会被误配到可变参 (sql, Class, Object...)，
+        // 把 params 与 types 当成两个绑定参数，导致 MySQL 收到序列化二进制而报 "from binary to utf8mb4"。
+        return execute(boundSql, () -> {
+            SingleColumnRowMapper<T> rowMapper = new SingleColumnRowMapper<>(requiredType);
+            return boundSql.getTypes() != null && boundSql.getTypes().length > 0
+                    ? jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), boundSql.getTypes(), rowMapper)
+                    : jdbcTemplate.queryForObject(boundSql.getSql(), boundSql.getParams(), rowMapper);
+        });
     }
 
     public List<Map<String, Object>> queryForMapList(BoundPageSql boundPageSql) {
@@ -222,22 +228,36 @@ public class Dao extends SqlKeyDao {
     }
 
     private List<Map<String, Object>> convert(List<Map<String, Object>> data, EntityMeta entityMeta) {
+        if (data == null || data.isEmpty() || entityMeta == null) {
+            return data;
+        }
+        Set<String> jsonKeys = entityMeta.getJsonFieldKeys();
+        if (jsonKeys.isEmpty()) {
+            return data; 
+        }
         for (Map<String, Object> map : data) {
-            for (String key : map.keySet()) {
-                FieldMeta fieldMeta = entityMeta.getFieldMeta(key);
-                if (fieldMeta != null) {
-                    String columnType = entityMeta.getFieldMeta(key).getColumnMeta().getDataType();
-                    if ("JSON".equals(columnType)) {
-                        Object value = map.get(key);
-                        String str = (value != null) ? value.toString() : "";
-                        if (str.startsWith("{") && str.endsWith("}")) {
-                            JSONObject jsonObject = JSONObject.parse(value.toString());
-                            map.replace(key, value, jsonObject);
-                        } else if (str.startsWith("[") && str.endsWith("]")) {
-                            JSONArray jsonArray = JSONArray.parse(value.toString());
-                            map.replace(key, value, jsonArray);
-                        }
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                if (!jsonKeys.contains(entry.getKey())) {
+                    continue;
+                }
+                Object value = entry.getValue();
+                if (value == null || value instanceof JSONObject || value instanceof JSONArray) {
+                    continue; 
+                }
+                String str = value.toString(); 
+                if (str.isEmpty()) {
+                    continue;
+                }
+                char first = str.charAt(0);
+                char last = str.charAt(str.length() - 1);
+                try {
+                    if (first == '{' && last == '}') {
+                        entry.setValue(JSONObject.parse(str));
+                    } else if (first == '[' && last == ']') {
+                        entry.setValue(JSONArray.parse(str));
                     }
+                } catch (Exception e) {
+                    log.warn("JSON 列解析失败, key={}, 保留原始字符串", entry.getKey(), e);
                 }
             }
         }
@@ -247,9 +267,13 @@ public class Dao extends SqlKeyDao {
  
 
     public <T> List<T> queryForOneColumnList(BoundSql boundSql, Class<T> elementType) {
-        return execute(boundSql, () -> boundSql.getTypes() != null && boundSql.getTypes().length > 0
-                ? jdbcTemplate.queryForList(boundSql.getSql(), elementType, boundSql.getParams(), boundSql.getTypes())
-                : jdbcTemplate.queryForList(boundSql.getSql(), elementType, boundSql.getParams()));
+        // 同 queryForObject：改用 (sql, args, argTypes, RowMapper) 重载，避免误配可变参签名把 types 数组当作绑定参数。
+        return execute(boundSql, () -> {
+            SingleColumnRowMapper<T> rowMapper = new SingleColumnRowMapper<>(elementType);
+            return boundSql.getTypes() != null && boundSql.getTypes().length > 0
+                    ? jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), boundSql.getTypes(), rowMapper)
+                    : jdbcTemplate.query(boundSql.getSql(), boundSql.getParams(), rowMapper);
+        });
     }
 
     /**

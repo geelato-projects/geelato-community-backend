@@ -8,9 +8,9 @@ public class DefaultUserOrgInfoEnricher implements UserOrgInfoEnricher {
     }
 
     @Override
-    public User enrich(User user) {
+    public void enrich(User user) {
         if (user == null) {
-            return null;
+            return;
         }
         String resolvedOrgId = firstNonBlank(user.getOrgId(), resolveOrgId(user));
         if (resolvedOrgId != null && !resolvedOrgId.isEmpty()) {
@@ -30,13 +30,12 @@ public class DefaultUserOrgInfoEnricher implements UserOrgInfoEnricher {
             user.setDefaultOrgId(resolvedDefaultOrgId);
             user.setDefaultOrgName(orgProvider.getOrgName(resolvedDefaultOrgId));
         }
-        return user;
     }
 
     @Override
-    public UserOrg enrich(UserOrg userOrg) {
+    public void enrich(UserOrg userOrg) {
         if (userOrg == null) {
-            return null;
+            return;
         }
         if (userOrg.getOrgId() != null && !userOrg.getOrgId().isEmpty()) {
             if (userOrg.getName() == null || userOrg.getName().isEmpty()) {
@@ -48,7 +47,6 @@ public class DefaultUserOrgInfoEnricher implements UserOrgInfoEnricher {
                 userOrg.setFullName(userOrg.getName());
             }
         }
-        return userOrg;
     }
 
     private String resolveOrgId(User user) {

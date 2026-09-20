@@ -1,10 +1,13 @@
 package cn.geelato.core.sql.provider;
 
+import cn.geelato.core.experiment.ExperimentFeatures;
+import cn.geelato.core.experiment.ExperimentGate;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
+import cn.geelato.core.meta.model.parser.FuzzymatchSupport;
 import com.alibaba.fastjson2.JSONArray;
 import org.springframework.util.StringUtils;
 
@@ -86,6 +89,9 @@ enum ConditionOperator implements ConditionAppender {
     GT {
         @Override
         public void appendFunction(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+            if (tryAppendFuzzymatchRewrite(provider, sb, em, fm, filter)) {
+                return;
+            }
             appendFunctionOrField(provider, sb, em, fm);
             sb.append(MetaBaseSqlProvider.convertToSignString(filter.getOperator()));
             sb.append("?");
@@ -273,8 +279,48 @@ enum ConditionOperator implements ConditionAppender {
         }
     };
 
-    private static void appendFunctionOrField(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm) {
-        if (FunctionParser.isFunction(fm)) {
+    /**
+     * fuzzymatch 函数条件的等价改写（仅 gt 0 触发）：
+     * {@code geelato.gfn_fuzzymatch(col,'kw') > 0} → {@code (col <> '' AND col REGEXP ?)}，
+     * ? 绑定按 {@link FuzzymatchSupport#buildRegexPattern} 复刻原函数清洗的 pattern。
+     * 内建 REGEXP 替代存储函数，消除逐行存储函数调用开销；MySQL 8.0.22+ 还会将内建函数条件
+     * 下推到派生表（vt 视图）内层，存储函数条件永不享受该优化。
+     * 不满足触发条件（非 fuzzymatch / 非 gt / 比较值非 0 / 参数不可确定性解析）时返回 false，
+     * 走原 geelato.gfn_fuzzymatch 函数路径。
+     */
+    private static boolean tryAppendFuzzymatchRewrite(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm, FilterGroup.Filter filter) {
+        // [experiment:search] 实验分支点 —— 毕业时删除本判定与 return false 分支，仅保留改写路径
+        if (!ExperimentGate.isEnabled(ExperimentFeatures.SEARCH)) {
+            return false;
+        }
+        if (!FuzzymatchSupport.isFuzzymatch(fm) || filter == null) {
+            return false;
+        }
+        // 仅 fuzzymatch|gt:0（平台约定写法）触发；其他比较值保留原函数语义
+        if (!"0".equals(filter.getValue())) {
+            return false;
+        }
+        String[] ps = FuzzymatchSupport.parseParams(fm);
+        if (ps == null) {
+            return false;
+        }
+        // $self 按当前实体解析（括号组内函数条件不经 getMysqlFunction 归一，$self 原样保留）
+        String colExpr = FuzzymatchSupport.resolveColumn(ps[0], em.getEntityName());
+        if (colExpr == null) {
+            return false;
+        }
+        if (em.getTableAlias() != null && !colExpr.contains(".")) {
+            colExpr = em.getTableAlias() + "." + colExpr;
+        }
+        String pattern = FuzzymatchSupport.buildRegexPattern(ps[1]);
+        sb.append("(").append(colExpr).append(" <> '' AND ").append(colExpr).append(" REGEXP ?)");
+        // 绑定值经 rawValue 传递（recombine 中 rawValue 优先）；value 保持 "0" 不动，
+        // 保证主查询与 count 两次生成均满足触发条件（幂等），也不改变非 0 比较值的原语义。
+        filter.setValue(filter.getValue(), pattern);
+        return true;
+    }
+
+    private static void appendFunctionOrField(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm) {        if (FunctionParser.isFunction(fm)) {
             String func;
             if (fm.startsWith("gfn_")) {
                 func = fm;

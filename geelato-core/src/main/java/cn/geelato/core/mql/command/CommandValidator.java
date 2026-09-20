@@ -3,6 +3,7 @@ package cn.geelato.core.mql.command;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableForeign;
+import lombok.Getter;
 import org.springframework.util.Assert;
 
 import java.util.Arrays;
@@ -14,6 +15,7 @@ import java.util.regex.Pattern;
  */
 public class CommandValidator {
     private final MetaManager metaManager = MetaManager.singleInstance();
+    @Getter
     private EntityMeta entityMeta = null;
     private String validateEntityName = null;
     private final StringBuilder message = new StringBuilder();

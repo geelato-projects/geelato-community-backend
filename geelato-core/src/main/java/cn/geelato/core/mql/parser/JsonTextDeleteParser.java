@@ -4,8 +4,10 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.core.mql.command.CommandType;
 import cn.geelato.core.mql.command.CommandValidator;
 import cn.geelato.core.mql.command.DeleteCommand;
+import cn.geelato.core.mql.command.DeleteCommands;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.mql.parser.keyword.DeleteKeyword;
+import cn.geelato.lang.meta.DeleteMode;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
@@ -43,13 +45,12 @@ public class JsonTextDeleteParser extends JsonTextParser {
         FilterGroup fg = new FilterGroup();
         command.setWhere(fg);
         command.setCommandType(CommandType.Delete);
-        Map<String, Object> params = new HashMap<>();
-        putDeleteDefaultField(sessionCtx,params,validator);
+        boolean physicalRequested = peekPhysicalDelete(jo, validator);
+        command.setDeleteMode(DeleteCommands.resolve(validator.getEntityMeta(), physicalRequested));
+        if (command.getDeleteMode() == DeleteMode.LOGIC) {
+            DeleteCommands.fillLogicDeleteValues(command, validator.getEntityMeta());
+        }
 
-        String[] updateFields = new String[params.size()];
-        params.keySet().toArray(updateFields);
-        command.setFields(updateFields);
-        command.setValueMap(params);
         jo.keySet().forEach(key -> {
             if (key.startsWith(KEYWORD_FLAG) && StringUtils.hasText(jo.getString(key))) {
                 String value = jo.getString(key);
@@ -76,23 +77,24 @@ public class JsonTextDeleteParser extends JsonTextParser {
         return command;
     }
 
-    private void putDeleteDefaultField(SessionCtx sessionCtx, Map<String, Object> params, CommandValidator validator) {
-        String newDataString = simpleDateFormat.format(new Date());
-        if (validator.hasKeyField("delStatus")) {
-            params.put(FN_DEL_STATUS, 1);
+    /**
+     * 前置识别 @physicalDelete 关键字（true|false），供默认字段填充前确定删除模式；
+     * 非法值走 validator 报错链，最终在 parse 尾部统一 logAndThrow。
+     */
+    private boolean peekPhysicalDelete(JSONObject jo, CommandValidator validator) {
+        String value = jo.getString(DeleteKeyword.PHYSICAL_DELETE.getKey());
+        if (value == null) {
+            return false;
         }
-        if (validator.hasKeyField("deleteAt")) {
-            params.put(FN_DELETE_AT, newDataString);
+        String normalized = value.trim();
+        if ("true".equalsIgnoreCase(normalized)) {
+            return true;
         }
-        if (validator.hasKeyField(FN_UPDATE_AT)) {
-            params.put(FN_UPDATE_AT, newDataString);
+        if ("false".equalsIgnoreCase(normalized)) {
+            return false;
         }
-        if (validator.hasKeyField(FN_UPDATER)) {
-            params.put(FN_UPDATER, SessionCtx.getUserId());
-        }
-        if (validator.hasKeyField(FN_UPDATER_NAME)) {
-            params.put(FN_UPDATER_NAME,  SessionCtx.getUserName());
-        }
+        validator.appendMessage(String.format("[@physicalDelete]仅支持true|false，当前值[%s];", value));
+        return false;
     }
 
 

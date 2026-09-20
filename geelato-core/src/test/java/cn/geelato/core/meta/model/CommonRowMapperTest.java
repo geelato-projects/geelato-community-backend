@@ -70,6 +70,48 @@ class CommonRowMapperTest {
         assertEquals("v1", row.get("col_a"));
     }
 
+    @Test
+    void decryptsOnlyEncryptedMarkedColumns() throws SQLException {
+        jdbcTemplate.execute("create table \"t_cm_encrypt\" (\"secret_col\" varchar(256), \"note_col\" varchar(256))");
+        // note_col 存 aes: 前缀的普通明文,须原样返回
+        jdbcTemplate.update("insert into \"t_cm_encrypt\" values (?, ?)",
+                cn.geelato.core.util.EncryptUtils.encrypt("top-secret"), "aes:not-a-cipher");
+
+        MetaManager metaManager = MetaManager.singleInstance();
+        try {
+            String tableName = jdbcTemplate.execute(CommonRowMapperTest::reportEncryptTableName);
+            TableMeta tableMeta = new TableMeta();
+            tableMeta.setEntityName("cm_encrypt_test");
+            tableMeta.setTableName(tableName);
+            ColumnMeta secretColumn = new ColumnMeta();
+            secretColumn.setName("secret_col");
+            secretColumn.setFieldName("secretCol");
+            secretColumn.setDataType("varchar");
+            secretColumn.setEncrypted(true);
+            ColumnMeta noteColumn = new ColumnMeta();
+            noteColumn.setName("note_col");
+            noteColumn.setFieldName("noteCol");
+            noteColumn.setDataType("varchar");
+            metaManager.parseTableEntity(tableMeta, List.of(secretColumn, noteColumn), null, null, null);
+
+            Map<String, Object> row = jdbcTemplate.queryForObject(
+                    "select * from \"t_cm_encrypt\"", new CommonRowMapper<>());
+
+            assertNotNull(row);
+            // 标记列解密,未标记列原样返回
+            assertEquals("top-secret", row.get("secretCol"));
+            assertEquals("aes:not-a-cipher", row.get("noteCol"));
+        } finally {
+            metaManager.removeOne("cm_encrypt_test");
+        }
+    }
+
+    private static String reportEncryptTableName(Connection connection) throws SQLException {
+        try (ResultSet resultSet = connection.createStatement().executeQuery("select * from \"t_cm_encrypt\"")) {
+            return resultSet.getMetaData().getTableName(1);
+        }
+    }
+
     private static String reportTableName(Connection connection) throws SQLException {
         try (ResultSet resultSet = connection.createStatement().executeQuery("select * from \"t_cm_fallback\"")) {
             return resultSet.getMetaData().getTableName(1);

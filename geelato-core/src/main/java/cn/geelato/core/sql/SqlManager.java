@@ -1,7 +1,6 @@
 package cn.geelato.core.sql;
 
 import cn.geelato.core.AbstractManager;
-import cn.geelato.core.SessionCtx;
 import cn.geelato.core.mql.command.*;
 import cn.geelato.core.mql.execute.BoundPageSql;
 import cn.geelato.core.mql.execute.BoundSql;
@@ -9,11 +8,10 @@ import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.sql.provider.*;
-import cn.geelato.utils.DateUtils;
+import cn.geelato.lang.meta.DeleteMode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -25,7 +23,6 @@ import java.util.*;
 @Slf4j
 @SuppressWarnings("rawtypes")
 public class SqlManager extends AbstractManager {
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DateUtils.DATETIME);
     private static SqlManager instance;
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final MetaQuerySqlProvider metaQuerySqlProvider = new MetaQuerySqlProvider();
@@ -165,7 +162,10 @@ public class SqlManager extends AbstractManager {
         DeleteCommand deleteCommand = new DeleteCommand();
         EntityMeta em = metaManager.get(clazz);
         deleteCommand.setEntityName(em.getEntityName());
-        deleteCommand.setFields(em.getFieldNames());
+        deleteCommand.setDeleteMode(DeleteCommands.resolve(em, false));
+        if (deleteCommand.getDeleteMode() == DeleteMode.LOGIC) {
+            DeleteCommands.fillLogicDeleteValues(deleteCommand, em);
+        }
         deleteCommand.setWhere(filterGroup);
         return metaDeleteSqlProvider.generate(deleteCommand);
     }
@@ -180,27 +180,10 @@ public class SqlManager extends AbstractManager {
         DeleteCommand deleteCommand = new DeleteCommand();
         EntityMeta em = metaManager.getByEntityName(entityName);
         deleteCommand.setEntityName(em.getEntityName());
-        Map<String, Object> params = new HashMap<>();
-        String newDataString = simpleDateFormat.format(new Date());
-        if (validator.hasKeyField("delStatus")) {
-            params.put("delStatus", 1);
+        deleteCommand.setDeleteMode(DeleteCommands.resolve(em, false));
+        if (deleteCommand.getDeleteMode() == DeleteMode.LOGIC) {
+            DeleteCommands.fillLogicDeleteValues(deleteCommand, em);
         }
-        if (validator.hasKeyField("deleteAt")) {
-            params.put("deleteAt", newDataString);
-        }
-        if (validator.hasKeyField("updateAt")) {
-            params.put("updateAt", newDataString);
-        }
-        if (validator.hasKeyField("updater")) {
-            params.put("updater", SessionCtx.getCurrentUser().getUserId());
-        }
-        if (validator.hasKeyField("updaterName")) {
-            params.put("updaterName", SessionCtx.getCurrentUser().getUserName());
-        }
-        String[] updateFields = new String[params.size()];
-        params.keySet().toArray(updateFields);
-        deleteCommand.setFields(updateFields);
-        deleteCommand.setValueMap(params);
         deleteCommand.setWhere(filterGroup);
         return metaDeleteSqlProvider.generate(deleteCommand);
     }

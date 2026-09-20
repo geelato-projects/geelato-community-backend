@@ -1,5 +1,7 @@
 package cn.geelato.core;
 
+import cn.geelato.lang.meta.DeleteMode;
+
 @SuppressWarnings("ALL")
 public class GlobalContext {
     protected final static String __ENV_ENCRYPT_TYPE__ = "GEELATO_ENCRYPT_TYPE";
@@ -11,7 +13,7 @@ public class GlobalContext {
     protected final static String __ENV_RSA_PRIVATE_KEY__ = "GEELATO_RSA_PRIVATE_KEY";
 
     /*
-    __SecurityLevel__代表系统密级，用于控制一些特殊的用于方便运维的越权手段等，但现在无实际意义。
+    __SecurityLevel__代表系统密级，用于控制一些特殊的用于方便运维的越权手段等。
      */
     protected final static Integer __SecurityLevel__ = 2;
     protected final static Boolean __ColumnEncrypt__ = __SecurityLevel__ > 0;
@@ -31,7 +33,7 @@ public class GlobalContext {
      */
     protected static Boolean __LogStack__ = true;
     protected final static Boolean __POLYGLOT_DEBUGGER__ =false;
-    /** MQL 查询结果缓存全局开关;实体级门控见 EntityMeta.isBackEndCacheEnabled,两级同时开启才缓存 */
+    /** MQL 查询结果缓存全局开关 */
     protected final static Boolean __MetaQueryCache__ = true;
     /*
     在线文档站根地址，用于异常响应中拼接错误码文档链接（docUrl）。
@@ -40,11 +42,19 @@ public class GlobalContext {
     protected final static String __DocBaseUrl__ = "https://docs.geelato.cn";
     protected final static Boolean __DocUrlEnabled__ = true;
     /**
-     * 默认租户编码：当登录链路无法确定用户租户（如 OAuth2 userinfo 未下发 tenantCode）时使用。
-     * 可由环境变量 GEELATO_DEFAULT_TENANT 覆盖；默认 geelato，向后兼容历史硬编码。
+     * 默认租户编码。
      */
     protected final static String __DefaultTenantCode__ = "geelato";
     protected final static String __ENV_DEFAULT_TENANT__ = "GEELATO_DEFAULT_TENANT";
+    protected final static String __ENV_DELETE_MODE__ = "GEELATO_DELETE_MODE";
+    /**
+     * 全局默认删除模式（logic|physical），@Entity(deleteMode = AUTO) 的实体删除时落到这里。
+     * 类加载时读取环境变量 GEELATO_DELETE_MODE 一次并固化，运行期不可动态改变；
+     * 未设置时默认 LOGIC，非法值或 auto 在启动期即失败。
+     * 运行期的按需控制请用实体级 @Entity(deleteMode) 或调用级 MetaFactory.physicalDelete(...)。
+     */
+    protected final static DeleteMode __DefaultDeleteMode__ = resolveDefaultDeleteMode(
+            getEnvOrDefault(__ENV_DELETE_MODE__, DeleteMode.LOGIC.name()));
     public static String getEnvironment() {
         return __Environment__;
     }
@@ -125,6 +135,31 @@ public class GlobalContext {
      */
     public static String getDefaultTenantCode() {
         return getEnvOrDefault(__ENV_DEFAULT_TENANT__, __DefaultTenantCode__);
+    }
+
+    /**
+     * 全局默认删除模式（@Entity(deleteMode = AUTO) 实体删除时的落点）。
+     */
+    public static DeleteMode getDefaultDeleteMode() {
+        return __DefaultDeleteMode__;
+    }
+
+    /**
+     * 解析环境变量值（包私有便于单测注入）：null/空白默认 LOGIC；
+     * 仅接受 logic|physical（忽略大小写），auto 与非法值启动期即失败。
+     */
+    static DeleteMode resolveDefaultDeleteMode(String value) {
+        if (value == null || value.isBlank()) {
+            return DeleteMode.LOGIC;
+        }
+        DeleteMode mode = DeleteMode.fromStringIgnoreCase(value);
+        if (mode == null) {
+            throw new IllegalStateException(String.format("环境变量 %s 的值[%s]非法，仅支持 logic|physical。", __ENV_DELETE_MODE__, value));
+        }
+        if (mode == DeleteMode.AUTO) {
+            throw new IllegalStateException(String.format("环境变量 %s 不支持 auto，仅支持 logic|physical。", __ENV_DELETE_MODE__));
+        }
+        return mode;
     }
 
     private static String getEnvOrDefault(String envName, String defaultValue) {

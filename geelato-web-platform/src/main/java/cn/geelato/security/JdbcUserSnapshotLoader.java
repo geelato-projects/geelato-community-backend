@@ -68,6 +68,31 @@ public class JdbcUserSnapshotLoader implements UserSnapshotLoader {
             ur.setTenantCode(getMapString(rm, "tenant_code"));
             list.add(ur);
         }
+        List<Map<String, Object>> orgRoleMapList = platformJdbcTemplate.queryForList(
+                "select uor.user_id, uor.org_id, r.id, r.code, r.name, r.type, r.tenant_code " +
+                        "from platform_user_r_org_role uor join platform_role r on r.id = uor.role_id " +
+                        "where uor.del_status = 0 and r.del_status = 0"
+        );
+        for (Map<String, Object> orm : orgRoleMapList) {
+            String userId = String.valueOf(orm.get("user_id"));
+            User user = userById.get(userId);
+            if (user == null) {
+                continue;
+            }
+            List<UserOrgRole> orgRoles = user.getUserOrgRoles();
+            if (orgRoles == null) {
+                orgRoles = new ArrayList<>();
+                user.setUserOrgRoles(orgRoles);
+            }
+            UserOrgRole uor = new UserOrgRole();
+            uor.setId(String.valueOf(orm.get("id")));
+            uor.setCode(getMapString(orm, "code"));
+            uor.setName(String.valueOf(orm.get("name")));
+            uor.setType(getMapString(orm, "type"));
+            uor.setTenantCode(getMapString(orm, "tenant_code"));
+            uor.setOrgId(String.valueOf(orm.get("org_id")));
+            orgRoles.add(uor);
+        }
         List<Map<String, Object>> orgMapList = platformJdbcTemplate.queryForList(
                 "select user_id, org_id, org_name, default_org from platform_org_r_user where del_status = 0"
         );
@@ -107,6 +132,11 @@ public class JdbcUserSnapshotLoader implements UserSnapshotLoader {
                 user.setUserOrgs(Collections.emptyList());
             } else {
                 user.setUserOrgs(List.copyOf(user.getUserOrgs()));
+            }
+            if (user.getUserOrgRoles() == null) {
+                user.setUserOrgRoles(Collections.emptyList());
+            } else {
+                user.setUserOrgRoles(List.copyOf(user.getUserOrgRoles()));
             }
         }
         return UserSnapshot.from(userById, extendIndex);

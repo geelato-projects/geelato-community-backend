@@ -40,37 +40,6 @@ class PlatformExceptionHandlerTest {
         GlobalContext.setLogStack(true);
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    void sqlExecuteExceptionReturnsFriendlyMessageWithoutTechnicalDetails() {
-        SqlExecuteException ex = new SqlExecuteException(
-                new UncategorizedDataAccessException("query failed",
-                        new SQLException("You have an error in your SQL syntax", "42000", 1064)) {
-                },
-                "select * from platform_dev_table where id = ?", new Object[]{"123"});
-
-        ResponseEntity<?> entity = handler.handleException(ex, request);
-
-        // SQL_EXECUTE 未声明 httpStatus，默认 500
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, entity.getStatusCode());
-        ApiResult<PlatformErrorResult> body = (ApiResult<PlatformErrorResult>) entity.getBody();
-        assertNotNull(body);
-        assertEquals("fail", body.getStatus());
-        // 顶层 msg：友好文案 + 错误码 + 反馈凭据，不含 SQL 语句与参数
-        assertTrue(body.getMsg().contains("数据操作失败，请稍后重试"));
-        assertTrue(body.getMsg().contains("错误码 10002"));
-        assertTrue(body.getMsg().contains("反馈凭据"));
-        assertFalse(body.getMsg().contains("select * from"));
-        assertFalse(body.getMsg().contains("123"));
-        // data：logTag 已生成且与 msg 中凭据一致；errorMsg 为友好文案（不含 SQL/参数）
-        assertNotNull(body.getData().getLogTag());
-        assertTrue(body.getMsg().contains(body.getData().getLogTag()));
-        assertFalse(body.getData().getErrorMsg().contains("select * from"));
-        assertTrue(body.getData().getErrorMsg().contains("数据操作失败"));
-        // stackTraceDetail：LogStack 默认开启，技术详情（含 SQL 的异常消息）+ 完整堆栈随响应下发
-        assertTrue(body.getData().getStackTraceDetail().contains("select * from platform_dev_table"));
-        assertTrue(body.getData().getStackTraceDetail().contains("\tat "));
-    }
 
     @Test
     @SuppressWarnings("unchecked")

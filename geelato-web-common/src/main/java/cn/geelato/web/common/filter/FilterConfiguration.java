@@ -54,4 +54,20 @@ public class FilterConfiguration {
     public SecurityContextFilter securityContextFilter() {
         return new SecurityContextFilter();
     }
+
+    @Bean
+    public FilterRegistrationBean experimentFilterRegistration() {
+        FilterRegistrationBean<ExperimentFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(experimentFilter());
+        registrationBean.addUrlPatterns("/*");
+        registrationBean.setName("experimentFilter");
+        // 在安全上下文(1)/缓存(2)/审计(3)之后、Controller 之前，解析 X-Gl-Experiments 请求头
+        registrationBean.setOrder(4);
+        return registrationBean;
+    }
+
+    @Bean(name = "experimentFilter")
+    public ExperimentFilter experimentFilter() {
+        return new ExperimentFilter();
+    }
 }

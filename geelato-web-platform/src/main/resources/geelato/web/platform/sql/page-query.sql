@@ -565,3 +565,123 @@ WHERE p1.del_status = 0 AND p2.del_status = 0 AND p2.enable_status = 1
 @/if
 AND p1.user_id = '$.userId'
 ORDER BY p2.seq_no ASC
+
+
+-- @sql page_query_platform_org_r_role
+SELECT
+    p1.id,
+    p1.tenant_code as tenantCode,
+    p1.org_id as orgId,
+    p1.role_id as roleId,
+    p1.update_at as updateAt,
+    p1.updater,
+    p1.updater_name as updaterName,
+    p1.create_at as createAt,
+    p1.creator,
+    p1.creator_name as creatorName,
+    p2.name as orgName,
+    p2.pid as orgPid,
+    p2.type as orgType,
+    p2.category as orgCategory,
+    p3.app_id as appId,
+    p3.name as roleName,
+    p3.code as roleCode,
+    p3.type as roleType,
+    p3.enable_status as roleEnableStatus
+FROM platform_org_r_role p1
+LEFT JOIN platform_org p2 ON p2.id = p1.org_id
+LEFT JOIN platform_role p3 ON p3.id = p1.role_id
+WHERE 1=1 AND p1.del_status = 0 AND p2.del_status = 0 AND p3.del_status = 0
+@if $.orgId!=null&&$.orgId!=''
+  AND p1.org_id = '$.orgId'
+@/if
+@if $.roleId!=null&&$.roleId!=''
+  AND p1.role_id = '$.roleId'
+@/if
+@if $.orgName!=null&&$.orgName!=''
+  AND p2.name like '%$.orgName%'
+@/if
+@if $.roleName!=null&&$.roleName!=''
+  AND p3.name like '%$.roleName%'
+@/if
+@if $.roleCode!=null&&$.roleCode!=''
+  AND p3.code like '%$.roleCode%'
+@/if
+@if $.appId!=null&&$.appId!=''
+  AND p3.app_id = '$.appId'
+@/if
+@if $.tenantCode!=null&&$.tenantCode!=''
+  AND p1.tenant_code = '$.tenantCode'
+@/if
+@if $.orderBy!=null&&$.orderBy!=''
+  ORDER BY $.orderBy
+@/if
+@if $.pageSize!=null&&$.pageSize!=''
+  LIMIT $.pageSize OFFSET $.startNum
+@/if
+
+
+-- @sql page_query_platform_user_r_org_role
+SELECT
+    p1.id,
+    p1.tenant_code as tenantCode,
+    p1.user_id as userId,
+    p1.org_id as orgId,
+    p1.role_id as roleId,
+    p1.update_at as updateAt,
+    p1.updater,
+    p1.updater_name as updaterName,
+    p1.create_at as createAt,
+    p1.creator,
+    p1.creator_name as creatorName,
+    p2.name as userName,
+    p2.login_name as userLoginName,
+    p2.enable_status as userEnableStatus,
+    p3.name as orgName,
+    p3.type as orgType,
+    p4.app_id as appId,
+    p4.name as roleName,
+    p4.code as roleCode,
+    p4.type as roleType,
+    p4.enable_status as roleEnableStatus
+FROM platform_user_r_org_role p1
+LEFT JOIN platform_user p2 ON p2.id = p1.user_id
+LEFT JOIN platform_org p3 ON p3.id = p1.org_id
+LEFT JOIN platform_role p4 ON p4.id = p1.role_id
+WHERE 1=1 AND p1.del_status = 0 AND p2.del_status = 0 AND p4.del_status = 0
+@if $.userId!=null&&$.userId!=''
+  AND p1.user_id = '$.userId'
+@/if
+@if $.orgId!=null&&$.orgId!=''
+  AND p1.org_id = '$.orgId'
+@/if
+@if $.roleId!=null&&$.roleId!=''
+  AND p1.role_id = '$.roleId'
+@/if
+@if $.userName!=null&&$.userName!=''
+  AND p2.name like '%$.userName%'
+@/if
+@if $.userLoginName!=null&&$.userLoginName!=''
+  AND p2.login_name like '%$.userLoginName%'
+@/if
+@if $.orgName!=null&&$.orgName!=''
+  AND p3.name like '%$.orgName%'
+@/if
+@if $.roleName!=null&&$.roleName!=''
+  AND p4.name like '%$.roleName%'
+@/if
+@if $.roleCode!=null&&$.roleCode!=''
+  AND p4.code like '%$.roleCode%'
+@/if
+@if $.appId!=null&&$.appId!=''
+  AND p4.app_id = '$.appId'
+@/if
+@if $.tenantCode!=null&&$.tenantCode!=''
+  AND p1.tenant_code = '$.tenantCode'
+@/if
+@if $.orderBy!=null&&$.orderBy!=''
+  ORDER BY $.orderBy
+@/if
+@if $.pageSize!=null&&$.pageSize!=''
+  LIMIT $.pageSize OFFSET $.startNum
+@/if

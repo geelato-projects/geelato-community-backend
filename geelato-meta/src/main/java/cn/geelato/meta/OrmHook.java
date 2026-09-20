@@ -38,9 +38,9 @@ public class OrmHook extends BaseEntity {
     @Col(name = "event_type", charMaxlength = 16, nullable = false)
     private String eventType;
 
-    @Title(title = "动作类型", description = "script：内嵌脚本；http：调用HTTP接口")
+    @Title(title = "动作类型", description = "http：调用HTTP接口（默认）；script：内嵌脚本")
     @Col(name = "action_type", charMaxlength = 16, nullable = false)
-    private String actionType;
+    private String actionType = "http";
 
     @Title(title = "脚本内容", description = "script 动作的 JavaScript 函数体（function(){...}，parameter 在闭包中可用）")
     @Col(name = "script_content")

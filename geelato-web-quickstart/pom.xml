@@ -38,6 +38,14 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
+        <!-- 嵌入式检索引擎（多编号模糊检索 fuzzymatch 路由 + 异步索引同步 + 失败补偿）。
+             未配置搜索域（geelato.search.domains）时不生效，查询走 SQL REGEXP 等价改写兜底。 -->
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-search-lucene</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
         <!-- sample runtime support -->
         <dependency>
             <groupId>com.mysql</groupId>

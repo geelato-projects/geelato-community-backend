@@ -28,7 +28,7 @@ public class AppScaffoldControllerCatalog {
         )));
 
         map.put(AppScaffoldCapability.NOTICE, new LinkedHashSet<>(Set.of(
-                "cn.geelato.web.platform.srv.notice.NoticeController"
+                "cn.geelato.web.platform.srv.notification.NotificationController"
         )));
 
         map.put(AppScaffoldCapability.ORGANIZATION, new LinkedHashSet<>(Set.of(

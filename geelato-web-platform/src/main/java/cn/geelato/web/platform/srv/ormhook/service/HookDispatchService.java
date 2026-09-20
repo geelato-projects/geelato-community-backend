@@ -37,9 +37,8 @@ import java.util.concurrent.TimeUnit;
  * 命中 update 规则；删除事件命中 delete 规则。
  * <p>
  * <b>饱和保护</b>：分发池为有界队列 + CallerRunsPolicy；极端饱和下任务回落到提交线程执行时，
- * 任务只写发件箱行（一次索引 INSERT，毫秒级）、跳过立即执行——立即执行永远只发生在
- * {@code orm-hook-*} 池线程上，业务提交线程最坏情况也只是一次 INSERT，永不执行脚本。
- * 未立即执行的行由调度器按 {@code intervalMs} 扫描兜底。
+ * 任务只写发件箱行（一次索引 INSERT，毫秒级）并登记 1s 后由重试定时器拾取——立即执行永远
+ * 只发生在 {@code orm-hook-*} 池线程上，业务提交线程最坏情况也只是一次 INSERT，永不执行脚本。
  * <p>
  * <b>已知崩溃窗口</b>：事务提交后、异步任务写发件箱前进程崩溃，则该次触发丢失——
  * 附加特性的可接受代价（如需零丢失，二期可评估业务事务内写 outbox 的原子方案）。
@@ -163,11 +162,12 @@ public class HookDispatchService {
                 try {
                     OrmHookLog row = insertLogRow(rule, payload);
                     if (inPoolThread()) {
-                        // 池线程：立即尝试执行（低延迟）；失败靠调度器退避重试
+                        // 池线程：立即尝试执行（低延迟）；失败靠内存定时退避重试
                         processor.processOne(row);
                     } else {
-                        // CallerRuns 回落到提交线程：只保证发件箱行落库，执行交给调度器兜底
-                        log.debug("ORM Hook 分发池饱和，hookId={} 的发件箱行已写入，立即执行让渡给调度器", rule.getId());
+                        // CallerRuns 回落到提交线程：只保证发件箱行落库，1s 后由重试定时器拾取（不依赖扫描）
+                        processor.scheduleRetry(row.getId(), 1000);
+                        log.debug("ORM Hook 分发池饱和，hookId={} 的发件箱行已写入并登记 1s 后拾取", rule.getId());
                     }
                 } catch (Exception e) {
                     // 分发失败不影响任何业务语义；若 INSERT 前失败即该次触发丢失（已知崩溃窗口同源）

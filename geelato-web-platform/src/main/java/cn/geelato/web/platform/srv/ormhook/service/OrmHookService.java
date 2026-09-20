@@ -35,14 +35,17 @@ public class OrmHookService extends BaseService {
 
     private final OrmHookRegistry registry;
     private final OrmHookActionManager actionManager;
+    private final OrmHookLogProcessor logProcessor;
 
     @Autowired
     public OrmHookService(@Qualifier("primaryDao") Dao dao,
                           OrmHookRegistry registry,
-                          OrmHookActionManager actionManager) {
+                          OrmHookActionManager actionManager,
+                          OrmHookLogProcessor logProcessor) {
         this.dao = dao;
         this.registry = registry;
         this.actionManager = actionManager;
+        this.logProcessor = logProcessor;
     }
 
     public OrmHook createModel(OrmHook model) {
@@ -65,7 +68,8 @@ public class OrmHookService extends BaseService {
     }
 
     /**
-     * 死信重放：CAS 将 dead 行重置为 ready（retry_count 清零、错误清空、立即到期）。
+     * 死信重放：CAS 将 dead 行重置为 ready（retry_count 清零、错误清空、立即到期），
+     * 并登记内存定时立即拾取（不等兜底扫描）。
      *
      * @return 是否重放成功（行不存在或非 dead 状态返回 false）
      */
@@ -78,6 +82,7 @@ public class OrmHookService extends BaseService {
                         + "error_msg = NULL, update_at = ? WHERE id = ? AND status = ?",
                 HookLogStatusEnum.READY.value(), new Date(), hookLogId, HookLogStatusEnum.DEAD.value());
         if (n > 0) {
+            logProcessor.scheduleRetry(hookLogId, 0);
             log.info("ORM Hook 死信已重放 hookLogId={}", hookLogId);
         }
         return n > 0;
@@ -105,11 +110,13 @@ public class OrmHookService extends BaseService {
         }
         String actionType = model.getActionType();
         if (StringUtils.isBlank(actionType)) {
-            throw new IllegalArgumentException("动作类型（actionType）不能为空。");
+            // 默认 HTTP（Hook 的主路径是调用 HTTP 接口，脚本次之）
+            actionType = OrmHookActionExecutor.TYPE_HTTP;
+            model.setActionType(actionType);
         }
         if (!actionManager.supports(actionType)) {
             throw new IllegalArgumentException(String.format(
-                    "动作类型无可用执行器：%s（当前支持：script | http）。", actionType));
+                    "动作类型无可用执行器：%s（当前支持：http | script）。", actionType));
         }
         try {
             if (MetaManager.singleInstance().getByEntityName(entityName) == null) {

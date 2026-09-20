@@ -185,6 +185,22 @@
         <appender-ref ref="interceptorLogFile"/>
         <appender-ref ref="console"/>
     </logger>
+    <!-- SQL 执行日志（p6spy）：最终执行 SQL（参数回填）+ 耗时，路由到独立文件，与业务日志隔离 -->
+    <appender name="sqlLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/sql/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN}</pattern>
+        </layout>
+    </appender>
+    <logger name="p6spy" additivity="false">
+        <appender-ref ref="sqlLogFile"/>
+        <appender-ref ref="console"/>
+    </logger>
     <!-- 业务扩展模块可通过 classpath include 追加独立日志路由 -->
     <include resource="geelato-ob-integrate-api-logback.xml"/>
     <!-- root 同时挂载启动日志与运行错误日志，由各 appender 上的阶段过滤器决定实际写入：

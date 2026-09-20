@@ -183,6 +183,22 @@ mvn clean install -f geelato-archive-engine/pom.xml -DskipTests
 启动即自动：幂等建表（platform_archive_policy / platform_archive_run）→ 装载预置模板（停用态）→
 启动每日调度。之后在策略管理中核阅并启用所需策略即可。
 
+## 前端（实体管理集成）
+
+归档策略配置的前端入口在 **geelato-front 仓库** 的 IDE 实体详情弹窗：模型管理（GlModelList）→
+实体详情 tabs（tableTabs.vue）→ **「数据归档」tab**（与「实体钩子」相邻，照其三件套模式实现）。
+
+- 位置：`packages/gl-ide-arco/src/views/sidebar/model/archive/`（list.vue 归档策略配置面板 /
+  run.vue 运行记录弹窗 / searchTable.ts 选项）；API 封装在
+  `packages/gl-runtime-core/src/m/datasource/ModelApi.ts` 的"数据归档"段（随 `modelApi` 导出）。
+- 形态：**一实体一策略，配置面板式**（非列表）——未开启时空态 + **「开启归档」**按钮
+  （实体名→生成默认停用策略，幂等）；已开启时直接展示策略表单（类型/保留天数/WHERE 条件/
+  目标库/目标表/执行参数，校验对齐后端门禁）+ 顶部**启停开关**（启用失败提示 70001 具体门禁原因）
+  + 保存/删除 + **运行记录**（弹窗分页：状态/行数/批次/耗时/错误详情 error_json，
+  支持手动"立即执行"与"中止当前运行"）。
+- 惯例说明：IDE 侧（gl-ide-arco）按既有惯例硬编码中文，不走 i18n；packages 以 workspace
+  源码直连，webapp vite 即时编译。归档数据在线查询与回迁的 UI 未在一期 tab 范围（API 已备）。
+
 ## 二期演进（预留）
 
 - MongoDB / Elasticsearch 归档通道（Channel SPI：bulkWrite / _bulk；策略模型 target_type 已预留）；

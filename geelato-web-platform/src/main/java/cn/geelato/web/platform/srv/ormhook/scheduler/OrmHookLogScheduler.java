@@ -1,11 +1,9 @@
 package cn.geelato.web.platform.srv.ormhook.scheduler;
 
 import cn.geelato.core.orm.Dao;
-import cn.geelato.meta.OrmHookLog;
 import cn.geelato.web.platform.srv.ormhook.enums.HookLogStatusEnum;
 import cn.geelato.web.platform.srv.ormhook.service.OrmHookLogProcessor;
 import cn.geelato.web.platform.srv.ormhook.service.OrmHookProperties;
-import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -14,27 +12,26 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * ORM 钩子发件箱调度器（对齐 {@code NotificationOutboxScheduler} 模式）。
+ * ORM 钩子发件箱<b>兜底</b>调度器（低频，非投递路径）。
  * <p>
- * 周期扫描 {@code platform_orm_hook_log} 中 status=ready（且 next_retry_at 已到期或为空）的行，
- * 委托 {@link OrmHookLogProcessor} 执行（CAS 抢占、指数退避、死信）。
- * 承担两类职责：立即执行失败后的退避重试，以及分发线程崩溃/饱和遗留行的兜底扫描。
+ * 正常执行与失败重试均为事件驱动（afterCommit 立即执行 + 内存精确定时重试，
+ * 见 {@link OrmHookLogProcessor}），<b>本调度器不做高频轮询</b>，只承担两类恢复职责：
+ * <ol>
+ *   <li>启动立即 {@code sweep()} 一次：恢复重启前遗留（丢失的内存重试定时、崩溃卡死的 processing）</li>
+ *   <li>低频周期 {@code sweep()}（默认 5 分钟，{@code geelato.platform.ormhook.sweep-interval-ms}）：
+ *       恢复多实例部署下他实例故障遗留行；需要更快恢复速度可调小</li>
+ * </ol>
+ * 另保留已完成行（success/dead）的低频清理（默认 6 小时一次、保留 7 天）。
+ * CAS 抢占保证多实例安全（谁抢到谁执行）。
  * <p>
  * <b>调度方式</b>：自管理 {@code ScheduledExecutorService}（守护线程），
  * 不用 {@code @Scheduled}/{@code @EnableScheduling}——后者是全局开关，会误激活平台内
  * 原本休眠的定时任务（与通知 outbox 调度器同因）。
- * <p>
- * <b>多实例部署</b>：CAS 抢占保证多实例安全（谁抢到谁执行），与总开关共用
- * {@code geelato.platform.ormhook.enabled}（默认开）。
  *
  * @author geelato
  */
@@ -43,10 +40,7 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnProperty(prefix = "geelato.platform.ormhook", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class OrmHookLogScheduler {
 
-    /** processing 超时回收阈值（分钟）：claim 后超此时长未完成视为执行实例崩溃残留 */
-    private static final int STALE_PROCESSING_MINUTES = 10;
-
-    private static final String TABLE = "platform_orm_hook_log";
+    private static final String LOG_TABLE = "platform_orm_hook_log";
 
     private final Dao dao;
     private final OrmHookProperties properties;
@@ -65,14 +59,17 @@ public class OrmHookLogScheduler {
 
     @PostConstruct
     public void start() {
-        long intervalMs = properties.getIntervalMs();
+        long sweepIntervalMs = properties.getSweepIntervalMs();
         scheduler = Executors.newScheduledThreadPool(1, r -> {
             Thread t = new Thread(r, "orm-hook-scheduler");
             t.setDaemon(true);
             return t;
         });
-        // fixedDelay 语义：上一轮结束后等 intervalMs 再开始下一轮
-        scheduler.scheduleWithFixedDelay(this::safeProcess, intervalMs, intervalMs, TimeUnit.MILLISECONDS);
+        // 启动立即兜底一次：恢复重启前遗留（内存重试定时随进程丢失，行仍在库中 ready）
+        scheduler.execute(this::safeSweep);
+        // 低频周期兜底：恢复多实例他实例故障行；正常路径不依赖本扫描
+        scheduler.scheduleWithFixedDelay(this::safeSweep, sweepIntervalMs, sweepIntervalMs, TimeUnit.MILLISECONDS);
+        log.info("ORM Hook 兜底调度器已启动（启动即扫一次，之后间隔 {}ms；正常执行与重试为事件驱动，无高频轮询）", sweepIntervalMs);
         // 已完成行清理：低频，默认 6 小时一次
         if (properties.getRetentionDays() > 0) {
             long initialDelayMs = TimeUnit.MINUTES.toMillis(10);
@@ -81,7 +78,6 @@ public class OrmHookLogScheduler {
             log.info("ORM Hook 发件箱清理任务已启动，间隔 {}h，保留 {} 天",
                     properties.getCleanupIntervalHours(), properties.getRetentionDays());
         }
-        log.info("ORM Hook 发件箱调度器已启动，间隔 {}ms", intervalMs);
     }
 
     @PreDestroy
@@ -99,57 +95,18 @@ public class OrmHookLogScheduler {
         }
     }
 
-    private void safeProcess() {
+    private void safeSweep() {
         try {
-            process();
+            processor.sweep();
         } catch (Throwable t) {
             // 兜底：任何异常都不能让调度线程中断（scheduleWithFixedDelay 遇异常会停止后续调度）
-            log.error("ORM Hook 发件箱调度异常：{}", t.getMessage(), t);
+            log.error("ORM Hook 发件箱兜底扫描异常：{}", t.getMessage(), t);
         }
     }
 
-    public void process() {
-        reclaimStaleProcessing();
-        List<OrmHookLog> ready;
-        try {
-            ready = fetchReady();
-        } catch (Exception e) {
-            log.error("扫描 ORM Hook 发件箱失败：{}", e.getMessage(), e);
-            return;
-        }
-        if (ready.isEmpty()) {
-            return;
-        }
-        for (OrmHookLog row : ready) {
-            try {
-                processor.processOne(row);
-            } catch (Exception e) {
-                log.error("处理 ORM Hook 发件箱行异常 id={}, hookId={}: {}", row.getId(), row.getHookId(), e.getMessage(), e);
-            }
-        }
-    }
-
-    private void safeCleanup() {
-        try {
-            cleanupFinished();
-        } catch (Throwable t) {
-            log.error("ORM Hook 发件箱清理异常：{}", t.getMessage(), t);
-        }
-    }
-
-    /**
-     * 回收超时的 processing 行：执行实例在 claim 后崩溃会使该行永卡 processing
-     * （扫描只挑 ready，无人回收），阈值远大于单次动作时长，正常执行中行不会被误伤；
-     * 即使误回收导致重复执行，动作方需自带幂等（附加特性语义）。
-     */
-    private void reclaimStaleProcessing() {
-        int reclaimed = dao.getJdbcTemplate().update(
-                "UPDATE " + TABLE + " SET status = ?, update_at = ? "
-                        + "WHERE status = ? AND update_at < DATE_SUB(NOW(), INTERVAL " + STALE_PROCESSING_MINUTES + " MINUTE)",
-                HookLogStatusEnum.READY.value(), new Date(), HookLogStatusEnum.PROCESSING.value());
-        if (reclaimed > 0) {
-            log.warn("回收超时 processing 的 ORM Hook 发件箱行 {} 条（疑似执行实例崩溃，已重置为 ready 待重试）", reclaimed);
-        }
+    /** 手动触发一次兜底扫描（排障/运维用）。 */
+    public void sweepNow() {
+        processor.sweep();
     }
 
     /** 物理删除超过保留期的已完成（success/dead）行，避免表无限膨胀；0 表示不清理。 */
@@ -160,28 +117,18 @@ public class OrmHookLogScheduler {
         }
         // retentionDays 为 int，直接拼字面量无注入风险；DATE_SUB 计算走数据库时间
         int deleted = dao.getJdbcTemplate().update(
-                "DELETE FROM " + TABLE + " WHERE status IN (?, ?) AND update_at < DATE_SUB(NOW(), INTERVAL " + retentionDays + " DAY)",
+                "DELETE FROM " + LOG_TABLE + " WHERE status IN (?, ?) AND update_at < DATE_SUB(NOW(), INTERVAL " + retentionDays + " DAY)",
                 HookLogStatusEnum.SUCCESS.value(), HookLogStatusEnum.DEAD.value());
         if (deleted > 0) {
             log.info("清理已完成 ORM Hook 发件箱行 {} 条（保留 {} 天）", deleted, retentionDays);
         }
     }
 
-    /** 取一批就绪项：status=ready，按 next_retry_at 升序，限制 batchSize；列显式别名为驼峰，保证 fastjson 映射到实体字段。 */
-    private List<OrmHookLog> fetchReady() {
-        String sql = "SELECT id, hook_id AS hookId, event_id AS eventId, entity_name AS entityName, "
-                + "event_type AS eventType, op_type AS opType, action_type AS actionType, "
-                + "payload_json AS payloadJson, status, retry_count AS retryCount, "
-                + "next_retry_at AS nextRetryAt, error_msg AS errorMsg "
-                + "FROM " + TABLE + " WHERE del_status = 0 AND status = ? "
-                + "AND (next_retry_at IS NULL OR next_retry_at <= ?) "
-                + "ORDER BY next_retry_at ASC, create_at ASC LIMIT ?";
-        List<Map<String, Object>> rows = dao.getJdbcTemplate().queryForList(sql,
-                HookLogStatusEnum.READY.value(), new Date(), properties.getBatchSize());
-        List<OrmHookLog> list = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            list.add(JSON.parseObject(JSON.toJSONString(row), OrmHookLog.class));
+    private void safeCleanup() {
+        try {
+            cleanupFinished();
+        } catch (Throwable t) {
+            log.error("ORM Hook 发件箱清理异常：{}", t.getMessage(), t);
         }
-        return list;
     }
 }

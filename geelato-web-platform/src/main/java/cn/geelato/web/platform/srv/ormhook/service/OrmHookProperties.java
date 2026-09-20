@@ -19,8 +19,8 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "geelato.platform.ormhook")
 public class OrmHookProperties {
 
-    /** 发件箱调度扫描间隔（毫秒），默认 3s */
-    private long intervalMs = 3000L;
+    /** 兜底扫描间隔（毫秒），默认 5 分钟——仅用于恢复崩溃/多实例遗留行，正常执行与重试为事件驱动 */
+    private long sweepIntervalMs = 300000L;
 
     /** 单次扫描处理的发件箱条数上限 */
     private int batchSize = 50;

@@ -18,7 +18,7 @@ CREATE TABLE `platform_notification`  (
   `biz_id` varchar(64) NULL DEFAULT NULL COMMENT '业务主键',
   `action_url` varchar(512) NULL DEFAULT NULL COMMENT '点击跳转地址，前端 router.push 或 window.open',
   `channels` varchar(256) NULL DEFAULT NULL COMMENT '实际投递渠道快照 JSON，如 ["inapp","email"]',
-  `priority` tinyint NULL DEFAULT 0 COMMENT '优先级',
+  `priority` tinyint NULL DEFAULT 0 COMMENT '重要级别：0普通 1提醒 2重要 3紧急',
   `tenant_code` varchar(32) NULL DEFAULT NULL COMMENT '租户编码',
   `del_status` int NOT NULL DEFAULT 0 COMMENT '逻辑删除状态，1：已删除、0：未删除',
   `update_at` datetime NOT NULL COMMENT '更新时间',

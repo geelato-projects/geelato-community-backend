@@ -138,7 +138,7 @@ public class OrmHookRegistry {
             return "解析实体 " + entityName + " 元数据失败：" + e.getMessage();
         }
         if (!actionManager.supports(rule.getActionType())) {
-            return "动作类型 " + rule.getActionType() + " 无可用执行器（当前支持：script | http）";
+            return "动作类型 " + rule.getActionType() + " 无可用执行器（当前支持：http | script）";
         }
         if (OrmHookActionExecutor.TYPE_SCRIPT.equals(rule.getActionType())
                 && (rule.getScriptContent() == null || rule.getScriptContent().isBlank())) {

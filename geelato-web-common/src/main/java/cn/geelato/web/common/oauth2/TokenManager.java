@@ -1,14 +1,16 @@
 package cn.geelato.web.common.oauth2;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
+import cn.geelato.utils.LocalBoundedCache;
 
 /**
  * Token管理器，用于存储和管理access_token与refresh_token的映射关系
  */
 public class TokenManager {
-    
-    private static final Map<String, String> tokenMap = new ConcurrentHashMap<>();
+
+    /**
+     * 映射须与 token 同寿，不设 TTL，仅以容量护栏消除无限增长
+     */
+    private static final LocalBoundedCache<String, String> tokenMap = new LocalBoundedCache<>("oauth-token", 0L, 100_000);
     
     /**
      * 存储token映射关系

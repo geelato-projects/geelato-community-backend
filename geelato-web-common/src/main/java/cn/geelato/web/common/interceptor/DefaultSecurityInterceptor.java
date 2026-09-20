@@ -4,6 +4,7 @@ import cn.geelato.core.GlobalContext;
 import cn.geelato.core.env.EnvManager;
 import cn.geelato.security.*;
 
+import cn.geelato.utils.LocalBoundedCache;
 import cn.geelato.utils.StringUtils;
 import cn.geelato.logging.LogContext;
 import cn.geelato.web.common.online.OnlineUserTracker;
@@ -41,7 +42,6 @@ import org.apache.shiro.authc.AuthenticationToken;
 
 import java.util.Calendar;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class DefaultSecurityInterceptor implements HandlerInterceptor {
@@ -67,45 +67,13 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     @Setter
     private SystemTokenProperties systemTokenProperties;
 
-    public static final ConcurrentHashMap<String, cn.geelato.meta.User> tokenUserCache = new ConcurrentHashMap<>();
+    public static final LocalBoundedCache<String, cn.geelato.meta.User> tokenUserCache =
+            new LocalBoundedCache<>("token-user", CACHE_TTL_MILLIS, 100_000);
 
-    private static final ConcurrentHashMap<String, UserContextCacheEntry> tokenContextCache = new ConcurrentHashMap<>();
+    private static final LocalBoundedCache<String, UserContextCacheEntry> tokenContextCache =
+            new LocalBoundedCache<>("token-context", CACHE_TTL_MILLIS, 100_000);
 
-    static {
-        Thread cleanupThread = new Thread(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    Thread.sleep(5 * 60 * 1000);
-                    long now = System.currentTimeMillis();
-                    tokenContextCache.entrySet().removeIf(e -> e.getValue().isExpired(now));
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        }, "SecurityInterceptor-CacheCleanup");
-        cleanupThread.setDaemon(true);
-        cleanupThread.start();
-    }
-
-    private static class UserContextCacheEntry {
-        final User user;
-        final Tenant tenant;
-        final String password;
-        final AuthenticationToken authToken;
-        final long expireAt;
-
-        UserContextCacheEntry(User user, Tenant tenant, String password, AuthenticationToken authToken) {
-            this.user = user;
-            this.tenant = tenant;
-            this.password = password;
-            this.authToken = authToken;
-            this.expireAt = System.currentTimeMillis() + CACHE_TTL_MILLIS;
-        }
-
-        boolean isExpired(long now) {
-            return now > expireAt;
-        }
+    private record UserContextCacheEntry(User user, Tenant tenant, String password, AuthenticationToken authToken) {
     }
 
     public DefaultSecurityInterceptor(OAuthConfigurationProperties config, OrgProvider orgProvider) {
@@ -294,10 +262,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
 
     private boolean tryRestoreFromCache(String rawToken, HttpServletRequest request, HttpServletResponse response) {
         UserContextCacheEntry entry = tokenContextCache.get(rawToken);
-        if (entry == null || entry.isExpired(System.currentTimeMillis())) {
-            if (entry != null) {
-                tokenContextCache.remove(rawToken, entry);
-            }
+        if (entry == null) {
             return false;
         }
         SecurityContext.setCurrentUser(entry.user);
@@ -309,7 +274,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         } catch (AuthenticationException e) {
             // 缓存的凭证已失效（如用户修改密码后，基于旧密码生成的令牌无法通过校验）。
             // 清理失效缓存并按未授权处理，交由上层统一抛出 401 异常，避免向外泄漏 Shiro 原始异常。
-            tokenContextCache.remove(rawToken, entry);
+            tokenContextCache.remove(rawToken);
             log.warn("cached credential invalidated, maybe password changed, url:{}", buildRequestUrl(request));
             return false;
         }
@@ -480,7 +445,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         token = token.replace(__OAuthTokenTag__, "");
 
         UserContextCacheEntry cachedEntry = tokenContextCache.get(rawToken);
-        if (cachedEntry != null && !cachedEntry.isExpired(System.currentTimeMillis())) {
+        if (cachedEntry != null) {
             SecurityContext.setCurrentUser(cachedEntry.user);
             SecurityContext.setCurrentTenant(cachedEntry.tenant);
             SecurityContext.setCurrentPassword(cachedEntry.password);
@@ -488,9 +453,6 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             subject.login(cachedEntry.authToken);
             applyTrafficTagAfterAuthenticated(cachedEntry.user, request, response);
             return true;
-        }
-        if (cachedEntry != null) {
-            tokenContextCache.remove(rawToken, cachedEntry);
         }
 
         cn.geelato.meta.User user = tokenUserCache.get(token);

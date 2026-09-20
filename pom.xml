@@ -19,11 +19,15 @@
         <module>geelato-core</module>
         <module>geelato-meta</module>
         <module>geelato-orm</module>
+        <module>geelato-search-api</module>
+        <module>geelato-search-lucene</module>
         <module>geelato-web-common</module>
         <module>geelato-web-oss</module>
         <module>geelato-web-runtime</module>
         <module>geelato-web-designer</module>
         <module>geelato-web-platform</module>
+<!--        <module>geelato-archive-policy</module>-->
+<!--        <module>geelato-archive-engine</module>-->
         <module>geelato-app-scaffold-starter</module>
 <!--        <module>geelato-mail</module>-->
         <module>geelato-web-quickstart</module>

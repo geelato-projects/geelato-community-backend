@@ -45,7 +45,6 @@ public class JdbcTemplateQueryExecutor implements QueryExecutor {
     @Override
     public List<Map<String, Object>> executeQuery(MetaQuery query) {
         BoundSql boundSql = resolveQueryBoundSql(query);
-        System.out.println("执行查询SQL: " + boundSql);
 
         return query(boundSql, mapRowMapper);
     }
@@ -61,7 +60,6 @@ public class JdbcTemplateQueryExecutor implements QueryExecutor {
         BoundPageSql boundPageSql = sqlManager.generatePageQuerySql(QueryCommandAdapter.forList(query));
         BoundSql boundSql = boundPageSql.getBoundSql();
         String countSql = boundPageSql.getCountSql();
-        System.out.println("执行统计SQL: " + countSql);
 
         Long count = boundSql.getTypes() != null && boundSql.getTypes().length > 0
                 ? jdbcTemplate.queryForObject(countSql, boundSql.getParams(), boundSql.getTypes(), Long.class)
@@ -84,8 +82,6 @@ public class JdbcTemplateQueryExecutor implements QueryExecutor {
     
     @Override
     public List<Map<String, Object>> executeSql(String sql) {
-        System.out.println("执行原生SQL: " + sql);
-        
         return jdbcTemplate.query(sql, mapRowMapper);
     }
     

@@ -2,7 +2,6 @@ package cn.geelato.web.platform.srv.ormhook.listener;
 
 import cn.geelato.core.orm.event.DeleteEventContext;
 import cn.geelato.core.orm.event.TransactionalAfterDeleteEventListener;
-import cn.geelato.web.platform.srv.ormhook.enums.OrmHookEventEnum;
 import cn.geelato.web.platform.srv.ormhook.service.HookDispatchService;
 import cn.geelato.web.platform.srv.ormhook.service.OrmHookRegistry;
 import cn.geelato.web.platform.srv.ormhook.spi.OrmHookDepthHolder;
@@ -11,8 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * ORM 钩子——删除事件监听器（与 {@link OrmHookSaveListener} 对称）。
  * <p>
- * 仅物理删除走本监听器（物理删除才产生 DeleteCommand/DeleteEventContext），命中 delete 规则；
- * <b>逻辑删除以 Update 形式走保存链路</b>（update 事件），payload 的 values 含 del_status=1。
+ * 仅物理删除走本监听器（物理删除才产生 DeleteCommand/DeleteEventContext），
+ * 载荷 eventType=delete；<b>逻辑删除以 Update 形式走保存链路</b>（eventType=update，
+ * values 含 del_status=1）。无实体/事件维度匹配——任何实体的删除事件都触发。
  * 契约同保存监听器：提交后异步、纯附加、失败不上抛、深度守卫防递归。
  * 非Spring Bean，由 {@code OrmHookRegistrar} 显式注册/注销。
  *
@@ -36,7 +36,7 @@ public class OrmHookDeleteListener implements TransactionalAfterDeleteEventListe
 
     @Override
     public boolean enabled(DeleteEventContext context) {
-        return registry.hasRules();
+        return registry.hasHooks();
     }
 
     @Override
@@ -47,12 +47,12 @@ public class OrmHookDeleteListener implements TransactionalAfterDeleteEventListe
         if (context.getCommand() == null || context.getCommand().getEntityName() == null) {
             return false;
         }
-        return registry.hasRuleFor(context.getCommand().getEntityName(), OrmHookEventEnum.DELETE);
+        return !OrmHookRegistry.FORBIDDEN_TARGET_ENTITIES.contains(context.getCommand().getEntityName());
     }
 
     @Override
     public void beforeDelete(DeleteEventContext context) {
-        // v1 无 before 同步钩子
+        // 无同步钩子
     }
 
     @Override

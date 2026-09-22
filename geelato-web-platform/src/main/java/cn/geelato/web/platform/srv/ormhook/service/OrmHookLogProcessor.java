@@ -143,9 +143,9 @@ public class OrmHookLogProcessor {
             markDead(row, String.format("钩子配置不存在或已禁用/删除（hookId=%s），执行时按当前配置判定", row.getHookId()));
             return;
         }
-        OrmHookActionExecutor executor = actionManager.getExecutor(rule.getActionType());
+        OrmHookActionExecutor executor = actionManager.getExecutor(OrmHookActionExecutor.TYPE_HTTP);
         if (executor == null) {
-            markDead(row, "无可用动作执行器：" + rule.getActionType());
+            markDead(row, "无可用动作执行器：" + OrmHookActionExecutor.TYPE_HTTP);
             return;
         }
         OrmHookActionResult result;
@@ -170,23 +170,13 @@ public class OrmHookLogProcessor {
         }
         try {
             return dao.getJdbcTemplate().queryForObject(
-                    "SELECT id, title, entity_name AS entityName, event_type AS eventType, "
-                            + "action_type AS actionType, script_content AS scriptContent, "
-                            + "http_method AS httpMethod, http_url AS httpUrl, "
-                            + "http_headers AS httpHeaders, http_body AS httpBody, enable_status AS enableStatus "
+                    "SELECT id, title, http_url AS httpUrl, enable_status AS enableStatus "
                             + "FROM " + HOOK_TABLE + " WHERE id = ? AND del_status = 0 AND enable_status = 1",
                     (rs, rowNum) -> {
                         OrmHook hook = new OrmHook();
                         hook.setId(rs.getString("id"));
                         hook.setTitle(rs.getString("title"));
-                        hook.setEntityName(rs.getString("entityName"));
-                        hook.setEventType(rs.getString("eventType"));
-                        hook.setActionType(rs.getString("actionType"));
-                        hook.setScriptContent(rs.getString("scriptContent"));
-                        hook.setHttpMethod(rs.getString("httpMethod"));
                         hook.setHttpUrl(rs.getString("httpUrl"));
-                        hook.setHttpHeaders(rs.getString("httpHeaders"));
-                        hook.setHttpBody(rs.getString("httpBody"));
                         hook.setEnableStatus(rs.getInt("enableStatus"));
                         return hook;
                     }, hookId);

@@ -196,7 +196,7 @@ public class BaseService {
         }
 
         Map<String, Object> map = dao.insert(model);
-        return (T) JSON.parseObject(JSON.toJSONString(map), model.getClass());
+        return (T) JSON.parseObject(JSON.toJSONString(map, DateUtils.DATETIME), model.getClass());
     }
 
     /**
@@ -216,7 +216,7 @@ public class BaseService {
         }
 
         Map<String, Object> map = dao.update(model);
-        return (T) JSON.parseObject(JSON.toJSONString(map), model.getClass());
+        return (T) JSON.parseObject(JSON.toJSONString(map, DateUtils.DATETIME), model.getClass());
     }
 
     /**

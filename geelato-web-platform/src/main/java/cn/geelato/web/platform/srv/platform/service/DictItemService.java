@@ -4,6 +4,7 @@ import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.EnableStatusEnum;
 import cn.geelato.lang.constants.ApiErrorMsg;
 import cn.geelato.meta.DictItem;
+import cn.geelato.utils.DateUtils;
 import com.alibaba.fastjson2.JSON;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
@@ -96,7 +97,7 @@ public class DictItemService extends BaseSortableService {
                 }
             }
         }
-        return JSON.parseObject(JSON.toJSONString(map), DictItem.class);
+        return JSON.parseObject(JSON.toJSONString(map, DateUtils.DATETIME), DictItem.class);
     }
 
     /**

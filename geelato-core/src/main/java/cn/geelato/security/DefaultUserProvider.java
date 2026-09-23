@@ -2,6 +2,8 @@ package cn.geelato.security;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
@@ -19,6 +21,11 @@ public class DefaultUserProvider implements UserProvider {
     @Override
     public User getUser(String userId) {
         return snapshotRef.get().getUser(userId);
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return new ArrayList<>(snapshotRef.get().getUserById().values());
     }
 
     @Override

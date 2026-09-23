@@ -12,6 +12,15 @@ public interface UserProvider {
 
     User getUser(String userId);
 
+    /**
+     * 全量用户（含 userRoles/userOrgs/userOrgRoles 挂靠关系，
+     * 供 {@link SecurityProvider} 桥接实现求解部门/角色下的人员等反向查询）。
+     * 快照式实现应覆写；直连式实现可不支持（返回空列表，桥接的人员求解方法随之返回空）。
+     */
+    default List<User> getAllUsers() {
+        return Collections.emptyList();
+    }
+
     default boolean containsUser(String userId) {
         return getUser(userId) != null;
     }

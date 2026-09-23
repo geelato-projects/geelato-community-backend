@@ -1,6 +1,8 @@
 package cn.geelato.security;
 
 import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
@@ -17,6 +19,11 @@ public class DefaultOrgProvider implements OrgProvider {
     @Override
     public Org getOrg(String orgId) {
         return snapshotRef.get().getOrg(orgId);
+    }
+
+    @Override
+    public List<Org> getAllOrgs() {
+        return new ArrayList<>(snapshotRef.get().getOrgById().values());
     }
 
     @Override

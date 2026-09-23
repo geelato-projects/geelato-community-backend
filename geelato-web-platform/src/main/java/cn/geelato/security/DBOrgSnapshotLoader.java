@@ -13,10 +13,10 @@ import java.util.Map;
  * {@link OrgSnapshotLoader} SPI 接口（接口在 geelato-security 模块）。保留原 package
  * （cn.geelato.security）以维持 import 一致性。</p>
  */
-public class JdbcOrgSnapshotLoader implements OrgSnapshotLoader {
+public class DBOrgSnapshotLoader implements OrgSnapshotLoader {
     private final JdbcTemplate platformJdbcTemplate;
 
-    public JdbcOrgSnapshotLoader(JdbcTemplate platformJdbcTemplate) {
+    public DBOrgSnapshotLoader(JdbcTemplate platformJdbcTemplate) {
         this.platformJdbcTemplate = platformJdbcTemplate;
     }
 

@@ -16,10 +16,10 @@ import java.util.Map;
  * （cn.geelato.security）以维持 import 一致性——该 package 本身已是 geelato-security + geelato-core 的 split package，
  * 本次仅将 core 侧的 JDBC 实现迁到 platform 侧。</p>
  */
-public class JdbcUserSnapshotLoader implements UserSnapshotLoader {
+public class DBUserSnapshotLoader implements UserSnapshotLoader {
     private final JdbcTemplate platformJdbcTemplate;
 
-    public JdbcUserSnapshotLoader(JdbcTemplate platformJdbcTemplate) {
+    public DBUserSnapshotLoader(JdbcTemplate platformJdbcTemplate) {
         this.platformJdbcTemplate = platformJdbcTemplate;
     }
 

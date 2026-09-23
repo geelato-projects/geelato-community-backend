@@ -1,13 +1,19 @@
 package cn.geelato.web.platform.boot;
 
+import cn.geelato.security.BridgeSecurityProvider;
 import cn.geelato.security.DefaultOrgProvider;
+import cn.geelato.security.DefaultRoleProvider;
 import cn.geelato.security.DefaultUserOrgInfoEnricher;
 import cn.geelato.security.DefaultUserProvider;
-import cn.geelato.security.JdbcOrgSnapshotLoader;
-import cn.geelato.security.JdbcUserSnapshotLoader;
+import cn.geelato.security.DBOrgSnapshotLoader;
+import cn.geelato.security.DBRoleSnapshotLoader;
+import cn.geelato.security.DBUserSnapshotLoader;
 import cn.geelato.security.OrgProvider;
 import cn.geelato.security.OrgSnapshotLoader;
+import cn.geelato.security.RoleProvider;
+import cn.geelato.security.RoleSnapshotLoader;
 import cn.geelato.security.SecurityDataRefreshCoordinator;
+import cn.geelato.security.SecurityProvider;
 import cn.geelato.security.UserOrgInfoEnricher;
 import cn.geelato.security.UserProvider;
 import cn.geelato.security.UserSnapshotLoader;
@@ -23,7 +29,7 @@ public class SecurityProviderConfiguration {
     @Bean
     @ConditionalOnMissingBean(OrgSnapshotLoader.class)
     public OrgSnapshotLoader orgSnapshotLoader(@Qualifier("primaryJdbcTemplate") JdbcTemplate jdbcTemplate) {
-        return new JdbcOrgSnapshotLoader(jdbcTemplate);
+        return new DBOrgSnapshotLoader(jdbcTemplate);
     }
 
     @Bean
@@ -41,7 +47,7 @@ public class SecurityProviderConfiguration {
     @Bean
     @ConditionalOnMissingBean(UserSnapshotLoader.class)
     public UserSnapshotLoader userSnapshotLoader(@Qualifier("primaryJdbcTemplate") JdbcTemplate jdbcTemplate) {
-        return new JdbcUserSnapshotLoader(jdbcTemplate);
+        return new DBUserSnapshotLoader(jdbcTemplate);
     }
 
     @Bean
@@ -52,9 +58,35 @@ public class SecurityProviderConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean(RoleSnapshotLoader.class)
+    public RoleSnapshotLoader roleSnapshotLoader(@Qualifier("primaryJdbcTemplate") JdbcTemplate jdbcTemplate) {
+        return new DBRoleSnapshotLoader(jdbcTemplate);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(RoleProvider.class)
+    public RoleProvider roleProvider(RoleSnapshotLoader roleSnapshotLoader) {
+        return new DefaultRoleProvider(roleSnapshotLoader);
+    }
+
+    /**
+     * 安全提供者（SecurityProvider 契约）的本地库默认实现：桥接上述 Org/User/Role 三 Provider。
+     * 平台应用不依赖 geelato-auth-client，无远程实现竞争；接入认证中心的子系统
+     * 由 auth-client 自动装配提供（AuthCenterSecurityProvider），与本 bean 互不干扰。
+     */
+    @Bean
+    @ConditionalOnMissingBean(SecurityProvider.class)
+    public SecurityProvider bridgeSecurityProvider(OrgProvider orgProvider,
+                                                   UserProvider userProvider,
+                                                   RoleProvider roleProvider) {
+        return new BridgeSecurityProvider(orgProvider, userProvider, roleProvider);
+    }
+
+    @Bean
     @ConditionalOnMissingBean(SecurityDataRefreshCoordinator.class)
     public SecurityDataRefreshCoordinator securityDataRefreshCoordinator(OrgProvider orgProvider,
-                                                                         UserProvider userProvider) {
-        return new SecurityDataRefreshCoordinator(orgProvider, userProvider);
+                                                                         UserProvider userProvider,
+                                                                         RoleProvider roleProvider) {
+        return new SecurityDataRefreshCoordinator(orgProvider, userProvider, roleProvider);
     }
 }

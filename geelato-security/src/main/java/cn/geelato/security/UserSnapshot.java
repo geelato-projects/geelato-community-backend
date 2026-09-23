@@ -34,6 +34,10 @@ public final class UserSnapshot {
         return userById.get(userId);
     }
 
+    Map<String, User> getUserById() {
+        return userById;
+    }
+
     User getUserByExtendKey(String type, String extendKey) {
         Map<String, User> pool = userByExtendType.get(type);
         if (pool == null) {

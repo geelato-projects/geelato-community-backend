@@ -100,8 +100,8 @@ The current default model is:
 
 The default loaders are:
 
-- `JdbcOrgSnapshotLoader`
-- `JdbcUserSnapshotLoader`
+- `DBOrgSnapshotLoader`
+- `DBUserSnapshotLoader`
 
 The default providers are:
 

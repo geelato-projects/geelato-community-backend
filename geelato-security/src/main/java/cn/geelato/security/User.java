@@ -122,8 +122,9 @@ public class User extends UserCore{
         if (this.orgId != null && !this.orgId.isEmpty()) {
             this.orgName = orgProvider.getOrgName(this.orgId);
             this.companyId = orgProvider.getCompanyId(this.orgId);
+            this.extendId = orgProvider.getCompanyExtendId(this.orgId);
             if (this.companyId != null && !this.companyId.isEmpty()) {
-                this.companyName = orgProvider.getOrgName(this.companyId);
+                this.companyName = orgProvider.getCompanyName(this.orgId);
                 this.buId = this.companyId;
                 this.buName = this.companyName;
             }

@@ -152,6 +152,8 @@ public class UserIdentityQueryService {
                         o.tenant_code,
                         o.del_status,
                         o.seq_no,
+                        o.id AS root_id,
+                        o.extend_id AS root_extend_id,
                         CASE WHEN o.type = 'department' THEN o.id ELSE NULL END AS dept_id,
                         CASE WHEN o.type = 'company' THEN o.id ELSE NULL END AS company_id,
                         CASE WHEN o.type = 'company' THEN o.name ELSE NULL END AS company_name,
@@ -173,6 +175,8 @@ public class UserIdentityQueryService {
                         o.tenant_code,
                         o.del_status,
                         o.seq_no,
+                        ot.root_id,
+                        ot.root_extend_id,
                         CASE WHEN o.type = 'department' THEN o.id ELSE ot.dept_id END AS dept_id,
                         CASE WHEN o.type = 'company' THEN o.id ELSE ot.company_id END AS company_id,
                         CASE WHEN o.type = 'company' THEN o.name ELSE ot.company_name END AS company_name,
@@ -185,8 +189,8 @@ public class UserIdentityQueryService {
                     id,
                     full_name,
                     dept_id,
-                    company_id,
-                    company_extend_id AS extend_id
+                    COALESCE(company_id, root_id) AS company_id,
+                    COALESCE(company_extend_id, root_extend_id) AS extend_id
                 FROM platform_org_tree
                 WHERE status = 1
                   AND del_status = 0

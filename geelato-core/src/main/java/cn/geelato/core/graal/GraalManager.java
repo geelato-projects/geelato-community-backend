@@ -27,7 +27,7 @@ public class GraalManager extends AbstractManager {
     /**
      * Graal 上下文懒初始化支持：允许启动期把扫描预热放到后台线程，使应用更早对外提供服务；
      * 任何运行期访问（getGraalServiceMap 等）通过 {@link #ensureInitialized()} 兜底等待完成，
-     * 绝不会读到半初始化数据。最坏情况下首访问者承担等同旧版的初始化耗时，仅时机转移。
+     * 绝不会读到半初始化数据。最坏情况下首访问者需等待初始化完成。
      */
     private volatile boolean initialized = false;
     private volatile Throwable initError = null;

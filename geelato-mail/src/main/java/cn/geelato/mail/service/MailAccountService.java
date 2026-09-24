@@ -190,9 +190,9 @@ public class MailAccountService {
      *
      * <p>删除默认账户且仍有剩余账户时，最早创建的剩余账户自动接任默认。
      *
-     * <p><b>del_status 语义（B4 修复）</b>：uk_user_email(user_id, email, del_status)
-     * 唯一索引下，若删除恒写常量 1，同 (user_id, email) 第二次删除会与首行幽灵记录
-     * 撞 UK（1062→500）。修复后 del_status 由行 id 派生（唯一删除标记），取值
+     * <p><b>del_status 语义</b>：uk_user_email(user_id, email, del_status)
+     * 唯一索引下，删除标记不能恒写常量 1——同 (user_id, email) 第二次删除会与首行幽灵记录
+     * 撞 UK（1062→500）。因此 del_status 由行 id 派生（唯一删除标记），取值
      * 「0=未删，&gt;0=删除标识」。查询面全部 {@code Filter.eq("delStatus", 0)} 语义
      * 不受影响。零迁移：列保持 INT，id 派生值经 {@code & 0x7FFFFFFF} 落入正整数域。
      *

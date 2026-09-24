@@ -37,14 +37,25 @@ final class OrgRelationResolver {
     }
 
     String resolveCompanyId(String orgId) {
+        Org company = resolveCompanyOrg(orgId);
+        return company == null ? "" : company.getOrgId();
+    }
+
+    String resolveCompanyExtendId(String orgId) {
+        Org company = resolveCompanyOrg(orgId);
+        return company == null ? null : company.getExtendId();
+    }
+
+    /** 沿父链取第一个 type=company 的祖先，无则回退最顶层祖先；组织不存在返回 null。 */
+    Org resolveCompanyOrg(String orgId) {
         Org org = orgById.get(orgId);
         if (org == null) {
-            return "";
+            return null;
         }
         if (isType(org, "company")) {
-            return org.getOrgId();
+            return org;
         }
-        String currentId = org.getOrgId();
+        Org current = org;
         String pid = org.getPid();
         Set<String> visited = new HashSet<>();
         while (pid != null && !pid.isEmpty() && visited.add(pid)) {
@@ -53,12 +64,12 @@ final class OrgRelationResolver {
                 break;
             }
             if (isType(parent, "company")) {
-                return parent.getOrgId();
+                return parent;
             }
-            currentId = parent.getOrgId();
+            current = parent;
             pid = parent.getPid();
         }
-        return currentId == null ? "" : currentId;
+        return current;
     }
 
     private boolean isType(Org org, String expectedType) {

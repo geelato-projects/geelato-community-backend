@@ -191,7 +191,7 @@ public class PluginManagerController {
 
     /**
      * @deprecated 由 {@link #platformSwitch(Map)} 与 {@link #tenantSwitch(Map)} 取代。
-     * 保留以兼容旧前端，改为 POST，内部转发。
+     * 兼容旧前端的入口，内部按平台级转发。
      */
     @Deprecated
     @RequestMapping(value = "/switchStatus", method = {RequestMethod.GET, RequestMethod.POST})
@@ -200,7 +200,7 @@ public class PluginManagerController {
         Map<String, Object> body = new HashMap<>();
         body.put("pluginId", pluginId);
         body.put("enable", enable);
-        // 默认按平台级处理（向后兼容旧行为）
+        // 默认按平台级处理
         return platformSwitch(body);
     }
 

@@ -133,7 +133,6 @@ public class EnvManager  extends AbstractManager {
         User cachedUserData = userCache.get(cacheKey);
         if (cachedUserData != null) {
             log.debug("从缓存中获取用户信息: {}", loginName);
-            // 权限信息每次都需要从数据库重新加载
             loadUserPermission(cachedUserData);
             return cachedUserData;
         }
@@ -154,12 +153,7 @@ public class EnvManager  extends AbstractManager {
             loadUserOrg(user);
             loadTenant(user);
             loadUserRole(user);
-
-            // 将用户基本信息放入缓存（不包含权限信息）
             userCache.put(cacheKey, user);
-            log.debug("用户信息已缓存: {}", loginName);
-
-            // 权限信息每次都需要从数据库重新加载
             loadUserPermission(user);
         }
         return user;

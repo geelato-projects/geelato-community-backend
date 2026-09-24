@@ -13,26 +13,25 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * MailMessageService.toDate 语义等价性单元测试（ST-14 LocalDateTime 统一修复）。
+ * MailMessageService.toDate 语义单测。
  *
- * 修复前 10 处 `row.get(x) instanceof Date d ? d : null` 对 MetaQuery.list() 返回的
- * LocalDateTime 静默丢值（且读改写链路会把 null 写回数据库）。修复后统一走 toDate：
- * - null → null（与旧模式等价）
- * - Date → 原样返回（与旧模式等价）
- * - LocalDateTime → 按系统默认时区转 Date（修复点：旧模式静默丢 null）
- * - 未知类型 → fail-fast IllegalStateException（旧模式静默置 null，此处有意收紧，
- *   禁止静默置 null 掩盖类型漂移；毫秒精度：LocalDateTime 纳秒超出毫秒部分按 Instant→Date 语义截断）
+ * toDate 统一转换（MetaQuery.list() 可能返回 LocalDateTime，直接 instanceof Date 会静默丢值，
+ * 读改写链路会把 null 写回数据库）：
+ * - null → null
+ * - Date → 原样返回
+ * - LocalDateTime → 按系统默认时区转 Date（纳秒超出毫秒部分按 Instant→Date 语义截断）
+ * - 未知类型 → fail-fast IllegalStateException（禁止静默置 null 掩盖类型漂移）
  */
 class MailMessageServiceToDateTest {
 
     @Test
-    @DisplayName("toDate：null → null（与旧 instanceof 模式等价）")
+    @DisplayName("toDate：null → null")
     void nullStaysNull() {
         assertNull(MailMessageService.toDate(null));
     }
 
     @Test
-    @DisplayName("toDate：Date 原样返回同实例（与旧 instanceof 模式等价）")
+    @DisplayName("toDate：Date 原样返回同实例")
     void datePassthrough() {
         Date d = new Date(1786539220000L);
         assertSame(d, MailMessageService.toDate(d));
@@ -57,7 +56,7 @@ class MailMessageServiceToDateTest {
     }
 
     @Test
-    @DisplayName("toDate：未知类型 fail-fast（旧模式静默置 null，有意收紧防类型漂移）")
+    @DisplayName("toDate：未知类型 fail-fast（禁止静默置 null 掩盖类型漂移）")
     void unknownTypeFailsFast() {
         assertThrows(IllegalStateException.class, () -> MailMessageService.toDate("2026-08-12"));
         assertThrows(IllegalStateException.class, () -> MailMessageService.toDate(1786539220000L));

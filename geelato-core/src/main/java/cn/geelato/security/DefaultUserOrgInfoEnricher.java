@@ -18,9 +18,10 @@ public class DefaultUserOrgInfoEnricher implements UserOrgInfoEnricher {
             user.setOrgName(orgProvider.getOrgName(resolvedOrgId));
             String companyId = orgProvider.getCompanyId(resolvedOrgId);
             user.setCompanyId(companyId);
-            user.setCompanyName(orgProvider.getOrgName(companyId));
+            user.setCompanyName(orgProvider.getCompanyName(resolvedOrgId));
+            user.setExtendId(orgProvider.getCompanyExtendId(resolvedOrgId));
             user.setBuId(companyId);
-            user.setBuName(orgProvider.getOrgName(companyId));
+            user.setBuName(user.getCompanyName());
             if (user.getDeptId() == null || user.getDeptId().isEmpty()) {
                 user.setDeptId(orgProvider.getDeptId(resolvedOrgId));
             }
@@ -43,6 +44,7 @@ public class DefaultUserOrgInfoEnricher implements UserOrgInfoEnricher {
             }
             userOrg.setDeptId(orgProvider.getDeptId(userOrg.getOrgId()));
             userOrg.setCompanyId(orgProvider.getCompanyId(userOrg.getOrgId()));
+            userOrg.setExtendId(orgProvider.getCompanyExtendId(userOrg.getOrgId()));
             if (userOrg.getFullName() == null || userOrg.getFullName().isEmpty()) {
                 userOrg.setFullName(userOrg.getName());
             }

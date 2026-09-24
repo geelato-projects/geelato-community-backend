@@ -7,10 +7,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 插件日志工具类。
- * <p>P2-A：改为走 SLF4J（logback），logger 名 {@code plugin.<pluginId>}，
- * 接入主程序统一日志收集与滚动策略。废弃自写 {@code plugins/logs/<id>.log} 文件。</p>
+ * <p>日志走 SLF4J（logback），logger 名 {@code plugin.<pluginId>}，
+ * 接入主程序统一日志收集与滚动策略；不落自写 {@code plugins/logs/<id>.log} 文件。</p>
  *
- * <p>静态 API 保持不变，避免改动既有调用点（{@code PluginManagerController}）。</p>
+ * <p>静态 API 保持不变，兼容既有调用点（{@code PluginManagerController}）。</p>
  *
  * @author geelato
  */

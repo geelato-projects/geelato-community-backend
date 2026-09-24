@@ -68,25 +68,28 @@ public class OrgService extends BaseSortableService {
     }
 
     /**
-     * 获取组织所属公司
-     * <p>
-     * 根据提供的组织ID，递归查找并返回该组织所属的公司。
+     * 获取组织所属公司：沿父链取第一个 type=company 的组织，无则回退最顶层祖先。
      *
      * @param id 组织的ID
-     * @return 返回组织所属的公司对象，如果未找到则返回null
+     * @return 返回组织所属的公司对象（或最顶层祖先），如果未找到则返回null
      */
     public Org getCompany(String id) {
-        if (Strings.isNotBlank(id)) {
-            Org model = this.getModel(Org.class, id);
-            if (model != null) {
-                if (OrgTypeEnum.ROOT.getValue().equals(model.getType())) {
-                    return model;
-                } else if (OrgTypeEnum.COMPANY.getValue().equals(model.getType())) {
-                    return model;
-                } else if (Strings.isNotBlank(model.getPid())) {
-                    return getCompany(model.getPid());
-                }
+        if (Strings.isBlank(id)) {
+            return null;
+        }
+        Org current = this.getModel(Org.class, id);
+        while (current != null) {
+            if (OrgTypeEnum.COMPANY.getValue().equals(current.getType())) {
+                return current;
             }
+            if (Strings.isBlank(current.getPid())) {
+                return current;
+            }
+            Org parent = this.getModel(Org.class, current.getPid());
+            if (parent == null) {
+                return current;
+            }
+            current = parent;
         }
         return null;
     }

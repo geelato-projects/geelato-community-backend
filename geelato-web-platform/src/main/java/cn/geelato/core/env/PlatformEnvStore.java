@@ -20,8 +20,7 @@ import java.util.List;
  * 仅保留 {@link EnvStore} SPI 接口。保留原 package（cn.geelato.core.env）以维持 import 一致性，
  * 由 {@code @ComponentScan(basePackages = {"cn.geelato"})} 发现。</p>
  *
- * <p>历史 SQL 注入修复：原 {@code refreshConfig} 使用 {@code String.format} 拼接 configKey，
- * 现统一改为参数化查询。</p>
+ * <p>SQL 统一参数化绑定，外部输入（configKey 等）不拼接进语句。</p>
  */
 @Component
 public class PlatformEnvStore implements EnvStore {
@@ -76,6 +75,8 @@ public class PlatformEnvStore implements EnvStore {
                                 o.id,o.pid,o.code,o.name,
                                 o.name AS full_name,
                                 o.type,o.category,o.tenant_code,
+                                o.id AS root_id,
+                                o.extend_id AS root_extend_id,
                                 CASE WHEN o.type = 'department' THEN o.id ELSE NULL END AS dept_id,
                                 CASE WHEN o.type = 'company' THEN o.id ELSE NULL END AS company_id,
                                 CASE WHEN o.type = 'company' THEN o.extend_id ELSE NULL END AS company_extend_id
@@ -85,12 +86,14 @@ public class PlatformEnvStore implements EnvStore {
                                 o.id,o.pid,o.code,o.name,
                                 CONCAT(ot.full_name, '/', o.name) AS full_name,
                                 o.type,o.category,o.tenant_code,
+                                ot.root_id,
+                                ot.root_extend_id,
                                 CASE WHEN o.type = 'department' THEN o.id ELSE ot.dept_id END AS dept_id,
                                 CASE WHEN o.type = 'company' THEN o.id ELSE ot.company_id END AS company_id,
                                 COALESCE(CASE WHEN o.type = 'company' THEN o.extend_id END, ot.company_extend_id) AS company_extend_id
                             FROM platform_org o JOIN platform_org_tree ot ON o.pid = ot.id WHERE o.status = 1 AND o.del_status = 0
                         ) SELECT t2.id AS orgId, t2.code, t2.name,t2.full_name AS fullName, t2.pid,t2.tenant_code AS tenantCode,
-                        t2.dept_id AS deptId,t2.company_id AS companyId,t2.company_extend_id AS extendId,t1.default_org AS defaultOrg,t2.type,t2.category
+                        t2.dept_id AS deptId,COALESCE(t2.company_id, t2.root_id) AS companyId,COALESCE(t2.company_extend_id, t2.root_extend_id) AS extendId,t1.default_org AS defaultOrg,t2.type,t2.category
                         FROM platform_org_r_user t1 LEFT JOIN platform_org_tree t2 ON t1.org_id =t2.id WHERE t1.del_status = 0 AND t1.user_id= ?""";
 
     private static final String SQL_ROLE_DATA_PERMISSION = """

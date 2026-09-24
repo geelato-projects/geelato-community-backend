@@ -11,10 +11,6 @@ public interface OrgProvider {
 
     Org getOrg(String orgId);
 
-    /**
-     * 全量组织（供 {@link SecurityProvider} 桥接实现推导组织树/子部门等反向查询）。
-     * 快照式实现应覆写；直连式实现可不支持（返回空列表，桥接的组织树方法随之返回空）。
-     */
     default List<Org> getAllOrgs() {
         return Collections.emptyList();
     }
@@ -31,6 +27,22 @@ public interface OrgProvider {
     String getDeptId(String orgId);
 
     String getCompanyId(String orgId);
+
+    /** 组织所属公司的名称；链上无 company 时与 getCompanyId 一致，取最顶层祖先。 */
+    default String getCompanyName(String orgId) {
+        String companyId = getCompanyId(orgId);
+        return companyId == null || companyId.isEmpty() ? "" : getOrgName(companyId);
+    }
+
+    /** 组织所属公司的 extendId，与 getCompanyId 同源；无 company 时取最顶层祖先的。 */
+    default String getCompanyExtendId(String orgId) {
+        String companyId = getCompanyId(orgId);
+        if (companyId == null || companyId.isEmpty()) {
+            return null;
+        }
+        Org company = getOrg(companyId);
+        return company == null ? null : company.getExtendId();
+    }
 
     default String getBuId(String orgId) {
         return getCompanyId(orgId);

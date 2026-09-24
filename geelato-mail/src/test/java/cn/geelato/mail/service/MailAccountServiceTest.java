@@ -277,14 +277,14 @@ class MailAccountServiceTest {
         ArgumentCaptor<MailAccount> captor = ArgumentCaptor.forClass(MailAccount.class);
         verify(dynamicDao).save(captor.capture());
         MailAccount saved = captor.getValue();
-        // B4 修复后 delStatus 不再为常量 1，而是行 id 派生的正整数（acc-001 走 hashCode 兜底）
-        assertTrue(saved.getDelStatus() > 0, "账户须逻辑删除（delStatus>0；B4 后为行 id 派生值）");
+        // delStatus 为行 id 派生的正整数（acc-001 走 hashCode 兜底）
+        assertTrue(saved.getDelStatus() > 0, "账户须逻辑删除（delStatus>0，行 id 派生值）");
         assertEquals("acc-001".hashCode() & 0x7FFFFFFF, saved.getDelStatus(),
                 "非数字 id 应退化为 hashCode & 0x7FFFFFFF（确定性，可断言语义）");
         assertNotNull(saved.getDeleteAt());
         assertEquals(USER_ID, saved.getUpdater());
         // 首参必须为被删账户 id：@Transactional 下 MetaQuery 读不到未提交删除写入，
-        // 不显式排除会把已删账户自身选为继任者并全列回写覆盖删除（R1 冒烟实证）
+        // 不显式排除会把已删账户自身选为继任者并全列回写覆盖删除
         verify(service).promoteEarliestAsDefault(eq("acc-001"), eq(USER_ID), eq(USER_NAME), any());
     }
 

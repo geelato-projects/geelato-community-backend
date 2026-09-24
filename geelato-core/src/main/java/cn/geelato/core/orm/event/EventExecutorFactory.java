@@ -11,13 +11,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 事件线程池工厂。
  *
- * <p>用于替代原来的 {@code Executors.newFixedThreadPool(4)}（无界队列、无背压、有 OOM 风险）。
- * 改为：有界队列 + {@link ThreadPoolExecutor.CallerRunsPolicy}（背压，不丢任务，提交线程自行执行）+
- * 可配置线程数与队列容量 + 守护线程。
+ * <p>有界队列 + {@link ThreadPoolExecutor.CallerRunsPolicy}（背压，不丢任务，提交线程自行执行），
+ * 线程数与队列容量可配置，守护线程。
  *
  * <p>由 {@code geelato-orm} 的 {@code OrmEventAutoConfiguration} 据 properties 构造后，
  * 通过 {@code SaveEventManager.setExecutor} / {@code DeleteEventManager.setExecutor} 注入。
- * 未配置时，{@link #defaultExecutor(String)} 提供与原行为一致的兜底（4 线程 + 1000 队列）。
+ * 未配置时，{@link #defaultExecutor(String)} 提供兜底（4 线程 + 1000 队列）。
  */
 public final class EventExecutorFactory {
 

@@ -37,6 +37,18 @@ public class DefaultOrgProvider implements OrgProvider {
     }
 
     @Override
+    public String getCompanyName(String orgId) {
+        Org company = relationResolverRef.get().resolveCompanyOrg(orgId);
+        return company == null ? "" : company.getName();
+    }
+
+    @Override
+    public String getCompanyExtendId(String orgId) {
+        Org company = relationResolverRef.get().resolveCompanyOrg(orgId);
+        return company == null ? null : company.getExtendId();
+    }
+
+    @Override
     public void refresh() {
         OrgSnapshot snapshot = orgSnapshotLoader.load();
         snapshotRef.set(snapshot);

@@ -59,7 +59,7 @@ public class CurrentUserProfileService {
 
         if (StringUtils.isNotBlank(loginResult.getCompanyId())) {
             Org org = dao.queryForObject(Org.class, loginResult.getCompanyId());
-            if (StringUtils.isNotBlank(loginResult.getCompanyExtendId())) {
+            if (StringUtils.isBlank(loginResult.getCompanyExtendId())) {
                 loginResult.setCompanyExtendId(org == null ? null : org.getExtendId());
             }
             if (StringUtils.isBlank(loginResult.getCompanyName())) {

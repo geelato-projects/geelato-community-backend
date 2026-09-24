@@ -165,7 +165,6 @@ public class DictItemController extends BaseController {
         }
         Map<String, List<DictItem>> pidListMap = pidList.stream().collect(Collectors.groupingBy(DictItem::getPid));
         pidList.forEach(item -> item.setChildren(pidListMap.get(item.getId())));
-        // 返回结果也改为返回顶层节点的list
         return pidListMap.get(ROOT_PARENT_ID);
     }
 

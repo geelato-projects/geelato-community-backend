@@ -11,7 +11,7 @@ public class UnauthorizedException extends CoreException {
     public static final int ERROR_CODE = 20005;
 
     public UnauthorizedException() {
-        this("未授权访问，请重新登录");
+        this("未授权访问，请登录");
     }
 
     public UnauthorizedException(String message) {

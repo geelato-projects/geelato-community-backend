@@ -308,7 +308,7 @@ public class LuceneSearchEngine implements SearchEngine, AutoCloseable {
     /**
      * 窥视索引文档的实际存储值（调试端点用）：返回 字段名 → 值列表
      * （多值字段含多个值）；文档不存在返回 null。需要字段以 Store.YES 写入
-     * （2026-09-14 起编号/过滤字段均存储；此前构建的索引不含存储值，重建后可窥视）。
+     * （编号/过滤字段均存储；未含存储值的旧索引需重建后方可窥视）。
      */
     public Map<String, List<String>> peekDocument(String domainId, String docId) {
         DomainIndex index = domainIndexes.get(domainId);

@@ -61,7 +61,7 @@ class SystemTokenAuthenticationTest {
 
     @AfterEach
     void tearDown() {
-        // Shiro 2.x：清空线程上下文（等价旧版 unbindAll），避免跨用例污染
+        // Shiro 2.x：清空线程上下文，避免跨用例污染
         ThreadContext.remove();
         SecurityContext.clear();
     }

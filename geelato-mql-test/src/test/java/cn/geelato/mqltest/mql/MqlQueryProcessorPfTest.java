@@ -69,14 +69,14 @@ class MqlQueryProcessorPfTest extends MqlTestSupport {
         JSONObject root = JSON.parseObject(MQL_WITH_PF);
         String cleanGql = MqlQueryProcessor.getInstance().extractPfAndSerialize(root, paramsByEntity);
 
-        // 修复后：外部参数传透，渲染生效
+        // 外部参数传透，渲染生效
         MqlQueryProcessor.ProcessedQuery pq = MqlQueryProcessor.getInstance().process(cleanGql, paramsByEntity);
         String sql = pq.getBoundPageSql().getBoundSql().getSql();
         assertTrue(sql.contains("o.status = 'pending'"), "外部注入的 @pf 应渲染进视图构造 SQL: " + sql);
     }
 
     @Test
-    @DisplayName("预提取后的净化 JSON 不传外部参数时保持段消除（原 bug 症状对照）")
+    @DisplayName("预提取后的净化 JSON 不传外部参数时保持段消除")
     void pfEliminatedWithoutExternalParams() {
         Map<String, Map<String, Object>> paramsByEntity = new HashMap<>();
         JSONObject root = JSON.parseObject(MQL_WITH_PF);

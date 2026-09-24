@@ -1,5 +1,7 @@
 package cn.geelato.utils;
 
+import lombok.Getter;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +54,7 @@ public final class LocalBoundedCache<K, V> {
         reaper.start();
     }
 
+    @Getter
     private final String name;
     /** <=0 表示永不过期，仅受容量护栏约束 */
     private final long ttlMillis;
@@ -79,10 +82,6 @@ public final class LocalBoundedCache<K, V> {
         INSTANCES.add(new WeakReference<>(this));
     }
 
-    public String getName() {
-        return name;
-    }
-
     public void put(K key, V value) {
         if (cache.size() >= maxEntries) {
             purgeExpired();
@@ -97,7 +96,6 @@ public final class LocalBoundedCache<K, V> {
     /**
      * 读时惰性过期：命中但已过期的条目会被移除并返回 null。
      */
-    @SuppressWarnings("unchecked")
     public V get(K key) {
         Entry entry = cache.get(key);
         if (entry == null) {
@@ -139,16 +137,15 @@ public final class LocalBoundedCache<K, V> {
     }
 
     /**
-     * @return 本次移除的过期条目数
+     *
      */
-    public int purgeExpired() {
+    public void purgeExpired() {
         if (ttlMillis <= 0) {
-            return 0;
+            return;
         }
         long now = System.currentTimeMillis();
         int before = cache.size();
         cache.entrySet().removeIf(e -> e.getValue().expired(now));
-        return before - cache.size();
     }
 
     /**

@@ -276,6 +276,13 @@
             <artifactId>json-schema-validator</artifactId>
             <version>1.0.87</version>
         </dependency>
+        <!-- 公告 git 直连：JGit 纯 Java 实现无 native（约 3.5MB，EDL/BSD-3 许可），
+             https 传输复用 classpath 已有 httpclient 4.5.x；仅公告同步使用，版本就地管理 -->
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>7.5.0.202512021534-r</version>
+        </dependency>
 
         <!-- ===== OpenMetrics / 可观测性 ===== -->
         <!-- actuator 提供 /actuator/prometheus、/actuator/health 等端点；micrometer 负责 HTTP/JVM/HikariCP 指标自动埋点。 -->

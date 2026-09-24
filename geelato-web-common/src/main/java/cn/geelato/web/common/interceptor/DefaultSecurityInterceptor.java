@@ -34,6 +34,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -119,14 +120,11 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
         log.info("handle token:{}",token);
 
-        // SystemToken 固定令牌仅允许访问标注了 @AllowSystemAccess 的方法。该校验必须先于
-        // tryRestoreFromCache：否则同一令牌在已标注接口认证缓存成功后，被用于未标注
-        // 接口时会命中缓存还原上下文，绕过注解限制。
         if (token.startsWith(__SystemTokenTag__)
                 && !handlerMethod.getMethod().isAnnotationPresent(AllowSystemAccess.class)) {
             log.warn("unauthorized system token request, method not annotated with @AllowSystemAccess, method:{}, url:{}",
                     request.getMethod(), buildRequestUrl(request));
-            throw new UnauthorizedException("未授权访问");
+            throw new UnauthorizedException();
         }
 
         if (tryRestoreFromCache(token, request, response)) {
@@ -149,9 +147,8 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
         if (!authenticated) {
             log.warn("unauthorized request, method:{}, url:{}", request.getMethod(), buildRequestUrl(request));
-            throw new UnauthorizedException("未授权访问");
+            throw new UnauthorizedException();
         }
-        // 认证成功后统一应用委托代办态（统一支持 JWT / OAuth2 / 扩展键等多种 token 类型）
         applyDelegation(token);
         return true;
     }
@@ -175,7 +172,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             return;
         }
         try {
-            User actUser = EnvManager.singleInstance().InitCurrentUser(session.getTargetLoginName(), session.getTenantCode());
+            User actUser = copyOf(EnvManager.singleInstance().InitCurrentUser(session.getTargetLoginName(), session.getTenantCode()));
             if (actUser == null) {
                 log.warn("applyDelegation: target user not found, loginName:{}, fallback to origin identity", session.getTargetLoginName());
                 return;
@@ -302,13 +299,9 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             String loginName = verify.getClaim("loginName").asString();
             String orgId = verify.getClaim("orgId").asString();
             String tenantCode = verify.getClaim("tenantCode").asString();
-            User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
+            User currentUser = copyOf(EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode));
             currentUser.setupOrgInfo(orgProvider);
-            if (StringUtils.isNotEmpty(orgId)) {
-                currentUser.setOrgId(orgId);
-                currentUser.setDeptId(orgProvider.getDeptId(orgId));
-                currentUser.setBuId( orgProvider.getBuId(orgId));
-            }
+            setupOrgInfo(currentUser, orgId);
             SecurityContext.setCurrentUser(currentUser);
             SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
             SecurityContext.setCurrentPassword(anonymousFixedPassword);
@@ -339,7 +332,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             if (StringUtils.isEmpty(loginName)) {
                 return false;
             }
-            User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
+            User currentUser = copyOf(EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode));
             currentUser.setupOrgInfo(orgProvider);
             setupOrgInfo(currentUser, orgId);
             SecurityContext.setCurrentUser(currentUser);
@@ -376,7 +369,7 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
         try {
             User user = userProvider.getUserByExtendKey(extendKey, extendType);
-            User currentUser = EnvManager.singleInstance().InitCurrentUser(user.getLoginName(), user.getTenantCode());
+            User currentUser = copyOf(EnvManager.singleInstance().InitCurrentUser(user.getLoginName(), user.getTenantCode()));
             if (currentUser == null || StringUtils.isEmpty(currentUser.getLoginName())) {
                 return false;
             }
@@ -478,14 +471,28 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     }
 
     private void setupOrgInfo(User currentUser, String orgId) {
-        if (currentUser == null) {
+        if (currentUser == null || StringUtils.isEmpty(orgId)) {
             return;
         }
-        if (StringUtils.isNotEmpty(orgId)) {
-            currentUser.setOrgId(orgId);
-            currentUser.setDeptId(orgProvider.getDeptId(orgId));
-            currentUser.setBuId(orgProvider.getBuId(orgId));
+        currentUser.setOrgId(orgId);
+        currentUser.setOrgName(orgProvider.getOrgName(orgId));
+        currentUser.setDeptId(orgProvider.getDeptId(orgId));
+        currentUser.setCompanyId(orgProvider.getCompanyId(orgId));
+        String companyName = orgProvider.getCompanyName(orgId);
+        currentUser.setCompanyName(companyName);
+        currentUser.setBuId(orgProvider.getBuId(orgId));
+        currentUser.setBuName(companyName);
+        currentUser.setExtendId(orgProvider.getCompanyExtendId(orgId));
+    }
+
+    /** EnvManager 缓存的是共享实例，切换身份等修改前必须先克隆，防止多 token 互相覆盖。 */
+    private User copyOf(User source) {
+        if (source == null) {
+            return null;
         }
+        User copy = new User();
+        BeanUtils.copyProperties(source, copy);
+        return copy;
     }
 
     private User resolveLocalUser(String weixinUnionId, String weixinWorkUserId) {
@@ -530,21 +537,11 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
          * @param expires 过期时间，单位(秒)
          */
         public static String getToken(Map<String, String> map, Integer expires) throws Exception {
-
-            //创建日历
             Calendar instance = Calendar.getInstance();
-            //设置过期时间
             instance.add(Calendar.SECOND, expires);
-
-            //创建jwt builder对象
             JWTCreator.Builder builder = JWT.create();
-
-            //payload
             map.forEach(builder::withClaim);
-
-            //指定过期时间
             String token = builder.withExpiresAt(instance.getTime())
-                    //设置加密方式
                     .sign(Algorithm.HMAC256(SIGN_KEY));
             return confoundPayload(token);
         }
@@ -582,19 +579,13 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
          * @param token 混淆payload前的token
          */
         private static String confoundPayload(String token) throws Exception {
-            //分割token
             String[] split = token.split("\\.");
-            //如果token不符合规范
             if (split.length != DEFAULT_TOKEN_SIZE) {
                 throw new JWTDecodeException("签名不正确");
             }
-            //取出payload
             String payload = split[1];
-            //获取长度
             int length = payload.length() / 2;
-            //指定截取点
             int index = payload.length() % 2 != 0 ? length + 1 : length;
-            //混淆处理后的token
             return split[0] + "." + reversePayload(payload, index) + "." + split[2];
         }
 
@@ -604,15 +595,11 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
          * @param token 混淆后的token
          */
         private static String deConfoundPayload(String token) throws Exception {
-            //分割token
             String[] split = token.split("\\.");
-            //如果token不符合规范
             if (split.length != DEFAULT_TOKEN_SIZE) {
                 throw new JWTDecodeException("签名不正确");
             }
-            //取出payload
             String payload = split[1];
-            //返回解析后的token
             return split[0] + "." + reversePayload(payload, payload.length() / 2) + "." + split[2];
         }
 
@@ -629,24 +616,14 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
 
     }
 
-    /**
-     * 执行OAuth2登录操作
-     * @param user OAuth2用户信息
-     * @param accessToken 访问令牌
-     */
-    private void performOAuth2Login(cn.geelato.meta.User user, String accessToken) {
-        performOAuth2Login(user, accessToken, __OAuthTokenTag__ + accessToken);
-    }
 
     private User performOAuth2Login(cn.geelato.meta.User user, String accessToken, String rawToken) {
         String loginName = user.getLoginName();
-        // 优先使用认证中心 userinfo 下发的 tenantCode（meta.User 继承字段，OAuth2Helper.parseUserInfoData 已保留）；
-        // 为空时降级为默认租户（环境变量 GEELATO_DEFAULT_TENANT 覆盖，默认 geelato，向后兼容）。
         String tenantCode = user.getTenantCode();
         if (tenantCode == null || tenantCode.trim().isEmpty()) {
             tenantCode = GlobalContext.getDefaultTenantCode();
         }
-        User currentUser = EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode);
+        User currentUser = copyOf(EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode));
         currentUser.setupOrgInfo(orgProvider);
         SecurityContext.setCurrentUser(currentUser);
         SecurityContext.setCurrentTenant(new Tenant(user.getTenantCode()));

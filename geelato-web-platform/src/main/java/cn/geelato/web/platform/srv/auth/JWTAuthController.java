@@ -11,6 +11,7 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
+import cn.geelato.meta.Org;
 import cn.geelato.meta.User;
 import cn.geelato.web.common.shiro.ShiroUser;
 import cn.geelato.web.platform.srv.BaseController;
@@ -148,7 +149,6 @@ public class JWTAuthController extends BaseController {
 
         String orgId = userIdentityQueryService.containsOrg(userOrgList, org) ? org : loginUser.getOrgId();
         String tenantCode = userIdentityQueryService.containsTenant(tenantList, tenant) ? tenant : loginUser.getTenantCode();
-        // 生成登录密钥 token
         Map<String, String> payload = new HashMap<>(5);
         payload.put("id", userId);
         payload.put("loginName", SecurityContext.getCurrentUser().getLoginName());
@@ -156,9 +156,21 @@ public class JWTAuthController extends BaseController {
         payload.put("orgId", orgId);
         payload.put("tenantCode", tenantCode);
         String token = JWTUtil.getToken(payload);
-        // 用户信息
         LoginResult loginResult = LoginResult.formatLoginResult(loginUser);
         loginResult.setToken(token);
+        userOrgList.stream()
+                .filter(userOrg -> userOrg.getOrgId() != null && userOrg.getOrgId().equals(orgId))
+                .findFirst()
+                .ifPresent(userOrg -> {
+                    loginResult.setOrgId(userOrg.getOrgId());
+                    loginResult.setOrgName(userOrg.getName());
+                    loginResult.setCompanyId(userOrg.getCompanyId());
+                    loginResult.setCompanyExtendId(userOrg.getExtendId());
+                    if (StringUtils.isNotBlank(userOrg.getCompanyId())) {
+                        Org company = dao.queryForObject(Org.class, userOrg.getCompanyId());
+                        loginResult.setCompanyName(company == null ? null : company.getName());
+                    }
+                });
         return ApiResult.success(loginResult, "切换身份成功，请使用新令牌!");
     }
 
@@ -281,10 +293,9 @@ public class JWTAuthController extends BaseController {
      *
      * @param params 包含查询参数的Map对象，参数包括flag、appId和tenantCode
      * @return 返回包含查询结果的ApiResult对象，如果查询成功则返回包含菜单列表的成功结果，否则返回失败结果
-     * @throws Exception 如果在查询过程中发生异常，则抛出该异常
      */
     @RequestMapping(value = "/menu", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult getCurrentUserMenu(@RequestBody(required = false) Map<String, Object> params) {
+    public ApiResult<?> getCurrentUserMenu(@RequestBody(required = false) Map<String, Object> params) {
         Map<String, Object> safeParams = params == null ? Collections.emptyMap() : params;
         User user = getUserByToken();
         List<Map<String, Object>> menuItemList = userAuthorizationQueryService.getCurrentUserMenu(
@@ -304,15 +315,14 @@ public class JWTAuthController extends BaseController {
      *
      * @param passwordLength 密码长度，默认为8位，最长为32位
      * @return 返回操作结果，包括密码重置是否成功及生成的随机密码
-     * @throws Exception 如果在重置密码过程中发生异常，则抛出该异常
      */
     @RequestMapping(value = "/resetPassword", method = {RequestMethod.POST, RequestMethod.GET})
-    public ApiResult resetPassword(@RequestParam(defaultValue = "8", required = false) int passwordLength) {
+    public ApiResult<?>  resetPassword(@RequestParam(defaultValue = "8", required = false) int passwordLength) {
         return ApiResult.success(userAccountCommandService.resetCurrentUserPassword(resolveCurrentUserId(), passwordLength));
     }
 
     @RequestMapping(value = "/forgetValid", method = RequestMethod.POST)
-    public ApiResult forgetValid(@Valid @RequestBody ForgetValidRequest form) {
+    public ApiResult<?>  forgetValid(@Valid @RequestBody ForgetValidRequest form) {
         User foundUser = accountRecoveryService.findUserByValidBox(form);
         User result = new User();
         result.setId(foundUser.getId());

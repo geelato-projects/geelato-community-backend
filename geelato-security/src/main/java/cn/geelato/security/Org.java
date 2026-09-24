@@ -8,4 +8,5 @@ import lombok.Setter;
 public class Org extends OrgCore {
     private String companyId;
     private String type;
+    private String extendId;
 }

@@ -175,8 +175,8 @@ sidebar_label: 安全 Provider 扩展
 
 在 `SecurityProviderConfiguration` 中，如果宿主工程没有自定义加载器，默认会创建：
 
-- `JdbcOrgSnapshotLoader`
-- `JdbcUserSnapshotLoader`
+- `DBOrgSnapshotLoader`
+- `DBUserSnapshotLoader`
 
 也就是说，默认架构是：
 

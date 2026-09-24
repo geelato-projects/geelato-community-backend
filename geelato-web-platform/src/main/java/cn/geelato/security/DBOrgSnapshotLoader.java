@@ -23,7 +23,7 @@ public class DBOrgSnapshotLoader implements OrgSnapshotLoader {
     @Override
     public OrgSnapshot load() {
         List<Org> list = platformJdbcTemplate.query(
-                "select id, pid, name, tenant_code, type, code from platform_org where del_status = 0",
+                "select id, pid, name, tenant_code, type, code, extend_id from platform_org where del_status = 0",
                 (rs, rowNum) -> {
                     Org o = new Org();
                     o.setOrgId(rs.getString("id"));
@@ -32,6 +32,7 @@ public class DBOrgSnapshotLoader implements OrgSnapshotLoader {
                     o.setTenantCode(rs.getString("tenant_code"));
                     o.setType(getSafeString(rs, "type"));
                     o.setCode(getSafeString(rs, "code"));
+                    o.setExtendId(getSafeString(rs, "extend_id"));
                     return o;
                 }
         );

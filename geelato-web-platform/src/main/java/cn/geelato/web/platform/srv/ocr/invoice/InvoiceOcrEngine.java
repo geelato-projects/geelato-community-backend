@@ -50,14 +50,14 @@ public class InvoiceOcrEngine {
     private boolean enabled;
 
     /**
-     * OCR 模型加载策略：true（默认）启动期不同步加载，改为就绪后异步预热 + 首次识别懒加载，
-     * 避免加载 native 库与 AI 模型阻塞应用启动；false 恢复启动期同步加载的旧行为。
+     * OCR 模型加载策略：true（默认）启动期不同步加载，就绪后异步预热 + 首次识别懒加载，
+     * 避免加载 native 库与 AI 模型阻塞应用启动；false 启动期同步加载。
      */
     @Value("${geelato.ocr.invoice.async-init:true}")
     private boolean asyncInit;
 
     /**
-     * 启动期处理：仅当关闭异步预热（asyncInit=false）时同步加载模型，恢复历史行为；
+     * 启动期处理：仅当 asyncInit=false 时同步加载模型；
      * 否则不做同步加载，等待 {@link #warmUp(ApplicationReadyEvent)} 异步预热或 {@link #recognize(byte[])} 懒加载。
      */
     @PostConstruct

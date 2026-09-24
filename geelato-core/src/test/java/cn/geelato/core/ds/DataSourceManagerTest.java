@@ -48,7 +48,7 @@ public class DataSourceManagerTest {
 
     @Test
     public void getRegisteredDataSourceOnlyReturnsRegisteredDataSource() {
-        // 未注册的 connectId 不再懒加载建池，直接返回 null
+        // 未注册的 connectId 直接返回 null，不懒加载建池
         assertNull(manager.getRegisteredDataSource("ds-test-mysql"));
 
         HikariDataSource dataSource = new HikariDataSource();

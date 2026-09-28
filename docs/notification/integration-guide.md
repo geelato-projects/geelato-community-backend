@@ -360,6 +360,7 @@ String id = notificationService.dispatch(req);
 | `actionUrl` | String | ❌ | — | 点击跳转地址 |
 | `senderId` | String | ❌ | 当前用户/system | 发送者 id |
 | `senderType` | String | ❌ | `user` | `system`/`user` |
+| `priority` | int | ❌ | `0` | 重要级别：`0`普通/`1`提醒/`2`重要/`3`紧急；非法值拒绝（发送方收到明确报错） |
 
 ## 2.2 收件箱消费（查询方）
 
@@ -372,6 +373,16 @@ String id = notificationService.dispatch(req);
 | POST | `/api/notification/star/{id}` | 星标（body: `{"value":1}`） |
 | POST | `/api/notification/archive/{id}` | 归档 |
 | POST | `/api/notification/recall/{id}` | 撤回（逻辑删主体，全员收件箱失效） |
+
+**检索参数**：`pageQuery` body 除 `keyword`（标题+内容 OR 模糊搜索）外，另支持 `title`（仅标题模糊检索）；可与其他过滤参数自由组合（AND），`title` 与 `keyword` 同传时取交集。
+
+**重要级别（priority）消费能力**：
+
+- `POST /api/notification/pageQuery` body 可选参数：
+  - `priorityGe`：重要级别下限（`>=`该级别），取值 `0`普通/`1`提醒/`2`重要/`3`紧急；如 `priorityGe=2` 只看"重要及以上"。非法值报错。
+  - `orderByPriority`：`true` 时按级别从高到低排序（同级别内时间倒序）；缺省按时间倒序。
+- `GET /api/notification/unread-count?priorityGe=2`：统计"重要及以上"未读数（不传参数=全部未读，行为不变）。
+- 收件箱每行与 SSE 推送负载（`NotifyPush` 事件）均带 `priority`（int）与 `priorityLabel`（中文标签：普通/提醒/重要/紧急）。
 
 **实时推送**：前端订阅个人主题 `/subscribe/notice_user_<userId>`，收到 SSE 推送角标 +1。`SseController` 校验个人主题归属，禁止 A 订阅 B 的主题（403）。
 
@@ -400,7 +411,7 @@ Authorization: SystemToken <固定密钥>
 curl -X POST http://{community}/api/notification/send \
   -H 'Content-Type: application/json' \
   -H 'Authorization: SystemToken <与 community 一致的密钥>' \
-  -d '{"recipients":["u1","u2"],"title":"合同待审批","content":"请尽快审批","senderType":"system","bizType":"contract","bizId":"HT-001"}'
+  -d '{"recipients":["u1","u2"],"title":"合同待审批","content":"请尽快审批","senderType":"system","bizType":"contract","bizId":"HT-001","priority":2}'
 ```
 
 > ⚠️ 注意前缀是 `SystemToken ` 而不是 `Bearer `——`Bearer ` 会被 community 送 OAuth2 认证中心校验，固定密钥无法通过。
@@ -427,6 +438,35 @@ curl -X POST http://{community}/api/notification/send \
 两者**不需要强同步**。一条消息在 geelato-message 投递成功（`platform_msg.status=success`）后，由 `InAppClient` 落地到 community（写 `platform_notification`）。若 community 落地失败，geelato-message 的 outbox 会重试（可靠性由 geelato-message 保证）；一旦落地成功，community 侧的收件箱、已读、撤回等全部基于 `platform_notification` 独立运作。
 
 **关联排查**：两边用相同的 `bizKey`（geelato-message）/`bizType+bizId`（community）串联，便于跨系统追查同一条消息。
+
+---
+
+## 3.1 共用库部署：outbox 投递者唯一性
+
+站内信能力（含 `NotificationOutboxScheduler` 扫描器）会随脚手架无差别装配。当**脚手架应用与平台共用同一套 `platform_notification*` 库**时，若各应用都启动扫描，会出现多实例重复扫描、CAS 竞争和清理任务重复执行——数据正确性有保障（`claim()` CAS + `uk_notif_user` 唯一键），但这是无谓的资源浪费与职责混乱。
+
+**原则：一套通知库只应有一个应用开启 outbox 扫描，投递归口平台。**
+
+调度器开关（默认**关闭**，显式开启）：
+
+```properties
+# 承担该通知库投递职责的应用置 true（平台自身、独立通知库的脚手架应用）
+geelato.notification.outbox-enabled=true
+```
+
+| 部署形态 | 配置 | 说明 |
+|---|---|---|
+| 平台（quickstart） | `true`（quickstart 已内置） | 平台是通知库的投递者 |
+| 独立通知库的脚手架应用 | `true`（必须显式配置） | 自带三张表，不开启则通知滞留 outbox 无人投递 |
+| 与平台共用通知库的脚手架应用 | 不配置（默认关闭） | 投递由平台承担，本应用只发送不投递 |
+
+开关只关**消费方**（扫描投递 + 已完成行清理）；**写入方不受影响**——未开启扫描的应用仍可正常发通知（REST `/api/notification/send`、`NotifyEvent` 事件），写入的 outbox 行由开启方（平台）投递。
+
+**已知固有限制**：SSE 实时推送发生在投递方进程内（与附录 A 直写库方式同款限制）——未开启扫描的应用，其进程内 SSE 连接的用户收不到实时推送，刷新/下次加载收件箱可见。需要实时推送的用户应连接到开启扫描的应用。
+
+**平台多副本**：平台自身水平扩容时多个副本都开启扫描，仍会重复扫描（CAS 保证不重复投递）；如需彻底去重需引入租约/leader 机制，当前不做。
+
+**故障切换**：开启方宕机期间 outbox 行保持 ready 不丢失，开启方恢复后继续投递；若共库应用紧急需要恢复投递，可将其中一台临时置 `true`（保证同一时刻只有一个应用开启）。
 
 ---
 

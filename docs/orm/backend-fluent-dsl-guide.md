@@ -231,8 +231,27 @@ String userId = MetaFactory.update("User")
 ```java
 int affected = MetaFactory.delete("User")
         .where(Filter.eq("id", "1912345678901234567"))
-        .delete();
+        .execute();
 ```
+
+- 删除模式（逻辑删除 / 物理删除）：
+
+`delete(...)` 默认按删除模式解析结果执行：逻辑删除生成 `update ... set del_status=1, delete_at=...`（同时补 `updateAt / updater / updaterName`），物理删除生成 `delete from ...`。模式优先级从高到低：
+
+| 优先级 | 配置方式 | 说明 |
+| --- | --- | --- |
+| 1 | 调用级：`MetaFactory.physicalDelete(...)` / MQL `"@physicalDelete": true` | 单次调用显式指定，最高优先 |
+| 2 | 实体级：`@Entity(deleteMode = DeleteMode.LOGIC \| DeleteMode.PHYSICAL)` | 该实体固定行为，压过全局 |
+| 3 | 全局默认：环境变量 `GEELATO_DELETE_MODE`（默认 `logic`） | `GlobalContext` 类加载时读取一次固化，运行期不可变；非法值或 `auto` 启动即失败。`AUTO`（注解默认值）实体落到这里，运行期按需控制请用优先级 1、2 |
+
+```java
+// 物理删除：工厂入口显式指定，构建与执行分离（可先 toSql() 预览再 execute()）
+int affected = MetaFactory.physicalDelete("User")
+        .where(Filter.eq("id", "1912345678901234567"))
+        .execute();
+```
+
+注意：最终解析为逻辑删除但实体缺少 `delStatus` 字段时（如精简 `IdEntity` 实体 + 全局默认 logic），删除会直接报错并提示上述三种出路，不再生成非法 SQL。
 
 ## 基于实体对象的便捷重载
 
@@ -265,7 +284,7 @@ MetaFactory.insert(user).useDataSource("portal").save();
 MetaFactory.update(user).useDataSource("portal").save();
 
 // 删除构建器：非空字段作为等值条件
-MetaFactory.delete(user).useDataSource("portal").delete();
+MetaFactory.delete(user).useDataSource("portal").execute();
 
 // 按属性等值查询：非空字段作为条件
 List<Map<String, Object>> rows = MetaFactory.query(user)
@@ -278,7 +297,7 @@ List<Map<String, Object>> rows = MetaFactory.query(user)
 - `save(entity)` 是唯一“一行直接执行”的便捷方法，返回主键；其余对象重载返回构建器，与 `insert(Class)` / `update(Class)` / `delete(Class)` / `query(Class)` 一一对应
 - 主键判定：主键为空（`null` 或空白字符串）→ 插入；主键非空 → 按主键更新
 - 对象重载与字段名版底层完全等价，复用同一套默认字段填充（`FluentSaveFieldValueFiller`）、UID 生成、动态数据源能力
-- `delete(entity)` 走的是逻辑删除（需 `BaseEntity` 的 `delStatus/deleteAt` 列）；若实体为精简 `IdEntity` 无这些列，请改用 `MetaFactory.sql("delete from ...")` 物理删除
+- `delete(entity)` 默认走逻辑删除（需 `BaseEntity` 的 `delStatus/deleteAt` 列）；精简 `IdEntity` 实体可改用 `MetaFactory.physicalDelete(entity)` 物理删除，或经 `@Entity(deleteMode)` 调整默认行为（全局默认为 GlobalContext 固化常量，见"写入示例"）（见"写入示例"的删除模式说明）
 
 ## 高级能力
 - 多表 join：

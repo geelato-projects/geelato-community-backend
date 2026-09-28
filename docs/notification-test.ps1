@@ -56,6 +56,7 @@ function case1 {
     bizType = "contract"; bizId = "HT-001"
     actionUrl = "/contract/approve?id=HT-001"
     senderType = "user"
+    priority = 3
   } | ConvertTo-Json -Compress
   $resp = Api-Post "/notification/send" $SenderToken $body
   Write-Host "响应：$($resp | ConvertTo-Json -Compress)"
@@ -188,8 +189,54 @@ function case10 {
   if ($rr.data -eq $false) { Write-Pass "归属校验生效（返回 false）" } else { Write-Fail "校验可能失效" }
 }
 
+# 用例 11：重要级别（发送硬校验 + 过滤 + 排序 + 分级未读数）
+function case11 {
+  Write-Case "用例11：重要级别（0普通/1提醒/2重要/3紧急）"
+  Write-Hr
+  # 1. 发两条不同级别：重要(2) 与 普通(0)
+  Api-Post "/notification/send" $SenderToken (@{recipients=@($UserAId);title="重要级别测试-重要";content="priority=2";bizType="priority-test";bizId="PRI-002";priority=2} | ConvertTo-Json -Compress) | Out-Null
+  Api-Post "/notification/send" $SenderToken (@{recipients=@($UserAId);title="重要级别测试-普通";content="priority=0";bizType="priority-test";bizId="PRI-000";priority=0} | ConvertTo-Json -Compress) | Out-Null
+  Write-Host "已发送重要(2)/普通(0)各一条，等 3 秒..."; Start-Sleep 3
+  # 2. priorityGe=2 过滤 + 按级别从高到低排序
+  $body = @{pageNum=1;pageSize=10;bizType="priority-test";priorityGe=2;orderByPriority=$true} | ConvertTo-Json -Compress
+  $resp = Api-Post "/notification/pageQuery" $UserAToken $body
+  $titles = ($resp.data | ForEach-Object { $_.title }) -join ","
+  Write-Host "priorityGe=2 + orderByPriority 响应标题：$titles"
+  if ($titles -like "*重要级别测试-重要*" -and $titles -notlike "*重要级别测试-普通*") {
+    Write-Pass "过滤正确：仅返回重要及以上"
+  } else { Write-Fail "过滤结果不符预期（应只含'重要级别测试-重要'）" }
+  # 3. 分级未读数：重要及以上未读 >= 1
+  $resp = Api-Get "/notification/unread-count?priorityGe=2" $UserAToken
+  Write-Host "重要及以上未读数 = $($resp.data)"
+  if ($resp.code -eq 20000 -and $resp.data -ge 1) { Write-Pass "分级未读数正确" } else { Write-Fail "分级未读数异常（应 >= 1）" }
+  # 4. 非法级别硬校验：priority=5 应发送失败
+  $resp = Api-Post "/notification/send" $SenderToken (@{recipients=@($UserAId);title="非法级别";content="priority=5";bizType="priority-test";bizId="PRI-005";priority=5} | ConvertTo-Json -Compress)
+  Write-Host "priority=5 响应：$($resp | ConvertTo-Json -Compress)"
+  if ($resp.code -ne 20000 -and $resp.msg -like "*合法值*") {
+    Write-Pass "硬校验生效：非法级别被拒绝且报错列明值域"
+  } else { Write-Fail "硬校验未生效（应拒绝并提示合法值域）" }
+}
+
+# 用例 12：标题检索（title 参数，仅匹配标题）
+function case12 {
+  Write-Case "用例12：标题检索（pageQuery title 参数）"
+  Write-Hr
+  # 1. 发两条标题可区分的通知
+  Api-Post "/notification/send" $SenderToken (@{recipients=@($UserAId);title="标题检索测试-甲";content="x";bizType="title-search-test";bizId="TS-001"} | ConvertTo-Json -Compress) | Out-Null
+  Api-Post "/notification/send" $SenderToken (@{recipients=@($UserAId);title="标题检索测试-乙";content="x";bizType="title-search-test";bizId="TS-002"} | ConvertTo-Json -Compress) | Out-Null
+  Write-Host "已发送甲/乙两条，等 3 秒..."; Start-Sleep 3
+  # 2. title 检索：只命中"甲"
+  $body = @{pageNum=1;pageSize=10;bizType="title-search-test";title="检索测试-甲"} | ConvertTo-Json -Compress
+  $resp = Api-Post "/notification/pageQuery" $UserAToken $body
+  $titles = ($resp.data | ForEach-Object { $_.title }) -join ","
+  Write-Host "title='检索测试-甲' 命中标题：$titles"
+  if ($titles -like "*标题检索测试-甲*" -and $titles -notlike "*标题检索测试-乙*") {
+    Write-Pass "标题检索正确：仅命中标题含关键字的通知"
+  } else { Write-Fail "标题检索结果不符预期（应只含'标题检索测试-甲'）" }
+}
+
 # ============== 主流程 ==============
-$allCases = "case1","case2","case3","case4","case5","case6","case7","case8","case9","case10"
+$allCases = "case1","case2","case3","case4","case5","case6","case7","case8","case9","case10","case11","case12"
 $run = if ($args.Count -gt 0) { $args } else { $allCases }
 
 Write-Host "====== 站内信 curl 测试开始 ======" -ForegroundColor Yellow
@@ -206,4 +253,4 @@ foreach ($c in $run) {
   }
 }
 Write-Host "====== 测试结束 ======" -ForegroundColor Yellow
-Write-Host "清理：DELETE FROM platform_notification WHERE biz_type IN ('idem-test','recall-test','own-test')"
+Write-Host "清理：DELETE FROM platform_notification WHERE biz_type IN ('idem-test','recall-test','own-test','priority-test','title-search-test')"

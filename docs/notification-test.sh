@@ -67,7 +67,8 @@ case1() {
       \"bizType\": \"contract\",
       \"bizId\": \"HT-001\",
       \"actionUrl\": \"/contract/approve?id=HT-001\",
-      \"senderType\": \"user\"
+      \"senderType\": \"user\",
+      \"priority\": 3
     }")
   echo "响应：$resp"
   code=$(json_get "$resp" '.code')
@@ -309,8 +310,85 @@ case10() {
   fi
 }
 
+# -----------------------------------------------------------------------------
+# 用例 11：重要级别（发送硬校验 + 过滤 + 排序 + 分级未读数）
+# -----------------------------------------------------------------------------
+case11() {
+  info "用例11：重要级别（0普通/1提醒/2重要/3紧急）"
+  check_token "$SENDER_TOKEN"; check_token "$USER_A_TOKEN"
+  hr
+  # 1. 发两条不同级别：重要(2) 与 普通(0)
+  curl -s -X POST "$BASE_URL/api/notification/send" \
+    -H "Authorization: $SENDER_TOKEN" -H "Content-Type: application/json" \
+    -d "{\"recipients\":[\"$USER_A_ID\"],\"title\":\"重要级别测试-重要\",\"content\":\"priority=2\",\"bizType\":\"priority-test\",\"bizId\":\"PRI-002\",\"priority\":2}" > /dev/null
+  curl -s -X POST "$BASE_URL/api/notification/send" \
+    -H "Authorization: $SENDER_TOKEN" -H "Content-Type: application/json" \
+    -d "{\"recipients\":[\"$USER_A_ID\"],\"title\":\"重要级别测试-普通\",\"content\":\"priority=0\",\"bizType\":\"priority-test\",\"bizId\":\"PRI-000\",\"priority\":0}" > /dev/null
+  echo "已发送重要(2)/普通(0)各一条，等待 fan-out..."; sleep 3
+  # 2. priorityGe=2 过滤 + 按级别从高到低排序
+  resp=$(curl -s -X POST "$BASE_URL/api/notification/pageQuery" \
+    -H "Authorization: $USER_A_TOKEN" -H "Content-Type: application/json" \
+    -d '{"pageNum":1,"pageSize":10,"bizType":"priority-test","priorityGe":2,"orderByPriority":true}')
+  titles=$(echo "$resp" | $JQ -r '.data[].title' 2>/dev/null | paste -sd, -)
+  echo "priorityGe=2 + orderByPriority 响应标题：$titles"
+  if [[ "$titles" == *"重要级别测试-重要"* && "$titles" != *"重要级别测试-普通"* ]]; then
+    pass "过滤正确：仅返回重要及以上，普通被排除"
+  else
+    fail "过滤结果不符预期（应只含'重要级别测试-重要'）"
+  fi
+  # 3. 分级未读数：重要及以上未读 >= 1
+  resp=$(curl -s -X GET "$BASE_URL/api/notification/unread-count?priorityGe=2" -H "Authorization: $USER_A_TOKEN")
+  n=$(json_get "$resp" '.data')
+  echo "重要及以上未读数 = $n"
+  if [[ "$n" =~ ^[0-9]+$ && "$n" -ge 1 ]]; then
+    pass "分级未读数正确"
+  else
+    fail "分级未读数异常（应 >= 1）"
+  fi
+  # 4. 非法级别硬校验：priority=5 应发送失败
+  resp=$(curl -s -X POST "$BASE_URL/api/notification/send" \
+    -H "Authorization: $SENDER_TOKEN" -H "Content-Type: application/json" \
+    -d "{\"recipients\":[\"$USER_A_ID\"],\"title\":\"非法级别\",\"content\":\"priority=5\",\"bizType\":\"priority-test\",\"bizId\":\"PRI-005\",\"priority\":5}")
+  code=$(json_get "$resp" '.code')
+  msg=$(json_get "$resp" '.msg')
+  echo "priority=5 响应：code=$code msg=$msg"
+  if [[ "$code" != "20000" && "$msg" == *"合法值"* ]]; then
+    pass "硬校验生效：非法级别被拒绝且报错列明值域"
+  else
+    fail "硬校验未生效（应拒绝并提示合法值域）"
+  fi
+}
+
+# -----------------------------------------------------------------------------
+# 用例 12：标题检索（title 参数，仅匹配标题）
+# -----------------------------------------------------------------------------
+case12() {
+  info "用例12：标题检索（pageQuery title 参数）"
+  check_token "$SENDER_TOKEN"; check_token "$USER_A_TOKEN"
+  hr
+  # 1. 发两条标题可区分的通知
+  curl -s -X POST "$BASE_URL/api/notification/send" \
+    -H "Authorization: $SENDER_TOKEN" -H "Content-Type: application/json" \
+    -d "{\"recipients\":[\"$USER_A_ID\"],\"title\":\"标题检索测试-甲\",\"content\":\"x\",\"bizType\":\"title-search-test\",\"bizId\":\"TS-001\"}" > /dev/null
+  curl -s -X POST "$BASE_URL/api/notification/send" \
+    -H "Authorization: $SENDER_TOKEN" -H "Content-Type: application/json" \
+    -d "{\"recipients\":[\"$USER_A_ID\"],\"title\":\"标题检索测试-乙\",\"content\":\"x\",\"bizType\":\"title-search-test\",\"bizId\":\"TS-002\"}" > /dev/null
+  echo "已发送甲/乙两条，等待 fan-out..."; sleep 3
+  # 2. title 检索：只命中"甲"
+  resp=$(curl -s -X POST "$BASE_URL/api/notification/pageQuery" \
+    -H "Authorization: $USER_A_TOKEN" -H "Content-Type: application/json" \
+    -d '{"pageNum":1,"pageSize":10,"bizType":"title-search-test","title":"检索测试-甲"}')
+  titles=$(echo "$resp" | $JQ -r '.data[].title' 2>/dev/null | paste -sd, -)
+  echo "title='检索测试-甲' 命中标题：$titles"
+  if [[ "$titles" == *"标题检索测试-甲"* && "$titles" != *"标题检索测试-乙"* ]]; then
+    pass "标题检索正确：仅命中标题含关键字的通知"
+  else
+    fail "标题检索结果不符预期（应只含'标题检索测试-甲'）"
+  fi
+}
+
 # ============== 主流程 ==============
-ALL_CASES="case1 case2 case3 case4 case5 case6 case7 case8 case9 case10"
+ALL_CASES="case1 case2 case3 case4 case5 case6 case7 case8 case9 case10 case11 case12"
 RUN="$ALL_CASES"
 if [[ $# -gt 0 ]]; then RUN="$*"; fi
 
@@ -333,4 +411,4 @@ echo -e "${Y}====== 测试结束 ======${N}"
 echo "提示："
 echo "  - 涉及 fan-out 的用例已内置 sleep 3 等待调度"
 echo "  - 实时推送/跳转类用例需配合前端浏览器观察"
-echo "  - 清理测试数据：DELETE FROM platform_notification WHERE biz_type IN ('idem-test','recall-test','own-test')"
+echo "  - 清理测试数据：DELETE FROM platform_notification WHERE biz_type IN ('idem-test','recall-test','own-test','priority-test','title-search-test')"

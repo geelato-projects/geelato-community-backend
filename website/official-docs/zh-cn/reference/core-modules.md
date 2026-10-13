@@ -25,6 +25,10 @@ sidebar_label: 核心模块说明
 
 承载 Meta、DAO、脚本与核心运行管理能力，是平台的核心。包含元数据模型、MQL 引擎、SQL 构建器与 ORM 运行时。
 
+### `geelato-script`
+
+通用脚本执行引擎 SDK：GraalVM Polyglot 沙箱、`@GraalService` kit 注册表、内置 kit 六件套（`$gl.sql`/`$gl.mql`/`$gl.http`/`$gl.encrypt`/`$gl.ctx`/`$gl.parameter`）、引擎版本快照与场景档案。详见[脚本引擎](/docs/script/overview)。
+
 ### `geelato-orm`
 
 承载 Fluent DSL 与 ORM 侧执行能力，对后端开发者暴露 `MetaFactory` 链式 CRUD。

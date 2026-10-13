@@ -60,6 +60,11 @@ const sidebars: SidebarsConfig = {
             },
             {
               type: 'category',
+              label: '脚本引擎',
+              items: ['script/overview', 'script/usage'],
+            },
+            {
+              type: 'category',
               label: '文件处理',
               items: ['file-processing/upload', 'file-processing/download'],
             },

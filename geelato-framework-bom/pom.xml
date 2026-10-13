@@ -88,6 +88,21 @@
             </dependency>
             <dependency>
                 <groupId>cn.geelato</groupId>
+                <artifactId>geelato-script</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-exception</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
+                <artifactId>geelato-alert</artifactId>
+                <version>${geelato.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.geelato</groupId>
                 <artifactId>geelato-app-scaffold</artifactId>
                 <version>${geelato.version}</version>
             </dependency>

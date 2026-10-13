@@ -29,6 +29,7 @@ sidebar_label: 开发者与 AI 导航手册
 | 编写后端的增删改查代码 | MetaFactory、Fluent DSL | [ORM: Fluent DSL](../orm/fluent-dsl.md) |
 | 在实体类上配置表名和字段映射 | `@Title`、`@Col`、`@Model` | [ORM: 注解说明](../orm/annotations.md) |
 | 通过 JSON 格式在前端或网关进行复杂查询 | MQL (Meta Query Language) | [MQL: 语法与用法](../mql/usage.md) |
+| 在规则、模板等场景嵌入安全脚本计算 | Script Engine | [脚本编写手册](../script/usage.md) |
 | 配置或连接多个数据库 | Dynamic Datasource | [动态数据源能力](../dynamic-datasource/overview.md) |
 
 ### 业务与扩展

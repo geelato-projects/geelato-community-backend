@@ -40,13 +40,13 @@ public class UploadService {
     @Getter
     private static String rootConfigDirectory;
 
-    @Value("${geelato.upload.root-directory}")
+    @Value("${geelato.upload.root-directory:/upload}")
     private String tempRootDirectory;
 
-    @Value("${geelato.upload.convert-directory}")
+    @Value("${geelato.upload.convert-directory:/upload/convert}")
     private String tempRootConvertDirectory;
 
-    @Value("${geelato.upload.config-directory}")
+    @Value("${geelato.upload.config-directory:/upload/config}")
     private String tempRootConfigDirectory;
 
     @PostConstruct

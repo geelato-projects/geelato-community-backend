@@ -27,6 +27,7 @@ import java.util.Objects;
  *   <li>{@link SqlDataTooLongException}（10025）—— 数据超长（用户文案含字段名）</li>
  *   <li>{@link SqlDataOutOfRangeException}（10026）—— 数值超出范围（用户文案含字段名）</li>
  *   <li>{@link SqlDataFormatException}（10027）—— 数据格式不正确（用户文案含字段名）</li>
+ *   <li>{@link SqlUnexpectedException}（10028）—— 非预期 SQL 故障兜底（语法错误、1052 伪装约束码、权限不足等）</li>
  * </ul>
  */
 @Getter
@@ -62,8 +63,11 @@ public class SqlExecuteException extends CoreException {
     }
 
     /**
-     * 分类工厂：按根因（连接中断/锁冲突/唯一键冲突/约束违反）实例化对应子类（10021-10024），
-     * 未归类（语法错误、权限不足等）返回根类自身（10002）。Dao 层统一经本工厂包装。
+     * 分类工厂：按根因（连接中断/锁冲突/唯一键冲突/约束违反/数据值问题）实例化对应子类（10021-10027），
+     * 未归类的一律返回 {@link SqlUnexpectedException}（10028），不再返回根类自身（10002）。
+     * 注意：约束类只认明确的外键/完整性厂商码与 PG 235xx 状态码——MySQL 的 SQLSTATE 是按错误码段
+     * 机械映射的（如 1052 也返回 23000），不能用 {@code startsWith("23")} 宽泛判定，否则用法/语法错误会被误报为约束违反。
+     * Dao 层统一经本工厂包装。
      */
     public static SqlExecuteException of(DataAccessException dae, String sql, Object[] params) {        SQLException root = rootSQLException(dae);
         if (isConnectionFailure(dae, root)) {
@@ -81,9 +85,10 @@ public class SqlExecuteException extends CoreException {
         if (dbErrorCode == 1062 || "23505".equals(sqlState)) {
             return new SqlDuplicateKeyException(dae, sql, params);
         }
-        // 外键 / 其他完整性约束（MySQL 1451/1452、PG 及标准 sqlState 23xxx 段）
+        // 外键 / 完整性约束（MySQL 1451/1452、PG 23502 非空 / 23503 外键 / 23514 CHECK）
+        // 不设 23xxx 段兜底：MySQL 未知错误码也可能被机械映射成 23000（如 1052），宁可落入 10028 也不误报为约束
         if (dbErrorCode == 1451 || dbErrorCode == 1452
-                || (sqlState != null && sqlState.startsWith("23"))) {
+                || "23502".equals(sqlState) || "23503".equals(sqlState) || "23514".equals(sqlState)) {
             return new SqlConstraintViolationException(dae, sql, params);
         }
         // 数据超长（MySQL 1406、标准/PG 22001）——高频错误，用户文案携带字段名
@@ -99,7 +104,7 @@ public class SqlExecuteException extends CoreException {
                 || "22007".equals(sqlState) || "22008".equals(sqlState)) {
             return new SqlDataFormatException(dae, sql, params);
         }
-        return new SqlExecuteException(dae, sql, params);
+        return new SqlUnexpectedException(dae, sql, params);
     }
 
     /** @see #of(DataAccessException, String, Object[]) */

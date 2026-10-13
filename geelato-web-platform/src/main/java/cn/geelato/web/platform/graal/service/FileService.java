@@ -33,7 +33,6 @@ public class FileService {
     private final FileHandler fileHandler;
 
     public FileService() {
-        // 使用ApplicationContextProvider获取RuleService
         this.exportExcelService = ApplicationContextProvider.getBean(ExportExcelService.class);
         this.importExcelService = ApplicationContextProvider.getBean(ImportExcelService.class);
         this.fileHandler = ApplicationContextProvider.getBean(FileHandler.class);

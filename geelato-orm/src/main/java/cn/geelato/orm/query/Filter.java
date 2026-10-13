@@ -2,7 +2,9 @@ package cn.geelato.orm.query;
 
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -67,6 +69,10 @@ public class Filter {
     
     // IN查询
     public static Filter in(String field, Object... values) {
+        // 单个 Collection 实参是高频写法（varargs 不会展平集合），不拍平会整个集合被当成一个值
+        if (values != null && values.length == 1 && values[0] instanceof Collection<?> c) {
+            return new Filter(field, "IN", new ArrayList<>(c));
+        }
         return new Filter(field, "IN", Arrays.asList(values));
     }
     

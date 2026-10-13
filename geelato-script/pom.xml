@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>geelato-parent</artifactId>
+        <groupId>cn.geelato</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../geelato-parent/pom.xml</relativePath>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>geelato-script</artifactId>
+    <packaging>jar</packaging>
+    <name>geelato-script</name>
+    <description>Geelato 通用脚本执行引擎 SDK：GraalVM Polyglot 沙箱（注解白名单 + 资源限制 + 超时强杀 + 共享 Engine 编译缓存）、
+        多语言执行器 SPI（js 缺省 / python 可选）、@GraalService 注解桥注册表（Spring Bean 与类路径扫描双通道、启动 fail-fast、
+        元数据 catalog 导出）、内置 kit 六件套（$gl.sql 只读/写门控 SQL 桥、$gl.mql 元数据查询、$gl.http 白名单出网、
+        $gl.encrypt 摘要与 AES、$gl.ctx 执行上下文、$gl.parameter 参数输入；build() 默认注册，消费方可同名覆盖）、
+        引擎版本能力（EngineRevision 快照，破坏性变更并存路由）。消费方经 ScriptProfile 声明场景能力边界。</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-lang</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.polyglot</groupId>
+            <artifactId>polyglot</artifactId>
+            <version>25.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.polyglot</groupId>
+            <artifactId>js</artifactId>
+            <version>25.0.1</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

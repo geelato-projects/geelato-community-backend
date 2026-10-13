@@ -90,13 +90,26 @@ class SqlExecuteExceptionTest {
     }
 
     @Test
-    void mysqlSyntaxErrorFallsBackToRoot() {
+    void mysqlSyntaxErrorMapsToUnexpected() {
         SqlExecuteException ex = SqlExecuteException.of(
                 wrapping(new SQLException("You have an error in your SQL syntax", "42000", 1064)), SQL, PARAMS);
 
-        assertEquals(SqlExecuteException.class, ex.getClass());
-        assertEquals(SqlExecuteException.ERROR_CODE, ex.getErrorCode());
-        assertEquals("数据操作失败，请稍后重试", ex.getUserMessage());
+        assertInstanceOf(SqlUnexpectedException.class, ex);
+        assertEquals(SqlUnexpectedException.ERROR_CODE, ex.getErrorCode());
+        assertEquals("数据操作出现未预期错误，已记录日志，请联系管理员排查", ex.getUserMessage());
+    }
+
+    @Test
+    void mysqlWrongTable1052WithFake23000MapsToUnexpected() {
+        // 生产实例：MySQL 1052 (23000) Incorrect table name——多表 UPDATE 带 ORDER BY/LIMIT 的用法错误，
+        // SQLSTATE 23000 是 MySQL 按错误码段机械映射的产物，不能误报为约束违反（10024）
+        SqlExecuteException ex = SqlExecuteException.of(
+                wrapping(new SQLException("Incorrect table name ''", "23000", 1052)), SQL, PARAMS);
+
+        assertInstanceOf(SqlUnexpectedException.class, ex);
+        assertEquals(SqlUnexpectedException.ERROR_CODE, ex.getErrorCode());
+        assertEquals(1052, ex.getDbErrorCode());
+        assertEquals("23000", ex.getSqlState());
     }
 
     // ==================== 分类工厂：数据值类（10025-10027，用户文案含字段名） ====================

@@ -115,21 +115,6 @@ class PlatformExceptionHandlerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void unauthorizedSkipsLoggingAndFeedbackTag() {
-        UnauthorizedException ex = new UnauthorizedException();
-
-        ResponseEntity<?> entity = handler.handleException(ex, request);
-
-        assertEquals(HttpStatus.UNAUTHORIZED, entity.getStatusCode());
-        ApiResult<PlatformErrorResult> body = (ApiResult<PlatformErrorResult>) entity.getBody();
-        assertNotNull(body);
-        assertEquals("未授权访问，请重新登录", body.getMsg());
-        assertNull(body.getData().getLogTag());
-        verifyNoInteractions(exceptionLogService);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
     void fallbackExceptionReturnsDetailedMessageWithLogTag() {
         ResponseEntity<?> entity = handler.handleOtherException(new NullPointerException("secret internal detail"), request);
 

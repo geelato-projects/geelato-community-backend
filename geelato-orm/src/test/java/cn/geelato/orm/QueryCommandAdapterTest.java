@@ -17,6 +17,7 @@ import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -183,6 +184,25 @@ public class QueryCommandAdapterTest extends OrmTestSupport {
                 .collect(Collectors.toList())
                 .get(0));
         assertEquals("creator='U1001'", command.getOriginalWhere());
+    }
+
+    /**
+     * Filter.in 单个 Collection 实参必须拍平为元素集合：varargs 不展平集合，
+     * 不拍平时整个集合被适配器 stringify 成 "[SCAN, BOTH]"，核心 getValueAsArray()
+     * 按前导 [ 走 JSONArray.parse 直接抛解析异常（异常引擎扫描 tick 停摆实例）。
+     */
+    @Test
+    public void shouldFlattenSingleCollectionArgOfInFilter() {
+        QueryCommand command = QueryCommandAdapter.forList(
+                MetaFactory.query(TestUserEntity.class)
+                        .where(Filter.in("triggerType", List.of("SCAN", "BOTH"))));
+
+        FilterGroup.Filter inFilter = command.getWhere().getFilters().stream()
+                .filter(filter -> "triggerType".equals(filter.getField()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("SCAN,BOTH", inFilter.getValue());
+        assertArrayEquals(new Object[]{"SCAN", "BOTH"}, inFilter.getValueAsArray());
     }
 
     private void applyDefaultFilters(QueryCommand command) {

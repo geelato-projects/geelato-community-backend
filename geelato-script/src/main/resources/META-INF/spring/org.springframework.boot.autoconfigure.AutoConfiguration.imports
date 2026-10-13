@@ -1,0 +1,3 @@
+cn.geelato.script.boot.ScriptEngineAutoConfiguration
+cn.geelato.script.boot.ScriptRestAutoConfiguration
+cn.geelato.script.boot.ScriptAdminAutoConfiguration

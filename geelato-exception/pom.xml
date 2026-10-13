@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>geelato-parent</artifactId>
+        <groupId>cn.geelato</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../geelato-parent/pom.xml</relativePath>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>geelato-exception</artifactId>
+    <packaging>jar</packaging>
+    <name>geelato-exception</name>
+    <description>Geelato 业务异常预警中心模块：异常规则库 / 异常实例 / 处置步骤 / 处理轨迹 / 触达留痕 / 扫描留痕，
+        契约面 + 持久化实现（扫描复评引擎、沙箱试运行、事件复评建实例引擎留待后续）。
+        业务组件（controller/service/entity）由宿主 @ComponentScan("cn.geelato") 发现；数据表位于宿主主库
+        （实体 @Entity(catalog="geelato")），DDL 由宿主 Flyway 维护（与 geelato-mail 同路径）。</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-lang</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-orm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-web-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-script</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

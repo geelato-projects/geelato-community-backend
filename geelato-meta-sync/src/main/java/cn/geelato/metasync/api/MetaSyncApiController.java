@@ -138,8 +138,14 @@ public class MetaSyncApiController {
                 return ApiResult.fail("「" + tableName + "」是视图，视图不支持补偿");
             }
             String entityName = str(body, "entityName");
+            String appId = str(body, "appId");
+            String tenantCode = str(body, "tenantCode");
+            String ctxErr = checkCtx(appId, tenantCode);
+            if (ctxErr != null) {
+                return ApiResult.fail(ctxErr);
+            }
             boolean apply = bool(body, "apply", false);
-            TableToMetaFixer.FixResult r = tableToMetaFixer.syncTableToMeta(tableName, entityName, null, apply);
+            TableToMetaFixer.FixResult r = tableToMetaFixer.syncTableToMeta(tableName, entityName, appId, tenantCode, apply);
             return ApiResult.success(r);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -176,16 +182,33 @@ public class MetaSyncApiController {
                 return ApiResult.fail("「" + tableName + "」是视图，视图不支持补偿");
             }
             String entityName = str(body, "entityName");
+            String appId = str(body, "appId");
+            String tenantCode = str(body, "tenantCode");
+            String ctxErr = checkCtx(appId, tenantCode);
+            if (ctxErr != null) {
+                return ApiResult.fail(ctxErr);
+            }
             String output = str(body, "output");
             if (StringUtils.isBlank(output)) {
                 output = "sql"; // 默认只返回 SQL，不写库
             }
-            JavaToMetaFixer.FixResult r = javaToMetaFixer.genMeta(entityName, output);
+            JavaToMetaFixer.FixResult r = javaToMetaFixer.genMeta(entityName, appId, tenantCode, output);
             return ApiResult.success(r);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ApiResult.fail(e.getMessage());
         }
+    }
+
+    /** appId / tenantCode 必填校验：缺失返回提示信息，齐备返回 null。 */
+    private static String checkCtx(String appId, String tenantCode) {
+        if (StringUtils.isBlank(appId)) {
+            return "请先指定 appId（应用 id），否则无法生成实体定义";
+        }
+        if (StringUtils.isBlank(tenantCode)) {
+            return "请先指定 tenantCode（租户编码），否则无法生成实体定义";
+        }
+        return null;
     }
 
     private static String str(Map<String, Object> body, String key) {

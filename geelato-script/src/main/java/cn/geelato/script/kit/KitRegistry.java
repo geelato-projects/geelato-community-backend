@@ -2,10 +2,15 @@ package cn.geelato.script.kit;
 
 import cn.geelato.core.graal.GraalFunctionDescription;
 import cn.geelato.core.graal.GraalServiceDescription;
+import cn.geelato.script.lang.HostKitContainer;
+import cn.geelato.script.lang.KitAdapter;
 import cn.geelato.utils.AnnotatedClassScanner;
 import org.graalvm.polyglot.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -16,15 +21,21 @@ import java.util.Set;
 
 /**
  * 注解 kit 注册表（实例级，不挂 GraalManager 全局单例）：
- * 注册通道 —— register(实例)（Spring Bean 优先）/ register(类) / scanPackages(类路径扫描 newInstance 兜底）；
+ * 注册通道 —— register(实例)（Spring Bean 优先）/ register(类) / scanPackages(类路径扫描 newInstance 兜底）
+ * / scanHostPackages(整库反射注入，无需注解，挂顶层 $kit)；
  * 注册完成即 fail-fast（命名冲突、方法参数/返回类型 interop 兼容白名单）。
  */
 public class KitRegistry {
+
+    private static final Logger logger = LoggerFactory.getLogger(KitRegistry.class);
 
     private static final Set<Class<?>> PARAM_TYPES = Set.of(
             String.class, Object.class, Map.class, List.class, Value.class, Date.class, Boolean.class);
     private static final Set<Class<?>> RETURN_TYPES = Set.of(
             String.class, Object.class, Map.class, List.class, Value.class, Date.class, Boolean.class, void.class, Void.class);
+    /** 整库注入危险类（与 SandboxContextFactory denyAccess 同集）。 */
+    private static final Set<String> DENIED_HOST_CLASSES = Set.of(
+            "java.lang.System", "java.lang.Runtime", "java.lang.Class", "java.lang.ClassLoader", "java.lang.Thread");
 
     private final Map<String, KitDefinition> definitions = new LinkedHashMap<>();
     private final Map<String, ScopedKitFactory> scopedFactories = new LinkedHashMap<>();
@@ -64,6 +75,122 @@ public class KitRegistry {
                 put(def, clazz.getName());
             }
         }
+    }
+
+    /**
+     * 整库反射注入：按 库别名→根包 扫描具体类，暴露 interop 兼容的公共方法
+     * （静态直接暴露；实例方法须有 public 无参构造），合并注册为顶层 $kit。
+     */
+    public void scanHostPackages(Map<String, String> aliasToPackage, List<String> excludes) {
+        if (aliasToPackage == null || aliasToPackage.isEmpty()) {
+            return;
+        }
+        Set<String> excluded = new LinkedHashSet<>();
+        if (excludes != null) {
+            excludes.forEach(x -> {
+                if (x != null && !x.isBlank()) {
+                    excluded.add(x.trim());
+                }
+            });
+        }
+        HostKitContainer container = new HostKitContainer();
+        Map<String, Map<String, List<Method>>> tree = new LinkedHashMap<>();
+        for (Map.Entry<String, String> e : aliasToPackage.entrySet()) {
+            String alias = e.getKey();
+            String pkg = e.getValue();
+            Map<String, KitAdapter> classAdapters = new LinkedHashMap<>();
+            Map<String, List<Method>> libTree = new LinkedHashMap<>();
+            for (Class<?> clazz : AnnotatedClassScanner.scanAll(pkg)) {
+                if (!isInjectableClass(clazz) || excluded.contains(clazz.getSimpleName()) || excluded.contains(clazz.getName())) {
+                    continue;
+                }
+                if (DENIED_HOST_CLASSES.contains(clazz.getName())) {
+                    throw new IllegalStateException("host-packages 拒绝危险类: " + clazz.getName());
+                }
+                HostClassBinding binding = bindHostClass(clazz);
+                if (binding == null || binding.methods().isEmpty()) {
+                    continue;
+                }
+                String member = decapitalize(clazz.getSimpleName());
+                if (libTree.containsKey(member)) {
+                    throw new IllegalStateException("host-packages 别名 " + alias + " 下类名冲突: " + member
+                            + "（" + member + " 已由 " + libTree.get(member).get(0).getDeclaringClass().getName()
+                            + " 占用，" + clazz.getName() + " 重复；可拆分为多个别名子包配置）");
+                }
+                classAdapters.put(member, KitAdapter.ofHost(binding.receiver(), binding.methods()));
+                libTree.put(member, binding.methods());
+            }
+            if (libTree.isEmpty()) {
+                throw new IllegalStateException("host-packages 别名 " + alias + "（包 " + pkg + "）未扫到任何可注入类："
+                        + "包名不在 classpath、或所有类/方法均不满足暴露条件（被 exclude、无兼容方法、非具体类）");
+            }
+            container.addLibrary(alias, classAdapters);
+            tree.put(alias, libTree);
+        }
+        put(KitDefinition.hostOf(container, tree), "host-packages");
+    }
+
+    private static boolean isInjectableClass(Class<?> clazz) {
+        return !clazz.isInterface() && !clazz.isAnnotation() && !clazz.isEnum() && !clazz.isPrimitive()
+                && !clazz.isSynthetic() && !Modifier.isAbstract(clazz.getModifiers());
+    }
+
+    private static HostClassBinding bindHostClass(Class<?> clazz) {
+        Object instance = null;
+        boolean instantiable = false;
+        try {
+            clazz.getConstructor();
+            instantiable = true;
+        } catch (NoSuchMethodException ignored) {
+            // 纯静态工具类无无参构造，仅暴露静态方法
+        }
+        List<Method> methods = new ArrayList<>();
+        int skipped = 0;
+        for (Method m : clazz.getMethods()) {
+            if (m.getDeclaringClass() == Object.class || m.isSynthetic() || m.isBridge()) {
+                continue;
+            }
+            if (!interopCompatible(m)) {
+                skipped++;
+                continue;
+            }
+            if (Modifier.isStatic(m.getModifiers())) {
+                methods.add(m);
+            } else if (instantiable) {
+                if (instance == null) {
+                    try {
+                        instance = clazz.getDeclaredConstructor().newInstance();
+                    } catch (ReflectiveOperationException ex) {
+                        throw new IllegalStateException("host-packages 类实例化失败: " + clazz.getName(), ex);
+                    }
+                }
+                methods.add(m);
+            } else {
+                skipped++;
+            }
+        }
+        if (skipped > 0) {
+            logger.warn("host-packages 类 {} 暴露 {} 个方法，跳过 {} 个（签名不兼容 interop 或需实例化但无无参构造）",
+                    clazz.getName(), methods.size(), skipped);
+        }
+        return new HostClassBinding(methods, instance);
+    }
+
+    private static boolean interopCompatible(Method m) {
+        for (Class<?> p : m.getParameterTypes()) {
+            if (!isAllowed(p, PARAM_TYPES) && !p.isPrimitive()) {
+                return false;
+            }
+        }
+        Class<?> r = m.getReturnType();
+        return isAllowed(r, RETURN_TYPES) || r.isPrimitive();
+    }
+
+    private static String decapitalize(String name) {
+        return name.isEmpty() ? name : Character.toLowerCase(name.charAt(0)) + name.substring(1);
+    }
+
+    private record HostClassBinding(List<Method> methods, Object receiver) {
     }
 
     public Map<String, KitDefinition> getDefinitions() {

@@ -53,6 +53,34 @@ public class SandboxContextFactory {
     }
 
     public Context create(String[] languages, long statementLimit, String esVersion) {
+        return baseBuilder(languages, statementLimit, esVersion).build();
+    }
+
+    /**
+     * 调试专用 Context：在正常沙箱配置基础上追加 GraalJS 内置 CDP inspector。
+     * <ul>
+     *   <li>{@code inspect=host:port}：inspector ws 服务只绑回环（host 缺省 127.0.0.1），绝不公网暴露；</li>
+     *   <li>{@code inspect.Suspend=true} + {@code inspect.WaitAttached=true}：未连上 DevTools 前不执行（挂起等接）；</li>
+     *   <li>{@code inspect.Path=sessionId}：多会话经路径区分。</li>
+     * </ul>
+     * 依赖 {@code allowExperimentalOptions(true)}（baseBuilder 已设）。调用方须自行保证 port 未被占用（
+     * 传 0 则由实现自动分配并回读实际端口）。statementLimit 仍生效防死循环。
+     */
+    public Context createForDebug(String[] languages, long statementLimit, String esVersion,
+                                  String inspectHost, int inspectPort, String inspectPath) {
+        Context.Builder builder = baseBuilder(languages, statementLimit, esVersion);
+        String host = inspectHost == null || inspectHost.isBlank() ? "127.0.0.1" : inspectHost;
+        builder.option("inspect", host + ":" + Math.max(0, inspectPort));
+        builder.option("inspect.Suspend", "true");
+        builder.option("inspect.WaitAttached", "true");
+        if (inspectPath != null && !inspectPath.isBlank()) {
+            builder.option("inspect.Path", inspectPath);
+        }
+        return builder.build();
+    }
+
+    /** 沙箱基线配置（正常与调试共用，保证 kit/bindings/资源限制注入等价）。 */
+    private Context.Builder baseBuilder(String[] languages, long statementLimit, String esVersion) {
         ResourceLimits limits = ResourceLimits.newBuilder().statementLimit(statementLimit, null).build();
         Context.Builder builder = Context.newBuilder(languages)
                 .allowHostAccess(SANDBOX_HOST)
@@ -71,7 +99,7 @@ public class SandboxContextFactory {
         } else {
             builder.option("engine.WarnInterpreterOnly", "false");
         }
-        return builder.build();
+        return builder;
     }
 
     private static Engine buildEngine() {

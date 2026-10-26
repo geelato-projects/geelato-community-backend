@@ -21,10 +21,13 @@ public final class KitAdapter implements ProxyObject {
 
     private final Object kit;
     private final Map<String, List<Method>> functions;
+    /** host kit（第三方类反射）返回值须经 GuestValues 包装——其方法体无法像内置 kit 一样自行包装。 */
+    private final boolean wrapReturns;
 
-    private KitAdapter(Object kit, Map<String, List<Method>> functions) {
+    private KitAdapter(Object kit, Map<String, List<Method>> functions, boolean wrapReturns) {
         this.kit = kit;
         this.functions = functions;
+        this.wrapReturns = wrapReturns;
     }
 
     public static KitAdapter of(Object kit) {
@@ -37,7 +40,21 @@ public final class KitAdapter implements ProxyObject {
                 }
             }
         }
-        return new KitAdapter(kit, functions);
+        return new KitAdapter(kit, functions, false);
+    }
+
+    /** host kit 构建：方法清单（已过滤）按名分组为重载列表；receiver 为实例或 null（纯静态）。 */
+    public static KitAdapter ofHost(Object receiver, List<Method> methods) {
+        Map<String, List<Method>> functions = new LinkedHashMap<>();
+        for (Method m : methods) {
+            try {
+                m.setAccessible(true);
+            } catch (Throwable ignored) {
+                // public 类的 public 方法无需提权即可反射调用
+            }
+            functions.computeIfAbsent(m.getName(), k -> new ArrayList<>()).add(m);
+        }
+        return new KitAdapter(receiver, functions, true);
     }
 
     public static boolean adaptable(Object kit) {
@@ -60,7 +77,7 @@ public final class KitAdapter implements ProxyObject {
 
     @Override
     public Object getMemberKeys() {
-        return functions.keySet().toArray(new String[0]);
+        return org.graalvm.polyglot.proxy.ProxyArray.fromArray(functions.keySet().toArray());
     }
 
     @Override
@@ -95,7 +112,7 @@ public final class KitAdapter implements ProxyObject {
             padded[i] = convert(raw, types[i]);
         }
         try {
-            return target.invoke(kit, padded);
+            return wrapReturns ? GuestValues.toGuest(target.invoke(kit, padded)) : target.invoke(kit, padded);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw cause instanceof RuntimeException runtime ? runtime : new RuntimeException(cause);
@@ -120,7 +137,10 @@ public final class KitAdapter implements ProxyObject {
             return null;
         }
         if ((type == int.class || type == long.class || type == Integer.class || type == Long.class) && o instanceof Number n) {
-            return type == int.class || type == Integer.class ? n.intValue() : n.longValue();
+            if (type == int.class || type == Integer.class) {
+                return n.intValue();
+            }
+            return n.longValue();
         }
         if ((type == double.class || type == Double.class) && o instanceof Number n) {
             return n.doubleValue();

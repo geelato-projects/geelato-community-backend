@@ -69,6 +69,18 @@ public class DataSourceManager extends AbstractManager {
         return dbType == null ? null : dbType.toString();
     }
 
+    /**
+     * 连接配置只读访问（platform_dev_db_connect 行：db_type/db_hostname_ip/db_port/db_name/db_schema 等），
+     * 供跨库改写等能力定位连接的实例与库名。
+     *
+     * @param connectId 连接 id
+     * @return 配置行副本，未登记返回 null
+     */
+    public Map<String, Object> getDataSourceConfig(String connectId) {
+        Map<String, Object> config = connectId == null ? null : dataSourceConfigMap.get(connectId);
+        return config == null ? null : Map.copyOf(config);
+    }
+
     public void registerDataSource(String key, DataSource dataSource) {
         if (key == null || key.isBlank() || dataSource == null) {
             return;

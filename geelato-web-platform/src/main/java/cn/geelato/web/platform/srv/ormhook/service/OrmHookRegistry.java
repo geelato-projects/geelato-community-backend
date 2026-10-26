@@ -61,7 +61,7 @@ public class OrmHookRegistry {
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
         if (!tableExists()) {
-            log.warn("platform_orm_hook 表不存在（宿主未执行 scaffold init），ORM 钩子特性静止：监听器空转、不加载任何规则");
+            log.warn("platform_orm_hook 表不存在，ORM 钩子特性静止：监听器空转、不加载任何规则");
             return;
         }
         refresh();

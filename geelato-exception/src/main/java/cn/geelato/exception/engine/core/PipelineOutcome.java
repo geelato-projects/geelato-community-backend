@@ -15,8 +15,8 @@ public class PipelineOutcome {
 
     /** SUCCESS / STEP_FAILED / PIPELINE_TIMEOUT / CONTRACT_FATAL。 */
     private String status;
-    /** 契约兜底后的有效命中。 */
-    private List<Map<String, Object>> validHits;
+    /** 契约兜底后的有效命中（bizType 已按规则回填）。 */
+    private List<Hit> validHits;
     /** 契约兜底丢弃明细。 */
     private List<Map<String, Object>> violations;
     private List<Map<String, Object>> steps;

@@ -33,4 +33,12 @@ public class ScriptExecution {
     private final cn.geelato.script.core.IdentitySnapshot identity;
     /** 写通道 dry-run 覆盖（null 用引擎配置 dao.dry-run 缺省 true）。 */
     private final Boolean dryRun;
+    /** 调试模式：经 CDP inspector 挂起执行（start/stop 会话，由 ScriptDebugService 承载，非同步 execute）。 */
+    private final boolean debugMode;
+    /** 调试会话 id（debugMode 时由调用方指定或由引擎分配）。 */
+    private final String debugSessionId;
+    /** 调试会话归属标识（平台用户/会话，供同源代理鉴权；空则回落身份 userId）。 */
+    private final String debugOwner;
+    /** 调试 inspector 端口（null=0 由引擎自动分配空闲端口）。 */
+    private final Integer debugPort;
 }

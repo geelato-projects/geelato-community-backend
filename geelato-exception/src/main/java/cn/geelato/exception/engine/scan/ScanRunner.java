@@ -1,6 +1,7 @@
 package cn.geelato.exception.engine.scan;
 
 import cn.geelato.core.orm.Dao;
+import cn.geelato.exception.engine.core.Hit;
 import cn.geelato.exception.engine.core.PipelineEngine;
 import cn.geelato.exception.engine.core.PipelineOutcome;
 import cn.geelato.exception.engine.core.TriggerMode;
@@ -104,10 +105,12 @@ public class ScanRunner {
     private Map<String, Object> runOneScan(FmsExceptionRule rule) {
         Date startAt = new Date();
         if (!tryLock(rule.getId(), startAt)) {
+            log.info("扫描跳过 ruleCode={}（锁被占用或规则已停用）", rule.getRuleCode());
             return Map.of("ruleCode", rule.getRuleCode(), "status", "SKIPPED_LOCKED");
         }
         try {
             return EngineContextExecutor.withContext(rule.getTenantCode(), () -> {
+                log.info("扫描开始 ruleCode={} version={}", rule.getRuleCode(), rule.getVersion());
                 PipelineOutcome outcome = pipelineEngine.execute(rule, TriggerMode.SCAN, null);
                 SubmitReport report = new SubmitReport();
                 int recovered = 0;
@@ -129,6 +132,14 @@ public class ScanRunner {
                 result.put("suppressedCount", report.getSuppressedCount());
                 result.put("costMs", outcome.getCostMs());
                 result.put("engineVersion", outcome.getEngineVersion());
+                log.info("扫描结束 ruleCode={} status={} candidateCount={} hitCount={} created={} renewed={} recovered={} suppressed={} costMs={}",
+                        rule.getRuleCode(), outcome.getStatus(), outcome.getCandidateCount(),
+                        result.get("hitCount"), report.getInstanceCreated(), report.getInstanceRenewed(),
+                        recovered, report.getSuppressedCount(), outcome.getCostMs());
+                if (!"SUCCESS".equals(outcome.getStatus())) {
+                    log.warn("扫描失败 ruleCode={} status={} error={}", rule.getRuleCode(),
+                            outcome.getStatus(), outcome.getError());
+                }
                 return result;
             });
         } finally {
@@ -137,14 +148,18 @@ public class ScanRunner {
     }
 
     /** diff 恢复：规则在途 source_key 中，本轮命中集合未覆盖的组级关闭。 */
-    private int recoverMissingSources(FmsExceptionRule rule, List<Map<String, Object>> hits) {
+    private int recoverMissingSources(FmsExceptionRule rule, List<Hit> hits) {
         Set<String> currentKeys = HitPolicies.distinctSourceKeys(rule.getRuleCode(), hits);
         Set<String> activeKeys = activeSourceKeysOf(rule.getRuleCode());
         int recovered = 0;
         for (String sourceKey : activeKeys) {
             if (!currentKeys.contains(sourceKey)) {
                 try {
-                    recovered += lifecycle.recoverSourceGroup(rule.getRuleCode(), sourceKey, "扫描 diff：本轮未命中");
+                    int closed = lifecycle.recoverSourceGroup(rule.getRuleCode(), sourceKey, "扫描 diff：本轮未命中");
+                    if (closed > 0) {
+                        log.info("组级恢复 ruleCode={} sourceKey={} closed={}", rule.getRuleCode(), sourceKey, closed);
+                    }
+                    recovered += closed;
                 } catch (Exception e) {
                     log.warn("组级恢复失败 ruleCode={} sourceKey={}: {}", rule.getRuleCode(), sourceKey, e.getMessage());
                 }

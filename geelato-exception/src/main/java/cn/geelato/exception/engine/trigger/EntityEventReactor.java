@@ -83,8 +83,7 @@ public class EntityEventReactor {
                 if (!outcome.getValidHits().isEmpty()) {
                     hitSubmitService.submit(rule, outcome.getValidHits());
                 } else {
-                    String sourceKey = HitPolicies.sourceKeyOf(rule.getRuleCode(),
-                            Map.of("bizType", rule.getBizType() == null ? "" : rule.getBizType(), "bizId", normalizedBizId));
+                    String sourceKey = HitPolicies.sourceKeyOf(rule.getRuleCode(), rule.getBizType(), normalizedBizId);
                     recovered = lifecycle.recoverSourceGroup(rule.getRuleCode(), sourceKey, "变更复评不命中");
                 }
             }

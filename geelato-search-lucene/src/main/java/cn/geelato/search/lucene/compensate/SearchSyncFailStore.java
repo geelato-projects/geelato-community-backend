@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 索引同步失败补偿队列（search_sync_fail 表）。
@@ -29,6 +30,24 @@ public class SearchSyncFailStore {
     public static final String REASON_MISSING_PK = "MISSING_PK";
 
     private final JdbcTemplate jdbcTemplate;
+
+    /** 补偿/对账行 → 记录模型（字段全量映射，供 duePending 与运维视图共用）。 */
+    private static final RowMapper<SyncFailRecord> RECORD_MAPPER = (rs, rowNum) -> {
+        SyncFailRecord r = new SyncFailRecord();
+        r.setId(rs.getString("id"));
+        r.setDomainId(rs.getString("domain_id"));
+        r.setDocId(rs.getString("doc_id"));
+        r.setEntityName(rs.getString("entity_name"));
+        r.setOpType(rs.getString("op_type"));
+        r.setFailReason(rs.getString("fail_reason"));
+        r.setErrorMessage(rs.getString("error_message"));
+        r.setRetryCount(rs.getInt("retry_count"));
+        r.setNextRetryAt(rs.getTimestamp("next_retry_at"));
+        r.setStatus(rs.getString("status"));
+        r.setCreateAt(rs.getTimestamp("create_at"));
+        r.setUpdateAt(rs.getTimestamp("update_at"));
+        return r;
+    };
 
     public SearchSyncFailStore(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -93,16 +112,45 @@ public class SearchSyncFailStore {
         return jdbcTemplate.query(
                 "SELECT * FROM search_sync_fail WHERE status='PENDING' AND next_retry_at <= ?" +
                         " ORDER BY next_retry_at LIMIT " + batchSize,
-                (RowMapper<SyncFailRecord>) (rs, rowNum) -> {
-                    SyncFailRecord r = new SyncFailRecord();
-                    r.id = rs.getString("id");
-                    r.domainId = rs.getString("domain_id");
-                    r.docId = rs.getString("doc_id");
-                    r.entityName = rs.getString("entity_name");
-                    r.opType = rs.getString("op_type");
-                    r.retryCount = rs.getInt("retry_count");
-                    return r;
-                }, Timestamp.valueOf(LocalDateTime.now()));
+                RECORD_MAPPER, Timestamp.valueOf(LocalDateTime.now()));
+    }
+
+    /** 运维视图：按状态（可空=全部）取最近若干条同步失败/补偿记录，按更新时间倒序。 */
+    public List<SyncFailRecord> listRecent(String status, int limit) {
+        int n = Math.max(1, Math.min(limit, 500));
+        if (status == null || status.isBlank()) {
+            return jdbcTemplate.query(
+                    "SELECT * FROM search_sync_fail ORDER BY update_at DESC LIMIT " + n, RECORD_MAPPER);
+        }
+        return jdbcTemplate.query(
+                "SELECT * FROM search_sync_fail WHERE status = ? ORDER BY update_at DESC LIMIT " + n,
+                RECORD_MAPPER, status);
+    }
+
+    /** 运维视图：各域对账水位（search_sync_state）。 */
+    public List<Map<String, Object>> listWatermarks() {
+        return jdbcTemplate.queryForList(
+                "SELECT domain_id, entity_name, watermark, update_at FROM search_sync_state" +
+                        " ORDER BY update_at DESC");
+    }
+
+    /** 运维视图：按域汇总补偿队列 PENDING/DEAD 计数。 */
+    public Map<String, Map<String, Long>> domainFailSummary() {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT domain_id, SUM(status = 'PENDING') AS pending, SUM(status = 'DEAD') AS dead" +
+                        " FROM search_sync_fail GROUP BY domain_id");
+        Map<String, Map<String, Long>> result = new java.util.LinkedHashMap<>();
+        for (Map<String, Object> row : rows) {
+            Map<String, Long> counts = new java.util.LinkedHashMap<>();
+            counts.put("pending", asLong(row.get("pending")));
+            counts.put("dead", asLong(row.get("dead")));
+            result.put(String.valueOf(row.get("domain_id")), counts);
+        }
+        return result;
+    }
+
+    private static long asLong(Object value) {
+        return value == null ? 0 : ((Number) value).longValue();
     }
 
     public void markSuccess(String id) {
@@ -152,6 +200,12 @@ public class SearchSyncFailStore {
         private String docId;
         private String entityName;
         private String opType;
+        private String failReason;
+        private String errorMessage;
         private int retryCount;
+        private Timestamp nextRetryAt;
+        private String status;
+        private Timestamp createAt;
+        private Timestamp updateAt;
     }
 }

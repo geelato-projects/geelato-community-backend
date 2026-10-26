@@ -174,7 +174,6 @@ public final class SaveEventManager {
         }
         for (AfterSaveEventListener l : AFTER_LISTENERS) {
             if (l.enabled(context) && l.supports(context)) {
-                // A2：事务感知监听器——把回调登记到 context，由 Dao 侧在事务提交/回滚点触发
                 if (l instanceof TransactionalAfterSaveEventListener tl) {
                     context.onCommit(() -> safeRunAfterCommit(tl, context));
                     context.onRollback(() -> safeRunAfterRollback(tl, context));

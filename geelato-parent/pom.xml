@@ -55,6 +55,7 @@
         <geelato.svcp.version>0.0.1-SNAPSHOT</geelato.svcp.version>
         <geelato.market.version>0.0.1-SNAPSHOT</geelato.market.version>
         <rapidocr4j.version>1.0.3</rapidocr4j.version>
+        <calcite.version>1.42.0</calcite.version>
     </properties>
 
     <licenses>
@@ -331,6 +332,12 @@
                 <groupId>io.github.hzkitty</groupId>
                 <artifactId>rapidocr4j</artifactId>
                 <version>${rapidocr4j.version}</version>
+            </dependency>
+            <!-- SQL 解析/跨源联邦执行（$gl.sql 跨库改写与跨实例查询） -->
+            <dependency>
+                <groupId>org.apache.calcite</groupId>
+                <artifactId>calcite-core</artifactId>
+                <version>${calcite.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

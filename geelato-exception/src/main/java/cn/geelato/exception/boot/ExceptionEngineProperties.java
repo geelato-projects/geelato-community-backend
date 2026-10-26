@@ -45,6 +45,8 @@ public class ExceptionEngineProperties {
         private long pipelineTimeoutMs = 120_000;
         /** 试运行/启用门禁受限超时毫秒。 */
         private long trialTimeoutMs = 30_000;
+        /** 单步出口大小熔断（JSON 序列化字节数，超限该步失败）。 */
+        private long stepOutputMaxBytes = 2 * 1024 * 1024;
     }
 
     @Getter

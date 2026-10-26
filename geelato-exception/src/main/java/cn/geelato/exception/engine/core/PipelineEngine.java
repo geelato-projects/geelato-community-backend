@@ -18,6 +18,8 @@ import java.util.Map;
  * 判定管道引擎（异常领域编排）：解析规则 steps 并逐步执行 geelato-script 单脚本引擎，
  * 上一步输出注入下一步 $input；三态复用同一条管道——SCAN 全量 / RECHECK 注入 $ctx.bizId 单对象 /
  * TRIAL 受限超时 dry-run。candidateCount = 各步 SQL 行数计数（$gl.dao kit 口径）累计。
+ * 步骤出口统一做 snake→camelCase 归一化与大小熔断；最终返回经 hits 契约兜底，
+ * bizType 脚本返回优先、规则值兜底（回溯坐标 bizType+bizId）。
  */
 @Slf4j
 public class PipelineEngine {
@@ -30,12 +32,15 @@ public class PipelineEngine {
     private final long stepTimeoutMs;
     private final long pipelineTimeoutMs;
     private final long trialTimeoutMs;
+    private final long stepOutputMaxBytes;
 
-    public PipelineEngine(ScriptEngine scriptEngine, long stepTimeoutMs, long pipelineTimeoutMs, long trialTimeoutMs) {
+    public PipelineEngine(ScriptEngine scriptEngine, long stepTimeoutMs, long pipelineTimeoutMs, long trialTimeoutMs,
+                          long stepOutputMaxBytes) {
         this.scriptEngine = scriptEngine;
         this.stepTimeoutMs = stepTimeoutMs;
         this.pipelineTimeoutMs = pipelineTimeoutMs;
         this.trialTimeoutMs = trialTimeoutMs;
+        this.stepOutputMaxBytes = stepOutputMaxBytes;
     }
 
     public PipelineOutcome execute(FmsExceptionRule rule, TriggerMode trigger, String bizId) {
@@ -51,8 +56,10 @@ public class PipelineEngine {
         if (steps.isEmpty()) {
             outcome.setStatus("CONTRACT_FATAL");
             outcome.setError("判定管道为空（pipeline_json.steps）");
+            log.warn("管道无步骤 rule={}", rule.getRuleCode());
             return outcome;
         }
+        log.info("管道开始 rule={} trigger={} bizId={} steps={}", rule.getRuleCode(), trigger.name(), bizId, steps.size());
 
         Map<String, Object> ctx = new LinkedHashMap<>();
         ctx.put("trigger", trigger.name());
@@ -107,20 +114,39 @@ public class PipelineEngine {
                     .build());
             lastResult = result;
             candidateCount += result.getRowCount();
-            outcome.getSteps().add(reportOf(name, lang, result.getStatus(), System.currentTimeMillis() - stepStart,
-                    result.getRowCount(), result.getConsole(),
-                    result.getError() == null ? null : result.getError().getType() + ": " + result.getError().getMessage()));
+            String scriptError = result.getError() == null ? null
+                    : result.getError().getType() + ": " + result.getError().getMessage();
             if (!"SUCCESS".equals(result.getStatus())) {
+                outcome.getSteps().add(reportOf(name, lang, result.getStatus(), System.currentTimeMillis() - stepStart,
+                        result.getRowCount(), result.getConsole(), scriptError));
                 outcome.setStatus("STEP_FAILED");
                 outcome.setCandidateCount(candidateCount);
                 outcome.setCostMs(System.currentTimeMillis() - start);
                 outcome.setEngineVersion(result.getEngineVersion());
                 outcome.setDeprecationWarning(result.getDeprecationWarning());
-                outcome.setError("步骤 " + name + " " + (result.getError() == null ? result.getStatus()
-                        : result.getError().getType() + ": " + result.getError().getMessage()));
+                outcome.setError("步骤 " + name + " " + (scriptError == null ? result.getStatus() : scriptError));
+                log.warn("步骤失败 rule={}/{} status={} error={}", rule.getRuleCode(), name, result.getStatus(),
+                        scriptError == null ? result.getStatus() : scriptError);
                 return outcome;
             }
-            input = result.getValue();
+            Object output = KeyCaseNormalizer.normalize(result.getValue());
+            String outputIssue = checkStepOutput(output);
+            outcome.getSteps().add(reportOf(name, lang, outputIssue == null ? "SUCCESS" : "STEP_FAILED",
+                    System.currentTimeMillis() - stepStart, result.getRowCount(), result.getConsole(),
+                    outputIssue == null ? null : outputIssue));
+            if (outputIssue != null) {
+                outcome.setStatus("STEP_FAILED");
+                outcome.setCandidateCount(candidateCount);
+                outcome.setCostMs(System.currentTimeMillis() - start);
+                outcome.setEngineVersion(result.getEngineVersion());
+                outcome.setDeprecationWarning(result.getDeprecationWarning());
+                outcome.setError("步骤 " + name + " " + outputIssue);
+                log.warn("步骤失败 rule={}/{} error={}", rule.getRuleCode(), name, outputIssue);
+                return outcome;
+            }
+            input = output;
+            log.info("步骤完成 rule={}/{} lang={} costMs={} rows={}", rule.getRuleCode(), name, lang,
+                    System.currentTimeMillis() - stepStart, result.getRowCount());
         }
 
         outcome.setCandidateCount(candidateCount);
@@ -134,12 +160,39 @@ public class PipelineEngine {
             outcome.setStatus("CONTRACT_FATAL");
             outcome.setViolations(check.violations());
             outcome.setError(check.violations().isEmpty() ? "hits 契约失败" : String.valueOf(check.violations().get(0).get("message")));
+            log.warn("hits 契约致命失败 rule={} violations={}", rule.getRuleCode(), check.violations());
             return outcome;
+        }
+        for (int i = 0; i < check.validHits().size(); i++) {
+            Hit hit = check.validHits().get(i);
+            hit.defaultBizType(rule.getBizType());
+            if (hit.getBizType() == null || hit.getBizType().isBlank()) {
+                check.violations().add(Map.of(
+                        "fieldPath", "hits[" + i + "].bizType", "code", "BIZ_TYPE_EMPTY",
+                        "message", "第 " + i + " 条命中 bizType 最终为空（脚本与规则均未提供），回溯坐标缺失"));
+            }
         }
         outcome.setStatus("SUCCESS");
         outcome.setValidHits(check.validHits());
         outcome.setViolations(check.violations());
+        log.info("管道完成 rule={} status=SUCCESS validHits={} violations={} candidateCount={} costMs={}",
+                rule.getRuleCode(), check.validHits().size(), check.violations().size(), candidateCount,
+                System.currentTimeMillis() - start);
         return outcome;
+    }
+
+    /** 步骤出口轻量校验：JSON 可序列化 + 大小熔断（返回 null=通过，否则为失败原因）。 */
+    private String checkStepOutput(Object output) {
+        String json;
+        try {
+            json = MAPPER.writeValueAsString(output);
+        } catch (Exception e) {
+            return "STEP_OUTPUT_NOT_SERIALIZABLE（输出无法 JSON 序列化: " + e.getMessage() + "）";
+        }
+        if (json != null && json.length() > stepOutputMaxBytes) {
+            return "STEP_OUTPUT_OVERSIZE（输出 " + json.length() + " 字节超过上限 " + stepOutputMaxBytes + " 字节）";
+        }
+        return null;
     }
 
     /** 语法预检（不执行），供保存契约门禁。 */

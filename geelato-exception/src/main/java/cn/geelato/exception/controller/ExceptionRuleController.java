@@ -113,6 +113,21 @@ public class ExceptionRuleController {
         }
     }
 
+    /** 多文档 YAML 批量导入（文档以 --- 分隔），逐条返回成败与失败原因。JSON 体 {yaml}。 */
+    @PostMapping("/import-yaml-batch")
+    public ApiResult<List<Map<String, Object>>> importYamlBatch(@RequestBody Map<String, String> body,
+                                                                @RequestParam String appId) {
+        try {
+            String yaml = body == null ? null : body.get("yaml");
+            if (yaml == null || yaml.isBlank()) {
+                return ApiResult.fail(40000, "YAML 内容为空");
+            }
+            return ApiResult.success(ruleService.importYamlBatch(yaml, appId));
+        } catch (IllegalArgumentException e) {
+            return ApiResult.fail(40000, e.getMessage());
+        }
+    }
+
     /** 导出 YAML（归档/迁移）。 */
     @GetMapping(value = "/{id}/export-yaml", produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiResult<Map<String, Object>> exportYaml(@PathVariable String id,

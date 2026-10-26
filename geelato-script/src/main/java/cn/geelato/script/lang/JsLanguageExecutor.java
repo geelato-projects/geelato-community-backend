@@ -35,6 +35,34 @@ public class JsLanguageExecutor implements ScriptLanguageExecutor {
         return ValueUnwrapper.toJavaObject(result);
     }
 
+    /**
+     * 调试专用源码：行号与编辑器 1:1 对齐——IIFE 前缀 {@code (function(){} 内联到首行首列（不占行），
+     * 仅影响第 1 行第 1 列，DevTools 行号 = 编辑器行号（无 ±1 偏移）。
+     * Source 名稳定为 {@code gl-debug://<scriptName>} 以便断点持久。闭合 {@code })} 置于末行新增行，
+     * 不影响用户行号对齐。
+     */
+    public Source debugSource(String content, String scriptName) {
+        String wrapped = "(function(){" + (content == null ? "" : content) + "\n})";
+        try {
+            return Source.newBuilder("js", wrapped, debugSourceName(scriptName)).build();
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("调试脚本源构建失败", e);
+        }
+    }
+
+    /** 调试执行：在已注入 kit/bindings 的 debug Context 上 eval 对齐 Source 并调用（阻塞于断点）。 */
+    public Object executeDebug(Context context, String content, String scriptName) {
+        Value fn = context.eval(debugSource(content, scriptName));
+        Value result = fn.execute();
+        return ValueUnwrapper.toJavaObject(result);
+    }
+
+    /** 调试 Source 名（供面板/代理映射断点，行号恒定）。 */
+    public static String debugSourceName(String scriptName) {
+        String safe = scriptName == null || scriptName.isBlank() ? "script" : scriptName.trim();
+        return "gl-debug://" + safe;
+    }
+
     @Override
     public List<ScriptIssue> parseOnly(Context context, String content, String stepName) {
         List<ScriptIssue> issues = new ArrayList<>();

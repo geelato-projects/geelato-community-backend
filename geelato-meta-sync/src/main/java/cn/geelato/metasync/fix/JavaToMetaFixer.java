@@ -8,11 +8,11 @@ import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.metasync.core.MetaSourceLoader;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.utils.UIDGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -30,6 +30,9 @@ import java.util.List;
 public class JavaToMetaFixer {
 
     private static final Logger log = LoggerFactory.getLogger(JavaToMetaFixer.class);
+
+    /** 补偿写库的创建者/更新者标识（裸 SQL 无 ORM 拦截器，固定为工具身份） */
+    private static final String OPERATOR = "meta-sync";
 
     private final Dao dao;
     private final MetaSourceLoader loader;
@@ -53,9 +56,11 @@ public class JavaToMetaFixer {
 
     /**
      * @param entityName Java 实体的 entityName（= @Entity(name=...) 或类全限定名）
+     * @param appId 应用 id（界面指定，必填）
+     * @param tenantCode 租户编码（界面指定，必填）
      * @param output "sql"=返回INSERT语句（不写库），"db"=写库
      */
-    public FixResult genMeta(String entityName, String output) {
+    public FixResult genMeta(String entityName, String appId, String tenantCode, String output) {
         boolean apply = "db".equalsIgnoreCase(output);
         FixResult result = new FixResult(apply);
         EntityMeta em = loader.getJavaEntityByName(entityName);
@@ -64,8 +69,7 @@ public class JavaToMetaFixer {
             return result;
         }
         JdbcTemplate jdbc = apply ? dao.getJdbcTemplate() : null;
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String now = sdf.format(new Date());
+        java.sql.Timestamp now = new java.sql.Timestamp(new Date().getTime());
 
         TableMeta tm = em.getTableMeta();
         String tableName = tm != null && StringUtils.isNotBlank(tm.getTableName()) ? tm.getTableName() : em.getTableName();
@@ -84,17 +88,19 @@ public class JavaToMetaFixer {
             }
         }
         if (StringUtils.isBlank(tableId)) {
-            // 生成 platform_dev_table 的 INSERT
-            tableId = java.util.UUID.randomUUID().toString().replace("-", "");
-            String title = em.getEntityTitle() == null ? tableName : escape(em.getEntityTitle());
-            String sql = "INSERT INTO platform_dev_table (id, entity_name, table_name, title, " +
-                    "table_type, enable_status, del_status, create_at, update_at) VALUES (" +
-                    "'" + tableId + "', '" + escape(entityName) + "', '" + escape(tableName) + "', '" + title + "', " +
-                    "'entity', " + ColumnDefault.ENABLE_STATUS_VALUE + ", " + ColumnDefault.DEL_STATUS_VALUE + ", " +
-                    "'" + now + "', '" + now + "')";
-            result.previewSql.add(sql);
+            // 生成 platform_dev_table 的 INSERT（雪花 id；参数化，值不拼进 SQL 文本）
+            tableId = String.valueOf(UIDGenerator.generate());
+            String title = em.getEntityTitle() == null ? tableName : em.getEntityTitle();
+            SqlStatement stmt = new SqlStatement(
+                    "INSERT INTO platform_dev_table (id, app_id, entity_name, table_name, title, " +
+                            "table_type, enable_status, del_status, create_at, update_at, tenant_code, creator, creator_name, updater, updater_name) " +
+                            "VALUES (?, ?, ?, ?, ?, 'entity', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    tableId, appId, entityName, tableName, title,
+                    ColumnDefault.ENABLE_STATUS_VALUE, ColumnDefault.DEL_STATUS_VALUE,
+                    now, now, tenantCode, OPERATOR, OPERATOR, OPERATOR, OPERATOR);
+            result.previewSql.add(stmt.toPreview());
             if (apply) {
-                jdbc.execute(sql);
+                jdbc.update(stmt.getSql(), stmt.getParams());
                 result.executed++;
             }
         }
@@ -120,44 +126,29 @@ public class JavaToMetaFixer {
                         continue; // 已存在，跳过
                     }
                 }
-                String id = java.util.UUID.randomUUID().toString().replace("-", "");
+                String id = String.valueOf(UIDGenerator.generate());
                 String fieldName = StringUtils.isNotBlank(fm.getFieldName()) ? fm.getFieldName() : cn.geelato.utils.StringUtils.toCamelCase(colName.toLowerCase());
                 String dataType = cm.getDataType() == null ? "" : cm.getDataType();
-                String title = StringUtils.isNotBlank(cm.getTitle()) ? escape(cm.getTitle()) : colName;
-                StringBuilder sb = new StringBuilder("INSERT INTO platform_dev_column (");
-                sb.append("id, table_id, table_name, field_name, column_name, title, ");
-                sb.append("data_type, is_nullable, column_key, character_maxinum_length, ");
-                sb.append("numeric_precision, numeric_scale, ordinal_position, seq_no, enable_status, del_status, create_at, update_at");
-                sb.append(") VALUES (");
-                sb.append("'").append(id).append("', ");
-                sb.append("'").append(tableId).append("', ");
-                sb.append("'").append(escape(tableName)).append("', ");
-                sb.append("'").append(escape(fieldName)).append("', ");
-                sb.append("'").append(escape(colName)).append("', ");
-                sb.append("'").append(title).append("', ");
-                sb.append("'").append(dataType).append("', ");
-                sb.append(cm.isNullable() ? 1 : 0).append(", ");
-                sb.append(cm.isKey() ? 1 : 0).append(", ");
-                sb.append(cm.getCharMaxLength()).append(", ");
-                sb.append(cm.getNumericPrecision()).append(", ");
-                sb.append(cm.getNumericScale()).append(", ");
-                sb.append(cm.getOrdinalPosition()).append(", ");
-                sb.append(cm.getOrdinalPosition()).append(", ");
-                sb.append(ColumnDefault.ENABLE_STATUS_VALUE).append(", ");
-                sb.append(ColumnDefault.DEL_STATUS_VALUE).append(", ");
-                sb.append("'").append(now).append("', ");
-                sb.append("'").append(now).append("')");
-                result.previewSql.add(sb.toString());
+                String title = StringUtils.isNotBlank(cm.getTitle()) ? cm.getTitle() : colName;
+                SqlStatement stmt = new SqlStatement(
+                        "INSERT INTO platform_dev_column (" +
+                                "id, app_id, table_id, table_name, field_name, column_name, title, " +
+                                "data_type, is_nullable, column_key, character_maxinum_length, " +
+                                "numeric_precision, numeric_scale, ordinal_position, seq_no, enable_status, del_status, create_at, update_at, tenant_code, " +
+                                "creator, creator_name, updater, updater_name" +
+                                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        id, appId, tableId, tableName, fieldName, colName, title,
+                        dataType, cm.isNullable() ? 1 : 0, cm.isKey() ? 1 : 0, cm.getCharMaxLength(),
+                        cm.getNumericPrecision(), cm.getNumericScale(), cm.getOrdinalPosition(), cm.getOrdinalPosition(),
+                        ColumnDefault.ENABLE_STATUS_VALUE, ColumnDefault.DEL_STATUS_VALUE, now, now, tenantCode,
+                        OPERATOR, OPERATOR, OPERATOR, OPERATOR);
+                result.previewSql.add(stmt.toPreview());
                 if (apply) {
-                    jdbc.execute(sb.toString());
+                    jdbc.update(stmt.getSql(), stmt.getParams());
                     result.executed++;
                 }
             }
         }
         return result;
-    }
-
-    private String escape(String s) {
-        return s == null ? "" : s.replace("'", "''");
     }
 }

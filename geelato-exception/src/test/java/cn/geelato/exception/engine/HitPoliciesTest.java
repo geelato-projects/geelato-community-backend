@@ -1,5 +1,6 @@
 package cn.geelato.exception.engine;
 
+import cn.geelato.exception.engine.core.Hit;
 import cn.geelato.exception.engine.hit.HitPolicies;
 import cn.geelato.exception.entity.FmsExceptionRule;
 import cn.geelato.exception.engine.scan.RuleCronCalculator;
@@ -12,23 +13,44 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HitPoliciesTest {
 
     @Test
-    void suppressScopes() {
-        Map<String, Object> hit = Map.of("bizType", "BOL_GRANT", "bizId", "1", "customerId", "C9", "ownerOrgId", "ORG7");
-        assertTrue(HitPolicies.suppressedBy(hit, "BIZ", Set.of("BOL_GRANT|1")));
-        assertFalse(HitPolicies.suppressedBy(hit, "BIZ", Set.of("BOL_GRANT|2")));
-        assertTrue(HitPolicies.suppressedBy(hit, "CUSTOMER", Set.of("C9")));
-        assertTrue(HitPolicies.suppressedBy(hit, "ORG", Set.of("ORG7")));
-        assertFalse(HitPolicies.suppressedBy(hit, "CUSTOMER", Set.of()));
+    void dimensionKeyDefaultsToBizIdAndKeepsFieldName() {
+        Hit hit = Hit.fromMap(Map.of("bizId", "1"));
+        assertEquals("bizId|1", HitPolicies.dimensionKeyOf(hit, null));
+        assertEquals("bizId|1", HitPolicies.dimensionKeyOf(hit, List.of()));
+    }
+
+    @Test
+    void dimensionKeyOfExtrasFieldAndMultiFields() {
+        Hit hit = Hit.fromMap(Map.of("bizId", "1", "customerId", "C9"));
+        assertEquals("customerId|C9", HitPolicies.dimensionKeyOf(hit, List.of("customerId")));
+        assertEquals("bizId|1|customerId|C9",
+                HitPolicies.dimensionKeyOf(hit, List.of("bizId", "customerId")));
+    }
+
+    @Test
+    void dimensionKeyNullOnMissingField() {
+        Hit hit = Hit.fromMap(Map.of("bizId", "1"));
+        assertNull(HitPolicies.dimensionKeyOf(hit, List.of("customerId")));
+    }
+
+    @Test
+    void suppressedByKeySetMembership() {
+        assertTrue(HitPolicies.suppressedBy("bizId|1", Set.of("bizId|1", "bizId|2")));
+        assertFalse(HitPolicies.suppressedBy("bizId|3", Set.of("bizId|1")));
+        assertFalse(HitPolicies.suppressedBy(null, Set.of("bizId|1")));
+        assertFalse(HitPolicies.suppressedBy("bizId|1", Set.of()));
+        assertFalse(HitPolicies.suppressedBy("bizId|1", null));
     }
 
     @Test
     void hitLimitTruncates() {
-        List<Map<String, Object>> hits = List.of(Map.of("a", 1), Map.of("a", 2), Map.of("a", 3));
+        List<Hit> hits = List.of(Hit.fromMap(Map.of("a", 1)), Hit.fromMap(Map.of("a", 2)), Hit.fromMap(Map.of("a", 3)));
         HitPolicies.Overflow unlimited = HitPolicies.applyHitLimit(hits, null);
         assertEquals(3, unlimited.kept().size());
         assertEquals(0, unlimited.dropped());
@@ -49,11 +71,13 @@ class HitPoliciesTest {
     @Test
     void sourceKeysDistinct() {
         String ruleCode = "EXC-BL-005";
-        List<Map<String, Object>> hits = List.of(
-                Map.of("bizType", "B", "bizId", "1"),
-                Map.of("bizType", "B", "bizId", "1"),
-                Map.of("bizType", "B", "bizId", "2"));
-        assertEquals(Set.of("EXC-BL-005|B|1", "EXC-BL-005|B|2"), HitPolicies.distinctSourceKeys(ruleCode, hits));
+        Hit one = Hit.fromMap(Map.of("bizId", "1"));
+        one.defaultBizType("B");
+        Hit two = Hit.fromMap(Map.of("bizId", "1"));
+        two.defaultBizType("B");
+        Hit three = Hit.fromMap(Map.of("bizId", "2"));
+        three.defaultBizType("B");
+        assertEquals(Set.of("EXC-BL-005|B|1", "EXC-BL-005|B|2"), HitPolicies.distinctSourceKeys(ruleCode, List.of(one, two, three)));
     }
 
     @Test

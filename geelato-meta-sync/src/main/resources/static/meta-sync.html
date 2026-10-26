@@ -128,6 +128,10 @@
   <div class="panel">
     <h3>补偿方向（默认 dry-run 预览，确认无误后点执行）</h3>
     <div class="toolbar">
+      <span style="color:#606266;">appId：</span>
+      <input type="text" id="fixAppId" placeholder="必填，应用 id" style="width:180px;">
+      <span style="color:#606266;">tenant_code：</span>
+      <input type="text" id="fixTenantCode" placeholder="必填，租户编码" style="width:160px;">
       <select id="fixType">
         <option value="table-to-meta">物理表 → 实体定义（platform_dev_column）</option>
         <option value="java-to-meta">Java 类 → 实体定义（platform_dev_table/column）</option>
@@ -170,7 +174,13 @@ function api(path){ return fetch(BASE + path).then(r=>r.json()); }
 function apiPost(path, body){
   return fetch(BASE + path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})}).then(r=>r.json());
 }
-function unwrap(r){ return r && r.data !== undefined ? r.data : r; }
+function unwrap(r){
+  // ApiResult 失败时 status=fail / code<0，data 为 null，直接取 data 会空指针并掩盖真实报错，这里抛出 msg 供调用方 catch 提示
+  if(r && (r.status==='fail' || (typeof r.code==='number' && r.code<0))){
+    throw new Error(r.msg || '请求失败');
+  }
+  return r && r.data !== undefined ? r.data : r;
+}
 
 let reports = [];
 
@@ -431,12 +441,23 @@ function renderFixResult(res){
   el.innerHTML = res.previewSql.map(s=>'<div class="sql-item">'+esc(s)+'</div>').join('');
 }
 
+/** 读取补偿写库上下文（appId / tenant_code）：任一为空则弹窗提示并返回 null */
+function readFixCtx(){
+  let appId = (document.getElementById('fixAppId').value || '').trim();
+  let tenantCode = (document.getElementById('fixTenantCode').value || '').trim();
+  if(!appId){ alert('请先指定 appId（应用 id），否则无法生成实体定义'); return null; }
+  if(!tenantCode){ alert('请先指定 tenant_code（租户编码），否则无法生成实体定义'); return null; }
+  return {appId: appId, tenantCode: tenantCode};
+}
+
 function runFixPreview(){
   if(!selectedFixEntity){ alert('请先选择实体'); return; }
+  let ctx = readFixCtx();
+  if(!ctx) return;
   let tableName = selectedFixEntity.tableName;
   let entityName = getCurrentEntityName();
   let fixType = document.getElementById('fixType').value;
-  let body = {tableName: tableName, entityName: entityName, apply: false};
+  let body = {tableName: tableName, entityName: entityName, appId: ctx.appId, tenantCode: ctx.tenantCode, apply: false};
   if(fixType==='java-to-meta'){ body.output='sql'; }
   apiPost('/fix/'+fixType, body).then(res=>{
     renderFixResult(unwrap(res));
@@ -445,11 +466,13 @@ function runFixPreview(){
 
 function runFixApply(){
   if(!selectedFixEntity){ alert('请先选择实体'); return; }
+  let ctx = readFixCtx();
+  if(!ctx) return;
   if(!confirm('确认写库？此操作将修改 platform_dev_table/column 数据。')) return;
   let tableName = selectedFixEntity.tableName;
   let entityName = getCurrentEntityName();
   let fixType = document.getElementById('fixType').value;
-  let body = {tableName: tableName, entityName: entityName, apply: true};
+  let body = {tableName: tableName, entityName: entityName, appId: ctx.appId, tenantCode: ctx.tenantCode, apply: true};
   if(fixType==='java-to-meta'){ body.output='db'; }
   apiPost('/fix/'+fixType, body).then(res=>{
     let data = unwrap(res);

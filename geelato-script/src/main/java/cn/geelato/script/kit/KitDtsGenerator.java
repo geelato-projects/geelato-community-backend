@@ -7,6 +7,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * catalog → TypeScript 声明文件：规则作者把产物放进工程即可在 IDE 中获得 $gl/$kit 的 intellisense。
@@ -37,10 +38,31 @@ public final class KitDtsGenerator {
         }
         for (KitDefinition def : topLevel) {
             out.append("declare const ").append(def.exposeName()).append(": {\n");
-            appendNamespace(out, def, "  ");
+            if (def.isHost()) {
+                appendHostTree(out, def, "  ");
+            } else {
+                appendNamespace(out, def, "  ");
+            }
             out.append("};\n");
         }
         return out.toString();
+    }
+
+    /** 整库注入 kit：$kit.{库别名}.{类简单名}.{方法} 三层嵌套。 */
+    private static void appendHostTree(StringBuilder out, KitDefinition def, String indent) {
+        for (Map.Entry<String, Map<String, List<Method>>> lib : def.getHostTree().entrySet()) {
+            out.append(indent).append("库别名 ").append(lib.getKey()).append('\n');
+            out.append(indent).append(lib.getKey()).append(": {\n");
+            for (Map.Entry<String, List<Method>> cls : lib.getValue().entrySet()) {
+                out.append(indent).append("  ").append(cls.getKey()).append(": {\n");
+                String access = lib.getKey() + "." + cls.getKey() + ".";
+                for (Method m : cls.getValue()) {
+                    appendMethod(out, describeHost(def, access + m.getName()), m.getName(), m, indent + "    ");
+                }
+                out.append(indent).append("  };\n");
+            }
+            out.append(indent).append("};\n");
+        }
     }
 
     private static void appendNamespace(StringBuilder out, KitDefinition def, String indent) {
@@ -53,7 +75,10 @@ public final class KitDtsGenerator {
     }
 
     private static void appendMethod(StringBuilder out, KitDefinition def, Method m, String indent) {
-        GraalFunctionDescription fn = describe(def, m);
+        appendMethod(out, describe(def, m), m.getName(), m, indent);
+    }
+
+    private static void appendMethod(StringBuilder out, GraalFunctionDescription fn, String name, Method m, String indent) {
         out.append(indent).append("/**\n");
         if (fn.getDescription() != null && !fn.getDescription().isBlank()) {
             out.append(indent).append(" * ").append(comment(fn.getDescription())).append('\n');
@@ -62,7 +87,7 @@ public final class KitDtsGenerator {
             out.append(indent).append(" * @example ").append(comment(fn.getExample())).append('\n');
         }
         out.append(indent).append(" */\n");
-        out.append(indent).append(m.getName()).append('(');
+        out.append(indent).append(name).append('(');
         Parameter[] params = m.getParameters();
         for (int i = 0; i < params.length; i++) {
             if (i > 0) {
@@ -74,13 +99,21 @@ public final class KitDtsGenerator {
     }
 
     private static GraalFunctionDescription describe(KitDefinition def, Method m) {
-        GraalFunctionDescription d = new GraalFunctionDescription();
         for (GraalFunctionDescription f : def.describeFunctions()) {
             if (f.getName().equals(m.getName())) {
                 return f;
             }
         }
-        return d;
+        return new GraalFunctionDescription();
+    }
+
+    private static GraalFunctionDescription describeHost(KitDefinition def, String access) {
+        for (GraalFunctionDescription f : def.describeFunctions()) {
+            if (f.getName().equals(access)) {
+                return f;
+            }
+        }
+        return new GraalFunctionDescription();
     }
 
     private static String paramName(Parameter p, int index) {

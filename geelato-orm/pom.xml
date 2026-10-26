@@ -59,6 +59,13 @@
       <scope>compile</scope>
     </dependency>
 
+    <!-- DataSource 装饰器（p6spy 最终 SQL 日志）：随 orm 下沉，所有宿主开箱即得；缺省行为见 P6SpyDefaultsEnvironmentPostProcessor -->
+    <dependency>
+      <groupId>com.github.gavlyukovskiy</groupId>
+      <artifactId>p6spy-spring-boot-starter</artifactId>
+      <version>1.9.2</version>
+    </dependency>
+
     <!-- Spring Boot Test Starter -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

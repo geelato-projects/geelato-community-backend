@@ -5,6 +5,7 @@ import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.search.lucene.config.GeelatoSearchProperties.DomainConfig;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -153,6 +154,47 @@ public class SearchDomainRegistry {
                             "运行期路由/回表将跳过该字段并记原因日志）: {}",
                     domainId, entityName, field);
         }
+    }
+
+    /**
+     * 运行期域结构体检：实体元数据是否就绪、编号字段/外键能否解析。
+     * <p>注册期只做非阻断告警（元数据有加载时序），运行期由运维页按需检查并如实反映。
+     *
+     * @return 问题描述列表；空列表表示结构完整可解析
+     */
+    public List<String> issues(DomainConfig domain) {
+        List<String> issues = new ArrayList<>();
+        EntityMeta em = metaManager.getByEntityName(domain.getMainEntity());
+        if (em == null) {
+            issues.add("主实体元数据不存在: " + domain.getMainEntity());
+        } else {
+            for (String field : domain.getFields()) {
+                if (!em.containsField(field)) {
+                    issues.add("主实体编号字段不存在: " + field);
+                }
+            }
+        }
+        for (DomainConfig.ChildConfig child : domain.getChildren()) {
+            EntityMeta cem = metaManager.getByEntityName(child.getEntity());
+            if (cem == null) {
+                issues.add("子实体元数据不存在: " + child.getEntity());
+                continue;
+            }
+            if (!cem.containsField(child.getFkField())) {
+                issues.add("子实体外键字段不存在: " + child.getEntity() + "." + child.getFkField());
+            }
+            for (String field : child.getFields()) {
+                if (!cem.containsField(field)) {
+                    issues.add("子实体编号字段不存在: " + child.getEntity() + "." + field);
+                }
+            }
+        }
+        for (Map.Entry<String, DomainConfig.RouteEntityConfig> e : domain.getRouteEntities().entrySet()) {
+            if (metaManager.getByEntityName(e.getKey()) == null) {
+                issues.add("路由实体元数据不存在: " + e.getKey());
+            }
+        }
+        return issues;
     }
 
     /** 写事件归属结果。 */

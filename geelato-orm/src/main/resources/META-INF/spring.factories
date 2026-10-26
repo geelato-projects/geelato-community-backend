@@ -2,4 +2,5 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 cn.geelato.orm.config.OrmAutoConfiguration
 
 org.springframework.boot.env.EnvironmentPostProcessor=\
-cn.geelato.datasource.transaction.AtomikosEnvironmentPostProcessor
+cn.geelato.datasource.transaction.AtomikosEnvironmentPostProcessor,\
+cn.geelato.datasource.P6SpyDefaultsEnvironmentPostProcessor

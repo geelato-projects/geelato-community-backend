@@ -1,34 +1,51 @@
 package cn.geelato.exception.engine.hit;
 
+import cn.geelato.exception.engine.core.Hit;
+
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
- * 命中策略纯函数（可离线单测）：抑制维度匹配、熔断截断、恢复冷却判定。
+ * 命中策略纯函数（可离线单测）：抑制维度键拼装与匹配、熔断截断、恢复冷却判定。
  */
 public final class HitPolicies {
 
     private HitPolicies() {
     }
 
-    /** 抑制维度匹配：BIZ=bizType+bizId、CUSTOMER=customerId、ORG=ownerOrgId；缺维度不抑制。 */
-    public static boolean suppressedBy(Map<String, Object> hit, String scope, Set<String> activeKeys) {
-        if (activeKeys == null || activeKeys.isEmpty()) {
-            return false;
+    /** 抑制维度缺省键字段：同一业务对象跨规则遮蔽。 */
+    public static final List<String> DEFAULT_SUPPRESS_KEY_FIELDS = List.of("bizId");
+
+    /**
+     * 维度键拼装：keyFields（缺省 ["bizId"]）逐字段从 hit 取值（契约字段或 extras），
+     * 拼 "field1|v1|field2|v2"（字段名参与防混撞）；任一字段缺值返回 null（缺维度不抑制）。
+     */
+    public static String dimensionKeyOf(Hit hit, List<String> keyFields) {
+        List<String> fields = keyFields == null || keyFields.isEmpty() ? DEFAULT_SUPPRESS_KEY_FIELDS : keyFields;
+        StringBuilder sb = new StringBuilder();
+        for (String field : fields) {
+            Object value = hit.getField(field);
+            if (value == null || String.valueOf(value).isBlank()) {
+                return null;
+            }
+            if (sb.length() > 0) {
+                sb.append('|');
+            }
+            sb.append(field).append('|').append(value);
         }
-        String key = switch (scope == null ? "BIZ" : scope) {
-            case "CUSTOMER" -> str(hit.get("customerId"));
-            case "ORG" -> str(hit.get("ownerOrgId"));
-            default -> str(hit.get("bizType")) + "|" + str(hit.get("bizId"));
-        };
-        return key != null && !key.isBlank() && activeKeys.contains(key);
+        return sb.toString();
+    }
+
+    /** 抑制判定：维度键命中被引用规则的在途键集合。 */
+    public static boolean suppressedBy(String dimensionKey, Set<String> activeKeys) {
+        return dimensionKey != null && activeKeys != null && !activeKeys.isEmpty()
+                && activeKeys.contains(dimensionKey);
     }
 
     /** 熔断：超 hitLimit 截断，AGGREGATE 保留溢出量供聚合通知、SKIP 直接丢弃。 */
-    public static Overflow applyHitLimit(List<Map<String, Object>> hits, Integer hitLimit) {
+    public static Overflow applyHitLimit(List<Hit> hits, Integer hitLimit) {
         if (hitLimit == null || hitLimit <= 0 || hits.size() <= hitLimit) {
             return new Overflow(hits, 0);
         }
@@ -43,22 +60,22 @@ public final class HitPolicies {
         return nowEpochMs - resolvedAtEpochMs < cooldownMinutes * 60_000L;
     }
 
-    public static String sourceKeyOf(String ruleCode, Map<String, Object> hit) {
-        return ruleCode + "|" + str(hit.get("bizType")) + "|" + str(hit.get("bizId"));
+    public static String sourceKeyOf(String ruleCode, Hit hit) {
+        return ruleCode + "|" + hit.getBizType() + "|" + hit.getBizId();
     }
 
-    public static Set<String> distinctSourceKeys(String ruleCode, List<Map<String, Object>> hits) {
+    public static String sourceKeyOf(String ruleCode, String bizType, String bizId) {
+        return ruleCode + "|" + bizType + "|" + bizId;
+    }
+
+    public static Set<String> distinctSourceKeys(String ruleCode, List<Hit> hits) {
         Set<String> keys = new LinkedHashSet<>();
-        for (Map<String, Object> hit : hits) {
+        for (Hit hit : hits) {
             keys.add(sourceKeyOf(ruleCode, hit));
         }
         return keys;
     }
 
-    private static String str(Object v) {
-        return v == null ? null : String.valueOf(v);
-    }
-
-    public record Overflow(List<Map<String, Object>> kept, int dropped) {
+    public record Overflow(List<Hit> kept, int dropped) {
     }
 }

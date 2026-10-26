@@ -440,7 +440,7 @@ public class ExceptionRuleService {
     /**
      * 从 YAML 导入规则（{@code POST /rule/import-yaml}）。
      *
-     * @param yaml 编辑器 RuleDocument 的 YAML 原文
+     * @param yaml 编辑器 RuleDocument 的 YAML 原文（单文档）
      * @return 落库后的规则
      */
     public FmsExceptionRule importYaml(String yaml, String appId) {
@@ -453,7 +453,49 @@ public class ExceptionRuleService {
         if (loaded == null) {
             throw new IllegalArgumentException("YAML 内容为空");
         }
-        JsonNode doc = MAPPER.valueToTree(loaded);
+        return importDocument(MAPPER.valueToTree(loaded), appId);
+    }
+
+    /**
+     * 多文档 YAML 批量导入（{@code POST /rule/import-yaml-batch}，文档以 {@code ---} 分隔）。
+     * 逐条走与单条导入相同的门禁与落库；单条失败不中断整批，结果逐条返回。
+     *
+     * @return 逐条结果 [{ruleCode, ruleName, success, id, version, error}]
+     */
+    public List<Map<String, Object>> importYamlBatch(String yaml, String appId) {
+        List<Object> docs;
+        try {
+            docs = new ArrayList<>();
+            for (Object doc : new Yaml().loadAll(yaml)) {
+                docs.add(doc);
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("YAML 解析失败: " + e.getMessage(), e);
+        }
+        if (docs.isEmpty()) {
+            throw new IllegalArgumentException("YAML 内容为空");
+        }
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (Object doc : docs) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            JsonNode node = MAPPER.valueToTree(doc);
+            row.put("ruleCode", textAt(node, "metadata", "code"));
+            try {
+                FmsExceptionRule saved = importDocument(node, appId);
+                row.put("ruleName", saved.getRuleName());
+                row.put("success", true);
+                row.put("id", saved.getId());
+                row.put("version", saved.getVersion());
+            } catch (Exception e) {
+                row.put("success", false);
+                row.put("error", e.getMessage());
+            }
+            results.add(row);
+        }
+        return results;
+    }
+
+    private FmsExceptionRule importDocument(JsonNode doc, String appId) {
         RuleSaveRequest req = new RuleSaveRequest();
         req.setDocument(doc);
         req.setAppId(appId);

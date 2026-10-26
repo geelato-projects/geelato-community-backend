@@ -37,6 +37,11 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
         </dependency>
+        <!-- SQL 解析与跨源联邦执行（SqlKit 跨库前缀改写 / 跨实例 JdbcSchema 联邦查询） -->
+        <dependency>
+            <groupId>org.apache.calcite</groupId>
+            <artifactId>calcite-core</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.graalvm.polyglot</groupId>
             <artifactId>polyglot</artifactId>
@@ -47,6 +52,14 @@
             <artifactId>js</artifactId>
             <version>25.0.1</version>
             <type>pom</type>
+        </dependency>
+        <!-- wasm 语言组件（optional：不向消费方传递，宿主按需引入并注册 WasmLanguageExecutor） -->
+        <dependency>
+            <groupId>org.graalvm.polyglot</groupId>
+            <artifactId>wasm</artifactId>
+            <version>25.0.1</version>
+            <type>pom</type>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

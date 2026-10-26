@@ -196,29 +196,26 @@ public class MetaSourceLoader {
 
     private void loadMetaSourceSingle(String tableName) {
         try {
-            // 实体定义按 table_name 过滤（platform_dev_table.table_name）
-            String tableSql = String.format(
-                    "select * from platform_dev_table where del_status = %d and table_name = '%s'",
-                    ColumnDefault.DEL_STATUS_VALUE, escape(tableName));
-            List<Map<String, Object>> tableList = jdbc.queryForList(tableSql);
+            // 实体定义按 table_name 过滤（platform_dev_table.table_name），参数化避免拼接注入
+            List<Map<String, Object>> tableList = jdbc.queryForList(
+                    "select * from platform_dev_table where del_status = ? and table_name = ?",
+                    ColumnDefault.DEL_STATUS_VALUE, tableName);
             if (tableList.isEmpty()) {
                 return;
             }
             // 该表的列
             Object tableId = tableList.get(0).get("id");
-            String columnSql;
             List<Map<String, Object>> columns;
             if (tableId != null) {
-                columnSql = String.format(
-                        "select * from platform_dev_column where del_status = %d and table_id = '%s' order by ordinal_position",
+                columns = jdbc.queryForList(
+                        "select * from platform_dev_column where del_status = ? and table_id = ? order by ordinal_position",
                         ColumnDefault.DEL_STATUS_VALUE, tableId.toString());
             } else {
-                columnSql = String.format(
-                        "select * from platform_dev_column where del_status = %d order by ordinal_position",
-                        ColumnDefault.DEL_STATUS_VALUE);
                 // 过滤会少，下面 buildMetaSource 按 table_id 关联，单表场景全量也能工作
+                columns = jdbc.queryForList(
+                        "select * from platform_dev_column where del_status = ? order by ordinal_position",
+                        ColumnDefault.DEL_STATUS_VALUE);
             }
-            columns = jdbc.queryForList(columnSql);
             buildMetaSource(tableList, columns);
         } catch (Exception e) {
             log.warn("装载单实体定义（{}）失败：{}", tableName, e.getMessage());
@@ -382,9 +379,5 @@ public class MetaSourceLoader {
         if (!loaded) {
             load();
         }
-    }
-
-    private static String escape(String s) {
-        return s == null ? "" : s.replace("'", "''");
     }
 }

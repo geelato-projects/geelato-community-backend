@@ -22,7 +22,5 @@ public class PlatformFluentSaveFieldValueFiller implements FluentSaveFieldValueF
         log.info("Platform Fluent save field filler applying defaults. entityName={}, commandType={}",
                 context.getEntityName(), context.getCommandType());
         support.applyFluentDefaults(context);
-        log.info("Platform Fluent save field filler completed defaults. entityName={}, commandType={}",
-                context.getEntityName(), context.getCommandType());
     }
 }

@@ -146,11 +146,21 @@ public class GraalManager extends AbstractManager {
 
     /**
      * 对单个包合并扫描 @GraalService 与 @GraalVariable（单趟 classpath 遍历）。
+     * geelato-script SDK 及其消费方 kit（经实例级 KitRegistry 注册挂载、部分为 scoped
+     * 构造无无参构造器）按包前缀排除，避免误入全局注册表（同名覆盖或实例化失败）。
      */
+    private static final List<String> SDK_KIT_PACKAGE_PREFIXES = List.of(
+            "cn.geelato.script.",
+            "cn.geelato.exception.engine.kit.",
+            "cn.geelato.alert.engine.");
+
     private void initGraalContextScan(String packageName) {
         log.info("开始从包{}中扫描 GraalService/GraalVariable...", packageName);
         List<Class<?>> classes = AnnotatedClassScanner.scan(packageName, GraalService.class, GraalVariable.class);
         for (Class<?> clazz : classes) {
+            if (SDK_KIT_PACKAGE_PREFIXES.stream().anyMatch(p -> clazz.getName().startsWith(p))) {
+                continue;
+            }
             boolean isService = clazz.isAnnotationPresent(GraalService.class);
             boolean isVariable = clazz.isAnnotationPresent(GraalVariable.class);
             try {

@@ -2,15 +2,18 @@ package cn.geelato.search.lucene.sync;
 
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
+import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.search.api.SearchDocument;
 import cn.geelato.search.lucene.config.GeelatoSearchProperties.DomainConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * 回表加载器：按域配置读取主行 + 子实体全部行，组装完整文档。
@@ -31,6 +34,38 @@ public class DocumentLoader {
 
     public DocumentLoader(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+    }
+
+    /**
+     * 按实体归属数据源执行查询：解析实体 connectId 并临时切换 {@link DynamicDataSourceHolder}，
+     * 与平台 ORM（DataSourceInterceptor）路由口径一致——回表不依赖手写 schema 前缀，
+     * 主/子/reindex/对账全部走实体真实归属库，口径统一。解析不到归属库时原样执行（回退默认源）。
+     */
+    private <T> T onDataSource(String entityName, Supplier<T> action) {
+        String connectId = metaManager.resolveConnectId(entityName);
+        if (connectId == null || connectId.isBlank()) {
+            return action.get();
+        }
+        String previous = DynamicDataSourceHolder.getDataSourceKey();
+        DynamicDataSourceHolder.setDataSourceKey(connectId);
+        try {
+            return action.get();
+        } finally {
+            if (previous != null) {
+                DynamicDataSourceHolder.setDataSourceKey(previous);
+            } else {
+                DynamicDataSourceHolder.clearDataSourceKey();
+            }
+        }
+    }
+
+    /**
+     * 目标库当前时间（对账水位用）：水位须与 {@code update_at} 同一时钟域，
+     * 多库部署下应用时钟与各业务库时钟可能存在整点偏差，不能以应用 {@code now()} 作基准。
+     */
+    public Timestamp currentDbTime(String entityName) {
+        return onDataSource(entityName,
+                () -> jdbcTemplate.queryForObject("SELECT CURRENT_TIMESTAMP", Timestamp.class));
     }
 
     /**
@@ -90,9 +125,9 @@ public class DocumentLoader {
         for (String field : domain.getFields()) {
             selectCols.add(em.getColumnName(field));
         }
-        String sql = "SELECT " + String.join(",", selectCols) + " FROM ob." + em.getTableName()
+        String sql = "SELECT " + String.join(",", selectCols) + " FROM " + em.getTableName()
                 + " WHERE " + pkCol + " IN (" + placeholders(docIds.size()) + ")";
-        return jdbcTemplate.queryForList(sql, docIds.toArray());
+        return onDataSource(domain.getMainEntity(), () -> jdbcTemplate.queryForList(sql, docIds.toArray()));
     }
 
     private void populateFromMainRow(SearchDocument doc, DomainConfig domain, Map<String, Object> row) {
@@ -119,7 +154,9 @@ public class DocumentLoader {
         List<String> docIds = new ArrayList<>(docs.keySet());
         String sql = "SELECT " + String.join(",", selectCols) + " FROM " + cem.getTableName()
                 + " WHERE " + fkCol + " IN (" + placeholders(docIds.size()) + ")";
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, docIds.toArray());
+        Object[] args = docIds.toArray();
+        List<Map<String, Object>> rows =
+                onDataSource(child.getEntity(), () -> jdbcTemplate.queryForList(sql, args));
         for (Map<String, Object> row : rows) {
             SearchDocument doc = docs.get(String.valueOf(row.get(fkCol)));
             if (doc == null) {
@@ -156,9 +193,9 @@ public class DocumentLoader {
         EntityMeta cem = metaManager.getByEntityName(child.getEntity());
         String childPkCol = cem.getColumnName("id");
         String fkCol = cem.getColumnName(child.getFkField());
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT " + fkCol + " FROM " + cem.getTableName() + " WHERE " + childPkCol + " = ?",
-                childPkValue);
+        String sql = "SELECT " + fkCol + " FROM " + cem.getTableName() + " WHERE " + childPkCol + " = ?";
+        List<Map<String, Object>> rows =
+                onDataSource(child.getEntity(), () -> jdbcTemplate.queryForList(sql, childPkValue));
         if (rows.isEmpty()) {
             return null;
         }
@@ -170,14 +207,15 @@ public class DocumentLoader {
     public List<String> scanIds(DomainConfig domain, String afterId, int limit) {
         EntityMeta em = metaManager.getByEntityName(domain.getMainEntity());
         String pkCol = em.getColumnName(domain.getPkField());
-        String sql = "SELECT " + pkCol + " FROM " + "ob."+ em.getTableName();
+        String sql = "SELECT " + pkCol + " FROM " + em.getTableName();
         if (afterId != null) {
-            sql += " WHERE " + pkCol + " > ?";
-            sql += " ORDER BY " + pkCol + " LIMIT " + limit;
-            return jdbcTemplate.queryForList(sql, String.class, afterId);
+            String scoped = sql + " WHERE " + pkCol + " > ? ORDER BY " + pkCol + " LIMIT " + limit;
+            return onDataSource(domain.getMainEntity(),
+                    () -> jdbcTemplate.queryForList(scoped, String.class, afterId));
         }
-        sql += " ORDER BY " + pkCol + " LIMIT " + limit;
-        return jdbcTemplate.queryForList(sql, String.class);
+        String scoped = sql + " ORDER BY " + pkCol + " LIMIT " + limit;
+        return onDataSource(domain.getMainEntity(),
+                () -> jdbcTemplate.queryForList(scoped, String.class));
     }
 
     /**
@@ -193,14 +231,16 @@ public class DocumentLoader {
         String sql = "SELECT " + select + " FROM " + em.getTableName()
                 + " WHERE " + updateAtCol + " >= ? AND " + pkCol + " > ?"
                 + " ORDER BY " + pkCol + " LIMIT " + limit;
-        return jdbcTemplate.queryForList(sql, String.class, watermark, afterId == null ? "" : afterId);
+        Object afterValue = afterId == null ? "" : afterId;
+        return onDataSource(entityName,
+                () -> jdbcTemplate.queryForList(sql, String.class, watermark, afterValue));
     }
 
     /** 主表可见行数（对账 count 比对用，不滤软删——文档包含软删行并靠 delStatus 过滤）。 */
     public long countMainRows(DomainConfig domain) {
         EntityMeta em = metaManager.getByEntityName(domain.getMainEntity());
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM " + em.getTableName(), Long.class);
+        String sql = "SELECT COUNT(*) FROM " + em.getTableName();
+        Long count = onDataSource(domain.getMainEntity(), () -> jdbcTemplate.queryForObject(sql, Long.class));
         return count == null ? 0 : count;
     }
 
@@ -215,7 +255,8 @@ public class DocumentLoader {
         }
         String sql = "SELECT " + String.join(",", selectCols) + " FROM "
                 + cem.getTableName() + " WHERE " + fkCol + " = ?";
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, mainFkValue);
+        List<Map<String, Object>> rows =
+                onDataSource(child.getEntity(), () -> jdbcTemplate.queryForList(sql, mainFkValue));
         for (Map<String, Object> row : rows) {
             for (String field : child.getFields()) {
                 String value = asString(row.get(columnKey(cem, field)));

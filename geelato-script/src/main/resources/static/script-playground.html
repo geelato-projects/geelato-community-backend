@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Playground</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif; font-size: 14px; color: #1d2129; background: #f5f5f5; }
+        .header { background: #1d2129; color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .desc { font-size: 12px; color: #86909c; margin-left: 12px; }
+        .tabs { background: #fff; border-bottom: 1px solid #e5e6eb; padding: 0 20px; display: flex; gap: 4px; }
+        .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: #4e5969; font-size: 14px; }
+        .tab.active { color: #165dff; border-bottom-color: #165dff; font-weight: 500; }
+        .content { padding: 16px 20px; }
+        .hidden { display: none; }
+
+        /* 调试台三栏布局 */
+        .playground-grid { display: grid; grid-template-columns: 280px 1.2fr 1fr; gap: 12px; height: calc(100vh - 120px); }
+        .panel { background: #fff; border: 1px solid #e5e6eb; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+        .panel-header { padding: 10px 12px; border-bottom: 1px solid #e5e6eb; font-weight: 600; font-size: 13px; background: #fafafa; display: flex; align-items: center; justify-content: space-between; }
+        .panel-body { flex: 1; overflow: auto; padding: 8px; }
+
+        /* Kit 目录 */
+        .kit-group { margin-bottom: 6px; }
+        .kit-group-header { padding: 6px 6px; font-weight: 600; font-size: 12px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; gap: 6px; }
+        .kit-group-header:hover { background: #f2f3f5; }
+        .kit-group-header .arrow { color: #86909c; font-size: 10px; transition: transform .15s; display: inline-block; }
+        .kit-group-header.open .arrow { transform: rotate(90deg); }
+        .kit-group-header .kit-ns { font-family: 'JetBrains Mono', Consolas, monospace; color: #165dff; }
+        .kit-fns { display: none; padding-left: 10px; }
+        .kit-fns.open { display: block; }
+        .kit-fn { padding: 4px 6px; border-radius: 3px; font-size: 12px; cursor: pointer; }
+        .kit-fn:hover { background: #f2f3f5; }
+        .kit-fn .fn-name { font-family: 'JetBrains Mono', Consolas, monospace; color: #1d2129; }
+        .kit-fn .fn-desc { font-size: 11px; color: #86909c; margin-top: 1px; }
+        .kit-example { margin: 2px 0 6px; padding: 5px 8px; background: #f7f8fa; border-left: 2px solid #165dff; border-radius: 3px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; cursor: pointer; color: #4e5969; }
+        .kit-example:hover { background: #eef3ff; color: #165dff; }
+
+        /* 编辑器与表单 */
+        .editor-toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border-bottom: 1px solid #e5e6eb; align-items: center; }
+        .editor-toolbar label { font-size: 11px; color: #86909c; }
+        .editor-toolbar select, .editor-toolbar input { padding: 3px 6px; border: 1px solid #c9cdd4; border-radius: 4px; font-size: 12px; background: #fff; color: #4e5969; }
+        .editor-toolbar input { width: 90px; }
+        .script-textarea { width: 100%; flex: 1; border: none; outline: none; padding: 10px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; line-height: 1.6; resize: none; background: #fafafa; min-height: 160px; }
+        .params-area { border-top: 1px solid #e5e6eb; padding: 6px 8px; }
+        .params-area .params-label { font-size: 11px; color: #86909c; margin-bottom: 3px; display: flex; justify-content: space-between; }
+        .params-area textarea, details.advanced textarea { width: 100%; height: 54px; border: 1px solid #e5e6eb; border-radius: 4px; padding: 6px 8px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; resize: vertical; outline: none; }
+        .params-area textarea:focus, details.advanced textarea:focus { border-color: #165dff; }
+        .input-error { color: #f53f3f; font-size: 11px; margin-top: 2px; }
+        details.advanced { border-top: 1px solid #e5e6eb; padding: 6px 8px; }
+        details.advanced summary { font-size: 11px; color: #86909c; cursor: pointer; user-select: none; }
+        .editor-actions { border-top: 1px solid #e5e6eb; padding: 8px; display: flex; gap: 8px; align-items: center; }
+        .run-state { font-size: 12px; color: #86909c; }
+
+        /* 按钮 */
+        button { padding: 5px 14px; border: 1px solid #c9cdd4; border-radius: 4px; background: #fff; color: #4e5969; cursor: pointer; font-size: 12px; }
+        button:hover { border-color: #165dff; color: #165dff; }
+        button.primary { background: #165dff; color: #fff; border-color: #165dff; }
+        button.primary:hover { background: #4080ff; }
+        button.sm { padding: 3px 10px; font-size: 11px; }
+        button.danger { border-color: #f53f3f; color: #f53f3f; }
+        button:disabled { opacity: .5; cursor: not-allowed; }
+
+        /* 结果区 */
+        .result-tabs { display: flex; border-bottom: 1px solid #e5e6eb; }
+        .result-tab { padding: 8px 14px; cursor: pointer; font-size: 12px; color: #4e5969; border-bottom: 2px solid transparent; }
+        .result-tab.active { color: #165dff; border-bottom-color: #165dff; }
+        .result-summary { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; align-items: center; }
+        .badge { font-size: 11px; padding: 2px 10px; border-radius: 10px; color: #fff; font-weight: 600; }
+        .badge.SUCCESS { background: #00b42a; }
+        .badge.ERROR { background: #f53f3f; }
+        .badge.TIMEOUT { background: #ff7d00; }
+        .meta-item { font-size: 11px; color: #86909c; font-family: 'JetBrains Mono', Consolas, monospace; }
+        .result-section { margin-bottom: 10px; }
+        .result-section-title { font-size: 12px; font-weight: 600; color: #4e5969; margin: 8px 0 4px; border-left: 3px solid #165dff; padding-left: 8px; }
+        .result-section-title.err { border-left-color: #f53f3f; }
+        .code-block { position: relative; background: #f7f8fa; padding: 10px; border-radius: 4px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; line-height: 1.6; margin: 4px 0; max-height: 300px; overflow: auto; }
+        .copy-btn { position: absolute; top: 6px; right: 6px; padding: 2px 8px; font-size: 11px; line-height: 1.4; }
+        .console-line { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; padding: 3px 8px; background: #f7f8fa; border-radius: 3px; margin-bottom: 3px; white-space: pre-wrap; word-break: break-all; }
+        table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        table.data-table th { background: #f7f8fa; padding: 6px 8px; text-align: left; border-bottom: 1px solid #e5e6eb; font-weight: 600; }
+        table.data-table td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+        td.mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 11px; }
+        .stack-line { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 11px; color: #86909c; padding: 1px 0 1px 12px; white-space: pre-wrap; word-break: break-all; }
+        .empty { text-align: center; color: #c9cdd4; padding: 40px 0; font-size: 13px; }
+        .issue-line { font-size: 12px; padding: 4px 8px; border-radius: 3px; margin-bottom: 3px; }
+        .issue-line.pass { background: #f2fff4; border-left: 3px solid #00b42a; color: #00b42a; }
+        .issue-line.fail { background: #fff7f0; border-left: 3px solid #f53f3f; }
+        .issue-line .loc { color: #86909c; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 11px; margin-left: 6px; }
+
+        /* 调试会话 Tab */
+        .debug-wrap { max-width: 860px; }
+        .debug-tip { background: #fff; border: 1px solid #e5e6eb; border-radius: 4px; padding: 12px 16px; font-size: 13px; color: #4e5969; line-height: 1.8; margin-bottom: 12px; }
+        .debug-tip code { font-family: 'JetBrains Mono', Consolas, monospace; background: #f7f8fa; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+        .debug-card { background: #fff; border: 1px solid #e5e6eb; border-radius: 4px; padding: 12px 16px; margin-bottom: 12px; }
+        .debug-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .kv-row { display: flex; gap: 10px; font-size: 12px; padding: 3px 0; align-items: baseline; }
+        .kv-row .k { color: #86909c; min-width: 90px; }
+        .kv-row .v { font-family: 'JetBrains Mono', Consolas, monospace; word-break: break-all; }
+        .state-badge { font-size: 11px; padding: 1px 10px; border-radius: 10px; font-weight: 600; }
+        .state-badge.WAITING { background: #fff7e8; color: #ff7d00; }
+        .state-badge.RUNNING { background: #e8ffea; color: #00b42a; }
+        .state-badge.EXITED { background: #f2f3f5; color: #86909c; }
+        .state-badge.STOPPED { background: #ffece8; color: #f53f3f; }
+        .loading { color: #165dff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display:flex;align-items:center;">
+            <h1>Script Playground</h1>
+            <span class="desc">geelato-script 脚本引擎在线调试台（执行 / 预检 / Kit 目录 / 调试会话）</span>
+        </div>
+        <div style="font-size:12px;color:#86909c;">写操作默认 dry-run（事务内回滚），由 geelato.script.engine.dao.dry-run 配置控制</div>
+    </div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('playground')">调试台</div>
+        <div class="tab" onclick="switchTab('debug')">调试会话</div>
+    </div>
+
+    <!-- ==================== Tab1: 调试台 ==================== -->
+    <div id="tab-playground" class="content">
+        <div class="playground-grid">
+            <!-- 左栏：Kit 目录 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Kit 目录</span>
+                    <button class="sm" onclick="loadCatalog()">刷新</button>
+                </div>
+                <div class="panel-body" id="kitPanel"><div class="empty loading">加载中...</div></div>
+            </div>
+
+            <!-- 中栏：编辑器 -->
+            <div class="panel">
+                <div class="panel-header"><span>脚本</span></div>
+                <div class="editor-toolbar">
+                    <label>语言</label>
+                    <select id="lang">
+                        <option value="js">js</option>
+                        <option value="python">python（需宿主注册）</option>
+                    </select>
+                    <label>引擎版本</label>
+                    <select id="engineVersion"><option value="">默认</option></select>
+                    <label>scriptName</label>
+                    <input id="scriptName" placeholder="可选">
+                    <label>profileId</label>
+                    <input id="profileId" placeholder="default">
+                    <label>timeoutMs</label>
+                    <input id="timeoutMs" type="number" min="1" placeholder="默认 30000">
+                </div>
+                <textarea class="script-textarea" id="scriptContent" spellcheck="false" placeholder="// JS：return 的值即执行结果；可用 $params / $env / console.log / $gl.sql / $gl.mql / $gl.http / $gl.encrypt / $gl.ctx / $gl.parameter"></textarea>
+                <div class="params-area">
+                    <div class="params-label"><span>$params（JSON，注入为 JS 对象）</span><span id="paramsErr" class="input-error"></span></div>
+                    <textarea id="paramsInput" spellcheck="false" placeholder='{"days": 1}'></textarea>
+                </div>
+                <details class="advanced">
+                    <summary>bindings（高级，JSON，受 profile.variables 白名单过滤）</summary>
+                    <div class="params-label" style="margin-top:6px;"><span id="bindingsErr" class="input-error"></span></div>
+                    <textarea id="bindingsInput" spellcheck="false" placeholder="{}"></textarea>
+                </details>
+                <div class="editor-actions">
+                    <button onclick="doParse()">语法检查</button>
+                    <button class="primary" id="execBtn" onclick="doExecute()">执行</button>
+                    <span class="run-state" id="runState"></span>
+                </div>
+            </div>
+
+            <!-- 右栏：结果 -->
+            <div class="panel">
+                <div class="result-tabs">
+                    <div class="result-tab active" onclick="switchResultTab('result')">结果</div>
+                    <div class="result-tab" onclick="switchResultTab('console')">控制台</div>
+                    <div class="result-tab" onclick="switchResultTab('trace')">踪迹</div>
+                </div>
+                <div class="panel-body">
+                    <div id="rtab-result">
+                        <div class="empty">执行后展示结果</div>
+                    </div>
+                    <div id="rtab-console" class="hidden">
+                        <div class="empty">暂无控制台输出</div>
+                    </div>
+                    <div id="rtab-trace" class="hidden">
+                        <div class="empty">暂无 $gl 调用踪迹</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== Tab2: 调试会话 ==================== -->
+    <div id="tab-debug" class="content hidden">
+        <div class="debug-wrap">
+            <div class="debug-tip">
+                调试会话基于 GraalJS CDP inspector，<b>仅支持 js</b>。启动后用当前「调试台」中的脚本与参数创建会话，
+                在本机 Chrome 打开 <code>chrome://inspect</code> → Configure 添加下方 ws 地址即可连上 DevTools 断点调试。
+                写操作同样在 dry-run 事务内执行。
+            </div>
+            <div class="debug-card">
+                <h3>会话操作</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button class="primary" id="debugStartBtn" onclick="debugStart()">以当前脚本启动调试会话</button>
+                    <button class="danger" id="debugStopBtn" onclick="debugStop()" disabled>停止</button>
+                    <span class="run-state" id="debugState"></span>
+                </div>
+            </div>
+            <div class="debug-card hidden" id="debugInfoCard">
+                <h3>会话信息</h3>
+                <div id="debugInfoBody"></div>
+            </div>
+            <div class="debug-card hidden" id="debugStatusCard">
+                <h3>会话状态 <span id="debugPollState" class="run-state"></span></h3>
+                <div id="debugStatusBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        'use strict';
+
+        /* ==================== 通用 ==================== */
+
+        async function api(method, url, body) {
+            const opts = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body !== undefined) opts.body = JSON.stringify(body);
+            const resp = await fetch(url, opts);
+            let data = null;
+            try { data = await resp.json(); } catch (e) { /* 非 JSON 响应 */ }
+            if (!resp.ok) {
+                throw new Error((data && (data.error || data.message)) || (resp.status + ' ' + resp.statusText));
+            }
+            return data;
+        }
+
+        function el(id) { return document.getElementById(id); }
+        function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function fmtMs(n) { return (n === undefined || n === null) ? '-' : n + 'ms'; }
+
+        async function copyText(text, btn) {
+            try { await navigator.clipboard.writeText(text); } catch (e) {
+                const ta = document.createElement('textarea');
+                ta.value = text; document.body.appendChild(ta); ta.select();
+                document.execCommand('copy'); document.body.removeChild(ta);
+            }
+            if (btn) { const old = btn.textContent; btn.textContent = '已复制'; setTimeout(() => btn.textContent = old, 1200); }
+        }
+
+        function codeBlock(text) {
+            const idx = text === undefined || text === null ? '' : (typeof text === 'string' ? text : JSON.stringify(text, null, 2));
+            return '<div class="code-block-wrap" style="position:relative;">' +
+                '<div class="code-block">' + esc(idx) + '</div>' +
+                '<button class="copy-btn sm" onclick="copyText(this.previousElementSibling.textContent, this)">复制</button></div>';
+        }
+
+        /* ==================== Tab 切换 ==================== */
+
+        function switchTab(name) {
+            document.querySelectorAll('.tabs .tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (name === 'playground')));
+            el('tab-playground').classList.toggle('hidden', name !== 'playground');
+            el('tab-debug').classList.toggle('hidden', name !== 'debug');
+        }
+
+        function switchResultTab(name) {
+            document.querySelectorAll('.result-tabs .result-tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (name === 'result')));
+            ['result', 'console', 'trace'].forEach(n => el('rtab-' + n).classList.toggle('hidden', n !== name));
+        }
+
+        /* ==================== Kit 目录 ==================== */
+
+        async function loadCatalog() {
+            const panel = el('kitPanel');
+            try {
+                const list = await api('GET', '/api/script/catalog');
+                if (!Array.isArray(list) || list.length === 0) {
+                    panel.innerHTML = '<div class="empty">无 Kit 注册</div>';
+                    return;
+                }
+                panel.innerHTML = list.map((svc, i) => {
+                    const fns = (svc.functions || []).map(f =>
+                        '<div class="kit-fn" onclick="toggleFn(this)">' +
+                        '<div class="fn-name">$gl.' + esc(svc.serviceName) + '.' + esc(f.name) + '()</div>' +
+                        (f.description ? '<div class="fn-desc">' + esc(f.description) + '</div>' : '') +
+                        (f.example ? '<div class="kit-example hidden" title="点击插入编辑器" onclick="insertSnippet(event, this)">' + esc(f.example) + '</div>' : '') +
+                        '</div>').join('');
+                    return '<div class="kit-group">' +
+                        '<div class="kit-group-header' + (i === 0 ? ' open' : '') + '" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')">' +
+                        '<span class="arrow">▶</span><span class="kit-ns">$gl.' + esc(svc.serviceName) + '</span>' +
+                        (svc.description ? '<span style="font-weight:400;font-size:11px;color:#86909c;">— ' + esc(svc.description) + '</span>' : '') +
+                        '</div><div class="kit-fns' + (i === 0 ? ' open' : '') + '">' + fns + '</div></div>';
+                }).join('');
+            } catch (e) {
+                panel.innerHTML = '<div class="empty" style="color:#f53f3f;">加载失败：' + esc(e.message) + '</div>';
+            }
+        }
+
+        function toggleFn(fnEl) { fnEl.querySelector('.kit-example')?.classList.toggle('hidden'); }
+
+        function insertSnippet(ev, exampleEl) {
+            ev.stopPropagation();
+            const ta = el('scriptContent');
+            const text = exampleEl.textContent;
+            const pos = ta.selectionStart || ta.value.length;
+            const before = ta.value.slice(0, pos);
+            const after = ta.value.slice(ta.selectionEnd || pos);
+            const pad = (before && !before.endsWith('\n')) ? '\n' : '';
+            ta.value = before + pad + text + after;
+            const cursor = (before + pad + text).length;
+            ta.focus(); ta.setSelectionRange(cursor, cursor);
+            saveDraft();
+        }
+
+        /* ==================== 引擎版本 ==================== */
+
+        async function loadVersions() {
+            const sel = el('engineVersion');
+            try {
+                const list = await api('GET', '/api/script/versions');
+                sel.innerHTML = '<option value="">默认</option>' + (Array.isArray(list) ? list : []).map(v => {
+                    const label = v.id + (v.status && v.status !== 'CURRENT' ? '（' + v.status + '）' : '');
+                    return '<option value="' + esc(v.id) + '">' + esc(label) + '</option>';
+                }).join('');
+            } catch (e) {
+                sel.innerHTML = '<option value="">默认（加载失败）</option>';
+            }
+        }
+
+        /* ==================== 输入收集 ==================== */
+
+        function parseJsonArea(textId, errId, label) {
+            const text = el(textId).value.trim();
+            el(errId).textContent = '';
+            if (!text) return undefined;
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                el(errId).textContent = label + ' JSON 解析失败：' + e.message;
+                return null;
+            }
+        }
+
+        function buildBody() {
+            const body = {
+                lang: el('lang').value || 'js',
+                content: el('scriptContent').value,
+            };
+            const scriptName = el('scriptName').value.trim();
+            if (scriptName) body.scriptName = scriptName;
+            const engineVersion = el('engineVersion').value;
+            if (engineVersion) body.engineVersion = engineVersion;
+            const profileId = el('profileId').value.trim();
+            if (profileId) body.profileId = profileId;
+            const timeoutMs = parseInt(el('timeoutMs').value, 10);
+            if (!isNaN(timeoutMs) && timeoutMs > 0) body.timeoutMs = timeoutMs;
+            const params = parseJsonArea('paramsInput', 'paramsErr', '$params');
+            if (params === null) return null;
+            if (params !== undefined) body.params = params;
+            const bindings = parseJsonArea('bindingsInput', 'bindingsErr', 'bindings');
+            if (bindings === null) return null;
+            if (bindings !== undefined) body.bindings = bindings;
+            return body;
+        }
+
+        /* ==================== 语法检查 ==================== */
+
+        async function doParse() {
+            const body = buildBody();
+            if (body === null) return;
+            if (!body.content) { el('runState').textContent = '脚本内容为空'; return; }
+            el('runState').textContent = '检查中...';
+            try {
+                const issues = await api('POST', '/api/script/parse', {
+                    lang: body.lang, content: body.content, engineVersion: body.engineVersion,
+                });
+                const box = el('rtab-result');
+                switchResultTab('result');
+                if (Array.isArray(issues) && issues.length > 0) {
+                    box.innerHTML = '<div class="result-section-title err">语法检查：' + issues.length + ' 个问题</div>' +
+                        issues.map(i => '<div class="issue-line fail">' + esc(i.message || i.code) +
+                            (i.line ? '<span class="loc">行 ' + i.line + (i.col ? ':' + i.col : '') + '</span>' : '') + '</div>').join('');
+                } else {
+                    box.innerHTML = '<div class="issue-line pass">语法检查通过</div>';
+                }
+                el('runState').textContent = '';
+            } catch (e) {
+                el('runState').textContent = '';
+                el('rtab-result').innerHTML = '<div class="issue-line fail">' + esc(e.message) + '</div>';
+                switchResultTab('result');
+            }
+        }
+
+        /* ==================== 执行 ==================== */
+
+        async function doExecute() {
+            const body = buildBody();
+            if (body === null) return;
+            if (!body.content) { el('runState').textContent = '脚本内容为空'; return; }
+            const btn = el('execBtn');
+            btn.disabled = true;
+            el('runState').textContent = '执行中...';
+            const t0 = Date.now();
+            try {
+                renderResult(await api('POST', '/api/script/execute', body));
+            } catch (e) {
+                renderFetchError(e);
+            } finally {
+                btn.disabled = false;
+                el('runState').textContent = '耗时 ' + (Date.now() - t0) + 'ms（含网络）';
+            }
+        }
+
+        function renderFetchError(e) {
+            switchResultTab('result');
+            el('rtab-result').innerHTML =
+                '<div class="result-summary"><span class="badge ERROR">请求失败</span></div>' +
+                '<div class="result-section"><div class="result-section-title err">错误</div><div class="code-block">' + esc(e.message) + '</div></div>';
+        }
+
+        function renderResult(r) {
+            switchResultTab('result');
+            const status = r.status || 'UNKNOWN';
+            const badge = '<span class="badge ' + status + '">' + status + '</span>';
+            const metas = [
+                r.execId ? 'execId=' + r.execId : null,
+                'costMs=' + fmtMs(r.costMs),
+                r.rowCount !== undefined && r.rowCount !== null ? 'rowCount=' + r.rowCount : null,
+                r.engineVersion ? 'engineVersion=' + r.engineVersion : null,
+            ].filter(Boolean).map(m => '<span class="meta-item">' + esc(m) + '</span>').join('');
+
+            let html = '<div class="result-summary">' + badge + metas + '</div>';
+            if (r.deprecationWarning) {
+                html += '<div class="issue-line fail">' + esc(r.deprecationWarning) + '</div>';
+            }
+            if (r.error) {
+                const err = r.error;
+                html += '<div class="result-section"><div class="result-section-title err">错误（' + esc(err.type || 'UNKNOWN') + '）</div>' +
+                    '<div class="code-block" style="color:#f53f3f;">' + esc(err.message || '') +
+                    (err.line ? '\n    at 行 ' + err.line + (err.col ? ':' + err.col : '') : '') + '</div>';
+                if (Array.isArray(err.stack) && err.stack.length) {
+                    html += err.stack.map(l => '<div class="stack-line">' + esc(l) + '</div>').join('');
+                }
+                html += '</div>';
+            }
+            if (r.value !== undefined && r.value !== null) {
+                html += '<div class="result-section"><div class="result-section-title">返回值</div>' + codeBlock(r.value) + '</div>';
+            }
+            el('rtab-result').innerHTML = html;
+
+            const consoleBox = el('rtab-console');
+            const lines = Array.isArray(r.console) ? r.console : [];
+            consoleBox.innerHTML = lines.length
+                ? lines.map(l => '<div class="console-line">' + esc(typeof l === 'string' ? l : JSON.stringify(l)) + '</div>').join('')
+                : '<div class="empty">暂无控制台输出</div>';
+
+            const traceBox = el('rtab-trace');
+            const trace = Array.isArray(r.trace) ? r.trace : [];
+            traceBox.innerHTML = trace.length
+                ? '<table class="data-table"><thead><tr><th>Kit</th><th>方法</th><th>概要</th><th>行数</th><th>耗时</th></tr></thead><tbody>' +
+                trace.map(t => '<tr><td class="mono">' + esc(t.ns || '') + '</td><td class="mono">' + esc(t.method || '') + '</td>' +
+                    '<td class="mono" title="' + esc(t.summary || '') + '">' + esc(t.summary && t.summary.length > 120 ? t.summary.slice(0, 120) + '…' : (t.summary || '')) + '</td>' +
+                    '<td>' + (t.rows ?? '-') + '</td><td>' + fmtMs(t.costMs) + '</td></tr>').join('') +
+                '</tbody></table>'
+                : '<div class="empty">暂无 $gl 调用踪迹</div>';
+        }
+
+        /* ==================== 调试会话 ==================== */
+
+        let debugSession = null;
+        let debugTimer = null;
+
+        async function debugStart() {
+            const body = buildBody();
+            if (body === null) return;
+            if (!body.content) { el('debugState').textContent = '脚本内容为空'; return; }
+            if (body.lang !== 'js') { el('debugState').textContent = '断点调试仅支持 js'; return; }
+            el('debugStartBtn').disabled = true;
+            el('debugState').textContent = '启动中...';
+            try {
+                debugSession = await api('POST', '/api/script/debug/start', body);
+                el('debugInfoCard').classList.remove('hidden');
+                el('debugInfoBody').innerHTML =
+                    kv('sessionId', debugSession.sessionId) +
+                    kv('ws 地址', 'ws://' + debugSession.host + ':' + debugSession.port + '/' + (debugSession.path || ''), true) +
+                    kv('engineVersion', debugSession.engineVersion || '-') +
+                    kv('owner', debugSession.owner || '-');
+                el('debugStopBtn').disabled = false;
+                el('debugState').textContent = '';
+                el('debugStatusCard').classList.remove('hidden');
+                startPoll();
+            } catch (e) {
+                el('debugState').textContent = '';
+                el('debugInfoBody').innerHTML = '<div class="issue-line fail">' + esc(e.message) + '</div>';
+                el('debugInfoCard').classList.remove('hidden');
+            } finally {
+                el('debugStartBtn').disabled = false;
+            }
+        }
+
+        function kv(k, v, copyable) {
+            return '<div class="kv-row"><span class="k">' + esc(k) + '</span><span class="v">' + esc(v) + '</span>' +
+                (copyable ? '<button class="sm" onclick="copyText(this.parentNode.querySelector(\'.v\').textContent, this)">复制</button>' : '') + '</div>';
+        }
+
+        function startPoll() {
+            stopPoll();
+            debugTimer = setInterval(pollDebugStatus, 2000);
+            pollDebugStatus();
+        }
+
+        function stopPoll() {
+            if (debugTimer) { clearInterval(debugTimer); debugTimer = null; }
+            el('debugPollState').textContent = '（轮询已停止）';
+        }
+
+        async function pollDebugStatus() {
+            if (!debugSession) return;
+            try {
+                const s = await api('GET', '/api/script/debug/' + encodeURIComponent(debugSession.sessionId) + '/status');
+                const state = s.state || 'UNKNOWN';
+                el('debugStatusBody').innerHTML =
+                    '<div class="kv-row"><span class="k">状态</span><span class="state-badge ' + state + '">' + state + '</span>' +
+                    '<span class="k" style="min-width:40px;">存活</span><span class="v">' + (s.alive ? '是' : '否') + '</span></div>' +
+                    (s.errorMessage ? '<div class="issue-line fail">' + esc(s.error || 'ERROR') + ': ' + esc(s.errorMessage) + '</div>' : '');
+                if (state === 'EXITED' || state === 'STOPPED') {
+                    stopPoll();
+                    el('debugStopBtn').disabled = true;
+                }
+            } catch (e) {
+                el('debugStatusBody').innerHTML = '<div class="issue-line fail">状态查询失败：' + esc(e.message) + '</div>';
+                stopPoll();
+            }
+        }
+
+        async function debugStop() {
+            if (!debugSession) return;
+            el('debugStopBtn').disabled = true;
+            try {
+                await api('POST', '/api/script/debug/stop/' + encodeURIComponent(debugSession.sessionId));
+            } catch (e) {
+                el('debugState').textContent = '停止失败：' + e.message;
+                el('debugStopBtn').disabled = false;
+                return;
+            }
+            el('debugState').textContent = '已停止';
+            stopPoll();
+            pollDebugStatus();
+        }
+
+        /* ==================== 草稿持久化 ==================== */
+
+        const DRAFT_KEY = 'script-playground.draft';
+        let draftTimer = null;
+
+        function saveDraft() {
+            clearTimeout(draftTimer);
+            draftTimer = setTimeout(() => {
+                try {
+                    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+                        lang: el('lang').value,
+                        engineVersion: el('engineVersion').value,
+                        scriptName: el('scriptName').value,
+                        profileId: el('profileId').value,
+                        timeoutMs: el('timeoutMs').value,
+                        content: el('scriptContent').value,
+                        params: el('paramsInput').value,
+                        bindings: el('bindingsInput').value,
+                    }));
+                } catch (e) { /* 隐私模式等存储失败可忽略 */ }
+            }, 500);
+        }
+
+        function restoreDraft() {
+            let draft;
+            try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch (e) { draft = null; }
+            if (!draft) return false;
+            if (draft.lang) el('lang').value = draft.lang;
+            if (draft.engineVersion !== undefined) el('engineVersion').value = draft.engineVersion;
+            if (draft.scriptName) el('scriptName').value = draft.scriptName;
+            if (draft.profileId) el('profileId').value = draft.profileId;
+            if (draft.timeoutMs) el('timeoutMs').value = draft.timeoutMs;
+            if (draft.content) el('scriptContent').value = draft.content;
+            if (draft.params) el('paramsInput').value = draft.params;
+            if (draft.bindings) el('bindingsInput').value = draft.bindings;
+            return !!draft.content;
+        }
+
+        const DEFAULT_SCRIPT = [
+            '// 返回值即执行结果；写操作默认 dry-run（事务内回滚）',
+            '// 可用：$params / $env / console.log / $gl.sql / $gl.mql / $gl.http / $gl.encrypt / $gl.ctx / $gl.parameter',
+            "const days = $params.days || 1;",
+            "console.log('hello, execId=' + $env.execId);",
+            'return { days: days, sum: days + 1 };',
+        ].join('\n');
+
+        /* ==================== 初始化 ==================== */
+
+        el('scriptContent').addEventListener('keydown', e => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const ta = e.target, pos = ta.selectionStart;
+                ta.value = ta.value.slice(0, pos) + '  ' + ta.value.slice(ta.selectionEnd);
+                ta.setSelectionRange(pos + 2, pos + 2);
+                saveDraft();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                doExecute();
+            }
+        });
+        ['lang', 'engineVersion', 'scriptName', 'profileId', 'timeoutMs'].forEach(id => el(id).addEventListener('change', saveDraft));
+        ['scriptContent', 'paramsInput', 'bindingsInput'].forEach(id => el(id).addEventListener('input', saveDraft));
+
+        if (!restoreDraft()) {
+            el('scriptContent').value = DEFAULT_SCRIPT;
+            el('paramsInput').value = '{\n  "days": 1\n}';
+        }
+        loadCatalog();
+        loadVersions().then(() => {
+            // 版本下拉异步填充后恢复草稿选择（restoreDraft 时下拉可能还是空的）
+            try {
+                const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+                if (draft && draft.engineVersion) {
+                    for (const opt of el('engineVersion').options) {
+                        if (opt.value === draft.engineVersion) { el('engineVersion').value = draft.engineVersion; break; }
+                    }
+                }
+            } catch (e) { /* 忽略 */ }
+        });
+    </script>
+</body>
+</html>

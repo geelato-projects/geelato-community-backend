@@ -126,7 +126,11 @@ public class SecurityInterceptorProperties {
                 // 实体三者同步校验工具（由 geelato.meta.sync.enabled 控制是否激活）
                 "/meta-sync.html",
                 "/meta-sync",
-                "/api/meta-sync/**"
+                "/api/meta-sync/**",
+                // Script Playground（脚本引擎调试台，由 geelato.script.rest.enabled 控制是否激活）
+                "/script-playground.html",
+                "/script-playground",
+                "/api/script/**"
         ));
     }
 }

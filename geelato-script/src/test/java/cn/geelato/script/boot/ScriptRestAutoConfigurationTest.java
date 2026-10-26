@@ -28,6 +28,7 @@ class ScriptRestAutoConfigurationTest {
                 .run(context -> {
                     assertThat(context).hasSingleBean(ScriptCatalogController.class);
                     assertThat(context).hasSingleBean(cn.geelato.script.rest.ScriptExecuteController.class);
+                    assertThat(context).hasSingleBean(cn.geelato.script.rest.ScriptPlaygroundController.class);
                 });
     }
 }

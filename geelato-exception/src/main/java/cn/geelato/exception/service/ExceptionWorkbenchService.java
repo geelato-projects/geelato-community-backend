@@ -11,16 +11,23 @@ import cn.geelato.exception.entity.FmsExceptionHandle;
 import cn.geelato.exception.entity.FmsExceptionRule;
 import cn.geelato.exception.entity.FmsExceptionStep;
 import cn.geelato.exception.support.SessionCtxHelper;
+import cn.geelato.exception.engine.lifecycle.ExceptionLifecycleEvent;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 异常工作台服务：清单/看板查询、详情与轨迹读取、处置动作（真实持久化 + CAS）。
@@ -30,6 +37,7 @@ import java.util.Map;
  *
  * <p>关联文档：bea/业务异常预警中心-接口设计-2026-09-17.md §2
  */
+@Slf4j
 @Service
 public class ExceptionWorkbenchService {
 
@@ -42,6 +50,9 @@ public class ExceptionWorkbenchService {
     @Autowired
     private ExceptionRuleService ruleService;
 
+    @Autowired
+    private ObjectProvider<ApplicationEventPublisher> publisherProvider;
+
     // ==================== 清单 / 看板 ====================
 
     /** 在途/历史实例分页清单（{@code POST /pageQuery}）。 */
@@ -49,7 +60,8 @@ public class ExceptionWorkbenchService {
         int page = Math.max(1, params.pageNum);
         int pageSize = Math.min(100, Math.max(1, params.pageSize));
         List<Filter> filters = new ArrayList<>();
-        filters.add(Filter.eq("tenantCode", SessionCtxHelper.getCurrentTenantCode()));
+        String tenant = SessionCtxHelper.getCurrentTenantCode();
+        filters.add(Filter.eq("tenantCode", tenant));
         filters.add(Filter.eq("delStatus", 0));
         // 实例清单：appId 为可选过滤（传入则限定归属应用，不传不强制，以免破坏现有实例页）。
         if (notBlank(params.appId)) {
@@ -64,19 +76,21 @@ public class ExceptionWorkbenchService {
         if (notBlank(params.level)) {
             filters.add(Filter.eq("level", params.level.trim()));
         }
+        // 状态集三档：显式 status 精确过滤优先；其次 scope（ACTIVE 在途 / HISTORY 历史）；缺守在途（向后兼容）。
         if (notBlank(params.status)) {
             filters.add(Filter.eq("status", params.status.trim()));
         } else {
-            filters.add(Filter.in("status", new Object[]{"OPEN", "PROCESSING", "ESCALATED"}));
+            filters.add(Filter.in("status", statusSetForScope(params.scope)));
         }
         if (Boolean.TRUE.equals(params.mine)) {
             filters.add(Filter.eq("participantId", SessionCtxHelper.getCurrentUserId()));
         }
-        if (notBlank(params.customerName)) {
-            filters.add(Filter.like("customerName", "%" + params.customerName.trim() + "%"));
+        // 用户实例视图：按任意处理人收窄（mine 之外补一个显式用户口径，二者可叠加，交集语义）。
+        if (notBlank(params.participantId)) {
+            filters.add(Filter.eq("participantId", params.participantId.trim()));
         }
-        if (notBlank(params.bizNo)) {
-            filters.add(Filter.eq("bizNo", params.bizNo.trim()));
+        if (notBlank(params.bizLabel)) {
+            filters.add(Filter.eq("bizLabel", params.bizLabel.trim()));
         }
         MetaQuery query = MetaFactory.query(FmsException.class)
                 .where(filters.toArray(new Filter[0]))
@@ -86,6 +100,8 @@ public class ExceptionWorkbenchService {
         for (Map<String, Object> row : pageResult.getRecords()) {
             items.add(toListRow(rowToEntity(row)));
         }
+        // 实例视图补充告警/消息标记：该异常是否产生了告警、其关联告警是否已产生消息。
+        enrichAlertFlags(items, tenant, notBlank(params.appId) ? params.appId.trim() : null);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("list", items);
         result.put("total", pageResult.getTotal());
@@ -259,6 +275,7 @@ public class ExceptionWorkbenchService {
             return ActionOutcome.conflict("该异常状态已被变更，请刷新后重试");
         }
         appendHandle(ex.getId(), "ESCALATE", from, "ESCALATED", null, remark);
+        publish("EXC_ESCALATED", ex);
         return ActionOutcome.ok("ESCALATED", ex.getCurrentStepCode());
     }
 
@@ -289,21 +306,63 @@ public class ExceptionWorkbenchService {
             return ActionOutcome.conflict("该异常状态已被变更，请刷新后重试");
         }
         appendHandle(ex.getId(), action, from, to, reasonCode, remark);
+        publish(eventTypeOf(action), ex);
         return ActionOutcome.ok(to, currentStepCode);
     }
 
-    /** ANY 策略组联动：同 source_key 其余在途实例一并置 RESOLVED（GROUP）。 */
+    /** 处置动作 → 生命周期事件类型（告警规则 match.events 订阅域）。 */
+    private static String eventTypeOf(String action) {
+        return switch (action == null ? "" : action) {
+            case "CLAIM" -> "EXC_CLAIMED";
+            case "RESOLVE" -> "EXC_RESOLVED";
+            case "IGNORE" -> "EXC_IGNORED";
+            case "ESCALATE" -> "EXC_ESCALATED";
+            default -> null;
+        };
+    }
+
+    private void publish(String eventType, FmsException ex) {
+        if (eventType == null) {
+            return;
+        }
+        try {
+            ApplicationEventPublisher publisher = publisherProvider == null ? null : publisherProvider.getIfAvailable();
+            if (publisher != null) {
+                publisher.publishEvent(new ExceptionLifecycleEvent(this, eventType, ex.getId(),
+                        ex.getRuleCode(), ex.getSourceKey(), ex.getParticipantId()));
+            }
+        } catch (Exception e) {
+            log.warn("生命周期事件发布失败 {} {}: {}", eventType, ex.getId(), e.getMessage());
+        }
+    }
+
+    /** ANY 策略组联动：同 source_key 其余在途实例一并置 RESOLVED（GROUP），逐实例发布 EXC_RESOLVED。 */
     private void closeGroupSiblings(String sourceKey) {
         if (!notBlank(sourceKey)) {
             return;
         }
         Date now = new Date();
         String userId = SessionCtxHelper.getCurrentUserId();
+        // 先取被联动实例（事件需逐实例 id）；UPDATE 仍批量 CAS，SELECT 与 UPDATE 间竞态由状态条件兜底
+        List<Map<String, Object>> siblings = dynamicDao.nativeQueryForMapList(
+                "SELECT id, rule_code, source_key, participant_id FROM platform_exception "
+                        + "WHERE source_key=? AND del_status=0 AND status IN ('OPEN','PROCESSING','ESCALATED')",
+                new Object[]{sourceKey});
         dynamicDao.nativeExecute(
                 "UPDATE platform_exception SET status='RESOLVED', resolved_at=?, resolved_type='GROUP',"
                         + " active_fingerprint=NULL, update_at=?, updater=?"
                         + " WHERE source_key=? AND del_status=0 AND status IN ('OPEN','PROCESSING','ESCALATED')",
                 new Object[]{now, now, userId, sourceKey});
+        if (siblings != null) {
+            for (Map<String, Object> row : siblings) {
+                FmsException ref = new FmsException();
+                ref.setId(str(row.get("id")));
+                ref.setRuleCode(str(row.containsKey("rule_code") ? row.get("rule_code") : row.get("ruleCode")));
+                ref.setSourceKey(str(row.containsKey("source_key") ? row.get("source_key") : row.get("sourceKey")));
+                ref.setParticipantId(str(row.containsKey("participant_id") ? row.get("participant_id") : row.get("participantId")));
+                publish("EXC_RESOLVED", ref);
+            }
+        }
     }
 
     private void appendHandle(String exceptionId, String action, String before, String after,
@@ -352,7 +411,7 @@ public class ExceptionWorkbenchService {
         }
         String url = template
                 .replace("{bizId}", nullToEmpty(ex.getBizId()))
-                .replace("{bizNo}", nullToEmpty(ex.getBizNo()));
+                .replace("{bizLabel}", nullToEmpty(ex.getBizLabel()));
         Map<String, Object> action = new LinkedHashMap<>();
         action.put("label", "去处理");
         action.put("url", url);
@@ -374,14 +433,133 @@ public class ExceptionWorkbenchService {
         map.put("status", ex.getStatus());
         map.put("participantName", ex.getParticipantName());
         map.put("bizType", ex.getBizType());
-        map.put("bizNo", ex.getBizNo());
-        map.put("customerName", ex.getCustomerName());
+        map.put("bizLabel", ex.getBizLabel());
         map.put("anchorElapsed", ex.getAnchorElapsed());
-        map.put("hitBrief", ex.getHitBrief());
+        map.put("title", ex.getTitle());
         map.put("currentStepCode", ex.getCurrentStepCode());
         map.put("escalationLevel", ex.getEscalationLevel());
         map.put("firstAt", ex.getFirstAt() == null ? null : fmt(ex.getFirstAt()));
+        // 用户实例弹窗按最近命中续期排序展示（后端列表已按 last_seen_at 降序）
+        map.put("lastSeenAt", ex.getLastSeenAt() == null ? null : fmt(ex.getLastSeenAt()));
         return map;
+    }
+
+    /**
+     * 为该页异常实例补充两个标记：
+     * <ul>
+     *   <li>hasAlert：是否存在以该实例为源命中的告警（platform_alert.event_ids 含实例 id）；</li>
+     *   <li>alertHasMessage：上述告警中是否至少一条已产生消息（status ∈ SENT/PARTIAL）。</li>
+     * </ul>
+     * event_ids 为 JSON 文本列，先按 LIKE 引号精确包裹粗筛候选，再在 Java 侧解析 event_ids 精确归属，避免子串误命中。
+     * 跨模块同库只读查询（与投递引擎回查 platform_exception 同模式），失败则降级为全 false，不影响主列表。
+     */
+    private void enrichAlertFlags(List<Map<String, Object>> items, String tenant, String appId) {
+        for (Map<String, Object> item : items) {
+            item.put("hasAlert", false);
+            item.put("alertHasMessage", false);
+        }
+        if (items.isEmpty()) {
+            return;
+        }
+        List<String> ids = new ArrayList<>();
+        for (Map<String, Object> item : items) {
+            String id = str(item.get("id"));
+            if (notBlank(id)) {
+                ids.add(id.trim());
+            }
+        }
+        if (ids.isEmpty()) {
+            return;
+        }
+        StringBuilder sql = new StringBuilder(
+                "SELECT event_ids, status FROM platform_alert WHERE tenant_code = ? AND del_status = 0 AND (");
+        List<Object> args = new ArrayList<>();
+        args.add(tenant);
+        for (int i = 0; i < ids.size(); i++) {
+            if (i > 0) {
+                sql.append(" OR ");
+            }
+            sql.append("event_ids LIKE ?");
+            args.add("%\"" + ids.get(i) + "\"%");
+        }
+        sql.append(")");
+        if (appId != null) {
+            sql.append(" AND app_id = ?");
+            args.add(appId);
+        }
+        List<Map<String, Object>> rows;
+        try {
+            rows = dynamicDao.nativeQueryForMapList(sql.toString(), args.toArray());
+        } catch (Exception e) {
+            log.warn("异常实例告警/消息标记补充失败 tenant={}: {}", tenant, e.getMessage());
+            return;
+        }
+        if (rows == null || rows.isEmpty()) {
+            return;
+        }
+        Set<String> alerted = new HashSet<>();
+        Set<String> messaged = new HashSet<>();
+        for (Map<String, Object> row : rows) {
+            Object eventIds = pick(row, "event_ids", "eventIds");
+            List<String> exIds = parseIdList(eventIds);
+            if (exIds.isEmpty()) {
+                continue;
+            }
+            boolean produced = messageProduced(str(pick(row, "status", "status")));
+            for (String exId : exIds) {
+                alerted.add(exId);
+                if (produced) {
+                    messaged.add(exId);
+                }
+            }
+        }
+        for (Map<String, Object> item : items) {
+            String id = str(item.get("id"));
+            item.put("hasAlert", id != null && alerted.contains(id));
+            item.put("alertHasMessage", id != null && messaged.contains(id));
+        }
+    }
+
+    /** 告警是否已产生消息：status ∈ {SENT, PARTIAL} 表示投递引擎已成功 enqueue 至少一路通道。 */
+    static boolean messageProduced(String status) {
+        return "SENT".equalsIgnoreCase(status) || "PARTIAL".equalsIgnoreCase(status);
+    }
+
+    /** 解析 JSON 数组文本列（event_ids）为字符串 id 清单，容错空/非数组/解析异常。 */
+    private static List<String> parseIdList(Object value) {
+        List<String> out = new ArrayList<>();
+        if (value == null) {
+            return out;
+        }
+        String json = String.valueOf(value);
+        if (json.isBlank()) {
+            return out;
+        }
+        try {
+            JsonNode node = MAPPER.readTree(json);
+            if (node.isArray()) {
+                for (JsonNode n : node) {
+                    String v = n.asText(null);
+                    if (v != null && !v.isBlank()) {
+                        out.add(v.trim());
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return out;
+    }
+
+    private static Object pick(Map<String, Object> row, String... keys) {
+        if (row == null) {
+            return null;
+        }
+        for (String key : keys) {
+            if (row.containsKey(key)) {
+                return row.get(key);
+            }
+        }
+        return null;
     }
 
     private FmsException rowToEntity(Map<String, Object> row) {
@@ -398,9 +576,7 @@ public class ExceptionWorkbenchService {
         ex.setParticipantOrg(str(row.get("participantOrg")));
         ex.setBizType(str(row.get("bizType")));
         ex.setBizId(str(row.get("bizId")));
-        ex.setBizNo(str(row.get("bizNo")));
-        ex.setCustomerId(str(row.get("customerId")));
-        ex.setCustomerName(str(row.get("customerName")));
+        ex.setBizLabel(str(row.get("bizLabel")));
         ex.setStatus(str(row.get("status")));
         ex.setCurrentStepCode(str(row.get("currentStepCode")));
         ex.setEscalationLevel(intVal(row.get("escalationLevel")));
@@ -409,7 +585,8 @@ public class ExceptionWorkbenchService {
         ex.setHitCount(intVal(row.get("hitCount")));
         Object anchor = row.get("anchorElapsed");
         ex.setAnchorElapsed(anchor == null ? null : longVal(anchor));
-        ex.setHitBrief(str(row.get("hitBrief")));
+        ex.setTitle(str(row.get("title")));
+        ex.setSuppressKeys(str(row.get("suppressKeys")));
         ex.setDetailJson(str(row.get("detailJson")));
         ex.setResolvedAt(toDate(row.get("resolvedAt")));
         ex.setResolvedType(str(row.get("resolvedType")));
@@ -455,6 +632,17 @@ public class ExceptionWorkbenchService {
 
     private boolean notBlank(String s) {
         return s != null && !s.isBlank();
+    }
+
+    /**
+     * scope → 在途/历史状态集解析（用户实例弹窗页签）：HISTORY 归历史终态；ACTIVE 及缺省归在途。
+     * 显式 status 精确过滤优先，不经过本方法。包级可见以便离线单测覆盖分支映射。
+     */
+    static Object[] statusSetForScope(String scope) {
+        if ("HISTORY".equalsIgnoreCase(scope)) {
+            return new Object[]{"RESOLVED", "IGNORED"};
+        }
+        return new Object[]{"OPEN", "PROCESSING", "ESCALATED"};
     }
 
     private String str(Object o) {
@@ -515,8 +703,12 @@ public class ExceptionWorkbenchService {
         public String level;
         public String status;
         public Boolean mine;
-        public String customerName;
-        public String bizNo;
+        /** 处理人用户 id 过滤（用户实例弹窗；platform_user.id）。 */
+        public String participantId;
+        /** 状态集范围：ACTIVE 在途（缺省）/ HISTORY 历史；显式 status 优先。 */
+        public String scope;
+        /** 业务可读标识精确过滤（原 bizNo）。 */
+        public String bizLabel;
         public int pageNum = 1;
         public int pageSize = 20;
     }

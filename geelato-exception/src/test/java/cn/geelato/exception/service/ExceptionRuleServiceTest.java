@@ -243,6 +243,34 @@ class ExceptionRuleServiceTest {
         assertEquals("geelato/v1", reparsed.path("exceptionVersion").asText());
     }
 
+    // ==================== importYamlBatch（离线可测面：解析与逐条隔离）====================
+
+    @Test
+    @DisplayName("importYamlBatch：空/纯注释内容拒绝")
+    void importYamlBatchRejectsBlank() {
+        IllegalArgumentException empty = assertThrows(IllegalArgumentException.class,
+                () -> service.importYamlBatch("", "app-1"));
+        assertTrue(empty.getMessage().contains("为空"));
+        IllegalArgumentException comments = assertThrows(IllegalArgumentException.class,
+                () -> service.importYamlBatch("# 只有注释\n", "app-1"));
+        assertTrue(comments.getMessage().contains("为空"));
+    }
+
+    @Test
+    @DisplayName("importYamlBatch：多文档逐条隔离——单条失败不中断，结果逐条返回失败原因")
+    void importYamlBatchIsolatesPerDocumentFailure() {
+        String yaml = String.join("\n---\n", List.of(
+                "kind: AlertRule\nmetadata: { code: BAD-1 }\nspec: {}",
+                "kind: AlertRule\nmetadata: { code: BAD-2, name: 缺管道 }\nspec:\n  trigger: { type: SCAN }\n  pipeline: {}"));
+        List<Map<String, Object>> results = service.importYamlBatch(yaml, "app-1");
+        assertEquals(2, results.size());
+        assertEquals("BAD-1", results.get(0).get("ruleCode"));
+        assertEquals(Boolean.FALSE, results.get(0).get("success"));
+        assertTrue(String.valueOf(results.get(0).get("error")).contains("门禁未通过"));
+        assertEquals("BAD-2", results.get(1).get("ruleCode"));
+        assertEquals(Boolean.FALSE, results.get(1).get("success"));
+    }
+
     /** 校验通过的最小 AlertRule 文档（exceptionVersion 显式合法值）。 */
     private String validAlertRule() {
         return """

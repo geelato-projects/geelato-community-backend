@@ -2,6 +2,7 @@ package cn.geelato.script.kit;
 
 import cn.geelato.script.core.IdentitySnapshot;
 import cn.geelato.script.core.TraceEntry;
+import cn.geelato.script.kit.sql.ConnectPoolProvider;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,6 +41,8 @@ public class KitContext {
     private final String aesKey;
     private final boolean daoWriteEnabled;
     private final boolean daoDryRun;
+    /** 联邦查询按 connectId 取池的提供器（null 走 core DataSourceManager 缺省）。 */
+    private final ConnectPoolProvider connectPoolProvider;
     /** 本次执行的注入变量（$ctx/$params 等，engine 侧 effectiveBindings 引用）——$gl.ctx/$gl.parameter 数据源。 */
     private final Map<String, Object> bindings;
     private final List<TraceEntry> trace = new ArrayList<>();
@@ -75,7 +78,7 @@ public class KitContext {
                          String execId, IdentitySnapshot identity,
                          DaoSupplier daoSupplier, OrmExecutionWrapper ormWrapper, String aesKey) {
         this(dataSourceSupplier, sqlRowLimit, sqlQueryTimeoutMs, httpEnabled, httpAllowlist, httpTimeoutMs,
-                attributes, execId, identity, daoSupplier, ormWrapper, aesKey, false, true, null);
+                attributes, execId, identity, daoSupplier, ormWrapper, aesKey, false, true, null, null);
     }
 
     public KitContext(DataSourceSupplier dataSourceSupplier,
@@ -85,6 +88,18 @@ public class KitContext {
                          String execId, IdentitySnapshot identity,
                          DaoSupplier daoSupplier, OrmExecutionWrapper ormWrapper, String aesKey,
                          boolean daoWriteEnabled, boolean daoDryRun, Map<String, Object> bindings) {
+        this(dataSourceSupplier, sqlRowLimit, sqlQueryTimeoutMs, httpEnabled, httpAllowlist, httpTimeoutMs,
+                attributes, execId, identity, daoSupplier, ormWrapper, aesKey, daoWriteEnabled, daoDryRun, bindings, null);
+    }
+
+    public KitContext(DataSourceSupplier dataSourceSupplier,
+                         int sqlRowLimit, int sqlQueryTimeoutMs,
+                         boolean httpEnabled, List<String> httpAllowlist, int httpTimeoutMs,
+                         Map<String, Object> attributes,
+                         String execId, IdentitySnapshot identity,
+                         DaoSupplier daoSupplier, OrmExecutionWrapper ormWrapper, String aesKey,
+                         boolean daoWriteEnabled, boolean daoDryRun, Map<String, Object> bindings,
+                         ConnectPoolProvider connectPoolProvider) {
         this.dataSourceSupplier = dataSourceSupplier;
         this.sqlRowLimit = sqlRowLimit;
         this.sqlQueryTimeoutMs = sqlQueryTimeoutMs;
@@ -100,6 +115,7 @@ public class KitContext {
         this.daoWriteEnabled = daoWriteEnabled;
         this.daoDryRun = daoDryRun;
         this.bindings = bindings == null ? Map.of() : bindings;
+        this.connectPoolProvider = connectPoolProvider;
     }
 
     public static Builder builder() {
@@ -147,6 +163,7 @@ public class KitContext {
         private boolean daoWriteEnabled;
         private boolean daoDryRun = true;
         private Map<String, Object> bindings;
+        private ConnectPoolProvider connectPoolProvider;
 
         public Builder dataSourceSupplier(DataSourceSupplier v) {
             this.dataSourceSupplier = v;
@@ -223,11 +240,16 @@ public class KitContext {
             return this;
         }
 
+        public Builder connectPoolProvider(ConnectPoolProvider v) {
+            this.connectPoolProvider = v;
+            return this;
+        }
+
         public KitContext build() {
             return new KitContext(dataSourceSupplier, sqlRowLimit, sqlQueryTimeoutMs,
                     httpEnabled, httpAllowlist, httpTimeoutMs, attributes,
                     execId, identity, daoSupplier, ormWrapper, aesKey,
-                    daoWriteEnabled, daoDryRun, bindings);
+                    daoWriteEnabled, daoDryRun, bindings, connectPoolProvider);
         }
     }
 }

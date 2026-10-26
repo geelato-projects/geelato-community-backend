@@ -1,6 +1,7 @@
 package cn.geelato.script.boot;
 
 import cn.geelato.script.core.DefaultScriptEngine;
+import cn.geelato.script.core.ScriptDebugService;
 import cn.geelato.script.core.ScriptEngine;
 import cn.geelato.script.core.ScriptEngineBuilder;
 import org.springframework.beans.factory.ObjectProvider;
@@ -37,7 +38,20 @@ public class ScriptEngineAutoConfiguration {
         for (String pkg : properties.getScanPackages()) {
             builder.scanPackage(pkg);
         }
+        HostKitDescriptors.resolveAliases()
+                .forEach((alias, packageName) -> builder.hostPackage(alias, packageName));
+        builder.hostExcludes(HostKitDescriptors.resolveExcludes());
         customizers.orderedStream().forEach(c -> c.customize(builder));
         return builder.build();
+    }
+
+    /**
+     * 调试会话门面：直接复用 {@link DefaultScriptEngine}（其已实现 {@link ScriptDebugService}，
+     * 与正常执行共享同一条 kit/bindings/dry-run 注入链，保证调试副作用与线上一致）。
+     */
+    @Bean
+    @ConditionalOnMissingBean(ScriptDebugService.class)
+    public ScriptDebugService scriptDebugService(DefaultScriptEngine scriptEngine) {
+        return scriptEngine;
     }
 }

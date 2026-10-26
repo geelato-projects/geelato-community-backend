@@ -1,5 +1,6 @@
 package cn.geelato.exception.engine;
 
+import cn.geelato.exception.engine.core.Hit;
 import cn.geelato.exception.engine.core.PipelineEngine;
 import cn.geelato.exception.engine.core.PipelineOutcome;
 import cn.geelato.exception.engine.core.TriggerMode;
@@ -36,7 +37,7 @@ class PipelineEngineTest {
                         .defaultTimeoutMs(5_000)
                         .build())
                 .build();
-        pipelineEngine = new PipelineEngine(scriptEngine, 5_000, 10_000, 5_000);
+        pipelineEngine = new PipelineEngine(scriptEngine, 5_000, 10_000, 5_000, 2_000_000);
     }
 
     @AfterAll
@@ -59,11 +60,11 @@ class PipelineEngineTest {
     void trialRunProducesValidHits() {
         FmsExceptionRule rule = ruleOf("{\"steps\":[{\"name\":\"judge\",\"lang\":\"js\",\"content\":"
                 + "\"const rows = [{bizId: '1', amount: 500}, {bizId: '2', amount: 0}, {amount: 99}];"
-                + " return rows.filter(r => r.amount > 0).map(r => ({bizType: 'BOL_GRANT', bizId: r.bizId, hitBrief: '未收款 ' + r.amount}))\"}]}");
+                + " return rows.filter(r => r.amount > 0).map(r => ({bizType: 'BOL_GRANT', bizId: r.bizId, title: '未收款 ' + r.amount}))\"}]}");
         PipelineOutcome outcome = pipelineEngine.execute(rule, TriggerMode.TRIAL, null);
         assertEquals("SUCCESS", outcome.getStatus());
         assertEquals(1, outcome.getValidHits().size());
-        assertEquals("1", String.valueOf(outcome.getValidHits().get(0).get("bizId")));
+        assertEquals("1", String.valueOf(outcome.getValidHits().get(0).getBizId()));
         assertEquals("v1", outcome.getEngineVersion());
     }
 
@@ -113,11 +114,57 @@ class PipelineEngineTest {
     void paramsInjectedAndUsable() {
         FmsExceptionRule rule = ruleOf("{\"steps\":[{\"name\":\"judge\",\"lang\":\"js\",\"content\":"
                 + "\"const rows = [{bizId: '1', amount: 500}, {bizId: '2', amount: 50}];"
-                + " return rows.filter(r => r.amount > $params.minAmount).map(r => ({bizType: 'X', bizId: r.bizId, hitBrief: '超阈值 ' + r.amount}))\"}]}");
+                + " return rows.filter(r => r.amount > $params.minAmount).map(r => ({bizType: 'X', bizId: r.bizId, title: '超阈值 ' + r.amount}))\"}]}");
         rule.setThresholdJson("{\"minAmount\": 100}");
         PipelineOutcome outcome = pipelineEngine.execute(rule, TriggerMode.TRIAL, null);
         assertEquals("SUCCESS", outcome.getStatus());
         assertEquals(1, outcome.getValidHits().size());
-        assertEquals("超阈值 500", outcome.getValidHits().get(0).get("hitBrief"));
+        assertEquals("超阈值 500", outcome.getValidHits().get(0).getTitle());
+    }
+
+    @Test
+    void snakeCaseKeysNormalizedAndBizTypeRuleFallback() {
+        FmsExceptionRule rule = ruleOf("{\"steps\":[{\"name\":\"judge\",\"lang\":\"js\",\"content\":"
+                + "\"return [{biz_id: '9', owner_org_id: 'ORG7'}]\"}]}");
+        rule.setBizType("BOL");
+        PipelineOutcome outcome = pipelineEngine.execute(rule, TriggerMode.TRIAL, null);
+        assertEquals("SUCCESS", outcome.getStatus());
+        Hit hit = outcome.getValidHits().get(0);
+        assertEquals("9", hit.getBizId());
+        assertEquals("BOL", hit.getBizType());
+        // owner 系已出契约：snake 别名归一化后降级 extras
+        assertEquals("ORG7", hit.getExtras().get("ownerOrgId"));
+    }
+
+    @Test
+    void bizTypeScriptValueWinsOverRuleFallback() {
+        FmsExceptionRule rule = ruleOf("{\"steps\":[{\"name\":\"judge\",\"lang\":\"js\",\"content\":"
+                + "\"return [{biz_id: '9', biz_type: 'il_eco'}]\"}]}");
+        rule.setBizType("ORDER");
+        PipelineOutcome outcome = pipelineEngine.execute(rule, TriggerMode.TRIAL, null);
+        assertEquals("SUCCESS", outcome.getStatus());
+        assertEquals("il_eco", outcome.getValidHits().get(0).getBizType());
+    }
+
+    @Test
+    void bizTypeEmptyEverywhereYieldsViolation() {
+        FmsExceptionRule rule = ruleOf("{\"steps\":[{\"name\":\"judge\",\"lang\":\"js\",\"content\":"
+                + "\"return [{biz_id: '9'}]\"}]}");
+        PipelineOutcome outcome = pipelineEngine.execute(rule, TriggerMode.TRIAL, null);
+        assertEquals("SUCCESS", outcome.getStatus());
+        assertEquals(1, outcome.getValidHits().size());
+        assertEquals(1, outcome.getViolations().stream()
+                .filter(v -> "BIZ_TYPE_EMPTY".equals(v.get("code"))).count());
+    }
+
+    @Test
+    void oversizeStepOutputFailsStep() {
+        PipelineEngine tiny = new PipelineEngine(scriptEngine, 5_000, 10_000, 5_000, 8);
+        FmsExceptionRule rule = ruleOf("{\"steps\":[{\"name\":\"fetch\",\"lang\":\"js\",\"content\":"
+                + "\"return 'aaaaaaaaaaaaaaaa'\"}]}");
+        PipelineOutcome outcome = tiny.execute(rule, TriggerMode.TRIAL, null);
+        assertEquals("STEP_FAILED", outcome.getStatus());
+        assertTrue(outcome.getError() != null && outcome.getError().contains("STEP_OUTPUT_OVERSIZE"));
+        assertEquals("STEP_FAILED", outcome.getSteps().get(0).get("status"));
     }
 }

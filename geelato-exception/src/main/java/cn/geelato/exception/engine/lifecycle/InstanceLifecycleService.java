@@ -1,5 +1,7 @@
 package cn.geelato.exception.engine.lifecycle;
 
+import cn.geelato.exception.engine.core.Hit;
+import cn.geelato.exception.engine.core.HitsContractValidator;
 import cn.geelato.exception.engine.participant.Participant;
 import cn.geelato.exception.engine.support.EngineContextExecutor;
 import cn.geelato.exception.entity.FmsException;
@@ -35,9 +37,9 @@ public class InstanceLifecycleService {
 
     /** 命中提交：指纹在途续期 / 不在途新建实例 + CREATE 流水 + CREATED 触达（受规则 notifyLevel 门槛）。 */
     public String upsertInstance(String ruleCode, String ruleName, String domainCode, String level,
-                                 Map<String, Object> hit, Participant handler, int ruleVersion, String appId) {
-        String bizType = str(hit.get("bizType"));
-        String bizId = str(hit.get("bizId"));
+                                 Hit hit, Participant handler, int ruleVersion, String appId, String suppressKeys) {
+        String bizType = hit.getBizType();
+        String bizId = hit.getBizId();
         String sourceKey = ruleCode + "|" + bizType + "|" + bizId;
         String fingerprint = sourceKey + "|" + handler.getId();
         FmsException existing = findActiveByFingerprint(fingerprint);
@@ -47,11 +49,12 @@ public class InstanceLifecycleService {
             patch.put("id", existing.getId());
             patch.put("lastSeenAt", now);
             patch.put("hitCount", existing.getHitCount() + 1);
-            patch.put("hitBrief", briefOf(hit, existing.getHitBrief()));
+            patch.put("title", titleOf(hit, existing.getTitle(), ruleName));
             patch.put("detailJson", detailOf(hit, existing.getDetailJson()));
+            patch.put("suppressKeys", suppressKeys);
             patch.put("updateAt", now);
-            patch.put("updater", EngineContextExecutor.SYSTEM_USER_ID);
-            patch.put("updaterName", EngineContextExecutor.SYSTEM_USER_NAME);
+            patch.put("updater", handler.getId());
+            patch.put("updaterName", handler.getName());
             MetaFactory.save(patchInstance(patch));
             return "renewed";
         }
@@ -60,7 +63,7 @@ public class InstanceLifecycleService {
         exception.setRuleName(ruleName);
         exception.setDomainCode(domainCode);
         exception.setAppId(appId);
-        exception.setLevel(levelOverride(hit, level));
+        exception.setLevel(level);
         exception.setActiveFingerprint(fingerprint);
         exception.setSourceKey(sourceKey);
         exception.setParticipantId(handler.getId());
@@ -68,18 +71,17 @@ public class InstanceLifecycleService {
         exception.setParticipantOrg(handler.getOrgId());
         exception.setBizType(bizType);
         exception.setBizId(bizId);
-        exception.setBizNo(str(hit.get("bizNo")));
-        exception.setCustomerId(str(hit.get("customerId")));
-        exception.setCustomerName(str(hit.get("customerName")));
+        exception.setBizLabel(hit.getBizLabel());
         exception.setStatus("OPEN");
         exception.setFirstAt(now);
         exception.setLastSeenAt(now);
         exception.setHitCount(1);
         exception.setAnchorElapsed(anchorElapsed(hit));
-        exception.setHitBrief(briefOf(hit, null));
+        exception.setTitle(titleOf(hit, null, ruleName));
         exception.setDetailJson(detailOf(hit, null));
+        exception.setSuppressKeys(suppressKeys);
         exception.setRuleVersion(ruleVersion);
-        fillAudit(exception, now);
+        fillAudit(exception, now, handler);
         try {
             String savedId = MetaFactory.save(exception);
             if (exception.getId() == null && savedId != null) {
@@ -148,7 +150,7 @@ public class InstanceLifecycleService {
     }
 
 
-    public void appendHandle(String exceptionId, String action, String beforeStatus, String afterStatus, Map<String, Object> payload) {
+    public void appendHandle(String exceptionId, String action, String beforeStatus, String afterStatus, Object payload) {
         FmsExceptionHandle handle = new FmsExceptionHandle();
         handle.setExceptionId(exceptionId);
         handle.setAction(action);
@@ -191,9 +193,11 @@ public class InstanceLifecycleService {
             e.setParticipantName(str(row.get("participantName")));
             e.setBizType(str(row.get("bizType")));
             e.setBizId(str(row.get("bizId")));
+            e.setBizLabel(str(row.get("bizLabel")));
             e.setStatus(str(row.get("status")));
             e.setHitCount(row.get("hitCount") instanceof Number n ? n.intValue() : 0);
-            e.setHitBrief(str(row.get("hitBrief")));
+            e.setTitle(str(row.get("title")));
+            e.setSuppressKeys(str(row.get("suppressKeys")));
             e.setDetailJson(str(row.get("detailJson")));
             e.setFirstAt(toDate(row.get("firstAt")));
             e.setLastSeenAt(toDate(row.get("lastSeenAt")));
@@ -208,30 +212,34 @@ public class InstanceLifecycleService {
         e.setId((String) patch.get("id"));
         e.setLastSeenAt((Date) patch.get("lastSeenAt"));
         e.setHitCount((Integer) patch.get("hitCount"));
-        e.setHitBrief((String) patch.get("hitBrief"));
+        e.setTitle((String) patch.get("title"));
         e.setDetailJson((String) patch.get("detailJson"));
+        e.setSuppressKeys((String) patch.get("suppressKeys"));
         e.setUpdateAt((Date) patch.get("updateAt"));
         e.setUpdater((String) patch.get("updater"));
         e.setUpdaterName((String) patch.get("updaterName"));
         return e;
     }
 
-    private static void fillAudit(Object entity, Date now) {
-        if (entity instanceof FmsException e) {
-            e.setTenantCode(currentTenant());
-            e.setDelStatus(0);
-            e.setCreateAt(now);
-            e.setUpdateAt(now);
-            e.setCreator(EngineContextExecutor.SYSTEM_USER_ID);
-            e.setCreatorName(EngineContextExecutor.SYSTEM_USER_NAME);
-        } else if (entity instanceof FmsExceptionHandle h) {
-            h.setTenantCode(currentTenant());
-            h.setDelStatus(0);
-            h.setCreateAt(now);
-            h.setUpdateAt(now);
-            h.setCreator(EngineContextExecutor.SYSTEM_USER_ID);
-            h.setCreatorName(EngineContextExecutor.SYSTEM_USER_NAME);
-        }
+    /** 实例审计字段写归属参与者（求解出的具体用户），创建时创建人=修改人。 */
+    private static void fillAudit(FmsException e, Date now, Participant participant) {
+        e.setTenantCode(currentTenant());
+        e.setDelStatus(0);
+        e.setCreateAt(now);
+        e.setUpdateAt(now);
+        e.setCreator(participant.getId());
+        e.setCreatorName(participant.getName());
+        e.setUpdater(participant.getId());
+        e.setUpdaterName(participant.getName());
+    }
+
+    private static void fillAudit(FmsExceptionHandle h, Date now) {
+        h.setTenantCode(currentTenant());
+        h.setDelStatus(0);
+        h.setCreateAt(now);
+        h.setUpdateAt(now);
+        h.setCreator(EngineContextExecutor.SYSTEM_USER_ID);
+        h.setCreatorName(EngineContextExecutor.SYSTEM_USER_NAME);
     }
 
     private static String currentTenant() {
@@ -242,37 +250,29 @@ public class InstanceLifecycleService {
         }
     }
 
-    private static String levelOverride(Map<String, Object> hit, String ruleLevel) {
-        Object v = hit.get("levelOverride");
-        return v == null || String.valueOf(v).isBlank() ? ruleLevel : String.valueOf(v);
+    /** title 三级回退：命中自带 → 既有实例值 → 规则名。 */
+    private static String titleOf(Hit hit, String fallback, String ruleName) {
+        String v = hit.getTitle();
+        if (v == null || v.isBlank()) {
+            v = fallback != null && !fallback.isBlank() ? fallback : ruleName;
+        }
+        return truncate(v, 500);
     }
 
-    private static String briefOf(Map<String, Object> hit, String fallback) {
-        Object v = hit.get("hitBrief");
-        return v == null || String.valueOf(v).isBlank() ? fallback : truncate(String.valueOf(v), 500);
-    }
-
-    private static String detailOf(Map<String, Object> hit, String fallback) {
-        Object snapshot = hit.get("snapshot");
+    private static String detailOf(Hit hit, String fallback) {
         Map<String, Object> detail = new LinkedHashMap<>();
-        detail.put("hitBrief", hit.get("hitBrief"));
-        detail.put("snapshot", snapshot);
+        detail.put("title", hit.getTitle());
+        detail.put("snapshot", hit.getSnapshot());
         String json = writeJson(detail);
         return "{}".equals(json) && fallback != null ? fallback : json;
     }
 
-    /** 锚点时间兼容格式：常规 yyyy-MM-dd HH:mm:ss 与 ISO 本地时间。 */
-    private static final java.time.format.DateTimeFormatter[] ANCHOR_TIME_FORMATS = {
-            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
-            java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME};
-
-    private static Long anchorElapsed(Map<String, Object> hit) {
-        Object anchorTime = hit.get("anchorTime");
-        if (anchorTime == null) {
+    private static Long anchorElapsed(Hit hit) {
+        String text = hit.getAnchorTime();
+        if (text == null) {
             return null;
         }
-        String text = String.valueOf(anchorTime);
-        for (java.time.format.DateTimeFormatter f : ANCHOR_TIME_FORMATS) {
+        for (java.time.format.DateTimeFormatter f : HitsContractValidator.ANCHOR_TIME_FORMATS) {
             try {
                 java.time.LocalDateTime t = java.time.LocalDateTime.parse(text, f);
                 return java.time.Duration.between(t, java.time.LocalDateTime.now()).getSeconds();

@@ -65,6 +65,7 @@ public class ExceptionScanScheduler {
                             .where(Filter.eq("enableStatus", 1),
                                     Filter.in("triggerType", List.of("SCAN", "BOTH")),
                                     Filter.eq("delStatus", 0))
+                            .disableInjectFilter()
                             .list());
             if (rows == null || rows.isEmpty()) {
                 return;
@@ -77,6 +78,8 @@ public class ExceptionScanScheduler {
                     continue;
                 }
                 if (RuleCronCalculator.isDue(rule, lastRunMap.get(rule.getRuleCode()), now)) {
+                    log.info("扫描到期，提交执行 ruleCode={} cron={} lastRun={}", rule.getRuleCode(),
+                            rule.getCronExpression(), lastRunMap.get(rule.getRuleCode()));
                     scanRunner.submitAsync(rule);
                 }
             }

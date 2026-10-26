@@ -5,6 +5,7 @@ import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.schema.SchemaColumn;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.utils.StringUtils;
+import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.utils.SchemaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,9 @@ import java.util.Map;
 public class TableToMetaFixer {
 
     private static final Logger log = LoggerFactory.getLogger(TableToMetaFixer.class);
+
+    /** 补偿写库的创建者/更新者标识（裸 SQL 无 ORM 拦截器，固定为工具身份） */
+    private static final String OPERATOR = "meta-sync";
 
     private final Dao dao;
 
@@ -53,13 +57,16 @@ public class TableToMetaFixer {
 
     /**
      * 把指定物理表的列同步到 platform_dev_column。
+     * <p>先确保 platform_dev_table 存在（缺失则用雪花 id 新建，app_id/tenant_code 取界面入参），
+     * 再以该 tableId 回填每个 column 的 table_id。
      *
      * @param tableName 物理表名
-     * @param entityName 对应的实体名（用于回填 platform_dev_column.table_name / entityName 关联，可为空则用 tableName）
-     * @param tableId platform_dev_table.id（用于回填 column.table_id；为空则尝试按 entity_name 查）
+     * @param entityName 对应的实体名（可为空则用 tableName）
+     * @param appId 应用 id（界面指定，必填）
+     * @param tenantCode 租户编码（界面指定，必填）
      * @param apply true=写库，false=仅返回预览 SQL
      */
-    public FixResult syncTableToMeta(String tableName, String entityName, String tableId, boolean apply) {
+    public FixResult syncTableToMeta(String tableName, String entityName, String appId, String tenantCode, boolean apply) {
         FixResult result = new FixResult(apply);
         if (StringUtils.isBlank(tableName)) {
             return result;
@@ -79,13 +86,21 @@ public class TableToMetaFixer {
         }
         List<SchemaColumn> schemaColumns = SchemaUtils.buildData(SchemaColumn.class, rows);
 
-        // 2. 解析 tableId（未提供则按 entity_name 查 platform_dev_table）
-        if (StringUtils.isBlank(tableId)) {
-            List<Map<String, Object>> t = jdbc.queryForList(
-                    "SELECT id FROM platform_dev_table WHERE entity_name = ? AND del_status = ? LIMIT 1",
-                    entityName, ColumnDefault.DEL_STATUS_VALUE);
-            if (t != null && !t.isEmpty() && t.get(0).get("id") != null) {
-                tableId = t.get(0).get("id").toString();
+        // 2. 确保 platform_dev_table 存在：缺失则先插入（雪花 id），再以其 id 回填 column.table_id
+        String tableId;
+        List<Map<String, Object>> t = jdbc.queryForList(
+                "SELECT id FROM platform_dev_table WHERE entity_name = ? AND del_status = ? LIMIT 1",
+                entityName, ColumnDefault.DEL_STATUS_VALUE);
+        if (t != null && !t.isEmpty() && t.get(0).get("id") != null) {
+            tableId = t.get(0).get("id").toString();
+        } else {
+            java.sql.Timestamp now = new java.sql.Timestamp(new Date().getTime());
+            tableId = String.valueOf(UIDGenerator.generate());
+            SqlStatement tableStmt = buildTableInsert(tableId, appId, tenantCode, entityName, tableName, now);
+            result.previewSql.add(tableStmt.toPreview());
+            if (apply) {
+                jdbc.update(tableStmt.getSql(), tableStmt.getParams());
+                result.executed++;
             }
         }
 
@@ -114,10 +129,10 @@ public class TableToMetaFixer {
             }
             if (!existing.containsKey(colLower)) {
                 // insert
-                String sql = buildInsertSql(tableId, entityName, tableName, sc, cm);
-                result.previewSql.add(sql);
+                SqlStatement stmt = buildInsert(tableId, appId, tenantCode, tableName, sc, cm);
+                result.previewSql.add(stmt.toPreview());
                 if (apply) {
-                    jdbc.execute(sql);
+                    jdbc.update(stmt.getSql(), stmt.getParams());
                     result.executed++;
                 }
             } else {
@@ -125,10 +140,10 @@ public class TableToMetaFixer {
                 Map<String, Object> exist = existing.get(colLower);
                 if (needUpdate(exist, cm)) {
                     String existId = exist.get("id") == null ? null : exist.get("id").toString();
-                    String sql = buildUpdateSql(exist, existId, cm);
-                    result.previewSql.add(sql);
+                    SqlStatement stmt = buildUpdate(exist, existId, cm);
+                    result.previewSql.add(stmt.toPreview());
                     if (apply) {
-                        jdbc.execute(sql);
+                        jdbc.update(stmt.getSql(), stmt.getParams());
                         result.executed++;
                     }
                 }
@@ -197,51 +212,81 @@ public class TableToMetaFixer {
         return def;
     }
 
-    private String buildInsertSql(String tableId, String entityName, String tableName, SchemaColumn sc, ColumnMeta cm) {
-        String now = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-        String id = java.util.UUID.randomUUID().toString().replace("-", "");
+    private SqlStatement buildTableInsert(String tableId, String appId, String tenantCode, String entityName, String tableName, java.sql.Timestamp now) {
+        String sql = "INSERT INTO platform_dev_table (" +
+                "id, app_id, table_name, entity_name, title, table_type, " +
+                "enable_status, del_status, create_at, update_at, tenant_code, " +
+                "creator, creator_name, updater, updater_name" +
+                ") VALUES (?, ?, ?, ?, ?, 'entity', ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        return new SqlStatement(sql,
+                tableId,
+                appId,
+                tableName,
+                entityName,
+                entityName,
+                ColumnDefault.ENABLE_STATUS_VALUE,
+                ColumnDefault.DEL_STATUS_VALUE,
+                now,
+                now,
+                tenantCode,
+                OPERATOR,
+                OPERATOR,
+                OPERATOR,
+                OPERATOR);
+    }
+
+    private SqlStatement buildInsert(String tableId, String appId, String tenantCode, String tableName, SchemaColumn sc, ColumnMeta cm) {
+        java.sql.Timestamp now = new java.sql.Timestamp(new Date().getTime());
+        // 主键用雪花算法（与平台一致，见 utils.UIDGenerator）
+        String id = String.valueOf(UIDGenerator.generate());
+        // 裸 SQL 绕过 ORM 审计拦截器，creator/updater 固定为工具身份 meta-sync（两列非空无默认值）
         String colName = sc.getColumnName().toLowerCase(Locale.ENGLISH);
         String fieldName = StringUtils.toCamelCase(colName);
-        String title = StringUtils.isNotBlank(sc.getColumnComment()) ? escape(sc.getColumnComment()) : colName;
-        StringBuilder sb = new StringBuilder("INSERT INTO platform_dev_column (");
-        sb.append("id, app_id, table_id, table_name, field_name, column_name, title, ");
-        sb.append("data_type, column_type, is_nullable, is_unique, column_key, ");
-        sb.append("character_maxinum_length, numeric_precision, numeric_scale, ");
-        sb.append("ordinal_position, seq_no, enable_status, del_status, create_at, update_at, tenant_code");
-        sb.append(") VALUES (");
-        sb.append("'").append(id).append("', ");
-        sb.append("NULL, ");
-        sb.append(StringUtils.isNotBlank(tableId) ? "'" + tableId + "'" : "NULL").append(", ");
-        sb.append("'").append(escape(tableName)).append("', ");
-        sb.append("'").append(escape(fieldName)).append("', ");
-        sb.append("'").append(escape(colName)).append("', ");
-        sb.append("'").append(title).append("', ");
-        sb.append("'").append(cm.getDataType() == null ? "" : cm.getDataType()).append("', ");
-        sb.append("'").append(cm.getType() == null ? "" : escape(cm.getType())).append("', ");
-        sb.append(cm.isNullable() ? "1" : "0").append(", ");
-        sb.append(cm.isUniqued() ? "1" : "0").append(", ");
-        sb.append(cm.isKey() ? "1" : "0").append(", ");
-        sb.append(cm.getCharMaxLength()).append(", ");
-        sb.append(cm.getNumericPrecision()).append(", ");
-        sb.append(cm.getNumericScale()).append(", ");
-        sb.append(cm.getOrdinalPosition()).append(", ");
-        sb.append(cm.getOrdinalPosition()).append(", ");
-        sb.append(ColumnDefault.ENABLE_STATUS_VALUE).append(", ");
-        sb.append(ColumnDefault.DEL_STATUS_VALUE).append(", ");
-        sb.append("'").append(now).append("', ");
-        sb.append("'").append(now).append("', ");
-        sb.append("NULL");
-        sb.append(")");
-        return sb.toString();
+        String title = StringUtils.isNotBlank(sc.getColumnComment()) ? sc.getColumnComment() : colName;
+        String sql = "INSERT INTO platform_dev_column (" +
+                "id, app_id, table_id, table_name, field_name, column_name, title, " +
+                "data_type, column_type, is_nullable, is_unique, column_key, " +
+                "character_maxinum_length, numeric_precision, numeric_scale, " +
+                "ordinal_position, seq_no, enable_status, del_status, create_at, update_at, tenant_code, " +
+                "creator, creator_name, updater, updater_name" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        return new SqlStatement(sql,
+                id,
+                appId,
+                StringUtils.isNotBlank(tableId) ? tableId : null,
+                tableName,
+                fieldName,
+                colName,
+                title,
+                cm.getDataType() == null ? "" : cm.getDataType(),
+                cm.getType() == null ? "" : cm.getType(),
+                cm.isNullable() ? 1 : 0,
+                cm.isUniqued() ? 1 : 0,
+                cm.isKey() ? 1 : 0,
+                cm.getCharMaxLength(),
+                cm.getNumericPrecision(),
+                cm.getNumericScale(),
+                cm.getOrdinalPosition(),
+                cm.getOrdinalPosition(),
+                ColumnDefault.ENABLE_STATUS_VALUE,
+                ColumnDefault.DEL_STATUS_VALUE,
+                now,
+                now,
+                tenantCode,
+                OPERATOR,
+                OPERATOR,
+                OPERATOR,
+                OPERATOR);
     }
 
     /**
-     * 构造 UPDATE：逐字段比较，只 SET 真正有差异的字段。
+     * 构造 UPDATE：逐字段比较，只 SET 真正有差异的字段，全部走占位符绑定。
      * 精度/长度（charMaxLength/precision/scale）不自动补偿——显示宽度 MySQL 8 已废弃、
      * ColumnMeta 默认值与物理真实值天然不同，写回只会刷库制造噪音。
      */
-    private String buildUpdateSql(Map<String, Object> exist, String existId, ColumnMeta cm) {
+    private SqlStatement buildUpdate(Map<String, Object> exist, String existId, ColumnMeta cm) {
         StringBuilder sets = new StringBuilder();
+        List<Object> params = new ArrayList<>();
         String existDataType = exist.get("data_type") == null ? null : exist.get("data_type").toString();
         // 类型差异：data_type 与 column_type 一起更新为物理侧规范值
         if (existDataType != null && cm.getDataType() != null
@@ -249,9 +294,11 @@ public class TableToMetaFixer {
             if (sets.length() > 0) {
                 sets.append(", ");
             }
-            sets.append("data_type='").append(cm.getDataType()).append("'");
+            sets.append("data_type=?");
+            params.add(cm.getDataType());
             if (cm.getType() != null) {
-                sets.append(", column_type='").append(escape(cm.getType())).append("'");
+                sets.append(", column_type=?");
+                params.add(cm.getType());
             }
         }
         // nullable 差异
@@ -260,12 +307,11 @@ public class TableToMetaFixer {
             if (sets.length() > 0) {
                 sets.append(", ");
             }
-            sets.append("is_nullable=").append(cm.isNullable() ? 1 : 0);
+            sets.append("is_nullable=?");
+            params.add(cm.isNullable() ? 1 : 0);
         }
-        return "UPDATE platform_dev_column SET " + sets + " WHERE id='" + existId + "'";
-    }
-
-    private String escape(String s) {
-        return s == null ? "" : s.replace("'", "''");
+        sets.append(" WHERE id=?");
+        params.add(existId);
+        return new SqlStatement("UPDATE platform_dev_column SET " + sets, params.toArray());
     }
 }

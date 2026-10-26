@@ -1,5 +1,6 @@
 package cn.geelato.exception.engine.participant;
 
+import cn.geelato.exception.engine.core.Hit;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,7 +28,7 @@ public class ParticipantSolver {
         }
     }
 
-    public Solution solve(String ownerSelectorJson, Map<String, Object> hit) {
+    public Solution solve(String ownerSelectorJson, Hit hit) {
         List<Participant> handlers = new ArrayList<>();
         List<Participant> cc = new ArrayList<>();
         Map<String, Object> root = parse(ownerSelectorJson);
@@ -42,7 +43,7 @@ public class ParticipantSolver {
         return new Solution(handlers, cc);
     }
 
-    private List<Participant> resolveList(Object selectors, Map<String, Object> hit, String group) {
+    private List<Participant> resolveList(Object selectors, Hit hit, String group) {
         List<Participant> out = new ArrayList<>();
         if (!(selectors instanceof List<?> list)) {
             return out;

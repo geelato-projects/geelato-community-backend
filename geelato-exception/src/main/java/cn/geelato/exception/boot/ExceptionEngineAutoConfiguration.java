@@ -40,7 +40,8 @@ public class ExceptionEngineAutoConfiguration {
 
     @Bean
     public ScriptEngineCustomizer exceptionScriptEngineCustomizer(ExceptionEngineProperties properties,
-                                                                   ApplicationContext appCtx) {
+                                                                   ApplicationContext appCtx,
+                                                                   ObjectProvider<cn.geelato.script.kit.sql.ConnectPoolProvider> poolProvider) {
         return builder -> builder
                 .profile(ScriptProfile.builder()
                         .id(PipelineEngine.PROFILE_ID)
@@ -49,11 +50,35 @@ public class ExceptionEngineAutoConfiguration {
                         .defaultTimeoutMs(properties.getPipeline().getStepTimeoutMs())
                         .build())
                 .dataSourceSupplier(() -> resolveDataSource(properties, appCtx))
+                .connectPoolProvider(poolProvider.getIfAvailable(cn.geelato.script.kit.sql.ConnectPoolProvider::defaultProvider))
                 .httpEnabled(properties.getHttp().isEnabled())
                 .httpAllowlist(properties.getHttp().getAllowlist())
                 .httpTimeoutMs(properties.getHttp().getTimeoutMs())
                 .registerScoped("target", TargetService.class, ctx -> new TargetService(
                         new org.springframework.jdbc.core.JdbcTemplate(resolveDataSource(properties, appCtx)), ctx));
+    }
+
+    /**
+     * 联邦查询取池：动态连接走 orm Registry（懒建池），primary/默认回退宿主数据源定位链，
+     * 其余再回退 core DataSourceManager。
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public cn.geelato.script.kit.sql.ConnectPoolProvider exceptionConnectPoolProvider(
+            ExceptionEngineProperties properties, ApplicationContext appCtx,
+            ObjectProvider<cn.geelato.datasource.DynamicDataSourceRegistry> registryProvider) {
+        return connectId -> {
+            if (connectId == null || connectId.isBlank()
+                    || "primary".equalsIgnoreCase(connectId) || "local".equalsIgnoreCase(connectId)) {
+                return resolveDataSource(properties, appCtx);
+            }
+            cn.geelato.datasource.DynamicDataSourceRegistry registry = registryProvider.getIfAvailable();
+            if (registry != null && registry.containsDataSource(connectId)) {
+                return registry.getDataSource(connectId);
+            }
+            DataSourceManager manager = DataSourceManager.singleInstance();
+            return manager.getRegisteredDataSource(connectId);
+        };
     }
 
     @Bean
@@ -64,7 +89,8 @@ public class ExceptionEngineAutoConfiguration {
         return new PipelineEngine(scriptEngine.getObject(),
                 properties.getPipeline().getStepTimeoutMs(),
                 properties.getPipeline().getPipelineTimeoutMs(),
-                properties.getPipeline().getTrialTimeoutMs());
+                properties.getPipeline().getTrialTimeoutMs(),
+                properties.getPipeline().getStepOutputMaxBytes());
     }
 
     @Bean

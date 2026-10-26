@@ -59,7 +59,7 @@ public class FmsException extends BaseSortableEntity {
     @Col(name = "participant_org", charMaxlength = 64)
     private String participantOrg;
 
-    @Title(title = "业务对象类型")
+    @Title(title = "业务对象类型", description = "回溯坐标，脚本返回优先/规则兜底")
     @Col(name = "biz_type", charMaxlength = 32)
     private String bizType;
 
@@ -67,17 +67,9 @@ public class FmsException extends BaseSortableEntity {
     @Col(name = "biz_id", charMaxlength = 64)
     private String bizId;
 
-    @Title(title = "业务单号")
-    @Col(name = "biz_no", charMaxlength = 64)
-    private String bizNo;
-
-    @Title(title = "客户ID")
-    @Col(name = "customer_id", charMaxlength = 64)
-    private String customerId;
-
-    @Title(title = "客户名称")
-    @Col(name = "customer_name", charMaxlength = 128)
-    private String customerName;
+    @Title(title = "业务可读标识", description = "列表认对象/URL 模板 {bizLabel}")
+    @Col(name = "biz_label", charMaxlength = 64)
+    private String bizLabel;
 
     @Title(title = "状态", description = "OPEN/PROCESSING/RESOLVED/IGNORED/ESCALATED")
     @Col(name = "status", nullable = false, charMaxlength = 16)
@@ -107,9 +99,13 @@ public class FmsException extends BaseSortableEntity {
     @Col(name = "anchor_elapsed", dataType = "bigint")
     private Long anchorElapsed;
 
-    @Title(title = "命中摘要")
-    @Col(name = "hit_brief", charMaxlength = 512)
-    private String hitBrief;
+    @Title(title = "实例标题", description = "脚本组装，缺省兜底规则名")
+    @Col(name = "title", charMaxlength = 512)
+    private String title;
+
+    @Title(title = "抑制维度键", description = "引用本规则的 inhibitedBy 各声明拼键 JSON 数组")
+    @Col(name = "suppress_keys", dataType = "text")
+    private String suppressKeys;
 
     @Title(title = "触发快照JSON")
     @Col(name = "detail_json", dataType = "text")

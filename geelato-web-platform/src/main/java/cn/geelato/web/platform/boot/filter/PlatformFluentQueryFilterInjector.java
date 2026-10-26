@@ -3,6 +3,7 @@ package cn.geelato.web.platform.boot.filter;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.orm.query.MetaQuery;
 import cn.geelato.orm.spi.FluentQueryFilterInjector;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -19,11 +20,8 @@ public class PlatformFluentQueryFilterInjector implements FluentQueryFilterInjec
      * 可通过 {@link #setEnabled(boolean)} 将本注入器置为禁用。禁用后不会参与运行期的“唯一启用注入器”判定，
      * 与其它启用的注入器不冲突。</p>
      */
+    @Setter
     private volatile boolean enabled = true;
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
 
     @Override
     public boolean isEnabled() {
@@ -35,7 +33,5 @@ public class PlatformFluentQueryFilterInjector implements FluentQueryFilterInjec
         log.info("Platform Fluent query filter injector applying default filters. entityName={}",
                 query == null ? null : query.resolveEntityName());
         ruleSupport.applyDefaultFilters(command);
-        log.info("Platform Fluent query filter injector completed default filters. entityName={}",
-                query == null ? null : query.resolveEntityName());
     }
 }

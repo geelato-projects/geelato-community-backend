@@ -187,4 +187,30 @@ public class GeelatoSearchAutoConfiguration {
         return new cn.geelato.search.lucene.web.SearchManageController(
                 registry, reindexService, engine, failStore, properties);
     }
+
+    /**
+     * 检索运维检查只读数据接口（/api/search-ops/**），供运维页消费。
+     * 与 {@link #searchManageController} 同口径：仅组件扫描未覆盖本包时由自动装配兜底注册。
+     */
+    @Bean
+    @ConditionalOnWebApplication
+    @ConditionalOnMissingBean(cn.geelato.search.lucene.web.SearchOpsApiController.class)
+    public cn.geelato.search.lucene.web.SearchOpsApiController searchOpsApiController(
+            SearchDomainRegistry registry, LuceneSearchEngine engine,
+            DocumentLoader searchDocumentLoader, SearchSyncFailStore failStore,
+            SearchReindexService reindexService) {
+        return new cn.geelato.search.lucene.web.SearchOpsApiController(
+                registry, engine, searchDocumentLoader, failStore, reindexService);
+    }
+
+    /**
+     * 检索运维检查 HTML 页面（GET /search-ops.html），显式 Controller 返回 classpath 静态页，
+     * 规避宿主静态资源机制被覆盖导致 404（对齐 geelato-meta-sync 先例）。
+     */
+    @Bean
+    @ConditionalOnWebApplication
+    @ConditionalOnMissingBean(cn.geelato.search.lucene.web.SearchOpsPageController.class)
+    public cn.geelato.search.lucene.web.SearchOpsPageController searchOpsPageController() {
+        return new cn.geelato.search.lucene.web.SearchOpsPageController();
+    }
 }

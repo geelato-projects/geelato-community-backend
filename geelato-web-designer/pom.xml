@@ -21,6 +21,11 @@
             <groupId>cn.geelato</groupId>
             <artifactId>geelato-web-platform</artifactId>
         </dependency>
+        <!-- 调试同源 CDP WebSocket 代理（浏览器 <-> 内网 worker inspector 双向转发） -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-websocket</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

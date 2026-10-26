@@ -27,6 +27,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.net.ServerSocket;
 
 /**
  * 引擎实现：每次执行独立 Context 故障隔离，worker 池 + Future 超时 + close(true) 强杀；
@@ -36,7 +38,7 @@ import java.util.concurrent.TimeoutException;
  * 版本清单/缺省版本为运行时可变状态（EngineAdmin 写、执行路径读，volatile/并发容器）。
  */
 @Slf4j
-public class DefaultScriptEngine implements ScriptEngine, EngineAdmin {
+public class DefaultScriptEngine implements ScriptEngine, EngineAdmin, ScriptDebugService {
 
     private static final int MAX_LOG_TEXT = 2000;
 
@@ -47,6 +49,8 @@ public class DefaultScriptEngine implements ScriptEngine, EngineAdmin {
     private final SandboxContextFactory contextFactory;
     private final Map<String, ScriptLanguageExecutor> languageExecutors;
     private final ExecutorService workers;
+    /** 调试会话登记表（sessionId -> 句柄）：debug Context 长会话存活，inspector 端口占用至 stop。 */
+    private final Map<String, DebugHandle> debugSessions = new java.util.concurrent.ConcurrentHashMap<>();
 
     DefaultScriptEngine(EngineOptions options, Map<String, EngineRevision> revisions, String defaultVersion,
                         Map<String, ScriptProfile> profiles,
@@ -87,11 +91,11 @@ public class DefaultScriptEngine implements ScriptEngine, EngineAdmin {
 
         long start = System.currentTimeMillis();
         ConsoleCollector console = new ConsoleCollector();
-        try (Context context = contextFactory.create(new String[]{langExecutor.language()},
+        try (Context context = contextFactory.create(languagesFor(langExecutor),
                 profile.getStatementLimit() != null ? profile.getStatementLimit() : options.statementLimit(),
                 revision.getEsVersion())) {
             console.inject(context);
-            injectKits(context, revision, profile, langExecutor.language(), kitCtx);
+            injectKits(context, revision, profile, kitCtx);
             injectVariables(langExecutor, context, bindings, profile);
             injectEnv(langExecutor, context, buildEnv(execId, langExecutor, revision, profile, timeout, identity, execution));
             Object value = runWithTimeout(context, langExecutor,
@@ -132,7 +136,7 @@ public class DefaultScriptEngine implements ScriptEngine, EngineAdmin {
     public List<ScriptIssue> parseOnly(String lang, String content, String engineVersion) {
         EngineRevision revision = resolveRevision(engineVersion);
         ScriptLanguageExecutor langExecutor = resolveLanguage(lang);
-        try (Context context = contextFactory.create(new String[]{langExecutor.language()}, options.statementLimit(), revision.getEsVersion())) {
+        try (Context context = contextFactory.create(languagesFor(langExecutor), options.statementLimit(), revision.getEsVersion())) {
             return langExecutor.parseOnly(context, content, "parse");
         }
     }
@@ -223,7 +227,151 @@ public class DefaultScriptEngine implements ScriptEngine, EngineAdmin {
     }
 
     public void close() {
+        for (String sessionId : new java.util.ArrayList<>(debugSessions.keySet())) {
+            try {
+                stop(sessionId);
+            } catch (Exception ignored) {
+            }
+        }
+        debugSessions.clear();
         workers.shutdownNow();
+    }
+
+    // ==================== 调试会话（ScriptDebugService） ====================
+
+    @Override
+    public DebugSession start(ScriptExecution execution) {
+        ScriptLanguageExecutor langExecutor = resolveLanguage(execution.getLang());
+        if (!(langExecutor instanceof JsLanguageExecutor jsExecutor)) {
+            throw new IllegalArgumentException("断点调试仅支持 javascript（当前语言: " + langExecutor.language() + "）");
+        }
+        EngineRevision revision = resolveRevision(execution.getEngineVersion());
+        if (revision.getStatus() == EngineRevision.Status.RETIRED) {
+            throw new IllegalArgumentException("引擎版本已下线: " + revision.getId());
+        }
+        ScriptProfile profile = resolveProfile(execution.getProfileId());
+        IdentitySnapshot identity = execution.getIdentity() != null ? execution.getIdentity()
+                : (options.identitySupplier() != null ? options.identitySupplier().get() : IdentitySnapshot.empty());
+        Map<String, Object> bindings = effectiveBindings(execution);
+        boolean dryRun = execution.getDryRun() != null ? execution.getDryRun() : options.daoDryRun();
+        String sessionId = execution.getDebugSessionId() != null && !execution.getDebugSessionId().isBlank()
+                ? execution.getDebugSessionId() : newExecId();
+        String owner = execution.getDebugOwner() != null && !execution.getDebugOwner().isBlank()
+                ? execution.getDebugOwner()
+                : (identity.getUser() != null ? identity.getUser().getUserId() : null);
+        int port = execution.getDebugPort() != null && execution.getDebugPort() > 0
+                ? execution.getDebugPort() : freePort();
+        long timeout = execution.getTimeoutMs() != null ? execution.getTimeoutMs() : profile.getDefaultTimeoutMs();
+        String execId = newExecId();
+        KitContext kitCtx = newKitContext(execution.getAttributes(), execId, identity, bindings, dryRun);
+        log.info("SCRIPT-DEBUG-START session={} exec={} name='{}' port={} dryRun={} owner={}",
+                sessionId, execId, execution.getScriptName(), port, dryRun, owner);
+
+        // 复用正常 execute 的同一条注入链（injectKits/injectVariables/injectEnv），保证副作用等价。
+        Context context = contextFactory.createForDebug(languagesFor(langExecutor),
+                profile.getStatementLimit() != null ? profile.getStatementLimit() : options.statementLimit(),
+                revision.getEsVersion(), "127.0.0.1", port, sessionId);
+        try {
+            new ConsoleCollector().inject(context);
+            injectKits(context, revision, profile, kitCtx);
+            injectVariables(langExecutor, context, bindings, profile);
+            injectEnv(langExecutor, context, buildEnv(execId, langExecutor, revision, profile, timeout, identity, execution));
+        } catch (RuntimeException e) {
+            closeQuietly(context);
+            throw e;
+        }
+        AtomicReference<DebugStatus.State> state = new AtomicReference<>(DebugStatus.State.WAITING);
+        AtomicReference<String> error = new AtomicReference<>();
+        String content = execution.getContent() == null ? "" : execution.getContent();
+        String scriptName = execution.getScriptName();
+        Thread thread = new Thread(() -> {
+            try {
+                // 阻塞于 inspector（WaitAttached/Suspend）：DevTools 连接 + resume 后才跑完（dry-run 恒回滚）。
+                jsExecutor.executeDebug(context, content, scriptName);
+            } catch (Throwable t) {
+                error.set(t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage());
+                log.warn("SCRIPT-DEBUG-ERR session={} err={}", sessionId, String.valueOf(t));
+            } finally {
+                // 自然结束→EXITED；已 stop 的会话不覆盖 STOPPED。
+                state.compareAndSet(DebugStatus.State.WAITING, DebugStatus.State.EXITED);
+                state.compareAndSet(DebugStatus.State.RUNNING, DebugStatus.State.EXITED);
+                closeQuietly(context);
+            }
+        }, "graal-script-debug-" + sessionId);
+        thread.setDaemon(true);
+        debugSessions.put(sessionId, new DebugHandle(context, port, sessionId, owner, thread, state, error));
+        thread.start();
+        return DebugSession.builder()
+                .sessionId(sessionId).host("127.0.0.1").port(port).path(sessionId)
+                .owner(owner).engineVersion(revision.getId()).build();
+    }
+
+    @Override
+    public void stop(String sessionId) {
+        DebugHandle handle = debugSessions.remove(sessionId);
+        if (handle == null) {
+            return;
+        }
+        handle.state.set(DebugStatus.State.STOPPED);
+        // close(true) 强关→打断阻塞中的 eval 并释放 inspector 端口（幂等）。
+        closeQuietly(handle.context);
+        if (handle.thread != null) {
+            handle.thread.interrupt();
+        }
+        log.info("SCRIPT-DEBUG-STOP session={} port={}", sessionId, handle.port);
+    }
+
+    @Override
+    public DebugStatus status(String sessionId) {
+        DebugHandle handle = debugSessions.get(sessionId);
+        if (handle == null) {
+            return DebugStatus.builder().sessionId(sessionId).state(DebugStatus.State.STOPPED).alive(false).build();
+        }
+        DebugStatus.State s = handle.state.get();
+        boolean alive = (s == DebugStatus.State.WAITING || s == DebugStatus.State.RUNNING)
+                && handle.thread != null && handle.thread.isAlive();
+        String err = handle.error.get();
+        return DebugStatus.builder().sessionId(sessionId).state(s)
+                .alive(alive).error(err != null).errorMessage(err).build();
+    }
+
+    /** 分配空闲端口（开—关一个 ServerSocket(0) 回读内核分配的端口；小窗口竞争可接受，先按单会话验证）。 */
+    private static int freePort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("无法分配调试 inspector 空闲端口", e);
+        }
+    }
+
+    private static void closeQuietly(Context context) {
+        try {
+            context.close(true);
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** 调试会话句柄（内部登记；持 Context 至 stop，端口占用至此）。 */
+    private static final class DebugHandle {
+        final Context context;
+        final int port;
+        final String path;
+        final String owner;
+        final Thread thread;
+        final AtomicReference<DebugStatus.State> state;
+        final AtomicReference<String> error;
+
+        DebugHandle(Context context, int port, String path, String owner, Thread thread,
+                    AtomicReference<DebugStatus.State> state, AtomicReference<String> error) {
+            this.context = context;
+            this.port = port;
+            this.path = path;
+            this.owner = owner;
+            this.thread = thread;
+            this.state = state;
+            this.error = error;
+        }
     }
 
     // ==================== 内部 ====================
@@ -254,6 +402,7 @@ public class DefaultScriptEngine implements ScriptEngine, EngineAdmin {
                 .daoWriteEnabled(options.daoWriteEnabled())
                 .daoDryRun(dryRun)
                 .bindings(bindings)
+                .connectPoolProvider(options.connectPoolProvider())
                 .build();
     }
 
@@ -347,8 +496,15 @@ public class DefaultScriptEngine implements ScriptEngine, EngineAdmin {
         return executor;
     }
 
-    private void injectKits(Context context, EngineRevision revision, ScriptProfile profile, String language,
-                               KitContext kitCtx) {
+    /** 非 js 语言时附带 js：console 收集与 $gl 注入面统一挂在 js bindings（脚本语言本身不受影响）。 */
+    private static String[] languagesFor(ScriptLanguageExecutor executor) {
+        return "js".equals(executor.language())
+                ? new String[]{"js"}
+                : new String[]{executor.language(), "js"};
+    }
+
+    /** kit 统一挂 js bindings（languagesFor 保证 js 恒在语言集中；wasm 等语言的全局作用域不可写）。 */
+    private void injectKits(Context context, EngineRevision revision, ScriptProfile profile, KitContext kitCtx) {
         Map<String, Object> active = new LinkedHashMap<>(revision.getSingletonKits());
         for (Map.Entry<String, cn.geelato.script.kit.ScopedKitSlot> e : revision.getScopedKits().entrySet()) {
             if (profile.namespaceAllowed(e.getKey())) {
@@ -360,20 +516,21 @@ public class DefaultScriptEngine implements ScriptEngine, EngineAdmin {
             if (!profile.namespaceAllowed(e.getKey())) {
                 continue;
             }
-            // @GraalFunction kit 经 guest 侧适配（arity 宽松 + 反射调用）；属性式 ProxyObject kit 原样挂载
-            Object expose = cn.geelato.script.lang.KitAdapter.adaptable(e.getValue())
-                    ? cn.geelato.script.lang.KitAdapter.of(e.getValue()) : e.getValue();
             KitDefinition def = revision.getDefinitions().get(e.getKey());
+            // 整库注入 kit 容器已为 guest 原生 ProxyObject 直接挂载；@GraalFunction kit 经 guest 侧适配（arity 宽松 + 反射调用）；属性式 kit 原样挂载
+            Object expose = def != null && def.isHost() ? e.getValue()
+                    : cn.geelato.script.lang.KitAdapter.adaptable(e.getValue())
+                    ? cn.geelato.script.lang.KitAdapter.of(e.getValue()) : e.getValue();
             if (def != null && def.isBuilt()) {
                 gl.put(e.getKey(), expose);
             } else {
-                context.getBindings(language).putMember(def != null ? def.exposeName() : e.getKey(), expose);
+                context.getBindings("js").putMember(def != null ? def.exposeName() : e.getKey(), expose);
             }
         }
         gl.putIfAbsent("help", (org.graalvm.polyglot.proxy.ProxyExecutable) args ->
                 cn.geelato.script.lang.KitHelpFormatter.format(revision.getDefinitions().values(),
                         profile::namespaceAllowed, helpNamespace(args)));
-        context.getBindings(language).putMember("$gl", cn.geelato.script.lang.GuestValues.toGuest(gl));
+        context.getBindings("js").putMember("$gl", cn.geelato.script.lang.GuestValues.toGuest(gl));
     }
 
     private static String helpNamespace(org.graalvm.polyglot.Value[] args) {
@@ -560,7 +717,8 @@ public class DefaultScriptEngine implements ScriptEngine, EngineAdmin {
                                 DaoSupplier daoSupplier, OrmExecutionWrapper ormWrapper,
                                 IdentitySupplier identitySupplier, String aesKey,
                                 boolean daoWriteEnabled, boolean daoDryRun,
-                                List<ScriptLanguageExecutor> languageExecutors) {
+                                List<ScriptLanguageExecutor> languageExecutors,
+                                cn.geelato.script.kit.sql.ConnectPoolProvider connectPoolProvider) {
     }
 
     private static final class EngineTimeoutException extends RuntimeException {

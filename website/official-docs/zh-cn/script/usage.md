@@ -54,6 +54,18 @@ const total = $gl.sql.queryValue('SELECT COUNT(*) FROM grant_apply', {});
 const row = $gl.sql.queryOne('SELECT * FROM grant_apply WHERE id = :id', { id: '1' });
 ```
 
+### 跨库查询
+
+`$gl.sql` 会自动识别语句引用的物理表（依据 `platform_dev_table.connect_id` / `@Entity(connectId)` / catalog 映射的连接登记），按表所在库与执行库的关系三段路由：
+
+| 场景 | 行为 |
+| :--- | :--- |
+| 全部在执行库本库（含未登记表） | 原样直连执行，零开销 |
+| 同实例跨库 | 自动加库名前缀（如 `` `bizdb`.`t` ``）后仍在执行库执行；事务与 dry-run 回滚语义不变 |
+| 跨实例 / 异构库 | Apache Calcite 联邦执行：单源过滤与投影下推各库，跨源 join/聚合在应用内存计算（非分布式引擎，大结果集受行数上限与超时收口） |
+
+边界：跨实例**写**语句直接拒绝（无跨库事务保证）；未登记表、已带库名限定的表、CTE 别名、无法解析的语句均原样透传；登记的连接在 `platform_dev_db_connect` 中无配置则硬失败。同实例前缀改写只替换表名文本区间，语句其余部分（含注释与 hint）保持原文不变。路由决策记入 trace（`sql/route` 条目）与 `KIT-XDB` 日志。
+
 ## $gl.mql：MQL 元数据查询
 
 入参为 MQL JSON 文本（语法见 [MQL 使用指引](/docs/mql/usage)），方法面对齐平台 `/meta/*` 接口（MetaController），按实体元数据自动路由数据源与身份。

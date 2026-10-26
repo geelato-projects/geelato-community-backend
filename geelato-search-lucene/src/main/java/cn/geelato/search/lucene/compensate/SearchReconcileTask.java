@@ -9,13 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;/**
  * 对账任务（兜底一切绕过事件同步的写入：直连 SQL、DBA 变更、补偿遗漏）。
  *
  * <p>按 update_at 水位拉取域内主表与子表变更：主表变更主键、子表变更外键（DISTINCT），
  * 无条件回表重建（幂等，重写即修复——是"比对后重建"的超集，不漏写）。
- * 水位回拨 5 分钟重叠扫描，容忍边界时间。另做双端 count 比对，偏差仅告警不自动全量重建
+ * 水位基准取目标库当前时间（非应用时钟，规避多库整点时差），回拨 5 分钟重叠扫描，容忍边界时间。
+ * 另做双端 count 比对，偏差仅告警不自动全量重建
  * （避免 DB 与索引双双异常时误判方向）。
  */
 @Slf4j
@@ -53,8 +53,11 @@ public class SearchReconcileTask {
             log.info("域未完成 reindex，跳过对账: domain={}", domain.getId());
             return;
         }
-        Timestamp watermark = Timestamp.valueOf(LocalDateTime.now().minusMinutes(WATERMARK_OVERLAP_MINUTES)
-                .withSecond(0).withNano(0));
+        // 水位天花板取目标库当前时间（与 update_at 同一时钟域），而非应用 LocalDateTime.now()——
+        // 多库部署下 ob_integrate 与平台库时钟可能相差整点小时，用应用时钟会系统性漏扫/重扫。
+        Timestamp dbNow = syncService.getDocumentLoader().currentDbTime(domain.getMainEntity());
+        Timestamp watermark = Timestamp.valueOf(dbNow.toLocalDateTime()
+                .minusMinutes(WATERMARK_OVERLAP_MINUTES).withSecond(0).withNano(0));
         Timestamp previous = failStore.getWatermark(domain.getId(), domain.getMainEntity());
 
         int rebuilt = 0;

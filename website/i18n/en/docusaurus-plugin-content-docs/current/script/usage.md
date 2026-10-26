@@ -41,6 +41,18 @@ Named parameters (`:name`); queries are capped by `sql.row-limit` (default 10000
 | `$gl.sql.update(sql, params)` | write statement, returns `{affected, dryRun}` |
 | `$gl.sql.execute(sql)` | DDL / no-parameter statement, same gating as update |
 
+### Cross-database queries
+
+`$gl.sql` resolves the physical tables referenced by a statement (via connection registration: `platform_dev_table.connect_id` / `@Entity(connectId)` / catalog mapping) and routes in three tiers by how each table's database relates to the executing database:
+
+| Case | Behavior |
+| :--- | :--- |
+| All tables local to the executing database (incl. unregistered ones) | executed as-is on the direct connection, zero overhead |
+| Same server, different database | database-name prefix added automatically (e.g. `` `bizdb`.`t` ``), still executed on the executing connection; transaction and dry-run rollback semantics unchanged |
+| Cross-server / heterogeneous sources | federated execution via Apache Calcite: per-source filters and projections are pushed down; cross-source joins/aggregations run in application memory (not a distributed engine; large results are bounded by row limit and timeout) |
+
+Boundaries: cross-server **write** statements are rejected outright (no cross-database transaction guarantee); unregistered tables, already qualified names, CTE aliases, and unparsable statements pass through unchanged; a registered connection with no `platform_dev_db_connect` row fails hard. The same-server prefix rewrite replaces only the table-name text span; the rest of the statement (comments and hints included) is preserved verbatim. Routing decisions are recorded in the trace (`sql/route` entries) and `KIT-XDB` logs.
+
 ## $gl.mql — MQL Metadata Query
 
 Input is an MQL JSON text (see the [MQL guide](/docs/mql/usage)); the method set mirrors the platform `/meta/*` endpoints (MetaController), and entity metadata drives data-source routing and identity.

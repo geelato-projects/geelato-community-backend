@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 @Slf4j
-@ConditionalOnProperty(prefix = "geelato.platform.ormhook", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "geelato.platform.ormhook", name = "enabled", havingValue = "true")
 public class OrmHookLogScheduler {
 
     private static final String LOG_TABLE = "platform_orm_hook_log";

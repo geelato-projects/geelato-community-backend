@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>检索索引运维检查</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; font-size: 13px; color: #333; background: #f5f7fa; }
+  header { background: #1f2d3d; color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 16px; font-weight: 500; }
+  header .actions { display: flex; gap: 8px; align-items: center; }
+  .desc { color: #97a8be; font-size: 12px; margin-left: 12px; }
+  button { cursor: pointer; border: 1px solid #dcdfe6; background: #fff; color: #606266; padding: 6px 14px; border-radius: 4px; font-size: 13px; transition: all .2s; }
+  button:hover { color: #409eff; border-color: #c6e2ff; background: #ecf5ff; }
+  button.primary { background: #409eff; border-color: #409eff; color: #fff; }
+  button.primary:hover { background: #66b1ff; }
+  button.mini { padding: 3px 10px; font-size: 12px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .tabs { background: #fff; border-bottom: 1px solid #e4e7ed; display: flex; padding: 0 20px; }
+  .tab { padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: #606266; }
+  .tab.active { color: #409eff; border-bottom-color: #409eff; }
+  .container { padding: 16px 20px; }
+  .summary { display: flex; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
+  .stat { background: #fff; border-radius: 4px; padding: 12px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); min-width: 110px; }
+  .stat .num { font-size: 22px; font-weight: 600; }
+  .stat .label { color: #909399; font-size: 12px; }
+  .stat.ok .num { color: #67c23a; }
+  .stat.warn .num { color: #e6a23c; }
+  .stat.err .num { color: #f56c6c; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #ebeef5; vertical-align: top; }
+  th { background: #fafafa; font-weight: 500; color: #909399; font-size: 12px; white-space: nowrap; }
+  tr:hover td { background: #f5f7fa; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; white-space: nowrap; }
+  .badge.ok { background: #f0f9eb; color: #67c23a; }
+  .badge.no { background: #fef0f0; color: #f56c6c; }
+  .badge.gray { background: #f4f4f5; color: #909399; }
+  .badge.run { background: #ecf5ff; color: #409eff; }
+  .badge.warn { background: #fdf6ec; color: #e6a23c; }
+  .issues { color: #f56c6c; font-size: 12px; margin: 0; padding-left: 16px; }
+  .issues li { margin: 1px 0; }
+  .ok-mark { color: #67c23a; font-size: 12px; }
+  .mono { font-family: Consolas, "Courier New", monospace; }
+  .empty { color: #c0c4cc; text-align: center; padding: 20px; }
+  select, input[type=text], input[type=number] { padding: 5px 8px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 13px; }
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .hidden { display: none; }
+  .loading { color: #409eff; }
+  .err-msg { color: #f56c6c; }
+  .progress-line { font-size: 12px; color: #606266; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>检索索引运维检查<span class="desc">索引数量 ↔ 主表行数 ↔ 表结构 · 更新日志（补偿队列）· 对账水位</span></h1>
+  </div>
+  <div class="actions">
+    <button class="primary" onclick="refreshAll()">刷新</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('consistency', this)">一致性体检</div>
+  <div class="tab" onclick="switchTab('compensation', this)">更新日志（补偿队列）</div>
+  <div class="tab" onclick="switchTab('watermarks', this)">对账水位</div>
+</div>
+
+<!-- Tab 1: 一致性体检 -->
+<div id="tab-consistency" class="container">
+  <div class="summary" id="cSummary"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>域 / 主实体</th>
+        <th>存量重建</th>
+        <th>主表行数</th>
+        <th>索引文档数</th>
+        <th>数量对齐</th>
+        <th>补偿队列</th>
+        <th>结构体检</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="cBody">
+      <tr><td colspan="8" class="empty">加载中...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Tab 2: 更新日志（补偿队列） -->
+<div id="tab-compensation" class="container hidden">
+  <div class="toolbar">
+    <span style="color:#606266;">状态：</span>
+    <select id="compStatus" onchange="loadCompensation()">
+      <option value="">全部</option>
+      <option value="PENDING">待补偿 PENDING</option>
+      <option value="DEAD">已死亡 DEAD（需人工介入）</option>
+    </select>
+    <span style="color:#606266;">条数：</span>
+    <input type="number" id="compLimit" value="100" min="1" max="500" style="width:80px;">
+    <button class="primary mini" onclick="loadCompensation()">查询</button>
+    <span id="compMeta" style="color:#909399;font-size:12px;"></span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>域</th>
+        <th>文档ID</th>
+        <th>实体</th>
+        <th>操作</th>
+        <th>失败原因</th>
+        <th>状态</th>
+        <th>重试</th>
+        <th>下次重试</th>
+        <th>更新时间</th>
+        <th>错误信息</th>
+      </tr>
+    </thead>
+    <tbody id="compBody">
+      <tr><td colspan="10" class="empty">加载中...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Tab 3: 对账水位 -->
+<div id="tab-watermarks" class="container hidden">
+  <table>
+    <thead>
+      <tr>
+        <th>域</th>
+        <th>实体</th>
+        <th>对账水位（库时间）</th>
+        <th>水位更新时间</th>
+      </tr>
+    </thead>
+    <tbody id="wmBody">
+      <tr><td colspan="4" class="empty">加载中...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+const OPS = '/api/search-ops';
+const MNG = '/api/search';
+
+function api(path){ return fetch(path).then(r=>r.json()); }
+
+function unwrap(r){
+  // ApiResult 失败时 status=fail / code<0，data 为 null，直接取 data 会空指针并掩盖真实报错，这里抛出 msg 供调用方 catch 提示
+  if(r && (r.status==='fail' || (typeof r.code==='number' && r.code<0))){
+    throw new Error(r.msg || '请求失败');
+  }
+  return r && r.data !== undefined ? r.data : r;
+}
+
+function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// 时间字段：Jackson 可能序列化为 epoch 毫秒数字或字符串，统一转本地可读串
+function fmtTime(v){
+  if(v==null || v==='') return '<span class="mono" style="color:#c0c4cc;">-</span>';
+  if(typeof v==='number'){ try { return new Date(v).toLocaleString(); } catch(e){ return String(v); } }
+  if(v && typeof v==='object'){ // 兜底 AtomicLong/其他对象包装
+    const n = v.value!==undefined?v.value:null;
+    if(typeof n==='number'){ try { return new Date(n).toLocaleString(); } catch(e){} }
+    return esc(JSON.stringify(v));
+  }
+  return esc(String(v).replace('T',' ').replace(/\.\d+$/,''));
+}
+
+function fmtNum(v){
+  if(v==null) return '<span style="color:#c0c4cc;">-</span>';
+  if(typeof v==='object'){ return v.value!==undefined?esc(String(v.value)):esc(JSON.stringify(v)); }
+  return esc(String(v));
+}
+
+function switchTab(name, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  ['consistency','compensation','watermarks'].forEach(k=>{
+    document.getElementById('tab-'+k).classList.toggle('hidden', k!==name);
+  });
+}
+
+function refreshAll(){ loadConsistency(); loadCompensation(); loadWatermarks(); }
+
+// ===== Tab 1: 一致性体检 =====
+function loadConsistency(){
+  document.getElementById('cBody').innerHTML = '<tr><td colspan="8" class="empty loading">体检中，请稍候...</td></tr>';
+  api(OPS+'/consistency').then(res=>{
+    const data = unwrap(res);
+    renderCSummary(data.summary||{});
+    renderCItems(data.items||[]);
+  }).catch(e=>{
+    document.getElementById('cBody').innerHTML = '<tr><td colspan="8" class="empty err-msg">体检失败：'+esc(e.message)+'</td></tr>';
+  });
+}
+
+function renderCSummary(s){
+  let html = '';
+  html += statCell(s.domains||0, '搜索域', '');
+  html += statCell(s.reindexed||0, '已存量重建', 'ok');
+  html += statCell(s.consistent||0, '完全一致', 'ok');
+  html += statCell(s.inconsistent||0, '存在差异', (s.inconsistent||0)>0?'warn':'');
+  html += statCell(s.pendingTotal||0, '待补偿', (s.pendingTotal||0)>0?'warn':'');
+  html += statCell(s.deadTotal||0, '死亡补偿', (s.deadTotal||0)>0?'err':'');
+  document.getElementById('cSummary').innerHTML = html;
+}
+
+function statCell(num, label, cls){
+  return '<div class="stat '+cls+'"><div class="num">'+num+'</div><div class="label">'+label+'</div></div>';
+}
+
+function renderCItems(items){
+  if(!items.length){
+    document.getElementById('cBody').innerHTML = '<tr><td colspan="8" class="empty">未配置搜索域</td></tr>';
+    return;
+  }
+  let html = '';
+  for(const it of items){
+    const reindexed = it.reindexed
+      ? (it.reindexRunning ? '<span class="badge run">重建中</span>' : '<span class="badge ok">已完成</span>')
+      : '<span class="badge no">未重建</span>';
+    const align = it.countMatch
+      ? '<span class="badge ok">一致</span>'
+      : (it.reindexed ? '<span class="badge no">不一致</span>' : '<span class="badge gray">N/A</span>');
+    const pd = '<span class="badge '+(it.pending>0?'warn':'gray')+'">P '+(it.pending||0)+'</span> '
+             + '<span class="badge '+(it.dead>0?'no':'gray')+'">D '+(it.dead||0)+'</span>';
+    const issues = (it.issues&&it.issues.length)
+      ? '<ul class="issues">'+it.issues.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>'
+      : '<span class="ok-mark">✓ 结构完整</span>';
+    html += '<tr>';
+    html += '<td><div class="mono">'+esc(it.domainId)+'</div><div style="color:#909399;font-size:12px;">'+esc(it.mainEntity)+'</div></td>';
+    html += '<td>'+reindexed+'</td>';
+    html += '<td class="mono">'+fmtNum(it.dbRows)+'</td>';
+    html += '<td class="mono">'+(it.reindexed?fmtNum(it.indexDocs):'<span class="mono" style="color:#c0c4cc;">-</span>')+'</td>';
+    html += '<td>'+align+'</td>';
+    html += '<td>'+pd+'</td>';
+    html += '<td>'+issues+'</td>';
+    html += '<td><button class="primary mini" onclick="triggerReindex(\''+esc(it.domainId)+'\', this)">重建索引</button>'
+          + '<div class="progress-line" id="prog-'+esc(it.domainId)+'"></div></td>';
+    html += '</tr>';
+  }
+  document.getElementById('cBody').innerHTML = html;
+}
+
+function triggerReindex(domainId, btn){
+  btn.disabled = true; btn.textContent = '触发中...';
+  api(MNG+'/reindex/'+encodeURIComponent(domainId)).then(res=>{
+    const p = unwrap(res);
+    renderProgress(domainId, p);
+    btn.textContent = '重建中...';
+    pollProgress(domainId, btn);
+  }).catch(e=>{
+    btn.disabled = false; btn.textContent = '重建索引';
+    setProgLine(domainId, '<span class="err-msg">触发失败：'+esc(e.message)+'</span>');
+  });
+}
+
+function pollProgress(domainId, btn){
+  const timer = setInterval(()=>{
+    api(MNG+'/reindex/'+encodeURIComponent(domainId)+'/progress').then(res=>{
+      const p = unwrap(res);
+      renderProgress(domainId, p);
+      if(p && p.finished){
+        clearInterval(timer);
+        btn.disabled = false; btn.textContent = '重建索引';
+        loadConsistency(); // 重建完成后刷新体检
+      } else if(p && p.error){
+        clearInterval(timer);
+        btn.disabled = false; btn.textContent = '重建索引';
+      }
+    }).catch(e=>{
+      clearInterval(timer);
+      btn.disabled = false; btn.textContent = '重建索引';
+      setProgLine(domainId, '<span class="err-msg">进度查询失败：'+esc(e.message)+'</span>');
+    });
+  }, 2000);
+}
+
+function renderProgress(domainId, p){
+  if(!p){ setProgLine(domainId, ''); return; }
+  const done = fmtNum(p.done), skipped = fmtNum(p.skipped);
+  let mark = '';
+  if(p.error) mark = '<span class="err-msg">错误：'+esc(p.error)+'</span>';
+  else if(p.finished) mark = '<span class="ok-mark">✓ 重建完成</span>';
+  else mark = '<span class="loading">进行中...</span>';
+  setProgLine(domainId, '已写入 '+done+' · 跳过 '+skipped+' · '+mark);
+}
+
+function setProgLine(domainId, html){
+  const el = document.getElementById('prog-'+domainId);
+  if(el) el.innerHTML = html;
+}
+
+// ===== Tab 2: 更新日志（补偿队列） =====
+function loadCompensation(){
+  const status = document.getElementById('compStatus').value || '';
+  const limit = document.getElementById('compLimit').value || 100;
+  document.getElementById('compBody').innerHTML = '<tr><td colspan="10" class="empty loading">加载中...</td></tr>';
+  api(OPS+'/compensation?status='+encodeURIComponent(status)+'&limit='+encodeURIComponent(limit)).then(res=>{
+    const data = unwrap(res);
+    document.getElementById('compMeta').innerHTML =
+      '待补偿 <b style="color:#e6a23c;">'+(data.pending||0)+'</b> · 已死亡 <b style="color:#f56c6c;">'+(data.dead||0)+'</b>';
+    renderCompItems(data.items||[]);
+  }).catch(e=>{
+    document.getElementById('compBody').innerHTML = '<tr><td colspan="10" class="empty err-msg">加载失败：'+esc(e.message)+'</td></tr>';
+  });
+}
+
+function renderCompItems(items){
+  if(!items.length){
+    document.getElementById('compBody').innerHTML = '<tr><td colspan="10" class="empty">暂无补偿记录</td></tr>';
+    return;
+  }
+  let html = '';
+  for(const it of items){
+    const st = it.status==='DEAD'
+      ? '<span class="badge no">DEAD</span>'
+      : '<span class="badge warn">PENDING</span>';
+    html += '<tr>';
+    html += '<td class="mono">'+esc(it.domainId)+'</td>';
+    html += '<td class="mono">'+esc(it.docId)+'</td>';
+    html += '<td class="mono">'+esc(it.entityName)+'</td>';
+    html += '<td>'+esc(it.opType)+'</td>';
+    html += '<td>'+esc(it.failReason)+'</td>';
+    html += '<td>'+st+'</td>';
+    html += '<td class="mono">'+fmtNum(it.retryCount)+'</td>';
+    html += '<td class="mono">'+fmtTime(it.nextRetryAt)+'</td>';
+    html += '<td class="mono">'+fmtTime(it.updateAt)+'</td>';
+    html += '<td class="mono" style="max-width:360px;word-break:break-all;">'+esc(it.errorMessage)+'</td>';
+    html += '</tr>';
+  }
+  document.getElementById('compBody').innerHTML = html;
+}
+
+// ===== Tab 3: 对账水位 =====
+function loadWatermarks(){
+  document.getElementById('wmBody').innerHTML = '<tr><td colspan="4" class="empty loading">加载中...</td></tr>';
+  api(OPS+'/watermarks').then(res=>{
+    const data = unwrap(res);
+    renderWmItems(data.items||[]);
+  }).catch(e=>{
+    document.getElementById('wmBody').innerHTML = '<tr><td colspan="4" class="empty err-msg">加载失败：'+esc(e.message)+'</td></tr>';
+  });
+}
+
+function renderWmItems(items){
+  if(!items.length){
+    document.getElementById('wmBody').innerHTML = '<tr><td colspan="4" class="empty">暂无对账水位（对账任务尚未执行）</td></tr>';
+    return;
+  }
+  let html = '';
+  for(const it of items){
+    html += '<tr>';
+    html += '<td class="mono">'+esc(it.domain_id)+'</td>';
+    html += '<td class="mono">'+esc(it.entity_name)+'</td>';
+    html += '<td class="mono">'+fmtTime(it.watermark)+'</td>';
+    html += '<td class="mono">'+fmtTime(it.update_at)+'</td>';
+    html += '</tr>';
+  }
+  document.getElementById('wmBody').innerHTML = html;
+}
+
+// 首次进入加载全部
+refreshAll();
+</script>
+</body>
+</html>

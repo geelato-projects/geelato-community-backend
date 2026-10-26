@@ -24,6 +24,8 @@ public class ScriptEngineBuilder {
     private final List<Object> kitInstances = new ArrayList<>();
     private final List<Class<?>> kitClasses = new ArrayList<>();
     private final List<String> scanPackages = new ArrayList<>();
+    private final Map<String, String> hostPackages = new LinkedHashMap<>();
+    private List<String> hostExcludes = new ArrayList<>();
     private final Map<String, ScopedRegistration> scopedFactories = new LinkedHashMap<>();
     private final Map<String, ScriptProfile> profiles = new LinkedHashMap<>();
     private final Map<String, EngineRevision> revisions = new LinkedHashMap<>();
@@ -44,6 +46,7 @@ public class ScriptEngineBuilder {
     private int httpTimeoutMs = 5_000;
     private DaoSupplier daoSupplier;
     private OrmExecutionWrapper ormWrapper;
+    private cn.geelato.script.kit.sql.ConnectPoolProvider connectPoolProvider;
     private IdentitySupplier identitySupplier = IdentitySnapshot::captureCurrent;
     private String aesKey;
     private boolean daoWriteEnabled = true;
@@ -68,6 +71,19 @@ public class ScriptEngineBuilder {
         if (pkg != null && !pkg.isBlank()) {
             scanPackages.add(pkg.trim());
         }
+        return this;
+    }
+
+    /** 整库反射注入：库别名 + 根包（合并挂载为顶层 $kit.{别名}.{类简单名小写}.{方法}）。 */
+    public ScriptEngineBuilder hostPackage(String alias, String packageName) {
+        if (alias != null && !alias.isBlank() && packageName != null && !packageName.isBlank()) {
+            hostPackages.put(alias.trim(), packageName.trim());
+        }
+        return this;
+    }
+
+    public ScriptEngineBuilder hostExcludes(List<String> excludes) {
+        this.hostExcludes = excludes == null ? new ArrayList<>() : new ArrayList<>(excludes);
         return this;
     }
 
@@ -159,6 +175,12 @@ public class ScriptEngineBuilder {
         return this;
     }
 
+    /** 联邦查询按 connectId 取池（null 走 core DataSourceManager 缺省；带动态连接的宿主应注入 orm Registry 支撑实现）。 */
+    public ScriptEngineBuilder connectPoolProvider(cn.geelato.script.kit.sql.ConnectPoolProvider provider) {
+        this.connectPoolProvider = provider;
+        return this;
+    }
+
     /** ORM 调用包裹（connectId 路由 + 线程上下文重建；缺省直跑）。 */
     public ScriptEngineBuilder ormWrapper(OrmExecutionWrapper ormWrapper) {
         this.ormWrapper = ormWrapper;
@@ -201,6 +223,7 @@ public class ScriptEngineBuilder {
             registry.registerScoped(reg.name, reg.kitClass, reg.factory);
         }
         registry.scanPackages(scanPackages);
+        registry.scanHostPackages(hostPackages, hostExcludes);
         registerBuiltins(registry);
         registry.validate();
 
@@ -246,7 +269,7 @@ public class ScriptEngineBuilder {
                 dataSourceSupplier, sqlRowLimit, sqlQueryTimeoutMs,
                 httpEnabled, httpAllowlist, httpTimeoutMs,
                 daoSupplier, ormWrapper, identitySupplier, aesKey,
-                daoWriteEnabled, daoDryRun, executors);
+                daoWriteEnabled, daoDryRun, executors, connectPoolProvider);
         return new DefaultScriptEngine(options, allRevisions, defaultVersion, allProfiles,
                 new SandboxContextFactory(engineShared));
     }

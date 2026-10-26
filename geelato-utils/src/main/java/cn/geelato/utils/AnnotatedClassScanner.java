@@ -105,4 +105,51 @@ public class AnnotatedClassScanner {
         }
         return result;
     }
+
+    /**
+     * 扫描指定包（含子包）下的所有具体类（无注解过滤，剔除接口/抽象类）。
+     *
+     * @param basePackage 基础包名（不含通配，如 {@code cn.geelato}）
+     * @return 包下的具体类列表（已通过 {@code ClassUtils.forName} 加载）；扫描异常时返回空列表
+     */
+    public static List<Class<?>> scanAll(String basePackage) {
+        if (basePackage == null || basePackage.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        MetadataReaderFactory readerFactory = new CachingMetadataReaderFactory(resolver);
+        String pattern = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX
+                + ClassUtils.convertClassNameToResourcePath(basePackage) + "/**/*.class";
+
+        List<Class<?>> result = new ArrayList<>();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        try {
+            Resource[] resources = resolver.getResources(pattern);
+            for (Resource resource : resources) {
+                if (!resource.isReadable()) {
+                    continue;
+                }
+                String className;
+                try {
+                    MetadataReader reader = readerFactory.getMetadataReader(resource);
+                    if (!reader.getClassMetadata().isConcrete()) {
+                        continue;
+                    }
+                    className = reader.getClassMetadata().getClassName();
+                } catch (Throwable t) {
+                    logger.debug("skip unreadable class resource [{}]: {}", resource, t.toString());
+                    continue;
+                }
+                try {
+                    result.add(ClassUtils.forName(className, classLoader));
+                } catch (ClassNotFoundException | LinkageError e) {
+                    logger.warn("无法加载类 [{}]: {}", className, e.toString());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("扫描包 {} 出错！", basePackage, e);
+        }
+        return result;
+    }
 }

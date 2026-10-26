@@ -3,7 +3,8 @@ package cn.geelato.exception.engine.lifecycle;
 import lombok.Getter;
 
 /**
- * 异常实例生命周期事件（Spring ApplicationEvent 出口，零耦合消费者预留——告警中心等按需监听）：
+ * 异常实例生命周期事件（Spring ApplicationEvent 出口，零耦合消费者预留——本模块自有出口；
+ * 跨模块事件投递统一走框架 ORM 事件/ORM Hook 机制，不自建契约）：
  * EXC_CREATED / EXC_CLAIMED / EXC_RESOLVED / EXC_IGNORED / EXC_ESCALATED / EXC_RECOVERED。
  */
 @Getter

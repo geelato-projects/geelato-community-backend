@@ -14,7 +14,15 @@ public enum AppScaffoldCapability {
     UPLOAD("upload"),
     DOWNLOAD("download"),
     OSS("oss"),
-    SWAGGER("swagger");
+    SWAGGER("swagger"),
+    APP("app"),
+    SCHEDULE("schedule"),
+    SQL("sql"),
+    SCRIPT("script"),
+    SITE("site"),
+    EXPORT("export"),
+    MODEL("model"),
+    DDL("ddl");
 
     private final String id;
 
@@ -26,6 +34,11 @@ public enum AppScaffoldCapability {
         return id;
     }
 
+    /**
+     * 脚手架默认（内置）能力集合：凡下游基于 scaffold 启动的应用，默认即暴露这些
+     * 平台端点，无需再由下游通过 extra-controllers 逐条声明——能力边界由脚手架自身决定。
+     * 准入硬边界交给 {@code DesignTimeRoleInterceptor} 等鉴权拦截器，不靠裁剪端点兜底。
+     */
     public static List<AppScaffoldCapability> builtinCapabilities() {
         return List.of(
                 LOGIN,
@@ -34,7 +47,15 @@ public enum AppScaffoldCapability {
                 USER,
                 DICTIONARY,
                 NOTICE,
-                UPLOAD
+                UPLOAD,
+                APP,
+                SCHEDULE,
+                SQL,
+                SCRIPT,
+                SITE,
+                EXPORT,
+                MODEL,
+                DDL
         );
     }
 

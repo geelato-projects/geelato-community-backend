@@ -4,8 +4,14 @@
 -- 内容：
 --   1. 建表 platform_alert_rule（告警规则库：匹配 + 触发 + 聚合 + 接收人 + 路由 + 模板绑定）
 --   2. 建表 platform_alert_template（告警消息模板：js 脚本 + 渠道变体 + 示例上下文 + 引擎版本）
---   3. 建表 platform_alert_record（告警记录：聚合缓冲 / 渲染快照 / 投递状态 / 命中清单）
+--   3. 建表 platform_alert（告警记录：聚合缓冲 / 渲染快照 / 投递状态 / 命中清单）
 --   4. 建表 platform_alert_silence（静默规则：维度匹配 + 时间窗）
+--
+-- 2026-10 事件源泛化：match_json 以 source 自描述事件源（告警规则与 exception 解耦，
+--   EXCEPTION 为首个内置源）；platform_alert.exception_count 更名 event_count。
+--   存量环境先执行 alert-schema-rebuild-2026-10.sql 再执行本基线。
+--   已按本基线建过表的环境补列：
+--     ALTER TABLE `platform_alert` ADD COLUMN `source_json` json NULL COMMENT '源业务数据快照（single=源实例全量对象/group=清单数组；落库时采集，渲染不回查源表）' AFTER `event_ids`;
 --
 -- 约定：
 --   - id 平台惯例 varchar(32)；JSON 列 json；active_group_key 可空唯一（组内未闭环占用、闭环置 NULL）
@@ -25,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `platform_alert_rule` (
   `alert_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '告警规则编码 ALR-{三位序号}',
   `alert_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '告警名称',
   `alert_desc` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '描述',
-  `match_json` json NOT NULL COMMENT '异常匹配器 {eventTypes,ruleCodes}',
+  `match_json` json NOT NULL COMMENT '事件源匹配条件 {source,events,ruleCodes}，结构由 source 决定',
   `trigger_mode` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'EVENT' COMMENT 'EVENT/SCHEDULE/BOTH',
   `cron_expression` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT 'SCHEDULE/BOTH 周期',
   `dataset_json` json NULL COMMENT 'SCHEDULE 数据集口径',
@@ -35,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `platform_alert_rule` (
   `repeat_interval_minutes` int NULL DEFAULT NULL COMMENT '在途组重复提醒间隔分钟',
   `max_items` int NULL DEFAULT NULL COMMENT '清单渲染条数上限',
   `resolve_notify` tinyint(1) NOT NULL DEFAULT 0 COMMENT '全部闭环是否发恢复通知',
-  `receiver_json` json NOT NULL COMMENT '接收人 {followException,extra[]}',
+  `receiver_json` json NOT NULL COMMENT '接收人选择器 {extra[]}',
   `route_json` json NOT NULL COMMENT '通道路由 {default:{channels,templateCode}}',
   `daily_limit` int NULL DEFAULT NULL COMMENT '每日发送上限条',
   `enable_status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0停用/1生效',
@@ -95,20 +101,21 @@ CREATE TABLE IF NOT EXISTS `platform_alert_template` (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '业务告警中心-告警消息模板表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- 3. platform_alert_record（告警记录表）
+-- 3. platform_alert（告警表，与 platform_exception 同构命名）
 -- ----------------------------
-CREATE TABLE IF NOT EXISTS `platform_alert_record` (
+CREATE TABLE IF NOT EXISTS `platform_alert` (
   `id` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '主键',
   `alert_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '告警规则编码',
   `alert_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '冗余名',
   `alert_version` int NULL DEFAULT NULL COMMENT '规则口径版本',
   `trigger_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'EVENT/SCHEDULE/REPEAT/RESOLVE',
-  `event_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '触发异常事件类型',
+  `event_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '触发源事件类型',
   `batch_no` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '批次号',
   `group_key` varchar(160) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '聚合身份',
   `active_group_key` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '在途告警组唯一列，闭环置 NULL',
-  `exception_count` int NOT NULL DEFAULT 0 COMMENT '命中异常数',
-  `event_ids` json NULL COMMENT '命中异常实例 id 清单',
+  `event_count` int NOT NULL DEFAULT 0 COMMENT '命中源事件数',
+  `event_ids` json NULL COMMENT '命中源实例 id 清单',
+  `source_json` json NULL COMMENT '源业务数据快照（single=源实例全量对象/group=清单数组；落库时采集，渲染不回查源表）',
   `stats_json` json NULL COMMENT '聚合统计快照',
   `rendered_title` varchar(120) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '渲染快照标题',
   `rendered_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '渲染快照正文',
@@ -145,7 +152,7 @@ CREATE TABLE IF NOT EXISTS `platform_alert_record` (
   INDEX `idx_alert_record_flush` (`flush_at` ASC) USING BTREE,
   INDEX `idx_alert_record_create` (`create_at` ASC) USING BTREE,
   INDEX `idx_alert_record_tenant` (`tenant_code` ASC, `del_status` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '业务告警中心-告警记录表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '业务告警中心-告警表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- 4. platform_alert_silence（静默规则表）
@@ -153,7 +160,7 @@ CREATE TABLE IF NOT EXISTS `platform_alert_record` (
 CREATE TABLE IF NOT EXISTS `platform_alert_silence` (
   `id` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '主键',
   `silence_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '静默名称',
-  `match_json` json NOT NULL COMMENT '压制维度 {alertCodes,ruleCodes,customerIds}',
+  `match_json` json NOT NULL COMMENT '压制维度 {alertCodes,ruleCodes,customerIds}，ruleCodes=源(EXCEPTION)规则编码',
   `window_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'ONCE' COMMENT 'ONCE/RECURRING',
   `start_at` datetime NULL DEFAULT NULL COMMENT 'ONCE 起 / RECURRING 生效总区间起',
   `end_at` datetime NULL DEFAULT NULL COMMENT 'ONCE 止 / RECURRING 生效总区间止',

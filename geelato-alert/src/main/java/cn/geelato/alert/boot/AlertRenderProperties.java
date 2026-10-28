@@ -15,6 +15,6 @@ public class AlertRenderProperties {
     /** 单脚本超时毫秒（bea 设计：模板 ≤ 2s）。 */
     private long timeoutMs = 2_000;
 
-    /** 工作台深链前缀（workbenchUrl 拼接）。 */
+    /** EXCEPTION 源工作台深链前缀（workbenchUrl 拼接）。 */
     private String workbenchBaseUrl = "/fms/exception-center";
 }

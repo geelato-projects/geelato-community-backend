@@ -1,6 +1,7 @@
 package cn.geelato.alert.service;
 
-import cn.geelato.alert.entity.FmsAlertRecord;
+import cn.geelato.alert.engine.silence.SilenceChecker;
+import cn.geelato.alert.entity.FmsAlert;
 import cn.geelato.alert.entity.FmsAlertSilence;
 import cn.geelato.alert.support.SessionCtxHelper;
 import cn.geelato.core.orm.Dao;
@@ -174,7 +175,7 @@ public class AlertSilenceService {
         }
         for (Map<String, Object> row : rows) {
             FmsAlertSilence s = rowToEntity(row);
-            if (!withinWindow(s, now)) {
+            if (!SilenceChecker.withinWindow(s, now)) {
                 continue;
             }
             List<String> hitDimensions = new ArrayList<>();
@@ -193,12 +194,7 @@ public class AlertSilenceService {
                     hitDimensions.add("customerIds");
                 }
                 // 声明了维度但假想告警对应值为空 → 视为该维度不命中，整体不匹配
-                boolean declared = match.has("alertCodes") || match.has("ruleCodes") || match.has("customerIds");
-                boolean allDeclaredHit = !declared
-                        || (dimensionDeclaredHit(match.path("alertCodes"), alertCode)
-                        && dimensionDeclaredHit(match.path("ruleCodes"), ruleCode)
-                        && dimensionDeclaredHit(match.path("customerIds"), customerId));
-                if (!allDeclaredHit) {
+                if (!SilenceChecker.hit(s.getMatchJson(), alertCode, ruleCode, customerId)) {
                     continue;
                 }
             }
@@ -214,7 +210,7 @@ public class AlertSilenceService {
      * 预填命中维度（该客户该规则），默认 24h ONCE 窗，静默即落库生效。
      * @param customerId 命中异常的客户维度（由记录关联回查后传入，可空）
      */
-    public FmsAlertSilence createFromRecord(FmsAlertRecord record, String customerId, Integer hours, String reason) {
+    public FmsAlertSilence createFromRecord(FmsAlert record, String customerId, Integer hours, String reason) {
         SilenceSaveRequest req = new SilenceSaveRequest();
         Map<String, Object> matchJson = new LinkedHashMap<>();
         matchJson.put("alertCodes", List.of(record.getAlertCode()));
@@ -235,69 +231,12 @@ public class AlertSilenceService {
     }
 
     // ==================== 窗口与维度判定 ====================
+    // 窗口与三维交集判定收敛在 engine.silence.SilenceChecker（引擎投递前终判与本服务试匹配共用）。
 
-    /** ONCE：绝对窗；RECURRING：总区间 [startAt,endAt] + 周期窗（days + 每日时段）粗判（分钟精度）。 */
-    private boolean withinWindow(FmsAlertSilence s, Date now) {
-        if (s.getStartAt() == null || s.getEndAt() == null) {
-            return false;
-        }
-        if (now.before(s.getStartAt()) || now.after(s.getEndAt())) {
-            return false;
-        }
-        if (!"RECURRING".equals(s.getWindowType())) {
-            return true;
-        }
-        JsonNode tw = parseDocumentOrNull(s.getTimeWindow());
-        if (tw == null) {
-            return true;
-        }
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.setTime(now);
-        JsonNode days = tw.path("days");
-        if (days.isArray() && !days.isEmpty()) {
-            // 0=周日..6=周六（JS 惯例），Calendar DAY_OF_WEEK 需换算
-            int dow = (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7;
-            boolean dayHit = false;
-            for (JsonNode d : days) {
-                if (d.asInt(-1) == dow) {
-                    dayHit = true;
-                    break;
-                }
-            }
-            if (!dayHit) {
-                return false;
-            }
-        }
-        int minutes = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE);
-        int start = parseHHmm(tw.path("startTime").asText(null), 0);
-        int end = parseHHmm(tw.path("endTime").asText(null), 24 * 60);
-        return minutes >= start && minutes < end;
-    }
-
-    private int parseHHmm(String text, int def) {
-        if (text == null || !text.contains(":")) {
-            return def;
-        }
-        String[] parts = text.split(":");
-        try {
-            return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
-        } catch (NumberFormatException e) {
-            return def;
-        }
-    }
-
-    /** 未声明维度视为不设限（命中）；声明则须包含。 */
+    /** 未声明维度视为不设限（命中）；声明则须包含（试匹配 hitDimensions 展示用）。 */
     private boolean dimensionHit(JsonNode arr, String value) {
         if (arr == null || arr.isMissingNode() || arr.isNull() || !arr.isArray() || arr.isEmpty()) {
             return false;
-        }
-        return notBlank(value) && containsText(arr, value.trim());
-    }
-
-    /** 声明了该维度时是否真实命中（未声明恒真）。 */
-    private boolean dimensionDeclaredHit(JsonNode arr, String value) {
-        if (arr == null || arr.isMissingNode() || arr.isNull() || !arr.isArray() || arr.isEmpty()) {
-            return true;
         }
         return notBlank(value) && containsText(arr, value.trim());
     }

@@ -16,7 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * 覆盖场景（不触碰数据库与会话上下文）：
  * - contextSchema：SINGLE/GROUP/SCHEDULE 三种上下文形态的字段树口径与 helper 清单；
- * - type 大小写/空值容错（默认落到 single 分支）。
+ * - type 大小写/空值容错（默认落到 single 分支）；
+ * - sourceType 缺省 EXCEPTION、未知源硬失败。
  */
 class AlertTemplateServiceTest {
 
@@ -54,30 +55,33 @@ class AlertTemplateServiceTest {
     }
 
     @Test
-    @DisplayName("contextSchema：single 形态含 exception 字段树与 eventType")
+    @DisplayName("contextSchema：single 形态含 source 字段树与 eventType")
     void contextSchemaSingle() {
-        Map<String, Object> result = service.contextSchema("single");
+        Map<String, Object> result = service.contextSchema("single", "EXCEPTION");
         assertEquals("single", result.get("type"));
-        assertTrue(hasPath(result, "exception"));
-        assertTrue(hasPath(result, "exception.ruleCode"));
-        assertTrue(hasPath(result, "exception.level"));
+        assertEquals("EXCEPTION", result.get("source"));
+        assertTrue(hasPath(result, "$source"));
+        assertTrue(hasPath(result, "$source.ruleCode"));
+        assertTrue(hasPath(result, "$source.level"));
+        assertTrue(hasPath(result, "$source.detail.snapshot"));
         assertTrue(hasPath(result, "eventType"));
     }
 
     @Test
-    @DisplayName("contextSchema：group 形态含聚合字段（group.items / stats）")
+    @DisplayName("contextSchema：group 形态含聚合字段（alerts / stats）")
     void contextSchemaGroup() {
-        Map<String, Object> result = service.contextSchema("GROUP");
+        Map<String, Object> result = service.contextSchema("GROUP", null);
         assertEquals("group", result.get("type"), "type 应归一为小写");
         assertTrue(hasPath(result, "group"));
         assertTrue(hasPath(result, "group.stats"));
-        assertTrue(hasPath(result, "group.items"));
+        assertTrue(hasPath(result, "alerts"));
+        assertTrue(hasPath(result, "alertsTruncated"));
     }
 
     @Test
     @DisplayName("contextSchema：schedule 形态含 digest 数据集字段")
     void contextSchemaSchedule() {
-        Map<String, Object> result = service.contextSchema("schedule");
+        Map<String, Object> result = service.contextSchema("schedule", "exception");
         assertEquals("schedule", result.get("type"));
         assertTrue(hasPath(result, "digest"));
         assertTrue(hasPath(result, "digest.conditionMet"));
@@ -86,16 +90,32 @@ class AlertTemplateServiceTest {
     @Test
     @DisplayName("contextSchema：type 为空默认落到 single 分支")
     void contextSchemaNullDefaultsToSingle() {
-        Map<String, Object> result = service.contextSchema(null);
+        Map<String, Object> result = service.contextSchema(null, null);
         assertEquals("single", result.get("type"));
-        assertTrue(hasPath(result, "exception"));
+        assertEquals("EXCEPTION", result.get("source"), "sourceType 为空应缺省 EXCEPTION");
+        assertTrue(hasPath(result, "$source"));
+    }
+
+    @Test
+    @DisplayName("contextSchema：sourceType 大小写容错（exception → EXCEPTION）")
+    void contextSchemaSourceCaseInsensitive() {
+        Map<String, Object> result = service.contextSchema("single", "exception");
+        assertEquals("EXCEPTION", result.get("source"));
+    }
+
+    @Test
+    @DisplayName("contextSchema：未知事件源 → IllegalArgumentException 硬失败")
+    void contextSchemaUnknownSourceRejected() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> service.contextSchema("single", "ORDER"));
+        assertTrue(ex.getMessage().contains("未知事件源"), "应提示未知事件源，实际：" + ex.getMessage());
     }
 
     @Test
     @DisplayName("contextSchema：三种形态均返回非空 helper 清单与字段树")
     void contextSchemaHelpersPresent() {
         for (String type : List.of("single", "group", "schedule")) {
-            Map<String, Object> result = service.contextSchema(type);
+            Map<String, Object> result = service.contextSchema(type, "EXCEPTION");
             assertFalse(fields(result).isEmpty(), type + " 字段树不应为空");
             @SuppressWarnings("unchecked")
             List<Object> helpers = (List<Object>) result.get("helpers");

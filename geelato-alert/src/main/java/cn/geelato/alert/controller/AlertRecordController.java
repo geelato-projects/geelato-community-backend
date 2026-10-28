@@ -1,6 +1,6 @@
 package cn.geelato.alert.controller;
 
-import cn.geelato.alert.entity.FmsAlertRecord;
+import cn.geelato.alert.entity.FmsAlert;
 import cn.geelato.alert.entity.FmsAlertSilence;
 import cn.geelato.alert.service.AlertRecordService;
 import cn.geelato.alert.service.AlertSilenceService;
@@ -48,7 +48,7 @@ public class AlertRecordController {
     /** 记录详情：渲染快照 + 命中异常清单 + 接收人 + 投递明细索引。 */
     @GetMapping("/{id}")
     public ApiResult<Map<String, Object>> detail(@PathVariable String id) {
-        FmsAlertRecord record = recordService.getById(id);
+        FmsAlert record = recordService.getById(id);
         if (record == null) {
             return ContractCodes.fail(ContractCodes.NOT_FOUND, "告警记录不存在: " + id);
         }
@@ -58,7 +58,7 @@ public class AlertRecordController {
     /** 投递明细：biz_key 关联 platform_msg 状态（渠道/接收人/重试/死信原因）。 */
     @GetMapping("/{id}/messages")
     public ApiResult<Map<String, Object>> messages(@PathVariable String id) {
-        FmsAlertRecord record = recordService.getById(id);
+        FmsAlert record = recordService.getById(id);
         if (record == null) {
             return ContractCodes.fail(ContractCodes.NOT_FOUND, "告警记录不存在: " + id);
         }
@@ -68,7 +68,7 @@ public class AlertRecordController {
     /** 手动重发（FAIL/PARTIAL：渲染快照重投，不重渲染；CAS 抢占防并发）。 */
     @PostMapping("/{id}/resend")
     public ApiResult<Map<String, Object>> resend(@PathVariable String id) {
-        FmsAlertRecord record = recordService.getById(id);
+        FmsAlert record = recordService.getById(id);
         if (record == null) {
             return ContractCodes.fail(ContractCodes.NOT_FOUND, "告警记录不存在: " + id);
         }
@@ -87,7 +87,7 @@ public class AlertRecordController {
     @PostMapping("/{id}/silence-from")
     public ApiResult<Map<String, Object>> silenceFrom(@PathVariable String id,
                                                       @RequestBody(required = false) AlertRecordService.SilenceFromRequest req) {
-        FmsAlertRecord record = recordService.getById(id);
+        FmsAlert record = recordService.getById(id);
         if (record == null) {
             return ContractCodes.fail(ContractCodes.NOT_FOUND, "告警记录不存在: " + id);
         }

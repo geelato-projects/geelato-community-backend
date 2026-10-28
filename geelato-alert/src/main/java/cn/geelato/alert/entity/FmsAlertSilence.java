@@ -27,7 +27,7 @@ public class FmsAlertSilence extends BaseSortableEntity {
     @Col(name = "silence_name", nullable = false, charMaxlength = 128)
     private String silenceName;
 
-    @Title(title = "压制维度JSON", description = "{alertCodes,ruleCodes,customerIds}")
+    @Title(title = "压制维度JSON", description = "{alertCodes,ruleCodes,customerIds}，ruleCodes=源(EXCEPTION)规则编码")
     @Col(name = "match_json", dataType = "text")
     private String matchJson;
 

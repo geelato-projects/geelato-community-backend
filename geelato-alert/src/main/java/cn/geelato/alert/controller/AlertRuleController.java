@@ -25,7 +25,7 @@ import java.util.Map;
  *
  * <p>由 ApiPrefixAutoConfiguration 自动加 /api 前缀，实际路径 = {@code /api/alert/rule}。
  *
- * <p>端点：pageQuery（withStats 附带近 7 日发送量）/ {id} / save / {id}/enable / {id}/disable /
+ * <p>端点：pageQuery（withStats 附带近 7 日发送量）/ {id} / save / {id}/enable / {id}/disable / {id}/delete /
  * import-yaml / {id}/export-yaml / {id}/trial-run / {id}/records。
  *
  * <p>关联文档：bea/业务告警中心-接口设计-2026-09-22.md §2
@@ -120,6 +120,19 @@ public class AlertRuleController {
         ruleService.disable(rule);
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("status", "disabled");
+        return ApiResult.success(data);
+    }
+
+    /** 删除（逻辑删除；置 {@code del_status=1}，彻底删除由运维脚本处理）。 */
+    @PostMapping("/{id}/delete")
+    public ApiResult<Map<String, Object>> delete(@PathVariable String id, @RequestParam String appId) {
+        FmsAlertRule rule = ruleService.getById(id, appId);
+        if (rule == null) {
+            return ContractCodes.fail(ContractCodes.NOT_FOUND, "规则不存在: " + id);
+        }
+        ruleService.delete(rule);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("status", "deleted");
         return ApiResult.success(data);
     }
 

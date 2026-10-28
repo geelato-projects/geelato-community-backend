@@ -2,6 +2,7 @@ package cn.geelato.alert.service;
 
 import cn.geelato.alert.entity.FmsAlertRule;
 import cn.geelato.alert.entity.FmsAlertTemplate;
+import cn.geelato.alert.support.AlertSources;
 import cn.geelato.alert.support.SessionCtxHelper;
 import cn.geelato.orm.MetaFactory;
 import cn.geelato.orm.page.PageResult;
@@ -206,6 +207,29 @@ public class AlertTemplateService {
     }
 
     /**
+     * 逻辑删除某编码的全部渠道变体（{@code POST /template/{code}/delete}）。
+     *
+     * <p>先做引用校验：被未删除规则通道路由引用的模板拒绝删除，避免规则指向空模板。
+     *
+     * @return 实际软删的变体行数
+     * @throws IllegalStateException 模板仍被规则引用
+     */
+    public int deleteByCode(String templateCode, String appId) {
+        if (!notBlank(appId)) {
+            return 0;
+        }
+        if (!findReferencingRules(templateCode, appId).isEmpty()) {
+            throw new IllegalStateException("alertRule.error.referenced");
+        }
+        return MetaFactory.delete(FmsAlertTemplate.class)
+                .where(Filter.eq("templateCode", templateCode),
+                        Filter.eq("appId", appId.trim()),
+                        Filter.eq("tenantCode", SessionCtxHelper.getCurrentTenantCode()),
+                        Filter.eq("delStatus", 0))
+                .execute();
+    }
+
+    /**
      * 试渲染（{@code POST /test-render}）：渲染引擎可用时按变体真实执行 title/content 脚本
      * （alert-render profile：$ctx/$tpl 注入、2s 超时、sql/http 结构性不可达、不落库不投递），
      * title≤120 / content≤32KB 超长截断告警；不可用时返回占位变体清单。
@@ -248,51 +272,19 @@ public class AlertTemplateService {
 
     private Map<String, Object> renderVariant(cn.geelato.script.core.ScriptEngine engine,
                                               FmsAlertTemplate variant, Map<String, Object> ctxBindings) {
+        // 执行收敛在 engine.render.VariantScripts（与投递引擎共用），此处仅转 testRender 输出结构
+        cn.geelato.alert.engine.render.VariantScripts.RenderResult r = cn.geelato.alert.engine.render.VariantScripts.run(
+                engine, variant.getTemplateCode(), variant.getEngineVersion(),
+                variant.getTitleScript(), variant.getContentScript(), ctxBindings);
         Map<String, Object> out = new LinkedHashMap<>();
-        long start = System.currentTimeMillis();
-        List<String> console = new ArrayList<>();
-        String title = null;
-        String content = null;
-        String error = null;
-        Map<String, Object> bindings = new LinkedHashMap<>();
-        bindings.put("$ctx", ctxBindings);
-        cn.geelato.script.core.ScriptResult titleResult = engine.execute(cn.geelato.script.core.ScriptExecution.builder()
-                .content(variant.getTitleScript()).scriptName(variant.getTemplateCode() + ":title")
-                .profileId("alert-render")
-                .engineVersion(variant.getEngineVersion()).bindings(bindings).build());
-        console.addAll(titleResult.getConsole() == null ? List.of() : titleResult.getConsole());
-        cn.geelato.script.core.ScriptResult contentResult = engine.execute(cn.geelato.script.core.ScriptExecution.builder()
-                .content(variant.getContentScript()).scriptName(variant.getTemplateCode() + ":content")
-                .profileId("alert-render")
-                .engineVersion(variant.getEngineVersion()).bindings(bindings).build());
-        console.addAll(contentResult.getConsole() == null ? List.of() : contentResult.getConsole());
-        if ("SUCCESS".equals(titleResult.getStatus()) && titleResult.getValue() != null) {
-            title = String.valueOf(titleResult.getValue());
-        } else if (!"SUCCESS".equals(titleResult.getStatus()) && titleResult.getError() != null) {
-            error = "title: " + titleResult.getError().getType() + " " + titleResult.getError().getMessage();
-        }
-        if ("SUCCESS".equals(contentResult.getStatus()) && contentResult.getValue() != null) {
-            content = String.valueOf(contentResult.getValue());
-        } else if (!"SUCCESS".equals(contentResult.getStatus()) && contentResult.getError() != null) {
-            error = (error == null ? "" : error + "; ") + "content: "
-                    + contentResult.getError().getType() + " " + contentResult.getError().getMessage();
-        }
-        if (title != null && title.length() > 120) {
-            title = title.substring(0, 120);
-            console.add("[warn] title 超过 120 字符已截断");
-        }
-        if (content != null && content.length() > 32_768) {
-            content = content.substring(0, 32_768);
-            console.add("[warn] content 超过 32KB 已截断");
-        }
-        out.put("title", title);
-        out.put("content", content);
-        out.put("costMs", System.currentTimeMillis() - start);
-        out.put("console", console);
+        out.put("title", r.getTitle());
+        out.put("content", r.getContent());
+        out.put("costMs", r.getCostMs());
+        out.put("console", r.getConsole());
         out.put("executed", true);
-        out.put("engineVersion", contentResult.getEngineVersion());
-        if (error != null) {
-            out.put("error", error);
+        out.put("engineVersion", r.getEngineVersion());
+        if (r.getError() != null) {
+            out.put("error", r.getError());
         }
         return out;
     }
@@ -300,47 +292,54 @@ public class AlertTemplateService {
     /**
      * 上下文字典（配置页速查面板数据源）：SINGLE/GROUP/SCHEDULE 三形态字段树静态字典。
      *
-     * <p>字段口径对齐《消息模板设计》§2 渲染上下文契约。
+     * <p>SINGLE 形态的上下文结构由规则订阅的事件源决定（sourceType 参数，缺省 EXCEPTION）；
+     * GROUP/SCHEDULE 形态按聚合统计中性口径。字段口径对齐《消息模板设计》§2 渲染上下文契约。
      */
-    public Map<String, Object> contextSchema(String type) {
+    public Map<String, Object> contextSchema(String type, String sourceType) {
         String t = type == null ? "single" : type.toLowerCase();
+        String source = notBlank(sourceType) ? sourceType.trim().toUpperCase() : AlertSources.EXCEPTION;
+        if (!AlertSources.KNOWN.contains(source)) {
+            throw new IllegalArgumentException("未知事件源: " + source + "（应为 " + AlertSources.KNOWN + "）");
+        }
         List<Map<String, Object>> fields = new ArrayList<>();
         switch (t) {
             case "group" -> {
                 fields.add(field("group", "object", "聚合组信息"));
-                fields.add(field("group.alertCode", "string", "告警规则编码"));
-                fields.add(field("group.groupKey", "string", "聚合身份键"));
-                fields.add(field("group.stats", "object", "聚合统计（byLevel/byDomain/total）"));
-                fields.add(field("group.items", "array<exception>", "命中异常清单（maxItems 截断）"));
+                fields.add(field("group.key", "string", "聚合身份键"));
                 fields.add(field("group.firstEventAt", "datetime", "组内首事件时刻"));
                 fields.add(field("group.lastEventAt", "datetime", "组内末事件时刻"));
+                fields.add(field("group.stats", "object", "聚合统计（count/byRule/amountTotal）"));
+                fields.add(field("alerts", "array<source-item>", "命中源实例清单（maxItems 截断，取自告警快照）"));
+                fields.add(field("alertsTruncated", "boolean", "清单是否被 maxItems 截断"));
             }
             case "schedule" -> {
                 fields.add(field("digest", "object", "定时数据集结果"));
                 fields.add(field("digest.kind", "string", "数据集口径（UNRESOLVED_DIGEST/TODAY_DIGEST/SLA_OVER/STATS_THRESHOLD）"));
                 fields.add(field("digest.conditionMet", "boolean", "发送条件是否满足"));
                 fields.add(field("digest.stats", "object", "统计指标"));
-                fields.add(field("digest.items", "array<exception>", "数据集清单行"));
+                fields.add(field("digest.items", "array<source-instance>", "数据集清单行"));
             }
             default -> {
-                fields.add(field("exception", "object", "命中异常实例（platform_exception 行）"));
-                fields.add(field("exception.id", "string", "异常实例 id"));
-                fields.add(field("exception.ruleCode", "string", "异常规则编码"));
-                fields.add(field("exception.ruleName", "string", "异常规则名称"));
-                fields.add(field("exception.domainCode", "string", "业务域编码"));
-                fields.add(field("exception.level", "string", "等级 P0~P3"));
-                fields.add(field("exception.customerName", "string", "客户名称"));
-                fields.add(field("exception.bizNo", "string", "业务单号"));
-                fields.add(field("exception.participantName", "string", "处理人"));
-                fields.add(field("exception.firstAt", "datetime", "首次触发"));
-                fields.add(field("exception.anchorElapsed", "number", "锚点滞留秒"));
-                fields.add(field("exception.hitBrief", "string", "命中摘要"));
-                fields.add(field("exception.detail", "object", "触发快照"));
-                fields.add(field("eventType", "string", "触发的异常生命周期事件"));
+                // SINGLE：源上下文为模板独有一级绑定 $source（告警落库时采集进 source_json，渲染不回查源表）
+                fields.add(field("$source", "object", "命中源实例快照（模板独有绑定，结构由规则订阅的事件源决定）"));
+                fields.add(field("$source.id", "string", "源实例 id"));
+                fields.add(field("$source.ruleCode", "string", "源规则编码"));
+                fields.add(field("$source.ruleName", "string", "源规则名称"));
+                fields.add(field("$source.domainCode", "string", "业务域编码"));
+                fields.add(field("$source.level", "string", "等级 P0~P3"));
+                fields.add(field("$source.bizLabel", "string", "业务可读标识"));
+                fields.add(field("$source.participantName", "string", "处理人"));
+                fields.add(field("$source.firstAt", "datetime", "首次触发"));
+                fields.add(field("$source.anchorElapsed", "number", "锚点滞留秒"));
+                fields.add(field("$source.title", "string", "实例标题"));
+                fields.add(field("$source.detail", "object", "源实例明细（EXCEPTION 源含 title 与 snapshot）"));
+                fields.add(field("$source.detail.snapshot", "object", "业务数据快照（异常规则 hits 契约的 snapshot 原样落库，客户等业务字段在其中）"));
+                fields.add(field("eventType", "string", "触发的源生命周期事件"));
             }
         }
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", t);
+        result.put("source", source);
         result.put("fields", fields);
         result.put("helpers", List.of("$tpl.levelTag", "$tpl.domainName", "$tpl.fmtTime",
                 "$tpl.fmtDuration", "$tpl.fmtAmount", "$tpl.workbenchUrl"));
@@ -400,7 +399,7 @@ public class AlertTemplateService {
         return oldNode == null || !oldNode.equals(newNode);
     }
 
-    /** 文档 → 变体规范化列（apiVersion 归一为短版本存 engine_version）。 */
+    /** 文档 → 变体规范化列（alertVersion 归一为短版本存 engine_version）。 */
     private void applyVariant(FmsAlertTemplate tpl, JsonNode doc, JsonNode vnode) {
         tpl.setTemplateCode(textAt(doc, "metadata", "code"));
         tpl.setTemplateName(orEmpty(textAt(doc, "metadata", "name")));
@@ -410,7 +409,7 @@ public class AlertTemplateService {
         tpl.setContentScript(orEmpty(text(vnode, "content")));
         tpl.setContextType(orDefault(textAt(doc, "spec", "contextType"), "SINGLE").toUpperCase());
         tpl.setContextSampleJson(writeJsonAt(vnode.path("contextSample")));
-        tpl.setEngineVersion(normalizeEngineVersion(text(doc, "apiVersion")));
+        tpl.setEngineVersion(normalizeEngineVersion(text(doc, "alertVersion")));
     }
 
     /** 变体规范化列 → 编辑器变体节点（detail definition 输出的统一来源）。 */
@@ -426,13 +425,13 @@ public class AlertTemplateService {
         return MAPPER.valueToTree(node);
     }
 
-    /** apiVersion（如 alert.geelato/v1）→ 短版本（v1），适配 engine_version varchar(8)。 */
-    private String normalizeEngineVersion(String apiVersion) {
-        if (!notBlank(apiVersion)) {
+    /** alertVersion（如 geelato/v1）→ 短版本（v1），适配 engine_version varchar(8)；缺失=空（v1 契约）。 */
+    private String normalizeEngineVersion(String alertVersion) {
+        if (!notBlank(alertVersion)) {
             return null;
         }
-        int idx = apiVersion.lastIndexOf('/');
-        String v = idx >= 0 ? apiVersion.substring(idx + 1) : apiVersion;
+        int idx = alertVersion.lastIndexOf('/');
+        String v = idx >= 0 ? alertVersion.substring(idx + 1) : alertVersion;
         if (v.isEmpty()) {
             return null;
         }

@@ -1,6 +1,6 @@
 package cn.geelato.alert.controller;
 
-import cn.geelato.alert.entity.FmsAlertRecord;
+import cn.geelato.alert.entity.FmsAlert;
 import cn.geelato.alert.entity.FmsAlertTemplate;
 import cn.geelato.alert.service.AlertRecordService;
 import cn.geelato.alert.service.AlertTemplateService;
@@ -25,7 +25,7 @@ import java.util.Map;
  *
  * <p>由 ApiPrefixAutoConfiguration 自动加 /api 前缀，实际路径 = {@code /api/alert/template}。
  *
- * <p>端点：pageQuery / {code} / save / test-render / context-schema / context-from-record/{recordId}。
+ * <p>端点：pageQuery / {code} / save / {code}/delete / test-render / context-schema / context-from-record/{recordId}。
  *
  * <p>关联文档：bea/业务告警中心-接口设计-2026-09-22.md §3
  */
@@ -74,6 +74,21 @@ public class AlertTemplateController {
         }
     }
 
+    /** 删除模板（按 code 逻辑删除全部渠道变体；被规则引用则拒绝）。 */
+    @PostMapping("/{code}/delete")
+    public ApiResult<Map<String, Object>> delete(@PathVariable String code, @RequestParam String appId) {
+        if (templateService.listVariants(code, appId).isEmpty()) {
+            return ContractCodes.fail(ContractCodes.NOT_FOUND, "模板不存在: " + code);
+        }
+        try {
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("deleted", templateService.deleteByCode(code, appId));
+            return ApiResult.success(data);
+        } catch (IllegalStateException e) {
+            return ContractCodes.fail(ContractCodes.NOT_PERMITTED, e.getMessage());
+        }
+    }
+
     /** 试渲染（示例上下文 → 各渠道变体输出预览；不落库不投递）。 */
     @PostMapping("/test-render")
     public ApiResult<Map<String, Object>> testRender(@RequestBody AlertTemplateService.TestRenderRequest req) {
@@ -87,17 +102,22 @@ public class AlertTemplateController {
         }
     }
 
-    /** 上下文字典（配置页速查面板数据源）。 */
+    /** 上下文字典（配置页速查面板数据源；SINGLE 形态按 sourceType 区分事件源上下文）。 */
     @GetMapping("/context-schema")
     public ApiResult<Map<String, Object>> contextSchema(
-            @RequestParam(required = false, defaultValue = "single") String type) {
-        return ApiResult.success(templateService.contextSchema(type));
+            @RequestParam(required = false, defaultValue = "single") String type,
+            @RequestParam(required = false, defaultValue = "EXCEPTION") String sourceType) {
+        try {
+            return ApiResult.success(templateService.contextSchema(type, sourceType));
+        } catch (IllegalArgumentException e) {
+            return ContractCodes.fail(ContractCodes.PARAM_INVALID, e.getMessage());
+        }
     }
 
     /** 用历史告警记录构造同构示例上下文（真实数据预演）。 */
     @GetMapping("/context-from-record/{recordId}")
     public ApiResult<Map<String, Object>> contextFromRecord(@PathVariable String recordId) {
-        FmsAlertRecord record = recordService.getById(recordId);
+        FmsAlert record = recordService.getById(recordId);
         if (record == null) {
             return ContractCodes.fail(ContractCodes.NOT_FOUND, "告警记录不存在: " + recordId);
         }

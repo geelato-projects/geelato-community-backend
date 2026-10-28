@@ -1,9 +1,6 @@
 package cn.geelato.security;
 
-import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Locale;
-
 public class SecurityContext {
 
     private static final ThreadLocal<User> threadUser = new ThreadLocal<>();
@@ -50,20 +47,13 @@ public class SecurityContext {
         threadApp.remove();
     }
 
-    /**
-     * 当前是否处于委托代办态（即有被委托人代替当前生效身份在操作）。
-     * <p>
-     * 判定依据：currentUser 的 delegateUserId 非空。
-     * 该值由委托代办机制（DelegateSessionStore + applyDelegation）在请求认证后注入。
-     */
+
     public static boolean isDelegated() {
         User user = getCurrentUser();
         return user != null && user.getDelegateUserId() != null && !user.getDelegateUserId().isEmpty();
     }
 
-    /**
-     * 获取当前操作的实际操作人（被委托人）ID，未处于委托代办态时返回 null。
-     */
+
     public static String getDelegateUserId() {
         User user = getCurrentUser();
         return user == null ? null : user.getDelegateUserId();

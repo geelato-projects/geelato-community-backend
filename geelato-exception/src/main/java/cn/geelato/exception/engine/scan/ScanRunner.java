@@ -80,9 +80,9 @@ public class ScanRunner {
         }
     }
 
-    /** 同步执行一轮扫描（adminScan 手动触发入口）。 */
+    /** 同步执行一轮扫描（adminScan 手动触发入口）；强制重建引擎系统身份，不沿用触发者会话。 */
     public Map<String, Object> runOneScanSync(FmsExceptionRule rule) {
-        return safeRunOneScan(rule);
+        return EngineContextExecutor.withEngineContext(rule.getTenantCode(), () -> safeRunOneScan(rule));
     }
 
     @PreDestroy

@@ -34,7 +34,7 @@ public class FmsAlertRule extends BaseSortableEntity {
     @Col(name = "alert_desc", charMaxlength = 1024)
     private String alertDesc;
 
-    @Title(title = "异常匹配器JSON", description = "{eventTypes,ruleCodes}")
+    @Title(title = "事件源匹配条件JSON", description = "{source,events,ruleCodes}，结构由 source 决定")
     @Col(name = "match_json", dataType = "text")
     private String matchJson;
 
@@ -74,7 +74,7 @@ public class FmsAlertRule extends BaseSortableEntity {
     @Col(name = "resolve_notify", nullable = false, dataType = "int")
     private int resolveNotify = 0;
 
-    @Title(title = "接收人JSON", description = "{followException,extra[]}")
+    @Title(title = "接收人JSON", description = "接收人选择器 {extra[]}")
     @Col(name = "receiver_json", dataType = "text")
     private String receiverJson;
 

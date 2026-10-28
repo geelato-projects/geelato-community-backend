@@ -10,18 +10,18 @@ import lombok.Setter;
 import java.util.Date;
 
 /**
- * 业务告警中心-告警记录实体（聚合缓冲 / 渲染快照 / 投递状态 / 命中清单）。
+ * 业务告警中心-告警实体（聚合缓冲 / 渲染快照 / 投递状态 / 命中清单），表名与异常实例表 platform_exception 同构命名。
  *
- * <p>表名 platform_alert_record，{@code active_group_key} 在途组占用唯一、闭环置 NULL；
- * {@code event_ids} 关联命中的 {@code platform_exception} 实例 id 清单。真实聚合冲刷与投递引擎留待后续。
+ * <p>表名 platform_alert，{@code active_group_key} 在途组占用唯一、闭环置 NULL；
+ * {@code event_ids} 关联命中的源实例 id 清单（源由规则 {@code match_json.source} 决定）。真实聚合冲刷与投递引擎留待后续。
  *
  * <p>关联文档：bea/业务告警中心-数据表设计-2026-09-22.md §5
  */
 @Getter
 @Setter
-@Entity(name = "platform_alert_record", catalog = "geelato")
-@Title(title = "告警记录")
-public class FmsAlertRecord extends BaseSortableEntity {
+@Entity(name = "platform_alert", catalog = "geelato")
+@Title(title = "告警")
+public class FmsAlert extends BaseSortableEntity {
 
     @Title(title = "告警规则编码")
     @Col(name = "alert_code", nullable = false, charMaxlength = 32)
@@ -39,7 +39,7 @@ public class FmsAlertRecord extends BaseSortableEntity {
     @Col(name = "trigger_type", nullable = false, charMaxlength = 16)
     private String triggerType;
 
-    @Title(title = "触发异常事件类型")
+    @Title(title = "触发源事件类型")
     @Col(name = "event_type", charMaxlength = 16)
     private String eventType;
 
@@ -55,13 +55,17 @@ public class FmsAlertRecord extends BaseSortableEntity {
     @Col(name = "active_group_key", charMaxlength = 180)
     private String activeGroupKey;
 
-    @Title(title = "命中异常数")
-    @Col(name = "exception_count", nullable = false, dataType = "int")
-    private int exceptionCount = 0;
+    @Title(title = "命中源事件数")
+    @Col(name = "event_count", nullable = false, dataType = "int")
+    private int eventCount = 0;
 
-    @Title(title = "命中异常实例id清单JSON")
+    @Title(title = "命中源实例id清单JSON")
     @Col(name = "event_ids", dataType = "text")
     private String eventIds;
+
+    @Title(title = "源业务数据快照JSON", description = "single=源实例全量对象/group=清单数组；落库时采集，渲染不回查源表")
+    @Col(name = "source_json", dataType = "text")
+    private String sourceJson;
 
     @Title(title = "聚合统计快照JSON")
     @Col(name = "stats_json", dataType = "text")

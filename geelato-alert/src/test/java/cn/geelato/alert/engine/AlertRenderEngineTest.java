@@ -45,35 +45,65 @@ class AlertRenderEngineTest {
     @Test
     void rendersTitleAndContentWithDomainDict() {
         Map<String, Object> ctx = Map.of(
-                "rule", Map.of("alertCode", "ALR-001", "time", "2026-09-29 10:00:00"),
-                "exception", Map.of("id", "9001", "level", "P0", "domainCode", "FIN",
-                        "bizNo", "HQL001", "hitBrief", "未收款 500 元", "anchorElapsed", 94320));
+                "rule", Map.of("alertCode", "ALR-001", "time", "2026-09-29 10:00:00"));
+        Map<String, Object> source = Map.of("id", "9001", "level", "P0", "domainCode", "FIN",
+                "bizLabel", "HQL001", "title", "未收款 500 元", "anchorElapsed", 94320);
         ScriptResult title = engine.execute(ScriptExecution.builder()
-                .content("return $tpl.levelTag($ctx.exception.level) + ' ' + $ctx.exception.hitBrief")
-                .profileId("alert-render").bindings(Map.of("$ctx", ctx)).build());
+                .content("return $tpl.levelTag($source.level) + ' ' + $source.title")
+                .profileId("alert-render").bindings(Map.of("$ctx", ctx, "$source", source)).build());
         assertEquals("SUCCESS", title.getStatus());
         assertEquals("[P0 严重] 未收款 500 元", title.getValue());
 
         ScriptResult content = engine.execute(ScriptExecution.builder()
-                .content("return $tpl.domainName($ctx.exception.domainCode) + ' / ' + $tpl.fmtDuration($ctx.exception.anchorElapsed)"
-                        + " + ' / ' + $tpl.workbenchUrl($ctx.exception.id)")
-                .profileId("alert-render").bindings(Map.of("$ctx", ctx)).build());
+                .content("return $tpl.domainName($source.domainCode) + ' / ' + $tpl.fmtDuration($source.anchorElapsed)"
+                        + " + ' / ' + $tpl.workbenchUrl($source.id)")
+                .profileId("alert-render").bindings(Map.of("$ctx", ctx, "$source", source)).build());
         assertEquals("SUCCESS", content.getStatus());
         assertEquals("资金收付 / 26 小时 12 分 / https://fms.example.com/workbench/9001", content.getValue());
+    }
+
+    @Test
+    void sourceSegmentPromotedToStandaloneBinding() {
+        Map<String, Object> ctx = new java.util.HashMap<>(Map.of(
+                "rule", Map.of("alertCode", "ALR-001"),
+                "source", Map.of("id", "9001", "level", "P0")));
+        cn.geelato.alert.engine.render.VariantScripts.RenderResult r =
+                cn.geelato.alert.engine.render.VariantScripts.run(engine, "TPL-1", null,
+                        "return $source.level",
+                        "return typeof $ctx.source === 'undefined' ? 'ctx-clean' : 'ctx-leaked'",
+                        ctx);
+        assertNull(r.getError());
+        assertEquals("P0", r.getTitle());
+        assertEquals("ctx-clean", r.getContent());
+    }
+
+    @Test
+    void groupShapeHasNoSourceBinding() {
+        Map<String, Object> ctx = new java.util.HashMap<>(Map.of(
+                "rule", Map.of("alertCode", "ALR-001"),
+                "alerts", List.of()));
+        cn.geelato.alert.engine.render.VariantScripts.RenderResult r =
+                cn.geelato.alert.engine.render.VariantScripts.run(engine, "TPL-1", null,
+                        "return typeof $source === 'undefined' ? 'absent' : 'leaked'",
+                        "return $ctx.alerts.length + '条'",
+                        ctx);
+        assertNull(r.getError());
+        assertEquals("absent", r.getTitle());
+        assertEquals("0条", r.getContent());
     }
 
     @Test
     void groupContextRendersTable() {
         Map<String, Object> ctx = Map.of(
                 "alerts", List.of(
-                        Map.of("bizNo", "HQL001", "level", "P0", "amountLocal", 100.5),
-                        Map.of("bizNo", "HQL002", "level", "P1", "amountLocal", 200)));
+                        Map.of("bizLabel", "HQL001", "level", "P0", "amountLocal", 100.5),
+                        Map.of("bizLabel", "HQL002", "level", "P1", "amountLocal", 200)));
         ScriptResult result = engine.execute(ScriptExecution.builder()
-                .content("return $tpl.tableRows($ctx.alerts, [{key:'bizNo',label:'单号'},{key:'amountLocal',label:'金额',fmt:'AMOUNT'}])")
+                .content("return $tpl.tableRows($ctx.alerts, [{key:'bizLabel',label:'业务标识'},{key:'amountLocal',label:'金额',fmt:'AMOUNT'}])")
                 .profileId("alert-render").bindings(Map.of("$ctx", ctx)).build());
         assertEquals("SUCCESS", result.getStatus());
         String md = String.valueOf(result.getValue());
-        assertTrue(md.contains("| 单号 | 金额 |"), md);
+        assertTrue(md.contains("| 业务标识 | 金额 |"), md);
         assertTrue(md.contains("| HQL001 | ¥100.50 |"), md);
     }
 

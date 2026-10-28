@@ -47,6 +47,7 @@ public class User extends UserCore{
     // 与 platform_user_r_delegate.delegate_user_id 同义：代理人（被委托人）。
     // 为空表示本人操作。creator/updater 仍记录当前生效身份（委托人），
     // delegateUserId/delegateUserName 仅供审计区分"是谁代替谁操作的"。
+    // 引擎（系统主体）代替用户落库时同语义适用：生效身份=归属用户，delegate 字段=引擎系统身份。
     private String delegateUserId;
     private String delegateUserName;
 

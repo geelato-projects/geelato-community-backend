@@ -57,7 +57,7 @@ public class FmsAlertTemplate extends BaseSortableEntity {
     @Col(name = "version", nullable = false, dataType = "int")
     private int version = 1;
 
-    @Title(title = "引擎版本", description = "脚本契约快照（apiVersion 短版本，空=v1）")
+    @Title(title = "引擎版本", description = "脚本契约快照（alertVersion 短版本，空=v1）")
     @Col(name = "engine_version", charMaxlength = 8)
     private String engineVersion;
 

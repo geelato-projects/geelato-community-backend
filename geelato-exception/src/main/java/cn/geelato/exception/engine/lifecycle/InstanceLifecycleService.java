@@ -55,7 +55,8 @@ public class InstanceLifecycleService {
             patch.put("updateAt", now);
             patch.put("updater", handler.getId());
             patch.put("updaterName", handler.getName());
-            MetaFactory.save(patchInstance(patch));
+            EngineContextExecutor.withParticipantPrincipal(handler.getId(), handler.getName(),
+                    () -> MetaFactory.save(patchInstance(patch)));
             return "renewed";
         }
         FmsException exception = new FmsException();
@@ -83,7 +84,8 @@ public class InstanceLifecycleService {
         exception.setRuleVersion(ruleVersion);
         fillAudit(exception, now, handler);
         try {
-            String savedId = MetaFactory.save(exception);
+            String savedId = EngineContextExecutor.withParticipantPrincipal(handler.getId(), handler.getName(),
+                    () -> MetaFactory.save(exception));
             if (exception.getId() == null && savedId != null) {
                 exception.setId(savedId);
             }

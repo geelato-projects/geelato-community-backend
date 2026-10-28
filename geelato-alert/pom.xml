@@ -15,7 +15,8 @@
     <packaging>jar</packaging>
     <name>geelato-alert</name>
     <description>Geelato 业务告警中心模块：告警规则 / 通知模板 / 静默窗口 / 告警记录，
-        契约面 + 持久化实现（聚合缓冲冲刷、脚本渲染、多渠道通知投递引擎留待后续）。
+        契约面 + 持久化实现 + 六段引擎（事件匹配/聚合/静默/渲染/路由/经 geelato-message 投递，
+        geelato.alert.engine.enabled 缺省关）。
         业务组件（controller/service/entity）由宿主 @ComponentScan("cn.geelato") 发现；数据表位于宿主主库
         （实体 @Entity(catalog="geelato")），DDL 由宿主 Flyway 维护（与 geelato-mail 同路径）。</description>
 

@@ -57,7 +57,7 @@ public class TplService {
         return DOMAIN_NAMES.getOrDefault(domain, domain == null ? "" : domain);
     }
 
-    @GraalFunction(example = "$tpl.workbenchUrl($ctx.exception.id)", description = "异常工作台详情跳转链接（inapp/email/wecom 深链）")
+    @GraalFunction(example = "$tpl.workbenchUrl($source.id)", description = "源实例工作台详情跳转链接（EXCEPTION 源，inapp/email/wecom 深链）")
     public String workbenchUrl(String exceptionId) {
         String base = workbenchBaseUrl.isBlank() ? "/fms/exception-center" : workbenchBaseUrl;
         return base.endsWith("/") ? base + exceptionId : base + "/" + exceptionId;
@@ -68,12 +68,12 @@ public class TplService {
         return LocalDateTime.now().format(TIME_FULL);
     }
 
-    @GraalFunction(example = "$tpl.fmtTime($ctx.exception.firstAt)", description = "时间格式化：缺省 MM-dd HH:mm；'FULL' 全格式；否则按 pattern")
+    @GraalFunction(example = "$tpl.fmtTime($source.firstAt)", description = "时间格式化：缺省 MM-dd HH:mm；'FULL' 全格式；否则按 pattern")
     public String fmtTime(String time, Value fmt) {
         return fmtTime(time, ValueUnwrapper.toNullableString(fmt));
     }
 
-    @GraalFunction(example = "$tpl.fmtDuration($ctx.exception.anchorElapsed)", description = "秒 -> 中文时长，如 '26 小时 12 分'")
+    @GraalFunction(example = "$tpl.fmtDuration($source.anchorElapsed)", description = "秒 -> 中文时长，如 '26 小时 12 分'")
     public String fmtDuration(Value seconds) {
         return fmtDuration(asNumber(ValueUnwrapper.toJavaObject(seconds)));
     }
@@ -112,7 +112,7 @@ public class TplService {
         return sum;
     }
 
-    @GraalFunction(example = "$tpl.lineList($ctx.alerts, a => a.bizNo + ' ' + a.hitBrief)", description = "清单逐行：对每项调 fn 返回一行文本，换行拼接")
+    @GraalFunction(example = "$tpl.lineList($ctx.alerts, a => a.bizLabel + ' ' + a.title)", description = "清单逐行：对每项调 fn 返回一行文本，换行拼接")
     public String lineList(Value rows, Value fn) {
         List<String> lines = new ArrayList<>();
         for (Object row : ValueUnwrapper.toList(rows)) {
@@ -122,7 +122,7 @@ public class TplService {
         return String.join("\n", lines);
     }
 
-    @GraalFunction(example = "$tpl.tableRows($ctx.alerts, [{key:'bizNo',label:'单号'}])", description = "markdown 表格；列 fmt 支持 pattern/'DURATION'/'AMOUNT'")
+    @GraalFunction(example = "$tpl.tableRows($ctx.alerts, [{key:'bizLabel',label:'业务标识'}])", description = "markdown 表格；列 fmt 支持 pattern/'DURATION'/'AMOUNT'")
     public String tableRows(Value rows, Value cols) {
         List<Object> columns = ValueUnwrapper.toList(cols);
         StringBuilder sb = new StringBuilder();

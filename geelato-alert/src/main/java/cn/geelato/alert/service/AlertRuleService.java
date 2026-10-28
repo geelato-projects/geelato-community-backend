@@ -1,6 +1,7 @@
 package cn.geelato.alert.service;
 
 import cn.geelato.alert.entity.FmsAlertRule;
+import cn.geelato.alert.support.AlertSources;
 import cn.geelato.alert.support.SessionCtxHelper;
 import cn.geelato.orm.MetaFactory;
 import cn.geelato.orm.page.PageResult;
@@ -9,6 +10,7 @@ import cn.geelato.orm.query.MetaQuery;
 import cn.geelato.orm.query.Order;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -35,8 +37,8 @@ public class AlertRuleService {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    /** 编辑器 RuleDocument.apiVersion 字面量（告警命名空间，与异常侧区分）。 */
-    private static final String API_VERSION = "alert.geelato/v1";
+    /** 编辑器 RuleDocument.alertVersion 字面量（文档格式版本，缺省同值，风格对齐异常侧 exceptionVersion）。 */
+    private static final String ALERT_VERSION = "geelato/v1";
 
     // ==================== 目录分页 ====================
 
@@ -120,7 +122,7 @@ public class AlertRuleService {
         return rows == null || rows.isEmpty() ? null : rowToEntity(rows.get(0));
     }
 
-    /** 规则详情：全字段 + 编辑器原文 document + 引用的异常规则角标（只读 platform_exception_rule 留后续，此处仅列出编码）。 */
+    /** 规则详情：全字段 + 编辑器原文 document + 订阅事件源 + 引用的源规则角标（EXCEPTION 源回查 platform_exception_rule 留后续，此处仅列出编码）。 */
     public Map<String, Object> detail(FmsAlertRule rule) {
         Map<String, Object> map = toCatalogRow(rule);
         map.put("match", parseJsonObjectOrNull(rule.getMatchJson()));
@@ -134,15 +136,17 @@ public class AlertRuleService {
         map.put("maxItems", rule.getMaxItems());
         map.put("dailyLimit", rule.getDailyLimit());
         map.put("updatedAt", rule.getUpdateAt() == null ? null : rule.getUpdateAt().toInstant().toString());
-        // 引用校验角标：列出 match.ruleCodes 引用的异常规则编码（启用状态回查由前端/后续联表补齐）
-        List<String> refCodes = new ArrayList<>();
+        // 引用校验角标：EXCEPTION 源时列出 match.ruleCodes 引用的源规则编码（启用状态回查由前端/后续联表补齐）
         JsonNode match = parseDocumentOrNull(rule.getMatchJson());
-        if (match != null) {
+        String source = match == null ? null : text(match, "source");
+        map.put("source", source);
+        List<String> refCodes = new ArrayList<>();
+        if (AlertSources.EXCEPTION.equals(source)) {
             for (JsonNode n : match.path("ruleCodes")) {
                 refCodes.add(n.asText());
             }
         }
-        map.put("referencedExceptionRules", refCodes);
+        map.put("referencedRuleCodes", refCodes);
         return map;
     }
 
@@ -166,6 +170,12 @@ public class AlertRuleService {
         }
         if (!notBlank(req.getAppId())) {
             throw new IllegalArgumentException("appId 不能为空");
+        }
+        // 文档级门禁（对原始提交文档，contractCheck 只见重建文档恒合法）：alertVersion 缺省 geelato/v1
+        String alertVersion = text(doc, "alertVersion");
+        if (alertVersion != null && !ALERT_VERSION.equals(alertVersion)) {
+            throw new IllegalArgumentException(
+                    "alertVersion 应为 " + ALERT_VERSION + "（缺省同值），当前: " + alertVersion);
         }
         FmsAlertRule existing = notBlank(req.getId())
                 ? getById(req.getId(), req.getAppId())
@@ -239,6 +249,20 @@ public class AlertRuleService {
     }
 
     /**
+     * 逻辑删除（{@code POST /rule/{id}/delete}）：经 {@link MetaFactory#delete(Class)} 自动转
+     * {@code UPDATE del_status=1, delete_at=now}（受限当前租户 + 未删除行），从目录可见集消失。
+     *
+     * <p>彻底删除（物理行）由运维脚本处理，接口只做软删，符合 {@code UK(alert_code, del_status, delete_at)}。
+     */
+    public void delete(FmsAlertRule rule) {
+        MetaFactory.delete(FmsAlertRule.class)
+                .where(Filter.eq("id", rule.getId()),
+                        Filter.eq("tenantCode", SessionCtxHelper.getCurrentTenantCode()),
+                        Filter.eq("delStatus", 0))
+                .execute();
+    }
+
+    /**
      * 契约门禁：可离线完成的静态结构 + 必填矩阵校验（对齐接口设计 §1 通用错误码 PARAM_INVALID 定位口径）。
      *
      * @return 定位化问题清单（{@code {fieldPath, code, message}}）；空表示通过
@@ -250,9 +274,6 @@ public class AlertRuleService {
             issues.add(issue("document", "BUILD_FAIL", "规则文档组装失败"));
             return issues;
         }
-        if (!API_VERSION.equals(text(doc, "apiVersion"))) {
-            issues.add(issue("apiVersion", "API_VERSION_INVALID", "apiVersion 应为 " + API_VERSION));
-        }
         if (!"AlertRule".equals(text(doc, "kind"))) {
             issues.add(issue("kind", "KIND_INVALID", "kind 应为 AlertRule"));
         }
@@ -262,11 +283,20 @@ public class AlertRuleService {
         if (!notBlank(textAt(doc, "metadata", "name"))) {
             issues.add(issue("metadata.name", "REQUIRED", "告警名称必填"));
         }
-        JsonNode events = doc.path("spec").path("match").path("events");
-        if (!events.isArray() || events.isEmpty()) {
-            issues.add(issue("spec.match.events", "REQUIRED", "订阅事件至少一项"));
+        JsonNode match = doc.path("spec").path("match");
+        String source = text(match, "source");
+        if (source == null || !AlertSources.KNOWN.contains(source)) {
+            issues.add(issue("spec.match.source", "SOURCE_INVALID",
+                    "未知事件源: " + source + "（应为 " + AlertSources.KNOWN + "）"));
         }
         String mode = textAt(doc, "spec", "trigger", "mode");
+        // EXCEPTION 源事件订阅必填；SCHEDULE 模式走数据集口径不走事件匹配，豁免（接口设计 §6）
+        if (AlertSources.EXCEPTION.equals(source) && !"SCHEDULE".equals(mode)) {
+            JsonNode events = match.path("events");
+            if (!events.isArray() || events.isEmpty()) {
+                issues.add(issue("spec.match.events", "REQUIRED", "订阅事件至少一项"));
+            }
+        }
         if (!List.of("EVENT", "SCHEDULE", "BOTH").contains(mode)) {
             issues.add(issue("spec.trigger.mode", "MODE_INVALID", "trigger.mode 应为 EVENT/SCHEDULE/BOTH"));
         }
@@ -291,10 +321,24 @@ public class AlertRuleService {
         if (!notBlank(textAt(doc, "spec", "route", "default", "template"))) {
             issues.add(issue("spec.route.default.template", "REQUIRED", "模板编码必填"));
         }
+        JsonNode selectors = doc.path("spec").path("receivers").path("extra");
+        if (!selectors.isArray() || selectors.isEmpty()) {
+            issues.add(issue("spec.receivers.extra", "REQUIRED", "接收人选择器至少一项"));
+        } else {
+            for (JsonNode sel : selectors) {
+                String selType = sel.path("type").asText(null);
+                if (!VALID_SELECTOR_TYPES.contains(selType)) {
+                    issues.add(issue("spec.receivers.extra", "SELECTOR_TYPE_INVALID",
+                            "接收人选择器类型非法: " + selType + "（应为 " + VALID_SELECTOR_TYPES + "）"));
+                }
+            }
+        }
         return issues;
     }
 
     private static final List<String> VALID_CHANNELS = List.of("inapp", "email", "sms", "wework", "bot", "voice");
+    private static final List<String> VALID_SELECTOR_TYPES =
+            List.of("USER", "ROLE", "DEPT", "DEPT_ROLE", "BIZ_FIELD", "ORG_TREE_UP");
 
     // ==================== 试跑（dry-run 占位）====================
 
@@ -305,7 +349,8 @@ public class AlertRuleService {
     public Map<String, Object> trialRun(FmsAlertRule rule, JsonNode sampleEvent, Integer replayHours) {
         List<Map<String, Object>> issues = contractCheck(rule);
         Map<String, Object> matchDetail = new LinkedHashMap<>();
-        matchDetail.put("eventTypes", "SKIPPED");
+        matchDetail.put("source", "SKIPPED");
+        matchDetail.put("events", "SKIPPED");
         matchDetail.put("ruleCodes", "SKIPPED");
         Map<String, Object> render = new LinkedHashMap<>();
         render.put("variant", "default");
@@ -392,11 +437,11 @@ public class AlertRuleService {
     }
 
     /** 文档 → 规范化列（唯一权威持久层）。 */
-    private void applyDocument(FmsAlertRule rule, JsonNode doc) {
+    void applyDocument(FmsAlertRule rule, JsonNode doc) {
         rule.setAlertCode(textAt(doc, "metadata", "code"));
         rule.setAlertName(orEmpty(textAt(doc, "metadata", "name")));
         rule.setAlertDesc(orEmpty(textAt(doc, "metadata", "desc")));
-        rule.setMatchJson(writeJsonAt(doc.path("spec").path("match")));
+        rule.setMatchJson(writeJsonAt(normalizeMatch(doc.path("spec").path("match"))));
         rule.setTriggerMode(orDefault(textAt(doc, "spec", "trigger", "mode"), "EVENT"));
         rule.setCronExpression(nullToBlank(textAt(doc, "spec", "trigger", "cron")));
         rule.setDatasetJson(writeJsonAt(doc.path("spec").path("trigger").path("dataset")));
@@ -406,7 +451,10 @@ public class AlertRuleService {
         rule.setGroupIntervalSeconds(intAt(agg, "groupIntervalSeconds"));
         rule.setRepeatIntervalMinutes(intAt(agg, "repeatMinutes"));
         rule.setMaxItems(intAt(agg, "maxItems"));
-        rule.setResolveNotify(boolToIntAt(agg, "resolveNotify"));
+        Integer resolveNotify = boolToIntAt(agg, "resolveNotify");
+        if (resolveNotify != null) {
+            rule.setResolveNotify(resolveNotify);
+        }
         rule.setReceiverJson(writeJsonAt(doc.path("spec").path("receivers")));
         rule.setRouteJson(writeJsonAt(doc.path("spec").path("route")));
         rule.setDailyLimit(intAt(doc.path("spec").path("noise"), "dailyLimit"));
@@ -415,7 +463,7 @@ public class AlertRuleService {
     /** 规范化列 → 编辑器 RuleDocument（detail/目录/导出/契约门禁的统一文档来源）。 */
     private JsonNode buildDocument(FmsAlertRule rule) {
         Map<String, Object> doc = new LinkedHashMap<>();
-        doc.put("apiVersion", API_VERSION);
+        doc.put("alertVersion", ALERT_VERSION);
         doc.put("kind", "AlertRule");
         Map<String, Object> metadata = new LinkedHashMap<>();
         metadata.put("code", rule.getAlertCode());
@@ -478,6 +526,17 @@ public class AlertRuleService {
         }
         doc.put("spec", spec);
         return MAPPER.valueToTree(doc);
+    }
+
+    /** match 落库前规范化：缺 source 补默认 EXCEPTION（落库即显式，自描述事件源）。 */
+    private JsonNode normalizeMatch(JsonNode match) {
+        if (match == null || !match.isObject() || notBlank(text(match, "source"))) {
+            return match;
+        }
+        ObjectNode normalized = MAPPER.createObjectNode();
+        normalized.put("source", AlertSources.EXCEPTION);
+        normalized.setAll((ObjectNode) match);
+        return normalized;
     }
 
     /** YAML 口径兼容：SINGLE≈INDEPENDENT（逐条）、GROUP≈AGGREGATE（聚合），落库归一为数据表枚举。 */
@@ -684,7 +743,7 @@ public class AlertRuleService {
         private String id;
         /** 所属应用ID（platform_app.id），新增必填、编辑须与原归属一致。 */
         private String appId;
-        /** 编辑器 RuleDocument 原文（apiVersion=alert.geelato/v1）。 */
+        /** 编辑器 RuleDocument 原文（alertVersion=geelato/v1，缺省同值）。 */
         private com.fasterxml.jackson.databind.JsonNode document;
         /** 期望启用态：draft/enabled/disabled（可空则沿用原态）。 */
         private String status;

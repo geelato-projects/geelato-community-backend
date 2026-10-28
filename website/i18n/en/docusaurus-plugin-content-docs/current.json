@@ -31,6 +31,10 @@
     "message": "MQL Syntax",
     "description": "The label for category 'MQL 语法' in sidebar 'frameworkSidebar'"
   },
+  "sidebar.frameworkSidebar.category.脚本引擎": {
+    "message": "Script Engine",
+    "description": "The label for category '脚本引擎' in sidebar 'frameworkSidebar'"
+  },
   "sidebar.frameworkSidebar.category.文件处理": {
     "message": "File Processing",
     "description": "The label for category '文件处理' in sidebar 'frameworkSidebar'"
@@ -74,5 +78,9 @@
   "sidebar.frameworkSidebar.category.📨 Geelato Message (消息中心)": {
     "message": "📨 Geelato Message",
     "description": "The label for category '📨 Geelato Message (消息中心)' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.📖 帮助中心": {
+    "message": "📖 Help Center",
+    "description": "The label for category '📖 帮助中心' in sidebar 'frameworkSidebar'"
   }
 }

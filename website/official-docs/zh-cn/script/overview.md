@@ -44,7 +44,7 @@ geelato-script 是 Geelato Framework 的通用脚本执行引擎 SDK，基于 Gr
 | `$gl.ctx` | 执行上下文读取 | 与 `$ctx` 注入变量同源 |
 | `$gl.parameter` | 参数输入读取 | 与 `$params` 注入变量同源 |
 
-各 kit 的 API 与使用规范见[脚本编写手册](/docs/script/usage)。
+各 kit 的 API 与使用规范见[内置 Kit](/docs/script/kits)。
 
 ## 变量体系
 
@@ -56,7 +56,7 @@ geelato-script 是 Geelato Framework 的通用脚本执行引擎 SDK，基于 Gr
 | `$env` | 引擎 | 执行元数据（execId、引擎版本、租户、用户等，只读） |
 | `console` | 引擎 | 日志输出，随 ScriptResult 返回 |
 
-注入变量受 `ScriptProfile.variables` 白名单过滤；`$gl.ctx`/`$gl.parameter` 为 kit 形态，不受该白名单约束，但受 `namespaces` 白名单约束。
+注入变量受 `ScriptProfile.variables` 白名单过滤；`$gl.ctx`/`$gl.parameter` 为 kit 形态，不受该白名单约束，但受 `namespaces` 白名单约束。各变量的含义与可见性规则详见[内置上下文](/docs/script/context)。
 
 ## 宿主装配
 
@@ -64,5 +64,10 @@ Spring 环境经 `geelato.script.engine.*` 配置自动装配（`ScriptEngineAut
 
 ## 推荐阅读
 
-- [脚本编写手册](/docs/script/usage)：语法规范、六个内置 kit 的 API 与示例、写通道与 dry-run、最佳实践。
+- [脚本使用手册](/docs/script/usage)：执行入口（SDK 与 REST）、引擎版本指定与管理、写通道与 dry-run、错误处理、最佳实践。
+- [内置上下文](/docs/script/context)：`console`/`$env`/`$ctx`/`$params`/`$input` 的含义与可见性规则。
+- [内置 Kit](/docs/script/kits)：六个内置 kit（`$gl.*`）的 API、示例与管控。
+- [自定义 Kit 开发](/docs/script/custom-kit)：注解模型、签名约束、注册方式与版本化固化。
+- [第三方库引入](/docs/script/host-library)：宿主声明整库注入，挂载为 `$kit.*`。
+- [在线调试](/docs/script/debugging)：调试会话与 Chrome DevTools 断点调试（实验性）。
 - [MQL 语法](/docs/mql/overview)：`$gl.mql` 入参的完整语法（字段选择、过滤、分页、排序）。

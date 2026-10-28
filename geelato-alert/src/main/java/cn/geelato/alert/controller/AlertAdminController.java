@@ -1,6 +1,7 @@
 package cn.geelato.alert.controller;
 
 import cn.geelato.alert.service.AlertAdminService;
+import cn.geelato.alert.support.AlertSources;
 import cn.geelato.alert.support.ContractCodes;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRuntimeRestController;
@@ -22,7 +23,7 @@ import java.util.Map;
  *
  * <p>由 ApiPrefixAutoConfiguration 自动加 /api 前缀，实际路径 = {@code /api/alert}。
  *
- * <p>端点：admin/trigger / admin/flush / admin/stats / event/exception（@AllowSystemAccess，预留）。
+ * <p>端点：admin/trigger / admin/flush / admin/stats / event（@AllowSystemAccess，预留）。
  *
  * <p>关联文档：bea/业务告警中心-接口设计-2026-09-22.md §6
  */
@@ -73,16 +74,25 @@ public class AlertAdminController {
     }
 
     /**
-     * 异常事件外部接入（预留：告警引擎拆独立部署时替代同宿主应用事件；内嵌形态不走此接口）。
-     *
-     * <p>SystemToken 鉴权由平台拦截器处理（@AllowSystemAccess）；消费引擎留后续，恒 accepted 留痕。
+     * 事件外部接入（预留占位）：载荷契约对齐框架 ORM Hook 投递格式
+     * {@code {entityName, eventType, values, eventId, ...}}——ORM Hook 配置地址指向本端点即可把实体事件
+     * 投给告警（entityName=platform_exception 解析为 EXCEPTION 源，未知实体硬失败）；
+     * 消费引擎为源表轮询，本端点仅在事件形态启用时接入，当前恒 accepted 留痕。
      */
     @AllowSystemAccess
-    @PostMapping("/event/exception")
-    public ApiResult<Map<String, Object>> exceptionEvent(@RequestBody Map<String, Object> event) {
+    @PostMapping("/event")
+    public ApiResult<Map<String, Object>> event(@RequestBody Map<String, Object> event) {
+        String entityName = event == null || event.get("entityName") == null
+                ? null : String.valueOf(event.get("entityName")).trim();
+        String source = AlertSources.sourceOfEntity(entityName);
+        if (source == null) {
+            return ContractCodes.fail(ContractCodes.PARAM_INVALID,
+                    "未知事件源实体: " + entityName + "（应为 platform_exception）");
+        }
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("accepted", event != null);
-        data.put("note", "事件消费引擎（匹配/聚合/渲染/投递）留待后续，本端点仅契约占位");
+        data.put("source", source);
+        data.put("note", "消费引擎为源表轮询，事件形态未启用，本端点仅契约占位（对齐 ORM Hook 载荷）");
         return ApiResult.success(data);
     }
 

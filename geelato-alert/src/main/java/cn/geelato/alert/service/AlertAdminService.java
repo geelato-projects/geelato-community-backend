@@ -1,6 +1,6 @@
 package cn.geelato.alert.service;
 
-import cn.geelato.alert.entity.FmsAlertRecord;
+import cn.geelato.alert.entity.FmsAlert;
 import cn.geelato.alert.entity.FmsAlertRule;
 import cn.geelato.alert.support.SessionCtxHelper;
 import cn.geelato.core.orm.Dao;
@@ -21,7 +21,7 @@ import java.util.Map;
  * 告警管理端点服务：手动触发 SCHEDULE 规则 / 手动冲刷聚合缓冲 / 发送统计 / 规则近 7 日发送量。
  *
  * <p>契约面 + 持久化深度：trigger 落 PENDING 缓冲记录留痕；flush 以 CAS 抢占 PENDING→READY
- * （渲染/投递引擎消费 READY 留后续）；stats 直查 platform_alert_record 聚合。
+ * （引擎启用时由 FlushScanner 冲刷渲染 + DeliverEngine 投递消费）；stats 直查 platform_alert 聚合。
  *
  * <p>关联文档：bea/业务告警中心-接口设计-2026-09-22.md §6
  */
@@ -59,7 +59,7 @@ public class AlertAdminService {
             result.put("reason", "非 SCHEDULE/BOTH 规则不支持手动触发");
             return result;
         }
-        FmsAlertRecord record = new FmsAlertRecord();
+        FmsAlert record = new FmsAlert();
         record.setAlertCode(rule.getAlertCode());
         record.setAlertName(rule.getAlertName());
         record.setAlertVersion(rule.getVersion());
@@ -75,7 +75,7 @@ public class AlertAdminService {
         String recordId = record.getId() != null ? record.getId() : savedId;
         result.put("triggered", true);
         result.put("recordId", recordId);
-        result.put("reason", "数据集执行/渲染/投递引擎未启用，已落 PENDING 缓冲留痕");
+        result.put("reason", "已落 PENDING 缓冲（未执行数据集，渲染上下文为空）；引擎启用时由冲刷链路消费");
         return result;
     }
 
@@ -87,7 +87,7 @@ public class AlertAdminService {
      */
     public Map<String, Object> flush(String alertCode, boolean all) {
         StringBuilder sql = new StringBuilder(
-                "UPDATE platform_alert_record SET status = 'READY', update_at = NOW() "
+                "UPDATE platform_alert SET status = 'READY', update_at = NOW() "
                         + "WHERE status = 'PENDING' AND del_status = 0 AND tenant_code = ?");
         List<Object> args = new ArrayList<>();
         args.add(SessionCtxHelper.getCurrentTenantCode());
@@ -98,7 +98,7 @@ public class AlertAdminService {
         int flushed = dynamicDao.nativeExecute(sql.toString(), args.toArray());
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("flushedCount", flushed);
-        result.put("note", "缓冲已抢占转 READY；渲染/投递消费留待后续引擎");
+        result.put("note", "缓冲已抢占转 READY（跳过冲刷渲染）；投递引擎以渲染兜底消费");
         return result;
     }
 
@@ -113,7 +113,7 @@ public class AlertAdminService {
                         + "SUM(CASE WHEN status = 'SENT' THEN 1 ELSE 0 END) AS sent_count, "
                         + "SUM(CASE WHEN status = 'FAIL' THEN 1 ELSE 0 END) AS fail_count, "
                         + "SUM(CASE WHEN status = 'SILENCED' THEN 1 ELSE 0 END) AS silenced_count "
-                        + "FROM platform_alert_record WHERE del_status = 0 AND tenant_code = ?");
+                        + "FROM platform_alert WHERE del_status = 0 AND tenant_code = ?");
         List<Object> args = new ArrayList<>();
         args.add(SessionCtxHelper.getCurrentTenantCode());
         if (alertCode != null && !alertCode.isBlank()) {
@@ -161,7 +161,7 @@ public class AlertAdminService {
         for (int i = 0; i < alertCodes.size(); i++) {
             placeholders.append(i == 0 ? "?" : ",?");
         }
-        String sql = "SELECT alert_code, COUNT(*) AS sent_count FROM platform_alert_record "
+        String sql = "SELECT alert_code, COUNT(*) AS sent_count FROM platform_alert "
                 + "WHERE del_status = 0 AND tenant_code = ? AND create_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) "
                 + "AND alert_code IN (" + placeholders + ") GROUP BY alert_code";
         List<Object> args = new ArrayList<>();
@@ -183,7 +183,7 @@ public class AlertAdminService {
     // ==================== 内部辅助 ====================
 
     /** 新增记录审计位（与异常侧同口径：save 不自动填充，需显式赋值）。 */
-    private void fillNewAudit(FmsAlertRecord record) {
+    private void fillNewAudit(FmsAlert record) {
         Date now = new Date();
         String userId = SessionCtxHelper.getCurrentUserId();
         record.setDelStatus(0);

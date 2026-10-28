@@ -19,10 +19,8 @@ public class PlatformEntitySaveFieldValueFiller implements EntitySaveFieldValueF
 
     @Override
     public void fill(EntitySaveFieldValueFillContext context) {
-        log.info("Platform entity save field filler applying defaults. entityName={}, commandType={}",
+        log.info("Platform entity save field filler defaults. entityName={}, commandType={}",
                 context.getEntityName(), context.getCommandType());
         support.applyEntityDefaults(context);
-        log.info("Platform entity save field filler completed defaults. entityName={}, commandType={}",
-                context.getEntityName(), context.getCommandType());
     }
 }

@@ -61,7 +61,15 @@ const sidebars: SidebarsConfig = {
             {
               type: 'category',
               label: '脚本引擎',
-              items: ['script/overview', 'script/usage'],
+              items: [
+                'script/overview',
+                'script/usage',
+                'script/context',
+                'script/kits',
+                'script/custom-kit',
+                'script/host-library',
+                'script/debugging',
+              ],
             },
             {
               type: 'category',

@@ -31,8 +31,8 @@
         <module>geelato-app-scaffold-starter</module>
 <!--        <module>geelato-mail</module>-->
         <module>geelato-script</module>
-        <module>geelato-exception</module>
-        <module>geelato-alert</module>
+<!--        <module>geelato-exception</module>-->
+<!--        <module>geelato-alert</module>-->
         <module>geelato-web-quickstart</module>
         <module>geelato-mql-test</module>
         <module>geelato-meta-sync</module>

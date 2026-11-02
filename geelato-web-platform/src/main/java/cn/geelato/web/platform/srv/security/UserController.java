@@ -183,10 +183,9 @@ public class UserController extends BaseController {
     public ApiResult createOrUpdate(@RequestBody User form) {
         try {
             User uMap = new User();
-            // 组织
-            setUserOrg(form);
             // 组织ID为空方可插入
             if (Strings.isNotBlank(form.getId())) {
+                setUserOrg(form);// 组织
                 // 组织存在，方可更新
                 User user = userService.getModel(CLAZZ, form.getId());
                 if (user != null) {
@@ -200,6 +199,8 @@ public class UserController extends BaseController {
                 form.setPlainPassword(UUIDUtils.generatePassword(DEFAULT_PASSWORD_DIGIT));
                 EncryptUtil.encryptPassword(form);
                 uMap = userService.createModel(form);
+                setUserOrg(uMap);// 组织
+                uMap = userService.updateModel(uMap);
                 uMap.setPlainPassword(form.getPlainPassword());
             }
             // 设置默认组织

@@ -11,7 +11,8 @@
 -- 约定：
 --   - id 采用平台惯例 varchar(32)（设计文档「bigint PK」为概念口径，落地统一平台主键）
 --   - JSON 列用 MySQL json；时间 datetime；enable_status/resolve_* 等用 tinyint(1)
---   - active_fingerprint 可空唯一列：在途非空、终态置 NULL（MySQL 唯一索引允许多 NULL）
+--   - active_fingerprint 唯一列：一人一实例终身唯一（重开模式常驻不置空；存量终态行可能为 NULL，
+--     MySQL 唯一索引允许多 NULL，两代语义共存不冲突）
 --   - 审计列沿用平台惯例（creator/create_at/update_at/updater/del_status/dept_id/bu_id/tenant_code）
 --   - platform_exception_rule.scan_status/scan_started_at/scan_runner 为集群扫描防重 CAS 列
 --     （UPDATE ... WHERE scan_status=0 OR scan_started_at<stale），engine_version 为脚本契约快照
@@ -81,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `platform_exception` (
   `rule_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '冗余规则名',
   `domain_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '冗余域',
   `level` char(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '本实例等级 P0~P3',
-  `active_fingerprint` varchar(160) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '在途唯一列，终态置 NULL',
+  `active_fingerprint` varchar(160) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '终身唯一指纹 {rule_code}|{biz_type}|{biz_id}|{participant_id}，重开模式常驻（存量终态行可能为 NULL）',
   `source_key` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '同源组键 {rule_code}|{biz_type}|{biz_id}',
   `participant_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '本实例处理人',
   `participant_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '处理人名称',
@@ -203,6 +204,7 @@ CREATE TABLE IF NOT EXISTS `platform_exception_scan_log` (
   `hit_count` int NOT NULL DEFAULT 0 COMMENT '判定命中数',
   `instance_created` int NOT NULL DEFAULT 0 COMMENT '本轮新建实例数',
   `instance_renewed` int NOT NULL DEFAULT 0 COMMENT '本轮续期实例数',
+  `instance_reopened` int NOT NULL DEFAULT 0 COMMENT '本轮重开实例数',
   `instance_recovered` int NOT NULL DEFAULT 0 COMMENT '本轮恢复实例数',
   `suppressed_count` int NOT NULL DEFAULT 0 COMMENT '本轮抑制数',
   `cost_ms` int NOT NULL DEFAULT 0 COMMENT '耗时（毫秒）',

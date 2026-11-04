@@ -1,6 +1,7 @@
 package cn.geelato.exception.engine.scan;
 
 import cn.geelato.exception.entity.FmsExceptionRule;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.support.CronExpression;
 
 import java.time.Instant;
@@ -12,6 +13,7 @@ import java.time.ZoneId;
  * 到期判定：next(lastRun) <= now；lastRun 缺失视为立即可跑；missed fire 只补跑一次
  * （本轮执行后 lastRun 更新为本轮 start_at）。
  */
+@Slf4j
 public final class RuleCronCalculator {
 
     private static final String DEFAULT_P0 = "0 */15 * * * *";
@@ -39,8 +41,14 @@ public final class RuleCronCalculator {
             CronExpression cron = CronExpression.parse(cronOf(rule));
             LocalDateTime base = lastRunAt != null ? lastRunAt : LocalDateTime.of(2020, 1, 1, 0, 0);
             LocalDateTime next = cron.next(base);
-            return next != null && !next.isAfter(now);
+            boolean due = next != null && !next.isAfter(now);
+            if (due) {
+                log.debug("到期判定通过 ruleCode={} cron={} lastRun={} next={} now={}",
+                        rule.getRuleCode(), cronOf(rule), lastRunAt, next, now);
+            }
+            return due;
         } catch (Exception e) {
+            log.warn("cron 解析失败 ruleCode={} cron={}: {}", rule.getRuleCode(), cronOf(rule), e.getMessage());
             return false;
         }
     }

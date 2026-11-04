@@ -290,7 +290,8 @@ public class ExceptionWorkbenchService {
         args.add(now);
         args.add(userId);
         if ("RESOLVED".equals(to) || "IGNORED".equals(to)) {
-            sql.append(", resolved_at=?, resolved_type=?, active_fingerprint=NULL");
+            // 指纹常驻不置空：消除/忽略是暂时态，规则再命中由引擎重开同一实例（终身一条）
+            sql.append(", resolved_at=?, resolved_type=?");
             args.add(now);
             args.add("RESOLVED".equals(to) ? "MANUAL" : "IGNORED");
         }
@@ -332,7 +333,7 @@ public class ExceptionWorkbenchService {
                         ex.getRuleCode(), ex.getSourceKey(), ex.getParticipantId()));
             }
         } catch (Exception e) {
-            log.warn("生命周期事件发布失败 {} {}: {}", eventType, ex.getId(), e.getMessage());
+            log.warn("生命周期事件发布失败 {} {}: {}", eventType, ex.getId(), e.getMessage(), e);
         }
     }
 
@@ -350,8 +351,8 @@ public class ExceptionWorkbenchService {
                 new Object[]{sourceKey});
         dynamicDao.nativeExecute(
                 "UPDATE platform_exception SET status='RESOLVED', resolved_at=?, resolved_type='GROUP',"
-                        + " active_fingerprint=NULL, update_at=?, updater=?"
-                        + " WHERE source_key=? AND del_status=0 AND status IN ('OPEN','PROCESSING','ESCALATED')",
+                + " update_at=?, updater=?"
+                + " WHERE source_key=? AND del_status=0 AND status IN ('OPEN','PROCESSING','ESCALATED')",
                 new Object[]{now, now, userId, sourceKey});
         if (siblings != null) {
             for (Map<String, Object> row : siblings) {
@@ -441,7 +442,22 @@ public class ExceptionWorkbenchService {
         map.put("firstAt", ex.getFirstAt() == null ? null : fmt(ex.getFirstAt()));
         // 用户实例弹窗按最近命中续期排序展示（后端列表已按 last_seen_at 降序）
         map.put("lastSeenAt", ex.getLastSeenAt() == null ? null : fmt(ex.getLastSeenAt()));
+        // 滞留时长（秒，动态计算不落库）：在途 = now−first_at；已关闭 = resolved_at−first_at
+        map.put("staySeconds", staySecondsOf(ex.getStatus(), ex.getFirstAt(), ex.getResolvedAt(), new Date()));
         return map;
+    }
+
+    /** 滞留秒数：在途段 = now−first_at；关闭段 = resolved_at−first_at（first_at 为本轮段起点，重开时重置）。 */
+    static Long staySecondsOf(String status, Date firstAt, Date resolvedAt, Date now) {
+        if (firstAt == null) {
+            return null;
+        }
+        Date end = "RESOLVED".equals(status) || "IGNORED".equals(status) ? resolvedAt : now;
+        if (end == null) {
+            return null;
+        }
+        long seconds = (end.getTime() - firstAt.getTime()) / 1000;
+        return Math.max(0, seconds);
     }
 
     /**
@@ -491,7 +507,7 @@ public class ExceptionWorkbenchService {
         try {
             rows = dynamicDao.nativeQueryForMapList(sql.toString(), args.toArray());
         } catch (Exception e) {
-            log.warn("异常实例告警/消息标记补充失败 tenant={}: {}", tenant, e.getMessage());
+            log.warn("异常实例告警/消息标记补充失败 tenant={}: {}", tenant, e.getMessage(), e);
             return;
         }
         if (rows == null || rows.isEmpty()) {

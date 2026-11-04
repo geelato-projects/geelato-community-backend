@@ -69,6 +69,19 @@ class HitPoliciesTest {
     }
 
     @Test
+    void cooldownBasisOnlyAutoClose() {
+        // 引擎 AUTO 关闭（规则不再命中的防抖）才计冷却
+        assertTrue(HitPolicies.isCooldownBasis("AUTO"));
+        assertTrue(HitPolicies.isCooldownBasis(" auto "));
+        // 用户消除与组联动是暂时态：规则再命中即刻重开，不受冷却限制
+        assertFalse(HitPolicies.isCooldownBasis("MANUAL"));
+        assertFalse(HitPolicies.isCooldownBasis("IGNORED"));
+        assertFalse(HitPolicies.isCooldownBasis("GROUP"));
+        assertFalse(HitPolicies.isCooldownBasis(null));
+        assertFalse(HitPolicies.isCooldownBasis(""));
+    }
+
+    @Test
     void sourceKeysDistinct() {
         String ruleCode = "EXC-BL-005";
         Hit one = Hit.fromMap(Map.of("bizId", "1"));

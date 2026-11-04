@@ -1,7 +1,6 @@
 package cn.geelato.web.platform.srv.base;
 
 import cn.geelato.core.SessionCtx;
-import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.security.User;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.lang.api.ApiResult;
@@ -116,8 +115,6 @@ public class PageController extends BaseController {
             // 获取页面多语言信息
             String pageLangKey = "platform_app_page_lang_" + page.getId() + "_" + locale;
             if (!CacheUtil.exists(pageLangKey) || CacheUtil.get(pageLangKey) == null) {
-                //todo 线程池问题临时处理方法
-                DynamicDataSourceHolder.setDataSourceKey("primary");
                 // 构建查询条件
                 Map<String, Object> langParams = new HashMap<>();
                 langParams.put("pageId", page.getId());
@@ -195,8 +192,6 @@ public class PageController extends BaseController {
                 // 获取页面多语言信息
                 String pageLangKey = "platform_app_page_lang_" + page.getId() + "_" + locale;
                 if (!CacheUtil.exists(pageLangKey) || CacheUtil.get(pageLangKey) == null) {
-                    //todo 线程池问题临时处理方法
-                    DynamicDataSourceHolder.setDataSourceKey("primary");
                     // 构建查询条件
                     Map<String, Object> langParams = new HashMap<>();
                     langParams.put("pageId", page.getId());
@@ -217,8 +212,6 @@ public class PageController extends BaseController {
                 if(withCustomConfig){
                     String pageCustomKey = "platform_app_page_custom_" + page.getId() + '_' + user.getUserId();
                     if (!CacheUtil.exists(pageCustomKey) || CacheUtil.get(pageCustomKey) == null) {
-                        //todo 线程池问题临时处理方法
-                        DynamicDataSourceHolder.setDataSourceKey("primary");
                         Map<String, Object> pageResult = ruleService.queryForMapList("{\"platform_my_page_custom\":{\"@fs\":\"id,cfg,pageId\",\"creator|eq\":\"" + user.getUserId() + "\",\"pageId|eq\":\"" + page.getId() + "\",\"delStatus|eq\":0,\"@p\":\"1,1\"}}", false);
                         Object dataSize = pageResult.get("dataSize");
                         if (dataSize instanceof Number number && number.intValue() > 0) {
@@ -241,8 +234,6 @@ public class PageController extends BaseController {
 
                     String pagePermissionKey = "platform_app_page_permission_" + page.getId() + '_' + user.getUserId();
                     if (!CacheUtil.exists(pagePermissionKey) || CacheUtil.get(pagePermissionKey) == null) {
-                        //todo 线程池问题临时处理方案
-                        DynamicDataSourceHolder.setDataSourceKey("primary");
                         List<Map<String, Object>> permsList = dao.queryForMapList("query_permission_code_and_rule_by_role_user", params);
                         if (permsList != null && !permsList.isEmpty()) {
                             CacheUtil.put(pagePermissionKey, permsList);

@@ -1,5 +1,6 @@
 package cn.geelato.exception.engine.lifecycle;
 
+import cn.geelato.core.orm.Dao;
 import cn.geelato.exception.engine.core.Hit;
 import cn.geelato.exception.engine.core.HitsContractValidator;
 import cn.geelato.exception.engine.participant.Participant;
@@ -11,6 +12,7 @@ import cn.geelato.orm.query.Filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.ArrayList;
@@ -20,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 实例生命周期持久化原语：指纹 upsert（一人一实例，在途唯一）、组级 AUTO_RECOVER、
+ * 实例生命周期持久化原语：指纹 upsert（一人一实例终身一条：在途续期 / 终态重开）、组级 AUTO_RECOVER、
  * handle 只追加流水、notify 待发行、生命周期事件发布。
  * 供命中提交链与事件复评共用；调用方负责线程上下文（扫描/事件线程经 EngineContextExecutor 重建）。
  */
@@ -29,21 +31,24 @@ public class InstanceLifecycleService {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    private final Dao dynamicDao;
     private final ObjectProvider<ApplicationEventPublisher> publisherProvider;
 
-    public InstanceLifecycleService(ObjectProvider<ApplicationEventPublisher> publisherProvider) {
+    public InstanceLifecycleService(@Qualifier("dynamicDao") Dao dynamicDao,
+                                    ObjectProvider<ApplicationEventPublisher> publisherProvider) {
+        this.dynamicDao = dynamicDao;
         this.publisherProvider = publisherProvider;
     }
 
-    /** 命中提交：指纹在途续期 / 不在途新建实例 + CREATE 流水 + CREATED 触达（受规则 notifyLevel 门槛）。 */
+    /** 命中提交：在途续期 / 终态重开 / 首现新建 + 流水与事件。返回 renewed / reopened / created。 */
     public String upsertInstance(String ruleCode, String ruleName, String domainCode, String level,
                                  Hit hit, Participant handler, int ruleVersion, String appId, String suppressKeys) {
         String bizType = hit.getBizType();
         String bizId = hit.getBizId();
         String sourceKey = ruleCode + "|" + bizType + "|" + bizId;
         String fingerprint = sourceKey + "|" + handler.getId();
-        FmsException existing = findActiveByFingerprint(fingerprint);
         Date now = new Date();
+        FmsException existing = findActiveByFingerprint(fingerprint);
         if (existing != null) {
             Map<String, Object> patch = new LinkedHashMap<>();
             patch.put("id", existing.getId());
@@ -57,7 +62,17 @@ public class InstanceLifecycleService {
             patch.put("updaterName", handler.getName());
             EngineContextExecutor.withParticipantPrincipal(handler.getId(), handler.getName(),
                     () -> MetaFactory.save(patchInstance(patch)));
+            log.info("在途续期 fingerprint={} ruleCode={} bizId={} participant={} hitCount={} status={}",
+                    fingerprint, ruleCode, bizId, handler.getId(), existing.getHitCount() + 1, existing.getStatus());
             return "renewed";
+        }
+        FmsException closed = findLatestClosedBySourceAndParticipant(sourceKey, handler.getId());
+        if (closed != null && reopenClosedInstance(closed, fingerprint, ruleName, hit, handler, ruleVersion, suppressKeys, now)) {
+            appendHandle(closed.getId(), "REOPEN", closed.getStatus(), "OPEN", hit);
+            publish("EXC_REOPENED", closed.getId(), ruleCode, sourceKey, handler.getId());
+            log.info("终态重开 ruleCode={} bizId={} participant={} instanceId={} 原状态={} 原解决方式={} firstAt重置={}",
+                    ruleCode, bizId, handler.getId(), closed.getId(), closed.getStatus(), closed.getResolvedType(), now);
+            return "reopened";
         }
         FmsException exception = new FmsException();
         exception.setRuleCode(ruleCode);
@@ -90,19 +105,48 @@ public class InstanceLifecycleService {
                 exception.setId(savedId);
             }
         } catch (Exception e) {
-            // 唯一索引兜底并发：同指纹他人已插入，转续期
+            // 唯一索引兜底并发：同指纹他人已插入/重开，转续期
             FmsException race = findActiveByFingerprint(fingerprint);
             if (race != null) {
+                log.info("新建竞态转续期 ruleCode={} bizId={} participant={} 既存实例={}",
+                        ruleCode, bizId, handler.getId(), race.getId());
                 return "renewed";
             }
+            log.error("实例新建失败 ruleCode={} bizId={} participant={}: {}",
+                    ruleCode, bizId, handler.getId(), e.getMessage(), e);
             throw e;
         }
         appendHandle(exception.getId(), "CREATE", null, "OPEN", hit);
         publish("EXC_CREATED", exception.getId(), ruleCode, sourceKey, handler.getId());
+        log.info("实例新建 ruleCode={} bizId={} participant={} instanceId={} level={} title={}",
+                ruleCode, bizId, handler.getId(), exception.getId(), level, exception.getTitle());
         return "created";
     }
 
-    /** 组级恢复：source_key 内 OPEN/PROCESSING 全部 AUTO 关闭、指纹置 NULL、流水留痕（ESCALATED 不动）。 */
+    /**
+     * 重开终态实例（用户消除/引擎关闭均为暂时态，异常最终跟随业务主体是否命中规则）：
+     * CAS 仅 RESOLVED/IGNORED 可重开；指纹回填常驻，first_at 重置为本轮段起点，
+     * resolved_at 与 resolved_type、current_step_code、escalation_level 清零回初始；竞态失败返回 false 由调用方落回新建兜底。
+     */
+    private boolean reopenClosedInstance(FmsException closed, String fingerprint, String ruleName, Hit hit,
+                                         Participant handler, int ruleVersion, String suppressKeys, Date now) {
+        int rows = dynamicDao.nativeExecute(
+                "UPDATE platform_exception SET status='OPEN', active_fingerprint=?, first_at=?, last_seen_at=?,"
+                        + " hit_count=?, title=?, detail_json=?, suppress_keys=?, anchor_elapsed=?,"
+                        + " resolved_at=NULL, resolved_type=NULL, current_step_code=NULL, escalation_level=0,"
+                        + " rule_version=?, update_at=?, updater=?, updater_name=?"
+                        + " WHERE id=? AND status IN ('RESOLVED','IGNORED') AND del_status=0",
+                new Object[]{fingerprint, now, now, closed.getHitCount() + 1,
+                        titleOf(hit, closed.getTitle(), ruleName), detailOf(hit, closed.getDetailJson()),
+                        suppressKeys, anchorElapsed(hit), ruleVersion,
+                        now, handler.getId(), handler.getName(), closed.getId()});
+        if (rows == 0) {
+            log.info("重开 CAS 失败（状态已变或非终态）instanceId={} fingerprint={}", closed.getId(), fingerprint);
+        }
+        return rows > 0;
+    }
+
+    /** 组级恢复：source_key 内 OPEN/PROCESSING 全部 AUTO 关闭、指纹常驻保留、流水留痕（ESCALATED 不动）。 */
     public int recoverSourceGroup(String ruleCode, String sourceKey, String reason) {
         int recovered = 0;
         Date now = new Date();
@@ -118,7 +162,6 @@ public class InstanceLifecycleService {
             patch.put("status", "RESOLVED");
             patch.put("resolvedAt", now);
             patch.put("resolvedType", "AUTO");
-            patch.put("activeFingerprint", null);
             patch.put("updateAt", now);
             patch.put("updater", EngineContextExecutor.SYSTEM_USER_ID);
             patch.put("updaterName", EngineContextExecutor.SYSTEM_USER_NAME);
@@ -126,6 +169,8 @@ public class InstanceLifecycleService {
             appendHandle(exception.getId(), "AUTO_RECOVER", exception.getStatus(), "RESOLVED",
                     Map.of("reason", reason == null ? "复评不命中，组级恢复" : reason));
             publish("EXC_RECOVERED", exception.getId(), ruleCode, sourceKey, exception.getParticipantId());
+            log.info("组级自动恢复 ruleCode={} instanceId={} participant={} 原状态={} reason={}",
+                    ruleCode, exception.getId(), exception.getParticipantId(), exception.getStatus(), reason);
             recovered++;
         }
         return recovered;
@@ -144,11 +189,44 @@ public class InstanceLifecycleService {
                 .list();
         List<FmsException> entities = toEntities(rows);
         for (FmsException e : entities) {
-            if ("OPEN".equals(e.getStatus()) || "PROCESSING".equals(e.getStatus())) {
+            if (isActiveStatus(e.getStatus())) {
                 return e;
             }
         }
         return null;
+    }
+
+    /**
+     * 终态行选取（重开目标）：同 source_key + 参与人的 RESOLVED/IGNORED 中关闭时刻最近一条。
+     * 不按指纹查（存量历史终态行指纹为 NULL，同样可被重开）；多历史行只重开最近一条，其余留档。
+     */
+    public FmsException findLatestClosedBySourceAndParticipant(String sourceKey, String participantId) {
+        List<Map<String, Object>> rows = MetaFactory.query(FmsException.class)
+                .where(Filter.eq("sourceKey", sourceKey),
+                        Filter.eq("participantId", participantId),
+                        Filter.eq("delStatus", 0))
+                .list();
+        FmsException latest = null;
+        for (FmsException e : toEntities(rows)) {
+            if (!isReopenableStatus(e.getStatus())) {
+                continue;
+            }
+            if (latest == null || (e.getResolvedAt() != null
+                    && (latest.getResolvedAt() == null || e.getResolvedAt().after(latest.getResolvedAt())))) {
+                latest = e;
+            }
+        }
+        return latest;
+    }
+
+    /** 在途状态集（指纹持有态）：OPEN/PROCESSING/ESCALATED。 */
+    public static boolean isActiveStatus(String status) {
+        return "OPEN".equals(status) || "PROCESSING".equals(status) || "ESCALATED".equals(status);
+    }
+
+    /** 可重开状态集（暂时关闭态）：RESOLVED/IGNORED。 */
+    public static boolean isReopenableStatus(String status) {
+        return "RESOLVED".equals(status) || "IGNORED".equals(status);
     }
 
 
@@ -169,11 +247,15 @@ public class InstanceLifecycleService {
     private void publish(String eventType, String exceptionId, String ruleCode, String sourceKey, String participantId) {
         try {
             ApplicationEventPublisher publisher = publisherProvider == null ? null : publisherProvider.getIfAvailable();
-            if (publisher != null) {
-                publisher.publishEvent(new ExceptionLifecycleEvent(this, eventType, exceptionId, ruleCode, sourceKey, participantId));
+            if (publisher == null) {
+                log.debug("无事件发布器，跳过生命周期事件 {} exceptionId={}", eventType, exceptionId);
+                return;
             }
+            publisher.publishEvent(new ExceptionLifecycleEvent(this, eventType, exceptionId, ruleCode, sourceKey, participantId));
+            log.debug("生命周期事件已发布 {} exceptionId={} ruleCode={} participant={}",
+                    eventType, exceptionId, ruleCode, participantId);
         } catch (Exception e) {
-            log.warn("生命周期事件发布失败 {} {}: {}", eventType, exceptionId, e.getMessage());
+            log.warn("生命周期事件发布失败 {} {}: {}", eventType, exceptionId, e.getMessage(), e);
         }
     }
 

@@ -1,9 +1,12 @@
 package cn.geelato.datasource.interceptor;
 
 import cn.geelato.core.ds.DataSourceManager;
+import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.mql.command.BaseCommand;
 import cn.geelato.core.mql.execute.BoundSql;
+import cn.geelato.datasource.DataSourceOverrideContext;
 import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.DynamicDataSourceRegistry;
 import cn.geelato.datasource.EntityDataSourceResolver;
 import cn.geelato.lang.meta.Entity;
 import org.junit.jupiter.api.AfterEach;
@@ -15,10 +18,28 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DataSourceInterceptorTest {
 
     private final DataSourceInterceptor interceptor = new DataSourceInterceptor();
+
+    @org.junit.jupiter.api.BeforeAll
+    static void registerEntities() {
+        MetaManager manager = MetaManager.singleInstance();
+        manager.parseOne(UnclaimedTestEntity.class);
+        manager.parseOne(PlatformCatalogTestEntity.class);
+        manager.parseOne(ConnectIdTestEntity.class);
+    }
+
+    @org.junit.jupiter.api.AfterAll
+    static void unregisterEntities() {
+        MetaManager manager = MetaManager.singleInstance();
+        manager.removeOne("override_unclaimed_entity");
+        manager.removeOne("override_platform_entity");
+        manager.removeOne("override_connect_entity");
+    }
 
     @BeforeEach
     void injectEntityResolver() throws Exception {
@@ -32,6 +53,7 @@ class DataSourceInterceptorTest {
         DynamicDataSourceHolder.clearDataSourceKey();
         DataSourceManager.singleInstance().setDefaultDataSourceKey(null);
         setAnnotationDefault(null);
+        DataSourceOverrideContext.clear();
     }
 
     @Test
@@ -64,6 +86,65 @@ class DataSourceInterceptorTest {
     void unresolvedEntityFallsBackToPlatformDefaultDataSourceKey() {
         DataSourceManager.singleInstance().setDefaultDataSourceKey("primary");
         assertEquals("primary", interceptor.resolveDataSourceKey("entity-without-connect"));
+    }
+
+    @Test
+    void overrideRoutesUnclaimedEntityToOverrideKey() {
+        DataSourceManager.singleInstance().setDefaultDataSourceKey("primary");
+        DataSourceOverrideContext.set("archive", true);
+        assertEquals("archive", interceptor.resolveDataSourceKey("override_unclaimed_entity"));
+    }
+
+    @Test
+    void overrideSkipsPlatformCatalogEntity() {
+        DataSourceManager.singleInstance().setDefaultDataSourceKey("primary");
+        DataSourceOverrideContext.set("archive", true);
+        assertEquals("primary", interceptor.resolveDataSourceKey("override_platform_entity"));
+    }
+
+    @Test
+    void overrideSkipsConnectIdEntity() {
+        DataSourceManager.singleInstance().setDefaultDataSourceKey("primary");
+        DataSourceOverrideContext.set("archive", true);
+        // 测试环境 resolver 未注入 registry（视为不可校验，跳过校验原样返回实体归属）
+        assertEquals("connect-x", interceptor.resolveDataSourceKey("override_connect_entity"));
+    }
+
+    @Test
+    void unregisteredExplicitConnectIdHardFailsInsteadOfSilentPrimaryFallback() throws Exception {
+        EntityDataSourceResolver resolver = (EntityDataSourceResolver)
+                interceptorFieldValue("entityDataSourceResolver");
+        java.lang.reflect.Field registryField = EntityDataSourceResolver.class.getDeclaredField("dynamicDataSourceRegistry");
+        registryField.setAccessible(true);
+        registryField.set(resolver, new DynamicDataSourceRegistry(null, null, null, null, null));
+
+        DataSourceManager.singleInstance().setDefaultDataSourceKey("primary");
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> interceptor.resolveDataSourceKey("override_connect_entity"));
+        assertTrue(ex.getMessage().contains("connect-x"));
+        assertTrue(ex.getMessage().contains("拒绝静默回退主库"));
+    }
+
+    private Object interceptorFieldValue(String fieldName) throws Exception {
+        java.lang.reflect.Field field = DataSourceInterceptor.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(interceptor);
+    }
+
+    @Test
+    void outerScopeKeyBeatsOverride() {
+        DataSourceManager.singleInstance().setDefaultDataSourceKey("primary");
+        DataSourceOverrideContext.set("archive", true);
+        DynamicDataSourceHolder.setDataSourceKey("connect-b");
+        assertEquals("connect-b", interceptor.resolveDataSourceKey("override_unclaimed_entity"));
+    }
+
+    @Test
+    void annotationScopedKeyBeatsOverride() throws Exception {
+        DataSourceManager.singleInstance().setDefaultDataSourceKey("primary");
+        DataSourceOverrideContext.set("archive", true);
+        setAnnotationDefault("annotation-ds");
+        assertEquals("annotation-ds", interceptor.resolveDataSourceKey("override_unclaimed_entity"));
     }
 
     @Test
@@ -127,6 +208,24 @@ class DataSourceInterceptorTest {
     }
 
     static class PlainObject {
+    }
+
+    @Entity(name = "override_unclaimed_entity")
+    public static class UnclaimedTestEntity {
+        @cn.geelato.lang.meta.Id
+        private String id;
+    }
+
+    @Entity(name = "override_platform_entity", catalog = "platform")
+    public static class PlatformCatalogTestEntity {
+        @cn.geelato.lang.meta.Id
+        private String id;
+    }
+
+    @Entity(name = "override_connect_entity", connectId = "connect-x")
+    public static class ConnectIdTestEntity {
+        @cn.geelato.lang.meta.Id
+        private String id;
     }
 
     @SuppressWarnings("unchecked")

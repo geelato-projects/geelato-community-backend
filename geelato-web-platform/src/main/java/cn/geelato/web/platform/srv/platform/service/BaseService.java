@@ -8,7 +8,8 @@ import cn.geelato.core.mql.parser.PageQueryRequest;
 import cn.geelato.lang.meta.Entity;
 import cn.geelato.core.meta.model.entity.BaseEntity;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.DataSourceOverrideContext;
+import cn.geelato.datasource.DynamicDataSourceScope;
 import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import cn.geelato.lang.api.ApiPagedResult;
 import cn.geelato.lang.api.DataItems;
@@ -79,6 +80,7 @@ public class BaseService {
      * @return 返回包含分页查询结果的ApiPagedResult对象
      */
     public <T> ApiPagedResult pageQueryModel(Class<T> entity, Map<String, Object> params, PageQueryRequest request) {
+        assertOverrideQuerySupported(entity);
         // 配置参数
         dao.setDefaultFilter(true, filterGroup);
         String orderBy = Strings.isNotBlank(request.getOrderBy()) ? request.getOrderBy() : BaseService.DEFAULT_ORDER_BY;
@@ -98,6 +100,7 @@ public class BaseService {
      * @return 返回分页查询结果，包括分页信息、查询结果等
      */
     public <T> ApiPagedResult pageQueryModel(Class<T> entity, FilterGroup filter, PageQueryRequest request) {
+        assertOverrideQuerySupported(entity);
         // 配置参数
         dao.setDefaultFilter(true, filterGroup);
         String orderBy = Strings.isNotBlank(request.getOrderBy()) ? request.getOrderBy() : BaseService.DEFAULT_ORDER_BY;
@@ -116,6 +119,7 @@ public class BaseService {
      * @return 返回查询结果列表，列表中的元素类型为指定的实体类类型
      */
     public <T> List<T> queryModel(Class<T> entity, Map<String, Object> params, String orderBy) {
+        assertOverrideQuerySupported(entity);
         dao.setDefaultFilter(true, filterGroup);
         orderBy = Strings.isNotBlank(orderBy) ? orderBy : BaseService.DEFAULT_ORDER_BY;
         return dao.queryList(entity, params, orderBy);
@@ -146,6 +150,7 @@ public class BaseService {
      * @return 返回查询结果列表，列表中的元素类型为指定的实体类类型
      */
     public <T> List<T> queryModel(Class<T> entity, FilterGroup filter, String orderBy) {
+        assertOverrideQuerySupported(entity);
         dao.setDefaultFilter(true, filterGroup);
         orderBy = Strings.isNotBlank(orderBy) ? orderBy : BaseService.DEFAULT_ORDER_BY;
         return dao.queryList(entity, filter, orderBy);
@@ -176,7 +181,25 @@ public class BaseService {
      * @return 返回查询到的实体对象，如果未找到对应的数据则返回null
      */
     public <T> T getModel(Class<T> entity, String id) {
+        assertOverrideQuerySupported(entity);
         return dao.queryForObject(entity, id);
+    }
+
+    /**
+     * 本服务读写走 primaryDao（不消费路由 key），请求级数据源覆盖生效期间查询无归属实体会
+     * 静默读到主库数据形成假象，故硬失败并指引导至 /meta/list（MQL 链路可正常路由）。
+     */
+    private <T> void assertOverrideQuerySupported(Class<T> entity) {
+        if (DataSourceOverrideContext.current() == null) {
+            return;
+        }
+        Entity annotation = entity.getAnnotation(Entity.class);
+        String entityName = annotation != null && !annotation.name().isEmpty()
+                ? annotation.name() : entity.getSimpleName();
+        if (DataSourceOverrideContext.isUnclaimed(entityName)) {
+            throw new IllegalStateException(String.format(
+                    "归档查询模式下该端点不支持查询 %s，请走 /meta/list", entityName));
+        }
     }
 
     /**
@@ -423,10 +446,7 @@ public class BaseService {
     }
 
     public void switchDbByConnectId(String connectId) {
-        if (Strings.isBlank(connectId)) {
-            throw new IllegalArgumentException("数据连接不能为空");
-        }
-        DynamicDataSourceHolder.setDataSourceKey(connectId);
+        DynamicDataSourceScope.switchTo(connectId);
     }
 
     /**

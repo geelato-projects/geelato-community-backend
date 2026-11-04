@@ -57,7 +57,7 @@ public class TargetService {
             out.put("level", row.get("level"));
             return GuestValues.toGuest(out);
         } catch (Exception e) {
-            log.warn("targetInstance 查询失败 ruleCode={} bizId={}: {}", escalationOf, bizId, e.getMessage());
+            log.warn("targetInstance 查询失败 ruleCode={} bizId={}: {}", escalationOf, bizId, e.getMessage(), e);
             return null;
         }
     }

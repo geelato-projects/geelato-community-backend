@@ -8,8 +8,11 @@ import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.mql.command.DeleteCommand;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.command.SaveCommand;
-import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.DataSourceOverrideContext;
+import cn.geelato.datasource.DynamicDataSourceScope;
+import cn.geelato.datasource.EntityDataSourceResolver;
 import org.springframework.util.StringUtils;
+
 
 import java.util.Map;
 import java.util.function.Supplier;
@@ -120,22 +123,14 @@ public abstract class AbstractExecutionStrategySupport {
     }
 
     protected <T> T withDataSource(String connectId, Supplier<T> supplier) {
-        String previous = DynamicDataSourceHolder.getDataSourceKey();
-        try {
-            if (StringUtils.hasText(connectId)) {
-                DynamicDataSourceHolder.setDataSourceKey(connectId);
-            }
-            return supplier.get();
-        } finally {
-            if (StringUtils.hasText(previous)) {
-                DynamicDataSourceHolder.setDataSourceKey(previous);
-            } else {
-                DynamicDataSourceHolder.clearDataSourceKey();
-            }
-        }
+        return DynamicDataSourceScope.withDataSource(connectId, supplier);
     }
 
     private String resolveEntityConnectId(String entityName) {
-        return metaManager.resolveConnectId(entityName);
+        String connectId = EntityDataSourceResolver.getInstance().resolveDataSource(entityName);
+        if (connectId != null) {
+            return connectId;
+        }
+        return DataSourceOverrideContext.resolveOverrideKey(entityName);
     }
 }

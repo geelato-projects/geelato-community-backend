@@ -1,6 +1,9 @@
 package cn.geelato.web.platform.srv.report.service;
 
+import cn.geelato.core.meta.MetaManager;
+import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.orm.MetaFactory;
+import cn.geelato.orm.query.MetaNativeSql;
 import cn.geelato.utils.UIDGenerator;
 import cn.geelato.web.platform.srv.report.dto.CustomerReportConfig;
 import cn.geelato.web.platform.srv.report.dto.ReportConfigDetailData;
@@ -21,6 +24,9 @@ import java.util.Map;
 public class ReportConfigEditorDatabaseService {
     private static final String DEFAULT_OPERATOR = "report-config";
     private static final String DEFAULT_TENANT = "geelato";
+    private static final String DEFAULT_CONFIG_NAME = "客户报告配置";
+    // 客户（合作单位）主数据实体，customerId 即该实体主键，客户名称取 name 字段
+    private static final String CUSTOMER_ORG_ENTITY_NAME = "il_cooperating_org";
 
     public ReportConfigDetailData loadDetail(String templateId, String reportTypeId, String customerId) {
         ReportConfigDetailData detail = new ReportConfigDetailData();
@@ -162,7 +168,9 @@ public class ReportConfigEditorDatabaseService {
         next.setScopeType(blankToDefault(next.getScopeType(), "CUSTOMER"));
         next.setTargetType(blankToDefault(next.getTargetType(), "CUSTOMER"));
         next.setTargetId(blankToDefault(next.getTargetId(), ""));
-        next.setConfigName(blankToDefault(next.getConfigName(), "客户报告配置"));
+        // 配置名称固定为「客户报告配置--客户名称」；客户名称解析失败时回退为默认名称
+        String customerName = resolveCustomerName(next.getTargetId());
+        next.setConfigName(isBlank(customerName) ? DEFAULT_CONFIG_NAME : DEFAULT_CONFIG_NAME + "--" + customerName);
         next.setTemplateName(blankToDefault(next.getTemplateName(), "客户报告模板"));
         next.setTemplateEngine(blankToDefault(next.getTemplateEngine(), "HTML"));
         next.setTemplateContent(blankToDefault(next.getTemplateContent(), ""));
@@ -209,6 +217,37 @@ public class ReportConfigEditorDatabaseService {
             ).execute();
         }
         return next;
+    }
+
+    /**
+     * 按客户ID（即 il_cooperating_org.id）解析客户名称。
+     * 实体元数据（platform_dev_table.connect_id）声明了该表所在的动态数据源，按其路由查询；
+     * 解析失败（实体未注册、数据源不可用、记录不存在）时返回 null，由调用方回退默认名称。
+     */
+    private String resolveCustomerName(String customerId) {
+        if (isBlank(customerId)) {
+            return null;
+        }
+        try {
+            String connectId = null;
+            MetaManager metaManager = MetaManager.singleInstance();
+            if (metaManager.containsEntity(CUSTOMER_ORG_ENTITY_NAME)) {
+                EntityMeta entityMeta = metaManager.getByEntityName(CUSTOMER_ORG_ENTITY_NAME);
+                connectId = entityMeta != null && entityMeta.getTableMeta() != null
+                        ? entityMeta.getTableMeta().getConnectId() : null;
+            }
+            MetaNativeSql query = MetaFactory.sql(
+                            "SELECT name FROM il_cooperating_org WHERE del_status = 0 AND id = ? LIMIT 1")
+                    .param(customerId);
+            if (!isBlank(connectId)) {
+                query.useDataSource(connectId);
+            }
+            Object name = query.one();
+            return name == null ? null : String.valueOf(name);
+        } catch (Exception e) {
+            log.warn("resolve customer name failed, customerId={}", customerId, e);
+            return null;
+        }
     }
 
     private String resolveCustomerConfigId(String reportTypeId, String customerId, String tenantCode) {

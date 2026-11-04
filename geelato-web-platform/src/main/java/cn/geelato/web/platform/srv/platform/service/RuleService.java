@@ -19,8 +19,6 @@ import cn.geelato.core.meta.model.view.ViewMeta;
 import cn.geelato.core.orm.Dao;
 import cn.geelato.core.orm.TransactionHelper;
 import cn.geelato.core.sql.SqlManager;
-import cn.geelato.datasource.DynamicDataSourceHolder;
-import cn.geelato.utils.StringUtils;
 import cn.geelato.web.platform.utils.CacheUtil;
 import cn.geelato.web.platform.cache.MetaCacheProvider;
 import lombok.extern.slf4j.Slf4j;
@@ -391,11 +389,7 @@ public class RuleService {
         BoundSql boundSql = sqlManager.generateSaveSql(command);
         String rtnValue;
         try {
-            // todo : wait to refactor by aspect
-            String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
-            if (!StringUtils.isEmpty(connectId)) {
-                DynamicDataSourceHolder.setDataSourceKey(connectId);
-            }
+            // 实体归属切库由 DataSourceInterceptor 切面按 BoundSql 实体名完成，此处不再手写
             rtnValue = dao.save(boundSql);
             String cacheKey = command.getEntityName() + "_" + rtnValue;
             if (CacheUtil.exists(cacheKey)) {
@@ -435,10 +429,7 @@ public class RuleService {
         BoundSql boundSql = sqlManager.generateSaveSql(command);
         String rtnValue;
         try {
-            String connectId = metaManager.getByEntityName(command.getEntityName()).getTableMeta().getConnectId();
-            if (!StringUtils.isEmpty(connectId)) {
-                DynamicDataSourceHolder.setDataSourceKey(connectId);
-            }
+            // 实体归属切库由 DataSourceInterceptor 切面按 BoundSql 实体名完成，此处不再手写
             rtnValue = dao.save(boundSql);
         } catch (Exception e) {
             TransactionHelper.rollbackTransaction(dataSourceTransactionManager, transactionStatus);

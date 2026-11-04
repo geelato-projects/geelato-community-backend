@@ -104,8 +104,9 @@ public class ExceptionEngineAutoConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "geelato.exception.engine", name = "enabled", havingValue = "true")
     public InstanceLifecycleService exceptionInstanceLifecycleService(
+            @Qualifier("dynamicDao") Dao dynamicDao,
             ObjectProvider<ApplicationEventPublisher> publisher) {
-        return new InstanceLifecycleService(publisher);
+        return new InstanceLifecycleService(dynamicDao, publisher);
     }
 
     @Bean

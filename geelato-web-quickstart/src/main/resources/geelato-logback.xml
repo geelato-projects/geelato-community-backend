@@ -153,6 +153,18 @@
             <pattern>${LOG_PATTERN}</pattern>
         </layout>
     </appender>
+    <!--业务告警引擎日志-->
+    <appender name="alertLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/alert/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN}</pattern>
+        </layout>
+    </appender>
     <!--应用打包(pack)模块日志：按包名路由，打包/部署/合并打包/打包前校验全量进独立文件-->
     <appender name="packLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Prudent>true</Prudent>
@@ -177,6 +189,10 @@
         <appender-ref ref="authLogFile"/>
         <appender-ref ref="console"/>
     </logger>
+    <logger name="cn.geelato.alert" additivity="false">
+        <appender-ref ref="alertLogFile"/>
+        <appender-ref ref="console"/>
+    </logger>
     <logger name="cn.geelato.message" additivity="false">
         <appender-ref ref="messageLogFile"/>
         <appender-ref ref="console"/>
@@ -199,6 +215,22 @@
     </appender>
     <logger name="p6spy" additivity="false">
         <appender-ref ref="sqlLogFile"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <!-- 脚本引擎（geelato-script）执行日志：START/入参/kit 调用/结果以 execId 串联，路由到独立文件 -->
+    <appender name="scriptLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/script/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN}</pattern>
+        </layout>
+    </appender>
+    <logger name="cn.geelato.script" additivity="false">
+        <appender-ref ref="scriptLogFile"/>
         <appender-ref ref="console"/>
     </logger>
     <!-- 业务扩展模块可通过 classpath include 追加独立日志路由 -->

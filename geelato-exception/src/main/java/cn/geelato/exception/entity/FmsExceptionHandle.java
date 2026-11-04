@@ -29,7 +29,7 @@ public class FmsExceptionHandle extends BaseSortableEntity {
     @Col(name = "step_id", charMaxlength = 32)
     private String stepId;
 
-    @Title(title = "动作", description = "CREATE/CLAIM/HANDLE_NOTE/RESOLVE/IGNORE/AUTO_RECOVER/ESCALATE/ESCALATED/ACK/GROUP_CLOSE/STEP_DONE")
+    @Title(title = "动作", description = "CREATE/CLAIM/HANDLE_NOTE/RESOLVE/IGNORE/AUTO_RECOVER/REOPEN/ESCALATE/ESCALATED/ACK/GROUP_CLOSE/STEP_DONE")
     @Col(name = "action", nullable = false, charMaxlength = 24)
     private String action;
 

@@ -2,7 +2,7 @@ package cn.geelato.search.lucene.sync;
 
 import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.entity.EntityMeta;
-import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.DynamicDataSourceScope;
 import cn.geelato.search.api.SearchDocument;
 import cn.geelato.search.lucene.config.GeelatoSearchProperties.DomainConfig;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,8 @@ public class DocumentLoader {
     }
 
     /**
-     * 按实体归属数据源执行查询：解析实体 connectId 并临时切换 {@link DynamicDataSourceHolder}，
+     * 按实体归属数据源执行查询：解析实体 connectId 后经框架统一作用域工具
+     * {@link DynamicDataSourceScope#withDataSource(String, Supplier)} 临时切换，
      * 与平台 ORM（DataSourceInterceptor）路由口径一致——回表不依赖手写 schema 前缀，
      * 主/子/reindex/对账全部走实体真实归属库，口径统一。解析不到归属库时原样执行（回退默认源）。
      */
@@ -46,17 +47,7 @@ public class DocumentLoader {
         if (connectId == null || connectId.isBlank()) {
             return action.get();
         }
-        String previous = DynamicDataSourceHolder.getDataSourceKey();
-        DynamicDataSourceHolder.setDataSourceKey(connectId);
-        try {
-            return action.get();
-        } finally {
-            if (previous != null) {
-                DynamicDataSourceHolder.setDataSourceKey(previous);
-            } else {
-                DynamicDataSourceHolder.clearDataSourceKey();
-            }
-        }
+        return DynamicDataSourceScope.withDataSource(connectId, action);
     }
 
     /**

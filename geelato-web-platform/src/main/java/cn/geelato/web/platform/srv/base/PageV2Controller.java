@@ -343,11 +343,10 @@ public class PageV2Controller extends BaseController {
 
     /**
      * 查询页面定义（带缓存）。
-     * 线程池中执行时 ThreadLocal 数据源上下文不继承，显式指定 primary
-     * （与 V1 中 lang/custom/perms 段的处理方式一致）。
+     * 线程池中执行时由 {@link #withRequestContext} 统一兜底数据源上下文；
+     * 请求线程路径由请求级清理安全网保证线程无残留 key，实体归属解析自然落主库。
      */
     private AppPage queryPage(boolean byPageId, String id) {
-        DynamicDataSourceHolder.setDataSourceKey("primary");
         String key = byPageId ? "platform_app_page_" + id : "platform_app_page_extend_" + id;
         if (CacheUtil.exists(key) && CacheUtil.get(key) != null) {
             return (AppPage) CacheUtil.get(key);
@@ -365,7 +364,6 @@ public class PageV2Controller extends BaseController {
     private Object queryPageLang(String pageId, String locale) {
         String pageLangKey = "platform_app_page_lang_" + pageId + "_" + locale;
         if (!CacheUtil.exists(pageLangKey) || CacheUtil.get(pageLangKey) == null) {
-            DynamicDataSourceHolder.setDataSourceKey("primary");
             Map<String, Object> langParams = new HashMap<>();
             langParams.put("pageId", pageId);
             langParams.put("langType", locale);
@@ -384,7 +382,6 @@ public class PageV2Controller extends BaseController {
     private Object queryPageCustom(String pageId, User user) {
         String pageCustomKey = "platform_app_page_custom_" + pageId + '_' + user.getUserId();
         if (!CacheUtil.exists(pageCustomKey) || CacheUtil.get(pageCustomKey) == null) {
-            DynamicDataSourceHolder.setDataSourceKey("primary");
             Map<String, Object> pageResult = ruleService.queryForMapList("{\"platform_my_page_custom\":{\"@fs\":\"id,cfg,pageId\",\"creator|eq\":\"" + user.getUserId() + "\",\"pageId|eq\":\"" + pageId + "\",\"delStatus|eq\":0,\"@p\":\"1,1\"}}", false);
             Object dataSize = pageResult.get("dataSize");
             if (dataSize instanceof Number number && number.intValue() > 0) {
@@ -404,7 +401,6 @@ public class PageV2Controller extends BaseController {
 
         String pagePermissionKey = "platform_app_page_permission_" + pageId + '_' + user.getUserId();
         if (!CacheUtil.exists(pagePermissionKey) || CacheUtil.get(pagePermissionKey) == null) {
-            DynamicDataSourceHolder.setDataSourceKey("primary");
             List<Map<String, Object>> permsList = dao.queryForMapList("query_permission_code_and_rule_by_role_user", params);
             if (permsList != null && !permsList.isEmpty()) {
                 CacheUtil.put(pagePermissionKey, permsList);

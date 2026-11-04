@@ -54,13 +54,18 @@ public class EntityEventReactor {
     public void onEvent(String entityName, String operation, String bizId, String tenantCode, String eventId) {
         List<FmsExceptionRule> matched = matchRules(entityName, operation, tenantCode);
         if (matched.isEmpty()) {
+            log.debug("事件无匹配规则，跳过 entity={} operation={} bizId={} tenant={} eventId={}",
+                    entityName, operation, bizId, tenantCode, eventId);
             return;
         }
+        log.info("事件命中规则 entity={} operation={} bizId={} rules={} eventId={}",
+                entityName, operation, bizId,
+                matched.stream().map(FmsExceptionRule::getRuleCode).toList(), eventId);
         for (FmsExceptionRule rule : matched) {
             try {
                 recheck(rule, entityName, operation, bizId, eventId);
             } catch (Exception e) {
-                log.warn("事件复评失败 ruleCode={} eventId={}: {}", rule.getRuleCode(), eventId, e.getMessage());
+                log.error("事件复评失败 ruleCode={} eventId={}: {}", rule.getRuleCode(), eventId, e.getMessage(), e);
             }
         }
     }
@@ -74,6 +79,7 @@ public class EntityEventReactor {
             }
             String normalizedBizId = "RELATED".equals(entry.role) ? normalize(entry, bizId) : bizId;
             if (normalizedBizId == null || normalizedBizId.isBlank()) {
+                log.info("复评跳过 ruleCode={} eventId={}（RELATED 归一化为空，子表行未取到主单 id）", rule.getRuleCode(), eventId);
                 return null;
             }
             Date startAt = new Date();
@@ -86,7 +92,13 @@ public class EntityEventReactor {
                     String sourceKey = HitPolicies.sourceKeyOf(rule.getRuleCode(), rule.getBizType(), normalizedBizId);
                     recovered = lifecycle.recoverSourceGroup(rule.getRuleCode(), sourceKey, "变更复评不命中");
                 }
+            } else {
+                log.warn("复评管道失败 ruleCode={} eventId={} status={} error={}",
+                        rule.getRuleCode(), eventId, outcome.getStatus(), outcome.getError());
             }
+            log.info("复评完成 ruleCode={} eventId={} bizId={} status={} candidateCount={} hitCount={} recovered={} costMs={}",
+                    rule.getRuleCode(), eventId, normalizedBizId, outcome.getStatus(), outcome.getCandidateCount(),
+                    outcome.getValidHits() == null ? 0 : outcome.getValidHits().size(), recovered, outcome.getCostMs());
             writeRecheckLog(rule, startAt, outcome, recovered,
                     Map.of("eventId", nz(eventId), "entityName", nz(entityName), "operation", nz(operation),
                             "bizId", nz(bizId), "normalizedBizId", nz(normalizedBizId)));
@@ -104,6 +116,7 @@ public class EntityEventReactor {
                         .list());
         List<FmsExceptionRule> matched = new ArrayList<>();
         if (rows == null) {
+            log.warn("事件规则匹配查询无结果 tenant={} entity={}", tenantCode, entityName);
             return matched;
         }
         for (Map<String, Object> row : rows) {
@@ -112,6 +125,8 @@ public class EntityEventReactor {
                 matched.add(rule);
             }
         }
+        log.debug("事件规则匹配 tenant={} entity={} operation={} 候选启用规则={} 命中={}",
+                tenantCode, entityName, operation, rows.size(), matched.size());
         return matched;
     }
 
@@ -135,6 +150,7 @@ public class EntityEventReactor {
         List<Map<String, Object>> rows = dynamicDao.nativeQueryForMapList(
                 "SELECT " + refField + " FROM " + entry.entity + " WHERE id = ?", new Object[]{bizId});
         if (rows == null || rows.isEmpty()) {
+            log.debug("RELATED 归一化未查到子表行 entity={} id={}", entry.entity, bizId);
             return null;
         }
         Object value = rows.get(0).values().iterator().next();
@@ -190,7 +206,7 @@ public class EntityEventReactor {
                 }
             }
         } catch (Exception e) {
-            log.warn("listen_entities 解析失败: {}", e.getMessage());
+            log.warn("listen_entities 解析失败: {}", e.getMessage(), e);
         }
         return entries;
     }

@@ -16,7 +16,7 @@ import cn.geelato.core.meta.schema.SchemaCheck;
 import cn.geelato.core.meta.schema.SchemaIndex;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.DynamicDataSourceScope;
 import cn.geelato.lang.api.ApiMetaResult;
 import cn.geelato.utils.SqlParams;
 import cn.geelato.web.platform.srv.model.service.DevDbConnectService;
@@ -59,7 +59,7 @@ public class MetaDdlService {
         }
         TableMeta tableMeta = getTableMeta(entityMeta);
         // 切换数据库
-        switchDbByConnectId(tableMeta.getConnectId());
+        DynamicDataSourceScope.switchTo(tableMeta.getConnectId());
         createOrUpdateTableByEntityMeta(primaryDao, entityMeta);
     }
 
@@ -86,7 +86,7 @@ public class MetaDdlService {
         // 与元数据对比，判断字段名称是否一修改了。
         // setBeforeFieldName(tableMeta, columnMetas);
         // 切换数据库
-        switchDbByConnectId(tableMeta.getConnectId());
+        DynamicDataSourceScope.switchTo(tableMeta.getConnectId());
         // 判断表是否存在，需要分库查询
         List<Map<String, Object>> tableMapList = dbGenerateDao.dbQueryAllTables(tableMeta.getDbType(), tableMeta.dbTableName());
         boolean isExistsTable = tableMapList != null && !tableMapList.isEmpty();
@@ -183,7 +183,7 @@ public class MetaDdlService {
                     errorModel = String.format("Error Model: %s（%s）", tableMeta.getTitle(), tableMeta.getEntityName());
                     // 切换数据
                     if (!currentConnect.equals(tableMeta.getConnectId())) {
-                        switchDbByConnectId(tableMeta.getConnectId());
+                        DynamicDataSourceScope.switchTo(tableMeta.getConnectId());
                         currentConnect = tableMeta.getConnectId();
                     }
                     // 创建或更新模型
@@ -250,7 +250,7 @@ public class MetaDdlService {
                 handleValidateViewSql(connectMetaResult.get(), viewMeta.getViewConstruct());
                 // 切换数据
                 if (!currentConnect.equals(viewMeta.getConnectId())) {
-                    switchDbByConnectId(viewMeta.getConnectId());
+                    DynamicDataSourceScope.switchTo(viewMeta.getConnectId());
                     currentConnect = viewMeta.getConnectId();
                 }
                 // 创建或更新视图
@@ -301,7 +301,7 @@ public class MetaDdlService {
             // 验证sql
             handleValidateViewSql(connectMeta, viewMeta.getViewConstruct());
             // 切换数据库
-            switchDbByConnectId(viewMeta.getConnectId());
+            DynamicDataSourceScope.switchTo(viewMeta.getConnectId());
             // 创建或更新视图
             dbGenerateDao.createOrUpdateView(connectMeta.getDbType(), viewMeta.getViewName(), viewMeta.getViewConstruct());
             entityName = viewMeta.getViewName();
@@ -324,7 +324,7 @@ public class MetaDdlService {
             // 验证sql
             handleValidateViewSql(meta, sql);
             // 切换数据库
-            switchDbByConnectId(connectId);
+            DynamicDataSourceScope.switchTo(connectId);
             // 创建或更新视图
             dbGenerateDao.createOrUpdateView(meta.getDbType(), entityName, sql);
             return ApiMetaResult.successNoResult();
@@ -411,14 +411,6 @@ public class MetaDdlService {
         table.put("tenant_code", Strings.isNotBlank(params.get("tenantCode")) ? params.get("tenantCode") : SessionCtx.getCurrentTenantCode());
         metaManager.parseDBMeta(table);
     }
-
-    public void switchDbByConnectId(String connectId) {
-        if (Strings.isBlank(connectId)) {
-            throw new IllegalArgumentException("数据连接不能为空");
-        }
-        DynamicDataSourceHolder.setDataSourceKey(connectId);
-    }
-
 
     public <T extends Exception> String getMessage(T ex) {
         return ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();

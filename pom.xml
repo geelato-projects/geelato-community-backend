@@ -34,8 +34,7 @@
 <!--        <module>geelato-exception</module>-->
 <!--        <module>geelato-alert</module>-->
         <module>geelato-web-quickstart</module>
-        <module>geelato-mql-test</module>
-        <module>geelato-meta-sync</module>
+        <module>geelato-maintenance</module>
 <!--        <module>geelato-tenant-test</module>-->
     </modules>
 </project>

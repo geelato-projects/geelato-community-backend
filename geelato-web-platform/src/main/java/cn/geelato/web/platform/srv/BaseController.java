@@ -4,7 +4,7 @@ import cn.geelato.core.SessionCtx;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.mql.parser.PageQueryRequest;
 import cn.geelato.core.orm.Dao;
-import cn.geelato.datasource.DynamicDataSourceHolder;
+import cn.geelato.datasource.DynamicDataSourceScope;
 import cn.geelato.utils.DateUtils;
 import cn.geelato.web.platform.srv.platform.service.RuleService;
 import com.alibaba.fastjson2.JSON;
@@ -164,10 +164,7 @@ public class BaseController extends ParameterOperator {
      * @param connectId 数据库连接ID
      */
     public void switchDbByConnectId(String connectId) {
-        if (Strings.isBlank(connectId)) {
-            throw new IllegalArgumentException("数据连接不能为空");
-        }
-        DynamicDataSourceHolder.setDataSourceKey(connectId);
+        DynamicDataSourceScope.switchTo(connectId);
     }
 
     /**

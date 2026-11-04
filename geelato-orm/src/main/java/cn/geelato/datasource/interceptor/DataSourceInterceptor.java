@@ -5,6 +5,7 @@ import cn.geelato.core.mql.execute.BoundPageSql;
 import cn.geelato.core.mql.execute.BoundSql;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.datasource.EntityDataSourceResolver;
+import cn.geelato.datasource.DataSourceOverrideContext;
 import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import cn.geelato.lang.meta.Entity;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +74,8 @@ public class DataSourceInterceptor {
     @Around("execution(* cn.geelato.core.orm.Dao.*(..))")
     public Object aroundDaoMethod(ProceedingJoinPoint pjp) throws Throwable {
         String entityName = resolveEntityName(pjp.getArgs());
+        DataSourceOverrideContext.assertWritable(
+                ((MethodSignature) pjp.getSignature()).getMethod().getName(), entityName);
         String dataSourceKey = resolveDataSourceKey(entityName);
         String previous = DynamicDataSourceHolder.getDataSourceKey();
         try {
@@ -133,13 +136,14 @@ public class DataSourceInterceptor {
 
     /**
      * 解析数据源 key，保证返回非 null 的具体 key。
-     * <p>解析优先级：实体映射 &gt; 类/方法级注解值 &gt; 外层已显式设置的 key &gt; 平台默认 key &gt; primary。
+     * <p>解析优先级：实体映射 &gt; 类/方法级注解值 &gt; 外层已显式设置的 key &gt;
+     * 请求级覆盖（仅无显式归属的实体，见{@link DataSourceOverrideContext}）&gt; 平台默认 key &gt; primary。
      * <p>字段级@UseDynamicDataSource仅为注入标记，不产生注解作用域默认值，
      * 因此{@link #DEFAULT_DATA_SOURCE}在纯字段注解场景下为空，由后续兜底链接管。
      */
     String resolveDataSourceKey(String entityName) {
         if (entityName == null) {
-            return resolveDefaultDataSourceKey();
+            return resolveDefaultDataSourceKey(null);
         }
 
         String dataSourceKey = entityDataSourceResolver.resolveDataSource(entityName);
@@ -148,16 +152,17 @@ public class DataSourceInterceptor {
             return dataSourceKey;
         }
         log.debug("实体 {} 未找到数据源映射，使用默认数据源", entityName);
-        return resolveDefaultDataSourceKey();
+        return resolveDefaultDataSourceKey(entityName);
     }
 
     /**
      * 解析默认数据源 key（非实体路由时的兜底链）。
      * <p>注解作用域值 &gt; 外层已显式设置的 key（原样返回，保护 withDataSource /
      * switchDbByConnectId 等嵌套切库语义，设置同值等价于保持原值）&gt;
+     * 请求级覆盖（entityName 无显式归属时生效）&gt;
      * 平台默认 key（启动时由 OrmAutoConfiguration 写入）&gt; primary 硬兜底。
      */
-    private String resolveDefaultDataSourceKey() {
+    private String resolveDefaultDataSourceKey(String entityName) {
         String annotationDefault = DEFAULT_DATA_SOURCE.get();
         if (annotationDefault != null) {
             return annotationDefault;
@@ -165,6 +170,11 @@ public class DataSourceInterceptor {
         String outerScopeKey = DynamicDataSourceHolder.getDataSourceKey();
         if (outerScopeKey != null && !outerScopeKey.trim().isEmpty()) {
             return outerScopeKey;
+        }
+        String overrideKey = DataSourceOverrideContext.resolveOverrideKey(entityName);
+        if (overrideKey != null) {
+            log.debug("实体 {} 无显式数据源归属，请求级覆盖路由到: {}", entityName, overrideKey);
+            return overrideKey;
         }
         String platformDefault = DataSourceManager.singleInstance().getDefaultDataSourceKey();
         return platformDefault == null || platformDefault.trim().isEmpty()

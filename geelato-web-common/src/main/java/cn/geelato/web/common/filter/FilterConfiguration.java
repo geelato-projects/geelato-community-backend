@@ -70,4 +70,20 @@ public class FilterConfiguration {
     public ExperimentFilter experimentFilter() {
         return new ExperimentFilter();
     }
+
+    @Bean
+    public FilterRegistrationBean dataSourceContextCleanupFilterRegistration() {
+        FilterRegistrationBean<DataSourceContextCleanupFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(dataSourceContextCleanupFilter());
+        registrationBean.addUrlPatterns("/*");
+        registrationBean.setName("dataSourceContextCleanupFilter");
+        // 最外层（解密0/安全1/缓存2/审计3/实验4/归档查询5 之前），finally 清理覆盖整个请求链路
+        registrationBean.setOrder(-100);
+        return registrationBean;
+    }
+
+    @Bean(name = "dataSourceContextCleanupFilter")
+    public DataSourceContextCleanupFilter dataSourceContextCleanupFilter() {
+        return new DataSourceContextCleanupFilter();
+    }
 }

@@ -160,7 +160,9 @@ public class MetaReflex {
             em.setCacheType(EntityCacheType.fromStringIgnoreCase(tableMeta.getCacheType()));
         }
         if (columnList == null || columnList.isEmpty()) {
-            throw new RuntimeException("column list is empty!");
+            log.warn("table [{}] has no column, entity [{}] parsed with empty field metas!",
+                    tableMeta.getTableName(), tableMeta.getEntityName());
+            em.setFieldMetas(Collections.emptyList());
         } else {
             HashMap<String, FieldMeta> columnMap = getColumnFieldMetas(columnList);
             em.setFieldMetas(columnMap.values());

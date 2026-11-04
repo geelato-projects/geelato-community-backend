@@ -32,14 +32,23 @@ public class ParticipantSolver {
         List<Participant> handlers = new ArrayList<>();
         List<Participant> cc = new ArrayList<>();
         Map<String, Object> root = parse(ownerSelectorJson);
+        if (root == null && ownerSelectorJson != null && !ownerSelectorJson.isBlank()) {
+            log.warn("owner_selector 解析失败（按空选择器处理，hits bizId={}）", hit.getBizId());
+        }
         for (Participant p : resolveList(root == null ? null : root.get("handlers"), hit, "handlers")) {
             handlers.add(p);
         }
         for (Participant p : resolveList(root == null ? null : root.get("cc"), hit, "cc")) {
             cc.add(p);
         }
+        int handlersBeforeDedup = handlers.size();
+        int ccBeforeDedup = cc.size();
         dedup(handlers);
         dedup(cc);
+        if (handlers.size() < handlersBeforeDedup || cc.size() < ccBeforeDedup) {
+            log.debug("参与者去重 bizId={} handlers {}→{} cc {}→{}", hit.getBizId(),
+                    handlersBeforeDedup, handlers.size(), ccBeforeDedup, cc.size());
+        }
         return new Solution(handlers, cc);
     }
 
@@ -61,9 +70,11 @@ public class ParticipantSolver {
                 continue;
             }
             try {
-                out.addAll(resolver.resolve(selector, hit));
+                List<Participant> resolved = resolver.resolve(selector, hit);
+                log.debug("选择器求解 group={} type={} bizId={} 结果={}", group, type, hit.getBizId(), resolved.size());
+                out.addAll(resolved);
             } catch (Exception e) {
-                log.warn("参与者求解失败 type={} selector={}: {}", type, selector, e.getMessage());
+                log.warn("参与者求解失败 type={} selector={}: {}", type, selector, e.getMessage(), e);
             }
         }
         return out;

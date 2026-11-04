@@ -10,6 +10,7 @@ public class SubmitReport {
 
     private int instanceCreated;
     private int instanceRenewed;
+    private int instanceReopened;
     private int suppressedCount;
     private int overflowDropped;
     private int cooldownSkipped;

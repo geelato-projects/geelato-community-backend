@@ -95,6 +95,8 @@ public class PipelineEngine {
                 outcome.setCostMs(System.currentTimeMillis() - start);
                 outcome.setError("管道总预算耗尽（" + pipelineBudget + "ms），止于步骤 " + name);
                 outcome.getSteps().add(reportOf(name, lang, "SKIPPED", 0, 0, List.of(), null));
+                log.warn("管道总预算耗尽 rule={} budget={}ms 止于步骤 {}（已完成 {} 步）",
+                        rule.getRuleCode(), pipelineBudget, name, i);
                 return outcome;
             }
 
@@ -187,6 +189,7 @@ public class PipelineEngine {
         try {
             json = MAPPER.writeValueAsString(output);
         } catch (Exception e) {
+            log.warn("步骤输出序列化失败: {}", e.getMessage(), e);
             return "STEP_OUTPUT_NOT_SERIALIZABLE（输出无法 JSON 序列化: " + e.getMessage() + "）";
         }
         if (json != null && json.length() > stepOutputMaxBytes) {
@@ -258,6 +261,7 @@ public class PipelineEngine {
         try {
             return MAPPER.readTree(json);
         } catch (Exception e) {
+            log.warn("规则 JSON 解析失败（视为空）: {}", e.getMessage());
             return null;
         }
     }

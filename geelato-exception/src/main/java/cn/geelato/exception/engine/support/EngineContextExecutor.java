@@ -23,6 +23,9 @@ public final class EngineContextExecutor {
         if (injected) {
             SecurityContext.setCurrentUser(systemUser());
             SecurityContext.setCurrentTenant(new Tenant(tenantCode == null || tenantCode.isBlank() ? "geelato" : tenantCode));
+            log.debug("上下文重建 tenant={}", tenantCode);
+        } else {
+            log.debug("上下文沿用调用线程已有身份 tenant={}", tenantCode);
         }
         try {
             return task.get();
@@ -42,6 +45,7 @@ public final class EngineContextExecutor {
         Tenant previousTenant = SecurityContext.getCurrentTenant();
         SecurityContext.setCurrentUser(systemUser());
         SecurityContext.setCurrentTenant(null);
+        log.debug("进入跨租户系统上下文（租户过滤不追加）");
         try {
             return task.get();
         } finally {
@@ -59,6 +63,7 @@ public final class EngineContextExecutor {
         Tenant previousTenant = SecurityContext.getCurrentTenant();
         SecurityContext.setCurrentUser(systemUser());
         SecurityContext.setCurrentTenant(new Tenant(tenantCode == null || tenantCode.isBlank() ? "geelato" : tenantCode));
+        log.debug("引擎上下文强制重建 tenant={} 原用户={}", tenantCode, previousUser == null ? null : previousUser.getUserId());
         try {
             return task.get();
         } finally {
@@ -86,6 +91,7 @@ public final class EngineContextExecutor {
         principal.setDelegateUserId(current.getUserId());
         principal.setDelegateUserName(current.getUserName());
         SecurityContext.setCurrentUser(principal);
+        log.debug("参与者身份让渡 participant={}（审计归属），delegate=引擎系统身份", userId);
         try {
             return task.get();
         } finally {

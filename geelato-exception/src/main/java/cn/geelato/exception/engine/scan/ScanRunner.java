@@ -105,7 +105,7 @@ public class ScanRunner {
     private Map<String, Object> runOneScan(FmsExceptionRule rule) {
         Date startAt = new Date();
         if (!tryLock(rule.getId(), startAt)) {
-            log.info("扫描跳过 ruleCode={}（锁被占用或规则已停用）", rule.getRuleCode());
+            log.info("扫描跳过 ruleCode={}（锁被占用或规则已停用，runner={}）", rule.getRuleCode(), runnerId);
             return Map.of("ruleCode", rule.getRuleCode(), "status", "SKIPPED_LOCKED");
         }
         try {
@@ -128,14 +128,15 @@ public class ScanRunner {
                 result.put("hitCount", outcome.getValidHits() == null ? 0 : outcome.getValidHits().size());
                 result.put("instanceCreated", report.getInstanceCreated());
                 result.put("instanceRenewed", report.getInstanceRenewed());
+                result.put("instanceReopened", report.getInstanceReopened());
                 result.put("instanceRecovered", recovered);
                 result.put("suppressedCount", report.getSuppressedCount());
                 result.put("costMs", outcome.getCostMs());
                 result.put("engineVersion", outcome.getEngineVersion());
-                log.info("扫描结束 ruleCode={} status={} candidateCount={} hitCount={} created={} renewed={} recovered={} suppressed={} costMs={}",
+                log.info("扫描结束 ruleCode={} status={} candidateCount={} hitCount={} created={} renewed={} reopened={} recovered={} suppressed={} costMs={}",
                         rule.getRuleCode(), outcome.getStatus(), outcome.getCandidateCount(),
                         result.get("hitCount"), report.getInstanceCreated(), report.getInstanceRenewed(),
-                        recovered, report.getSuppressedCount(), outcome.getCostMs());
+                        report.getInstanceReopened(), recovered, report.getSuppressedCount(), outcome.getCostMs());
                 if (!"SUCCESS".equals(outcome.getStatus())) {
                     log.warn("扫描失败 ruleCode={} status={} error={}", rule.getRuleCode(),
                             outcome.getStatus(), outcome.getError());
@@ -161,7 +162,7 @@ public class ScanRunner {
                     }
                     recovered += closed;
                 } catch (Exception e) {
-                    log.warn("组级恢复失败 ruleCode={} sourceKey={}: {}", rule.getRuleCode(), sourceKey, e.getMessage());
+                    log.warn("组级恢复失败 ruleCode={} sourceKey={}: {}", rule.getRuleCode(), sourceKey, e.getMessage(), e);
                 }
             }
         }
@@ -201,7 +202,7 @@ public class ScanRunner {
                     "UPDATE platform_exception_rule SET scan_status = 0 WHERE id = ? AND scan_runner = ?",
                     new Object[]{ruleId, runnerId});
         } catch (Exception e) {
-            log.warn("释放扫描锁失败 ruleId={}: {}（stale 兜底回收）", ruleId, e.getMessage());
+            log.warn("释放扫描锁失败 ruleId={}: {}（stale 兜底回收）", ruleId, e.getMessage(), e);
         }
     }
 
@@ -218,6 +219,7 @@ public class ScanRunner {
             logRow.setHitCount(outcome == null || outcome.getValidHits() == null ? 0 : outcome.getValidHits().size());
             logRow.setInstanceCreated(report == null ? 0 : report.getInstanceCreated());
             logRow.setInstanceRenewed(report == null ? 0 : report.getInstanceRenewed());
+            logRow.setInstanceReopened(report == null ? 0 : report.getInstanceReopened());
             logRow.setInstanceRecovered(recovered);
             logRow.setSuppressedCount(report == null ? 0 : report.getSuppressedCount());
             logRow.setCostMs((int) Math.min(Integer.MAX_VALUE, finishAt.getTime() - startAt.getTime()));
@@ -231,7 +233,7 @@ public class ScanRunner {
             logRow.setCreatorName(EngineContextExecutor.SYSTEM_USER_NAME);
             MetaFactory.save(logRow);
         } catch (Exception e) {
-            log.error("scan_log 回写失败 ruleCode={}: {}", rule.getRuleCode(), e.getMessage());
+            log.error("scan_log 回写失败 ruleCode={}: {}", rule.getRuleCode(), e.getMessage(), e);
         }
     }
 

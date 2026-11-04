@@ -12,14 +12,37 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 实体数据源解析器
  * 负责根据实体名称解析对应的数据源
+ * <p>是路由体系中"实体归属档"的唯一实现（Dao 切面链与 MQL 执行器链共用，
+ * 见 {@link DynamicDataSourceScope} 的优先级说明）。实体显式归属的数据源未注册时
+ * 硬失败，不静默回退主库。</p>
  */
 @Component
 @Slf4j
 public class EntityDataSourceResolver {
-    MetaManager metaManager=MetaManager.singleInstance();
+
+    /**
+     * Spring 上下文实例桥（构造时登记），供非 Spring 构造的执行策略经
+     * {@link #getInstance()} 取用同一份缓存与校验
+     */
+    private static volatile EntityDataSourceResolver instance;
+
+    MetaManager metaManager = MetaManager.singleInstance();
 
     @Autowired
     private DynamicDataSourceRegistry dynamicDataSourceRegistry;
+
+    public EntityDataSourceResolver() {
+        instance = this;
+    }
+
+    /**
+     * 取用当前解析器实例；脱离 Spring 上下文时回退裸实例（registry 未注入则不做注册性校验，
+     * 由路由层按原行为兜底）。
+     */
+    public static EntityDataSourceResolver getInstance() {
+        EntityDataSourceResolver resolved = instance;
+        return resolved != null ? resolved : new EntityDataSourceResolver();
+    }
 
     /**
      * 实体与数据源的映射缓存
@@ -71,15 +94,16 @@ public class EntityDataSourceResolver {
     
 
     private String resolveFromMetaData(String entityName) {
-        try {
-            String dataSourceKey = metaManager.resolveConnectId(entityName);
-            if (dataSourceKey != null && dynamicDataSourceRegistry.containsDataSource(dataSourceKey)) {
-                return dataSourceKey;
-            }
-        } catch (Exception e) {
-            log.debug("从数据库查询实体映射失败: {}", entityName, e);
+        String dataSourceKey = metaManager.resolveConnectId(entityName);
+        if (dataSourceKey == null) {
+            return null;
         }
-        return null;
+        if (dynamicDataSourceRegistry == null || dynamicDataSourceRegistry.containsDataSource(dataSourceKey)) {
+            return dataSourceKey;
+        }
+        throw new IllegalStateException(String.format(
+                "实体 %s 显式归属数据源 %s 未注册（platform_dev_db_connect 未登记或已被删除），拒绝静默回退主库",
+                entityName, dataSourceKey));
     }
     
     /**

@@ -94,10 +94,13 @@ public class HitSubmitService {
                             rule.getAppId(), suppressKeys);
                     if ("created".equals(result)) {
                         report.setInstanceCreated(report.getInstanceCreated() + 1);
+                    } else if ("reopened".equals(result)) {
+                        report.setInstanceReopened(report.getInstanceReopened() + 1);
                     } else {
                         report.setInstanceRenewed(report.getInstanceRenewed() + 1);
                     }
-                    log.info("实例{} ruleCode={} bizId={} participant={}", "created".equals(result) ? "新建" : "续期",
+                    log.info("实例{} ruleCode={} bizId={} participant={}",
+                            "created".equals(result) ? "新建" : "reopened".equals(result) ? "重开" : "续期",
                             rule.getRuleCode(), hit.getBizId(), participant.getId());
                 } catch (Exception e) {
                     log.error("实例提交失败 ruleCode={} bizId={} participant={}: {}",
@@ -105,10 +108,10 @@ public class HitSubmitService {
                 }
             }
         }
-        log.info("命中提交完成 ruleCode={} suppressed={} overflowDropped={} cooldownSkipped={} noHandlerSkipped={} created={} renewed={}",
+        log.info("命中提交完成 ruleCode={} suppressed={} overflowDropped={} cooldownSkipped={} noHandlerSkipped={} created={} renewed={} reopened={}",
                 rule.getRuleCode(), report.getSuppressedCount(), report.getOverflowDropped(),
                 report.getCooldownSkipped(), report.getNoHandlerSkipped(),
-                report.getInstanceCreated(), report.getInstanceRenewed());
+                report.getInstanceCreated(), report.getInstanceRenewed(), report.getInstanceReopened());
         return report;
     }
 
@@ -189,7 +192,8 @@ public class HitSubmitService {
                     }
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("suppress_keys 展开失败（视为无键） {}: {}", String.valueOf(suppressKeysJson), e.getMessage());
         }
     }
 
@@ -233,7 +237,10 @@ public class HitSubmitService {
         return rows == null ? List.of() : rows;
     }
 
-    /** 同源组最近终态时刻（恢复冷却判定输入），无终态返回 null。 */
+    /**
+     * 同源组最近引擎 AUTO 关闭时刻（恢复冷却判定输入）；用户消除（MANUAL/IGNORE/GROUP）是暂时态，
+     * 不计冷却基准——规则再命中即刻重开，异常最终跟随业务主体是否满足规则。
+     */
     private Long lastResolvedAt(String sourceKey) {
         List<Map<String, Object>> rows = MetaFactory.query(FmsException.class)
                 .where(Filter.eq("sourceKey", sourceKey),
@@ -244,6 +251,9 @@ public class HitSubmitService {
             return null;
         }
         for (Map<String, Object> row : rows) {
+            if (!HitPolicies.isCooldownBasis(str(row.get("resolvedType")))) {
+                continue;
+            }
             Object resolvedAt = row.get("resolvedAt");
             Date date = toDate(resolvedAt);
             if (date != null && (latest == null || date.getTime() > latest)) {
@@ -253,7 +263,7 @@ public class HitSubmitService {
         return latest;
     }
 
-    /** storm_json 解析（空/坏 JSON 返回 null，各抑制策略自然跳过）。 */
+    /** storm_json 解析（空返回 null，各抑制策略自然跳过；坏 JSON 告警留痕）。 */
     private static com.fasterxml.jackson.databind.JsonNode parseStorm(String stormJson) {
         if (stormJson == null || stormJson.isBlank()) {
             return null;
@@ -261,6 +271,7 @@ public class HitSubmitService {
         try {
             return MAPPER.readTree(stormJson);
         } catch (Exception e) {
+            log.warn("storm_json 解析失败，风暴策略全部跳过: {}", e.getMessage(), e);
             return null;
         }
     }

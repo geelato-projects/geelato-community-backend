@@ -30,7 +30,7 @@ public final class HitPolicies {
             if (value == null || String.valueOf(value).isBlank()) {
                 return null;
             }
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
                 sb.append('|');
             }
             sb.append(field).append('|').append(value);
@@ -58,6 +58,14 @@ public final class HitPolicies {
             return false;
         }
         return nowEpochMs - resolvedAtEpochMs < cooldownMinutes * 60_000L;
+    }
+
+    /**
+     * 恢复冷却基准类型：仅引擎 AUTO 关闭计入冷却（规则不再命中的防抖）；
+     * 用户消除（MANUAL/IGNORE）与组联动（GROUP）是暂时态，规则再命中即刻重开、不受冷却限制。
+     */
+    public static boolean isCooldownBasis(String resolvedType) {
+        return "AUTO".equalsIgnoreCase(resolvedType == null ? "" : resolvedType.trim());
     }
 
     public static String sourceKeyOf(String ruleCode, Hit hit) {

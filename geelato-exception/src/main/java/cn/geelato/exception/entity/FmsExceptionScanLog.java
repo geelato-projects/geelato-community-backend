@@ -55,6 +55,10 @@ public class FmsExceptionScanLog extends BaseSortableEntity {
     @Col(name = "instance_renewed", nullable = false, dataType = "int")
     private int instanceRenewed = 0;
 
+    @Title(title = "本轮重开实例数")
+    @Col(name = "instance_reopened", nullable = false, dataType = "int")
+    private int instanceReopened = 0;
+
     @Title(title = "本轮恢复实例数")
     @Col(name = "instance_recovered", nullable = false, dataType = "int")
     private int instanceRecovered = 0;

@@ -10,10 +10,10 @@ import lombok.Setter;
 import java.util.Date;
 
 /**
- * 业务异常预警中心-异常实例实体（一人一实例，参与者实例模型）。
+ * 业务异常预警中心-异常实例实体（一人一实例，参与者实例模型，终身一条）。
  *
- * <p>表名 platform_exception。{@code active_fingerprint} 在途唯一、终态置 NULL；
- * {@code source_key} 为同源组键 {rule_code}|{biz_type}|{biz_id}。
+ * <p>表名 platform_exception。{@code active_fingerprint} 为终身唯一指纹（规则|业务主体|人），
+ * 重开模式下常驻不置空（存量历史终态行可能为 NULL）；{@code source_key} 为同源组键 {rule_code}|{biz_type}|{biz_id}。
  *
  * <p>关联文档：bea/业务异常预警中心-数据表设计-2026-09-17.md §4
  */
@@ -39,7 +39,7 @@ public class FmsException extends BaseSortableEntity {
     @Col(name = "level", charMaxlength = 2)
     private String level;
 
-    @Title(title = "在途唯一指纹", description = "终态置 NULL")
+    @Title(title = "终身唯一指纹", description = "规则|业务主体|人，重开模式常驻不置空")
     @Col(name = "active_fingerprint", charMaxlength = 160)
     private String activeFingerprint;
 

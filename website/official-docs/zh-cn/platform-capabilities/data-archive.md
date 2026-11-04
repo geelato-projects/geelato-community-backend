@@ -95,6 +95,57 @@
 
 错误码 70xxx 段见 [错误码参考](../reference/error-codes.md#70xxx-数据归档类)。
 
+## 归档数据在线查询（请求级数据源切换）
+
+除 `/archive/run/archivedData` 按策略查询单表归档数据外，平台还提供**请求级整体切换**：
+前端在请求头携带 `X-Gl-Archive-Query: true`，该请求内所有 ORM 读操作自动路由到归档库——
+同一个业务页面无需改造任何接口，即可在"在线数据 / 归档数据"两种视角间切换。
+
+该能力属于**平台标准件**（geelato-orm 提供中性的"请求级数据源覆盖"能力 + geelato-web-platform
+承载归档语义与请求过滤器），**不依赖 archive 定制模块**，任何引入 web-platform 的宿主开箱可用。
+
+### 配置（application.properties，键风格对齐 primary/secondary）
+
+```properties
+spring.datasource.archive.jdbc-url=jdbc:mysql://localhost:3306/geelato_archive?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2B8
+spring.datasource.archive.username=geelato_user
+spring.datasource.archive.password=******
+spring.datasource.archive.driver-class-name=com.mysql.cj.jdbc.Driver
+# 池参数可选，默认与平台同套保活/探活哲学（maximum-pool-size=10、keepalive、SELECT 1 探活等）
+```
+
+配置 `jdbc-url` 即启用（未配置不装配任何东西，无独立开关）；归档库表结构须与主库一致
+（结构由归档引擎的建表克隆保证），dbType 须与主库一致（方言按主库解析）。
+
+### 切换语义
+
+- **只切"无显式归属"的实体**：无 `connectId`、无有效 `catalog` 的业务实体切到归档库；
+  `catalog=platform` 等显式归属实体（用户/字典/菜单/元数据等）保持原路由——
+  归档模式下页面框架、字典翻译、权限体系照常工作。
+- **任何显式指定不被劫持**：实体显式 connectId、DSL `useDataSource`、代码级 `withDataSource`
+  等显式切库语义优先于请求级覆盖。
+- **只读，写操作硬失败**：归档模式下对无归属实体的 insert/update/delete 等写操作直接抛出
+  明确异常（含实体名与数据源 key）——归档库一致性由引擎两阶段对账保证，在线写入会绕过对账。
+- **泛型实体模板端点硬失败**：`BaseService.pageQueryModel/queryModel/getModel` 走 primaryDao
+  不参与路由，归档模式下查询无归属实体会静默读到主库形成假象，故直接硬失败并指引导至
+  `/meta/list`（MQL 通用查询链路可正常路由到归档库）。
+- 请求结束自动清理上下文（防线程池串号）；调度器/引擎/异步线程无请求上下文，天然不受影响。
+
+### 约束与注意
+
+1. **"archive" 为数据源保留键**，勿用作 platform_dev_db_connect 行 id（全量刷新会覆写注册实例）；
+2. 事务内动态切库存在已知限制（事务开始时绑定首个物理连接）——归档模式按只读浏览设计，
+   通用查询链路无事务，正常使用不受影响；归档模式请求内应避免进入写事务业务；
+3. 跨平台表 join 的模板查询（如树查询 join platform_tree_node）在归档模式下会因归档库
+   无平台表而硬失败——明确报错优于静默错数据，此类页面请走专用端点；
+4. SQL 日志（p6spy）与连接池监控对归档库同样生效（经动态路由数据源代理）。
+
+### 前端契约（geelato-front 仓库）
+
+前端在"查看归档数据"浏览模式下，由 HTTP 拦截器对全部请求统一注入 `X-Gl-Archive-Query: true`
+（值仅接受 true/1/on，不区分大小写）；退出浏览模式即停止注入。后端在归档数据源未配置时
+对携带该头的请求硬失败（明确提示缺 `spring.datasource.archive.jdbc-url` 配置），不会静默降级。
+
 ## 运行形态：日常静默，需要时再 run 起来
 
 引擎**默认完全不运行**——不创建任何调度线程、不自动执行任何归档（`geelato.archive.scheduler-enabled`
@@ -201,7 +252,8 @@ mvn clean install -f geelato-archive-engine/pom.xml -DskipTests
 
 ## 二期演进（预留）
 
-- MongoDB / Elasticsearch 归档通道（Channel SPI：bulkWrite / _bulk；策略模型 target_type 已预留）；
+- MongoDB / Elasticsearch 归档通道（Channel SPI：bulkWrite / _bulk；策略模型 target_type 已预留；
+  读侧"请求级切换"机制对 dbType 无感知，Mongo 通道落地后仅需归档数据源构建分支适配，切换语义不变）；
 - SeaTunnel 外部执行器（数据面移交专业同步引擎，平台只做策略/编排/对账；executor 字段已预留）；
 - 前端管理页（geelato-front：实体管理"开启归档"按钮 + 策略管理页）；
 - 软删行独立窗口（按 delete_at）、租户差异化保留期。

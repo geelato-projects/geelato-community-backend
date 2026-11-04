@@ -3,8 +3,12 @@ package cn.geelato.exception.service;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Date;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -53,5 +57,35 @@ class ExceptionWorkbenchServiceTest {
         assertFalse(ExceptionWorkbenchService.messageProduced("READY"));
         assertFalse(ExceptionWorkbenchService.messageProduced("FAIL"));
         assertFalse(ExceptionWorkbenchService.messageProduced(null));
+    }
+
+    @Test
+    @DisplayName("staySeconds：在途 = now−first_at")
+    void staySecondsInFlightIsNowMinusFirstAt() {
+        Date now = new Date();
+        Date firstAt = new Date(now.getTime() - 90 * 1000L);
+        assertEquals(90L, ExceptionWorkbenchService.staySecondsOf("OPEN", firstAt, null, now));
+        assertEquals(90L, ExceptionWorkbenchService.staySecondsOf("PROCESSING", firstAt, null, now));
+        assertEquals(90L, ExceptionWorkbenchService.staySecondsOf("ESCALATED", firstAt, null, now));
+    }
+
+    @Test
+    @DisplayName("staySeconds：已关闭 = resolved_at−first_at（关闭后不再增长）")
+    void staySecondsClosedIsResolvedMinusFirstAt() {
+        Date firstAt = new Date(System.currentTimeMillis() - 10 * 60 * 1000L);
+        Date resolvedAt = new Date(firstAt.getTime() + 2 * 60 * 1000L);
+        Date now = new Date();
+        assertEquals(120L, ExceptionWorkbenchService.staySecondsOf("RESOLVED", firstAt, resolvedAt, now));
+        assertEquals(120L, ExceptionWorkbenchService.staySecondsOf("IGNORED", firstAt, resolvedAt, now));
+    }
+
+    @Test
+    @DisplayName("staySeconds：first_at 缺失返回 null；时钟回拨钳 0")
+    void staySecondsNullWithoutFirstAtAndClampsNegative() {
+        Date now = new Date();
+        assertNull(ExceptionWorkbenchService.staySecondsOf("OPEN", null, null, now));
+        assertNull(ExceptionWorkbenchService.staySecondsOf("RESOLVED", now, null, now));
+        assertEquals(0L, ExceptionWorkbenchService.staySecondsOf(
+                "OPEN", new Date(now.getTime() + 5000), null, now));
     }
 }

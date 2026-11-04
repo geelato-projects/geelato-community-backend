@@ -35,7 +35,10 @@ public class ChangeEventDispatcher {
     /** 非阻塞入队；队列满丢弃留痕（下一轮扫描兜底复评）。 */
     public boolean dispatch(String entityName, String operation, String bizId, String tenantCode, String eventId) {
         boolean accepted = queue.offer(new PendingEvent(entityName, operation, bizId, tenantCode, eventId));
-        if (!accepted) {
+        if (accepted) {
+            log.debug("事件入队 eventId={} entity={} operation={} bizId={} tenant={} queueSize={}",
+                    eventId, entityName, operation, bizId, tenantCode, queue.size());
+        } else {
             log.warn("事件队列已满，丢弃 eventId={} entity={}（扫描兜底）", eventId, entityName);
         }
         return accepted;
@@ -46,13 +49,16 @@ public class ChangeEventDispatcher {
             try {
                 PendingEvent event = queue.poll(5, TimeUnit.SECONDS);
                 if (event != null) {
+                    log.debug("事件开始消费 eventId={} entity={} operation={} bizId={}",
+                            event.eventId(), event.entityName(), event.operation(), event.bizId());
                     reactor.onEvent(event.entityName(), event.operation(), event.bizId(), event.tenantCode(), event.eventId());
+                    log.debug("事件消费完成 eventId={}", event.eventId());
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return;
             } catch (Exception e) {
-                log.warn("事件消费异常: {}", e.getMessage());
+                log.error("事件消费异常: {}", e.getMessage(), e);
             }
         }
     }

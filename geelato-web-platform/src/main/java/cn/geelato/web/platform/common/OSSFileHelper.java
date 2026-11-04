@@ -19,7 +19,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @Component
-@ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${geelato.oss.accessKeyId:}') && T(org.springframework.util.StringUtils).hasText('${geelato.oss.accessKeySecret:}') && T(org.springframework.util.StringUtils).hasText('${geelato.oss.bucketName:}')")
+@ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${geelato.oss.accessKeyId:}') && T(org.springframework.util.StringUtils).hasText('${geelato.oss.accessKeySecret:}') && T(org.springframework.util.StringUtils).hasText('${geelato.oss.bucketName:}') && T(org.springframework.util.StringUtils).hasText('${geelato.oss.endPoint:}')")
 public class OSSFileHelper {
     FileObjectSrvProvider fileObjectSrvProvider;
 

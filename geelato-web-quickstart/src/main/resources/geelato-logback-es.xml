@@ -135,6 +135,18 @@
             <pattern>${LOG_PATTERN}</pattern>
         </layout>
     </appender>
+    <!-- 脚本引擎（geelato-script）执行日志：START/入参/kit 调用/结果以 execId 串联，本地落盘 -->
+    <appender name="scriptLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_DIR}/script/%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <maxFileSize>1000MB</maxFileSize>
+            <maxHistory>2</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN}</pattern>
+        </layout>
+    </appender>
 
     <!-- category loggers mirroring geelato-logback.xml -->
     <logger name="cn.geelato.schedule" additivity="false">
@@ -143,6 +155,10 @@
     </logger>
     <logger name="cn.geelato.web.platform.srv.pack" additivity="false">
         <appender-ref ref="packLogFile"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="cn.geelato.script" additivity="false">
+        <appender-ref ref="scriptLogFile"/>
         <appender-ref ref="console"/>
     </logger>
     <logger name="cn.geelato.auth" additivity="false">

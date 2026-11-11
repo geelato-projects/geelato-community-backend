@@ -4,6 +4,8 @@ import cn.geelato.core.AbstractManager;
 import cn.geelato.core.constants.ColumnDefault;
 import cn.geelato.core.enums.DataTypeRadiusEnum;
 import cn.geelato.core.enums.MysqlToJavaEnum;
+import cn.geelato.core.enums.TableTypeEnum;
+import cn.geelato.core.enums.ViewTypeEnum;
 import cn.geelato.core.meta.spi.MetaDefinitionBundle;
 import cn.geelato.core.meta.spi.MetaResourceProvider;
 import cn.geelato.core.meta.spi.MetaStore;
@@ -18,6 +20,7 @@ import cn.geelato.core.meta.model.entity.TableForeign;
 import cn.geelato.core.meta.model.entity.TableMeta;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.view.TableView;
+import cn.geelato.core.meta.model.view.ViewMeta;
 import cn.geelato.utils.AnnotatedClassScanner;
 import lombok.Getter;
 import lombok.Setter;
@@ -165,6 +168,11 @@ public class MetaManager extends AbstractManager {
                 MetaComapare.logDiffs(log, diffResult);
             }
         }
+        // 视图行按 view_name 兜底注册：connect 指向引擎的物化副本行不随表行消费（上方分组键含 connect_id），
+        // 统一再注册一遍（幂等；同名时 parseViewEntity 的规则保证 materialized 优先）
+        for (TableView view : allViewList) {
+            parseViewEntity(view);
+        }
     }
 
     /**
@@ -189,8 +197,11 @@ public class MetaManager extends AbstractManager {
      */
     private void refreshViewMeta(String viewName) {
         List<TableView> viewList = metaStore.loadByViewName(viewName).getViewList();
-        for (TableView view : viewList) {
+        if (!viewList.isEmpty()) {
+            // 先统一清理一次，再逐条注册：parseViewEntity 的物化覆盖规则保证同名多行时 materialized 胜出，与加载顺序无关
             removeOne(viewName);
+        }
+        for (TableView view : viewList) {
             parseViewEntity(view);
         }
     }
@@ -252,6 +263,34 @@ public class MetaManager extends AbstractManager {
         }
         refreshDBMeta(entityName);
         return getByEntityName(entityName);
+    }
+
+    /**
+     * 实体是否为物化视图实体。
+     * <p>两种登记形态：视图行（platform_dev_view，view_type=materialized，实体名即视图名）或
+     * 表行（platform_dev_table，table_type=materialized）。物化视图由外部引擎增量维护，平台侧只读。
+     */
+    public boolean isMaterializedEntity(String entityName) {
+        if (Strings.isBlank(entityName)) {
+            return false;
+        }
+        EntityMeta entityMeta = getByEntityName(entityName);
+        if (entityMeta == null) {
+            return false;
+        }
+        if (entityMeta.getTableMeta() != null
+                && TableTypeEnum.MATERIALIZED.getValue().equalsIgnoreCase(entityMeta.getTableMeta().getTableType())) {
+            return true;
+        }
+        if (EntityType.View == entityMeta.getEntityType() && entityMeta.getViewMetas() != null) {
+            for (ViewMeta viewMeta : entityMeta.getViewMetas()) {
+                if (entityName.equalsIgnoreCase(viewMeta.getViewName())
+                        && ViewTypeEnum.MATERIALIZED.getCode().equalsIgnoreCase(viewMeta.getViewType())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public EntityMeta get(String tableName) {
@@ -467,13 +506,25 @@ public class MetaManager extends AbstractManager {
             return;
         }
         String entityName = view.getViewName();
-        if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
-            EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);
-            entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
-            removeLiteMeta(entityMeta.getEntityName());
-            entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.View));
-            tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
+        if (Strings.isBlank(entityName)) {
+            return;
         }
+        if (entityMetadataMap.containsKey(entityName)) {
+            // 同名多行（原视图 + 物化视图副本）时物化优先：materialized 覆盖已注册的非物化；非物化不覆盖 materialized；双非物化维持先到先得
+            if (!isMaterializedViewType(view.getViewType()) || isMaterializedEntity(entityName)) {
+                return;
+            }
+            removeOne(entityName);
+        }
+        EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);
+        entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
+        removeLiteMeta(entityMeta.getEntityName());
+        entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.View));
+        tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
+    }
+
+    static boolean isMaterializedViewType(String viewType) {
+        return viewType != null && ViewTypeEnum.MATERIALIZED.getCode().equalsIgnoreCase(viewType);
     }
 
     public EntityMeta getClassSourceEntity(String entityName) {

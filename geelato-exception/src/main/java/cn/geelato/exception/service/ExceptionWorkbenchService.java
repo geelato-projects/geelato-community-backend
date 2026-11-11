@@ -11,7 +11,9 @@ import cn.geelato.exception.entity.FmsExceptionHandle;
 import cn.geelato.exception.entity.FmsExceptionRule;
 import cn.geelato.exception.entity.FmsExceptionStep;
 import cn.geelato.exception.support.SessionCtxHelper;
+import cn.geelato.exception.engine.hit.SubmitReport;
 import cn.geelato.exception.engine.lifecycle.ExceptionLifecycleEvent;
+import cn.geelato.exception.engine.trigger.EntityEventReactor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +54,9 @@ public class ExceptionWorkbenchService {
 
     @Autowired
     private ObjectProvider<ApplicationEventPublisher> publisherProvider;
+
+    @Autowired
+    private ObjectProvider<EntityEventReactor> eventReactorProvider;
 
     // ==================== 清单 / 看板 ====================
 
@@ -386,6 +391,76 @@ public class ExceptionWorkbenchService {
         handle.setCreator(handle.getOperatorId());
         handle.setCreatorName(handle.getOperatorName());
         MetaFactory.save(handle);
+    }
+
+    // ==================== 手工重算 ====================
+
+    /**
+     * 手工重算（{@code POST /{id}/recalculate}）：对该实例的业务对象立即重跑 RECHECK 判定管道
+     * （与扫描/事件复评同口径），不命中即组级 AUTO 消除，不必等定时扫描；
+     * 仍命中则续期/重开（冷却与风暴抑制照常生效）；管道失败不改任何状态。
+     */
+    public RecalcResult recalculate(FmsException ex) {
+        if (!notBlank(ex.getBizId())) {
+            return RecalcResult.fail(40000, "实例缺少业务对象标识（bizId），无法重算");
+        }
+        FmsExceptionRule rule = ruleService.getByCode(ex.getRuleCode(), ex.getAppId());
+        if (rule == null) {
+            return RecalcResult.fail(40400, "规则不存在或已删除: " + ex.getRuleCode());
+        }
+        if (rule.getEnableStatus() != 1) {
+            return RecalcResult.fail(40900, "规则已停用，无法重算；如仅需关闭该异常可使用\"解决/忽略\"");
+        }
+        EntityEventReactor reactor = eventReactorProvider == null ? null : eventReactorProvider.getIfAvailable();
+        if (reactor == null) {
+            return RecalcResult.fail(50000, "异常引擎未启用（geelato.exception.engine.enabled），无法重算");
+        }
+        String userId = SessionCtxHelper.getCurrentUserId();
+        String userName = SessionCtxHelper.getCurrentUserName();
+        EntityEventReactor.RecalcOutcome core = reactor.recalculate(rule, ex.getBizId(), ex.getSourceKey(),
+                Map.of("eventId", "MANUAL_RECALC:" + nullToEmpty(ex.getId()),
+                        "trigger", "MANUAL_RECALC",
+                        "exceptionId", nullToEmpty(ex.getId()),
+                        "bizId", nullToEmpty(ex.getBizId()),
+                        "operator", nullToEmpty(userId),
+                        "operatorName", nullToEmpty(userName)));
+        if (!"SUCCESS".equals(core.getOutcome().getStatus())) {
+            return RecalcResult.fail(50000, "重算管道失败: " + core.getOutcome().getError());
+        }
+        int hitCount = core.getOutcome().getValidHits() == null ? 0 : core.getOutcome().getValidHits().size();
+        SubmitReport report = core.getReport();
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("action", recalcActionOf(core.getRecovered(), report));
+        data.put("pipelineStatus", core.getOutcome().getStatus());
+        data.put("hitCount", hitCount);
+        data.put("recovered", core.getRecovered());
+        data.put("instanceCreated", report == null ? 0 : report.getInstanceCreated());
+        data.put("instanceRenewed", report == null ? 0 : report.getInstanceRenewed());
+        data.put("instanceReopened", report == null ? 0 : report.getInstanceReopened());
+        data.put("costMs", core.getOutcome().getCostMs());
+        FmsException latest = getById(ex.getId());
+        data.put("exceptionStatus", latest == null ? null : latest.getStatus());
+        return RecalcResult.ok(data);
+    }
+
+    /** 重算动作汇总：组级恢复优先，其次重开/续期/新建；全为 0（含冷却/抑制跳过）为 NO_CHANGE。 */
+    static String recalcActionOf(int recovered, SubmitReport report) {
+        if (recovered > 0) {
+            return "RECOVERED";
+        }
+        if (report == null) {
+            return "NO_CHANGE";
+        }
+        if (report.getInstanceReopened() > 0) {
+            return "REOPENED";
+        }
+        if (report.getInstanceRenewed() > 0) {
+            return "RENEWED";
+        }
+        if (report.getInstanceCreated() > 0) {
+            return "CREATED";
+        }
+        return "NO_CHANGE";
     }
 
     // ==================== 内部辅助 ====================
@@ -749,6 +824,29 @@ public class ExceptionWorkbenchService {
 
         static ActionOutcome conflict(String message) {
             return new ActionOutcome(false, null, null, message);
+        }
+    }
+
+    /** 重算结果（成功带汇总数据；失败带错误码与信息）。 */
+    public static class RecalcResult {
+        public final boolean success;
+        public final int errorCode;
+        public final String errorMessage;
+        public final Map<String, Object> data;
+
+        private RecalcResult(boolean success, int errorCode, String errorMessage, Map<String, Object> data) {
+            this.success = success;
+            this.errorCode = errorCode;
+            this.errorMessage = errorMessage;
+            this.data = data;
+        }
+
+        static RecalcResult ok(Map<String, Object> data) {
+            return new RecalcResult(true, 0, null, data);
+        }
+
+        static RecalcResult fail(int errorCode, String errorMessage) {
+            return new RecalcResult(false, errorCode, errorMessage, null);
         }
     }
 }

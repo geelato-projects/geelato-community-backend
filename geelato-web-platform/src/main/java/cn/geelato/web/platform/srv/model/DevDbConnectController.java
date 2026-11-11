@@ -76,9 +76,7 @@ public class DevDbConnectController extends BaseController {
     @RequestMapping(value = "/createOrUpdate", method = RequestMethod.POST)
     public ApiResult<?> createOrUpdate(@RequestBody ConnectMeta form) {
         try {
-            // 判断是否存在
             devDbConnectService.isExist(form);
-            // 判断是否是更�?
             if (Strings.isNotBlank(form.getId())) {
                 return ApiResult.success(devDbConnectService.updateModel(form));
             } else {

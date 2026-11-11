@@ -428,10 +428,6 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         if (EntityType.View != md.getEntityType()) {
             return md.getTableName();
         }
-        ViewMeta viewMeta = resolveViewMeta(md);
-        if (isComplexView(viewMeta)) {
-            return resolveComplexViewName(viewMeta, md);
-        }
         String viewSql = resolveViewSql(md);
         if (StringUtils.hasText(viewSql)) {
             return "(" + renderViewConstruct(viewSql, command.getViewTemplateParams()) + ")";
@@ -461,8 +457,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         if (md == null || EntityType.View != md.getEntityType()) {
             return false;
         }
-        ViewMeta viewMeta = resolveViewMeta(md);
-        return !isComplexView(viewMeta) && StringUtils.hasText(resolveViewSql(md));
+        return StringUtils.hasText(resolveViewSql(md));
     }
 
     private ViewMeta resolveViewMeta(EntityMeta md) {
@@ -472,35 +467,23 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         return md.getViewMeta(md.getTableName());
     }
 
-    private boolean isDefaultView(ViewMeta viewMeta) {
-        return viewMeta == null
-                || !StringUtils.hasText(viewMeta.getViewType())
-                || ViewTypeEnum.DEFAULT.getCode().equalsIgnoreCase(viewMeta.getViewType());
-    }
-
-    private boolean isComplexView(ViewMeta viewMeta) {
-        return viewMeta != null && ViewTypeEnum.COMPLEX.getCode().equalsIgnoreCase(viewMeta.getViewType());
-    }
-
-    private String resolveComplexViewName(ViewMeta viewMeta, EntityMeta md) {
-        String viewName = viewMeta != null && StringUtils.hasText(viewMeta.getViewName())
-                ? viewMeta.getViewName()
-                : md.getTableName();
-        return viewName + "_complex";
-    }
-
     private String resolveViewSql(EntityMeta md) {
         if (md == null) {
             return null;
         }
         ViewMeta viewMeta = resolveViewMeta(md);
-        if (isComplexView(viewMeta)) {
+        if (isMaterializedView(viewMeta)) {
+            // 物化视图按物理视图名直查引擎；viewConstruct 仅存原始建表语句，不参与 SQL 构建
             return null;
         }
         if (viewMeta != null && StringUtils.hasText(viewMeta.getViewConstruct())) {
             return viewMeta.getViewConstruct();
         }
         return md.getTableMeta() == null ? null : md.getTableMeta().getViewSql();
+    }
+
+    private boolean isMaterializedView(ViewMeta viewMeta) {
+        return viewMeta != null && ViewTypeEnum.MATERIALIZED.getCode().equalsIgnoreCase(viewMeta.getViewType());
     }
 
     private String renderViewConstruct(String viewConstruct, Map<String, Object> params) {

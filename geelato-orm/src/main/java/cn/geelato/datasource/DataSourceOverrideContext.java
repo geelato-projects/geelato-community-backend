@@ -34,6 +34,14 @@ public final class DataSourceOverrideContext {
     private DataSourceOverrideContext() {
     }
 
+    /**
+     * 方法名是否属于数据写方法（cn.geelato.core.orm.Dao 继承链上的变更类方法，精确匹配）。
+     * <p>供实体级只读门禁（如物化视图实体禁写）复用同一份名单。
+     */
+    public static boolean isWriteMethod(String methodName) {
+        return methodName != null && WRITE_METHODS.contains(methodName);
+    }
+
     public static void set(String connectId, boolean readOnly) {
         CURRENT.set(new DataSourceOverride(connectId, readOnly));
     }

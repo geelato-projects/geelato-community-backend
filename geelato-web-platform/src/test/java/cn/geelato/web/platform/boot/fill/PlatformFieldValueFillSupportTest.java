@@ -107,6 +107,72 @@ class PlatformFieldValueFillSupportTest {
         assertEquals(DateUtils.DEFAULT_DELETE_AT, entity.get(FN_DELETE_AT));
     }
 
+    @Test
+    void shouldOverrideCallerSuppliedAuditFieldsOnInsertEvenWithoutDefaultMeta() {
+        // 安全缺陷回归：调用方在报文中手工指定 creator/updater 时，必须被当前登录用户覆盖，
+        // 且不依赖 defaultEntityMap 是否收录该列（元数据驱动链路 defaultEntityMap 往往取不到列）。
+        User user = new User();
+        user.setUserId("real-user");
+        user.setUserName("Real User");
+        SecurityContext.setCurrentUser(user);
+        SecurityContext.setCurrentTenant(new Tenant("tenant-a"));
+
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put(FN_CREATOR, "forged-creator");
+        values.put(FN_CREATOR_NAME, "Forged Creator");
+        values.put(FN_UPDATER, "forged-updater");
+        values.put(FN_TENANT_CODE, "forged-tenant");
+
+        // defaultEntityMap 传空 Map（模拟元数据取不到列），entityMeta 承载字段存在性
+        support.applyMqlDefaults(new MqlSaveFieldValueFillContext(
+                "demo", CommandType.Insert, new AuditFieldEntityMeta(), java.util.Collections.emptyMap(), values, null
+        ));
+
+        assertEquals("real-user", values.get(FN_CREATOR));
+        assertEquals("Real User", values.get(FN_CREATOR_NAME));
+        assertEquals("real-user", values.get(FN_UPDATER));
+        assertEquals("tenant-a", values.get(FN_TENANT_CODE));
+    }
+
+    @Test
+    void shouldDropCallerSuppliedCreationFieldsOnUpdate() {
+        User user = new User();
+        user.setUserId("real-user");
+        user.setUserName("Real User");
+        SecurityContext.setCurrentUser(user);
+
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put(FN_CREATOR, "forged-creator");
+        values.put(FN_CREATE_AT, "2000-01-01 00:00:00");
+        values.put(FN_UPDATER, "forged-updater");
+        values.put(FN_TENANT_CODE, "forged-tenant");
+
+        support.applyMqlDefaults(new MqlSaveFieldValueFillContext(
+                "demo", CommandType.Update, new AuditFieldEntityMeta(), java.util.Collections.emptyMap(), values, null
+        ));
+
+        assertFalse(values.containsKey(FN_CREATOR));
+        assertFalse(values.containsKey(FN_CREATE_AT));
+        assertFalse(values.containsKey(FN_TENANT_CODE));
+        assertEquals("real-user", values.get(FN_UPDATER));
+    }
+
+    /** 测试用元数据：字段存在性判定路径，containsField 对审计字段返回 true。 */
+    private static class AuditFieldEntityMeta extends cn.geelato.core.meta.model.entity.EntityMeta {
+        AuditFieldEntityMeta() {
+            super();
+        }
+
+        @Override
+        public boolean containsField(String fieldName) {
+            return FN_CREATE_AT.equals(fieldName) || FN_CREATOR.equals(fieldName)
+                    || FN_CREATOR_NAME.equals(fieldName) || FN_TENANT_CODE.equals(fieldName)
+                    || FN_BU_ID.equals(fieldName) || FN_DEPT_ID.equals(fieldName)
+                    || FN_UPDATE_AT.equals(fieldName) || FN_UPDATER.equals(fieldName)
+                    || FN_UPDATER_NAME.equals(fieldName) || FN_DELETE_AT.equals(fieldName);
+        }
+    }
+
     private Map<String, Object> defaultFields() {
         Map<String, Object> fields = new LinkedHashMap<>();
         fields.put(FN_CREATE_AT, null);

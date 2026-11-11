@@ -1,7 +1,14 @@
 package cn.geelato.lang.exception;
 
 
+import lombok.Getter;
+
+@Getter
 public abstract class CoreException extends RuntimeException {
+    /**
+     * -- GETTER --
+     * 业务错误码。
+     */
     private final int errorCode;
 
     public CoreException(int errorCode, String msg) {
@@ -11,11 +18,6 @@ public abstract class CoreException extends RuntimeException {
     public CoreException(int errorCode, String msg, Throwable cause) {
         super(msg, cause);
         this.errorCode = errorCode;
-    }
-
-    /** 业务错误码。 */
-    public int getErrorCode() {
-        return errorCode;
     }
 
     /** 错误文案，等价于 {@link #getMessage()}（保留历史 API）。 */

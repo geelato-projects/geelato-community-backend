@@ -11,13 +11,13 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: '📦 Geelato Framework',
+      label: '🧩 Geelato Framework (框架)',
       collapsible: false,
       collapsed: false,
       items: [
         {
           type: 'category',
-          label: '🌱 快速入门',
+          label: '🌱 QuickStart',
           items: [
             'guide/quick-start',
             'guide/app-scaffold-starter-project-guide',
@@ -26,37 +26,49 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: '🧠 架构与核心概念',
+          label: '🧠 框架架构设计说明',
           items: [
-            'runtime/platform-web-runtime',
-            'designer/platform-desginer',
             'reference/core-modules',
             'reference/startup-process',
+            'runtime/platform-web-runtime',
+            'designer/platform-desginer',
           ],
         },
         {
           type: 'category',
-          label: '🛠️ 开发指南：基础能力',
+          label: '⚙️ 框架能力',
           items: [
             {
               type: 'category',
-              label: 'ORM 与数据源',
+              label: '元数据',
+              items: ['metadata/overview', 'reference/metastore-extension'],
+            },
+            {
+              type: 'category',
+              label: '数据源',
               items: [
-                'orm/overview',
-                'orm/annotations',
-                'orm/fluent-dsl',
-                'orm/event-features',
                 'dynamic-datasource/overview',
                 'dynamic-datasource/entity-binding',
                 'dynamic-datasource/configuration',
                 'dynamic-datasource/switching',
                 'dynamic-datasource/host-mapping',
+                'dynamic-datasource/materialized-view',
+                'dynamic-datasource/risingwave-engine',
+                'orm/datasource-extension',
               ],
             },
             {
               type: 'category',
-              label: 'MQL 语法',
-              items: ['mql/overview', 'mql/usage'],
+              label: 'ORM',
+              items: ['orm/overview', 'orm/annotations', 'orm/fluent-dsl'],
+            },
+            {
+              type: 'category',
+              label: 'ORM 高级',
+              items: [
+                'orm/event-features',
+                'reference/spi-query-filter-and-save-fill-extension',
+              ],
             },
             {
               type: 'category',
@@ -73,47 +85,57 @@ const sidebars: SidebarsConfig = {
             },
             {
               type: 'category',
-              label: '文件处理',
-              items: ['file-processing/upload', 'file-processing/download'],
+              label: '安全协议',
+              items: [
+                'security/org-user-role',
+                'authentication/security-authentication',
+                'runtime/security-context-lifecycle',
+                'reference/security-provider-extension',
+              ],
+            },
+            {
+              type: 'category',
+              label: '全局上下文',
+              items: ['platform-capabilities/global-context'],
             },
           ],
         },
+      ],
+    },
+    {
+      type: 'category',
+      label: '🚀 Geelato Platform (平台)',
+      collapsible: false,
+      collapsed: false,
+      items: [
         {
           type: 'category',
-          label: '🔌 开发指南：高级特性',
+          label: 'MQL 使用和语法',
+          items: ['mql/overview', 'mql/usage'],
+        },
+        {
+          type: 'category',
+          label: '文件处理',
+          items: ['file-processing/upload', 'file-processing/download'],
+        },
+        {
+          type: 'category',
+          label: '事件总线与 SSE 订阅推送',
+          items: ['platform-capabilities/event-bus', 'platform-capabilities/sse-subscription'],
+        },
+        {
+          type: 'category',
+          label: '流量标记',
+          items: ['platform-capabilities/traffic-tagging'],
+        },
+        {
+          type: 'category',
+          label: '插件机制',
           items: [
-            {
-              type: 'category',
-              label: '平台能力',
-              items: [
-                'platform-capabilities/global-context',
-                'platform-capabilities/event-bus',
-                'platform-capabilities/sse-subscription',
-                'platform-capabilities/traffic-tagging',
-                'runtime/security-context-lifecycle',
-                'authentication/security-authentication',
-              ],
-            },
-            {
-              type: 'category',
-              label: '插件机制',
-              items: [
-                'plugin-mechanism/overview',
-                'plugin-mechanism/development',
-                'plugin-mechanism/lifecycle',
-                'plugin-mechanism/repository',
-              ],
-            },
-            {
-              type: 'category',
-              label: '可扩展性体系',
-              items: [
-                'reference/metastore-extension',
-                'orm/datasource-extension',
-                'reference/security-provider-extension',
-                'reference/spi-query-filter-and-save-fill-extension',
-              ],
-            },
+            'plugin-mechanism/overview',
+            'plugin-mechanism/development',
+            'plugin-mechanism/lifecycle',
+            'plugin-mechanism/repository',
           ],
         },
         {
@@ -125,7 +147,6 @@ const sidebars: SidebarsConfig = {
               label: '系统模块配置',
               items: [
                 'system-config/overview',
-                'system-config/workflow',
                 'system-config/seata',
                 'system-config/oss',
                 'system-config/package',
@@ -179,6 +200,20 @@ const sidebars: SidebarsConfig = {
       collapsible: false,
       collapsed: false,
       items: ['message/overview', 'message/integration', 'message/integration-management'],
+    },
+    {
+      type: 'category',
+      label: '🛠️ Geelato Workflow (工作流)',
+      collapsible: false,
+      collapsed: false,
+      items: ['workflow/overview', 'system-config/workflow'],
+    },
+    {
+      type: 'category',
+      label: '⏰ Geelato Scheduler (调度)',
+      collapsible: false,
+      collapsed: false,
+      items: ['scheduler/overview'],
     },
     {
       type: 'category',

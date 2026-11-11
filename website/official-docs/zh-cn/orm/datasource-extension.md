@@ -709,7 +709,7 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 5. 看同类 SPI 是否注册了多个实现
 6. 看 SPI 的 `isEnabled()` 是否返回 `true`
 7. 自定义 loader 启动报 `NoUniqueBeanDefinitionException` → 实现类漏了 `@Primary`
-8. 报 `UnsupportedOperationException: 不支持的数据库类型` → Map 的 `db_type` 不是 `mysql` / `postgresql`
+8. 报 `UnsupportedOperationException: 不支持的数据库类型` → Map 的 `db_type` 不是内置的 `mysql` / `postgresql`，也不是经 `Dialects.registerAlias` 注册过方言家族的类型
 9. 改了来源但切源没生效 → 只刷了 `DynamicDataSourceRegistry`，没刷 `DynamicRoutingDataSource`（两步缺一不可）
 
 ## 推荐使用建议

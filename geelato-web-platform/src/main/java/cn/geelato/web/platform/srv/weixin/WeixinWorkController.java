@@ -4,6 +4,7 @@ import cn.geelato.lang.api.ApiResult;
 import cn.geelato.meta.Company;
 import cn.geelato.security.*;
 import cn.geelato.utils.HttpUtils;
+import cn.geelato.utils.LocalBoundedCache;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.meta.User;
 import cn.geelato.web.platform.srv.BaseController;
@@ -35,6 +36,13 @@ public class WeixinWorkController extends BaseController {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private volatile String cachedAccessToken;
     private volatile long tokenExpireTime;
+
+    /**
+     * queryGroup 结果缓存，12小时过期，避免每次调用微信接口
+     */
+    private final LocalBoundedCache<String, List<Map<String, Object>>> groupListCache =
+            new LocalBoundedCache<>("weixin-work-group-list", 12 * 60 * 60 * 1000L, 1000);
+
     @RequestMapping(value = "/syncUser", method = RequestMethod.GET)
     public ApiResult<?> syncContacts(@RequestParam String orgId) {
         try {
@@ -124,6 +132,14 @@ public class WeixinWorkController extends BaseController {
                 return ApiResult.fail("企业微信配置信息不完整");
             }
 
+            // 缓存key按公司、绑定的企业微信用户、是否按群主过滤区分
+            String cacheKey = companyId + ":" + weixinWorkUserId + ":" + filter;
+            List<Map<String, Object>> cachedGroupList = groupListCache.get(cacheKey);
+            if (cachedGroupList != null) {
+                log.debug("命中客户群组列表缓存, cacheKey: {}", cacheKey);
+                return ApiResult.success(cachedGroupList);
+            }
+
             String listUrl = this.weixinWorkConfig.getApiBaseUrl() +
                     "/externalcontact/groupchat/list?access_token=" + getAccessToken(corpId, corpSecret);
             
@@ -173,6 +189,7 @@ public class WeixinWorkController extends BaseController {
                 groupList.add(groupSummary);
             }
 
+            groupListCache.put(cacheKey, groupList);
             return ApiResult.success(groupList);
         } catch (Exception e) {
             log.error("获取客户群组列表异常", e);

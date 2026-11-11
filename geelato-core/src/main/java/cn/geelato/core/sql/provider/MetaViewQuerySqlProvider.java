@@ -123,9 +123,6 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
         if (viewMeta == null) {
             return "";
         }
-        if (isComplexView(viewMeta)) {
-            return resolveComplexViewName(viewMeta);
-        }
         if (isDefaultView(viewMeta)) {
             return "(" + renderViewConstruct(viewMeta.getViewConstruct(), command.getViewTemplateParams()) + ")";
         }
@@ -138,14 +135,6 @@ public class MetaViewQuerySqlProvider extends MetaBaseSqlProvider<QueryViewComma
 
     private boolean isDefaultView(ViewMeta viewMeta) {
         return viewMeta != null && ViewTypeEnum.DEFAULT.getCode().equalsIgnoreCase(viewMeta.getViewType());
-    }
-
-    private boolean isComplexView(ViewMeta viewMeta) {
-        return viewMeta != null && ViewTypeEnum.COMPLEX.getCode().equalsIgnoreCase(viewMeta.getViewType());
-    }
-
-    private String resolveComplexViewName(ViewMeta viewMeta) {
-        return viewMeta.getViewName() + "_complex";
     }
 
     private void buildSelectCountField(StringBuilder sb, EntityMeta md, String[] fields) {

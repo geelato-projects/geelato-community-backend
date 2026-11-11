@@ -6,6 +6,7 @@ import cn.geelato.core.mql.execute.BoundSql;
 import cn.geelato.datasource.DynamicDataSourceHolder;
 import cn.geelato.datasource.EntityDataSourceResolver;
 import cn.geelato.datasource.DataSourceOverrideContext;
+import cn.geelato.datasource.MaterializedViewGuard;
 import cn.geelato.datasource.annotation.UseDynamicDataSource;
 import cn.geelato.lang.meta.Entity;
 import lombok.extern.slf4j.Slf4j;
@@ -74,8 +75,9 @@ public class DataSourceInterceptor {
     @Around("execution(* cn.geelato.core.orm.Dao.*(..))")
     public Object aroundDaoMethod(ProceedingJoinPoint pjp) throws Throwable {
         String entityName = resolveEntityName(pjp.getArgs());
-        DataSourceOverrideContext.assertWritable(
-                ((MethodSignature) pjp.getSignature()).getMethod().getName(), entityName);
+        String methodName = ((MethodSignature) pjp.getSignature()).getMethod().getName();
+        DataSourceOverrideContext.assertWritable(methodName, entityName);
+        MaterializedViewGuard.assertWritable(methodName, entityName);
         String dataSourceKey = resolveDataSourceKey(entityName);
         String previous = DynamicDataSourceHolder.getDataSourceKey();
         try {

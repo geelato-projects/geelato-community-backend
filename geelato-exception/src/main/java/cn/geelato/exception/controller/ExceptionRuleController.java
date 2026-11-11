@@ -3,6 +3,7 @@ package cn.geelato.exception.controller;
 import cn.geelato.lang.api.ApiResult;
 import cn.geelato.web.common.annotation.ApiRuntimeRestController;
 import cn.geelato.exception.entity.FmsExceptionRule;
+import cn.geelato.exception.service.ExceptionAdminService;
 import cn.geelato.exception.service.ExceptionRuleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -21,7 +22,7 @@ import java.util.Map;
  * <p>由 ApiPrefixAutoConfiguration 自动加 /api 前缀，实际路径 = {@code /api/exception/rule}。
  *
  * <p>端点：pageQuery / {id} / save / {id}/enable / {id}/disable / import-yaml /
- * {id}/export-yaml / {id}/trial-run / escalation-chain/{ruleCode}。
+ * {id}/export-yaml / {id}/trial-run / {id}/scan / escalation-chain/{ruleCode}。
  *
  * <p>关联文档：bea/业务异常预警中心-接口设计-2026-09-17.md §4
  */
@@ -30,6 +31,9 @@ public class ExceptionRuleController {
 
     @Autowired
     private ExceptionRuleService ruleService;
+
+    @Autowired
+    private ExceptionAdminService adminService;
 
     /** 规则目录分页（含编辑器原文 document，供前端无损组装全快照）。 */
     @PostMapping("/pageQuery")
@@ -153,6 +157,19 @@ public class ExceptionRuleController {
         }
         String target = req == null || req.getTarget() == null ? "SCAN" : req.getTarget();
         return ApiResult.success(ruleService.trialRun(rule, target));
+    }
+
+    /** 手动触发单规则扫描（同步真实执行：CAS 抢占 + 产生/续期/恢复实例 + scan_log 留痕，不必等定时调度）。 */
+    @PostMapping("/{id}/scan")
+    public ApiResult<Map<String, Object>> scan(@PathVariable String id, @RequestParam String appId) {
+        FmsExceptionRule rule = ruleService.getById(id, appId);
+        if (rule == null) {
+            return ApiResult.fail(40400, "规则不存在: " + id);
+        }
+        if (rule.getEnableStatus() != 1) {
+            return ApiResult.fail(40900, "规则已停用，启用后才能扫描");
+        }
+        return ApiResult.success(adminService.scanOne(rule));
     }
 
     /** 升级链查询（链上规则 + 漂移标记）。 */

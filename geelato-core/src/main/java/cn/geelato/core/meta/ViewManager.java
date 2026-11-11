@@ -26,9 +26,13 @@ public class ViewManager {
         lock.unlock();
         return instance;
     }
-    public void addViewMeta(String viewName,ViewMeta viewMeta){
-        if(!viewMetadataMap.containsKey(viewName)){
-            viewMetadataMap.put(viewName,viewMeta);
+    public void addViewMeta(String viewName, ViewMeta viewMeta) {
+        ViewMeta existing = viewMetadataMap.get(viewName);
+        // 与 MetaManager.parseViewEntity 同规则：同名时物化视图副本优先，其余先到先得
+        if (existing == null
+                || (MetaManager.isMaterializedViewType(viewMeta.getViewType())
+                && !MetaManager.isMaterializedViewType(existing.getViewType()))) {
+            viewMetadataMap.put(viewName, viewMeta);
         }
     }
     public ViewMeta getByViewName(String viewName) {

@@ -46,7 +46,7 @@ sidebar_label: 插件机制概览
 | 配置项 | 默认值 | 说明 |
 | --- | --- | --- |
 | `geelato.plugin.pluginDirectory` | `plugins` | 运行时插件根目录，应用启动时扫描此目录。 |
-| `geelato.plugin.pluginRepository` | `plugins/repository` | 插件仓库目录，供 `UpdateManager` 使用。 |
+| `geelato.plugin.pluginRepository` | `plugin-repository` | 插件仓库目录，供 `UpdateManager` 使用；默认与插件根目录平级。 |
 
 ### 插件调用 (`PluginBeanProvider`)
 

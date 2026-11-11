@@ -43,7 +43,7 @@ public class ExceptionAdminController {
         }
     }
 
-    /** 手动触发扫描（占位留痕，不执行管道）。 */
+    /** 手动触发扫描（ruleCode 单规则 / all=true 全部启用规则；同步真实执行，结果回填 scan_log）。 */
     @PostMapping("/admin/scan")
     public ApiResult<Map<String, Object>> scan(@RequestBody(required = false) ExceptionAdminService.ScanRequest req) {
         return ApiResult.success(adminService.adminScan(req));

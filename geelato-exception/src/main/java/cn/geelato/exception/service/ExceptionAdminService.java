@@ -129,6 +129,18 @@ public class ExceptionAdminService {
                 }
             }
         }
+        return executeScan(targets);
+    }
+
+    /**
+     * 单规则手动扫描（{@code POST /rule/{id}/scan}）：与 adminScan 单规则同口径，
+     * 同步真实执行（调用方已完成规则解析与启用校验）。
+     */
+    public Map<String, Object> scanOne(cn.geelato.exception.entity.FmsExceptionRule rule) {
+        return executeScan(List.of(rule));
+    }
+
+    private Map<String, Object> executeScan(List<cn.geelato.exception.entity.FmsExceptionRule> targets) {
         cn.geelato.exception.engine.scan.ScanRunner runner = scanRunnerProvider == null
                 ? null : scanRunnerProvider.getIfAvailable();
         List<Object> results = new ArrayList<>();

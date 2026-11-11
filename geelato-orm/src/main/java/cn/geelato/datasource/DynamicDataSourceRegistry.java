@@ -56,7 +56,8 @@ public class DynamicDataSourceRegistry {
                 log.info("For dynamic data sources has been search completed, with a total of {} data sources searched", count);
             }
         } catch (Exception e) {
-            log.error("For dynamic data sources has been search failed", e);
+            log.warn("For dynamic data sources has been search failed, external dynamic datasources not loaded: {}"
+                    + " (expected on first startup before auto-init creates the config table)", e.getMessage());
         }
     }
 

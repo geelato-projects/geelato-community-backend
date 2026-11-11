@@ -130,7 +130,13 @@ public class SecurityInterceptorProperties {
                 // Script Playground（脚本引擎调试台，由 geelato.script.rest.enabled 控制是否激活）
                 "/script-playground.html",
                 "/script-playground",
-                "/api/script/**"
+                "/api/script/**",
+                // 检索运维检查页（由 geelato.search.enabled 控制是否激活）
+                "/search-ops.html",
+                "/search-ops",
+                "/api/search-ops/**",
+                // 运维页调用重建触发与进度轮询（domains/health/debug 等其余管理接口仍走鉴权）
+                "/api/search/reindex/**"
         ));
     }
 }

@@ -24,7 +24,7 @@ sidebar_label: 配置方式
 | `dbConnectName` | `db_connect_name` | 连接名称（必填） |
 | `dbName` | `db_name` | 数据库名（必填） |
 | `dbSchema` | `db_schema` | 数据库 schema（必填） |
-| `dbType` | `db_type` | 数据库类型（必填），当前支持 `mysql` / `postgresql` |
+| `dbType` | `db_type` | 数据库类型（必填），内置支持 `mysql` / `postgresql`；`risingwave` 由物化视图引擎适配注册（见[物化视图加速](materialized-view.md)） |
 | `dbUserName` | `db_user_name` | 用户名（必填） |
 | `dbPassword` | `db_password` | 密码（必填，**加密存储**，建池时自动解密） |
 | `dbPort` | `db_port` | 连接端口 |

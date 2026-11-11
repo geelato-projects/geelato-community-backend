@@ -88,7 +88,7 @@ public class AnnouncementService {
                 log.info("[公告] 启动完成，暂无公告");
             }
         } catch (Exception e) {
-            log.error("[公告] 启动拉取公告仓库失败（不阻断应用）", e);
+            log.warn("[公告] 启动拉取公告仓库失败（不阻断应用）", e);
         }
     }
 

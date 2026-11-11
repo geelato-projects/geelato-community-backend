@@ -40,7 +40,7 @@ public class PluginConfiguration {
     @Bean
     @DependsOn("pluginManager")
     public UpdateManager updateManager(PluginConfigurationProperties pluginConfigurationProperties) {
-        Path pluginRepository = normalizeDirectory(pluginConfigurationProperties.getPluginRepository(), "plugins/repository");
+        Path pluginRepository = normalizeDirectory(pluginConfigurationProperties.getPluginRepository(), "plugin-repository");
         return new UpdateManager(springPluginManager, pluginRepository);
     }
 

@@ -20,7 +20,7 @@ import java.util.Map;
  * <p>由 ApiPrefixAutoConfiguration 自动加 /api 前缀，实际路径 = {@code /api/exception}。
  *
  * <p>端点：pageQuery / summary / domain-stats / {id} / {id}/steps / {id}/handles /
- * {id}/notifies / informs / informs/{id}/read / {id}/claim|note|resolve|ignore|escalate。
+ * {id}/notifies / informs / informs/{id}/read / {id}/claim|note|resolve|ignore|escalate|recalculate。
  *
  * <p>关联文档：bea/业务异常预警中心-接口设计-2026-09-17.md §2
  */
@@ -128,6 +128,20 @@ public class ExceptionWorkbenchController {
             return ApiResult.fail(40400, "实例不存在: " + id);
         }
         return outcome(workbenchService.escalate(ex, req == null ? null : req.getRemark()));
+    }
+
+    /** 手工重算：立即对该实例的业务对象重跑判定管道，不命中即组级 AUTO 消除，不必等定时扫描。 */
+    @PostMapping("/{id}/recalculate")
+    public ApiResult<Map<String, Object>> recalculate(@PathVariable String id) {
+        FmsException ex = require(id);
+        if (ex == null) {
+            return ApiResult.fail(40400, "实例不存在: " + id);
+        }
+        ExceptionWorkbenchService.RecalcResult result = workbenchService.recalculate(ex);
+        if (!result.success) {
+            return ApiResult.fail(result.errorCode, result.errorMessage);
+        }
+        return ApiResult.success(result.data);
     }
 
     // ==================== 内部辅助 ====================

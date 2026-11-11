@@ -6,6 +6,7 @@ import cn.geelato.exception.engine.core.PipelineOutcome;
 import cn.geelato.exception.engine.core.TriggerMode;
 import cn.geelato.exception.engine.hit.HitPolicies;
 import cn.geelato.exception.engine.hit.HitSubmitService;
+import cn.geelato.exception.engine.hit.SubmitReport;
 import cn.geelato.exception.engine.lifecycle.InstanceLifecycleService;
 import cn.geelato.exception.engine.scan.ScanRunner;
 import cn.geelato.exception.engine.support.EngineContextExecutor;
@@ -14,6 +15,8 @@ import cn.geelato.exception.entity.FmsExceptionScanLog;
 import cn.geelato.orm.MetaFactory;
 import cn.geelato.orm.query.Filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -29,6 +32,7 @@ import java.util.regex.Pattern;
  * RELATED 归一化（refField 白名单校验，子表 id 换主单 id）→ RECHECK 单对象复评
  * （$ctx.bizId 注入，与扫描同管道口径不漂移）→ 命中提交 / 不命中且在途组级恢复。
  * 事件只影响时效不影响正确性：重复/乱序/幽灵信号无害，判定以复评时库内现查数据为准，扫描兜底。
+ * 手工重算（{@link #recalculate}）复用同一复评内核，供工作台按异常实例即时复评。
  */
 @Slf4j
 public class EntityEventReactor {
@@ -82,28 +86,53 @@ public class EntityEventReactor {
                 log.info("复评跳过 ruleCode={} eventId={}（RELATED 归一化为空，子表行未取到主单 id）", rule.getRuleCode(), eventId);
                 return null;
             }
-            Date startAt = new Date();
-            PipelineOutcome outcome = pipelineEngine.execute(rule, TriggerMode.RECHECK, normalizedBizId);
-            int recovered = 0;
-            if ("SUCCESS".equals(outcome.getStatus())) {
-                if (!outcome.getValidHits().isEmpty()) {
-                    hitSubmitService.submit(rule, outcome.getValidHits());
-                } else {
-                    String sourceKey = HitPolicies.sourceKeyOf(rule.getRuleCode(), rule.getBizType(), normalizedBizId);
-                    recovered = lifecycle.recoverSourceGroup(rule.getRuleCode(), sourceKey, "变更复评不命中");
-                }
-            } else {
-                log.warn("复评管道失败 ruleCode={} eventId={} status={} error={}",
-                        rule.getRuleCode(), eventId, outcome.getStatus(), outcome.getError());
-            }
-            log.info("复评完成 ruleCode={} eventId={} bizId={} status={} candidateCount={} hitCount={} recovered={} costMs={}",
-                    rule.getRuleCode(), eventId, normalizedBizId, outcome.getStatus(), outcome.getCandidateCount(),
-                    outcome.getValidHits() == null ? 0 : outcome.getValidHits().size(), recovered, outcome.getCostMs());
-            writeRecheckLog(rule, startAt, outcome, recovered,
+            doRecheck(rule, normalizedBizId, null, "变更复评不命中",
                     Map.of("eventId", nz(eventId), "entityName", nz(entityName), "operation", nz(operation),
                             "bizId", nz(bizId), "normalizedBizId", nz(normalizedBizId)));
             return null;
         });
+    }
+
+    /**
+     * 手工重算入口（工作台 {@code POST /{id}/recalculate}）：与事件复评同管道同口径
+     * （RECHECK 注入 $ctx.bizId 单对象），不经过 listen_entities 匹配。
+     * 调用线程为真实用户会话，须强制重建引擎系统身份（upsertInstance 的参与者让渡要求系统主体），
+     * 结束恢复原身份。sourceKey 传异常行存量值（规则 bizType 中途变更不漂移），不命中时组级恢复。
+     */
+    public RecalcOutcome recalculate(FmsExceptionRule rule, String bizId, String sourceKey,
+                                     Map<String, Object> eventInfo) {
+        return EngineContextExecutor.withEngineContext(rule.getTenantCode(), () ->
+                doRecheck(rule, bizId, sourceKey, "手工重算不命中", eventInfo));
+    }
+
+    /** RECHECK 复评内核：execute → 命中提交 / 不命中组级恢复 → RECHECK 留痕。 */
+    private RecalcOutcome doRecheck(FmsExceptionRule rule, String bizId, String sourceKey, String reason,
+                                    Map<String, Object> eventInfo) {
+        Date startAt = new Date();
+        PipelineOutcome outcome = pipelineEngine.execute(rule, TriggerMode.RECHECK, bizId);
+        int recovered = 0;
+        SubmitReport report = null;
+        if ("SUCCESS".equals(outcome.getStatus())) {
+            if (!outcome.getValidHits().isEmpty()) {
+                report = hitSubmitService.submit(rule, outcome.getValidHits());
+            } else {
+                String key = sourceKey == null || sourceKey.isBlank()
+                        ? HitPolicies.sourceKeyOf(rule.getRuleCode(), rule.getBizType(), bizId) : sourceKey;
+                recovered = lifecycle.recoverSourceGroup(rule.getRuleCode(), key, reason);
+            }
+        } else {
+            log.warn("复评管道失败 ruleCode={} eventId={} status={} error={}",
+                    rule.getRuleCode(), eventInfo.get("eventId"), outcome.getStatus(), outcome.getError());
+        }
+        log.info("复评完成 ruleCode={} eventId={} bizId={} status={} candidateCount={} hitCount={} recovered={} costMs={}",
+                rule.getRuleCode(), eventInfo.get("eventId"), bizId, outcome.getStatus(), outcome.getCandidateCount(),
+                outcome.getValidHits() == null ? 0 : outcome.getValidHits().size(), recovered, outcome.getCostMs());
+        writeRecheckLog(rule, startAt, outcome, recovered, eventInfo);
+        RecalcOutcome result = new RecalcOutcome();
+        result.setOutcome(outcome);
+        result.setRecovered(recovered);
+        result.setReport(report);
+        return result;
     }
 
     private List<FmsExceptionRule> matchRules(String entityName, String operation, String tenantCode) {
@@ -250,6 +279,15 @@ public class EntityEventReactor {
 
     private static String nz(String s) {
         return s == null ? "" : s;
+    }
+
+    /** 单次复评结果：管道产物 + 组级恢复实例数 + 命中提交报告（命中时非空）。 */
+    @Getter
+    @Setter
+    public static final class RecalcOutcome {
+        private PipelineOutcome outcome;
+        private int recovered;
+        private SubmitReport report;
     }
 
     private static final class ListenEntry {

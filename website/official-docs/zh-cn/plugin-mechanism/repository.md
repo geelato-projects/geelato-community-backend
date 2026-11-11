@@ -14,7 +14,7 @@ sidebar_label: 插件仓库配置
 - `geelato.plugin.pluginDirectory`：Runtime 实际加载插件的目录，是启停、列表、调用面对的插件根目录。
 - `geelato.plugin.pluginRepository`：插件仓库描述目录，存放仓库索引与插件发布清单。
 
-默认值分别为 `plugins` 与 `plugins/repository`。
+默认值分别为 `plugins` 与 `plugin-repository`。仓库目录默认与插件根目录平级，避免 pf4j 把仓库目录误当插件候选扫描。
 
 ## 仓库描述文件
 
@@ -70,7 +70,7 @@ sidebar_label: 插件仓库配置
 Runtime 在 `PluginConfiguration` 中创建 `UpdateManager`：
 
 ```java
-Path pluginRepository = normalizeDirectory(pluginConfigurationProperties.getPluginRepository(), "plugins/repository");
+Path pluginRepository = normalizeDirectory(pluginConfigurationProperties.getPluginRepository(), "plugin-repository");
 return new UpdateManager(springPluginManager, pluginRepository);
 ```
 

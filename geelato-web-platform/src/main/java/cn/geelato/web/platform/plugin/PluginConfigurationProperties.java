@@ -14,8 +14,9 @@ public class PluginConfigurationProperties {
     private String pluginDirectory = "plugins";
     /**
      * pf4j-update 仓库目录。
+     * <p>默认与插件根目录平级（不在 {@code pluginDirectory} 内），避免 pf4j 把仓库目录误当插件候选扫描。</p>
      */
-    private String pluginRepository = "plugins/repository";
+    private String pluginRepository = "plugin-repository";
     /**
      * 插件开关配置目录（共享卷挂载点）。
      * <p>存放平台级 {@code plugins-enabled.json} 与租户级 {@code tenants/tenant_{code}.json}。

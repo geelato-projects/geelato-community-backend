@@ -1,5 +1,6 @@
 package cn.geelato.datasource;
 
+import cn.geelato.core.enums.Dialects;
 import cn.geelato.core.util.EncryptUtils;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
@@ -96,7 +97,9 @@ public class DataSourceFactory {
             ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
             ds.setJdbcUrl(String.format("jdbc:mysql://%s:%s/%s?%s", params.host(), params.port(), params.dbName(), commonParams));
             ds.setConnectionTestQuery(properties.getConnectionTestQuery());
-        } else if ("postgresql".equals(params.dbType()) || "postgres".equals(params.dbType())) {
+        } else if ("postgresql".equals(params.dbType()) || "postgres".equals(params.dbType())
+                // 经 Dialects.registerAlias 注册的 PG 家族方言别名（如引擎适配器注册的类型）复用 postgresql 建池
+                || Dialects.POSTGRESQL == Dialects.lookUp(params.dbType())) {
             String commonParams = "sslmode=disable&connectTimeout=" + properties.getConnectTimeoutMs() / 1000
                     + "&socketTimeout=" + properties.getSocketTimeoutMs() / 1000 + "&ApplicationName=geelato";
             ds.setDriverClassName("org.postgresql.Driver");

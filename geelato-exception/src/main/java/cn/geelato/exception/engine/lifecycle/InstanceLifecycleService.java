@@ -157,15 +157,18 @@ public class InstanceLifecycleService {
             if (!"OPEN".equals(exception.getStatus()) && !"PROCESSING".equals(exception.getStatus())) {
                 continue;
             }
-            Map<String, Object> patch = new LinkedHashMap<>();
-            patch.put("id", exception.getId());
-            patch.put("status", "RESOLVED");
-            patch.put("resolvedAt", now);
-            patch.put("resolvedType", "AUTO");
-            patch.put("updateAt", now);
-            patch.put("updater", EngineContextExecutor.SYSTEM_USER_ID);
-            patch.put("updaterName", EngineContextExecutor.SYSTEM_USER_NAME);
-            MetaFactory.save(patchInstance(patch));
+            // CAS 原生更新：仅 OPEN/PROCESSING 可关闭，直接写 status/resolved_at/resolved_type，
+            // 不经 patchInstance（那是续期原语，不持关闭字段且拆箱 null hitCount 会 NPE）。
+            int rows = dynamicDao.nativeExecute(
+                    "UPDATE platform_exception SET status='RESOLVED', resolved_at=?, resolved_type='AUTO',"
+                            + " update_at=?, updater=?, updater_name=?"
+                            + " WHERE id=? AND rule_code=? AND status IN ('OPEN','PROCESSING') AND del_status=0",
+                    new Object[]{now, now, EngineContextExecutor.SYSTEM_USER_ID, EngineContextExecutor.SYSTEM_USER_NAME,
+                            exception.getId(), ruleCode});
+            if (rows == 0) {
+                log.info("组级恢复 CAS 失败（状态已变）instanceId={} sourceKey={}", exception.getId(), sourceKey);
+                continue;
+            }
             appendHandle(exception.getId(), "AUTO_RECOVER", exception.getStatus(), "RESOLVED",
                     Map.of("reason", reason == null ? "复评不命中，组级恢复" : reason));
             publish("EXC_RECOVERED", exception.getId(), ruleCode, sourceKey, exception.getParticipantId());

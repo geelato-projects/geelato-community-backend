@@ -149,7 +149,7 @@ public class DevDbConnectService extends BaseService {
     }
 
     public boolean refreshDataSource(String connectId) {
-        if (dynamicDataSourceRegistry == null || dynamicRoutingDataSource == null) {
+        if (dynamicDataSourceRegistry == null ) {
             throw new RuntimeException("动态数据源能力未启用");
         }
         boolean refreshed = dynamicDataSourceRegistry.refreshDataSource(connectId);

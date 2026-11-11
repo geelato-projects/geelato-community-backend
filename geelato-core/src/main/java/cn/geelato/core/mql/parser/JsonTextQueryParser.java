@@ -5,6 +5,7 @@ import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.mql.parser.keyword.QueryKeyword;
 import cn.geelato.core.mql.spi.support.MqlQueryFilterRuntimeResolver;
+import cn.geelato.core.meta.MetaManager;
 import cn.geelato.core.meta.model.field.FunctionFieldValue;
 import cn.geelato.core.meta.model.parser.FunctionParser;
 import com.alibaba.fastjson2.JSON;
@@ -26,6 +27,7 @@ import java.util.Map;
 public class JsonTextQueryParser extends JsonTextParser {
 
     private final static String SUB_ENTITY_FLAG = "~";
+    private final MetaManager metaManager = MetaManager.singleInstance();
 
     public static Map<String, String> orderMap;
 
@@ -75,6 +77,11 @@ public class JsonTextQueryParser extends JsonTextParser {
     private QueryCommand parse(String entityName, JSONObject jo, CommandValidator validator) {
         if (!validator.validateEntity(entityName)) {
             logAndThrow(validator.getMessage(), "validateEntity failed: {}", entityName);
+        }
+        // 物化视图实体只包含用户 SELECT 定义的列；查询构造端可能带入了标准审计字段（updateAt/delStatus 等）
+        // 在解析前从 MQL JSON 中移除实体上不存在的字段引用（验证逻辑保持严格，不做绕过）
+        if (metaManager.isMaterializedEntity(entityName)) {
+            stripNonExistentFields(jo, validator.getEntityMeta(), entityName);
         }
         QueryCommand command = new QueryCommand();
         command.setEntityName(entityName);
@@ -128,4 +135,27 @@ public class JsonTextQueryParser extends JsonTextParser {
         return command;
     }
 
+    /**
+     * 物化视图实体预处理：从 MQL JSON 中移除实体上不存在的字段引用（@order 与过滤条件），
+     * 使后续验证与 SQL 生成只处理实际存在的列。验证逻辑本身不放宽。
+     */
+    private void stripNonExistentFields(JSONObject jo, cn.geelato.core.meta.model.entity.EntityMeta entityMeta, String entityName) {
+        // @order：字段不存在则移除排序
+        String order = jo.getString("@order");
+        if (StringUtils.hasText(order)) {
+            String orderField = order.replaceFirst("^[+\\-\\s]+", "").split("\\s+")[0].trim();
+            if (!entityMeta.containsField(orderField)) {
+                jo.remove("@order");
+                log.debug("物化视图实体 {} 不存在排序字段 {}，已移除", entityName, orderField);
+            }
+        }
+        // 过滤条件：字段不存在则移除（跳过 @ 开头的关键字）
+        jo.keySet().removeIf(key -> {
+            if (key.startsWith(KEYWORD_FLAG) || key.startsWith(SUB_ENTITY_FLAG)) {
+                return false;
+            }
+            String field = key.split(FILTER_FLAG)[0];
+            return !entityMeta.containsField(field) && !"*".equals(field) && !"forceId".equals(field);
+        });
+    }
 }

@@ -11,7 +11,8 @@ public enum ViewTypeEnum {
     DEFAULT("default", "默认视图"),
     COMPLEX("complex", "复杂视图"),
     CUSTOM("custom", "自定义视图"),
-    VIRTUAL("virtual", "虚拟视图");
+    VIRTUAL("virtual", "虚拟视图"),
+    MATERIALIZED("materialized", "物化视图");
 
     private final String code;
     private final String name;

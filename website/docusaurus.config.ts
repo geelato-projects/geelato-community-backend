@@ -93,6 +93,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          to: '/docs/mql/overview',
+          label: '平台',
+          position: 'left',
+        },
+        {
           to: '/docs/authentication/overview',
           label: '认证',
           position: 'left',
@@ -100,6 +105,16 @@ const config: Config = {
         {
           to: '/docs/message/overview',
           label: '消息',
+          position: 'left',
+        },
+        {
+          to: '/docs/workflow/overview',
+          label: '工作流',
+          position: 'left',
+        },
+        {
+          to: '/docs/scheduler/overview',
+          label: '调度',
           position: 'left',
         },
         {

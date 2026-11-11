@@ -24,7 +24,7 @@ The default source of truth for dynamic datasource definitions is the connection
 | `dbConnectName` | `db_connect_name` | connection name (required) |
 | `dbName` | `db_name` | database name (required) |
 | `dbSchema` | `db_schema` | database schema (required) |
-| `dbType` | `db_type` | database type (required), currently `mysql` / `postgresql` |
+| `dbType` | `db_type` | database type (required), built-in `mysql` / `postgresql`; `risingwave` is registered by the materialized view engine adapter (see [Materialized View Acceleration](materialized-view.md)) |
 | `dbUserName` | `db_user_name` | username (required) |
 | `dbPassword` | `db_password` | password (required, **stored encrypted**, decrypted automatically when the pool is built) |
 | `dbPort` | `db_port` | connection port |

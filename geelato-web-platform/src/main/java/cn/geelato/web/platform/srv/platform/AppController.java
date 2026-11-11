@@ -94,10 +94,10 @@ public class AppController extends BaseController {
             List<Map<String, Object>> appList = dao.queryForMapList("query_app_by_role_user", map);
             // app.type normal：普通应用；platform：平台应用
             // app.purpose inside：企业内部； outside：企业外部； side：企业内外部
-            // user.type 0：员工；1：系统；2：企业外部人员；999：租户管理员
+            // user.type 0：员工；3：虚拟员工；1：系统；2：企业外部人员；999：租户管理员
             if (appList != null && !appList.isEmpty()) {
-                if (userType == 0) {
-                    // user.type: [0],只能看 app.type=normal,app.purpose=inside/side
+                if (userType == 0 || userType == 3) {
+                    // user.type: [0,3],只能看 app.type=normal,app.purpose=inside/side
                     appList = appList.stream().filter(x -> "normal".equals(x.get("type")) && ("inside".equals(x.get("purpose")) || "side".equals(x.get("purpose")))).collect(Collectors.toList());
                 } else if (userType == 1 || userType == 999) {
                     // user.type: [1,999],只能看 app.type=normal/platform,app.purpose=inside/outside/side

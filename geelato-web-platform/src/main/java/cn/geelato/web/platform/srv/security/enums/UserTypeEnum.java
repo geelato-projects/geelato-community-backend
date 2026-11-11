@@ -5,6 +5,7 @@ import lombok.Getter;
 @Getter
 public enum UserTypeEnum {
     EMPLOYEE("员工账号", 0, false),
+    VIRTUAL_EMPLOYEE("虚拟员工账号", 3, false),
     SYSTEM("系统账号", 1, false),
     EXTERNAL("企业外人员", 2, false),
     ADMINISTRATOR("租户管理员", 999, true);

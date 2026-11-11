@@ -48,7 +48,7 @@ public class User extends BaseSortableEntity implements EntityEnableAble {
     private String email;
     @Title(title = "职务")
     private String post;
-    @Title(title = "类型", description = "0:员工账号|1:系统账号|2:企业外人员")
+    @Title(title = "类型", description = "0:员工账号|3:虚拟员工账号|1:系统账号|2:企业外人员")
     private int type;
     @Title(title = "来源", description = "0:本地用户|1:系统同步")
     private int source;

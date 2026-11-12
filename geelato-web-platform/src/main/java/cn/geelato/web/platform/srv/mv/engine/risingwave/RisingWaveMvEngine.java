@@ -36,6 +36,8 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
     private static final String ENGINE_TYPE = "risingwave";
     private static final int AUTO_TABLE_WAIT_MILLIS = 5000;
     private static final int AUTO_TABLE_POLL_INTERVAL_MILLIS = 500;
+    /** 回填期摄取限流（行/秒/并行度），仅作用于初始回填阶段，保护源库与集群（固定保守值） */
+    private static final int MV_BACKFILL_RATE_LIMIT = 50000;
 
     @Override
     public String engineType() {
@@ -166,7 +168,10 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
         return (spec.sourceName() + "_" + table).toLowerCase(Locale.ROOT);
     }
 
-    /** 第①步：建 CDC source。密码以掩码输出，执行前再注入真实密码，避免密码外泄到前端与日志 */
+    /**
+     * 第①步：建 CDC source。密码以掩码输出，执行前再注入真实密码，避免密码外泄到前端与日志。
+     * <p>server.id 显式指定（确定性派生，同一 source 稳定不变），避免多 source 共存同一 MySQL 时随机 ID 冲突。</p>
+     */
     private String buildSourceDdl(SourceSpec spec) {
         return "CREATE SOURCE IF NOT EXISTS " + quoted(spec.sourceName()) + " WITH (\n"
                 + "  connector = 'mysql-cdc',\n"
@@ -174,13 +179,21 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
                 + "  port = '" + spec.originPort() + "',\n"
                 + "  username = '" + sqlLiteral(spec.originUserName()) + "',\n"
                 + "  password = '" + RisingWaveDdlParser.PASSWORD_MASK + "',\n"
-                + "  database.name = '" + sqlLiteral(spec.originDatabase()) + "'\n"
+                + "  database.name = '" + sqlLiteral(spec.originDatabase()) + "',\n"
+                + "  server.id = '" + serverIdOf(spec) + "'\n"
                 + ")";
     }
 
-    /** 第③步：建物化视图 */
+    /** server.id：由源库连接与 source 名确定性派生（10000~1010000），同一 source 稳定，不同 source 冲突概率低 */
+    static int serverIdOf(SourceSpec spec) {
+        String seed = spec.originHost() + ":" + spec.originPort() + "/" + spec.originDatabase() + "/" + spec.sourceName();
+        return 10000 + Math.abs(seed.hashCode()) % 1_000_000;
+    }
+
+    /** 第③步：建物化视图。source_rate_limit 仅作用于回填期，控制初始回填对源库与集群的压力 */
     private String buildMvDdl(String viewName, String sqlBody) {
-        return "CREATE MATERIALIZED VIEW " + quoted(viewName) + " AS " + sqlBody;
+        return "CREATE MATERIALIZED VIEW " + quoted(viewName) + " WITH ( source_rate_limit = " + MV_BACKFILL_RATE_LIMIT
+                + " ) AS " + sqlBody;
     }
 
     @Override
@@ -313,9 +326,9 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
         try {
             execute(ds, ddl);
         } catch (SQLException e) {
-            throw new IllegalStateException(String.format("创建 CDC source 失败（%s ← %s:%s/%s）：%s\n执行DDL：\n%s",
+            throw new IllegalStateException(String.format("创建 CDC source 失败（%s ← %s:%s/%s）：%s",
                     spec.sourceName(), spec.originHost(), spec.originPort(), spec.originDatabase(),
-                    e.getMessage(), maskCredentials(ddl)), e);
+                    e.getMessage()), e);
         }
         return true;
     }
@@ -336,8 +349,8 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
             execute(ds, cdcTable.ddl());
         } catch (SQLException e) {
             throw new IllegalStateException(String.format(
-                    "创建 CDC 摄取表失败（%s ← %s.%s）：%s\n执行DDL：\n%s",
-                    cdcTable.engineTable(), spec.originDatabase(), cdcTable.originTable(), e.getMessage(), cdcTable.ddl()), e);
+                    "创建 CDC 摄取表失败（%s ← %s.%s）：%s",
+                    cdcTable.engineTable(), spec.originDatabase(), cdcTable.originTable(), e.getMessage()), e);
         }
         return true;
     }
@@ -385,10 +398,10 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
         String ddl = plan.mvDdl();
         log.info("[MV] 创建物化视图，DDL：\n{}", ddl);
         try {
-            execute(engineDataSource(spec.engineConnectId()), ddl);
+            // 同会话开启 BACKGROUND_DDL：CREATE MV 立即返回，不阻塞到回填完成（回填进度由 viewStatus 轮询）
+            executeInSession(engineDataSource(spec.engineConnectId()), "SET BACKGROUND_DDL = true", ddl);
         } catch (SQLException e) {
-            throw new IllegalStateException("创建物化视图失败：" + e.getMessage()
-                    + "\n执行DDL：\n" + ddl, e);
+            throw new IllegalStateException("创建物化视图失败：" + e.getMessage(), e);
         }
     }
 
@@ -453,7 +466,11 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
         }
         String pk = schema.primaryKeys().stream().map(k -> quoted(k.toLowerCase(Locale.ROOT))).reduce((a, b) -> a + ", " + b).orElse("");
         cols.append(", PRIMARY KEY (").append(pk).append(")");
-        return "CREATE TABLE IF NOT EXISTS " + quoted(cdcTable) + " (" + cols + ") FROM " + quoted(spec.sourceName())
+        // snapshot=false 跳过初始快照回填（大表场景避免源库与集群压力，靠 binlog 追平，期间数据不完整）；
+        // WITH 子句按 RW 语法位于列定义与 FROM 之间
+        return "CREATE TABLE IF NOT EXISTS " + quoted(cdcTable) + " (" + cols + ")"
+                + " WITH ( snapshot = '" + spec.snapshotEnabled() + "' )"
+                + " FROM " + quoted(spec.sourceName())
                 + " TABLE '" + sqlLiteral(spec.originDatabase()) + "." + sqlLiteral(table) + "'";
     }
 
@@ -531,8 +548,29 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
             log.info("[MV-Validate] SQL 语法验证通过（EXPLAIN）");
         } catch (SQLException e) {
             throw new IllegalStateException(
-                    "SQL 语法验证失败（RisingWave 不支持该语法，请将 MySQL 方言改为 RW/PG 兼容写法）：" + e.getMessage()
-                    + "\nSQL：\n" + sql, e);
+                    "SQL 语法验证失败（RisingWave 不支持该语法，请将 MySQL 方言改为 RW/PG 兼容写法）：" + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<String> probeOutputColumns(String engineConnectId, String sql) {
+        String body = sql == null ? "" : sql.trim();
+        if (body.endsWith(";")) {
+            body = body.substring(0, body.length() - 1);
+        }
+        String probe = "SELECT * FROM (" + body + ") AS _mv_default_column_probe LIMIT 0";
+        DataSource ds = engineDataSource(engineConnectId);
+        try (Connection conn = ds.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(probe)) {
+            ResultSetMetaData meta = rs.getMetaData();
+            List<String> columns = new ArrayList<>();
+            for (int i = 1; i <= meta.getColumnCount(); i++) {
+                columns.add(meta.getColumnLabel(i));
+            }
+            return columns;
+        } catch (SQLException e) {
+            throw new IllegalStateException("物化视图定义输出列探测失败：" + e.getMessage(), e);
         }
     }
 
@@ -572,10 +610,31 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
         }
         Map<String, Object> row = rows.get(0);
         String definition = row.get("definition") == null ? null : String.valueOf(row.get("definition"));
+        // 官方目录列 status = StreamJobStatus（Creating=创建/回填中, Created=已就绪），旧版本可能缺失
+        String status = row.get("status") == null ? null : String.valueOf(row.get("status"));
+        if (status != null) {
+            String normalizedStatus = status.trim().toLowerCase(Locale.ROOT);
+            if ("created".equals(normalizedStatus)) {
+                return new ViewStatus(true, "READY", null, "回填完成，增量维护中", definition);
+            }
+            if ("creating".equals(normalizedStatus)) {
+                String progress = ddlProgressOf(ds, viewName);
+                return new ViewStatus(true, "BACKFILLING", progress, "初始回填进行中，此期间查询结果不完整", definition);
+            }
+        }
+        // 旧版本无 status 列：尝试 backfill_progress（个别版本提供）与 rw_ddl_progress（仅有进行中 DDL 时才有行）
         Object progressValue = row.get("backfill_progress");
         String progress = progressValue == null ? null : String.valueOf(progressValue);
         if (progress == null) {
-            return new ViewStatus(true, "UNKNOWN", null, "引擎目录未提供回填进度列（rw_materialized_views）", definition);
+            progress = ddlProgressOf(ds, viewName);
+        }
+        if (progress == null) {
+            // rw_ddl_progress 为空说明当前无进行中的回填任务，结合 initialized_at（初始化完成时间）判定就绪
+            if (row.get("initialized_at") != null) {
+                return new ViewStatus(true, "READY", null, "回填完成，增量维护中", definition);
+            }
+            return new ViewStatus(true, "UNKNOWN", null,
+                    "无法从引擎目录判断回填进度（rw_materialized_views.status / rw_ddl_progress 均不可用）", definition);
         }
         String normalized = progress.replaceAll("\\s", "").toLowerCase(Locale.ROOT);
         boolean done = normalized.contains("\"progress\":1.0")
@@ -615,7 +674,7 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
                     : String.valueOf(row.get("data_type"));
             columns.add(new EngineColumn(
                     String.valueOf(row.get("column_name")),
-                    typeName,
+                    normalizeColumnTypeName(typeName),
                     !"NO".equalsIgnoreCase(String.valueOf(row.get("is_nullable"))),
                     intValue(row.get("character_maximum_length")),
                     intValue(row.get("numeric_precision")),
@@ -626,6 +685,34 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
         return columns;
     }
 
+    /**
+     * 把 RisingWave/PG 风格类型名规范化为 MySQL 兼容类型名，
+     * 保证 MysqlToJavaEnum 等平台侧类型映射可识别（fieldType 不为 null）。
+     */
+    private String normalizeColumnTypeName(String typeName) {
+        if (StringUtils.isBlank(typeName)) {
+            return typeName;
+        }
+        return switch (typeName.toLowerCase(Locale.ROOT)) {
+            case "int2", "smallint" -> "SMALLINT";
+            case "int4", "int", "integer" -> "INT";
+            case "int8", "bigint", "long" -> "BIGINT";
+            case "float4", "real" -> "FLOAT";
+            case "float8", "double precision" -> "DOUBLE";
+            case "numeric", "decimal" -> "DECIMAL";
+            case "bpchar" -> "CHAR";
+            case "varchar", "text", "string" -> "VARCHAR";
+            case "bool", "boolean" -> "BIT";
+            case "date" -> "DATE";
+            case "time", "time without time zone" -> "TIME";
+            case "timestamp", "timestamp without time zone" -> "DATETIME";
+            case "timestamptz", "timestamp with time zone" -> "TIMESTAMP";
+            case "json", "jsonb", "variant", "struct", "array" -> "JSON";
+            case "bytea" -> "BLOB";
+            default -> typeName.toUpperCase(Locale.ROOT);
+        };
+    }
+
     private List<EngineColumn> introspectByJdbcMetaData(DataSource ds, String schema, String viewName) throws SQLException {
         List<EngineColumn> columns = new ArrayList<>();
         try (Connection conn = ds.getConnection()) {
@@ -634,7 +721,7 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
                 while (rs.next()) {
                     columns.add(new EngineColumn(
                             rs.getString("COLUMN_NAME"),
-                            rs.getString("TYPE_NAME"),
+                            normalizeColumnTypeName(rs.getString("TYPE_NAME")),
                             rs.getInt("NULLABLE") != ResultSetMetaData.columnNoNulls,
                             rs.getInt("COLUMN_SIZE"),
                             rs.getInt("COLUMN_SIZE"),
@@ -737,6 +824,28 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
     private void execute(DataSource ds, String sql) throws SQLException {
         try (Connection conn = ds.getConnection(); Statement st = conn.createStatement()) {
             st.execute(sql);
+        }
+    }
+
+    /** 在同一会话内顺序执行多条语句（会话级 SET + DDL） */
+    private void executeInSession(DataSource ds, String... statements) throws SQLException {
+        try (Connection conn = ds.getConnection(); Statement st = conn.createStatement()) {
+            for (String sql : statements) {
+                st.execute(sql);
+            }
+        }
+    }
+
+    /** 查询 rw_ddl_progress 中与本视图相关的 DDL 进度；引擎不支持该目录时静默返回 null */
+    private String ddlProgressOf(DataSource ds, String viewName) {
+        try {
+            List<Map<String, Object>> rows = queryRows(ds,
+                    "SELECT progress FROM rw_catalog.rw_ddl_progress WHERE lower(statement) LIKE ?",
+                    "%" + viewName.toLowerCase(Locale.ROOT) + "%");
+            return rows.isEmpty() ? null : String.valueOf(rows.get(0).get("progress"));
+        } catch (SQLException e) {
+            log.debug("查询 rw_ddl_progress 失败（引擎版本可能不支持），忽略：{}", e.getMessage());
+            return null;
         }
     }
 

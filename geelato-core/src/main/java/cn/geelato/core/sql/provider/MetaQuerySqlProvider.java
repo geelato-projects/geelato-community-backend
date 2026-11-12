@@ -167,7 +167,6 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
             sb.append("*");
             return;
         }
-        // 只取第一个字段用于统计总数，默认按主键统计
         if (md.getId() != null) {
             tryAppendKeywords(sb, md.getId().getColumnName());
         } else {
@@ -188,7 +187,6 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
 
         if (hasFields) {
             for (String fieldName : command.getFields()) {
-                // 忽略的字段不查询
                 if (ArrayUtils.contains(command.getIgnoreFields(), fieldName)) {
                     continue;
                 }

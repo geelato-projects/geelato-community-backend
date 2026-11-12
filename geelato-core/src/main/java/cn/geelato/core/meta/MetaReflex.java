@@ -41,13 +41,9 @@ public class MetaReflex {
     public static HashedMap dataTypeDefaultMaxLengthMap = new HashedMap();
 
     static {
-        // 最大长度255个字元(2^8-1)
         dataTypeDefaultMaxLengthMap.put("tinyText", 65535L);
-        // 最大长度65535个字元(2^16-1)
         dataTypeDefaultMaxLengthMap.put("text", 65535L);
-        // 最大长度 16777215 个字元(2^24-1)
         dataTypeDefaultMaxLengthMap.put("mediumText", 16777215L);
-        // 最大长度4294967295个字元 (2^32-1)
         dataTypeDefaultMaxLengthMap.put("longText", 4294967295L);
     }
 
@@ -219,7 +215,6 @@ public class MetaReflex {
 
     public static EntityMeta getEntityMetaByView(TableView view) {
         EntityMeta em = new EntityMeta();
-        // view 行与 table 行部分字段重叠，构造 TableMeta 时复制这些重叠字段
         TableMeta tableMeta = new TableMeta();
         tableMeta.setAppId(view.getAppId());
         tableMeta.setConnectId(view.getConnectId());
@@ -228,8 +223,9 @@ public class MetaReflex {
         tableMeta.setId(view.getId());
         tableMeta.setDelStatus(view.getDelStatus());
         String viewName = view.getViewName();
+        // 视图有自身连接时（如物化副本行 connect_id=引擎连接）不继承主体 dbType，方言必须按执行连接解析
         String subjectEntityName = view.getEntityName();
-        if (StringUtils.hasText(subjectEntityName)) {
+        if (StringUtils.hasText(subjectEntityName) && !StringUtils.hasText(view.getConnectId())) {
             EntityMeta subjectEntityMeta = MetaManager.singleInstance().getByEntityName(subjectEntityName);
             if (subjectEntityMeta != null && subjectEntityMeta.getTableMeta() != null) {
                 tableMeta.setDbType(subjectEntityMeta.getTableMeta().getDbType());
@@ -263,7 +259,6 @@ public class MetaReflex {
     /**
      * 兼容旧入口：接收 view 行 Map，转为 {@link TableView} 后委托给主方法。
      */
-    @SuppressWarnings({"rawtypes", "unchecked"})
     public static EntityMeta getEntityMetaByView(Map<String, Object> map) {
         return getEntityMetaByView(new TableView(map));
     }
@@ -781,14 +776,12 @@ public class MetaReflex {
             return null;
         }
         String fieldName = "";
-        // 去掉get三个字符
         if (methodName.startsWith("get")) {
             fieldName = methodName.substring(3);
         }
         if (methodName.startsWith("is")) {
             fieldName = methodName.substring(2);
         }
-        // 首字符变小写
         return firstCharToLow(fieldName);
     }
 

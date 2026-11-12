@@ -6,6 +6,7 @@ import cn.geelato.core.meta.MetaManager;
 import cn.geelato.datasource.EntityDataSourceResolver;
 import cn.geelato.datasource.PlatformDataSources;
 import cn.geelato.core.meta.model.connect.ConnectMeta;
+import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.mql.filter.FilterGroup;
 import cn.geelato.core.util.EncryptUtils;
@@ -24,13 +25,21 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 /**
@@ -44,6 +53,9 @@ public class MaterializedViewService extends BaseService {
 
     private static final Pattern VIEW_NAME_PATTERN = Pattern.compile("^[a-z][a-z0-9_]{0,62}$");
     private static final Pattern IDENT_PART_PATTERN = Pattern.compile("[^a-zA-Z0-9_]");
+
+    /** 平台默认字段强制校验项 key（物化视图输出列必须包含 column_default.json 全部默认字段） */
+    static final String DEFAULT_COLUMN_CHECK_ITEM = "mv-default-columns";
 
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final List<MaterializedViewEngine> engines;
@@ -88,7 +100,7 @@ public class MaterializedViewService extends BaseService {
                             "视图引用已展开为物理表：" + expansion.expandedViews() + " → " + expansion.physicalTables()));
                 }
                 String normalizedViewName = StringUtils.isBlank(viewName) ? "precheck" : normalizeViewName(viewName);
-                MaterializedViewEngine.SourceSpec spec = buildSpec(engineConnectId, originConnect, database, expansion.physicalTables(), normalizedViewName);
+                MaterializedViewEngine.SourceSpec spec = buildSpec(engineConnectId, originConnect, database, expansion.physicalTables(), normalizedViewName, snapshotEnabledOf(params));
                 items.addAll(engine.precheck(spec, viewName));
             } catch (Exception e) {
                 items.add(new MaterializedViewEngine.CheckResult("origin-views-expand", false,
@@ -120,9 +132,11 @@ public class MaterializedViewService extends BaseService {
         if (physicalTables.isEmpty()) {
             throw new IllegalArgumentException("源表清单未解析到任何物理表（MySQL 视图会被自动展开）");
         }
-        MaterializedViewEngine.SourceSpec spec = buildSpec(engineConnectId, originConnect, database, physicalTables, viewName);
+        MaterializedViewEngine.SourceSpec spec = buildSpec(engineConnectId, originConnect, database, physicalTables, viewName, snapshotEnabledOf(params));
         MaterializedViewEngine.DdlPlan plan = engine.buildDdlPlan(spec, viewName, null);
         MaterializedViewEngine.SourceTableMapping mapping = engine.applyDdl(spec, plan);
+        persistDdlToViewConstruct(engine, engineConnectId, viewName,
+                buildDdlStorageJson(engine, spec, physicalTables, mapping.asMap(), plan, true));
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("engineType", engine.engineType());
         result.put("engineConnectId", engineConnectId);
@@ -139,10 +153,7 @@ public class MaterializedViewService extends BaseService {
         MaterializedViewEngine engine = resolveEngine(engineConnect);
         String viewName = normalizeViewName(str(params, "viewName"));
         TableView originView = requireOriginView(viewName);
-        String originSql = str(params, "originSql");
-        if (StringUtils.isBlank(originSql)) {
-            throw new IllegalArgumentException("originSql 不能为空（以源库表名书写的 SELECT 定义）");
-        }
+        String originSql = requireOriginSql(params, viewName);
         TableView materializedView = findAnyMaterializedView(viewName);
         String mode;
         if (materializedView == null) {
@@ -196,10 +207,7 @@ public class MaterializedViewService extends BaseService {
         TableView originView = requireOriginView(viewName);
         ConnectMeta originConnect = requireConnect(str(params, "originConnectId"), "originConnectId");
         String database = resolveDatabase(params, originConnect);
-        String originSql = str(params, "originSql");
-        if (StringUtils.isBlank(originSql)) {
-            throw new IllegalArgumentException("originSql 不能为空（以源库表名书写的 SELECT 定义）");
-        }
+        String originSql = requireOriginSql(params, viewName);
         boolean recreate = Boolean.parseBoolean(String.valueOf(params.getOrDefault("recreate", "false")));
         TableView materializedView = findMaterializedView(viewName);
         log.info("[MV] 初始化开始：view={}, engine={}, engineConnectId={}, 源库={}:{}/{}{}, recreate={}",
@@ -235,7 +243,7 @@ public class MaterializedViewService extends BaseService {
         log.info("[MV-Precheck] P2 SQL 改写完成，引擎执行语句：view={}\n{}", viewName, engineSql);
 
         // P2.5 构造建立物化视图的三步 DDL（只读内省源库，不执行任何 DDL）
-        MaterializedViewEngine.SourceSpec spec = buildSpec(engineConnectId, originConnect, database, tables, viewName);
+        MaterializedViewEngine.SourceSpec spec = buildSpec(engineConnectId, originConnect, database, tables, viewName, snapshotEnabledOf(params));
         MaterializedViewEngine.DdlPlan plan = engine.buildDdlPlan(spec, viewName, engineSql);
 
         // P2.6 若前端回传了编辑后的 DDL，先逐段校验；不通过则不执行任何 DDL
@@ -297,6 +305,16 @@ public class MaterializedViewService extends BaseService {
             }
         }
 
+        // P5 强制校验：物化视图最终输出列必须包含平台默认字段（MQL 租户隔离/数据权限过滤注入依赖这些列）。
+        // CDC 摄取表此时已存在，用探测查询读取定义 SQL 的真实输出列；不通过则阻止物化视图创建。
+        MaterializedViewEngine.CheckResult defaultColumns = defaultColumnCheck(engine, engineConnectId, plan.mvBody());
+        log.info("[MV-Precheck] P5 平台默认字段校验：view={}, {} {}", viewName,
+                defaultColumns.passed() ? "√" : "×", defaultColumns.message());
+        if (!defaultColumns.passed()) {
+            throw new IllegalStateException("物化视图创建被阻止：" + defaultColumns.message()
+                    + "（物化视图未创建；CDC 摄取通道已保留可复用，修正定义 SQL 后重新初始化即可）");
+        }
+
         boolean existed = engine.relationExists(engineConnectId, viewName);
         boolean reused = existed && !recreate;
         if (existed && recreate) {
@@ -312,6 +330,9 @@ public class MaterializedViewService extends BaseService {
 
         MaterializedRowSync sync = syncMaterializedRow(originView, materializedView, engine, engineConnect,
                 engineConnectId, viewName, originSql, database, tables);
+        // 初始化成功：把实际执行的（可能经前端编辑的）DDL JSON 持久化到副本行 viewConstruct
+        String executedDdlJson = buildDdlStorageJson(engine, spec, tables, plannedMapping, plan, true);
+        persistDdlToViewConstruct(engine, engineConnectId, viewName, executedDdlJson);
         String mode = sync.mode();
 
         MaterializedViewEngine.ViewStatus status = engine.viewStatus(engineConnectId, null, viewName);
@@ -329,6 +350,7 @@ public class MaterializedViewService extends BaseService {
         result.put("originSql", originSql);
         result.put("expandedSql", expandedSql);
         result.put("physicalTables", tables);
+        result.put("ddlJson", executedDdlJson);
         if (!expansion.expandedViews().isEmpty()) {
             result.put("expandedViews", expansion.expandedViews());
         }
@@ -349,7 +371,17 @@ public class MaterializedViewService extends BaseService {
         long startAt = System.currentTimeMillis();
         DdlContext context = buildDdlContext(params);
         MaterializedViewEngine.DdlPlan plan = context.engine().buildDdlPlan(context.spec(), context.viewName(), context.engineSql());
-        MaterializedViewEngine.DdlValidation validation = context.engine().validateDdl(context.spec(), context.viewName(), plan);
+        // 预览仅首存：副本行尚无引擎 DDL JSON 时落库（executed=false）；已有则跳过，
+        // 避免打开面板自动预览就覆盖已执行/已保存的 DDL（用户视角即"每次打开都被重新生成"）
+        TableView existingMvRow = findAnyMaterializedView(context.viewName());
+        String existingConstruct = existingMvRow == null ? null : existingMvRow.getViewConstruct();
+        if (existingConstruct == null || !existingConstruct.trim().startsWith("{")) {
+            persistDdlToViewConstruct(context.engine(), context.spec().engineConnectId(), context.viewName(),
+                    buildDdlStorageJson(context.engine(), context.spec(), context.physicalTables(),
+                            context.plannedMapping(), plan, false));
+        }
+        MaterializedViewEngine.DdlValidation validation = withDefaultColumnCheck(context,
+                context.engine().validateDdl(context.spec(), context.viewName(), plan));
         log.info("[MV-DDL] 预览完成：view={}, 结果={}, 共 {} 段, 耗时={}ms",
                 context.viewName(), validation.passed() ? "通过" : "存在待修复项",
                 validation.checks().size(), System.currentTimeMillis() - startAt);
@@ -364,7 +396,16 @@ public class MaterializedViewService extends BaseService {
         DdlContext context = buildDdlContext(params);
         MaterializedViewEngine.DdlPlan generated = context.engine().buildDdlPlan(context.spec(), context.viewName(), context.engineSql());
         MaterializedViewEngine.DdlPlan edited = readEditedPlan(params, generated, context.plannedMapping());
-        MaterializedViewEngine.DdlValidation validation = context.engine().validateDdl(context.spec(), context.viewName(), edited);
+        // 校验仅首存：副本行尚无引擎 DDL JSON 时落库；已有（尤其 executed=true 的实际执行版）则跳过，避免覆盖
+        TableView existingMvRow = findAnyMaterializedView(context.viewName());
+        String existingConstruct = existingMvRow == null ? null : existingMvRow.getViewConstruct();
+        if (existingConstruct == null || !existingConstruct.trim().startsWith("{")) {
+            persistDdlToViewConstruct(context.engine(), context.spec().engineConnectId(), context.viewName(),
+                    buildDdlStorageJson(context.engine(), context.spec(), context.physicalTables(),
+                            context.plannedMapping(), edited, false));
+        }
+        MaterializedViewEngine.DdlValidation validation = withDefaultColumnCheck(context,
+                context.engine().validateDdl(context.spec(), context.viewName(), edited));
         log.info("[MV-DDL] 校验完成：view={}, 结果={}, 耗时={}ms",
                 context.viewName(), validation.passed() ? "通过" : "存在待修复项", System.currentTimeMillis() - startAt);
         return ddlResult(context, edited, validation);
@@ -391,6 +432,13 @@ public class MaterializedViewService extends BaseService {
         if (columns.isEmpty()) {
             throw new IllegalStateException(String.format("物化视图 %s 创建后未内省到任何列", viewName));
         }
+        // 兜底校验（创建前探测门禁理论上已拦截）：最终列缺少平台默认字段时不写入副本行，阻止坏视图注册进元数据
+        List<String> missingColumns = missingRequiredColumns(columns.stream().map(MaterializedViewEngine.EngineColumn::name).toList());
+        if (!missingColumns.isEmpty()) {
+            throw new IllegalStateException(String.format(
+                    "物化视图 %s 输出列缺少平台默认字段 %s（MQL 无法做租户隔离/数据权限过滤注入）；"
+                            + "请删除引擎内该视图并修正定义 SQL 后重新初始化（本次未写入平台副本行）", viewName, missingColumns));
+        }
         log.info("[MV] 列内省完成：view={}, 共 {} 列：{}", viewName, columns.size(),
                 columns.stream().map(c -> c.name() + ":" + c.typeName()).toList());
 
@@ -409,8 +457,9 @@ public class MaterializedViewService extends BaseService {
         materializedView.setConnectId(engineConnectId);
         materializedView.setViewName(viewName);
         materializedView.setViewType(ViewTypeEnum.MATERIALIZED.getCode());
-        materializedView.setViewConstruct(originSql);
-        materializedView.setViewColumn(buildViewColumnJson(columns, viewName, engineSchema(engineConnect)));
+        // viewConstruct 由 persistDdlToViewConstruct 写入引擎 DDL JSON；定义 SQL 与列元数据（viewColumn）以同名原视图行为准，
+        // 原样继承，保证物化视图实体的字段元数据与原视图完全一致（含标题、引用/字典配置等）
+        materializedView.setViewColumn(originView.getViewColumn());
         materializedView.setDescription(String.format("物化视图（引擎 %s，源 %s.%s，原视图 %s）",
                 engine.engineType(), database, tables, viewName));
         materializedView.setEnableStatus(EnableStatusEnum.ENABLED.getValue());
@@ -439,7 +488,8 @@ public class MaterializedViewService extends BaseService {
         DdlContext context = buildDdlContext(params);
         MaterializedViewEngine.DdlPlan generated = context.engine().buildDdlPlan(context.spec(), context.viewName(), context.engineSql());
         MaterializedViewEngine.DdlPlan edited = readEditedPlan(params, generated, context.plannedMapping());
-        MaterializedViewEngine.DdlValidation validation = context.engine().validateDdl(context.spec(), context.viewName(), edited);
+        MaterializedViewEngine.DdlValidation validation = withDefaultColumnCheck(context,
+                context.engine().validateDdl(context.spec(), context.viewName(), edited));
         MaterializedViewEngine.StepCheck check = validation.checkOf(stepKey);
         if (check == null) {
             throw new IllegalArgumentException("未找到步骤 " + stepKey + "，可用步骤："
@@ -478,9 +528,14 @@ public class MaterializedViewService extends BaseService {
             MaterializedRowSync sync = syncMaterializedRow(originView, materializedView, context.engine(),
                     context.engineConnect(), context.spec().engineConnectId(), context.viewName(), context.originSql(),
                     context.database(), context.physicalTables());
+            // mv 步执行成功：把实际执行的（可能经前端编辑的）DDL JSON 持久化到副本行 viewConstruct
+            String executedDdlJson = buildDdlStorageJson(context.engine(), context.spec(), context.physicalTables(),
+                    context.plannedMapping(), edited, true);
+            persistDdlToViewConstruct(context.engine(), context.spec().engineConnectId(), context.viewName(), executedDdlJson);
             result.put("materialized", true);
             result.put("mode", sync.mode());
             result.put("columns", sync.columns().stream().map(MaterializedViewEngine.EngineColumn::name).toList());
+            result.put("ddlJson", executedDdlJson);
         }
         return result;
     }
@@ -507,10 +562,7 @@ public class MaterializedViewService extends BaseService {
         String viewName = normalizeViewName(str(params, "viewName"));
         ConnectMeta originConnect = requireConnect(str(params, "originConnectId"), "originConnectId");
         String database = resolveDatabase(params, originConnect);
-        String originSql = str(params, "originSql");
-        if (StringUtils.isBlank(originSql)) {
-            throw new IllegalArgumentException("originSql 不能为空（以源库表名书写的 SELECT 定义）");
-        }
+        String originSql = requireOriginSql(params, viewName);
         MvViewExpander.Expansion expansion = expandOrigin(originConnect, database, originSql, strList(params, "tables"));
         List<String> tables = expansion.physicalTables();
         if (tables.isEmpty()) {
@@ -522,7 +574,7 @@ public class MaterializedViewService extends BaseService {
             plannedMapping.put(table, (sourceName + "_" + table).toLowerCase(Locale.ROOT));
         }
         String engineSql = MvSqlRewriter.rewrite(expansion.expandedSql(), plannedMapping, Set.of(database));
-        MaterializedViewEngine.SourceSpec spec = buildSpec(engineConnectId, originConnect, database, tables, viewName);
+        MaterializedViewEngine.SourceSpec spec = buildSpec(engineConnectId, originConnect, database, tables, viewName, snapshotEnabledOf(params));
         return new DdlContext(engine, engineConnect, originConnect, database, viewName, originSql, expansion.expandedSql(),
                 expansion.expandedViews(), tables, plannedMapping, engineSql, spec);
     }
@@ -664,6 +716,100 @@ public class MaterializedViewService extends BaseService {
         return payload;
     }
 
+    /**
+     * 物化副本行 viewConstruct 存储载荷：三段引擎 DDL JSON（kind=mv-engine-ddl）。
+     * <p>物化行不再用 viewConstruct 存定义 SQL（定义 SQL 以同名原视图行为准）；
+     * 不冗余存 originSql/engineSql（前者在原视图行，后者包含在 mvDdl 内），控制存储体积。</p>
+     */
+    private String buildDdlStorageJson(MaterializedViewEngine engine,
+                                       MaterializedViewEngine.SourceSpec spec,
+                                       List<String> tables,
+                                       Map<String, String> tableMapping,
+                                       MaterializedViewEngine.DdlPlan plan,
+                                       boolean executed) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("kind", "mv-engine-ddl");
+        payload.put("engineType", engine.engineType());
+        payload.put("engineConnectId", spec.engineConnectId());
+        payload.put("sourceName", spec.sourceName());
+        payload.put("physicalTables", tables);
+        payload.put("tableMapping", tableMapping);
+        payload.put("snapshot", spec.snapshotEnabled());
+        payload.put("executed", executed);
+        payload.put("sourceDdl", plan.sourceDdl());
+        List<Map<String, Object>> cdcTables = new ArrayList<>();
+        for (MaterializedViewEngine.CdcTableDdl cdc : plan.cdcTables()) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("originTable", cdc.originTable());
+            item.put("engineTable", cdc.engineTable());
+            item.put("ddl", cdc.ddl());
+            cdcTables.add(item);
+        }
+        payload.put("cdcTables", cdcTables);
+        payload.put("mvDdl", plan.mvDdl());
+        return JSON.toJSONString(payload);
+    }
+
+    /** 把引擎 DDL JSON 持久化到物化副本行 viewConstruct；副本行不存在时按 enable 逻辑创建（预览阶段未启用也落库） */
+    private void persistDdlToViewConstruct(MaterializedViewEngine engine,
+                                           String engineConnectId,
+                                           String viewName,
+                                           String ddlJson) {
+        TableView materializedView = findAnyMaterializedView(viewName);
+        String mode;
+        if (materializedView == null) {
+            TableView originView = requireOriginView(viewName);
+            materializedView = new TableView();
+            materializedView.setAppId(originView.getAppId());
+            materializedView.setTenantCode(originView.getTenantCode());
+            materializedView.setEntityName(originView.getEntityName());
+            materializedView.setTitle(originView.getTitle());
+            materializedView.setSeqNo(originView.getSeqNo());
+            materializedView.setLinked(0);
+            mode = "created";
+        } else {
+            mode = "updated";
+        }
+        if ("created".equals(mode)) {
+            materializedView.setDelStatus(cn.geelato.core.enums.DeleteStatusEnum.NO.getValue());
+            materializedView.setDeleteAt(null);
+            materializedView.setViewColumn("[]");
+        }
+        materializedView.setConnectId(engineConnectId);
+        materializedView.setViewName(viewName);
+        materializedView.setViewType(ViewTypeEnum.MATERIALIZED.getCode());
+        materializedView.setViewConstruct(ddlJson);
+        // 更新已有行时不动 viewColumn：保留 syncMaterializedRow 同步的列元数据（清空会导致实体查询报过滤字段不存在）
+        materializedView.setEnableStatus(EnableStatusEnum.ENABLED.getValue());
+        materializedView.afterSet();
+        if ("created".equals(mode)) {
+            devViewService.createModel(materializedView);
+        } else {
+            devViewService.updateModel(materializedView);
+        }
+        refreshMetaAndCache(viewName);
+        log.info("[MV-DDL] 引擎 DDL 已落库：view={}, engine={}, 副本行={}, id={}",
+                viewName, engine.engineType(), mode, materializedView.getId());
+    }
+
+    /** 读取并校验 originSql：为空或误传物化行存储的引擎 DDL JSON 时，回退为同名原视图行的定义 SQL */
+    private String requireOriginSql(Map<String, Object> params, String viewName) {
+        String originSql = str(params, "originSql");
+        if (StringUtils.isNotBlank(originSql)) {
+            String trimmed = originSql.trim();
+            if (!trimmed.startsWith("{") && !trimmed.contains("\"kind\"")) {
+                return originSql;
+            }
+        }
+        // 前端兼容：物化行 view_construct 已改存引擎 DDL JSON，误传时回退为原视图行定义 SQL
+        TableView originView = requireOriginView(viewName);
+        String fallback = originView.getViewConstruct();
+        if (StringUtils.isBlank(fallback)) {
+            throw new IllegalArgumentException("originSql 不能为空（以源库表名书写的 SELECT 定义），且原视图定义 SQL 为空");
+        }
+        return fallback;
+    }
+
     /** 校验不通过时按「哪一步 / 哪一项 / 怎么改」列出 */
     private String describeValidationFailure(MaterializedViewEngine.DdlValidation validation) {
         StringBuilder builder = new StringBuilder();
@@ -679,6 +825,104 @@ public class MaterializedViewService extends BaseService {
             }
         }
         return builder.toString();
+    }
+
+    /**
+     * 平台默认字段（column_default.json）列名集合，小写、去重；唯一事实来源为 MetaManager 默认列。
+     */
+    static Set<String> requiredColumnNames() {
+        Set<String> names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        List<ColumnMeta> defaults = MetaManager.singleInstance().getDefaultColumn();
+        if (defaults != null) {
+            for (ColumnMeta meta : defaults) {
+                if (StringUtils.isNotBlank(meta.getName())) {
+                    names.add(meta.getName().toLowerCase(Locale.ROOT));
+                }
+            }
+        }
+        return names;
+    }
+
+    /**
+     * 计算实际列名清单中缺失的平台默认字段（大小写不敏感）。
+     */
+    static List<String> missingRequiredColumns(Collection<String> actualColumns) {
+        Set<String> actual = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        if (actualColumns != null) {
+            for (String name : actualColumns) {
+                if (StringUtils.isNotBlank(name)) {
+                    actual.add(name.toLowerCase(Locale.ROOT));
+                }
+            }
+        }
+        List<String> missing = new ArrayList<>();
+        for (String required : requiredColumnNames()) {
+            if (!actual.contains(required)) {
+                missing.add(required);
+            }
+        }
+        return missing;
+    }
+
+    /**
+     * 平台默认字段强制校验：用探测查询（SELECT * FROM (mvBody) LIMIT 0）读取定义 SQL 的真实输出列，
+     * 与必含字段集比对。需要 CDC 摄取表已存在；探测失败视为不通过。
+     */
+    private MaterializedViewEngine.CheckResult defaultColumnCheck(MaterializedViewEngine engine,
+                                                                  String engineConnectId,
+                                                                  String mvBody) {
+        List<String> actual;
+        try {
+            actual = engine.probeOutputColumns(engineConnectId, mvBody);
+        } catch (Exception e) {
+            return new MaterializedViewEngine.CheckResult(DEFAULT_COLUMN_CHECK_ITEM, false,
+                    "无法探测物化视图输出列：" + e.getMessage());
+        }
+        List<String> missing = missingRequiredColumns(actual);
+        if (missing.isEmpty()) {
+            return new MaterializedViewEngine.CheckResult(DEFAULT_COLUMN_CHECK_ITEM, true,
+                    String.format("物化视图输出列包含全部 %d 项平台默认字段（id、tenant_code、creator 等）",
+                            requiredColumnNames().size()));
+        }
+        return new MaterializedViewEngine.CheckResult(DEFAULT_COLUMN_CHECK_ITEM, false,
+                "物化视图输出列缺少平台默认字段 " + missing
+                        + "；MQL 无法对该视图做租户隔离/数据权限过滤注入，请调整定义 SELECT 的输出列"
+                        + "（建议直接输出包含默认字段的列，或使用 SELECT *）");
+    }
+
+    /**
+     * 把平台默认字段校验项并入 DDL 分段校验结果（key=mv 的 StepCheck 追加 CheckResult，passed 重算）。
+     * CDC 摄取表尚未创建时探测不可行，追加非阻断提示项（第③步执行前会强制校验）。
+     */
+    private MaterializedViewEngine.DdlValidation withDefaultColumnCheck(DdlContext context,
+                                                                        MaterializedViewEngine.DdlValidation validation) {
+        boolean cdcReady = false;
+        try {
+            cdcReady = !context.plannedMapping().isEmpty() && context.plannedMapping().values().stream()
+                    .allMatch(t -> context.engine().relationExists(context.spec().engineConnectId(), t));
+        } catch (Exception e) {
+            log.debug("[MV-DDL] 检查 CDC 表是否存在失败，默认字段校验推迟：{}", e.getMessage());
+        }
+        MaterializedViewEngine.CheckResult item = cdcReady
+                ? defaultColumnCheck(context.engine(), context.spec().engineConnectId(), validation.normalized().mvBody())
+                : new MaterializedViewEngine.CheckResult(DEFAULT_COLUMN_CHECK_ITEM, true,
+                "CDC 摄取表尚未创建，默认字段校验将在第③步（mv）执行前强制进行");
+        List<MaterializedViewEngine.StepCheck> checks = new ArrayList<>();
+        boolean passed = validation.passed();
+        for (MaterializedViewEngine.StepCheck check : validation.checks()) {
+            if ("mv".equals(check.key())) {
+                List<MaterializedViewEngine.CheckResult> items = new ArrayList<>(check.items());
+                items.add(item);
+                boolean stepPassed = items.stream().allMatch(MaterializedViewEngine.CheckResult::passed);
+                checks.add(new MaterializedViewEngine.StepCheck(check.key(), stepPassed, check.level(), items));
+                if (!stepPassed) {
+                    passed = false;
+                }
+            } else {
+                checks.add(check);
+            }
+        }
+        return new MaterializedViewEngine.DdlValidation(passed, validation.normalized(), checks);
     }
 
     private Map<String, Object> toMap(Object raw) {
@@ -742,8 +986,8 @@ public class MaterializedViewService extends BaseService {
                 }
             }
         } catch (SQLException e) {
-            throw new IllegalStateException(String.format("查询物化视图 %s 失败：%s；执行SQL：%s",
-                    viewName, e.getMessage(), sql), e);
+            throw new IllegalStateException(String.format("查询物化视图 %s 失败：%s",
+                    viewName, e.getMessage()), e);
         }
         MaterializedViewEngine.ViewStatus status = engine.viewStatus(engineConnectId, null, viewName);
         log.info("[MV] 检查查询完成：view={}, 行数={}, 列数={}, 状态={}, 耗时={}ms",
@@ -798,12 +1042,53 @@ public class MaterializedViewService extends BaseService {
 
     public Map<String, Object> refreshMeta(Map<String, Object> params) {
         String viewName = normalizeViewName(str(params, "viewName"));
+        // 兜底：副本行列元数据缺失（历史操作被清成 [] / 初始化未成功过）但引擎内视图已存在时，重新内省列并回写
+        int syncedColumns = syncColumnsIfMissing(viewName);
         refreshMetaAndCache(viewName);
-        log.info("[MV] 手动刷新元数据：view={}（元数据已重载，数据源路由缓存已清空）", viewName);
+        log.info("[MV] 手动刷新元数据：view={}（元数据已重载，数据源路由缓存已清空，补同步列={}）", viewName, syncedColumns);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("viewName", viewName);
         result.put("refreshed", true);
+        result.put("syncedColumns", syncedColumns);
         return result;
+    }
+
+    /**
+     * 物化副本行 viewColumn 缺失时（空 / "[]"），且引擎内物化视图已存在，则内省列并回写副本行。
+     * 用于修复历史脏数据（viewColumn 被清空）而无需重新初始化；返回内省到的列数（未触发返回 -1）。
+     */
+    private int syncColumnsIfMissing(String viewName) {
+        TableView materializedView = findAnyMaterializedView(viewName);
+        if (materializedView == null) {
+            return -1;
+        }
+        String viewColumn = materializedView.getViewColumn();
+        if (viewColumn != null && !viewColumn.isBlank() && !"[]".equals(viewColumn.trim())) {
+            return -1;
+        }
+        String engineConnectId = materializedView.getConnectId();
+        if (StringUtils.isBlank(engineConnectId)) {
+            return -1;
+        }
+        ConnectMeta engineConnect = requireConnect(engineConnectId, "engineConnectId");
+        MaterializedViewEngine engine = resolveEngine(engineConnect);
+        if (!engine.relationExists(engineConnectId, viewName)) {
+            return -1;
+        }
+        List<MaterializedViewEngine.EngineColumn> columns = engine.introspectColumns(engineConnectId, null, viewName);
+        if (columns.isEmpty()) {
+            return -1;
+        }
+        List<String> missingColumns = missingRequiredColumns(columns.stream().map(MaterializedViewEngine.EngineColumn::name).toList());
+        if (!missingColumns.isEmpty()) {
+            log.warn("[MV] 列元数据补同步跳过：view={} 缺少平台默认字段 {}（请修正定义 SQL 后重新初始化）", viewName, missingColumns);
+            return -1;
+        }
+        // 列元数据与原视图行保持一致：原样继承原视图 viewColumn（含标题、引用/字典配置等）
+        materializedView.setViewColumn(requireOriginView(viewName).getViewColumn());
+        devViewService.updateModel(materializedView);
+        log.info("[MV] 列元数据补同步完成：view={}, 共 {} 列", viewName, columns.size());
+        return columns.size();
     }
 
     // ======================== 数据对比 ========================
@@ -949,16 +1234,39 @@ public class MaterializedViewService extends BaseService {
     }
 
     private boolean valueEquals(Object mysqlVal, Object rwVal) {
-        if (mysqlVal instanceof java.util.Date md && rwVal instanceof java.util.Date rd) {
-            return md.getTime() == rd.getTime();
+        // 时间/日期类型统一转为 epoch 毫秒比较，避免不同 JDBC 驱动返回类型不同（如 LocalDateTime vs Timestamp）
+        Object a = toEpochMillis(mysqlVal);
+        Object b = toEpochMillis(rwVal);
+        if (a instanceof Long ta && b instanceof Long tb) {
+            return ta.longValue() == tb.longValue();
         }
-        if (mysqlVal instanceof Number mn && rwVal instanceof Number rn) {
-            return new java.math.BigDecimal(mn.toString()).compareTo(new java.math.BigDecimal(rn.toString())) == 0;
+        if (a instanceof Number an && b instanceof Number bn) {
+            return new java.math.BigDecimal(an.toString()).compareTo(new java.math.BigDecimal(bn.toString())) == 0;
         }
-        if (mysqlVal instanceof Boolean mb && rwVal instanceof Boolean rb) {
-            return mb.equals(rb);
+        if (a instanceof Boolean ab && b instanceof Boolean bb) {
+            return ab.equals(bb);
         }
-        return normalizeString(mysqlVal).equals(normalizeString(rwVal));
+        // tinyint(1) 类列：MySQL 驱动返回 Boolean，RW 侧可能是数值
+        if (a instanceof Boolean abn && b instanceof Number bnn) {
+            return (abn ? 1 : 0) == bnn.intValue();
+        }
+        if (a instanceof Number ann && b instanceof Boolean bbn) {
+            return ann.intValue() == (bbn ? 1 : 0);
+        }
+        return normalizeString(a).equals(normalizeString(b));
+    }
+
+    /** 将时间/日期类型统一转换为 epoch 毫秒（本地时区），非时间类型原样返回 */
+    private Object toEpochMillis(Object v) {
+        if (v instanceof java.sql.Timestamp ts) return ts.getTime();
+        if (v instanceof java.util.Date d) return d.getTime();
+        if (v instanceof LocalDateTime ldt) return java.sql.Timestamp.valueOf(ldt).getTime();
+        if (v instanceof LocalDate ld) return java.sql.Timestamp.valueOf(ld.atStartOfDay()).getTime();
+        if (v instanceof LocalTime lt) return lt.toSecondOfDay() * 1000L;
+        if (v instanceof OffsetDateTime odt) return odt.toInstant().toEpochMilli();
+        if (v instanceof ZonedDateTime zdt) return zdt.toInstant().toEpochMilli();
+        if (v instanceof Instant i) return i.toEpochMilli();
+        return v;
     }
 
     private String normalizeString(Object val) {
@@ -1048,7 +1356,8 @@ public class MaterializedViewService extends BaseService {
     }
 
     private MaterializedViewEngine.SourceSpec buildSpec(String engineConnectId, ConnectMeta originConnect,
-                                                        String database, List<String> tables, String viewName) {
+                                                        String database, List<String> tables, String viewName,
+                                                        boolean snapshotEnabled) {
         return new MaterializedViewEngine.SourceSpec(
                 engineConnectId,
                 originConnect.getId(),
@@ -1059,32 +1368,17 @@ public class MaterializedViewService extends BaseService {
                 originConnect.getDbUserName(),
                 EncryptUtils.decrypt(originConnect.getDbPassword()),
                 sourceName(originConnect.getId(), database, viewName),
-                tables);
+                tables,
+                snapshotEnabled);
     }
 
-    private String buildViewColumnJson(List<MaterializedViewEngine.EngineColumn> columns, String viewName, String schema) {
-        List<Map<String, Object>> columnList = new ArrayList<>();
-        int ordinal = 1;
-        for (MaterializedViewEngine.EngineColumn column : columns) {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("field_name", column.name());
-            map.put("column_name", column.name());
-            map.put("title", StringUtils.isBlank(column.comment()) ? column.name() : column.comment());
-            map.put("table_name", viewName);
-            map.put("table_schema", schema);
-            map.put("data_type", column.typeName().toUpperCase(Locale.ROOT));
-            map.put("column_type", column.typeName());
-            map.put("is_nullable", String.valueOf(column.nullable()));
-            map.put("character_maxinum_length", (long) column.charMaxLength());
-            map.put("numeric_precision", column.numericPrecision());
-            map.put("numeric_scale", column.numericScale());
-            map.put("ordinal_position", column.ordinalPosition() > 0 ? column.ordinalPosition() : ordinal);
-            map.put("linked", 1);
-            map.put("enable_status", 1);
-            columnList.add(map);
-            ordinal++;
+    /** snapshot 开关：true（默认）= CDC 摄取表建立时执行初始快照回填；false = 跳过快照，靠 binlog 追平，避免大表回填压力 */
+    private boolean snapshotEnabledOf(Map<String, Object> params) {
+        Object value = params.get("snapshot");
+        if (value == null) {
+            return true;
         }
-        return JSON.toJSONString(columnList);
+        return Boolean.parseBoolean(String.valueOf(value));
     }
 
     private MaterializedViewEngine findEngine(ConnectMeta connect) {

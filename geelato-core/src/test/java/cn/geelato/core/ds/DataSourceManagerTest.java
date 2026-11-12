@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -65,6 +66,45 @@ public class DataSourceManagerTest {
         manager.setDefaultDataSourceKey("ds-test-mysql");
         assertEquals("ds-test-mysql", manager.getDefaultDataSourceKey());
         manager.setDefaultDataSourceKey(null);
+    }
+
+    @Test
+    public void getDataSourceDbTypeLazyLoadsMissingConnectFromDefinitionLoader() {
+        manager.setDefinitionLoader(new DataSourceDefinitionLoader() {
+            @Override
+            public List<Map<String, Object>> load(Dao dao) {
+                return List.of();
+            }
+
+            @Override
+            public Map<String, Object> loadOne(String key) {
+                return "ds-lazy-rw".equals(key) ? dbConnect("ds-lazy-rw", "risingwave") : null;
+            }
+        });
+        assertEquals("risingwave", manager.getDataSourceDbType("ds-lazy-rw"));
+    }
+
+    @Test
+    public void absentConnectIdLookupIsCachedAgainstDefinitionLoader() {
+        AtomicInteger loadOneCalls = new AtomicInteger();
+        manager.setDefinitionLoader(new DataSourceDefinitionLoader() {
+            @Override
+            public List<Map<String, Object>> load(Dao dao) {
+                return List.of();
+            }
+
+            @Override
+            public Map<String, Object> loadOne(String key) {
+                if (!"ds-lazy-absent".equals(key)) {
+                    return null;
+                }
+                loadOneCalls.incrementAndGet();
+                return null;
+            }
+        });
+        assertNull(manager.getDataSourceDbType("ds-lazy-absent"));
+        assertNull(manager.getDataSourceDbType("ds-lazy-absent"));
+        assertEquals(1, loadOneCalls.get());
     }
 
     private static Map<String, Object> dbConnect(String id, String dbType) {

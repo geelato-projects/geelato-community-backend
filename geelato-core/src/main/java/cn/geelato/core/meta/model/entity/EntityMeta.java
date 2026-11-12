@@ -211,7 +211,7 @@ public class EntityMeta {
     private SimpleFieldMeta getSimpleFiledMeta(FieldMeta fm) {
         SimpleFieldMeta meta = new SimpleFieldMeta();
         meta.setName(fm.getFieldName());
-        meta.setType(fm.getFieldType().getSimpleName());
+        meta.setType(fm.getFieldType() == null ? Object.class.getSimpleName() : fm.getFieldType().getSimpleName());
         meta.setTitle(fm.getColumnMeta().getTitle());
         meta.setComment(fm.getColumnMeta().getComment());
         meta.setNullable(fm.getColumnMeta().isNullable());

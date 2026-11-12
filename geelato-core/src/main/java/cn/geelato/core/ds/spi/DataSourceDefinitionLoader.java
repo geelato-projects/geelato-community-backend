@@ -11,4 +11,11 @@ import java.util.Map;
 public interface DataSourceDefinitionLoader {
 
     List<Map<String, Object>> load(Dao dao);
+
+    /**
+     * 运行期按 connectId 实时补载单条连接定义（快照 miss 时的自愈来源），未实现或不存在返回 null。
+     */
+    default Map<String, Object> loadOne(String key) {
+        return null;
+    }
 }

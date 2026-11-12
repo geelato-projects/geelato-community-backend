@@ -1,6 +1,7 @@
 package cn.geelato.core.sql.provider;
 
 import cn.geelato.core.ds.DataSourceManager;
+import cn.geelato.core.enums.Dialects;
 import cn.geelato.core.mql.TypeConverter;
 import cn.geelato.core.mql.command.BaseCommand;
 import cn.geelato.core.mql.execute.BoundSql;
@@ -556,7 +557,9 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         if (normalized.contains("oracle")) {
             return "oracle";
         }
-        return normalized;
+        // 引擎方言别名（如 risingwave→postgresql）按运行期注册表归一，未注册的保持原值
+        Dialects family = Dialects.lookUp(normalized);
+        return family != null ? family.getValue() : normalized;
     }
 
     public EntityMeta getEntityMeta(E command) {

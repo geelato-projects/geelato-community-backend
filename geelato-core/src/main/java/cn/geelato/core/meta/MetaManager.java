@@ -524,7 +524,7 @@ public class MetaManager extends AbstractManager {
     }
 
     static boolean isMaterializedViewType(String viewType) {
-        return viewType != null && ViewTypeEnum.MATERIALIZED.getCode().equalsIgnoreCase(viewType);
+        return ViewTypeEnum.MATERIALIZED.getCode().equalsIgnoreCase(viewType);
     }
 
     public EntityMeta getClassSourceEntity(String entityName) {

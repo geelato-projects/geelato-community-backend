@@ -41,7 +41,7 @@ public class TableView extends BaseSortableEntity implements EntityEnableAble {
     @Title(title = "视图语句")
     @Col(name = "view_construct")
     private String viewConstruct;
-    @Title(title = "视图语句")
+    @Title(title = "视图字段")
     @Col(name = "view_column")
     private String viewColumn;
     @Title(title = "补充描述")

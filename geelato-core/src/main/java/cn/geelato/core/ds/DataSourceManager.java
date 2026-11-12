@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -23,6 +24,9 @@ public class DataSourceManager extends AbstractManager {
     private final static ConcurrentHashMap<String, DataSource> dataSourceMap = new ConcurrentHashMap<>();
 
     private final static ConcurrentHashMap<String, Map<String, Object>> dataSourceConfigMap = new ConcurrentHashMap<>();
+
+    /** loadOne 确认不存在的 connectId，避免坏 id 反复打库 */
+    private final static Set<String> absentConnectIds = ConcurrentHashMap.newKeySet();
 
     @Setter
     private volatile String defaultDataSourceKey;
@@ -61,7 +65,7 @@ public class DataSourceManager extends AbstractManager {
     }
 
     public String getDataSourceDbType(String connectId) {
-        Map<String, Object> config = connectId == null ? null : dataSourceConfigMap.get(connectId);
+        Map<String, Object> config = resolveConfig(connectId);
         if (config == null) {
             return null;
         }
@@ -77,8 +81,35 @@ public class DataSourceManager extends AbstractManager {
      * @return 配置行副本，未登记返回 null
      */
     public Map<String, Object> getDataSourceConfig(String connectId) {
-        Map<String, Object> config = connectId == null ? null : dataSourceConfigMap.get(connectId);
+        Map<String, Object> config = resolveConfig(connectId);
         return config == null ? null : Map.copyOf(config);
+    }
+
+    /**
+     * 快照 miss 时经 definitionLoader.loadOne 实时补载（对齐 orm Registry 的运行期查库行为），
+     * 使运行期新建的连接（如物化视图引擎连接）对 dbType 解析立即可见。
+     */
+    private Map<String, Object> resolveConfig(String connectId) {
+        Map<String, Object> config = connectId == null ? null : dataSourceConfigMap.get(connectId);
+        if (config != null || connectId == null) {
+            return config;
+        }
+        DataSourceDefinitionLoader loader = definitionLoader;
+        if (loader == null || absentConnectIds.contains(connectId)) {
+            return null;
+        }
+        try {
+            Map<String, Object> row = loader.loadOne(connectId);
+            if (row == null) {
+                absentConnectIds.add(connectId);
+                return null;
+            }
+            dataSourceConfigMap.put(connectId, row);
+            return row;
+        } catch (Exception e) {
+            log.warn("lazy load db connect {} failed", connectId, e);
+            return null;
+        }
     }
 
     public void registerDataSource(String key, DataSource dataSource) {

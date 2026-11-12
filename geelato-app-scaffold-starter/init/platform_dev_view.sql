@@ -25,7 +25,7 @@ CREATE TABLE `platform_dev_view`  (
   `id` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '主键',
   `app_id` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
   `connect_id` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
-  `view_construct` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL,
+  `view_construct` mediumtext CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL,
   `view_column` json NULL COMMENT '视图字段',
   `description` varchar(1024) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
   `title` varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,

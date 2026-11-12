@@ -154,12 +154,15 @@ public class DevViewService extends BaseSortableService {
         sqlParams.put("delStatus", DeleteStatusEnum.IS.getValue());
         sqlParams.put("deleteAt", sdf.format(new Date()));
         sqlParams.put("connectId", connectMeta.getId());
-        // 数据库视图，切换数据库
-        switchDbByConnectId(connectMeta.getId());
-        String dbSql = dbGenerateDao.dbQueryViewsByName(connectMeta.getDbType(), model.getViewName());
-        // 修正字段、外键、视图
-        if (Strings.isNotBlank(dbSql)) {
-            dynamicDao.execute(connectMeta.getDbType() + "_replaceView", sqlParams);
+        // 物化视图由引擎（如 RisingWave）管理，viewConstruct 存的是引擎 DDL JSON，不做数据库视图替换
+        if (!ViewTypeEnum.MATERIALIZED.getCode().equals(model.getViewType())) {
+            // 数据库视图，切换数据库
+            switchDbByConnectId(connectMeta.getId());
+            String dbSql = dbGenerateDao.dbQueryViewsByName(connectMeta.getDbType(), model.getViewName());
+            // 修正字段、外键、视图
+            if (Strings.isNotBlank(dbSql)) {
+                dynamicDao.execute(connectMeta.getDbType() + "_replaceView", sqlParams);
+            }
         }
         // 删除关联的应用信息和权限信息
         dao.execute("upgradeMetaAfterDelView", sqlParams);

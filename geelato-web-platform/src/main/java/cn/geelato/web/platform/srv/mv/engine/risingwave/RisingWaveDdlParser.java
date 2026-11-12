@@ -63,7 +63,7 @@ public final class RisingWaveDdlParser {
 
     /** CREATE SOURCE 解析结果 */
     public record SourceDdl(String name, String connector, String hostname, String port,
-                            String username, String password, String databaseName) {
+                            String username, String password, String databaseName, String serverId) {
     }
 
     /** CDC 摄取表的一列 */
@@ -146,6 +146,17 @@ public final class RisingWaveDdlParser {
                 dbOk ? "database.name 与源库连接登记一致：" + parsed.databaseName()
                         : "database.name（" + parsed.databaseName() + "）与源库连接登记（" + expectedDatabase
                         + "）不一致：将以本 DDL 为准，并需与第②步 TABLE '库.表' 的库名保持一致"));
+        boolean serverIdOk = true;
+        String serverIdMessage;
+        if (isBlank(parsed.serverId())) {
+            serverIdMessage = "未指定 server.id：将随机会话 ID 建立复制通道，多 source 共存同一 MySQL 时可能冲突";
+        } else {
+            serverIdOk = parsed.serverId().trim().matches("^[1-9][0-9]*$");
+            serverIdMessage = serverIdOk
+                    ? "server.id=" + parsed.serverId().trim() + "（复制通道唯一标识，须全 MySQL 集群唯一）"
+                    : "server.id 必须为正整数（当前：" + parsed.serverId() + "）";
+        }
+        items.add(new CheckResult("source-server-id", serverIdOk, serverIdMessage));
         return items;
     }
 
@@ -350,7 +361,7 @@ public final class RisingWaveDdlParser {
         require(close > 0, "WITH 参数括号未闭合");
         Map<String, String> params = parseWithParams(s.substring(open + 1, close));
         return new SourceDdl(name.name(), params.get("connector"), params.get("hostname"), params.get("port"),
-                params.get("username"), params.get("password"), params.get("database.name"));
+                params.get("username"), params.get("password"), params.get("database.name"), params.get("server.id"));
     }
 
     public static CdcTableDdlParsed parseCdcTableDdl(String ddl) {
@@ -400,6 +411,18 @@ public final class RisingWaveDdlParser {
             }
         }
         String tail = s.substring(close + 1).trim();
+        // 可选 WITH ( ... )：如 snapshot 等摄取参数，位于列定义与 FROM 之间
+        Matcher withMatcher = Pattern.compile("^WITH\\s*\\(", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(tail);
+        if (withMatcher.find()) {
+            int withOpen = withMatcher.end() - 1;
+            int withClose = matchParen(tail, withOpen);
+            require(withClose > 0, "WITH 参数括号未闭合");
+            Map<String, String> withParams = parseWithParams(tail.substring(withOpen + 1, withClose));
+            String snapshot = withParams.get("snapshot");
+            require(snapshot == null || "true".equalsIgnoreCase(snapshot.trim()) || "false".equalsIgnoreCase(snapshot.trim()),
+                    "WITH 中 snapshot 取值必须为 true/false（当前：" + snapshot + "）");
+            tail = tail.substring(withClose + 1).trim();
+        }
         Matcher matcher = Pattern.compile(
                 "^FROM\\s+(\"[^\"]+\"|`[^`]+`|[A-Za-z0-9_$]+)\\s+TABLE\\s+'([^']*)'",
                 Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(tail);
@@ -409,7 +432,7 @@ public final class RisingWaveDdlParser {
         int dot = bound.lastIndexOf('.');
         String database = dot < 0 ? "" : bound.substring(0, dot);
         String table = dot < 0 ? bound : bound.substring(dot + 1);
-        return new CdcTableDdlParsed(table, columns, primaryKeys, source.name(), database, table);
+        return new CdcTableDdlParsed(tableIdent.name(), columns, primaryKeys, source.name(), database, table);
     }
 
     public static MvDdlParsed parseMvDdl(String ddl) {
@@ -421,6 +444,14 @@ public final class RisingWaveDdlParser {
         Ident name = readIdentifier(s, pos);
         require(name, "缺少物化视图标识符");
         pos = skipWhitespace(s, name.end());
+        // 可选 WITH ( ... )：如 source_rate_limit 等回填控制参数，位于视图名与 AS 之间
+        if (s.regionMatches(true, pos, "WITH", 0, "WITH".length()) && !isIdentifierPart(charAt(s, pos + "WITH".length()))) {
+            int open = s.indexOf('(', pos);
+            require(open > 0, "WITH 后缺少参数括号");
+            int close = matchParen(s, open);
+            require(close > 0, "WITH 参数括号未闭合");
+            pos = skipWhitespace(s, close + 1);
+        }
         require(s.regionMatches(true, pos, "AS", 0, 2) && !isIdentifierPart(charAt(s, pos + 2)),
                 "缺少 AS 查询体");
         String body = s.substring(pos + 2).trim();

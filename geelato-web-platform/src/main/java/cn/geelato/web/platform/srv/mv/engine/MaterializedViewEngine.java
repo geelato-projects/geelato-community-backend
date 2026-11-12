@@ -70,12 +70,19 @@ public interface MaterializedViewEngine {
     /** 语法预检：解析 SELECT 语句但不执行（RW 用 EXPLAIN），失败说明引擎不支持该 SQL 语法 */
     void validateQuery(String engineConnectId, String sql);
 
+    /**
+     * 试探查询的输出列名（零副作用）：执行 SELECT * FROM (sql) AS _mv_default_column_probe LIMIT 0，
+     * 读取结果集元数据返回输出列名。用于物化视图平台默认字段强制校验（创建前探测最终输出列）。
+     */
+    List<String> probeOutputColumns(String engineConnectId, String sql);
+
     /** 密码为解密后明文，仅用于引擎侧建通道 */
     record SourceSpec(String engineConnectId,
                       String originConnectId, String originDbType,
                       String originHost, int originPort,
                       String originDatabase, String originUserName, String originPassword,
-                      String sourceName, List<String> tables) {
+                      String sourceName, List<String> tables,
+                      boolean snapshotEnabled) {
     }
 
     record CheckResult(String item, boolean passed, String message) {

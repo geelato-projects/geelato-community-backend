@@ -234,6 +234,10 @@ public class MetaDdlService {
                     tableResult.put(viewMeta.getViewName(), "虚拟视图，无需创建");
                     continue;
                 }
+                if (ViewTypeEnum.MATERIALIZED.getCode().equals(viewMeta.getViewType())) {
+                    tableResult.put(viewMeta.getViewName(), "物化视图由引擎管理，无需创建数据库视图");
+                    continue;
+                }
                 Optional<ConnectMeta> connectMetaResult = connectMetas.stream().filter(c -> c.getId().equals(viewMeta.getConnectId())).findFirst();
                 if (connectMetaResult.isEmpty()) {
                     tableResult.put(viewMeta.getViewName(), "不存在可以关联的数据库链接");
@@ -284,6 +288,9 @@ public class MetaDdlService {
             Assert.notNull(viewMeta, "视图信息查询失败");
             if (ViewTypeEnum.VIRTUAL.getCode().equals(viewMeta.getViewType())) {
                 throw new RuntimeException("虚拟视图无需创建");
+            }
+            if (ViewTypeEnum.MATERIALIZED.getCode().equals(viewMeta.getViewType())) {
+                throw new RuntimeException("物化视图由引擎管理，无需创建数据库视图");
             }
             // 视图所属模型信息
             Map<String, Object> tableParams = new HashMap<>();

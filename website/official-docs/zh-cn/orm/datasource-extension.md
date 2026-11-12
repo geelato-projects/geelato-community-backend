@@ -35,7 +35,7 @@ sidebar_label: ORM / 数据源扩展
 
 ## 最短接入路径
 
-如果你正在新接一个宿主工程，建议按下面顺序做。
+新接入宿主工程时，建议按以下顺序执行。
 
 ### 第 1 步：先让宿主工程里存在 `Dao`
 
@@ -65,7 +65,7 @@ geelato.orm.dao-bean-name=myDao
 
 不是所有项目都需要动态数据源。
 
-只有当你存在下面这些需求时，才继续往下做：
+仅当存在以下需求时，才继续后续步骤：
 
 - 同一套服务代码要访问多个库
 - 某些查询/存储过程要按 key 切换到其他库
@@ -114,7 +114,7 @@ geelato.datasource.dynamic.*
   - `dynamicJdbcTemplate`
   - `dynamicDao`
 
-典型工程中，`primaryJdbcTemplate` 由 Starter 提供；如果你没有使用 Starter，也可以在业务工程里自行提供 `primaryJdbcTemplate`（例如基于 Spring Boot 的主数据源构建 `JdbcTemplate`），从而触发动态数据源自动装配。
+典型工程中，`primaryJdbcTemplate` 由 Starter 提供；未使用 Starter 时，也可在业务工程里自行提供 `primaryJdbcTemplate`（例如基于 Spring Boot 的主数据源构建 `JdbcTemplate`），从而触发动态数据源自动装配。
 
 默认重要属性包括：
 
@@ -158,7 +158,7 @@ List<Map<String, Object>> rows = MetaFactory.sql("select id, name from platform_
         .list();
 ```
 
-如果你的诉求只是“这条链路切源”，优先用这种方式，最直接。
+若诉求仅为“这条链路切源”，优先采用这种方式，最为直接。
 
 ### 方式 2：用 `@UseDynamicDataSource` 控制类、方法或字段
 
@@ -205,15 +205,15 @@ public class SyncService {
 }
 ```
 
-如果你希望某类方法整体使用同一数据源，或者希望注入 `dynamicDao` 体系，`@UseDynamicDataSource` 会比每条查询都写 `.useDataSource(...)` 更省事。
+若需某类方法整体使用同一数据源，或需注入 `dynamicDao` 体系，`@UseDynamicDataSource` 比每条查询都写 `.useDataSource(...)` 更简洁。
 
 ### 方式 3：让 ORM 默认绑定动态源的 `Dao`
 
-如果你的项目里大多数 ORM 操作都应落到动态源链路，无需任何配置：只要容器中存在 `dynamicDao`，ORM 会自动绑定它，Fluent DSL 默认就会走动态源能力（`useDataSource` 切库生效），而不是每次都手工指定。
+若业务工程中大多数 ORM 操作都应落到动态源链路，无需任何配置：只要容器中存在 `dynamicDao`，ORM 会自动绑定它，Fluent DSL 默认就会走动态源能力（`useDataSource` 切库生效），无需每次手工指定。
 
 ### 方式 4：用 `@Entity` 注解声明实体所属数据源
 
-前三种方式都是在“调用时”或“组件级”决定走哪个数据源。如果你希望一个实体的数据源归属是**固定的、写在实体声明里**的，就用 `@Entity` 注解来声明。
+前三种方式都是在“调用时”或“组件级”决定走哪个数据源。若需实体的数据源归属**固定、写在实体声明里**，则使用 `@Entity` 注解声明。
 
 它适合：
 
@@ -287,7 +287,7 @@ geelato:
 
 ## 为什么要抽象数据源来源
 
-和元数据来源（`MetaStore`）一样，动态数据源的**定义来源**也被抽象成了 SPI。理解它的设计动机，能帮你判断是否需要替换。
+和元数据来源（`MetaStore`）一样，动态数据源的**定义来源**也被抽象成了 SPI。理解其设计动机，有助于判断是否需要替换。
 
 ### 之前：数据源定义硬绑平台表
 
@@ -301,7 +301,7 @@ geelato:
 
 ### 设计决策：把“数据源从哪来”抽象成 SPI
 
-我们把加载逻辑抽象成 `DynamicDataSourceDefinitionLoader` SPI（位于 `geelato-orm` 的 `cn.geelato.datasource.spi` 包），“从平台表读”降级为默认实现 `PlatformDynamicDataSourceDefinitionLoader`（迁移到业务层 `geelato-web-platform`）。
+框架将加载逻辑抽象成 `DynamicDataSourceDefinitionLoader` SPI（位于 `geelato-orm` 的 `cn.geelato.datasource.spi` 包），“从平台表读”降级为默认实现 `PlatformDynamicDataSourceDefinitionLoader`（迁移到业务层 `geelato-web-platform`）。
 
 关键设计：`DynamicDataSourceRegistry` 对 loader 用 `@Nullable` 注入——**不提供任何 loader 时，框架只走 `primary` / `secondary`，仍可独立运行**。这与 `MetaStore` 的“可无 DB 运行”理念一致。
 
@@ -321,17 +321,17 @@ geelato:
 
 ## 如何覆盖动态数据源定义来源
 
-宿主工程只要提供自己的 `DynamicDataSourceDefinitionLoader`，就可以替换默认加载逻辑。
+宿主工程只需提供自定义的 `DynamicDataSourceDefinitionLoader`，即可替换默认加载逻辑。
 
 ### 让自定义实现生效：必须加 `@Primary`
 
-这与 [MetaStore 扩展](../reference/metastore-extension.md) 里的覆盖机制**完全同构**，也是最容易踩的坑：
+这与 [MetaStore 扩展](../reference/metastore-extension.md) 里的覆盖机制**完全同构**，也是最高频的误用点：
 
 - 默认 `PlatformDynamicDataSourceDefinitionLoader` 是 `@Component`，且**没有** `@Primary`；
 - `DynamicDataSourceRegistry` 的注入点是构造器参数 `@Nullable DynamicDataSourceDefinitionLoader definitionLoader`，**无 `@Qualifier`**；
 - 直接写 `@Component implements DynamicDataSourceDefinitionLoader` → 容器里两个候选 → 启动报 `NoUniqueBeanDefinitionException`。
 
-正确写法是在你的实现上加 `@Primary`：
+正确写法是在自定义实现上加 `@Primary`：
 
 ```java
 @Component
@@ -588,7 +588,7 @@ public void refresh(String key) {
 
 ### 不想替换 loader？直接注册已构建的 DataSource
 
-如果你只是想在代码里临时加一个数据源（例如基于 `application.properties` 配置、或从连接池工厂直接拿到一个 `DataSource`），可以绕过 loader，直接注册：
+若只需在代码里临时注册一个数据源（例如基于 `application.properties` 配置、或从连接池工厂直接获取 `DataSource`），可绕过 loader 直接注册：
 
 ```java
 dynamicDataSourceRegistry.registerDataSource("my-key", alreadyBuiltDataSource);
@@ -683,15 +683,15 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 
 ## 推荐的实操顺序
 
-如果你要在一个新项目里同时接 ORM、动态数据源和平台规则，推荐顺序是：
+若需在新项目中同时接入 ORM、动态数据源和平台规则，推荐顺序是：
 
-1. 先把 `primaryDao` 或其他基础 `Dao` 跑通
+1. 先验证 `primaryDao` 或其他基础 `Dao` 可用
 2. 再确认 ORM 自动绑定到了 `dynamicDao`（存在时必绑定；绑定 `primaryDao` 时切库不生效）
 3. 再启用动态数据源并验证 `.useDataSource(...)`
 4. 再视需要补 `@UseDynamicDataSource`
 5. 最后再实现查询过滤和字段填充 SPI
 
-这样做的好处是，一旦出问题，你能快速判断到底是：
+这样做的好处是，一旦出问题，可以快速定位究竟是：
 
 - `Dao` 没配好
 - 动态源没生效
@@ -700,7 +700,7 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 
 ## 一步一步排障
 
-如果你感觉“切源没生效”或“SPI 没生效”，建议按这个顺序查：
+若出现“切源未生效”或“SPI 未生效”，建议按以下顺序排查：
 
 1. 看容器里是否真的存在 `primaryDao` / `dynamicDao`
 2. 看 ORM 绑定的是否是 `dynamicDao`（未显式配置 `geelato.orm.dao-bean-name` 时应自动绑定它）

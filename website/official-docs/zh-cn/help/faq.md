@@ -54,7 +54,7 @@ sidebar_label: 常见问题
 
 详见 [脚手架快速启动指南](../guide/app-scaffold-starter-project-guide)。
 
-### Q7. `scanBasePackages` 有什么坑？
+### Q7. `scanBasePackages` 有哪些常见陷阱？
 
 `scanBasePackages` 必须同时包含 `cn.geelato` 与业务包：只写业务包会导致框架控制器与自动装配组件缺失；只写 `cn.geelato` 会导致业务实体、Controller、Service 不被扫描。此外，`geelato.meta.scan-package-names` 与 `geelato.graal.scan-package-names` 默认只扫描 `cn.geelato`，业务包未加入时 MQL 将无法识别业务实体。
 
@@ -88,7 +88,7 @@ JDBC 驱动由业务工程自行引入。动态数据源层（`DataSourceFactory
 
 详见 [插件机制概览](../plugin-mechanism/overview)、[插件加载、启停与卸载](../plugin-mechanism/lifecycle)。
 
-### Q12. 自定义 `MetaStore` 启动报 `NoUniqueBeanDefinitionException` 怎么办？
+### Q12. 自定义 `MetaStore` 启动报 `NoUniqueBeanDefinitionException` 该如何处理？
 
 需在自定义实现上加 `@Primary`（默认 `DefaultMetaStore` 是 `@Component` 但无 `@Primary`，注入点无 `@Qualifier`），并确保包被 `geelato.meta.scan-package-names` 覆盖。不要依赖 Bean 名称覆盖（`allow-bean-definition-overriding` 默认 `false`）。
 

@@ -30,7 +30,7 @@ MQL 的核心处理类为 `MetaController`，主要接口如下：
 - 典型用途包括：租户隔离、数据权限、组织维度过滤
 - 当前平台默认实现位于 `geelato-web-platform`
 
-如果你需要在宿主项目中替换或扩展这类规则，建议阅读：[查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)
+若需在宿主项目中替换或扩展这类规则，建议阅读：[查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)
 
 ## 查询语法
 
@@ -448,7 +448,7 @@ ORDER BY status ASC, createAt DESC
 - 当 `{orderType}` 缺失、为 `null` 或空串时，整段 `#...#` 会被移除
 - 参数按原值文本直接替换，不自动补单引号
 
-因此如果你传的是字符串值，需要自行保证模板和参数值都符合你的 SQL 预期。
+因此若传入字符串值，需自行保证模板与参数值均符合预期 SQL 语义。
 
 ## 保存语法
 

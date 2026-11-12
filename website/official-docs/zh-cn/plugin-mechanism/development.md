@@ -102,7 +102,7 @@ public interface Greeting extends PluginExtensionPoint {
 
 - `GreetingService`
 
-这样插件扩展实现类就可以直接使用：
+这样插件扩展实现类即可直接使用：
 
 - `@Autowired`
 
@@ -181,7 +181,7 @@ plugin.version=0.0.1
 
 - `cn.geelato:plugin-all`
 
-这是为了拿到：
+这一步的目的是获取：
 
 - 扩展点接口
 - 共享契约对象

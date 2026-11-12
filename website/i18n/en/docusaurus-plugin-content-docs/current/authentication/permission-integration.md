@@ -229,7 +229,7 @@ public class AuthCenterPermissionPuller {
 }
 ```
 
-> **Easier**: depend on `cn.geelato:geelato-auth-client` and skip the hand-written HTTP/token/unwrapping code above — the auto-configured `AuthCenterProvisioningClient` calls the provisioning API with a client_credentials machine token (`getPermissions(userId, mode)` / `getMenus(userId, mode)`), with optional TTL caching and `invalidate(userId)`; just configure `geelato.auth.client.base-url/client-id/client-secret`. Pass `mode=full` when you need mirror persistence (the payload then carries `id/type/audit timestamps` plus full `roles`/`menus`).
+> **Easier**: depend on `cn.geelato:geelato-auth-client` and skip the hand-written HTTP/token/unwrapping code above — the auto-configured `AuthCenterProvisioningClient` calls the provisioning API with a client_credentials machine token (`getPermissions(userId, mode)` / `getMenus(userId, mode)`), with optional TTL caching and `invalidate(userId)`; only `geelato.auth.client.base-url/client-id/client-secret` needs to be configured. Pass `mode=full` when you need mirror persistence (the payload then carries `id/type/audit timestamps` plus full `roles`/`menus`).
 
 ### Step 3: implement `FluentQueryFilterInjector` (data permission enforcement, the core)
 

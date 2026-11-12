@@ -87,7 +87,7 @@ sidebar_label: 动态数据源
 - 动态数据源定义由平台表统一维护
 - 路由 key 和平台连接定义主键 `id` 对齐
 
-如果你不想继续使用平台表作为事实来源，而是想改成配置中心、YAML、外部服务或别的注册中心，就不要修改默认实现，而是去看：
+若需将事实来源由平台表改为配置中心、YAML、外部服务或其他注册中心，不要修改默认实现，请参阅：
 
 - [ORM / 数据源扩展](../orm/datasource-extension.md)
 
@@ -147,7 +147,7 @@ sidebar_label: 动态数据源
 
 - 当前线程里先写入一个数据源 key
 - 路由数据源在执行时读取这个 key
-- 再拿到真实 `DataSource`
+- 再获取真实 `DataSource`
 
 如果当前 key 对应的数据源还没有真正创建，`DynamicRoutingDataSource` 会触发：
 
@@ -188,7 +188,7 @@ sidebar_label: 动态数据源
 3. 取出实体表元数据中的 `connectId`
 4. 判断该 key 在 `DynamicDataSourceRegistry` 中是否存在
 
-也就是说，当前最关键的映射关系其实是：
+也就是说，当前最关键的映射关系为：
 
 - `EntityMeta.tableMeta.connectId -> dynamic datasource key`
 
@@ -244,7 +244,7 @@ sidebar_label: 动态数据源
 - 非空 `List`（batchSave / multiSave / multiDelete 等，取首元素按同样规则识别）
 - 带 `@Entity` 注解的实体实例（insert / save / update）
 
-拿到实体名后，再调用：
+获取实体名后，再调用：
 
 - `EntityDataSourceResolver.resolveDataSource(entityName)`
 
@@ -353,7 +353,7 @@ geelato.datasource.dynamic.*
 
 ## 什么时候看扩展章节
 
-如果你只是想：
+若仅需：
 
 - 理解现有动态数据源怎么工作
 - 正常使用动态路由能力
@@ -361,7 +361,7 @@ geelato.datasource.dynamic.*
 
 这篇文档就够了。
 
-如果你想继续做下面这些事情，就应该跳到：
+若需进一步执行以下事项，请跳转至：
 
 - [ORM / 数据源扩展](../orm/datasource-extension.md)
 

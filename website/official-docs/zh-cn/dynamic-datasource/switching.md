@@ -30,7 +30,7 @@ ORM 运行时的 Dao 绑定规则（`OrmDaoResolver`，高 → 低）：
 3. `primaryDao`
 4. 唯一的 Dao Bean（多个且无标准名时报错，要求显式配置）
 
-典型工程（使用 Starter 且配置了 `spring.datasource.primary.jdbc-url`）中 `dynamicDao` 总会存在，ORM 自动绑定它，无需关心。**但如果你的代码绕过 ORM 直接注入了 `primaryDao`，切库对这批调用永远无效**——请注入 `dynamicDao`。
+典型工程（使用 Starter 且配置了 `spring.datasource.primary.jdbc-url`）中 `dynamicDao` 总会存在，ORM 自动绑定它，无需关心。**但若代码绕过 ORM 直接注入了 `primaryDao`，切库对这批调用永远无效**——请注入 `dynamicDao`。
 
 字段注入时配合 `@UseDynamicDataSource` 注解：
 

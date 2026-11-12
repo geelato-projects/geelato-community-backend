@@ -179,7 +179,7 @@ EventPublisher.publish(new OrderCreatedEvent(this, orderId, userId));
 
 但也要注意：
 
-- 如果一个事件需要多个完全独立的订阅者，就需要你进一步拆分事件职责，或扩展监听模型
+- 如果一个事件需要多个完全独立的订阅者，就需进一步拆分事件职责，或扩展监听模型
 
 ## 什么时候适合用事件总线
 
@@ -212,7 +212,7 @@ EventPublisher.publish(new OrderCreatedEvent(this, orderId, userId));
 
 ### 推荐模式
 
-例如你定义：
+例如定义了以下事件：
 
 - `OrderCreatedEvent`
 
@@ -263,7 +263,7 @@ public class OrderCreatedEvent extends BusinessEvent {
 - 事件总线是后端内部传播机制
 - SSE 是后端到前端的传输机制
 
-最好的做法通常不是让 Controller 直接写一堆 SSE 推送代码，而是：
+通常不应由 Controller 直接编写大量 SSE 推送代码，而是：
 
 - 先发布业务事件
 - 再在事件消费阶段决定是否转成 SSE

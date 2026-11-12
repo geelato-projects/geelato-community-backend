@@ -21,7 +21,7 @@ RisingWave is the first engine adapter of the materialized view acceleration fra
 ## Ingestion Model
 
 - **Two-stage (RW 3.0 API)**: ① `CREATE SOURCE {channel} WITH (connector='mysql-cdc', hostname, port, username, password, database.name)` — connection definition only, no table list (the 1.x table.name.list is deprecated, and the single-table CDC CREATE TABLE is disabled); ② per physical table `CREATE TABLE {channel}_{table} FROM {channel} TABLE '{db}.{table}'` (**FROM is followed directly by the source name, no SOURCE keyword**) — **the schema is derived automatically by the engine**, no column definitions or type mapping needed
-- Channel names `gl_{connection_id}_{database}_{view_name}` (one channel per view); each table attaches to the shared source independently, so **appending tables is naturally supported** (a table-list change just creates the missing tables)
+- Channel names `gl_{connection_id}_{database}_{view_name}` (one channel per view); each table attaches to the shared source independently, so **appending tables is naturally supported** (a table-list change only creates the missing tables)
 - Source tables must have a primary key (the CDC upsert key); the engine reports on creation otherwise (with context in the error)
 - Disable/drop: dropSource first drops the prefixed CDC tables, then the shared source
 - the `mysql-cdc` `server.name` takes the channel name, which is naturally unique

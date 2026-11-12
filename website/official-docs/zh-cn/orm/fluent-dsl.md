@@ -57,7 +57,7 @@ List<Map<String, Object>> users = MetaFactory.query(User.class)
 
 ## 接入与装配
 
-这一节把“依赖、Bean、元数据准备”串起来，确保你在独立 Spring Boot 工程里可以直接使用 Fluent DSL。
+这一节把“依赖、Bean、元数据准备”串起来，确保在独立 Spring Boot 工程中即可直接使用 Fluent DSL。
 
 对应示例工程：
 
@@ -118,7 +118,7 @@ List<Map<String, Object>> rows = MetaFactory.query("DevDbConnect")
         .list();
 ```
 
-当你的工程中存在名为 `primaryJdbcTemplate` 的 Bean 时，ORM 会自动装配动态数据源相关 Bean（`dynamicDataSource`、`dynamicJdbcTemplate`、`dynamicDao`），供框架内动态数据源链路使用。
+当业务工程中存在名为 `primaryJdbcTemplate` 的 Bean 时，ORM 会自动装配动态数据源相关 Bean（`dynamicDataSource`、`dynamicJdbcTemplate`、`dynamicDao`），供框架内动态数据源链路使用。
 
 ## 快速开始（从 0 到 CRUD）
 

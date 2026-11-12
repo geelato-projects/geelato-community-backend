@@ -138,7 +138,7 @@ sidebar_label: 文件上传
 
 - `UploadService.getSaveRootPath(root, fileName, isRename)`
 
-这意味着文件会直接落到你指定的根目录下，而不是默认的上传根目录结构。
+这意味着文件会直接写入指定的根目录下，而不是默认的上传根目录结构。
 
 ## 本地与 OSS 两种存储模式
 
@@ -277,7 +277,7 @@ OSS 模式下：
 - `GEELATO_OSS_BUCKETNAME`
 - `GEELATO_OSS_REGION`
 
-如果 OSS 未配置，而你又把 `serviceType` 指到 `aliyun`，`FileHandler` 会直接抛出明确错误，提示切回本地存储或补齐 OSS 配置。
+如果 OSS 未配置，而 `serviceType` 指向 `aliyun`，`FileHandler` 会直接抛出明确错误，提示切回本地存储或补齐 OSS 配置。
 
 ## 上传后的常见附件管理接口
 

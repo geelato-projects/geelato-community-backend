@@ -258,7 +258,7 @@ iframe.contentWindow?.postMessage(
 
 ### 登录成功后的正确处理
 
-前端拿到 `LOGIN_SUCCESS` 后，标准动作只有两步：
+前端接收到 `LOGIN_SUCCESS` 后，标准动作只有两步：
 
 1. 提取并保存 token
 2. 在后续请求中把 token 传给第三方应用自己的后端
@@ -347,7 +347,7 @@ Authorization: Bearer <token>
 
 ### 后端身份映射
 
-第三方应用后端拿到认证中心用户后，后续处理由第三方自己决定，常见方式包括：
+第三方应用后端获取认证中心用户后，后续处理由第三方自行决定，常见方式包括：
 
 - 直接把认证中心用户当作当前用户
 - 根据认证中心 `loginId` 映射本系统账户
@@ -371,7 +371,7 @@ event.origin === liteSsoOrigin
 
 ### 不要只信前端 `user`
 
-前端从 `LOGIN_SUCCESS` 拿到的 `user` 只能作为辅助显示信息。
+前端从 `LOGIN_SUCCESS` 获取的 `user` 只能作为辅助显示信息。
 
 最终可信身份必须以后端调用认证中心确认结果为准。
 
@@ -511,7 +511,7 @@ iframe.contentWindow?.postMessage(
 
 如果不做来源校验，任意页面都可能伪造语言切换消息，造成集成行为不可控。即使这类消息不直接携带敏感凭证，也应保持与登录消息同一套安全要求。
 
-### 为什么不能只信前端拿到的 token 和 user
+### 为什么不能只信任前端获取的 token 和 user
 
 因为：
 

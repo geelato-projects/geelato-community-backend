@@ -9,7 +9,7 @@ sidebar_label: OAuth2 业务系统接入
 
 本文档介绍接入的前提条件、交互时序，以及获取 Token 与用户数据的核心步骤。
 
-> 如果您的场景**没有用户参与**（服务端之间的集成、定时任务、调用开放 API），无需走 OAuth2 重定向流程，请直接阅读 [机器对机器接入（client_credentials）](client-credentials-integration.md)，使用 `client_id` + `client_secret` 获取机器令牌。
+> 若场景**没有用户参与**（服务端之间的集成、定时任务、调用开放 API），无需走 OAuth2 重定向流程，请直接阅读 [机器对机器接入（client_credentials）](client-credentials-integration.md)，使用 `client_id` + `client_secret` 获取机器令牌。
 
 ## 接入前提：申请应用凭证
 
@@ -90,7 +90,7 @@ sequenceDiagram
 
 ### 第三步：获取用户数据并建立本地会话
 
-拿到 `access_token` 后，业务系统后端需调用用户信息接口获取当前登录用户的真实身份。
+获取 `access_token` 后，业务系统后端需调用用户信息接口获取当前登录用户的真实身份。
 
 **请求方式**：`GET`
 **请求地址**：`https://<auth-host>/oauth2/userinfo`
@@ -118,10 +118,10 @@ sequenceDiagram
 
 ## 常见问题
 
-- **`client_secret` 不慎泄露了怎么办？**
+- **`client_secret` 不慎泄露如何处理？**
   必须立即联系统一认证中心管理员重置秘钥，否则恶意第三方可能伪造应用骗取用户 Token。
 
-- **Token 过期了怎么办？**
+- **Token 过期如何处理？**
   如果授权时下发了 `refresh_token`，可通过调用 `/oauth2/token`（将 `grant_type` 设为 `refresh_token`）接口在服务端刷新；如果未提供刷新 Token 或刷新失败，则需清理本地会话并要求用户重新登录。
 
 - **可以直接在前端 AJAX 调用 `/oauth2/token` 吗？**

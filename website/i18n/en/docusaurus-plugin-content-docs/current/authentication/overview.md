@@ -20,7 +20,7 @@ The Auth Center provides three integration methods. External business systems ca
 | **Integration Complexity** | **Very Low**. Primarily frontend integration. The business backend only needs an interceptor to validate the Bearer token. | **Medium**. Requires the business backend to support a complete OAuth2 client protocol stack. | **Very Low**. A single HTTP call to obtain a token. |
 | **Use Cases** | 1. Modern frontend-backend separated architectures (Vue/React, etc.)<br/>2. Wanting to pop up a login box directly within the business system (without leaving the page)<br/>3. Pure frontend SPA applications | 1. **Any application with an independent backend**<br/>2. Strict security requirements where tokens must never be exposed to the browser<br/>3. Existing external systems with built-in standard OAuth2 Client modules | 1. Server-to-server integration and scheduled jobs without user participation<br/>2. Integrators self-managing roles/users/permissions via the Open API (`/api/open/v1/**`) |
 | **Token Identity** | Logged-in user | Logged-in user | The application itself (`client_id`), representing no user |
-| **How to Integrate** | 👉 [Read the lite-login Integration Guide](lite-login-integration.md) | 👉 [Read the Standard OAuth2 Integration Guide](oauth2-integration.md) | 👉 [Read the Machine-to-Machine Integration Guide](client-credentials-integration.md) |
+| **How to Integrate** | [Read the lite-login Integration Guide](lite-login-integration.md) | [Read the Standard OAuth2 Integration Guide](oauth2-integration.md) | [Read the Machine-to-Machine Integration Guide](client-credentials-integration.md) |
 
 ## What Unified Authentication Solves
 
@@ -31,7 +31,7 @@ The main goal is to decouple authentication from each business system's own sess
 - The business system frontend (third-party application) receives the token and passes it to its own backend business service.
 - The business system backend confirms the real user identity against the independent authentication center using the token.
 
-With this model, whenever a new portal, SaaS application, or customer-owned system is added, there is no need for each system to repeat a "username + password" login flow. It can simply delegate this to the independent authentication center service.
+With this model, whenever a new portal, SaaS application, or customer-owned system is added, there is no need for each system to repeat a "username + password" login flow. It can delegate this entirely to the independent authentication center service.
 
 ## Core Components
 

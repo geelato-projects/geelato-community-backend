@@ -17,7 +17,7 @@ sidebar_label: MetaStore 扩展
 
 ### 之前：框架层与平台表强耦合
 
-早期版本里，元数据来源是**硬写死**的——`DefaultMetaStore` 直接用 SQL 查询平台设计器的五张表（`platform_dev_table` / `platform_dev_column` / `platform_dev_view` / `platform_dev_table_check` / `platform_dev_table_foreign`），拿到行数据后交给 `MetaReflex` 解析成 `EntityMeta`。
+早期版本里，元数据来源是**硬写死**的——`DefaultMetaStore` 直接用 SQL 查询平台设计器的五张表（`platform_dev_table` / `platform_dev_column` / `platform_dev_view` / `platform_dev_table_check` / `platform_dev_table_foreign`），获取行数据后交给 `MetaReflex` 解析成 `EntityMeta`。
 
 这在"使用平台设计器"的场景下工作得很好，但带来三个真实痛点：
 
@@ -29,7 +29,7 @@ sidebar_label: MetaStore 扩展
 
 ### 设计决策：把"来源"抽象成 SPI，平台表降级为实现之一
 
-我们把"元数据从哪来"这件事从框架层剥离出来，抽象成 `MetaStore` SPI（位于 `geelato-core` 的 `cn.geelato.core.meta.spi` 包）；而"从平台表读"只降级为**众多实现里的一个**——`DefaultMetaStore` 迁移到业务层 `geelato-web-platform`（为兼容现有 import，保留了原 package `cn.geelato.core.meta.support`）。
+框架将“元数据从哪来”从框架层剥离，抽象成 `MetaStore` SPI（位于 `geelato-core` 的 `cn.geelato.core.meta.spi` 包）；而“从平台表读”只降级为**众多实现里的一个**——`DefaultMetaStore` 迁移到业务层 `geelato-web-platform`（为兼容现有 import，保留了原 package `cn.geelato.core.meta.support`）。
 
 ```
 改造前                          改造后
@@ -44,7 +44,7 @@ sidebar_label: MetaStore 扩展
                               └─────────────┘
 ```
 
-这样一来，框架层（`geelato-core`）不再依赖任何具体表结构，`MetaManager` 只通过 `MetaStore` 接口拿到 `MetaDefinitionBundle`，至于这些数据是从数据库、文件、还是远程服务来的，框架**不关心**。
+这样一来，框架层（`geelato-core`）不再依赖任何具体表结构，`MetaManager` 只通过 `MetaStore` 接口获取 `MetaDefinitionBundle`，至于这些数据来源于数据库、文件还是远程服务，框架**不关心**。
 
 ### 为什么是 Spring 风格 SPI，而不是 JDK ServiceLoader
 
@@ -55,7 +55,7 @@ sidebar_label: MetaStore 扩展
 - 能注入依赖：实现类可以通过构造器注入 `Dao`、`RestClient`、配置属性等，而非 ServiceLoader 那样只能无参实例化。
 
 :::note
-全代码库中**不存在** `META-INF/services` 目录，也**没有** `java.util.ServiceLoader` 调用。如果你按 JDK SPI 的习惯去建注册文件，不会生效。
+全代码库中**不存在** `META-INF/services` 目录，也**没有** `java.util.ServiceLoader` 调用。若按 JDK SPI 的习惯创建注册文件，不会生效。
 :::
 
 ---
@@ -66,9 +66,9 @@ sidebar_label: MetaStore 扩展
 
 1. **零改框架**：实现 `MetaStore` 接口 + `@Component @Primary`，整条来源链路被替换，不动框架一行代码，后续平滑升级框架。
 2. **不必建平台表**：最小接入可用 JSON 文件或内存定义起步，等需要可视化设计时再升级到平台表，**按需付费**而非一次性投入。
-3. **来源由你定**：文件 / 配置中心 / 外部元数据 API / 任意存储，只要能组装出 `MetaDefinitionBundle`，框架全盘接收。
+3. **来源自定义**：文件 / 配置中心 / 外部元数据 API / 任意存储，只要能组装出 `MetaDefinitionBundle`，框架全盘接收。
 4. **能力全继承**：换来源后，`MetaManager` 的包扫描、缓存、冲突检测、实体→数据源路由，以及下游的 ORM / MQL / 字段自动填充等能力**全部自动复用**，无需重写。
-5. **可与默认实现并存**：支持灰度迁移——`catalog=platform` 的平台实体仍以 Java 类为准，业务实体走你的自定义来源，互不干扰。
+5. **可与默认实现并存**：支持灰度迁移——`catalog=platform` 的平台实体仍以 Java 类为准，业务实体走自定义来源，互不干扰。
 
 ---
 
@@ -120,7 +120,7 @@ sidebar_label: MetaStore 扩展
 
 ## 六、让自定义实现生效：必须加 `@Primary`
 
-这是替换默认实现时**最容易踩的坑**，务必看懂。
+这是替换默认实现时**最高频的误用点**，务必理解。
 
 `DefaultMetaStore` 是 `@Component`，且**没有** `@Primary`；而装配端 `MetaConfiguration` 的注入点是：
 
@@ -129,13 +129,13 @@ sidebar_label: MetaStore 扩展
 private MetaStore metaStore;   // 无 @Qualifier
 ```
 
-如果你直接写一个 `@Component implements MetaStore`，容器里就会出现**两个** `MetaStore` 类型的 Bean（`defaultMetaStore` + 你的）。此时：
+若直接编写一个 `@Component implements MetaStore`，容器里就会出现**两个** `MetaStore` 类型的 Bean（`defaultMetaStore` + 自定义实现）。此时：
 
 - `required = false` **只允许零个 Bean**（注入 null），**不能容忍多个 Bean**；
 - 注入点没有 `@Qualifier`，两个实现都没标 `@Primary`；
 - Spring 无法裁决 → 启动直接报 `NoUniqueBeanDefinitionException`。
 
-### 正确写法：在你的实现上加 `@Primary`
+### 正确写法：在自定义实现上加 `@Primary`
 
 ```java
 @Component
@@ -148,7 +148,7 @@ public class MyMetaStore implements MetaStore {
 这是最简洁、最可靠的方式——不需要排除默认 Bean、不需要改框架代码、不依赖任何隐式规则。框架自身在覆盖其他 SPI 时也用同样的手法。
 
 :::warning
-**不要**靠"Bean 同名覆盖"来替换默认实现。Spring Boot 2.1+ 默认 `spring.main.allow-bean-definition-overriding=false`，把你的 Bean 命名成 `defaultMetaStore` 会抛 `BeanDefinitionOverrideException`。开启该全局开关有副作用，不推荐。
+**不要**靠"Bean 同名覆盖"来替换默认实现。Spring Boot 2.1+ 默认 `spring.main.allow-bean-definition-overriding=false`，将自定义 Bean 命名为 `defaultMetaStore` 会抛 `BeanDefinitionOverrideException`。开启该全局开关有副作用，不推荐。
 :::
 
 ---
@@ -485,7 +485,7 @@ public class HttpApiMetaStore implements MetaStore {
 ## 十二、注意事项
 
 - **是 Spring 风格 SPI**，不是 JDK `ServiceLoader`，无需写 `META-INF/services` 文件。
-- **包扫描要覆盖到你的实现类**：默认 `@ComponentScan` 扫描 `cn.geelato`，配置项为 `geelato.meta.scan-package-names`。如果你的实现放在 `com.acme` 下，需把该包加入扫描范围。
+- **包扫描要覆盖到自定义实现类**：默认 `@ComponentScan` 扫描 `cn.geelato`，配置项为 `geelato.meta.scan-package-names`。若实现类位于 `com.acme` 下，需把该包加入扫描范围。
 - **`catalog=platform` 的实体有特殊规则**：不可通过 `refreshDBMeta` 刷新，且与 Java 类冲突时**恒以 Java 类为准**。自定义来源适合放业务实体，平台实体仍走 Java 注解。
 - **返回空 bundle 是安全的**：当 `MetaStore` 返回空时框架跳过 DB 元数据解析，因此框架可在无 DB 环境独立运行。
 
@@ -495,8 +495,8 @@ public class HttpApiMetaStore implements MetaStore {
 
 | 症状 | 原因 | 排查 |
 | --- | --- | --- |
-| 启动报 `NoUniqueBeanDefinitionException` | 容器里同时存在 `DefaultMetaStore` 和你的实现 | 在你的实现类上加 `@Primary` |
-| 自定义实现没生效，仍读平台表 | 你的包未被 `@ComponentScan` 覆盖 | 把实现类所在包加入 `geelato.meta.scan-package-names` |
+| 启动报 `NoUniqueBeanDefinitionException` | 容器里同时存在 `DefaultMetaStore` 和自定义实现 | 在自定义实现类上加 `@Primary` |
+| 自定义实现没生效，仍读平台表 | 实现类所在包未被 `@ComponentScan` 覆盖 | 把实现类所在包加入 `geelato.meta.scan-package-names` |
 | 启动报 `NullPointerException`（`entity_name`） | 某个表 Map 缺 `entity_name` | 检查每行 tableMap 都含 `entity_name` |
 | 启动报 `column list is empty` | `columnList` 为空 | 至少返回一个列定义 |
 | 实体字段类型不对 | `data_type` 写错或缺失 | 核对 `data_type` 取值（`bigint`/`varchar`/`decimal`/`datetime` 等） |

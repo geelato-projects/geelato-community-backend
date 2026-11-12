@@ -5,7 +5,7 @@ sidebar_label: 机器对机器接入
 
 # 机器对机器接入（client_credentials）
 
-如果您的场景**没有用户参与**——例如服务端之间的集成、定时任务、后台批处理，或者需要调用统一认证中心的**开放 API**（`/api/open/v1/**`）——无需走 OAuth2 重定向流程，可直接使用 `client_id` + `client_secret` 换取**机器令牌**（client_credentials 模式）。
+若场景**没有用户参与**——例如服务端之间的集成、定时任务、后台批处理，或者需要调用统一认证中心的**开放 API**（`/api/open/v1/**`）——无需走 OAuth2 重定向流程，可直接使用 `client_id` + `client_secret` 换取**机器令牌**（client_credentials 模式）。
 
 ## 适用场景
 
@@ -77,11 +77,11 @@ curl -H "Authorization: Bearer <access_token>" \
 - **为什么不能用 `/oauth2/token` 获取 client_credentials 令牌？**
   认证中心基于 sa-token 1.46+ 实现，`client_credentials` 是其内置的独立端点 `/oauth2/client_token`，标准 `/oauth2/token` 端点不支持该授权模式。
 
-- **令牌过期了怎么办？**
+- **令牌过期如何处理？**
   机器令牌不提供 refresh_token，过期后重新调用 `/oauth2/client_token` 获取即可。建议在代码中根据 `expires_in` 提前刷新并缓存令牌，而非每次请求都重新获取。
 
-- **`client_secret` 不慎泄露了怎么办？**
-  必须立即联系统一认证中心管理员重置秘钥。机器令牌代表调用方应用的身份，secret 泄露意味着第三方可以冒充您的应用调用开放 API。
+- **`client_secret` 不慎泄露如何处理？**
+  必须立即联系统一认证中心管理员重置秘钥。机器令牌代表调用方应用的身份，secret 泄露意味着第三方可以冒充该应用调用开放 API。
 
 - **机器令牌能当用户身份用吗？**
   不能。机器令牌的主体是 `client_id`（应用身份），仅用于开放 API 等机器对机器场景；需要识别具体登录用户的场景请使用 [OAuth2 授权码模式](oauth2-integration.md) 或 [lite-login 集成](lite-login-integration.md)。

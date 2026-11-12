@@ -41,7 +41,7 @@ The `clientId` / `systemCode` registered for push integration **reuse the `oauth
 | Field | Required | Description |
 | :--- | :--- | :--- |
 | `systemCode` | **Yes** | System code (unique), corresponds to Auth Server `oauth_client.system_code`. |
-| `systemName` | **Yes** | System name, for easy identification. |
+| `systemName` | **Yes** | System name, for straightforward identification. |
 | `clientId` | No | Auth Server clientId (referenced, no secret stored). |
 | `authType` | No | Auth method: `oauth_token` / `api_key` / `none`, default `none`. |
 | `authVerifyEnabled` | No | Whether to verify token on enqueue: `1` verify / `0` skip, default `0`. |

@@ -145,7 +145,7 @@ Rules:
 - if `{orderType}` is missing, `null`, or an empty string, the whole `#...#` fragment is removed
 - parameters are replaced using raw value text and are not automatically quoted
 
-So if you pass a string value, you should ensure the template and parameter content already match your intended SQL output.
+Therefore, if a string value is passed, ensure that the template and parameter content match the expected SQL semantics.
 
 ## Save Syntax
 

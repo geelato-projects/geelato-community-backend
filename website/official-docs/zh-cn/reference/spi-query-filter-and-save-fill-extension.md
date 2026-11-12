@@ -13,15 +13,15 @@ sidebar_label: 查询过滤与字段填充 SPI
 
 这两组能力的共同目标，是将"平台默认规则"从 `geelato-core / geelato-orm` 中抽离，改为通过 SPI 在上层工程中显式接入。
 
-## 先判断这篇适不适合你
+## 适用场景判断
 
-如果你的需求是下面这些，优先看本页：
+若需求属于以下情况，优先阅读本页：
 
 - 想让 MQL 或 Fluent DSL 查询自动带上租户、权限、组织隔离条件
 - 想让保存链路统一补齐审计字段、租户字段、组织字段
 - 想让不同宿主项目接入自己的平台规则
 
-如果你的需求是下面这些，本页不是首选：
+若需求属于以下情况，本页并非首选：
 
 - 只是某一个业务方法里临时拼接一个额外条件
 - 只是单条查询临时切数据源
@@ -32,9 +32,9 @@ sidebar_label: 查询过滤与字段填充 SPI
 - [ORM / 数据源扩展](../orm/datasource-extension.md)
 - [ORM 事件特性](../orm/event-features.md)
 
-## 先判断你要做的是哪一类扩展
+## 先判断目标扩展类型
 
-在动手前，建议先把场景分清楚：
+实施前，建议先明确场景：
 
 - 想影响查询：实现“查询过滤 SPI”
 - 想影响保存：实现“字段值填充 SPI”
@@ -56,11 +56,11 @@ sidebar_label: 查询过滤与字段填充 SPI
   - 承载平台默认实现
   - 承载默认业务规则
 
-因此如果你的项目要替换默认行为，推荐在业务宿主或平台层实现 SPI，而不是把规则重新写回底层模块。
+因此，若业务工程需替换默认行为，推荐在业务宿主或平台层实现 SPI，而不是把规则重新写回底层模块。
 
 ## 最短接入步骤
 
-如果你只是想快速接入一条平台规则，可以直接按下面 4 步做。
+若仅需快速接入一条平台规则，按以下 4 步执行即可。
 
 ### 第 1 步：先决定入口
 
@@ -88,7 +88,7 @@ sidebar_label: 查询过滤与字段填充 SPI
 
 ### 第 4 步：用真实查询或保存链路验证
 
-不要只看 Spring 启动成功。一定要实际触发一条查询或保存，确认你的规则真的进到了执行链路里。
+不要只看 Spring 启动成功。应实际触发一条查询或保存，确认规则已真正进入执行链路。
 
 ## 查询过滤 SPI
 
@@ -288,7 +288,7 @@ public class DemoMqlQueryFilterInjector implements MqlQueryFilterInjector {
 
     @Override
     public void inject(QueryCommand command) {
-        // 这里根据你的平台规则向 QueryCommand 注入过滤条件
+        // 根据平台规则向 QueryCommand 注入过滤条件
     }
 }
 ```
@@ -412,7 +412,7 @@ MetaFactory.query("platform_user")
 
 ## 推荐的实操顺序
 
-如果你要在一个新项目里接入 SPI 扩展，推荐顺序是：
+若需在新项目中接入 SPI 扩展，推荐顺序是：
 
 1. 先确定规则作用在哪条链路上
 2. 再选对 SPI 接口
@@ -420,20 +420,20 @@ MetaFactory.query("platform_user")
 4. 再确认同类 SPI 只有一个启用实现
 5. 最后用真实查询或保存链路验证
 
-这样做的好处是，一旦出问题，你能快速判断到底是：
+这样做的好处是，一旦出问题，可以快速定位究竟是：
 
 - SPI 选错了入口
 - Bean 没注册成功
 - `isEnabled()` 返回了 `false`
 - 同类实现注册了多个
-- 实际业务根本没有走到你以为的那条链路
+- 实际业务未走到预期的链路
 
 ## 一步一步排障
 
-如果你感觉“SPI 没生效”，建议按这个顺序排查：
+若出现“SPI 未生效”，建议按以下顺序排查：
 
 1. 先确认当前请求到底走的是 MQL、Fluent DSL，还是对象保存链路
-2. 再确认你实现的是否是对应入口的 SPI
+2. 再确认所实现的是否为对应入口的 SPI
 3. 再确认容器里是否只存在一个同类 SPI Bean
 4. 再确认 `isEnabled()` 是否返回 `true`
 5. 再通过真实查询或保存链路触发一次
@@ -460,7 +460,7 @@ MetaFactory.query("platform_user")
 
 `SaveDefaultValueFiller / DefaultSaveDefaultValueFiller` 当前仍保留在 `geelato-orm` 中，但它们已经降级为兼容层，不再是 `SaveCommandAdapter` 主链路的推荐扩展入口。
 
-如果你要扩展当前保存链路，优先使用：
+若需扩展当前保存链路，优先使用：
 
 - `MqlSaveFieldValueFiller`
 - `FluentSaveFieldValueFiller`

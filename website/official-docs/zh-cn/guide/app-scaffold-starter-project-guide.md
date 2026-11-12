@@ -414,7 +414,7 @@ curl -sS -X POST http://localhost:8088/api/user/login \
 
 失败排查：返回 `code=-2` 且 `msg=账号或密码不正确` → 先确认重置 SQL 已执行、口令输入无误，再确认请求体字段名是 `username`/`tenant`。
 
-拿到 `token` 后，后续接口统一携带：
+获取 `token` 后，后续接口统一携带：
 
 ```
 Authorization: JWTBearer {token}

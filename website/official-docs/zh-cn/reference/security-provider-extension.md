@@ -188,12 +188,12 @@ sidebar_label: 安全 Provider 扩展
 
 ### 方式一：直接替换 `OrgProvider` / `UserProvider`
 
-如果你已经有自己完整的组织和用户访问模型，最直接的方式就是在宿主工程里提供自己的：
+若已具备完整的组织和用户访问模型，最直接的方式是在宿主工程里提供自定义的：
 
 - `OrgProvider`
 - `UserProvider`
 
-因为默认装配是 `@ConditionalOnMissingBean`，所以你自己的 Bean 一旦存在，默认实现就不会再创建。
+因为默认装配是 `@ConditionalOnMissingBean`，所以自定义 Bean 一旦存在，默认实现就不会再创建。
 
 这适合：
 
@@ -203,12 +203,12 @@ sidebar_label: 安全 Provider 扩展
 
 ### 方式二：保留 Provider，替换 Loader
 
-如果你认可默认 Provider 的“快照 + 只读查询”模型，但不想用默认 JDBC 来源，则更推荐只替换：
+若认可默认 Provider 的“快照 + 只读查询”模型，但不想使用默认 JDBC 来源，则更推荐只替换：
 
 - `OrgSnapshotLoader`
 - `UserSnapshotLoader`
 
-这样你仍可复用：
+这样仍可复用：
 
 - `DefaultOrgProvider`
 - `DefaultUserProvider`
@@ -233,7 +233,7 @@ sidebar_label: 安全 Provider 扩展
 
 - `DefaultUserOrgInfoEnricher`
 
-如果你的用户快照本身不完整，或者组织归属需要额外推导，也可以只替换这一层，而不是整套 `UserProvider`。
+若用户快照本身不完整，或组织归属需要额外推导，也可以只替换这一层，而不是整套 `UserProvider`。
 
 ## 开发者应该实现哪些方法
 
@@ -245,7 +245,7 @@ sidebar_label: 安全 Provider 扩展
 - `getUserByExtendKey(String extendKey, String type)`
 - `refresh()`
 
-如果你返回的 `User` 已经带有：
+若返回的 `User` 已经带有：
 
 - `userRoles`
 - `userOrgs`
@@ -255,7 +255,7 @@ sidebar_label: 安全 Provider 扩展
 - `getUserRoles(...)`
 - `getUserOrgs(...)`
 
-就可以直接复用。
+即可直接复用。
 
 ### 自定义 `OrgProvider`
 
@@ -288,7 +288,7 @@ sidebar_label: 安全 Provider 扩展
 - `refreshOrg()`
 - `refreshUser()`
 
-因此当你扩展 Provider 或 Loader 时，`refresh()` 的语义要保持稳定：
+因此扩展 Provider 或 Loader 时，`refresh()` 的语义要保持稳定：
 
 - 能够重新加载最新快照
 - 不要把 `refresh()` 实现成有副作用的重事务流程
@@ -318,7 +318,7 @@ sidebar_label: 安全 Provider 扩展
 
 更推荐的顺序通常是：
 
-1. 先判断你要改的是“底层数据来源”还是“整个 Provider 行为”
+1. 先判断目标改动是“底层数据来源”还是“整个 Provider 行为”
 2. 如果只是来源变化，优先替换 `OrgSnapshotLoader` / `UserSnapshotLoader`
 3. 如果连快照模型都不适用，再直接替换 `OrgProvider` / `UserProvider`
 4. 保持 `refresh()`、组织补全和扩展键查询语义稳定

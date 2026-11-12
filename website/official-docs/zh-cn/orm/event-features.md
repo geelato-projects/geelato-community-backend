@@ -143,7 +143,7 @@ ORM 事件分为三大类，每类都分成 `Before`/`After` 两个时机：
 |---|---|---|
 | `dao` | `Dao` | 允许监听器复用当前 ORM 执行能力 |
 | `sessionCtx` | `SessionCtx` | 保存链路共享的会话级上下文 |
-| `entity` | `IdEntity` | 当入口来自实体保存时，可直接拿到实体对象 |
+| `entity` | `IdEntity` | 当入口来自实体保存时，可直接获取实体对象 |
 | `boundSql` | `BoundSql` | 可看到或修改本次最终执行的 SQL 与参数 |
 | `command` | `SaveCommand` | 实体名、值映射等 ORM 保存命令信息 |
 | `resultValueMap` | `Map` | 主保存完成后的结果值映射 |
@@ -490,7 +490,7 @@ public void register() {
 2. 看监听器是否已注册到对应 `EventManager`
 3. 看 `supports(...)` 是否返回 `true`
 4. 看 `enabled(...)` 是否返回 `true`
-5. 看逻辑是不是写在 `After`，而你却期待它阻断主流程
+5. 确认逻辑是否写在 `After`，而调用方却期待其阻断主流程
 6. 看是否出现重复注册，导致执行多次
 7. （事务感知 after）确认写操作经由 `Dao` 执行，且回调在事务提交后才触发
 

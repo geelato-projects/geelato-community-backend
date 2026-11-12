@@ -24,7 +24,7 @@ Geelato Framework provides two standard approaches to start a project. Whether y
 1. **If you are building a brand new backend system**:
    👉 **Strongly recommended: [App Scaffold Quickstart](app-scaffold-starter-project-guide.md)**. It saves you the time of building foundational modules so you can focus on business logic on day one.
    
-2. **If you are refactoring an old project, or just want to use a specific Geelato feature (like FluentDSL)**:
+2. **If you are refactoring an old project, or only want to use a specific Geelato feature (like FluentDSL)**:
    👉 **Choose [Minimal Integration](minimal-integration.md)**. This method won't force any platform tables into your database, nor will it hijack your login system.
 
 ---

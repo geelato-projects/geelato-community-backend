@@ -167,7 +167,7 @@ List<Map<String, Object>> users = MetaFactory.query("User")
 - 查询过滤 SPI：把租户、权限等平台级过滤规则注入查询链路
 - 字段填充 SPI：在保存链路自动补齐审计字段、租户字段等默认值
 
-#### ORM 事件怎么用
+#### ORM 事件的使用方式
 
 适合做：
 
@@ -178,7 +178,7 @@ List<Map<String, Object>> users = MetaFactory.query("User")
 
 对应文档见 [ORM 事件特性](event-features.md)。
 
-#### 动态数据源怎么用
+#### 动态数据源的使用方式
 
 适合做：
 
@@ -188,7 +188,7 @@ List<Map<String, Object>> users = MetaFactory.query("User")
 
 对应文档见 [ORM / 数据源扩展](datasource-extension.md) 和 [动态数据源](../dynamic-datasource/overview.md)。
 
-#### 注入扩展怎么用
+#### 注入扩展的使用方式
 
 适合做：
 

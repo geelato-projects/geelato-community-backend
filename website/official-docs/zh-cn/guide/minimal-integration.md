@@ -5,7 +5,7 @@ sidebar_label: 新项目最小接入
 
 # 新项目最小接入
 
-本页说明如何从零接入 Geelato Framework，在不引入平台重扩展的前提下跑通一个最小 Spring Boot Web 应用。
+本页说明如何从零接入 Geelato Framework，在不引入平台重扩展的前提下搭建并验证一个最小 Spring Boot Web 应用。
 
 ## 前置条件
 
@@ -45,11 +45,11 @@ mvn -B install -DskipTests -pl geelato-framework-bom,geelato-lang,geelato-utils,
 1. 引入 `geelato-framework-bom`
 2. 引入 `geelato-framework-starter`
 3. 参考 [`geelato-sample-quickstart`](https://github.com/geelato-projects/geelato-hello-example/tree/main/geelato-sample-quickstart) 搭建最小工程
-4. 跑通主库、`JdbcTemplate`、`Dao`、ORM 和一个示例接口
+4. 验证主库、`JdbcTemplate`、`Dao`、ORM 与示例接口连通
 5. 业务需要基础后台能力时，再切到 `geelato-app-scaffold`
 6. 再按需叠加 runtime、designer 或业务扩展模块
 
-## 5 分钟跑通
+## 5 分钟完成最小验证
 
 最快的验证方式是直接运行官方最小样例（H2 内存库，无外部依赖）：
 

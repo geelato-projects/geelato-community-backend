@@ -78,7 +78,7 @@ curl -H "Authorization: Bearer <access_token>" \
   The Auth Center is built on sa-token 1.46+, where `client_credentials` is a built-in dedicated endpoint `/oauth2/client_token`; the standard `/oauth2/token` endpoint does not support this grant type.
 
 - **What if the token expires?**
-  Machine tokens do not provide a refresh_token. Simply call `/oauth2/client_token` again. It is recommended to cache the token and refresh it ahead of expiry based on `expires_in`, rather than fetching a new one for every request.
+  Machine tokens do not provide a refresh_token. Call `/oauth2/client_token` again. It is recommended to cache the token and refresh it ahead of expiry based on `expires_in`, rather than fetching a new one for every request.
 
 - **What if `client_secret` is leaked?**
   Contact the Auth Center administrator immediately to reset the secret. A machine token represents the calling application's identity; a leaked secret allows a third party to impersonate your application on the Open API.

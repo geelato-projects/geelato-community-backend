@@ -60,7 +60,7 @@ public class DemoService {
 | 单例 | 无参构造器，或以**实例**注册 | 全引擎复用一个实例 | 无状态 kit |
 | scoped | 声明 `(KitContext)` 构造器（唯一 public 构造器参数恰为 KitContext），或经 `registerScoped` 工厂通道注册 | **每次执行实例化**，互不串扰 | 需要执行级上下文的 kit |
 
-scoped kit 经构造器拿到的 `KitContext` 是单次执行的上下文：`execId`、身份快照（`identity`）、注入变量（`bindings`，`$gl.ctx`/`$gl.parameter` 的数据源）、执行级属性袋（`attributes`）、行数计数器（`addRows`）、kit 调用留痕（`record`）以及宿主装配的 SPI（数据源、ORM 供给等）。
+scoped kit 经构造器获取的 `KitContext` 是单次执行的上下文：`execId`、身份快照（`identity`）、注入变量（`bindings`，`$gl.ctx`/`$gl.parameter` 的数据源）、执行级属性袋（`attributes`）、行数计数器（`addRows`）、kit 调用留痕（`record`）以及宿主装配的 SPI（数据源、ORM 供给等）。
 
 带外部依赖（Spring Bean 等）不适合构造器直接创建时，走工厂通道：
 

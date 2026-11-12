@@ -22,10 +22,10 @@ sidebar_label: 统一认证中心
 | --- | --- | --- | --- |
 | **核心机制** | 认证中心提供现成的前端登录门面（`lite-login`），通过跨域 `postMessage` 机制向业务系统前端下发 token。 | 走标准的 OAuth2 授权码模式（Authorization Code Flow），通过后端服务器间的重定向交换 token。 | 使用 `client_id` + `client_secret` 直接换取机器令牌（client_credentials），无任何用户交互。 |
 | **前端交互** | 业务系统以 iframe 嵌入或新开窗口拉起 `lite-login` 页面，**无需**业务系统自己写登录 UI，用户体验无缝；嵌入态下支持由宿主页面统一控制显示语言。 | 浏览器发生**全页重定向**，跳到认证中心的统一登录页，登录后再重定向回业务系统。 | 无前端参与，纯服务端调用。 |
-| **对接复杂度** | **极低**。纯前端对接为主，业务系统后端只需增加拦截器来验证拿到的 Bearer token 即可。 | **中等**。需要业务系统后端支持完整的 OAuth2 客户端协议栈能力。 | **极低**。一个 HTTP 调用获取令牌即可。 |
+| **对接复杂度** | **极低**。纯前端对接为主，业务系统后端只需增加拦截器来验证所获取的 Bearer token 即可。 | **中等**。需要业务系统后端支持完整的 OAuth2 客户端协议栈能力。 | **极低**。一个 HTTP 调用获取令牌即可。 |
 | **适用场景** | 1. 现代的前后端分离架构 (Vue/React 等)<br/>2. 希望在业务系统内部直接弹出登录框（不离开当前页面）<br/>3. 纯前端 SPA 应用 | 1. **拥有独立后端的任意应用**<br/>2. 强安全要求，token 绝对不能暴露给浏览器前端<br/>3. 现有的外部系统已经内置了标准 OAuth2 Client 模块 | 1. 无用户参与的服务端集成、定时任务<br/>2. 集成方经开放 API（`/api/open/v1/**`）自助管理角色/用户/权限等数据 |
 | **令牌代表身份** | 登录用户 | 登录用户 | 应用本身（`client_id`），不代表任何用户 |
-| **如何接入** | 👉 [阅读 lite-login 业务系统接入指南](lite-login-integration.md) | 👉 [阅读标准 OAuth2 业务系统接入指南](oauth2-integration.md) | 👉 [阅读机器对机器接入指南](client-credentials-integration.md) |
+| **如何接入** | [阅读 lite-login 业务系统接入指南](lite-login-integration.md) | [阅读标准 OAuth2 业务系统接入指南](oauth2-integration.md) | [阅读机器对机器接入指南](client-credentials-integration.md) |
 
 ## 统一认证解决什么问题
 
@@ -33,7 +33,7 @@ sidebar_label: 统一认证中心
 
 - `auth-server` 负责独立、统一地签发 token，是唯一可信的认证源。
 - `lite-login` 负责提供轻量的、可跨域嵌入的登录前端门面。
-- 业务系统前端（第三方应用）负责拿到 token 并传给自己后端的业务服务。
+- 业务系统前端（第三方应用）负责获取 token 并传给自己后端的业务服务。
 - 业务系统后端负责拿着 token，向独立的认证中心确认用户真实身份。
 
 这样，无论是新增门户、SaaS 还是客户自有系统，都不需要每个系统再去重复实现一套“用户名+密码”的底层认证流程，全部委托给独立的认证中心服务即可。
@@ -104,14 +104,14 @@ sidebar_label: 统一认证中心
 
 独立认证服务（Auth Server）与 Geelato 框架本身的边界建议如下：
 
-- **Auth Server（独立服务）**：解决“业务系统如何接入、如何拿到统一 token 并确认用户身份”的问题。
-- **安全认证（框架能力）**：解决“业务系统拿到 token 后，如何在平台运行时消费 token 并建立当前请求的鉴权主体”的问题。
+- **Auth Server（独立服务）**：解决“业务系统如何接入、如何获取统一 token 并确认用户身份”的问题。
+- **安全认证（框架能力）**：解决“业务系统获取 token 后，如何在平台运行时消费 token 并建立当前请求的鉴权主体”的问题。
 - **Runtime 链路（框架能力）**：解决“认证成功后如何在后端建立安全上下文”的问题。
 - **MQL / ORM（框架能力）**：解决“身份确认之后如何访问业务数据”的问题。
 
 需要特别注意：
 
-- 前端从 `LOGIN_SUCCESS` 里拿到的 `user` 只能作为展示辅助信息
+- 前端从 `LOGIN_SUCCESS` 里获取的 `user` 只能作为展示辅助信息
 - 最终可信身份必须以后端确认结果为准
 - `SecurityContext` 只能在鉴权成功后由安全链路内部设置
 
@@ -135,7 +135,7 @@ https://<auth-host>/lite-login
 
 1. [lite-login 业务系统接入指南](lite-login-integration.md)
 2. [标准 OAuth2 业务系统接入指南](oauth2-integration.md)
-   - 如果你采用 iframe 嵌入 `lite-login`，并希望语言跟随宿主页面，请重点查看其中的“嵌入态语言控制”章节
+   - 若采用 iframe 嵌入 `lite-login` 且需语言跟随宿主页面，请重点查看其中的“嵌入态语言控制”章节
 3. 纯服务端、无用户交互的场景，请看 [机器对机器接入指南](client-credentials-integration.md)
 4. 接入统一权限管理（镜像表 / 数据权限注入），请看 [权限接入指南](permission-integration.md)
 5. 经开放 API 自助管理本系统数据（角色 / 用户 / 组织 / 会话）并自建管理 UI，请看 [开放管理 API](open-api-management.md)

@@ -24,7 +24,7 @@ sidebar_label: 认证鉴权
 也就是说：
 
 - 统一认证章节解决“token 从哪里来”
-- 本章节解决“后端拿到 token 后如何完成鉴权”
+- 本章节解决“后端获取 token 后如何完成鉴权”
 
 ## 所在位置
 
@@ -58,7 +58,7 @@ sidebar_label: 认证鉴权
 
 - `applyTrafficTag(request, response)`
 
-这一步发生在 `@IgnoreVerify` 判断之前，目的是保证即使某些接口不需要鉴权，也仍然能够拿到统一的：
+这一步发生在 `@IgnoreVerify` 判断之前，目的是保证即使某些接口不需要鉴权，也仍然能够获得统一的：
 
 - `trafficTag`
 - MDC 日志上下文
@@ -206,7 +206,7 @@ sidebar_label: 认证鉴权
 2. 再看 `tokenUserCache` 是否已有 OAuth2 用户信息
 3. 如果都没有，再通过 `OAuth2Helper.getUserInfo(...)` 向认证中心取用户信息
 
-拿到用户后，会执行：
+获取用户后，会执行：
 
 - 初始化本地当前用户
 - 设置当前租户
@@ -297,7 +297,7 @@ sidebar_label: 认证鉴权
 
 这使得当前用户不仅有登录身份，还有组织维度上下文。
 
-如果你需要替换默认组织来源或组织关系解析方式，请继续阅读：
+若需替换默认组织来源或组织关系解析方式，请继续阅读：
 
 - [安全 Provider 扩展](../reference/security-provider-extension.md)
 
@@ -310,7 +310,7 @@ sidebar_label: 认证鉴权
 
 这类非标准用户名密码认证入口。
 
-如果你需要替换默认用户来源或扩展键映射方式，请继续阅读：
+若需替换默认用户来源或扩展键映射方式，请继续阅读：
 
 - [安全 Provider 扩展](../reference/security-provider-extension.md)
 

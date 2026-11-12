@@ -140,6 +140,36 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
+          label: '内置维护',
+          items: ['maintenance/overview'],
+        },
+        {
+          type: 'category',
+          label: '搜索引擎',
+          items: ['search/overview', 'search/extension'],
+        },
+        {
+          type: 'category',
+          label: '数据归档',
+          items: ['archive/overview'],
+        },
+        {
+          type: 'category',
+          label: '业务异常',
+          items: ['exception/overview', 'exception/usage'],
+        },
+        {
+          type: 'category',
+          label: '业务告警',
+          items: ['alert/overview', 'alert/usage'],
+        },
+        {
+          type: 'category',
+          label: '应用打包',
+          items: ['packaging/overview'],
+        },
+        {
+          type: 'category',
           label: '⚙️ 系统配置与运维',
           items: [
             {
@@ -206,14 +236,34 @@ const sidebars: SidebarsConfig = {
       label: '🛠️ Geelato Workflow (工作流)',
       collapsible: false,
       collapsed: false,
-      items: ['workflow/overview', 'system-config/workflow'],
+      items: [
+        'workflow/overview',
+        'workflow/api',
+        'workflow/integration',
+        'system-config/workflow',
+      ],
     },
     {
       type: 'category',
       label: '⏰ Geelato Scheduler (调度)',
       collapsible: false,
       collapsed: false,
-      items: ['scheduler/overview'],
+      items: ['scheduler/overview', 'scheduler/usage'],
+    },
+    {
+      type: 'category',
+      label: '🧩 Geelato Dyn (动态集成)',
+      collapsible: false,
+      collapsed: false,
+      items: [
+        'geelato-dyn/overview',
+        'geelato-dyn/installation',
+        'geelato-dyn/configuration',
+        'geelato-dyn/capabilities',
+        'geelato-dyn/message-dispatch',
+        'geelato-dyn/callback-bus',
+        'geelato-dyn/develop-module',
+      ],
     },
     {
       type: 'category',

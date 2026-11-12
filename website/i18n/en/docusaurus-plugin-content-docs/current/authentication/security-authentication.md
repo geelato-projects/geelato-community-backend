@@ -70,7 +70,7 @@ If the current handler is not a `HandlerMethod`, or the method is annotated with
 
 - `@IgnoreVerify`
 
-the interceptor simply returns:
+the interceptor returns:
 
 - `return true`
 

@@ -12,6 +12,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +21,12 @@ import org.springframework.beans.factory.annotation.Value;
 import java.net.URI;
 import java.util.Base64;
 
+/**
+ * ES 客户端装配。elasticsearch-java 为 optional 依赖：classpath 无 ES 客户端时本配置不生效，
+ * 宿主经 geelato-web-platform-extras 或 co.elastic.clients:elasticsearch-java 恢复。
+ */
 @Configuration
+@ConditionalOnClass(name = "co.elastic.clients.elasticsearch.ElasticsearchClient")
 @ConditionalOnProperty(prefix = "geelato.es", name = "enabled", havingValue = "true")
 public class EsClientConfiguration {
     @Value("${geelato.es.url:}")

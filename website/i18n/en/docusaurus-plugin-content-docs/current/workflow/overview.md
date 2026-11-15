@@ -26,7 +26,19 @@ Foundation: Activiti `activiti-spring-boot-starter`, mybatis-plus, HikariCP, gee
 
 - Controllers use the composed `@WFApiRestController` annotation (= `@ApiRestController(category="workflow")` + JSON produces); the quickstart `ApiPrefixAutoConfiguration` adds the unified `/api` prefix.
 - Responses are unified as `WorkflowResult` (`ResultCode` / `WorkflowErrorCode`).
-- Full endpoint list: [REST API Reference](api.md).
+- Full endpoint list: [REST API Reference](api.md); field-level contracts: [Define Integration](integration-define.md), [Runtime Integration](integration-runtime.md) and [My Process Integration](integration-my.md).
+
+## Documentation Map
+
+| Page | Content |
+| --- | --- |
+| [Workflow Orchestration](orchestration.md) | Process node, sequence flow, participant, process/node property models |
+| [Workflow Runtime](runtime.md) | Start → resolution → operation → end lifecycle and sequences |
+| [Business Integration](integration.md) | Deployment, authentication and configuration |
+| [REST API Reference](api.md) | Navigation-level index of all endpoints |
+| [Define Integration](integration-define.md) | Definition save, version, publish, edit-lock contracts |
+| [Runtime Integration](integration-runtime.md) | Start, resolution, submit, handling, instance management contracts |
+| [My Process Integration](integration-my.md) | Pending, done, to-read, read, opinion phrase, circulation contracts |
 
 ## Process Definition & Deployment
 

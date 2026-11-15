@@ -94,14 +94,15 @@ Not intended for:
 - extracts `data.user`
 - establishes account mapping, permission context, or local session state
 
-## Boundary between Independent Service and Framework Capabilities
+## Boundary between Independent Service, Framework and Platform Capabilities
 
-Recommended boundaries between the independent Auth Server and the Geelato framework itself:
+Recommended boundaries between the independent Auth Server and the Geelato framework and platform capabilities:
 
 - **Auth Server (Independent Service)**: How the business system integrates, gets the central token, and confirms user identity.
 - **Security Authentication (Framework Capability)**: How the business system consumes the token in the platform runtime and establishes the authenticated subject for the current request.
 - **Runtime Security Chain (Framework Capability)**: How to establish backend security context after authentication succeeds.
-- **MQL / ORM (Framework Capability)**: How to access business data after identity is confirmed.
+- **MQL (Platform Capability)**: How the frontend and the platform protocol side access business data after identity is confirmed.
+- **ORM (Framework Capability)**: How backend Java services access business data.
 
 Important note:
 
@@ -133,4 +134,4 @@ Each third-party application should still keep its own `/login` page as the entr
 4. To integrate unified permission management (mirror tables / data-permission injection), see the [Permission Integration Guide](permission-integration.md)
 5. To self-manage your system's data (roles / users / organizations / sessions) and build your own admin UI via the Open API, see the [Open Management API](open-api-management.md)
 6. To understand how the framework consumes Tokens, see [Platform Capabilities: Authentication](security-authentication.md)
-7. To understand the security context, see [Platform Capabilities: SecurityContext Lifecycle](../runtime/security-context-lifecycle.md)
+7. To understand the security context, see [Security Contract: Security Context](../security/context.md)

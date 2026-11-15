@@ -82,5 +82,21 @@
   "sidebar.frameworkSidebar.category.📖 帮助中心": {
     "message": "📖 Help Center",
     "description": "The label for category '📖 帮助中心' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.安全契约": {
+    "message": "Security Contract",
+    "description": "The label for category '安全契约' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.认证鉴权": {
+    "message": "Authentication & Authorization",
+    "description": "The label for category '认证鉴权' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.平台实体": {
+    "message": "Platform Entities",
+    "description": "The label for category '平台实体' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.全局上下文": {
+    "message": "Global Context",
+    "description": "The label for category '全局上下文' in sidebar 'frameworkSidebar'"
   }
 }

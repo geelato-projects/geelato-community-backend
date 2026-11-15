@@ -6,6 +6,7 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Getter
@@ -50,6 +51,11 @@ public class User extends UserCore{
     // 引擎（系统主体）代替用户落库时同语义适用：生效身份=归属用户，delegate 字段=引擎系统身份。
     private String delegateUserId;
     private String delegateUserName;
+
+    // 通用扩展属性：由上层通过 UserExtInfoEnricher 在快照装载时填充，具体业务（git 绑定等）
+    // 以约定键存放，User 层不感知键含义；值应为不可变对象（字符串为主）。
+    // 与 extendId（公司扩展 ID，String）是两个不同概念。
+    private Map<String, Object> extendInfo;
 
     private UserOrg defaultOrg;
     private Tenant tenant;

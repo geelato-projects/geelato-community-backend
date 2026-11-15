@@ -74,4 +74,4 @@ Use this for:
 - [PlatformWebRuntime](../runtime/platform-web-runtime.md)
 - [PlatformDesginer](../designer/platform-desginer.md)
 - [App Scaffold](../guide/app-scaffold-starter-project-guide.md)
-- [SecurityContext Lifecycle](../runtime/security-context-lifecycle.md)
+- [Security Context](../security/context.md)

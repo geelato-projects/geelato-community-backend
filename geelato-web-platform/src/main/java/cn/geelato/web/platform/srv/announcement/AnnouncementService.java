@@ -2,6 +2,7 @@ package cn.geelato.web.platform.srv.announcement;
 
 import cn.geelato.web.platform.srv.announcement.dto.AnnouncementInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class AnnouncementService {
     private static final DateTimeFormatter ISO_DATE = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter COMPACT_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-    private final AnnouncementGitSynchronizer gitSynchronizer;
+    private final ObjectProvider<AnnouncementGitSynchronizer> gitSynchronizerProvider;
 
     /** 已记过 ERROR 的不合规文件名，避免重复拉取时重复刷日志（refresh 时清空重记） */
     private final Set<String> loggedMalformedFiles = ConcurrentHashMap.newKeySet();
@@ -48,8 +49,8 @@ public class AnnouncementService {
     /** 内存缓存的当前最新公告；null 表示无公告（尚未拉取或拉取失败） */
     private volatile AnnouncementInfo current;
 
-    public AnnouncementService(AnnouncementGitSynchronizer gitSynchronizer) {
-        this.gitSynchronizer = gitSynchronizer;
+    public AnnouncementService(ObjectProvider<AnnouncementGitSynchronizer> gitSynchronizerProvider) {
+        this.gitSynchronizerProvider = gitSynchronizerProvider;
     }
 
     /**
@@ -68,7 +69,14 @@ public class AnnouncementService {
      * 清空去重集合使本轮拉入的不合规文件能重新记一次 ERROR。
      */
     public synchronized AnnouncementInfo refresh() {
-        this.current = loadLatest(gitSynchronizer.fetchMarkdownFiles());
+        AnnouncementGitSynchronizer sync = gitSynchronizerProvider.getIfAvailable();
+        if (sync == null) {
+            // 启动路径由 logStartupAnnouncement 捕获记 WARN 跳过；手动 refresh 经接口返回失败
+            throw new IllegalStateException(
+                    "公告 git 同步未启用：classpath 缺少 jgit。"
+                            + "宿主工程添加依赖 cn.geelato:geelato-web-platform-extras 或 org.eclipse.jgit:org.eclipse.jgit 后重启");
+        }
+        this.current = loadLatest(sync.fetchMarkdownFiles());
         AnnouncementInfo info = this.current;
         if (info != null) {
             log.info("[公告] 刷新完成，当前公告：{}（id={}，date={}）",

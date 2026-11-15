@@ -12,6 +12,7 @@ import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.LocationTextExtractionStrategy;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -40,12 +41,12 @@ public class InvoiceOcrService {
     /** PDF 虚拟坐标：列片段 x 步进与片段宽。 */
     private static final double PDF_CELL_WIDTH = 200.0;
 
-    private final InvoiceOcrEngine engine;
+    private final ObjectProvider<InvoiceOcrEngine> engineProvider;
     private final InvoiceFieldExtractor extractor;
     private final FileHandler fileHandler;
 
-    public InvoiceOcrService(InvoiceOcrEngine engine, InvoiceFieldExtractor extractor, FileHandler fileHandler) {
-        this.engine = engine;
+    public InvoiceOcrService(ObjectProvider<InvoiceOcrEngine> engineProvider, InvoiceFieldExtractor extractor, FileHandler fileHandler) {
+        this.engineProvider = engineProvider;
         this.extractor = extractor;
         this.fileHandler = fileHandler;
     }
@@ -63,7 +64,7 @@ public class InvoiceOcrService {
         if (isPdf(fileName)) {
             lines = toLines(extractPdfText(fileBytes));
         } else {
-            lines = engine.recognize(fileBytes);
+            lines = requireEngine().recognize(fileBytes);
         }
         return extractor.extract(lines, parseItems);
     }
@@ -95,9 +96,21 @@ public class InvoiceOcrService {
         }
     }
 
-    /** 引擎健康检查。 */
+    /** 引擎健康检查（依赖缺失视为未就绪）。 */
     public boolean healthCheck() {
-        return engine.healthCheck();
+        InvoiceOcrEngine engine = engineProvider.getIfAvailable();
+        return engine != null && engine.healthCheck();
+    }
+
+    /** 图片识别路径专用：引擎 bean 不存在（classpath 无 rapidocr4j）时硬失败并提示恢复方式。 */
+    private InvoiceOcrEngine requireEngine() {
+        InvoiceOcrEngine engine = engineProvider.getIfAvailable();
+        if (engine == null) {
+            throw new IllegalStateException(
+                    "发票 OCR 未启用：classpath 缺少 rapidocr4j（PDF 路径不受影响）。"
+                            + "宿主工程添加依赖 cn.geelato:geelato-web-platform-extras 或 io.github.hzkitty:rapidocr4j 后重启");
+        }
+        return engine;
     }
 
     private boolean isPdf(String fileName) {

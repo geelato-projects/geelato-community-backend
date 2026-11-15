@@ -47,16 +47,20 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-tx</artifactId>
     </dependency>
+    <!-- JTA 分布式/原子事务（约 0.5MB）：optional，默认不开（geelato.datasource.dynamic.enable-jta-transaction）；
+         seata 代理分支同样默认关。脚手架默认不携带，恢复方式：geelato-web-platform-extras -->
     <dependency>
       <groupId>com.atomikos</groupId>
       <artifactId>transactions-spring-boot3-starter</artifactId>
       <version>6.0.0</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.seata</groupId>
       <artifactId>seata-all</artifactId>
       <version>2.3.0</version>
       <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
 
     <!-- DataSource 装饰器（p6spy 最终 SQL 日志）：随 orm 下沉，所有宿主开箱即得；缺省行为见 P6SpyDefaultsEnvironmentPostProcessor -->

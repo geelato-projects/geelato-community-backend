@@ -4,7 +4,6 @@ import cn.geelato.core.enums.Dialects;
 import cn.geelato.core.util.EncryptUtils;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.seata.rm.datasource.DataSourceProxy;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -39,7 +38,7 @@ public class DataSourceFactory {
         HikariDataSource ds = createHikariDataSource(params);
         ds.setPoolName(params.dbId());
         if (properties.isEnableSeataProxy()) {
-            return new DataSourceProxy(ds);
+            return wrapSeataProxy(ds);
         }
         return ds;
     }
@@ -54,7 +53,24 @@ public class DataSourceFactory {
     public DataSource buildDataSourceProxy(Map<String, Object> dbConnectMap) {
         ConnectionParams params = extractConnectionParams(dbConnectMap);
         HikariDataSource ds = createHikariDataSource(params);
-        return new DataSourceProxy(ds);
+        return wrapSeataProxy(ds);
+    }
+
+    /**
+     * seata 为 optional 依赖：经反射构造 DataSourceProxy（默认关，仅显式开启或显式调用时触达），
+     * classpath 无 seata-all 时硬失败并提示恢复方式。
+     */
+    private DataSource wrapSeataProxy(HikariDataSource ds) {
+        try {
+            Class<?> proxyClass = Class.forName("org.apache.seata.rm.datasource.DataSourceProxy");
+            return (DataSource) proxyClass.getConstructor(javax.sql.DataSource.class).newInstance(ds);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException(
+                    "Seata 代理已启用但 classpath 缺少 seata-all。"
+                            + "宿主工程添加依赖 cn.geelato:geelato-web-platform-extras 或 org.apache.seata:seata-all 后重启", e);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("构建 Seata DataSourceProxy 失败", e);
+        }
     }
 
     // ======================== 内部方法 ========================

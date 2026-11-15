@@ -9,6 +9,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.opencv.core.Point;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -27,10 +28,15 @@ import java.util.concurrent.Executors;
  * 由 rapidocr4j 传递依赖引入）。若 OpenCV native 加载失败，可经
  * {@code geelato.ocr.invoice.opencv-lib-path} 指向外置 dll/so。</p>
  *
+ * <p>依赖缺失守卫：rapidocr4j 为 optional 依赖，classpath 无 RapidOCR 时不注册本引擎
+ * （字符串形式条件，避免扫描期加载本类），宿主经 geelato-web-platform-extras 或
+ * 直接引入 io.github.hzkitty:rapidocr4j 恢复。</p>
+ *
  * @author geelato
  */
 @Slf4j
 @Component
+@ConditionalOnClass(name = "io.github.hzkitty.RapidOCR")
 public class InvoiceOcrEngine {
 
     private volatile RapidOCR ocr;

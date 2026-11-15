@@ -5,7 +5,7 @@ sidebar_label: 开发者与 AI 导航手册
 
 # 开发者与 AI 导航手册
 
-本手册面向人类开发者与 AI 编码助手（如 Trae、Copilot 等），提供框架能力矩阵、查询地图以及与 AI 协作的上下文，便于快速定位需求并开始编码。
+本手册面向人类开发者与 AI 编码助手（如 Trae、Copilot 等），提供能力矩阵、查询地图以及与 AI 协作的上下文，便于快速定位需求并开始编码。
 
 ## 快速启动决策树
 
@@ -36,7 +36,7 @@ sidebar_label: 开发者与 AI 导航手册
 
 | 功能意图 | 核心组件 / 技术栈 | 查阅文档 |
 | --- | --- | --- |
-| 获取当前登录用户、租户或请求上下文 | Global Context、SecurityContext | [平台能力: 全局上下文](../platform-capabilities/global-context.md) |
+| 获取当前登录用户、租户或请求上下文 | Global Context、SecurityContext | [平台能力: 全局上下文](../platform-capabilities/global-context.md)、[安全契约: 安全上下文](../security/context.md) |
 | 拦截数据保存/更新前后的逻辑 | Entity Events、Event Bus | [ORM: 事件特性](../orm/event-features.md) |
 | 扩展平台默认规则（如查询过滤、字段填充） | SPI、Spring Bean | [查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md) |
 | 开发、加载和卸载业务插件 | Plugin Mechanism | [插件机制: 定义与开发](../plugin-mechanism/development.md) |

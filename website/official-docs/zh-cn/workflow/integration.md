@@ -5,7 +5,7 @@ sidebar_label: 业务接入
 
 # 工作流业务系统接入指南
 
-本页说明如何部署工作流服务、业务系统如何接入（认证、数据源、配置）。端点清单见 [REST API 清单](api.md)，配置项明细见 [Workflow 模块配置](../system-config/workflow.md)。
+本页说明如何部署工作流服务、业务系统如何接入（认证、数据源、配置）。端点清单见 [REST API 清单](api.md)，字段级接口契约见[流程定义集成](integration-define.md)、[流程运行集成](integration-runtime.md)与[个人流程集成](integration-my.md)，配置项明细见 [Workflow 模块配置](../system-config/workflow.md)。
 
 ## 部署形态
 

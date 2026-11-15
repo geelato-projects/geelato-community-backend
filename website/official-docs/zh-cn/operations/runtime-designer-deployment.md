@@ -88,4 +88,4 @@ spring.application.name=geelato-web-designer
 - [PlatformWebRuntime](../runtime/platform-web-runtime.md)
 - [PlatformDesginer](../designer/platform-desginer.md)
 - [App Scaffold](../guide/app-scaffold-starter-project-guide.md)
-- [SecurityContext 生命周期](../runtime/security-context-lifecycle.md)
+- [安全上下文](../security/context.md)

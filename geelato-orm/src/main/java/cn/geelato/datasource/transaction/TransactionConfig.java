@@ -6,6 +6,7 @@ import com.atomikos.icatch.jta.UserTransactionManager;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.TransactionManager;
 import jakarta.transaction.UserTransaction;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,12 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.TransactionSynchronization;
 
 
+/**
+ * JTA（Atomikos）事务装配。atomikos 为 optional 依赖：classpath 无 atomikos 时本配置不生效，
+ * 宿主经 geelato-web-platform-extras 或 com.atomikos:transactions-spring-boot3-starter 恢复。
+ */
 @Configuration
+@ConditionalOnClass(name = "com.atomikos.icatch.jta.UserTransactionImp")
 @ConditionalOnProperty(prefix = "geelato.datasource.dynamic", name = "enable-jta-transaction", havingValue = "true")
 public class TransactionConfig {
     @Bean(name = "userTransaction")

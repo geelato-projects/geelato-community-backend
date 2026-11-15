@@ -108,4 +108,4 @@ The shell naming `Desginer` is a long-standing historical name in this module; t
 - [PlatformWebRuntime](../runtime/platform-web-runtime.md)
 - [Startup Process](../reference/startup-process.md)
 - [Runtime / Designer Deployment and Dependencies](../operations/runtime-designer-deployment.md)
-- [SecurityContext Lifecycle](../runtime/security-context-lifecycle.md)
+- [Security Context](../security/context.md)

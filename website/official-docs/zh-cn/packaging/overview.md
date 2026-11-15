@@ -3,61 +3,73 @@ title: 应用打包
 sidebar_label: 应用打包
 ---
 
-# 应用打包与部署机制
+# 应用打包
 
 低代码应用在平台上的交付有三条并行路径，覆盖不同粒度与场景：
 
 | 机制 | 产物 | 粒度 | 说明 |
 | --- | --- | --- | --- |
-| **应用包（本页主角）** | `.gdp` / `.zgdp` | 整个应用（元数据 + 资源） | 设计器产出的应用全量数据包，打包→传输→部署→回滚；对应模块 `geelato-package` + web-platform 的 `/package` 服务 |
+| **应用包（本章主题）** | `.gdp` / `.zgdp` | 整个应用（元数据 + 业务数据） | 设计器产出的应用数据包，打包→传输→部署→回滚；对应模块 `geelato-package` 与 web-platform 的 `/package` 服务 |
 | 插件包（pf4j） | 插件 jar | 代码级扩展能力 | 运行期启停的 Java 插件；见[插件机制](../plugin-mechanism/overview.md) |
 | 脚手架 / 启动壳制品 | Spring Boot fat jar | 宿主工程 | `geelato-app-scaffold` 生成的工程或 runtime/designer 启动壳的常规构建部署；见[平台部署指南](../operations/runtime-designer-deployment.md) |
 
 三者常组合使用：宿主用脚手架/启动壳交付运行时，低代码配置用应用包在环境间迁移，二方代码能力用插件包热插拔。
 
-## 应用包结构
+## 应用包是什么
 
-- 包数据 `AppPackData`：`sourceAppId / targetAppId / version / appCode / appName` + `appMetaList`（应用元数据行：页面、模型、流程等）+ `appResourceList`（静态资源）+ `basePlatformVersion`（打包时平台基准版本）。
-- 产物：`.gdp`（JSON 全量包，默认名 `geelatoApp`）或压缩 `.zgdp`。
+应用包是一个应用在某一时刻的**完整数据快照**：以 JSON 形式携带该应用在设计器中产出的全部配置数据，可在环境之间传输并部署生效。
+
+- 包数据 `AppPackData`：`sourceAppId / targetAppId / version / appCode / appName` + `appMetaList`（元数据条目数组，每条为 `{metaName, metaData}`，`metaName` 即表名/实体名，`metaData` 为该表的行数组）+ `appResourceList`（资源条目）+ `basePlatformVersion`（打包时平台基准版本，取自平台应用 `geelato_admin` 的 `version_info`）。
+- 产物两级：`.gdp`（UTF-8 JSON 全量包，默认名 `geelatoApp`）压缩为 `.zgdp`（zip，内含 `<appCode>/<appCode>.gdp`）。
+- 包文件按租户与应用归档存储，并在应用版本表 `platform_app_version` 登记（来源 `packet/upload/sync`，状态 `draft/release/unused/deployed/backup`）。
 - 模块坐标 `cn.geelato:geelato-package`；配置前缀 `geelato.package`。
+
+## 打包内容一览
+
+应用包携带的内容按运行期职责分为四层，逐类说明见[打包内容与运行作用](contents.md)：
+
+| 层 | 内容 | 包内表 |
+| --- | --- | --- |
+| 应用本体 | 应用定义、设计器文件树、依赖声明 | `platform_app` |
+| 界面层 | 页面、菜单树 | `platform_app_page`、`platform_tree_node` |
+| 数据层 | 数据源连接、模型/字段/约束/视图 | `platform_dev_db_connect`、`platform_dev_table/column/table_foreign/view` |
+| 业务数据 | 按实体的数据打包策略携带 | `pack_bus_data` 大于 0 的业务表 |
+| 治理层 | 角色/权限/授权关系、字典、应用配置、导出模板、编码规则、资源元数据 | `platform_role*`、`platform_dict(_item)`、`platform_sys_config`、`platform_export_template`、`platform_encoding`、`platform_resources` |
+
+服务接口、接口编排、定时任务等不在打包清单中，跨环境迁移需另行处理；完整清单与各类内容的运行期作用见[打包内容与运行作用](contents.md)。
+
+## 全流程鸟瞰
+
+```mermaid
+flowchart LR
+    A[打包 packet] --> B[版本登记 draft]
+    B --> C[下载 / 上传]
+    C --> D[部署 deploy]
+    D --> E{校验通过}
+    E -- 否 --> F[失败终止 60003/60004]
+    E -- 是 --> G[备份 v2]
+    G --> H[删旧插新 / 增量合并]
+    H --> I[刷新元数据缓存 生效]
+    I -. 回滚仅 v2 .-> J[最近备份版本]
+```
+
+1. **打包**：从源环境按应用导出 19 张平台白名单表 + 按数据打包策略选定的业务表，生成 `.zgdp` 并登记版本（状态 `draft`）；流程见[打包流程](packaging-flow.md)。
+2. **传输**：下载 `.zgdp` 到目标环境后上传登记，或在同一环境直接部署。
+3. **部署**：环境门禁 → 包数据校验（实体与列必须在目标平台元模型中存在）→ 备份（v2）→ 落库（覆盖型删旧插新、增量型跳过已有行）→ 刷新元数据缓存；热加载生效，不需重启。流程见[应用包部署](deployment-flow.md)。
+4. **回滚**（仅 v2）：部署失败或结果异常时回滚到最近一次备份版本。
 
 ## 配置
 
 | 键（`geelato.package.*`） | 默认 | 说明 |
 | --- | --- | --- |
-| `env` | — | 环境标识 |
+| `env` | — | 环境标识；`init_source` 环境禁止部署 |
 | `path` | — | 包文件存储根目录 |
 | `uploadFolder` | — | 上传包子目录 |
-| `engine` | `v1` | 打包/部署引擎版本：`v1`（原始实现）或 `v2`（演进版，见下）；仅 v2 支持回滚 |
+| `engine` | `v1` | 打包/部署引擎版本：`v1`（原始实现）或 `v2`（演进版，见下）；备份与回滚仅 v2 支持 |
 
-:::tip
-三个基础键的含义另见[系统模块配置：Package](../system-config/package.md)；本页补充 `engine` 与操作流程。
+:::note 默认引擎是 v1
+`engine` 缺省为 `v1`。备份、回滚、表名防注入等能力只在 `v2` 生效，生产环境建议显式配置 `geelato.package.engine=v2`。三个基础键的含义另见[系统模块配置：Package](../system-config/package.md)。
 :::
-
-## 操作流程
-
-`PackageController` 是普通 `@Controller`（**端点不带 `/api` 前缀**），`AppVersionController` 走 `/api/app/version`：
-
-| 步骤 | 端点 | 说明 |
-| --- | --- | --- |
-| 1. 打包 | `GET/POST /package/packet/{appId}` | 生成应用包并登记版本；`engine=v2` 走 `packetV2` |
-| 2. 合并打包 | `GET/POST /package/packet/merge` | 多应用合并为包 |
-| 3. 下载 | `GET /package/downloadPackage/{versionId}` | 下载 `.zgdp` |
-| 4. 上传 | `POST /package/uploadPackage/{appId}` | 上传到 `geelato.package.path/uploadFolder`，登记 `AppVersion` |
-| 5. 部署 | `GET /package/deploy/{versionId}` | 校验→备份→落库→刷新缓存 |
-| 6. 回滚 | `GET /package/rollback/{appId}` | 回滚到最近一次备份（**仅 v2**） |
-
-版本管理：`POST /api/app/version/pageQuery`、`GET /api/app/version/get/{id}`、`POST /createOrUpdate`、`POST /validate`、`DELETE /isDelete/{id}`（实体 `AppVersion`，含 `packagePath`、`packetTime`）。
-
-## 部署校验与安全边界
-
-1. **平台版本匹配**：包的 `basePlatformVersion` 须与目标平台应用 `geelato_admin` 的 `platform_app.version_info` 匹配，不匹配报"请先更新平台应用 geelato_admin 至版本 X"；
-2. **部署前备份**：v2 部署自动备份当前版本，供回滚；
-3. **平台表白名单**：`PlatformTableConstant.isPlatformTable` 清洗，应用包不能改写平台表；
-4. **表名防注入**：落库表名须匹配 `^[a-zA-Z_][a-zA-Z0-9_]*$`；
-5. **批式落库**：元数据行分批 500 行写入（MQL SaveCommand / `JsonTextSaveParser`）；
-6. **环境保护**：`init_source` 环境禁止部署；
-7. **缓存刷新**：部署完成后刷新应用元数据缓存。
 
 ## v1 与 v2 引擎
 
@@ -66,11 +78,20 @@ sidebar_label: 应用打包
 | 维度 | v1 | v2 |
 | --- | --- | --- |
 | 打包/部署入口 | `/package/packet`、`/deploy`（同一端点按 engine 分流） | 同左 |
-| 状态管理 | 单例可变状态 | 无单例可变状态 |
-| 部署事务 | 编程式 | 声明式 `@Transactional` |
-| 备份/回滚 | 无备份 | 部署前自动备份 + `GET /package/rollback/{appId}` |
+| 状态管理 | 单例可变状态 | 方法局部上下文，无单例可变状态 |
+| 部署落库 | 编程式事务，删除与插入包在一个事务、失败回滚 | 分批落库（500 行/批），中途失败已写入批次保留，可通过重新部署补齐 |
+| 备份/回滚 | 无真实备份 | 部署前自动备份 + `GET /package/rollback/{appId}` |
+| 指定范围打包语义 | `appointMetas` 为白名单：未列出的表整张排除 | `appointMetas` 为选行修饰：未列出的表仍全量打包 |
 | 数据清洗 | — | 平台表白名单 + 表名防注入 + 分批 500 |
 
-## 与插件包的边界
+## 与插件包、脚手架的边界
 
-应用包搬移的是**数据形态**的低代码配置（页面/模型/流程元数据与资源）；插件包（pf4j）部署的是**代码形态**的扩展（Java jar，实现 `PluginExtensionPoint`）。需要"环境间同步代码级能力"时打插件包并拷入插件目录（HTTP 上传/安装端点暂未提供，见插件机制章节），低代码配置变更则走应用包。
+应用包搬移的是**数据形态**的低代码配置（页面/模型/字典/权限等元数据与业务数据）；插件包（pf4j）部署的是**代码形态**的扩展（Java jar，实现 `PluginExtensionPoint`）。需要"环境间同步代码级能力"时打插件包并拷入插件目录（HTTP 上传/安装端点暂未提供，见[插件机制](../plugin-mechanism/overview.md)），低代码配置变更则走应用包。
+
+跨租户/跨应用的商品化交付在应用包基础上另有占位符重置与主键重生成逻辑，见应用市场相关文档（[系统模块配置：Market](../system-config/market.md)）。
+
+## 推荐继续阅读
+
+- [打包内容与运行作用](contents.md)：19 张平台表逐类说明与各内容对应用运行的作用
+- [打包流程](packaging-flow.md)：前置门禁、三种打包方式、产物链路、下载与上传
+- [应用包部署](deployment-flow.md)：校验门禁、备份与回滚、落库策略、生效机制

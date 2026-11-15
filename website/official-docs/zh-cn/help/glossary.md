@@ -107,7 +107,7 @@ Geelato Web 平台的运行时应用壳，基于共享底座 `geelato-web-platfo
 
 请求级（线程级）安全上下文。硬约束：安全主体只能在鉴权成功后由安全链路内部写入。
 
-详见 [SecurityContext 生命周期](../runtime/security-context-lifecycle)。
+详见 [安全上下文](../security/context)。
 
 ### GlobalContext
 

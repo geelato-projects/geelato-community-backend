@@ -15,7 +15,7 @@ import cn.geelato.web.platform.srv.file.handler.AccessoryHandler;
 import cn.geelato.web.platform.srv.file.param.FileParam;
 import cn.geelato.web.platform.srv.file.param.ThumbnailResolution;
 import cn.geelato.web.platform.utils.FileParamUtils;
-import cn.geelato.web.platform.utils.OfficeUtils;
+import cn.geelato.web.platform.utils.OfficeConverter;
 import cn.geelato.web.platform.utils.ThumbnailUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,11 +39,13 @@ public class FileHandler {
     private final AccessoryHandler accessoryHandler;
     private final DownloadService downloadService;
     private final OSSFileHelper fileHelper;
+    private final ObjectProvider<OfficeConverter> officeConverterProvider;
 
-    public FileHandler(AccessoryHandler accessoryHandler, DownloadService downloadService, ObjectProvider<OSSFileHelper> fileHelperProvider) {
+    public FileHandler(AccessoryHandler accessoryHandler, DownloadService downloadService, ObjectProvider<OSSFileHelper> fileHelperProvider, ObjectProvider<OfficeConverter> officeConverterProvider) {
         this.accessoryHandler = accessoryHandler;
         this.downloadService = downloadService;
         this.fileHelper = fileHelperProvider.getIfAvailable();
+        this.officeConverterProvider = officeConverterProvider;
     }
 
     /**
@@ -264,7 +266,7 @@ public class FileHandler {
             }
             try {
                 String outputPath = UploadService.getSavePath(UploadService.getRootConvertDirectory(), tenantCode, appId, "word-to-pdf.pdf", true);
-                OfficeUtils.toPdf(sourceFile.getAbsolutePath(), outputPath, sourceExt);
+                requireOfficeConverter().toPdf(sourceFile.getAbsolutePath(), outputPath, sourceExt);
                 return FileUtils.pathToFile(outputPath);
             } catch (Exception e) {
                 log.error("toPdf: error", e);
@@ -272,6 +274,17 @@ public class FileHandler {
             }
         }
         return null;
+    }
+
+    /** word/excel 转 PDF 依赖 aspose（optional）：实现 bean 缺失时硬失败并提示恢复方式。 */
+    private OfficeConverter requireOfficeConverter() {
+        OfficeConverter converter = officeConverterProvider.getIfAvailable();
+        if (converter == null) {
+            throw new IllegalStateException(
+                    "Office 转 PDF 未启用：classpath 缺少 aspose-words/aspose-cells。"
+                            + "宿主工程添加依赖 cn.geelato:geelato-web-platform-extras 或 com.aspose:aspose-words + aspose-cells 后重启");
+        }
+        return converter;
     }
 
     /**

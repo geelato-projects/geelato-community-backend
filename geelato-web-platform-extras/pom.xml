@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>cn.geelato</groupId>
+        <artifactId>geelato-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../geelato-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>geelato-web-platform-extras</artifactId>
+    <packaging>jar</packaging>
+    <name>geelato-web-platform-extras</name>
+    <description>Feature pack: re-aggregates the platform's optional heavy dependencies (OCR / Office-to-PDF / 7zip / Elasticsearch / JGit / seata / atomikos / JDBC drivers)</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-web-platform</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- ===== 重依赖复原（能力库侧均已 optional，此处非 optional 使其重新传递） ===== -->
+
+        <!-- 发票 OCR：rapidocr4j（传递 onnxruntime + opencv 全平台 native + PP-OCRv4 模型，约 198MB） -->
+        <dependency>
+            <groupId>io.github.hzkitty</groupId>
+            <artifactId>rapidocr4j</artifactId>
+            <version>${rapidocr4j.version}</version>
+        </dependency>
+
+        <!-- Office 转 PDF（约 22MB） -->
+        <dependency>
+            <groupId>com.aspose</groupId>
+            <artifactId>aspose-words</artifactId>
+            <version>21.1</version>
+            <classifier>jdk17</classifier>
+        </dependency>
+        <dependency>
+            <groupId>com.aspose</groupId>
+            <artifactId>aspose-cells</artifactId>
+            <version>21.11</version>
+        </dependency>
+
+        <!-- 静态站点发布 RAR 解压（全平台 native 约 6.7MB） -->
+        <dependency>
+            <groupId>net.sf.sevenzipjbinding</groupId>
+            <artifactId>sevenzipjbinding</artifactId>
+            <version>16.02-2.01</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.sevenzipjbinding</groupId>
+            <artifactId>sevenzipjbinding-all-platforms</artifactId>
+            <version>16.02-2.01</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ES 数据同步/服务日志存储客户端（约 10.3MB） -->
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <version>8.12.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-client</artifactId>
+            <version>8.12.2</version>
+        </dependency>
+
+        <!-- 公告 git 同步（约 3.5MB） -->
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>7.5.0.202512021534-r</version>
+        </dependency>
+
+        <!-- JTA/分布式事务（默认仍由开关控制：geelato.datasource.dynamic.enable-jta-transaction / is-enable-seata-proxy） -->
+        <dependency>
+            <groupId>com.atomikos</groupId>
+            <artifactId>transactions-spring-boot3-starter</artifactId>
+            <version>6.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.seata</groupId>
+            <artifactId>seata-all</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+
+        <!-- JDBC 驱动：core 只按 db_type 引用驱动类名，驱动由发行侧提供 -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+</project>

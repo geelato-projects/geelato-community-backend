@@ -182,7 +182,7 @@ Do not start with:
 - `message`, `market`, `schedule`, or similar extensions
 - heavy platform capabilities that require extra middleware
 
-Dependency size note: `geelato-framework-starter` transitively brings GraalVM JS (~58 MB), Seata, Atomikos, the Redis client, and the MySQL driver — even if you only use H2. The minimal fat jar measures about 156 MB / 178 jars / 8 Geelato modules. The "do not start with" list means don't add platform modules on top of the starter, not that the current dependency tree is already tiny. A lite starter is planned; be aware of the current footprint.
+Dependency size note: `geelato-framework-starter` transitively brings GraalVM JS (~58 MB) and the Redis client; the minimal fat jar measures about **120 MB** (starter runtime deps ~117 MB / 126 jars, plus the H2 driver declared by the host). Seata, Atomikos, and JDBC drivers are now optional — an H2-only project no longer carries the MySQL driver, and JTA dependencies stay out of the package; add `geelato-web-platform-extras` (one dependency) to restore them all. The "do not start with" list means don't add platform modules on top of the starter, not that the current dependency tree is already tiny.
 
 ## Minimal Configuration Surface
 
@@ -205,7 +205,7 @@ The official minimal sample is [`geelato-sample-quickstart`](https://github.com/
 
 Its purpose is to prove that the framework foundation can be consumed independently.
 
-Transaction note: JTA and the Seata proxy are disabled at the Geelato layer (the corresponding configuration keys are not loaded unless set to `true`), but Atomikos on the classpath is still auto-configured by Spring Boot — startup logs will contain Atomikos output and a `./atomikos-logs/` directory is created in the working directory. This is expected.
+Transaction note: JTA and the Seata proxy are disabled at the Geelato layer (the corresponding configuration keys are not loaded unless set to `true`), and the Atomikos / Seata dependencies themselves are optional — a minimal project no longer has Atomikos on the classpath, so no Atomikos output appears in startup logs and no `./atomikos-logs/` directory is created. Add `com.atomikos:transactions-spring-boot3-starter` to restore JTA.
 
 ## When to Switch to the Scaffold
 

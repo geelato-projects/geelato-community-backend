@@ -5,7 +5,7 @@ sidebar_label: 启动过程
 
 # 启动过程
 
-本页说明基于 `cn.geelato.web.platform.boot.BootApplication` 启动 Geelato Runtime 应用时，框架在启动阶段的执行顺序，以及元数据、SQL、数据源、Graal 上下文、系统配置分别在哪个阶段完成初始化。
+本页说明基于 `cn.geelato.web.platform.boot.BootApplication` 启动 Geelato Runtime 应用时，平台在启动阶段的执行顺序，以及元数据、SQL、数据源、Graal 上下文、系统配置分别在哪个阶段完成初始化。
 
 ## 两层启动
 
@@ -38,11 +38,28 @@ public class AcmeOrderApplication extends BootApplication {
 
 要点：元数据初始化早于 `BootApplication.run(...)`；`run(...)` 负责运行期管理器的收尾初始化。
 
+两层启动的整体时序如下图：
+
+```mermaid
+flowchart TD
+    subgraph S["Spring 容器初始化"]
+        A["Spring Boot 创建并刷新 ApplicationContext"] --> B["@ComponentScan 扫描 Bean<br/>cn.geelato + 业务包"]
+        B --> C["MetaConfiguration 元数据初始化<br/>① 扫描 @Entity 类注解元数据<br/>② 装载数据库元数据（表、列、视图、校验、外键）<br/>③ MetaBootstrap 二次增强（可选）"]
+    end
+    subgraph R["BootApplication.run(...) 运行期初始化"]
+        D["初始化数据源定义缓存<br/>仅缓存定义，访问时按需建连"] --> E["装载 SQL 脚本与 platform_sql 数据库脚本"]
+        E --> F["扫描 Graal Service / Variable"]
+        F --> G["初始化环境配置缓存<br/>platform_sys_config"]
+    end
+    S --> R
+    G --> H["Runtime 启动完成，对外提供能力"]
+```
+
 ## 阶段一：Spring 扫描与 Bean 装配
 
-`BootApplication` 自带 `@ComponentScan(basePackages = {"cn.geelato"})`，框架默认扫描 `cn.geelato` 下的运行时 Bean。业务工程通常在 `@SpringBootApplication` 上补充业务包名（如 `cn.geelato`、`com.acme.order`），使框架 Bean 与业务实体、Controller、Service 同时进入容器。
+`BootApplication` 自带 `@ComponentScan(basePackages = {"cn.geelato"})`，平台默认扫描 `cn.geelato` 下的运行时 Bean。业务工程通常在 `@SpringBootApplication` 上补充业务包名（如 `cn.geelato`、`com.acme.order`），使平台 Bean 与业务实体、Controller、Service 同时进入容器。
 
-- 仅扫业务包、不扫 `cn.geelato`：框架运行时能力会缺失。
+- 仅扫业务包、不扫 `cn.geelato`：平台运行时能力会缺失。
 - 仅扫 `cn.geelato`、不扫业务包：业务 Bean 不会进入容器。
 
 ## 阶段二：元数据初始化

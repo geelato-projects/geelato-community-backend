@@ -10,12 +10,20 @@ import java.util.concurrent.atomic.AtomicReference;
 public class DefaultUserProvider implements UserProvider {
     private final UserSnapshotLoader userSnapshotLoader;
     private final UserOrgInfoEnricher userOrgInfoEnricher;
+    private final UserExtInfoEnricher userExtInfoEnricher;
     private final AtomicReference<UserSnapshot> snapshotRef = new AtomicReference<>(UserSnapshot.empty());
 
     public DefaultUserProvider(UserSnapshotLoader userSnapshotLoader,
                                UserOrgInfoEnricher userOrgInfoEnricher) {
+        this(userSnapshotLoader, userOrgInfoEnricher, null);
+    }
+
+    public DefaultUserProvider(UserSnapshotLoader userSnapshotLoader,
+                               UserOrgInfoEnricher userOrgInfoEnricher,
+                               UserExtInfoEnricher userExtInfoEnricher) {
         this.userSnapshotLoader = userSnapshotLoader;
         this.userOrgInfoEnricher = userOrgInfoEnricher;
+        this.userExtInfoEnricher = userExtInfoEnricher;
     }
 
     @Override
@@ -39,6 +47,11 @@ public class DefaultUserProvider implements UserProvider {
     @Override
     public void refresh() {
         UserSnapshot snapshot = userSnapshotLoader.load(userOrgInfoEnricher);
+        if (userExtInfoEnricher != null) {
+            for (User user : snapshot.getUserById().values()) {
+                userExtInfoEnricher.enrich(user);
+            }
+        }
         snapshotRef.set(snapshot);
         log.info("User provider snapshot refreshed.");
     }

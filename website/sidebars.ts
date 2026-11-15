@@ -29,7 +29,6 @@ const sidebars: SidebarsConfig = {
           label: '🧠 框架架构设计说明',
           items: [
             'reference/core-modules',
-            'reference/startup-process',
             'runtime/platform-web-runtime',
             'designer/platform-desginer',
           ],
@@ -41,7 +40,15 @@ const sidebars: SidebarsConfig = {
             {
               type: 'category',
               label: '元数据',
-              items: ['metadata/overview', 'reference/metastore-extension'],
+              items: [
+                'metadata/overview',
+                'metadata/model',
+                'metadata/loading',
+                'metadata/operations',
+                'metadata/interfaces',
+                'metadata/extensions',
+                'reference/metastore-extension',
+              ],
             },
             {
               type: 'category',
@@ -85,12 +92,15 @@ const sidebars: SidebarsConfig = {
             },
             {
               type: 'category',
-              label: '安全协议',
+              label: '安全契约',
               items: [
-                'security/org-user-role',
-                'authentication/security-authentication',
-                'runtime/security-context-lifecycle',
-                'reference/security-provider-extension',
+                'security/overview',
+                'security/model',
+                'security/provider',
+                'security/loader',
+                'security/snapshot',
+                'security/context',
+                'security/platform-defaults',
               ],
             },
             {
@@ -108,6 +118,31 @@ const sidebars: SidebarsConfig = {
       collapsible: false,
       collapsed: false,
       items: [
+        {
+          type: 'category',
+          label: '平台启动',
+          items: ['reference/startup-process'],
+        },
+        {
+          type: 'category',
+          label: '平台实体',
+          items: [
+            'entities/overview',
+            'entities/app-and-designer',
+            'entities/api-orchestration',
+            'entities/org-tenant-user',
+            'entities/role-permission',
+            'entities/message-notification',
+            'entities/dict-config-file',
+            'entities/schedule-integration-log',
+            'entities/platform-entity-index',
+          ],
+        },
+        {
+          type: 'category',
+          label: '认证鉴权',
+          items: ['authentication/security-authentication'],
+        },
         {
           type: 'category',
           label: 'MQL 使用和语法',
@@ -166,7 +201,12 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: '应用打包',
-          items: ['packaging/overview'],
+          items: [
+            'packaging/overview',
+            'packaging/contents',
+            'packaging/packaging-flow',
+            'packaging/deployment-flow',
+          ],
         },
         {
           type: 'category',
@@ -238,8 +278,13 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'workflow/overview',
-        'workflow/api',
+        'workflow/orchestration',
+        'workflow/runtime',
         'workflow/integration',
+        'workflow/api',
+        'workflow/integration-define',
+        'workflow/integration-runtime',
+        'workflow/integration-my',
         'system-config/workflow',
       ],
     },

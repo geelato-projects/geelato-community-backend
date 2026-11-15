@@ -214,7 +214,24 @@ mvn -B dependency:get -Dartifact=cn.geelato:geelato-framework-bom:pom:1.0.0-SNAP
 </project>
 ```
 
-产物说明：`geelato-app-scaffold-starter` 传递依赖完整平台运行时（GraalVM JS、Seata、Atomikos、Redis 客户端、OpenCV/onnxruntime、aspose-words 等），`mvn package` 产出的 fat jar 约 450 MB，冷启动约 50–60 秒。这是"开箱即用全能力"的体积代价；仅需验证框架底座时请使用[新项目最小接入](minimal-integration.md)链路，产物约 156 MB。
+产物说明：`geelato-app-scaffold-starter` 传递平台核心运行时（GraalVM JS、Redis 客户端等），默认**不含**重型可选依赖（发票 OCR、Office 转 PDF、ES 同步、分布式事务等），fat jar 约 **170 MB**（约 230 个 jar），冷启动显著快于全量发行。这正是"能力层完整、发行层轻量"的分层设计：库保持完整，重量由装配决定。
+
+#### 可选特性恢复
+
+重型依赖一律 `optional` 声明，需要哪个特性就补哪一行依赖（版本经 `geelato-framework-bom` / parent 管理）：
+
+| 特性 | 缺失时的行为 | 恢复依赖（一行即可） |
+|---|---|---|
+| 发票 OCR（图片识别） | 调用报错并提示补依赖；PDF 文本层路径不受影响 | `io.github.hzkitty:rapidocr4j` |
+| word/excel 转 PDF（附件预览） | 调用报错并提示补依赖 | `com.aspose:aspose-words` + `aspose-cells` |
+| 静态站点发布 rar/7z 解压 | 该两种格式报错并提示；zip/tar/gz 正常 | `net.sf.sevenzipjbinding:sevenzipjbinding` + `sevenzipjbinding-all-platforms` |
+| ES 实体同步 / ES 服务日志 | 配置类不装配（同现状 `geelato.es.enabled=false`） | `co.elastic.clients:elasticsearch-java` |
+| 公告 git 直连 | 启动记 WARN 跳过；手动 refresh 返回失败提示 | `org.eclipse.jgit:org.eclipse.jgit` |
+| JTA（Atomikos）事务 | 配置不装配（同现状开关关闭） | `com.atomikos:transactions-spring-boot3-starter` |
+| Seata 数据源代理 | 显式开启时报错并提示补依赖 | `org.apache.seata:seata-all` |
+| JDBC 驱动 | 按实际数据库自带一种即可（如 MySQL） | `com.mysql:mysql-connector-j` 等 |
+
+**一行恢复全部**：依赖 `cn.geelato:geelato-web-platform-extras`（平台特性包，等价于完整参考平台 `geelato-web-quickstart` 的重型依赖集，fat jar 约回到 490 MB）。能力库后续新增重型依赖也一律 optional——脚手架体积不会随版本悄悄回弹。
 
 #### 启动类模板
 

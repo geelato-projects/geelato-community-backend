@@ -5,7 +5,7 @@ sidebar_label: MQL
 
 # MQL
 
-MQL，完整名称为 Meta Query Language，是 Geelato Framework 在平台侧提供的一套基于 JSON 的元数据查询与操作协议。
+MQL，完整名称为 Meta Query Language，是 Geelato 平台提供的一套基于 JSON 的元数据查询与操作协议。
 
 它的目标不是替代后端 Java 服务中的 ORM Fluent DSL，而是为前端页面、低代码界面和平台通用数据接口提供统一的数据访问表达方式。
 

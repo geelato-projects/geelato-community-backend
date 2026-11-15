@@ -27,6 +27,8 @@ import java.util.regex.Pattern;
 /**
  * RisingWave 物化视图引擎适配器（PG 协议）。
  * 摄取：两段式（CREATE SOURCE 连接定义 + CREATE TABLE ... FROM source TABLE (*)）。
+ * CDC source 与摄取表按源库共享：同一源库在引擎内只建一个 source（gl_{连接id}_{库名}），
+ * 同一源表只建一张摄取表，多视图复用；删除由编排层引用计数保护。
  * 引擎目录：rw_relations / rw_materialized_views，回退 information_schema。
  */
 @Component
@@ -184,7 +186,7 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
                 + ")";
     }
 
-    /** server.id：由源库连接与 source 名确定性派生（10000~1010000），同一 source 稳定，不同 source 冲突概率低 */
+    /** server.id：由源库连接与 source 名确定性派生（10000~1010000）；共享 source 命名稳定，server.id 随之稳定不变 */
     static int serverIdOf(SourceSpec spec) {
         String seed = spec.originHost() + ":" + spec.originPort() + "/" + spec.originDatabase() + "/" + spec.sourceName();
         return 10000 + Math.abs(seed.hashCode()) % 1_000_000;
@@ -215,8 +217,8 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
         try {
             boolean exists = relationExists(spec.engineConnectId(), spec.sourceName());
             items.add(new CheckResult("source-exists", true, exists
-                    ? "引擎内已存在同名 source（将复用；对本段的修改不会重建已存在的 source）"
-                    : "引擎内不存在同名 source（初始化时创建）"));
+                    ? "引擎内已存在同名 source（按源库共享的通道，将复用；对本段的修改不会重建已存在的 source）"
+                    : "引擎内不存在同名 source（按源库共享，初始化时创建；同库其他视图将复用）"));
         } catch (Exception e) {
             items.add(new CheckResult("source-exists", false, "无法检查引擎内 source 是否存在：" + e.getMessage()));
         }
@@ -744,22 +746,32 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
     }
 
     @Override
-    public void dropSource(String engineConnectId, String sourceName) {
+    public void dropSource(String engineConnectId, String sourceName, List<String> cdcTables) {
         DataSource ds = engineDataSource(engineConnectId);
+        boolean sharedKeepSource = cdcTables != null && !cdcTables.isEmpty();
         List<String> tables = new ArrayList<>();
         try {
-            for (Map<String, Object> row : queryRows(ds,
-                    "SELECT table_name AS name FROM information_schema.tables WHERE table_name LIKE ?",
-                    sourceName.toLowerCase(Locale.ROOT) + "\\_%")) {
-                tables.add(String.valueOf(row.get("name")));
+            if (sharedKeepSource) {
+                tables.addAll(cdcTables);
+            } else {
+                for (Map<String, Object> row : queryRows(ds,
+                        "SELECT table_name AS name FROM information_schema.tables WHERE table_name LIKE ?",
+                        sourceName.toLowerCase(Locale.ROOT) + "\\_%")) {
+                    tables.add(String.valueOf(row.get("name")));
+                }
             }
             for (String table : tables) {
                 execute(ds, "DROP TABLE IF EXISTS " + quoted(table));
             }
+            if (sharedKeepSource) {
+                log.info("[MV-CDC] 共享 CDC source 保留（仍有其他视图引用），仅删除视图专属摄取表：source={}, tables={}",
+                        sourceName, tables);
+                return;
+            }
             execute(ds, "DROP SOURCE IF EXISTS " + quoted(sourceName));
             log.info("[MV-CDC] 删除摄取通道：source={}, 前缀 CDC 表={}", sourceName, tables);
         } catch (SQLException e) {
-            throw new IllegalStateException("删除摄取通道失败（source=" + sourceName + "，前缀表 " + tables + "）：" + e.getMessage()
+            throw new IllegalStateException("删除摄取通道失败（source=" + sourceName + "，CDC 表 " + tables + "）：" + e.getMessage()
                     + "；若仍有物化视图引用这些 CDC 表，请先删除相关物化视图", e);
         }
     }

@@ -22,6 +22,14 @@
             <artifactId>geelato-web-designer</artifactId>
         </dependency>
 
+        <!-- 完整参考平台特性包：重依赖(发票OCR/Office转PDF/七zip/ES/JGit/seata/atomikos/JDBC驱动)非 optional 聚合。
+             脚手架工程不依赖本包即获得轻量发行(约 240MB),按需恢复见官方文档"可选特性"表。 -->
+        <dependency>
+            <groupId>cn.geelato</groupId>
+            <artifactId>geelato-web-platform-extras</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- 内置维护模块：实体三者同步校验与补偿工具 + MQL 测试套件与在线调试工具链。
              两者各由独立开关控制：geelato.meta.sync.enabled=true / geelato.mql.playground.enabled=true，默认关闭不激活。 -->
         <dependency>
@@ -45,10 +53,6 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-        </dependency>
-        <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <version>2.2.11</version>
@@ -62,16 +66,6 @@
             <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-impl</artifactId>
             <version>2.2.11</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-            <version>${apache.poi.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>${apache.poi.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.activation</groupId>
@@ -151,6 +145,13 @@
                 <version>3.0.0</version>
                 <configuration>
                     <mainClass>cn.geelato.web.quickstart.QuickStartApplication</mainClass>
+                    <!-- repackage 默认连 provided scope 一并打进 BOOT-INF/lib（Boot 插件行为），显式排除仅编译期依赖 -->
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>

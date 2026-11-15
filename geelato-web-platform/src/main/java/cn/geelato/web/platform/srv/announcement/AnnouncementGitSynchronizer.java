@@ -14,6 +14,7 @@ import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.FS;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -26,11 +27,14 @@ import java.util.Map;
  * 每次读取即一次完整拉取，结果由调用方缓存在内存中（拉取时机：应用启动与手动 refresh）。
  * <p>仅支持 https（file 协议供测试）；私有仓库配 username + PAT。失败抛
  * {@link IllegalStateException}（仓库地址落日志，密码不落日志），不做降级。</p>
+ * <p>jgit 为 optional 依赖：classpath 无 jgit 时本 bean 不注册（字符串形式条件），
+ * 宿主经 geelato-web-platform-extras 或 org.eclipse.jgit:org.eclipse.jgit 恢复。</p>
  *
  * @author geelato
  */
 @Slf4j
 @Component
+@ConditionalOnClass(name = "org.eclipse.jgit.api.Git")
 public class AnnouncementGitSynchronizer {
 
     private final AnnouncementGitProperties properties;

@@ -7,6 +7,14 @@ sidebar_label: REST API 清单
 
 所有端点由 `@WFApiRestController` 声明并统一带 `/api` 前缀（认证控制器除外，见文末），返回统一 `WorkflowResult`。字段级入参以控制器源码为准，本页是导航级清单。
 
+:::info 字段级接口契约
+流程定义、流程运行、个人流程（含传阅）三组核心接口的逐端点入参/出参说明见：
+
+- [流程定义集成](integration-define.md)
+- [流程运行集成](integration-runtime.md)
+- [个人流程集成](integration-my.md)
+:::
+
 ## 流程定义 `/api/define`（DefineController）
 
 | 端点 | 说明 |
@@ -49,7 +57,7 @@ sidebar_label: REST API 清单
 | `GET /getMyStart` | 我发起的 |
 | `GET /getOpinionPhraseList`、`POST /saveOpinionPhrase`、`/updateOpinionPhrase`、`/deleteOpinionPhrase` | 常用语 CRUD |
 
-## 传阅 `/api/toread`（ToReadController）
+## 传阅 `/api/toRead`（ToReadController）
 
 `POST /sendToRead`（发传阅）、`POST /completeRead`、`POST /batchCompleteRead`（办结/批量办结传阅）
 

@@ -6,7 +6,7 @@ sidebar_label: Business Integration
 
 # Workflow Business Integration Guide
 
-How to deploy the workflow service and how business systems integrate (auth, datasources, configuration). Endpoints: [REST API Reference](api.md); configuration details: [Workflow Module Configuration](../system-config/workflow.md).
+How to deploy the workflow service and how business systems integrate (auth, datasources, configuration). Endpoints: [REST API Reference](api.md); field-level contracts: [Define Integration](integration-define.md), [Runtime Integration](integration-runtime.md) and [My Process Integration](integration-my.md); configuration details: [Workflow Module Configuration](../system-config/workflow.md).
 
 ## Deployment
 

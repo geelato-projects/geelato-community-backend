@@ -1,6 +1,6 @@
 # Startup Process
 
-This page explains what happens during application startup when a runtime application is based on:
+This page explains the platform's startup sequence when a Geelato Runtime application is based on:
 
 - `cn.geelato.web.platform.boot.BootApplication`
 
@@ -30,13 +30,30 @@ So `BootApplication` is not the outermost Spring Boot entry. It is the Geelato r
 The current startup sequence can be summarized as:
 
 1. Spring Boot creates and refreshes the `ApplicationContext`
-2. Spring scans framework beans and business beans
+2. Spring scans platform beans and business beans
 3. `MetaConfiguration` initializes metadata from classes and database definitions
 4. Spring executes `BootApplication.run(...)`
 5. runtime managers initialize data source definitions
 6. SQL resources and DB scripts are loaded
 7. Graal services and variables are scanned
 8. environment configuration cache is initialized
+
+The overall sequence in its two layers:
+
+```mermaid
+flowchart TD
+    subgraph S["Spring container initialization"]
+        A["Spring Boot creates and refreshes the ApplicationContext"] --> B["@ComponentScan bean scanning<br/>cn.geelato + business packages"]
+        B --> C["MetaConfiguration metadata initialization<br/>1. scan @Entity class metadata<br/>2. load database metadata: tables, columns, views, checks, foreign keys<br/>3. MetaBootstrap post-enhancement, optional"]
+    end
+    subgraph R["BootApplication.run(...) runtime initialization"]
+        D["cache data source definitions<br/>connections created lazily on access"] --> E["load SQL resources and platform_sql DB scripts"]
+        E --> F["scan Graal services and variables"]
+        F --> G["initialize environment config cache<br/>platform_sys_config"]
+    end
+    S --> R
+    G --> H["runtime startup completes"]
+```
 
 ## Metadata Initialization
 

@@ -42,6 +42,7 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 
 import java.util.Calendar;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Slf4j
@@ -492,6 +493,10 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
         User copy = new User();
         BeanUtils.copyProperties(source, copy);
+        // BeanUtils 对 Map 只拷引用：隔离 extendInfo，防止会话副本变更污染共享快照
+        if (source.getExtendInfo() != null) {
+            copy.setExtendInfo(new LinkedHashMap<>(source.getExtendInfo()));
+        }
         return copy;
     }
 

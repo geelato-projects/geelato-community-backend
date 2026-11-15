@@ -1,6 +1,6 @@
 # MQL Usage Guide
 
-This page explains how MQL is used in Geelato Framework for query, save, delete, and expression-based data access on the platform side.
+This page explains how MQL is used on the platform side for query, save, delete, and expression-based data access.
 
 ## Core Endpoints
 

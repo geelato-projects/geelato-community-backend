@@ -8,6 +8,14 @@ sidebar_label: REST API Reference
 
 All endpoints are declared via `@WFApiRestController` with the unified `/api` prefix (except the auth controllers, at the end) and return a unified `WorkflowResult`. This is a navigation-level list; field-level inputs follow the controller sources.
 
+:::info Field-Level Contracts
+Per-endpoint input/output documentation for the define, runtime and my-process (incl. circulation) groups:
+
+- [Define Integration](integration-define.md)
+- [Runtime Integration](integration-runtime.md)
+- [My Process Integration](integration-my.md)
+:::
+
 ## Process Definition `/api/define`
 
 | Endpoint | Description |
@@ -50,7 +58,7 @@ All endpoints are declared via `@WFApiRestController` with the unified `/api` pr
 | `GET /getMyStart` | Started by me |
 | `GET /getOpinionPhraseList`, `POST /saveOpinionPhrase`, `/updateOpinionPhrase`, `/deleteOpinionPhrase` | Opinion phrases CRUD |
 
-## To-read `/api/toread`
+## To-read `/api/toRead`
 
 `POST /sendToRead`, `POST /completeRead`, `POST /batchCompleteRead`
 

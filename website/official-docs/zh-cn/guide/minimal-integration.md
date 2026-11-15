@@ -187,7 +187,7 @@ public class SampleHelloController {
 - `message`、`market`、`schedule` 等扩展模块
 - 需要额外中间件的重量级平台能力
 
-依赖体量说明：`geelato-framework-starter` 自身传递依赖了 GraalVM JS（约 58 MB）、Seata、Atomikos、Redis 客户端、MySQL 驱动等，即使只用 H2 也会被打包——最小工程 fat jar 实测约 156 MB / 178 个 jar / 8 个 Geelato 模块。上述"不建议引入"指的是在 starter 之上再叠加平台模块，而非当前依赖树已经极简。轻量 starter 在规划中，当前版本请知悉该体量。
+依赖体量说明：`geelato-framework-starter` 自身传递 GraalVM JS（约 58 MB）与 Redis 客户端，fat jar 实测约 **120 MB**（framework-starter 约 117 MB / 126 个 jar + 宿主自带 H2）。Seata、Atomikos 与 JDBC 驱动均已改为 optional——只用 H2 不会再带上 MySQL 驱动，JTA 依赖也不会进包；需要时经 `geelato-web-platform-extras` 一行恢复全部。上述"不建议引入"指的是在 starter 之上再叠加平台模块，而非当前依赖树已经极简。
 
 ## 最小配置面
 
@@ -210,7 +210,7 @@ public class SampleHelloController {
 
 这条链路的目的不是展示平台全能力，而是验证框架底座可以被独立消费。
 
-事务补充说明：Geelato 层的 JTA 与 Seata 代理默认关闭（对应配置键不置 `true` 即不加载），但 classpath 上的 Atomikos 仍会被 Spring Boot 自装配，启动日志中会出现 Atomikos 输出并在工作目录写出 `./atomikos-logs/`，属预期行为。
+事务补充说明：Geelato 层的 JTA 与 Seata 代理默认关闭（对应配置键不置 `true` 即不加载），且 Atomikos / Seata 依赖本身已 optional——最小工程 classpath 上不再出现 Atomikos，工作目录不会产生 `./atomikos-logs/`。需要 JTA 时引入 `com.atomikos:transactions-spring-boot3-starter` 即恢复。
 
 ## 何时切换到脚手架
 

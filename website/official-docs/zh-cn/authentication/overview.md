@@ -100,14 +100,15 @@ sidebar_label: 统一认证中心
 - 从返回结果中提取 `data.user`
 - 建立本系统自己的账号映射、权限上下文或本地会话
 
-## 独立服务与框架能力的边界
+## 独立服务与框架、平台能力的边界
 
-独立认证服务（Auth Server）与 Geelato 框架本身的边界建议如下：
+独立认证服务（Auth Server）与 Geelato 框架及平台能力的边界建议如下：
 
 - **Auth Server（独立服务）**：解决“业务系统如何接入、如何获取统一 token 并确认用户身份”的问题。
 - **安全认证（框架能力）**：解决“业务系统获取 token 后，如何在平台运行时消费 token 并建立当前请求的鉴权主体”的问题。
 - **Runtime 链路（框架能力）**：解决“认证成功后如何在后端建立安全上下文”的问题。
-- **MQL / ORM（框架能力）**：解决“身份确认之后如何访问业务数据”的问题。
+- **MQL（平台能力）**：解决“身份确认之后，前端与平台协议侧如何访问业务数据”的问题。
+- **ORM（框架能力）**：解决“后端 Java 服务如何访问业务数据”的问题。
 
 需要特别注意：
 
@@ -140,4 +141,4 @@ https://<auth-host>/lite-login
 4. 接入统一权限管理（镜像表 / 数据权限注入），请看 [权限接入指南](permission-integration.md)
 5. 经开放 API 自助管理本系统数据（角色 / 用户 / 组织 / 会话）并自建管理 UI，请看 [开放管理 API](open-api-management.md)
 6. 了解框架如何消费 Token，请看 [平台能力：认证鉴权](security-authentication.md)
-7. 了解安全上下文，请看 [平台能力：SecurityContext 生命周期](../runtime/security-context-lifecycle.md)
+7. 了解安全上下文，请看 [安全契约：安全上下文](../security/context.md)

@@ -25,7 +25,19 @@ geelato-workflow 是独立仓库（`geelato-workflow`），不属于 geelato-com
 
 - 控制器标注组合注解 `@WFApiRestController`（= `@ApiRestController(category="workflow")` + JSON produces）；quickstart 的 `ApiPrefixAutoConfiguration` 为其统一加 `/api` 前缀。
 - 返回统一为 `WorkflowResult`（`ResultCode` / `WorkflowErrorCode`）。
-- 端点全集见 [REST API 清单](api.md)。
+- 端点全集见 [REST API 清单](api.md)；字段级接口契约见[流程定义集成](integration-define.md)、[流程运行集成](integration-runtime.md)与[个人流程集成](integration-my.md)。
+
+## 文档导航
+
+| 页面 | 内容 |
+| --- | --- |
+| [流程编排](orchestration.md) | 流程节点、迁移线、参与者、流程属性与节点属性模型 |
+| [流程运转](runtime.md) | 发起 → 求解 → 运转 → 结束的全生命周期与时序 |
+| [业务接入](integration.md) | 部署形态、认证与配置 |
+| [REST API 清单](api.md) | 全部端点导航级索引 |
+| [流程定义集成](integration-define.md) | 定义保存、版本、发布、编辑锁接口契约 |
+| [流程运行集成](integration-runtime.md) | 发起、求解、提交、办理、实例管理接口契约 |
+| [个人流程集成](integration-my.md) | 待办、已办、待阅、已阅、常用语、传阅接口契约 |
 
 ## 流程定义与部署链路
 

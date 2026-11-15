@@ -17,6 +17,7 @@ import cn.geelato.web.platform.srv.mv.engine.MaterializedViewEngine;
 import cn.geelato.web.platform.srv.model.service.DevViewService;
 import cn.geelato.web.platform.srv.platform.service.BaseService;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -230,7 +232,7 @@ public class MaterializedViewService extends BaseService {
         }
 
         // P2. 计算目标 CDC 表名（不创建），改写 SQL
-        String sourceName = sourceName(originConnect.getId(), database, viewName);
+        String sourceName = sourceName(originConnect.getId(), database);
         Map<String, String> plannedMapping = new LinkedHashMap<>();
         for (String table : tables) {
             plannedMapping.put(table, (sourceName + "_" + table).toLowerCase(Locale.ROOT));
@@ -245,6 +247,20 @@ public class MaterializedViewService extends BaseService {
         // P2.5 构造建立物化视图的三步 DDL（只读内省源库，不执行任何 DDL）
         MaterializedViewEngine.SourceSpec spec = buildSpec(engineConnectId, originConnect, database, tables, viewName, snapshotEnabledOf(params));
         MaterializedViewEngine.DdlPlan plan = engine.buildDdlPlan(spec, viewName, engineSql);
+
+        // 历史视图迁移约束：引擎内 MV 已存在且持久化 DDL 为旧的按视图命名通道时，复用（不 recreate）会与共享通道命名不一致
+        if (!recreate) {
+            JSONObject persisted = persistedDdlJson(findAnyMaterializedView(viewName));
+            String persistedSourceName = persisted == null ? null : persisted.getString("sourceName");
+            if (StringUtils.isNotBlank(persistedSourceName)
+                    && !persistedSourceName.equalsIgnoreCase(spec.sourceName())
+                    && engine.relationExists(engineConnectId, viewName)) {
+                throw new IllegalStateException(String.format(
+                        "该物化视图此前按旧的按视图命名创建了独立摄取通道（source=%s），与共享通道（source=%s）不一致，"
+                                + "复用既有物化视图将导致通道与持久化 DDL 不匹配；请传 recreate=true 迁移到共享 CDC source（将重建物化视图并重新回填）。",
+                        persistedSourceName, spec.sourceName()));
+            }
+        }
 
         // P2.6 若前端回传了编辑后的 DDL，先逐段校验；不通过则不执行任何 DDL
         if (params.get("ddl") != null) {
@@ -568,7 +584,7 @@ public class MaterializedViewService extends BaseService {
         if (tables.isEmpty()) {
             throw new IllegalArgumentException("建表语句未解析到任何物理表（mysql-cdc 只能摄取物理表，MySQL 视图会被自动展开）");
         }
-        String sourceName = sourceName(originConnect.getId(), database, viewName);
+        String sourceName = sourceName(originConnect.getId(), database);
         Map<String, String> plannedMapping = new LinkedHashMap<>();
         for (String table : tables) {
             plannedMapping.put(table, (sourceName + "_" + table).toLowerCase(Locale.ROOT));
@@ -1024,19 +1040,43 @@ public class MaterializedViewService extends BaseService {
         MaterializedViewEngine engine = resolveEngine(engineConnect);
         engine.dropView(materializedView.getConnectId(), null, viewName);
         boolean dropSource = Boolean.parseBoolean(String.valueOf(params.getOrDefault("dropSource", "false")));
+        boolean sharedSourceKept = false;
+        List<String> droppedCdcTables = List.of();
         if (dropSource) {
             ConnectMeta originConnect = requireConnect(str(params, "originConnectId"), "originConnectId");
             String database = resolveDatabase(params, originConnect);
-            engine.dropSource(materializedView.getConnectId(), sourceName(originConnect.getId(), database, viewName));
+            // 以副本行持久化的 DDL JSON 为准（历史视图为旧的按视图命名），避免重算成共享名误删共享通道
+            String sourceName = resolveSourceName(materializedView, originConnect.getId(), database, viewName);
+            List<String> ownTables = persistedCdcTables(materializedView);
+            List<String> referencedByOthers = cdcTablesReferencedByOthers(viewName, sourceName);
+            if (referencedByOthers.isEmpty()) {
+                // 无其他视图引用：按前缀清理全部摄取表 + 删除 source（顺带清理孤儿表）
+                engine.dropSource(materializedView.getConnectId(), sourceName, List.of());
+                droppedCdcTables = ownTables;
+            } else {
+                // 共享通道仍有其他视图引用：只删除本视图专属、不被他人引用的摄取表，保留 source
+                droppedCdcTables = ownTables.stream()
+                        .filter(t -> !referencedByOthers.contains(t))
+                        .toList();
+                if (!droppedCdcTables.isEmpty()) {
+                    engine.dropSource(materializedView.getConnectId(), sourceName, droppedCdcTables);
+                }
+                sharedSourceKept = true;
+                log.info("[MV-CDC] 共享 CDC source 保留（source={}，仍被其他视图引用），本视图专属摄取表删除：{}",
+                        sourceName, droppedCdcTables);
+            }
         }
         materializedView.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
         this.isDeleteModel(materializedView);
         refreshMetaAndCache(viewName);
-        log.info("[MV] 删除：view={}, dropSource={}, engineConnectId={}", viewName, dropSource, materializedView.getConnectId());
+        log.info("[MV] 删除：view={}, dropSource={}, sharedSourceKept={}, engineConnectId={}",
+                viewName, dropSource, sharedSourceKept, materializedView.getConnectId());
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("viewName", viewName);
         result.put("droppedView", viewName);
         result.put("dropSource", dropSource);
+        result.put("sharedSourceKept", sharedSourceKept);
+        result.put("droppedCdcTables", droppedCdcTables);
         return result;
     }
 
@@ -1111,7 +1151,10 @@ public class MaterializedViewService extends BaseService {
         }
 
         log.info("[MV-Compare] 数据对比开始：view={}, 物理表={}, 引擎={}", viewName, tables, engine.engineType());
-        String sourceName = sourceName(originConnect.getId(), database, viewName);
+        // 以副本行持久化的 DDL JSON 为准（历史视图为旧的按视图命名），避免重算成共享名比对错表
+        TableView mvRow = findAnyMaterializedView(viewName);
+        String sourceName = resolveSourceName(mvRow, originConnect.getId(), database, viewName);
+        Map<String, String> tableMapping = resolveTableMapping(mvRow, sourceName, tables);
 
         List<Map<String, Object>> results = new ArrayList<>();
         boolean allMatch = true;
@@ -1124,7 +1167,7 @@ public class MaterializedViewService extends BaseService {
                 long tableStart = System.currentTimeMillis();
 
                 long mysqlCount = queryCount(originConn, table);
-                String cdcTable = (sourceName + "_" + table).toLowerCase(Locale.ROOT);
+                String cdcTable = tableMapping.getOrDefault(table, (sourceName + "_" + table).toLowerCase(Locale.ROOT));
                 long rwCount;
                 try (Connection rwConn = engineDs.getConnection()) {
                     rwCount = queryCount(rwConn, cdcTable);
@@ -1367,7 +1410,7 @@ public class MaterializedViewService extends BaseService {
                 database,
                 originConnect.getDbUserName(),
                 EncryptUtils.decrypt(originConnect.getDbPassword()),
-                sourceName(originConnect.getId(), database, viewName),
+                sourceName(originConnect.getId(), database),
                 tables,
                 snapshotEnabled);
     }
@@ -1498,8 +1541,19 @@ public class MaterializedViewService extends BaseService {
         throw new IllegalArgumentException("database 不能为空（源连接未登记 db_name）");
     }
 
-    /** 通道按视图隔离：gl_{连接id}_{库名}_{视图名}，超长截断加哈希后缀 */
-    private String sourceName(String originConnectId, String database, String viewName) {
+    /** 共享 CDC 通道按源库隔离：gl_{连接id}_{库名}，同一源库在引擎内只建一个 source；超长截断加哈希后缀 */
+    static String sourceName(String originConnectId, String database) {
+        String name = ("gl_" + IDENT_PART_PATTERN.matcher(originConnectId == null ? "" : originConnectId).replaceAll("_")
+                + "_" + IDENT_PART_PATTERN.matcher(database == null ? "" : database).replaceAll("_")).toLowerCase(Locale.ROOT);
+        if (name.length() > 63) {
+            String hash = Integer.toHexString((originConnectId + ":" + database).hashCode());
+            name = name.substring(0, 63 - hash.length() - 1) + "_" + hash;
+        }
+        return name;
+    }
+
+    /** 历史视图的旧命名（按视图隔离）：gl_{连接id}_{库名}_{视图名}，仅在副本行无持久化 DDL JSON 时回退使用 */
+    private static String legacySourceName(String originConnectId, String database, String viewName) {
         String name = ("gl_" + IDENT_PART_PATTERN.matcher(originConnectId == null ? "" : originConnectId).replaceAll("_")
                 + "_" + IDENT_PART_PATTERN.matcher(database == null ? "" : database).replaceAll("_")
                 + "_" + IDENT_PART_PATTERN.matcher(viewName == null ? "" : viewName).replaceAll("_")).toLowerCase(Locale.ROOT);
@@ -1508,6 +1562,116 @@ public class MaterializedViewService extends BaseService {
             name = name.substring(0, 63 - hash.length() - 1) + "_" + hash;
         }
         return name;
+    }
+
+    /** 解析副本行持久化的引擎 DDL JSON（kind=mv-engine-ddl）；副本行无效或非引擎 DDL JSON 时返回 null */
+    private JSONObject persistedDdlJson(TableView mvRow) {
+        if (mvRow == null) {
+            return null;
+        }
+        String construct = mvRow.getViewConstruct();
+        if (construct == null || !construct.trim().startsWith("{")) {
+            return null;
+        }
+        try {
+            JSONObject json = JSON.parseObject(construct);
+            return "mv-engine-ddl".equals(json.getString("kind")) ? json : null;
+        } catch (Exception e) {
+            log.warn("[MV] 解析副本行 DDL JSON 失败（view={}）：{}", mvRow.getViewName(), e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 副本行实际使用的 CDC source 名：优先读持久化 DDL JSON（历史视图为旧的按视图命名，必须以其为准，
+     * 避免删除/对比时重算成共享名而误伤共享通道）；无有效 JSON 时回退旧按视图命名。
+     */
+    private String resolveSourceName(TableView mvRow, String originConnectId, String database, String viewName) {
+        JSONObject json = persistedDdlJson(mvRow);
+        if (json != null && StringUtils.isNotBlank(json.getString("sourceName"))) {
+            return json.getString("sourceName");
+        }
+        return legacySourceName(originConnectId, database, viewName);
+    }
+
+    /** 副本行实际使用的源表→引擎摄取表映射：优先读持久化 DDL JSON 的 tableMapping；无则按共享命名计算 */
+    private Map<String, String> resolveTableMapping(TableView mvRow, String sourceName, List<String> tables) {
+        JSONObject json = persistedDdlJson(mvRow);
+        if (json != null) {
+            JSONObject mapping = json.getJSONObject("tableMapping");
+            if (mapping != null && !mapping.isEmpty()) {
+                Map<String, String> result = new LinkedHashMap<>();
+                for (String table : tables) {
+                    String engineTable = mapping.getString(table);
+                    if (engineTable == null) {
+                        // 映射键大小写可能与源表清单不一致，做一次忽略大小写匹配
+                        for (Map.Entry<String, Object> entry : mapping.entrySet()) {
+                            if (entry.getKey() != null && entry.getKey().equalsIgnoreCase(table)) {
+                                engineTable = String.valueOf(entry.getValue());
+                                break;
+                            }
+                        }
+                    }
+                    if (engineTable != null) {
+                        result.put(table, engineTable.toLowerCase(Locale.ROOT));
+                    }
+                }
+                if (!result.isEmpty()) {
+                    return result;
+                }
+            }
+        }
+        Map<String, String> result = new LinkedHashMap<>();
+        for (String table : tables) {
+            result.put(table, (sourceName + "_" + table).toLowerCase(Locale.ROOT));
+        }
+        return result;
+    }
+
+    /** 副本行实际占用的引擎 CDC 摄取表清单（小写）：读持久化 DDL JSON 的 tableMapping 值；无有效 JSON 时返回空 */
+    private List<String> persistedCdcTables(TableView mvRow) {
+        JSONObject json = persistedDdlJson(mvRow);
+        if (json == null) {
+            return List.of();
+        }
+        JSONObject mapping = json.getJSONObject("tableMapping");
+        if (mapping == null || mapping.isEmpty()) {
+            return List.of();
+        }
+        List<String> tables = new ArrayList<>();
+        for (Object value : mapping.values()) {
+            if (value != null) {
+                tables.add(String.valueOf(value).toLowerCase(Locale.ROOT));
+            }
+        }
+        return tables;
+    }
+
+    /**
+     * 统计其他未软删的物化副本行对同一 CDC source 的引用（共享通道引用计数）。
+     * 返回这些视图占用的全部摄取表清单（小写，含重复按表去重）；空清单表示没有其他视图引用该 source。
+     */
+    private List<String> cdcTablesReferencedByOthers(String excludeViewName, String sourceName) {
+        Set<String> tables = new LinkedHashSet<>();
+        for (TableView row : queryMaterializedRows()) {
+            if (excludeViewName != null && excludeViewName.equalsIgnoreCase(row.getViewName())) {
+                continue;
+            }
+            JSONObject json = persistedDdlJson(row);
+            if (json == null || !sourceName.equalsIgnoreCase(json.getString("sourceName"))) {
+                continue;
+            }
+            tables.addAll(persistedCdcTables(row));
+        }
+        return new ArrayList<>(tables);
+    }
+
+    /** 全部未软删的物化副本行（viewType=materialized；queryModel 默认过滤已排除软删行） */
+    private List<TableView> queryMaterializedRows() {
+        FilterGroup filter = new FilterGroup();
+        filter.addFilter("viewType", ViewTypeEnum.MATERIALIZED.getCode());
+        List<TableView> views = devViewService.queryModel(TableView.class, filter);
+        return views == null ? List.of() : views;
     }
 
     /** resolver 缓存永不过期，必须手动清 */

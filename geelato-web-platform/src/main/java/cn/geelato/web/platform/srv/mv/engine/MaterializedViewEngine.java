@@ -64,8 +64,12 @@ public interface MaterializedViewEngine {
 
     void dropView(String engineConnectId, String schema, String viewName);
 
-    /** 幂等；是否删除由编排层显式参数决定 */
-    void dropSource(String engineConnectId, String sourceName);
+    /**
+     * 幂等；是否删除由编排层显式参数决定。
+     * <p>{@code cdcTables} 为空：按前缀删除该 source 名下全部摄取表并删除 source（独占通道清理）；
+     * 非空：只精确删除清单内摄取表，保留 source（共享通道仍有其他视图引用时使用）。</p>
+     */
+    void dropSource(String engineConnectId, String sourceName, List<String> cdcTables);
 
     /** 语法预检：解析 SELECT 语句但不执行（RW 用 EXPLAIN），失败说明引擎不支持该 SQL 语法 */
     void validateQuery(String engineConnectId, String sql);

@@ -51,10 +51,12 @@
             <groupId>org.pf4j</groupId>
             <artifactId>pf4j-update</artifactId>
         </dependency>
-        <!-- 发票 OCR：rapidocr4j（传递依赖 onnxruntime 1.18.0 + openpnp opencv 4.6.0-0，含全平台 native + PP-OCRv4 中文模型） -->
+        <!-- 发票 OCR：rapidocr4j（传递依赖 onnxruntime 1.18.0 + openpnp opencv 4.6.0-0，含全平台 native + PP-OCRv4 中文模型，约 198MB）
+             重依赖一律 optional：脚手架默认不携带，需要该特性的宿主依赖 geelato-web-platform-extras 或直接引入本坐标 -->
         <dependency>
             <groupId>io.github.hzkitty</groupId>
             <artifactId>rapidocr4j</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>cn.geelato</groupId>
@@ -85,10 +87,6 @@
                     <artifactId>jedis</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -188,16 +186,19 @@
             <version>2.6.12</version>
         </dependency>
 
+        <!-- Office 转 PDF（约 22MB）：optional，恢复方式同 rapidocr4j -->
         <dependency>
             <groupId>com.aspose</groupId>
             <artifactId>aspose-words</artifactId>
             <version>21.1</version>
             <classifier>jdk17</classifier>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.aspose</groupId>
             <artifactId>aspose-cells</artifactId>
             <version>21.11</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
@@ -214,16 +215,19 @@
             <artifactId>xmlworker</artifactId>
             <version>5.5.13.3</version>
         </dependency>
+        <!-- 静态站点发布 RAR 解压（all-platforms native 约 6.7MB）：optional -->
         <dependency>
             <groupId>net.sf.sevenzipjbinding</groupId>
             <artifactId>sevenzipjbinding</artifactId>
             <version>16.02-2.01</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>net.sf.sevenzipjbinding</groupId>
             <artifactId>sevenzipjbinding-all-platforms</artifactId>
             <version>16.02-2.01</version>
             <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.aliyun</groupId>
@@ -261,15 +265,18 @@
             <version>3.5.3</version>
         </dependency>
 
+        <!-- ES 数据同步/服务日志存储客户端（约 10.3MB）：optional -->
         <dependency>
             <groupId>co.elastic.clients</groupId>
             <artifactId>elasticsearch-java</artifactId>
             <version>8.12.2</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client</artifactId>
             <version>8.12.2</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
@@ -277,11 +284,12 @@
             <version>1.0.87</version>
         </dependency>
         <!-- 公告 git 直连：JGit 纯 Java 实现无 native（约 3.5MB，EDL/BSD-3 许可），
-             https 传输复用 classpath 已有 httpclient 4.5.x；仅公告同步使用，版本就地管理 -->
+             https 传输复用 classpath 已有 httpclient 4.5.x；仅公告同步使用，版本就地管理；optional -->
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
             <version>7.5.0.202512021534-r</version>
+            <optional>true</optional>
         </dependency>
 
         <!-- ===== OpenMetrics / 可观测性 ===== -->

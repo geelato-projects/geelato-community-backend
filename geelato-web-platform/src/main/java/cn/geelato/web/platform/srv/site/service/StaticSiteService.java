@@ -59,6 +59,17 @@ public class StaticSiteService extends BaseService {
         }
     }
 
+    /** rar/7z 分支专用守卫：sevenzipjbinding 为 optional 依赖，缺失时硬失败并提示恢复方式（zip/tar/gz 不受影响）。 */
+    private static void requireSevenZip() {
+        try {
+            Class.forName("net.sf.sevenzipjbinding.SevenZip");
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException(
+                    "静态站点发布不支持 rar/7z 解压：classpath 缺少 sevenzipjbinding。"
+                            + "宿主工程添加依赖 cn.geelato:geelato-web-platform-extras 或 net.sf.sevenzipjbinding:sevenzipjbinding(+all-platforms) 后重启", e);
+        }
+    }
+
     public StaticSite createModel(StaticSite model, String baseFolderPath) {
         model = super.createModel(model);
         // 创建文件夹
@@ -128,9 +139,11 @@ public class StaticSiteService extends BaseService {
                 processSingleCompressedFile(compressedFile, rootPath, isExist);
                 break;
             case "rar":
+                requireSevenZip();
                 processRarFile(compressedFile, rootPath, isByStep, isExist);
                 break;
             case "7z":
+                requireSevenZip();
                 process7zFile(compressedFile, rootPath, isByStep, isExist);
                 break;
             default:

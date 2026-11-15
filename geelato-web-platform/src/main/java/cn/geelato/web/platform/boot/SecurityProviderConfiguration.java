@@ -3,6 +3,7 @@ package cn.geelato.web.platform.boot;
 import cn.geelato.security.BridgeSecurityProvider;
 import cn.geelato.security.DefaultOrgProvider;
 import cn.geelato.security.DefaultRoleProvider;
+import cn.geelato.security.DefaultUserExtInfoEnricher;
 import cn.geelato.security.DefaultUserOrgInfoEnricher;
 import cn.geelato.security.DefaultUserProvider;
 import cn.geelato.security.DBOrgSnapshotLoader;
@@ -14,6 +15,7 @@ import cn.geelato.security.RoleProvider;
 import cn.geelato.security.RoleSnapshotLoader;
 import cn.geelato.security.SecurityDataRefreshCoordinator;
 import cn.geelato.security.SecurityProvider;
+import cn.geelato.security.UserExtInfoEnricher;
 import cn.geelato.security.UserOrgInfoEnricher;
 import cn.geelato.security.UserProvider;
 import cn.geelato.security.UserSnapshotLoader;
@@ -45,6 +47,12 @@ public class SecurityProviderConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean(UserExtInfoEnricher.class)
+    public UserExtInfoEnricher userExtInfoEnricher() {
+        return new DefaultUserExtInfoEnricher();
+    }
+
+    @Bean
     @ConditionalOnMissingBean(UserSnapshotLoader.class)
     public UserSnapshotLoader userSnapshotLoader(@Qualifier("primaryJdbcTemplate") JdbcTemplate jdbcTemplate) {
         return new DBUserSnapshotLoader(jdbcTemplate);
@@ -53,8 +61,9 @@ public class SecurityProviderConfiguration {
     @Bean
     @ConditionalOnMissingBean(UserProvider.class)
     public UserProvider userProvider(UserSnapshotLoader userSnapshotLoader,
-                                     UserOrgInfoEnricher userOrgInfoEnricher) {
-        return new DefaultUserProvider(userSnapshotLoader, userOrgInfoEnricher);
+                                     UserOrgInfoEnricher userOrgInfoEnricher,
+                                     UserExtInfoEnricher userExtInfoEnricher) {
+        return new DefaultUserProvider(userSnapshotLoader, userOrgInfoEnricher, userExtInfoEnricher);
     }
 
     @Bean

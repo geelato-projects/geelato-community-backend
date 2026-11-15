@@ -299,7 +299,7 @@ sidebar_label: 认证鉴权
 
 若需替换默认组织来源或组织关系解析方式，请继续阅读：
 
-- [安全 Provider 扩展](../reference/security-provider-extension.md)
+- [Provider 契约](../security/provider.md)
 
 ### `UserProvider`
 
@@ -312,7 +312,7 @@ sidebar_label: 认证鉴权
 
 若需替换默认用户来源或扩展键映射方式，请继续阅读：
 
-- [安全 Provider 扩展](../reference/security-provider-extension.md)
+- [Provider 契约](../security/provider.md)
 
 ### `OnlineUserTracker`
 
@@ -346,5 +346,5 @@ sidebar_label: 认证鉴权
 ## 推荐继续阅读
 
 - [统一认证](overview.md)
-- [平台能力：SecurityContext 生命周期](../runtime/security-context-lifecycle.md)
-- [安全 Provider 扩展](../reference/security-provider-extension.md)
+- [安全契约：安全上下文](../security/context.md)
+- [Provider 契约](../security/provider.md)

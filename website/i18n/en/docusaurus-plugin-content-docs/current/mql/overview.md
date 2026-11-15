@@ -1,6 +1,6 @@
 # MQL
 
-MQL, short for Meta Query Language, is the JSON-based metadata query and mutation protocol used by Geelato Framework on the platform side.
+MQL, short for Meta Query Language, is the JSON-based metadata query and mutation protocol provided by the Geelato platform.
 
 Its purpose is not to replace backend Java ORM Fluent DSL usage, but to provide a unified data access language for frontend pages, low-code screens, and generic platform data endpoints.
 

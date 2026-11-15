@@ -40,6 +40,8 @@ MySQL 源表（写路径不变）
 
 **只读硬失败**：启用期间对视图实体的写操作（save/insert/update/delete 等）在 Dao 层直接抛出明确异常，写操作请指向源库原表。
 
+**方言解析**：视图实体自身无 `connectId` 时，`dbType` 继承主体实体的方言；实际执行连接按实体 `connectId` 解析（物化副本行指向引擎连接）。运行期注册的引擎方言别名（如 `risingwave`）经 `Dialects` 归一到方言家族，SQL 方言按执行连接生成，与元数据标注解耦。
+
 ## 使用流程
 
 设计时 API 前缀 `/api/model/mv`（DesignTime）。引擎连接需先在 `/api/model/connect` 登记。前端在视图编辑弹窗的"物化视图"页签以开关驱动全流程。

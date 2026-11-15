@@ -41,6 +41,8 @@ A materialized view is an acceleration copy of an existing view, not a new view:
 
 **Read-only hard failure**: while enabled, write operations (save/insert/update/delete, etc.) on the view entity throw an explicit exception at the Dao layer; write to the source tables instead.
 
+**Dialect resolution**: when the view entity has no `connectId` of its own, its `dbType` inherits the dialect of the subject entity; the actual execution connection is resolved from the entity's `connectId` (the materialized copy row points to the engine connection). Engine dialect aliases registered at runtime (e.g. `risingwave`) are normalized to a dialect family via `Dialects`; SQL dialects are generated per the execution connection, decoupled from the metadata annotation.
+
 ## Usage Flow
 
 Design-time API prefix `/api/model/mv` (DesignTime). Register the engine connection first via `/api/model/connect`. On the frontend, the whole flow is driven by a switch in the "Materialized View" tab of the view editor.

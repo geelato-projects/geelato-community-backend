@@ -59,36 +59,40 @@ public class OrderService {
 | 非空 `List` | 取首元素按同样规则递归识别 | `batchSave` / `multiSave` / `multiDelete` |
 | 带 `@Entity` 注解的实例 | 同上 | `insert` / `save` / `update` |
 
-全部无法识别时实体名为空，直接走兜底链（注解作用域默认 > 外层显式 key > 平台默认 > primary）。
+全部无法识别时实体名为空，直接走兜底链（注解作用域默认 > 外层显式 key > 请求级覆盖 > 平台默认 > primary）。
 
-识别出实体后，按[实体绑定页的优先级链](entity-binding.md)解析；解析出的 key 若对应数据源未注册，按未解析处理走兜底链——**永远不会路由到不存在的数据源**。
+识别出实体后，按[实体绑定页的优先级链](entity-binding.md)解析；解析出的 key 若对应数据源未注册，直接硬失败（抛出 `IllegalStateException`，拒绝静默回退主库）——**永远不会路由到不存在的数据源，也不会悄悄落到别的库**。
 
 ## 手工切换：三种 API
 
-### 1. Controller 基类：`switchDbByConnectId`
+业务代码对线程上下文 key 的写入统一收敛在 `cn.geelato.datasource.DynamicDataSourceScope`（geelato-orm 提供）——它是数据源切换的**唯一出入口**。`DynamicDataSourceHolder`（一个 `ThreadLocal<String>`）只是它底层的承载机制，业务代码不应直接读写。
 
-平台 `BaseController` 提供的便捷方法，直接设置线程上下文：
+### 1. 代码块作用域：`DynamicDataSourceScope.withDataSource`
+
+块内生效、结束恢复，适合代码级临时切库：
 
 ```java
-// 在 Controller 方法内：当前请求线程后续的 Dao 调用走 biz_db
-switchDbByConnectId("biz_db");
+List<Map<String, Object>> rows = DynamicDataSourceScope.withDataSource("biz_db", () ->
+        dao.querys(SomeEntity.class));
+```
+
+- 正常或异常结束都会恢复进入前的原值（finally 语义内置），无需手工清理
+- MQL 执行器、`DataSourceInterceptor` 切面、异步任务等框架路径均走此语义
+- connectId 为空时不动当前 key，直接执行
+
+### 2. 请求内默认库：`DynamicDataSourceScope.switchTo`
+
+设置后持续生效（直至下次切换或请求结束），适合在请求入口处整段切库：
+
+```java
+// 在 Controller / Service 方法内：当前请求线程后续未命中实体映射的调用走 biz_db
+DynamicDataSourceScope.switchTo("biz_db");
 ```
 
 - 参数为空直接抛出 `IllegalArgumentException`，不会静默忽略
-- 设置的是线程级 key，对后续所有**未命中实体映射**的调用生效
-- 命中实体映射的调用仍以实体声明的数据源为准（实体映射优先级更高，见[实体绑定](entity-binding.md)）
-
-### 2. 线程上下文：`DynamicDataSourceHolder`
-
-切库的底层 API，`switchDbByConnectId` 内部就是它：
-
-```java
-DynamicDataSourceHolder.setDataSourceKey("biz_db");   // 设置
-DynamicDataSourceHolder.getDataSourceKey();           // 读取（未设置返回 null）
-DynamicDataSourceHolder.clearDataSourceKey();         // 清理
-```
-
-直接使用时**务必在 finally 中恢复或清理**，否则线程复用（线程池）会把 key 带到下一个请求。推荐优先使用带作用域保护的 `switchDbByConnectId`（Controller 场景）或下面的 DSL。
+- 设置的是线程级 key，对后续所有**未命中实体映射**的调用生效；命中实体映射的调用仍以实体声明的数据源为准（实体映射优先级更高，见[实体绑定](entity-binding.md)）
+- 请求结束由 web 层清理安全网兜底回收：`DataSourceContextCleanupFilter`（order=-100，位于过滤链最外层）在 finally 中同时清理线程 key 与请求级覆盖上下文，线程池复用不会把 key 带到下一个请求
+- 平台 `BaseController` / `BaseService` 保留的 `switchDbByConnectId("biz_db")` 即本方法的薄委托，语义完全一致
 
 ### 3. Fluent DSL：`useDataSource(...)`
 
@@ -106,24 +110,36 @@ MetaFactory.insert(DemoOrder.class)
         .save(order);
 ```
 
-DSL 层面的覆盖关系：**显式 `useDataSource(...)` > 实体 connectId 声明 > 平台默认**。即实体已绑定库时，单次调用仍可用 `useDataSource` 临时指向另一个库。
+DSL 层面的覆盖关系：**显式 `useDataSource(...)` > 实体 connectId 声明 > 请求级覆盖 > 平台默认**。即实体已绑定库时，单次调用仍可用 `useDataSource` 临时指向另一个库。
 
 ## 嵌套调用的语义
 
-三层保护确保嵌套切库不互相污染：
+四层保护确保嵌套切库不互相污染：
 
 - **拦截器 finally 恢复**：内层 `Dao` 调用结束后，线程上下文 key 恢复为进入前的值，外层设置的 key 不受影响
-- **DSL 自动作用域**：`useDataSource` 只在本次命令执行期间生效（executor 侧 `withDataSource`：设置 → 执行 → finally 恢复）
+- **代码块作用域**：`DynamicDataSourceScope.withDataSource` 块内生效，正常/异常结束都恢复原值——executor 侧的 DSL `useDataSource` 同样经它实现（设置 → 执行 → finally 恢复）
 - **注解默认值即清即走**：类/方法级 `@UseDynamicDataSource` 的作用域默认值在方法结束后清理，不会泄漏到线程复用的下一个请求
+- **清理安全网兜底**：`switchTo` 设置的请求内 key 与请求级覆盖上下文，在请求结束时由 `DataSourceContextCleanupFilter`（order=-100）统一回收，不依赖调用方自觉
 
 因此典型嵌套场景的语义是：
 
 ```java
-switchDbByConnectId("biz_db");          // 外层切到 biz_db
-dao.querys(SomeEntity.class, ...);      // SomeEntity 未声明归属 → 沿用 biz_db（第 3 级兜底）
-dao.querys(OtherEntity.class, ...);     // OtherEntity 声明了 connectId="order_db" → 路由 order_db（实体映射优先）
-dao.querys(ThirdEntity.class, ...);     // ThirdEntity 未声明归属 → 回到 biz_db（内层调用已恢复外层 key）
+DynamicDataSourceScope.switchTo("biz_db"); // 外层切到 biz_db（等价于 switchDbByConnectId）
+dao.querys(SomeEntity.class, ...);         // SomeEntity 未声明归属 → 沿用 biz_db（第 3 级兜底）
+dao.querys(OtherEntity.class, ...);        // OtherEntity 声明了 connectId="order_db" → 路由 order_db（实体映射优先）
+dao.querys(ThirdEntity.class, ...);        // ThirdEntity 未声明归属 → 回到 biz_db（内层调用已恢复外层 key）
 ```
+
+## 请求级覆盖：归档数据在线查询
+
+除以上代码级切换外，还有一条**请求级**的默认源覆盖通道：前端在请求头携带 `X-Gl-Archive-Query: true`，该请求内所有**无显式归属**实体的读操作自动路由到归档库。底层是 geelato-orm 提供的中性请求级数据源覆盖能力（`DataSourceOverrideContext`），geelato-web-platform 承载归档语义与请求过滤器。要点：
+
+- **只切"无显式归属"的实体**：无 `connectId` 且 catalog 未映射的业务实体才被覆盖；显式归属实体（用户/字典/元数据等）保持原路由，页面框架照常工作
+- **任何显式指定不被劫持**：实体归属、注解、DSL `useDataSource`、`withDataSource` 代码块都优先于请求级覆盖
+- **只读**：归档模式下对无归属实体的写操作直接硬失败
+- **硬失败**：归档数据源未配置时，携带该头的请求直接报错，不静默降级
+
+完整配置、约束与前端契约见[归档数据在线查询](../archive/overview.md)。
 
 ## 事务内切库的限制（重要）
 

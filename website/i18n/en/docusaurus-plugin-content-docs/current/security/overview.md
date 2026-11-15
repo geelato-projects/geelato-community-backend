@@ -49,6 +49,7 @@ IAM / org center / Redis"]
     DB --> L3
     EXT -. replace loader impl .-> L1
     EXT -. replace loader impl .-> L2
+    EXT -. replace loader impl .-> L3
     L1 --> S1
     L2 --> S2
     L3 --> S3
@@ -60,6 +61,7 @@ IAM / org center / Redis"]
     P3 --> P4
     P1 --> C
     P2 --> C
+    P3 --> C
     P4 --> C
 ```
 

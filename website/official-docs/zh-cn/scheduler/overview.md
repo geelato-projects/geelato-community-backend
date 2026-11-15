@@ -3,66 +3,58 @@ title: 调度总览
 sidebar_label: 调度
 ---
 
-# 调度（geelato-schedule）
+# 调度（Scheduler）
 
-Geelato 的通用调度能力由 `geelato-schedule` 提供（独立仓库，`geelato-schedule-core` 纯执行抽象 + `geelato-schedule-starter` Spring Boot 装配）：**数据库配置驱动、进程内触发**——任务存于 `platform_schedule` 表，应用启动时装载启用任务并按 cron 触发，改库后热更新免重启。
+Geelato 提供统一的任务调度中心：定时任务以数据库配置的方式登记在 `platform_schedule` 表中，应用启动时自动装载启用中的任务，按 cron 表达式周期触发；运行期间修改任务配置后热更新即可生效，无需重启应用。
 
-:::warning 集群行为
-调度器**无集群协调**（无分布式锁/选主）：每个 `geelato.schedule=true` 的节点独立装载并触发全部启用任务。多实例部署时，同一任务会在每个节点各执行一次——通用任务请只在单实例开启调度，或确保任务本身幂等。
+**本页面向**需要在平台中配置定时任务的业务开发者与运维人员，说明哪些任务可以被调度、调度如何启用，以及平台内置周期任务的分布。任务的配置与启停操作见[任务配置与操作](usage.md)。
+
+## 1. 什么任务可以被调度
+
+调度中心支持三种类型的任务，均通过任务唯一码（`code`）指向一个已存在的执行体：
+
+| 类型 (`type`) | 任务如何定义 | 适用场景 |
+| :--- | :--- | :--- |
+| `sql` | `code` 填平台 **SQL 管理**（`platform_sql`）中登记的 SQL 标识 | 定期数据清理、汇总、状态刷新等配置化 SQL |
+| `java` | `code` + `class_info = "全类名,方法名"`，调用应用容器内的 Bean 方法 | 逻辑已随应用开发完成的场景 |
+| `general` | `code` 填平台 **API 管理**（`platform_api`）中已发布的 JS 脚本 | 业务编排类任务，脚本内可直接使用 `$gl` 服务 |
+
+:::note
+任务模型中的 `retry_times`（重试次数）字段已预留，**自动重试暂未实现**：任务执行失败后不会自动重跑，需人工排查处理。
 :::
 
-## 启用方式
+**执行身份**：任务由调度器以系统身份触发执行——SQL 与脚本不受当前人员的数据权限过滤，但租户隔离依然生效。编写任务 SQL 或脚本时，请据此评估数据的可见范围。
+
+## 2. 启用调度与部署注意
+
+调度能力通过应用配置开启：
 
 ```properties
-# 调度总开关（quickstart 默认 ${GEELATO_SCHEDULE_OPTION:false}）
+# 调度总开关（默认关闭）
 geelato.schedule=true
-# 调度线程池大小
+# 调度线程池大小（缺省 10）
 geelato.schedule.thread-pool-size=10
 ```
 
-装配类 `DynamicLiteSchedulingConfigurer`（`@EnableScheduling @EnableAsync`）经传统 `spring.factories` 注册，仅当 `geelato.schedule=true` 才装配；同时注册健康端点（"调度模块 HEALTH"）。
-
-## 任务模型
-
-任务表 `platform_schedule`（实体 `Schedule`，catalog=platform）：`app_id`、`name`、`code`（任务唯一码）、`class_info`、`expression`（cron）、`type`、`params`、`status`（0 停 / 1 启）、`retry_times`、`last_start_time` / `last_finish_time`、`context`（跨轮上下文）。执行日志落 `platform_schedule_log`。
-
-三种执行体类型（`type`）：
-
-| 类型 | 执行体 | 说明 |
-| --- | --- | --- |
-| `sql` | `SqlKeyExecution` | `code` 即 `platform_sql.id`，按 `key_name` 经 Dao.executeKey 执行配置化 SQL |
-| `java` | `ClassExecution` | `class_info = "类名,方法名"`，反射调用当前容器 Bean 的方法 |
-| `general` | `GraalJsExecution` | `code` 即 `platform_api.id`，取 `release_content` 包 IIFE 模板经 GraalVM 执行，注入 `$gl` 变量/服务；`ctx.result` 回写 `platform_schedule.context` 供下轮读取 |
-
-:::note
-`retry_times` 字段已建模并传入 Cron，但执行层暂未实现重试循环。
+:::warning 集群行为
+调度器**无集群协调**（无分布式锁/选主）：每个 `geelato.schedule=true` 的节点独立装载并触发全部启用任务。多实例部署时，同一任务会在每个节点各执行一次——请只在单实例开启调度，或确保任务本身幂等。
 :::
 
-## 运行机制
+## 3. 平台模块的内置周期任务
 
-- **装载**：启动时固定 SQL 查 `status=1` 的任务，逐条包成 `GeelatoTriggerTask`（CronTrigger）注册到线程池。
-- **热更新**：运行时改库后调 `GET /schedule/runtime/{code}/config/refresh`，改 cron 免重启。
-- **执行上下文**：每次执行以系统用户 `system-schedule` 构造（跳过数据权限、保留租户隔离），经 `SecurityContextRunnable.wrap` 包装并在结束后清理 ThreadLocal。
-- **日志**：`ScheduleLogHelper` 写 `platform_schedule_log` 并回写 `last_start_time` / `last_finish_time`；`ScheduleContextHelper` 读写跨轮上下文。
+平台部分模块自带周期性引擎动作（如邮件同步、告警扫描），这些动作**不经过调度中心登记**，而是随模块独立运行，各自提供配置开关：
 
-## 平台模块的调度惯例（第二条线）
+| 模块 | 周期动作 | 配置开关 |
+| :--- | :--- | :--- |
+| 邮件 | 邮箱账号增量同步 | `geelato.mail.sync.enabled` |
+| 站内通知 | 通知外发投递 | `geelato.notification.outbox-enabled` |
+| 业务告警 | 告警引擎扫描/投递 | `geelato.alert.engine.enabled` |
+| 数据归档 | 按归档模板定时归档 | `geelato.archive.scheduler-enabled` |
+| 业务异常 | 异常规则扫描 | `geelato.exception.engine.enabled` |
 
-平台宿主**刻意不全局开启 `@EnableScheduling`**，需要周期动作的模块统一使用**自管理 ScheduledExecutorService 守护线程**模式（各有独立开关、互不依赖）：
+**选型口径**：业务方在管理界面配置的定时任务（sql/java/general）→ 统一调度中心；模块内部的引擎周期动作 → 各自开关控制，无需登记任务。
 
-| 模块 | 调度器 | 开关 |
-| --- | --- | --- |
-| 邮件同步 | `MailSyncScheduleTask`（60s 扫描账号级增量） | `geelato.mail.sync.enabled` |
-| 站内通知 | `NotificationOutboxScheduler`（惯例源头） | 随模块 |
-| 业务告警 | `AlertEngineScheduler`（主 tick + schedule tick） | `geelato.alert.engine.enabled` |
-| 数据归档 | `ArchiveScheduler`（每日 schedule-time） | `geelato.archive.scheduler-enabled` |
-| 业务异常 | `ExceptionScanScheduler`（30s tick 扫描腿） | `geelato.exception.engine.enabled` |
+## 推荐继续阅读
 
-**选型口径**：用户在 Designer 里配置的业务级定时任务（sql/java/general）→ geelato-schedule；模块内部的周期性引擎动作 → 自管理守护线程。归档预置模板 `tpl-schedule-log` 反过来把 `platform_schedule_log`（90 天）列为归档对象。
-
-## 管理面
-
-- Designer 管理页：geelato-front `packages/gl-ide-arco/src/views/sidebar/schedule/`。
-- 管理端点（`@DesignTimeApiRestController("/schedule")` → `/api/schedule`）：`POST /pageQuery`、`GET /query`、`GET /get/{id}`、`POST /createOrUpdate`、`DELETE /isDelete/{id}`、`POST /validate`、`GET /status/{id}/{status}`；日志 `/api/schedule/log`。
-- 运行时控制：`GET /schedule/runtime/{code}/start`（立即执行一次）、`/stop`、`/config/refresh`（热更新）、`/config`（查询已注册触发器）——普通 `@RestController`，**不带 /api 前缀**。
-
-任务配置操作见[调度任务使用](usage.md)。
+- [任务配置与操作](usage.md)：如何配置一个定时任务、如何启停与查看执行日志。
+- [调度集成与日志实体](../entities/schedule-integration-log.md)：`platform_schedule` / `platform_schedule_log` 完整字段定义。

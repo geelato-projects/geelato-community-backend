@@ -1,3 +1,8 @@
+---
+title: Dynamic Datasource
+sidebar_label: Dynamic Datasource
+---
+
 # Dynamic Datasource
 
 This page explains the current dynamic datasource capability provided by `geelato-dynamic-datasource`, including how the runtime handles:
@@ -12,11 +17,14 @@ If your goal is not just to understand the built-in behavior but to replace the 
 
 - [ORM / Datasource Extension](../orm/datasource-extension.md)
 
-This chapter has four pages; this one is the overview and the other three expand by topic:
+This page is the overview; the other pages expand by topic:
 
 - [Binding & Priority](entity-binding.md) — how entities bind to datasources and the full priority chain
 - [Configuration](configuration.md) — connection definitions, module properties, the default datasource and refresh
-- [Switching](switching.md) — automatic/manual switching, nested semantics and transaction limits
+- [Switching](switching.md) — automatic/manual switching, the request-level override, nested semantics and transaction limits
+- [Host Mapping](host-mapping.md) — local mapping of intranet addresses during development
+- [Materialized View Acceleration](materialized-view.md) — slow queries served by engine-maintained materialized views
+- [RisingWave Engine](risingwave-engine.md) — the first materialized-view engine integration
 
 ## Module Position
 
@@ -58,14 +66,14 @@ The runtime flow can be understood as:
 
 1. `DynamicDataSourceRegistry` loads datasource definitions at startup
 2. the registry keeps datasource configs and builds `DataSource` instances on demand
-3. `DynamicRoutingDataSource` selects the real datasource by the current thread key
-4. `DataSourceInterceptor` resolves the entity and sets the datasource key before `Dao` execution
-5. ORM and `Dao` continue execution on the selected datasource
+3. `DataSourceInterceptor` resolves the entity owner before `Dao` execution; `DynamicDataSourceScope` (the single switching entry point) writes the datasource key into the thread context
+4. `DynamicRoutingDataSource` selects the real datasource by the current thread key
+5. at the end of the request, `DataSourceContextCleanupFilter` clears the thread context (the request-level override context is reclaimed as well)
 
 So the core chain is a combination of:
 
 - metadata resolution
-- ThreadLocal-based selection
+- ThreadLocal-based selection (single entry point `DynamicDataSourceScope`)
 - routing-datasource execution
 
 ## Where Definitions Come From
@@ -138,11 +146,11 @@ which extends:
 
 The current lookup key comes from:
 
-- `DynamicDataSourceHolder`
+- `DynamicDataSourceHolder` (essentially a `ThreadLocal<String>`)
 
-and that holder is essentially:
+and every write to it converges on the single entry point:
 
-- `ThreadLocal<String>`
+- `DynamicDataSourceScope` — `withDataSource(...)` block scope / `switchTo(...)` request-scoped default
 
 So the current routing model is:
 
@@ -187,7 +195,7 @@ Its current logic is:
 1. check the local entity-to-datasource cache
 2. if needed, resolve from entity metadata
 3. read `connectId` from table metadata
-4. confirm the key exists in `DynamicDataSourceRegistry`
+4. verify the key is registered in `DynamicDataSourceRegistry` — an unregistered key fails hard, refusing silent fallback to primary
 
 So the key mapping is:
 
@@ -249,13 +257,14 @@ Once the entity name is resolved, it calls:
 
 - `EntityDataSourceResolver.resolveDataSource(entityName)`
 
-If resolution succeeds, it switches to the entity datasource; if not, the fallback chain applies, and the outer key is restored after the call (protecting nested switching semantics).
+If resolution succeeds, it switches to the entity datasource; if no ownership is resolved, the fallback chain applies, and the outer key is restored after the call (protecting nested switching semantics).
 
 So the current priority is (high → low):
 
 - entity mapping (`TableMeta.connectId`, annotation and DB registration share one slot → `@Entity(catalog)` mapping)
 - the class/method-level `@UseDynamicDataSource` default
-- the outer explicit key (thread-context value set by `switchDbByConnectId` / `useDataSource` etc.)
+- the outer explicit key (thread-context value set by `DynamicDataSourceScope.switchTo` / `withDataSource`)
+- the request-level override (only for entities without an explicit owner, driven e.g. by the archive-query header)
 - the platform default key (written into `DataSourceManager` at startup by `OrmAutoConfiguration`)
 - the `primary` hard fallback
 
@@ -349,6 +358,7 @@ The recommended mental model is:
 - treat `platform_dev_db_connect` as the default dynamic definition center
 - treat `connectId` in entity metadata as the core entity-to-datasource binding
 - treat `dynamicDao` as the preferred ORM execution entry for routed access
+- do all manual switching through `DynamicDataSourceScope`: `withDataSource(...)` for block scope, `switchTo(...)` for a request-scoped default (the platform `switchDbByConnectId(...)` is a thin delegate)
 - enable JTA or Seata only when there is a clear need
 
 ## When To Read the Extension Chapter

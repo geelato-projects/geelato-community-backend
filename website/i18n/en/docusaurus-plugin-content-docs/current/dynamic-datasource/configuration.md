@@ -111,9 +111,9 @@ Connection definitions live in the database; after changing them there is no res
 
 Refreshing is done by `DevDbConnectService`: definitions and instances are updated in the registry first, then the routing map of the routing datasource is refreshed; deleted or disabled connections are removed from routing. Under lazy loading, connections that never built a pool only get their definition updated and still build lazily on first route.
 
-:::note Entity mapping cache
+:::note Entity mapping cache and connection config snapshot
 
-`EntityDataSourceResolver` keeps an in-memory cache of "entity → datasource" resolutions, but every hit re-checks that the target datasource is still registered; the cache invalidates itself when a datasource is removed. No extra cleanup of entity mappings is needed after refreshing connection definitions.
+`EntityDataSourceResolver` keeps an in-memory cache of "entity → datasource" resolutions, but every hit re-checks that the target datasource is still registered; the cache invalidates itself when a datasource is removed. No extra cleanup of entity mappings is needed after refreshing connection definitions. On the core side, `DataSourceManager` also holds a snapshot of connection definitions (used by readers such as dbType resolution); on a snapshot miss it loads the row on demand via the definition loader's `loadOne` — connections created at runtime (e.g. a materialized-view engine connection) become visible to dbType resolution immediately, with no extra refresh.
 
 :::
 

@@ -17,13 +17,13 @@ All SQL providers call `MetaBaseSqlProvider#getEntityMeta` first and only then s
 
 | Entry | What it reads | What it does |
 | --- | --- | --- |
-| `MetaInsertSqlProvider#buildOneSql` | tableName, `getColumnName(field)`, ColumnMeta.dataType | Builds INSERT table/column lists, binds JDBC types per column type |
+| `MetaInsertSqlProvider#buildOneSql` | tableName, `getColumnName(field)`, ColumnMeta.dataType | Builds INSERT structure/column lists, binds JDBC types per column type |
 | `MetaUpdateSqlProvider#buildOneSql` | tableName, `isIgnoreUpdateField()` | Builds the UPDATE SET clause, skipping creation fields and the primary key |
 | `MetaDeleteSqlProvider#buildOneSql` | tableName, deleteMode (via `DeleteCommands.resolve`) | Emits an update for logic delete, a delete for physical delete |
 | `MetaQuerySqlProvider#buildOneSql/buildForeignJoins` | field column mapping, TableForeign, ViewMeta.viewConstruct, dbType | Builds SELECT, auto left joins from foreign-key metadata with display columns, dialect quoting per dbType |
 | `MetaBaseSqlProvider#requireFilterFieldMeta` | FieldMeta + dataType | Filter-field validation (throws InvalidFilterFieldException when absent), parameter SQL type binding, comparison disabled for JSON columns |
 | `EntitySaveParser#parse` | all fieldMetas, primary key, newDefaultEntityMap | Entity object → SaveCommand: insert/update decided by the primary key, key generation, field-fill SPI trigger |
-| `Dao#convert` / `CommonRowMapper` | getJsonFieldKeys, field column mapping | ResultSet row → entity/Map mapping + JSON column deserialization + encrypted column decryption |
+| `Dao#convert` / `CommonRowMapper` | getJsonFieldKeys, field column mapping | Row data → entity/Map mapping + JSON column deserialization + encrypted column decryption |
 | `EncryptedColumns#resolve` | getEncryptedColumnNames | Query-column decryption (including the column union of joined entities) |
 | `PageTotalStrategy#uniqueKeyBounded` | `getId()` primary key | Skips the count SQL when a primary-key equality condition hits |
 | `SaveCommandAdapter` / `DeleteCommandAdapter` (Fluent API) | primary key, defaults, deleteMode | Adapts MetaInsert/MetaUpdate/MetaDelete → SaveCommand/DeleteCommand |
@@ -41,7 +41,7 @@ Entity and field names written in MQL payloads must pass metadata validation bef
 | `MqlQueryProcessor#applyViewTemplateParams` | ViewMeta.viewType | Only VIRTUAL views accept `@pf` template parameters |
 | `MqlFuzzymatchRouteResolver` | getFieldMetaByColumn | Column↔field conversion when fuzzy search routes to Lucene |
 
-## Datasource Routing: Entity→Database Ownership
+## Datasource Routing: Entity→Datasource Ownership
 
 | Entry | What it reads | What it does |
 | --- | --- | --- |
@@ -78,41 +78,51 @@ Permission rules are organized by entity name — without the stable entity name
 
 See [Materialized View](../dynamic-datasource/materialized-view.md).
 
+## Script Engine and AI Channels
+
+The script engine has no `$gl.meta` kit; metadata reaches scripts and external tools through these channels:
+
+| Channel | Entry | Notes |
+| --- | --- | --- |
+| `$gl.mql` | MqlKit (`list/multiList/save/batchSave/multiSave/delete/deleteByGql/explain`) | The metadata query channel driven by MQL payloads; internally MqlQueryProcessor/MetaQLManager consume metadata to build SQL; `entityConnectId(entityName)` reads `TableMeta.connectId` for datasource routing; write methods are gated by `dao.write-enabled` |
+| `$gl.sql` cross-database locating | MetaTableLocationResolver | Walks the registry by structure name (exact → case-insensitive) to find EntityMeta, then locates the physical database via `resolveConnectId` + the connection definition (`ConnectMeta`); results cached in LocalBoundedCache (60s/4096) |
+| MQL function parameters | GFunction (increment/findinset/fuzzymatch) | `$entity.field` is translated to the real column name via MetaManager, producing `gfn_xxx(...)` functions |
+| MCP tool | MetaModelTool (geelato-mcp) | Exposes getAllEntityNames/getEntityMeta (field lists) to AI so models can understand the data model |
+
 ## Archive: Metadata as a Precondition
 
-`ArchivePolicyService#enableArchiveForEntity` goes through `MetaManager.get(entityName)` to obtain the table name and title for the archive policy — **a bare table without metadata is refused archiving**. In archive query mode, entity ownership decides the redirection to `/api/meta/list`. See [Archive](../archive/overview.md).
+`ArchivePolicyService#enableArchiveForEntity` goes through `MetaManager.get(entityName)` to obtain the structure name and title for the archive policy — **a bare structure without metadata is refused archiving**. In archive query mode, entity ownership decides the redirection to the generic metadata query channel. See [Archive](../archive/overview.md).
 
 ## Engineering Chain: Design Time and Operations
 
 | Entry | What it reads | What it does |
 | --- | --- | --- |
-| `DevTableController` / `DevTableColumnController` / `DevViewController` | refreshDBMeta, getTableUpgradeList, getClassSourceEntity | Refresh metadata after designer saves, generate DDL upgrade lists, dual-source conflict checks |
-| `MetaDdlService#createOrUpdateTableByEntityMeta` | EntityMeta | Creates or upgrades tables from entity metadata |
+| Table/column/view designers (`DevTableController` / `DevTableColumnController` / `DevViewController`) | refreshDBMeta, getTableUpgradeList, getClassSourceEntity | Refresh metadata after designer saves, generate structure upgrade lists, dual-source conflict checks |
+| `MetaDdlService#createOrUpdateTableByEntityMeta` | EntityMeta | Creates or upgrades structures (DDL) from entity metadata |
 | `EntityJavaSourceGenerator` | entity name/title/fields/columns/primary key | Reverse-generates Java source annotated with `@Entity/@Col/@Title/@Id` |
-| `PackageService#assertColumnsConsistent` + `PackageUtils.validatePackageData` | getAll() | Before packaging, "physical columns ⊆ entity FieldMeta columns" is enforced; inconsistency blocks packaging |
+| `PackageService#assertColumnsConsistent` + `PackageUtils.validatePackageData` | getAll() | Before packaging, "physical structure columns ⊆ entity FieldMeta columns" is enforced; inconsistency blocks packaging |
 | `ImportExcelService` | getFieldMeta/ColumnMeta | Excel import column locating, type conversion, value validation, unique-column detection |
 | `AuditBusinessNamer` / `DictDisplayResolver` | entityTitle, FieldMeta.title, dictDataSourceMap | Translates audit-log field values into "entity.field (dictionary label)" |
 | `OcrUtils` | EntityMeta column mapping | Lands OCR results by metadata |
-| `ConsistencyChecker` (geelato-maintenance) | three-way EntityMeta | Field-by-field diff and repair across Java class source / metadata DB source / physical DB source |
+| `ConsistencyChecker` (geelato-maintenance) | three-way EntityMeta | Field-by-field diff and repair across ORM annotation source / online definition source / physical DB source |
 | `MqlTestModelRegistrar` / `MqlExplainService` | MetaManager | Registers test models into the registry for MQL explain/trial runs |
 | `PlatformMetaMonitorEndPoint` | getAll() | Actuator endpoint emitting a full entity-metadata snapshot |
-| `MetaModelTool` (geelato-mcp) | getEntityMeta | Exposes entity lists and field definitions to AI |
 
 ## Summary: What You Lose Without Metadata
 
 | Without… | You lose… |
 | --- | --- |
-| Table name / column mapping | ORM cannot generate any insert/update/delete/query SQL |
-| Field validation | MQL cannot judge entity or field validity; the generic APIs have no entry |
-| connectId / dbType | Multi-datasource routing and per-entity dialect resolution fail; dynamic datasources lose the "entity→database" basis |
+| Structure name / column mapping | ORM cannot generate any insert/update/delete/query SQL |
+| Field validation | MQL cannot judge entity or field validity; the generic data APIs have no entry |
+| connectId / dbType | Multi-datasource routing and per-entity dialect resolution fail; dynamic datasources lose the "entity→datasource" basis |
 | Entity-name attachment point | Row-level data permission and tenant filtering have nowhere to inject |
 | containsField | Logic delete and audit filling lose their per-entity switches |
 | SimpleFieldMeta | The low-code frontend loses its form-rendering contract; generic APIs degrade to a raw SQL channel |
 | Designer write-back + refreshDBMeta | Model changes require a restart; design time and runtime split apart |
-| Packaging column consistency check | unfound FieldMeta surfaces only at deploy time — the worst possible moment |
+| Packaging structure consistency check | unfound FieldMeta surfaces only at deploy time — the worst possible moment |
 
 ## Further Reading
 
 - [Metadata Model](./model.md) — where the attributes consumers read come from
 - [Metadata Loading](./loading.md) — how the registry consumers query is built
-- [Persistence and Interfaces](./interfaces.md) — the frontend contract and endpoint details
+- [Runtime Operations](./operations.md) — the query and refresh APIs consumers call

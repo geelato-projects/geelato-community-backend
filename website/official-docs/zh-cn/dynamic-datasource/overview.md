@@ -7,11 +7,14 @@ sidebar_label: 动态数据源
 
 本页说明 `geelato-dynamic-datasource` 模块提供的动态数据源能力及其运行机制，包括数据源定义加载、实例构建、路由切换、实体到数据源的解析以及事务相关预留能力。
 
-本章共四页，本页是总览，其余三页按主题展开：
+本页是总览，其余各页按主题展开：
 
 - [实体绑定与优先级](entity-binding.md) —— 实体如何与数据源绑定，完整优先级链
 - [配置方式](configuration.md) —— 连接定义、模块参数、默认数据源与刷新
-- [切换方式](switching.md) —— 自动/手工切换、嵌套语义与事务限制
+- [切换方式](switching.md) —— 自动/手工切换、请求级覆盖、嵌套语义与事务限制
+- [主机地址映射](host-mapping.md) —— 开发环境内网地址本地映射
+- [物化视图加速](materialized-view.md) —— 外部引擎物化视图承接慢查询
+- [RisingWave 引擎](risingwave-engine.md) —— 首个物化视图引擎的接入
 
 如需替换默认定义来源或做深度扩展，请阅读 [ORM / 数据源扩展](../orm/datasource-extension.md)。
 
@@ -55,14 +58,14 @@ sidebar_label: 动态数据源
 
 1. 启动时由 `DynamicDataSourceRegistry` 加载数据源定义
 2. `DynamicDataSourceRegistry` 保存数据源配置，并按需构建 `DataSource`
-3. `DynamicRoutingDataSource` 在执行时根据当前线程中的 key 选择真实数据源
-4. `DataSourceInterceptor` 在 `Dao` 调用前解析实体并设置数据源 key
-5. ORM / `Dao` 执行完成后继续走当前选中的数据源
+3. `DataSourceInterceptor` 在 `Dao` 调用前解析实体归属，由 `DynamicDataSourceScope`（切换唯一出入口）将数据源 key 写入线程上下文
+4. `DynamicRoutingDataSource` 在执行时根据当前线程中的 key 选择真实数据源
+5. 请求结束时由 `DataSourceContextCleanupFilter` 清理线程上下文（请求级覆盖上下文一并回收）
 
 因此它本质上是一条：
 
 - 元数据解析
-- ThreadLocal 选源
+- ThreadLocal 选源（唯一出入口 `DynamicDataSourceScope`）
 - 路由数据源执行
 
 组合出来的运行时能力链路。
@@ -137,11 +140,11 @@ sidebar_label: 动态数据源
 
 当前切换依据来自：
 
-- `DynamicDataSourceHolder`
+- `DynamicDataSourceHolder`（本质上是一个 `ThreadLocal<String>`）
 
-而 `DynamicDataSourceHolder` 本质上是一个：
+所有对它的写入统一收敛在唯一出入口：
 
-- `ThreadLocal<String>`
+- `DynamicDataSourceScope`——`withDataSource(...)` 代码块作用域 / `switchTo(...)` 请求内默认库
 
 所以当前动态数据源能力的关键模型是：
 
@@ -186,7 +189,7 @@ sidebar_label: 动态数据源
 1. 先查实体到数据源的本地缓存
 2. 如果缓存失效，再从实体元数据里读取
 3. 取出实体表元数据中的 `connectId`
-4. 判断该 key 在 `DynamicDataSourceRegistry` 中是否存在
+4. 校验该 key 在 `DynamicDataSourceRegistry` 中已注册——未注册直接硬失败，拒绝静默回退主库
 
 也就是说，当前最关键的映射关系为：
 
@@ -248,13 +251,14 @@ sidebar_label: 动态数据源
 
 - `EntityDataSourceResolver.resolveDataSource(entityName)`
 
-如果解析成功，就切换到实体对应的数据源；解析不到则走兜底链，并在调用结束后恢复外层的 key（保护嵌套切库语义）。
+如果解析成功，就切换到实体对应的数据源；解析不到归属则走兜底链，并在调用结束后恢复外层的 key（保护嵌套切库语义）。
 
 因此当前优先级可以概括为（高 → 低）：
 
 - 实体映射（`TableMeta.connectId`，注解与 DB 登记同槽位 → `@Entity(catalog)` 映射）
 - 类/方法级 `@UseDynamicDataSource` 指定的默认源
-- 外层已显式设置的 key（`switchDbByConnectId` / `useDataSource` 等设置的线程上下文值）
+- 外层已显式设置的 key（`DynamicDataSourceScope.switchTo` / `withDataSource` 设置的线程上下文值）
+- 请求级覆盖（仅对无显式归属实体生效，由归档查询请求头等驱动）
 - 平台默认 key（启动时由 `OrmAutoConfiguration` 写入 `DataSourceManager`）
 - `primary` 硬兜底
 
@@ -349,6 +353,7 @@ geelato.datasource.dynamic.*
 - 把 `platform_dev_db_connect` 当作默认动态源定义中心
 - 把实体元数据里的 `connectId` 当作实体到库的核心绑定点
 - 把 `dynamicDao` 作为 ORM 优先使用的动态路由执行入口
+- 手工切库统一走 `DynamicDataSourceScope`：代码块作用域用 `withDataSource(...)`，请求内默认库用 `switchTo(...)`（平台 `switchDbByConnectId(...)` 为其薄委托）
 - 只在确有需要时再开启 JTA / Seata
 
 ## 什么时候看扩展章节

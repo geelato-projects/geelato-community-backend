@@ -4,64 +4,58 @@ title: Scheduler Overview
 sidebar_label: Scheduler
 ---
 
-# Scheduler (geelato-schedule)
+# Scheduler
 
-Geelato's general scheduling capability is provided by `geelato-schedule` (standalone repo: `geelato-schedule-core` pure execution abstraction + `geelato-schedule-starter` Spring Boot wiring): **database-config-driven, in-process triggering** — jobs live in the `platform_schedule` table, are loaded at startup (enabled ones only) and triggered by cron; changes are hot-refreshed without restart.
+Geelato provides a unified job scheduling center: scheduled jobs are registered as database configuration in the `platform_schedule` table. On application startup, enabled jobs are loaded automatically and triggered periodically by cron expressions; changes made while running take effect through hot refresh, with no restart required.
 
-:::warning Cluster Behavior
-The scheduler has **no cluster coordination** (no distributed lock / leader election): every node with `geelato.schedule=true` independently loads and triggers all enabled jobs. With multiple instances the same job runs once per node — either enable scheduling on a single instance only, or make jobs idempotent.
+**This page is for** business developers and operations staff who need to configure scheduled jobs on the platform. It covers which jobs can be scheduled, how to enable scheduling, and where platform built-in periodic tasks live. For job configuration and start/stop operations, see [Job Configuration & Operations](usage.md).
+
+## 1. What jobs can be scheduled
+
+The scheduling center supports three job types, each pointing via a unique code (`code`) to an existing executable:
+
+| Type (`type`) | How the job is defined | Typical use cases |
+| :--- | :--- | :--- |
+| `sql` | `code` refers to a SQL registered in platform **SQL management** (`platform_sql`) | Periodic data cleanup, aggregation, status refresh via configured SQL |
+| `java` | `code` + `class_info = "fully.qualified.ClassName,methodName"`, invoking a Bean method inside the application container | Logic that has already been developed within the application |
+| `general` | `code` refers to a JS script published in platform **API management** (`platform_api`) | Business orchestration jobs; scripts can use `$gl` services directly |
+
+:::note
+The `retry_times` field in the job model is reserved, but **automatic retry is not yet implemented**: a failed job will not be re-run automatically and needs manual handling.
 :::
 
-## Enabling
+**Execution identity**: jobs are triggered by the scheduler under a system identity — SQL and scripts are not filtered by the current user's data permissions, while tenant isolation still applies. Take this into account when assessing data visibility in job SQL or scripts.
+
+## 2. Enabling scheduling and deployment notes
+
+Scheduling is enabled through application configuration:
 
 ```properties
-geelato.schedule=true            # master switch (quickstart default ${GEELATO_SCHEDULE_OPTION:false})
+# Scheduling master switch (off by default)
+geelato.schedule=true
+# Scheduling thread pool size (default 10)
 geelato.schedule.thread-pool-size=10
 ```
 
-`DynamicLiteSchedulingConfigurer` (`@EnableScheduling @EnableAsync`) is registered via classic `spring.factories` and wired only when `geelato.schedule=true`; a health endpoint ("调度模块 HEALTH") is registered alongside.
-
-## Job Model
-
-Job table `platform_schedule` (entity `Schedule`, catalog=platform): `app_id`, `name`, `code` (unique), `class_info`, `expression` (cron), `type`, `params`, `status` (0 off / 1 on), `retry_times`, `last_start_time` / `last_finish_time`, `context` (cross-run state). Execution logs go to `platform_schedule_log`.
-
-Three executor types (`type`):
-
-| Type | Executor | Description |
-| --- | --- | --- |
-| `sql` | `SqlKeyExecution` | `code` = `platform_sql.id`; executes the configured SQL by `key_name` via Dao.executeKey |
-| `java` | `ClassExecution` | `class_info = "className,methodName"`; reflects into a container bean |
-| `general` | `GraalJsExecution` | `code` = `platform_api.id`; runs `release_content` (IIFE template) on GraalVM with `$gl` services injected; `ctx.result` is written back to `platform_schedule.context` for the next run |
-
-:::note
-`retry_times` is modeled and passed into Cron, but the retry loop is not implemented in the execution layer yet.
+:::warning Clustering behavior
+The scheduler has **no cluster coordination** (no distributed lock or leader election): every node with `geelato.schedule=true` independently loads and triggers all enabled jobs. When running multiple instances, the same job executes once per node — enable scheduling on a single instance only, or make sure the job itself is idempotent.
 :::
 
-## Runtime Model
+## 3. Built-in periodic tasks of platform modules
 
-- **Loading**: at startup a fixed SQL selects `status=1` jobs, each wrapped into a `GeelatoTriggerTask` (CronTrigger) on the pool.
-- **Hot refresh**: after editing rows, call `GET /schedule/runtime/{code}/config/refresh` — cron changes apply without restart.
-- **Execution context**: each run runs as system user `system-schedule` (skips data-permission filtering, keeps tenant isolation), wrapped by `SecurityContextRunnable.wrap` with ThreadLocal cleanup.
-- **Logging**: `ScheduleLogHelper` writes `platform_schedule_log` and updates `last_start_time`/`last_finish_time`; `ScheduleContextHelper` reads/writes cross-run context.
+Some platform modules ship their own periodic engine actions (mail sync, alert scanning, etc.). These actions are **not registered in the scheduling center**; they run independently within each module and expose their own configuration switches:
 
-## The Platform Modules' Own Convention (the second line)
+| Module | Periodic action | Configuration switch |
+| :--- | :--- | :--- |
+| Mail | Incremental mailbox account sync | `geelato.mail.sync.enabled` |
+| In-app notifications | Notification delivery | `geelato.notification.outbox-enabled` |
+| Business alerts | Alert engine scan/delivery | `geelato.alert.engine.enabled` |
+| Data archiving | Scheduled archiving by archive templates | `geelato.archive.scheduler-enabled` |
+| Business exceptions | Exception rule scanning | `geelato.exception.engine.enabled` |
 
-The platform host **deliberately does not enable `@EnableScheduling` globally**; modules with periodic work use the **self-managed ScheduledExecutorService daemon-thread** pattern (independent switches, no cross-dependency):
+**Selection guideline**: business jobs configured through the admin UI (sql/java/general) → the unified scheduling center; periodic engine actions inside modules → controlled by their own switches, no job registration needed.
 
-| Module | Scheduler | Switch |
-| --- | --- | --- |
-| Mail sync | `MailSyncScheduleTask` (60s account-level scan) | `geelato.mail.sync.enabled` |
-| In-app notifications | `NotificationOutboxScheduler` (convention origin) | with module |
-| Business alert | `AlertEngineScheduler` (main + schedule ticks) | `geelato.alert.engine.enabled` |
-| Data archive | `ArchiveScheduler` (daily schedule-time) | `geelato.archive.scheduler-enabled` |
-| Business exception | `ExceptionScanScheduler` (30s scan tick) | `geelato.exception.engine.enabled` |
+## Recommended reading
 
-**Choice rule**: business-level scheduled jobs configured by users in the Designer (sql/java/general) → geelato-schedule; module-internal engine cycles → self-managed daemon threads. The archive preset `tpl-schedule-log` in turn archives `platform_schedule_log` (90 days).
-
-## Management Surface
-
-- Designer page: geelato-front `packages/gl-ide-arco/src/views/sidebar/schedule/`.
-- Management endpoints (`/api/schedule`): `POST /pageQuery`, `GET /query`, `GET /get/{id}`, `POST /createOrUpdate`, `DELETE /isDelete/{id}`, `POST /validate`, `GET /status/{id}/{status}`; logs `/api/schedule/log`.
-- Runtime control: `GET /schedule/runtime/{code}/start` (run once now), `/stop`, `/config/refresh` (hot update), `/config` (registered triggers) — plain `@RestController`, **no /api prefix**.
-
-Usage: [Working with Scheduled Jobs](usage.md).
+- [Job Configuration & Operations](usage.md): how to configure a scheduled job, start/stop it, and view execution logs.
+- [Schedule & Log Entities](../entities/schedule-integration-log.md): full field definitions of `platform_schedule` / `platform_schedule_log`.

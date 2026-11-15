@@ -7,18 +7,19 @@ sidebar_label: Metadata Model
 
 This page documents every model class in the metadata system, attribute by attribute. Code locations: the `cn.geelato.core.meta.model` package in `geelato-core`; annotations in the `cn.geelato.lang.meta` package in `geelato-lang`.
 
+These models describe structured data itself, independent of the storage medium: the same attribute contracts can sit behind a MySQL table, an Excel worksheet, a MongoDB collection, or any other structured carrier.
+
 Model relationships:
 
 ```mermaid
 flowchart TB
-    EM["EntityMeta (aggregate root)"] --> TM["TableMeta"]
+    EM["EntityMeta (aggregate root)"] --> TM["TableMeta (structure definition)"]
     EM --> FM["FieldMeta × N"]
     FM --> CM["ColumnMeta (1:1 delegation)"]
     EM --> VM["ViewMeta × N"] --> TV["TableView"]
     EM --> TF["TableForeign × N"]
     EM --> TC["TableCheck × N"]
     EM --> DDS["DictDataSource map"]
-    TM & CM & TV & TF & TC --> BASE["IdEntity → BaseEntity → BaseSortableEntity<br/>(common fields of persistable entities)"]
     CM -.->|"published outward"| SFM["SimpleFieldMeta"]
 ```
 
@@ -30,14 +31,14 @@ Path: `cn.geelato.core.meta.model.entity.EntityMeta`.
 
 | Attribute | Type | Meaning |
 | --- | --- | --- |
-| `entityName` | String | Entity name. Long class name for the class source; `platform_dev_table.entity_name` for the DB source |
-| `entityTitle` | String | Entity title (from `@Title` or the designer) |
-| `classType` | Class | The source Java class. Null for DB-source entities — the direct discriminator between the two sources |
+| `entityName` | String | Entity name. Long class name for the ORM annotation source; the designer-maintained entity name for the online definition source |
+| `entityTitle` | String | Entity title (from `@Title` or design-time maintenance) |
+| `classType` | Class | The source Java class. Null for online-definition entities — the direct discriminator between the two sources |
 | `entityType` | EntityType | Enum `Table / View / Class`, marking the form the metadata came from |
 | `catalog` | String, default `"none"` | Logical database grouping, from `@Entity(catalog)`; participates in datasource routing |
 | `id` | FieldMeta | Primary key field metadata; `setId` also adds the key to the ignore-update map |
-| `tableMeta` | TableMeta | Table-level definition (see below) |
-| `tableAlias` | String | Table alias used by SQL generation |
+| `tableMeta` | TableMeta | Structure-level definition (see below) |
+| `tableAlias` | String | Structure alias used by SQL generation |
 | `fieldNames` | String[] | All field names in a fixed order (see `setFieldMetas`) |
 | `fieldMetas` | Collection\<FieldMeta\> | All field metadata |
 | `viewMetas` | Collection\<ViewMeta\> | Associated view definitions |
@@ -45,14 +46,14 @@ Path: `cn.geelato.core.meta.model.entity.EntityMeta`.
 | `tableChecks` | Collection\<TableCheck\> | CHECK constraints |
 | `dictDataSourceMap` | Map\<String, DictDataSource\> | Dictionary sources (fieldName → group/code), from `@DictDataSrc` |
 | `fieldMetaMap` | LinkedHashMap | Redundant index: fieldName → FieldMeta for fast lookup |
-| `simpleFieldMetaMap` | LinkedHashMap | Redundant index: outward-facing slim field metadata, filtered of table/schema info |
+| `simpleFieldMetaMap` | LinkedHashMap | Redundant index: outward-facing slim field metadata, filtered of storage-layer info |
 | `tableForeignsMap` | Map\<String, TableForeign\> | Redundant index: foreignTable → TableForeign |
 | `ignoreUpdateFieldMap` | Map\<String, Boolean\> | Non-updatable fields. Constructor adds `create_at/createAt/creator`; `setId` adds the primary key |
 | `encryptedColumnNames` | Set\<String\> | All encrypted column names, lazily computed once, recomputed after `setFieldMetas` |
 | `jsonFieldKeys` | Set\<String\> | Keys of JSON-typed fields (both fieldName and columnName), lazily computed; used by Dao row conversion to decide JSON parsing |
-| `versionControl` | Boolean, default false | Version control (optimistic lock). **Currently suspended**: `platform_dev_table` has no `version_control` column yet and SQL generation does not consume it — treat it as not in effect |
+| `versionControl` | Boolean, default false | Version control (optimistic lock). **Currently suspended**: SQL generation does not consume it — treat it as not in effect |
 | `deleteMode` | DeleteMode, default `AUTO` | Entity-level delete mode. AUTO means follow the global default; final resolution converges in `DeleteCommands.resolve` with priority call-site > entity > global |
-| `cacheType` | EntityCacheType (private setter) | **The getter reads `tableMeta.cacheType` live**, deferring to the designer configuration rather than storing its own value |
+| `cacheType` | EntityCacheType (private setter) | **The getter reads `tableMeta.cacheType` live**, deferring to the design-time configuration rather than storing its own value |
 
 ### Key Methods
 
@@ -61,7 +62,7 @@ Path: `cn.geelato.core.meta.model.entity.EntityMeta`.
 | `setFieldMetas(Collection)` | Builds the three redundant indexes and reorders fields into a fixed sequence: `id` → `title` → `name` → business fields (incoming order) → `seq_no` → `description` → `del_status` → `create_at` → `creator` → `creator_name` → `update_at` → `updater` → `updater_name`. Also clears the encrypted/JSON lazy caches |
 | `getColumnName(fieldName)` | Field name → column name; throws with the fieldName when missing |
 | `getFieldMeta(fieldName)` / `getFieldMetas(String[])` | Field name → FieldMeta (reads `fieldMetaMap`) |
-| `getFieldMetaByColumn(columnName)` | Column name → FieldMeta, linear scan; throws with entity/table/column when missing — the pack/deploy column consistency check relies on this behavior |
+| `getFieldMetaByColumn(columnName)` | Column name → FieldMeta, linear scan; throws with entity/structure/column when missing — the pack/deploy structure consistency check relies on this behavior |
 | `getSimpleFieldMetas(String[])` / `getAllSimpleFieldMetas()` | Outward-facing slim field metadata |
 | `containsField(fieldName)` | Field existence; audit filling, logic-delete filling and permission injection all key off it |
 | `isIgnoreUpdateField(field)` | Whether the field is non-updatable |
@@ -70,203 +71,165 @@ Path: `cn.geelato.core.meta.model.entity.EntityMeta`.
 
 ## FieldMeta
 
-Path: `cn.geelato.core.meta.model.field.FieldMeta`. Field metadata is the bridge between the Java field name and the physical column.
+Path: `cn.geelato.core.meta.model.field.FieldMeta`. Field metadata is the bridge between the Java field name and the stored field.
 
 | Attribute | Type | Meaning |
 | --- | --- | --- |
 | `columnMeta` | ColumnMeta, final | The delegated column metadata; all column-level information lives there |
 | `fieldName` | String | Java field name |
-| `fieldType` | Class | Java type. Class source = reflected field type; DB source = derived from the column's data_type via `MysqlToJavaEnum.getJava` |
+| `fieldType` | Class | Java type. ORM annotation source = reflected field type; online definition source = derived from the column's data_type via `MysqlToJavaEnum.getJava` |
 
 Derived methods: `getColumnName()` is `columnMeta.getName()`, plus `getTitle()` and `isEquals()` (whether column name equals field name).
 
-Two constructors correspond to the two sources: annotation path `(columnName, fieldName, title)`; DB load path `(ColumnMeta)`.
+Two constructors correspond to the two sources: the ORM annotation path `(columnName, fieldName, title)`; the online-definition load path `(ColumnMeta)`.
 
 ## ColumnMeta
 
-Path: `cn.geelato.core.meta.model.column.ColumnMeta`.
-
-ColumnMeta is also a persistable entity: `@Entity(name = "platform_dev_column", catalog = "platform")`, extends `BaseSortableEntity`. The definition of a column is itself stored in the platform's column-definition table.
+Path: `cn.geelato.core.meta.model.column.ColumnMeta`. Column metadata carries the complete definition of one stored field and is the delegated object of FieldMeta.
 
 ### Attributes
 
-| Attribute | Column | Type/Default | Meaning |
-| --- | --- | --- | --- |
-| `appId` | app_id | String | Application id |
-| `title` | title | String | Chinese name |
-| `abstractColumnExpressions` | — (no @Col) | String | Computed-column expression; non-null marks an abstract column |
-| `fieldName` | field_name | String | Java field name |
-| `tableId` | table_id | String | Owning table id |
-| `tableSchema` | table_schema | String | Database name |
-| `tableName` | table_name | String | Table name |
-| `tableCatalog` | table_catalog | String | Table catalog (e.g. def) |
-| `name` | column_name | String | Column name |
-| `comment` | column_comment | String | Comment |
-| `ordinalPosition` | ordinal_position | int=0 | Column ordinal |
-| `defaultValue` | column_default | String=null | Default value (auto_increment / null / current_timestamp / custom) |
-| `type` | column_type | String | Full column type (e.g. varchar(64)) |
-| `key` | column_key | boolean=false | Primary key column |
-| `nullable` | is_nullable | boolean=true | Nullable |
-| `dataType` | data_type | String | Data type (VARCHAR/INT…); SQL generation uses it to bind JDBC types |
-| `extra` | extra | String | Extra info; `afterSet` derives UNIQUE/AUTO_INCREMENT/UNSIGNED |
-| `autoIncrement` | auto_increment | boolean=false | Auto increment |
-| `uniqued` | is_unique | boolean=false | Unique constraint |
-| `charMaxLength` | character_maxinum_length | long=64 | Character max length (the column name spelling `character_maxinum_length` is an established convention, kept as is) |
-| `numericPrecision` | numeric_precision | int=19 | Numeric precision |
-| `numericScale` | numeric_scale | int=0 | Numeric scale |
-| `numericSigned` | numeric_signed | boolean=false | Signed |
-| `datetimePrecision` | datetime_precision | int=0 | Datetime precision |
-| `enableStatus` | enable_status | int=1 | Enabled status |
-| `linked` | linked | int=1 | Linked |
-| `description` | description | String | Description |
-| `refLocalCol` | ref_local_col | String | Local reference field (when `isRefColumn`) |
-| `refColName` | foreign_col_name | String | Foreign field ([table].[field]) |
-| `refTables` | foreign_table | String | Foreign table(s), comma-separated |
-| `selectType` | select_type | String | Select type (designer widget type) |
-| `typeExtra` | type_extra | String | Extra data of the select type |
-| `extraValue` | extra_value | String | Extra value |
-| `extraMap` | extra_map | String | Field-to-extra-field mapping |
-| `autoAdd` | auto_add | boolean=false | Whether org/user fields auto-add id/name |
-| `autoName` | auto_name | String | Identifier of the auto-added field |
-| `synced` | synced | boolean=false | Synced |
-| `encrypted` | encrypted | boolean | Encrypted column; `EntityMeta.encryptedColumnNames` derives from it |
-| `marker` | marker | String | Special marker |
-| `drawed` | drawed | boolean=false | Designer field visibility |
-| `isRefColumn` | is_foreign_column (on the getter) | boolean | Foreign-field column |
-| `befColName` | @Transient | String | Previous column name (staged during renames) |
+| Attribute | Type/Default | Meaning |
+| --- | --- | --- |
+| `appId` | String | Application id |
+| `title` | String | Chinese name |
+| `abstractColumnExpressions` | String | Computed-column expression; non-null marks an abstract column |
+| `fieldName` | String | Java field name |
+| `tableId` | String | Owning structure id |
+| `tableSchema` | String | Database name |
+| `tableName` | String | Structure name |
+| `tableCatalog` | String | Structure catalog (e.g. def) |
+| `name` | String | Column name |
+| `comment` | String | Comment |
+| `ordinalPosition` | int=0 | Column ordinal |
+| `defaultValue` | String=null | Default value (auto_increment / null / current_timestamp / custom) |
+| `type` | String | Full column type (e.g. varchar(64)) |
+| `key` | boolean=false | Primary key column |
+| `nullable` | boolean=true | Nullable |
+| `dataType` | String | Data type (VARCHAR/INT…); SQL generation uses it to bind JDBC types |
+| `extra` | String | Extra info; `afterSet` derives UNIQUE/AUTO_INCREMENT/UNSIGNED |
+| `autoIncrement` | boolean=false | Auto increment |
+| `uniqued` | boolean=false | Unique constraint |
+| `charMaxLength` | long=64 | Character max length |
+| `numericPrecision` | int=19 | Numeric precision |
+| `numericScale` | int=0 | Numeric scale |
+| `numericSigned` | boolean=false | Signed |
+| `datetimePrecision` | int=0 | Datetime precision |
+| `enableStatus` | int=1 | Enabled status |
+| `linked` | int=1 | Linked |
+| `description` | String | Description |
+| `refLocalCol` | String | Local reference field (when `isRefColumn`) |
+| `refColName` | String | Foreign field ([structure].[field]) |
+| `refTables` | String | Foreign structure name(s), comma-separated |
+| `selectType` | String | Select type (designer widget type) |
+| `typeExtra` | String | Extra data of the select type |
+| `extraValue` | String | Extra value |
+| `extraMap` | String | Field-to-extra-field mapping |
+| `autoAdd` | boolean=false | Whether org/user fields auto-add id/name |
+| `autoName` | String | Identifier of the auto-added field |
+| `synced` | boolean=false | Synced |
+| `encrypted` | boolean | Encrypted column; `EntityMeta.encryptedColumnNames` derives from it |
+| `marker` | String | Special marker |
+| `drawed` | boolean=false | Designer field visibility |
+| `isRefColumn` | boolean (on the getter) | Foreign-field column |
+| `befColName` | String (@Transient) | Previous column name (staged during renames) |
 
-Inherited fields are listed under [Base class chain](#base-class-chain-of-persistable-entities).
-
-Special behavior: `afterSet()` derives type, extra, defaultValue and autoIncrement from dataType plus `DataTypeRadiusEnum`/`MysqlDataTypeEnum`; a `(Map<String,Object>)` constructor loads rows directly from `platform_dev_column`.
+Special behavior: `afterSet()` derives type, extra, defaultValue and autoIncrement from dataType plus `DataTypeRadiusEnum`/`MysqlDataTypeEnum`; a `(Map<String,Object>)` constructor builds directly from definition data loaded by a MetaStore.
 
 ## TableMeta
 
-Path: `cn.geelato.core.meta.model.entity.TableMeta`. Persistable entity: `@Entity(name = "platform_dev_table", catalog = "platform")`, extends `BaseSortableEntity`.
+Path: `cn.geelato.core.meta.model.entity.TableMeta`. Carries the definition of one structure — name, schema, owning datasource, cache type, etc.
 
-| Attribute | Column | Type/Default | Meaning |
-| --- | --- | --- | --- |
-| `appId` | app_id | String | Application id |
-| `title` | title | String | Name (Chinese) |
-| `connectId` | connect_id | String | Database connect id (the id in `platform_dev_db_connect`); the highest-priority routing input |
-| `dbType` | db_type | String | Database type; feeds SQL dialect resolution |
-| `tableSchema` | table_schema | String | Database schema |
-| `tableName` | table_name | String | Table name |
-| `entityName` | entity_name | String | Entity name |
-| `tableType` | table_type | String | Table type: entity / view / materialized |
-| `tableComment` | table_comment | String | Comment |
-| `enableStatus` | enable_status | int=1 | Enabled status |
-| `linked` | linked | int | Linked |
-| `description` | description | String | Description |
-| `synced` | synced | Boolean=false | Synced |
-| `sourceType` | source_type | String | Source type: system / creation |
-| `packBusData` | pack_bus_data | int=0 | Data packaging strategy |
-| `viewSql` | view_sql | String | View SQL |
-| `acrossApp` | across_app | boolean=false | Cross-application |
-| `acrossWorkflow` | across_workflow | boolean=false | Cross-workflow |
-| `cacheType` | cache_type | String="none" | Cache type; the actual data source of `EntityMeta.isBackEndCacheEnabled` |
+| Attribute | Type/Default | Meaning |
+| --- | --- | --- |
+| `appId` | String | Application id |
+| `title` | String | Name (Chinese) |
+| `connectId` | String | Datasource connect identifier, pointing to a connection definition (`ConnectMeta`); the highest-priority routing input |
+| `dbType` | String | Database type; feeds SQL dialect resolution |
+| `tableSchema` | String | Database schema |
+| `tableName` | String | Structure name |
+| `entityName` | String | Entity name |
+| `tableType` | String | Structure type: entity / view / materialized |
+| `tableComment` | String | Comment |
+| `enableStatus` | int=1 | Enabled status |
+| `linked` | int | Linked |
+| `description` | String | Description |
+| `synced` | Boolean=false | Synced |
+| `sourceType` | String | Source type: system / creation |
+| `packBusData` | int=0 | Data packaging strategy |
+| `viewSql` | String | View SQL |
+| `acrossApp` | boolean=false | Cross-application |
+| `acrossWorkflow` | boolean=false | Cross-workflow |
+| `cacheType` | String="none" | Cache type; the actual data source of `EntityMeta.isBackEndCacheEnabled` |
 
-`versionControl` is commented out in code — by convention its column would be `version_control`; it awaits the column addition with three call sites to enable together. **The optimistic lock is not in effect**; SQL generation does not consume it.
+`versionControl` is commented out in code, awaiting the data-model addition to be enabled in several places together. **The optimistic lock is not in effect**; SQL generation does not consume it.
 
 Methods: `dbTableName()` falls back to entityName when tableName is empty; the `(Map)` constructor falls back title → tableName → entityName.
 
-## Base Class Chain of Persistable Entities
+## The Common Base Classes of Definition Classes
 
-All metadata entities stored in `platform_dev_*` tables share one base class chain.
-
-### IdEntity
-
-| Attribute | Meaning |
-| --- | --- |
-| `id` | `@Id` String primary key |
-
-### BaseEntity (extends IdEntity)
-
-| Attribute | Column | Meaning |
-| --- | --- | --- |
-| `createAt` | create_at, not null | Creation time |
-| `creator` | creator, not null | Creator |
-| `creatorName` | creator_name | Creator name |
-| `buId` | bu_id (32) | Business unit id |
-| `deptId` | dept_id (32) | Department id |
-| `tenantCode` | tenant_code (32) | Tenant code |
-| `updateAt` | update_at, not null | Update time |
-| `updater` | updater, not null | Updater |
-| `updaterName` | updater_name | Updater name |
-| `deleteAt` | delete_at | Delete time |
-| `delStatus` | del_status (int=0) | Logic-delete marker |
-
-### BaseSortableEntity (extends BaseEntity)
-
-| Attribute | Column | Meaning |
-| --- | --- | --- |
-| `seqNo` | seq_no | Sort sequence, implements `EntitySortable` |
+TableMeta, ColumnMeta, TableView, TableForeign, TableCheck and ConnectMeta inherit one base class chain `IdEntity → BaseEntity → BaseSortableEntity`, carrying the String primary key `id`, audit fields (createAt/creator/creatorName/buId/deptId/tenantCode/updateAt/updater/updaterName/deleteAt/delStatus) and the sort sequence `seqNo`. This is the implementation base **of the definition classes themselves**, serving their loading, ordering and maintenance — not a requirement the metadata model places on business entities; business-entity common fields are covered in [ORM Annotations](../orm/annotations.md).
 
 ## TableForeign
 
-Persistable entity: `@Entity(name = "platform_dev_table_foreign", catalog = "platform")`, extends `BaseSortableEntity`.
+Carries the foreign-key relation between two structures; the query SQL generator uses it to emit left joins automatically and select display columns, and `EntityMeta.tableForeignsMap` indexes it by foreignTable.
 
-| Attribute | Column | Meaning |
-| --- | --- | --- |
-| `appId` | app_id | Application id |
-| `mainTableSchema` | main_table_schema | Main table schema |
-| `mainTableId` | main_table_id | Main table id |
-| `mainTable` | main_table | Main table name |
-| `mainTableCol` | main_table_col | Main table column |
-| `foreignTableSchema` | foreign_table_schema | Foreign table schema |
-| `foreignTableId` | foreign_table_id | Foreign table id |
-| `foreignTable` | foreign_table | Foreign table name |
-| `foreignTableCol` | foreign_table_col | Foreign table column |
-| `description` | description | Description |
-| `enableStatus` | enable_status | Enabled status |
-| `deleteAction` | delete_action, default FOREIGN_ACTION_VALUE | On-delete action |
-| `updateAction` | update_action, default FOREIGN_ACTION_VALUE | On-update action |
-
-The query SQL generator uses it to emit left joins automatically and select display columns; `EntityMeta.tableForeignsMap` indexes it by foreignTable.
+| Attribute | Meaning |
+| --- | --- |
+| `appId` | Application id |
+| `mainTableSchema` | Main table schema |
+| `mainTableId` | Main table id |
+| `mainTable` | Main structure name |
+| `mainTableCol` | Main table column |
+| `foreignTableSchema` | Foreign table schema |
+| `foreignTableId` | Foreign table id |
+| `foreignTable` | Foreign structure name |
+| `foreignTableCol` | Foreign table column |
+| `description` | Description |
+| `enableStatus` | Enabled status |
+| `deleteAction` | On-delete action (default FOREIGN_ACTION_VALUE) |
+| `updateAction` | On-update action (default FOREIGN_ACTION_VALUE) |
 
 ## TableCheck
 
-Persistable entity: `@Entity(name = "platform_dev_table_check", catalog = "platform")`, extends `BaseEntity`.
-
-Attributes: `appId`, `title`, `code`, `type`, `checkClause` (check_clause, the constraint expression), `connectId` (connect_id), `tableSchema` (table_schema), `tableId` (table_id), `tableName` (table_name), `columnId` (column_id), `columnName` (column_name), `description`, `enableStatus` (enable_status), `synced`.
+Carries the CHECK constraint definitions of a structure. Attributes: `appId`, `title`, `code`, `type`, `checkClause` (the constraint expression), `connectId`, `tableSchema`, `tableId`, `tableName`, `columnId`, `columnName`, `description`, `enableStatus`, `synced`.
 
 ## View Metadata: TableView / ViewMeta / ViewColumn
 
-**TableView** is the persistable entity: `@Entity(name = "platform_dev_view")`, extends `BaseSortableEntity`.
+**TableView** carries the definition of a view:
 
-| Attribute | Column | Meaning |
-| --- | --- | --- |
-| `appId` | app_id | Application id |
-| `connectId` | connect_id | Connect id (materialized views own a connection; virtual views inherit the subject entity when empty) |
-| `entityName` | entity_name | Subject entity name |
-| `title` | title | Name |
-| `viewName` | view_name | View name |
-| `viewType` | view_type | View type |
-| `viewConstruct` | view_construct | View construction statement |
-| `viewColumn` | view_column | View columns (JSON string) |
-| `description` | description | Description |
-| `linked` | linked | Linked |
-| `enableStatus` | enable_status | Enabled status |
+| Attribute | Meaning |
+| --- | --- |
+| `appId` | Application id |
+| `connectId` | Connect id (materialized views own a connection; virtual views inherit the subject entity when empty) |
+| `entityName` | Subject entity name |
+| `title` | Name |
+| `viewName` | View name |
+| `viewType` | View type |
+| `viewConstruct` | View construction statement |
+| `viewColumn` | View columns (JSON string) |
+| `description` | Description |
+| `linked` | Linked |
+| `enableStatus` | Enabled status |
 
 **ViewMeta** (not an entity) is the runtime form registered into EntityMeta, holding `viewMeta(TableView)`, `viewName`, `viewType`, `viewConstruct`, `viewColumn`, `subjectEntity`. **ViewColumn** (not an entity) carries view column definitions (table_name/column_name/field_name/title/select_type, lengths and precisions); the static `fromColumnMeta(ColumnMeta)` converts from column metadata.
 
 ## ConnectMeta
 
-Persistable entity: `@Entity(name = "platform_dev_db_connect", catalog = "platform")`, extends `BaseEntity`.
+Carries the definition of a datasource connection. The `$gl.sql` kit locates physical databases through this chain: structure → EntityMeta → connectId → this connection definition.
 
-| Attribute | Column | Constraints |
-| --- | --- | --- |
-| `appId` | app_id | Application id |
-| `dbConnectName` | db_connect_name | not null, 255 |
-| `dbName` | db_name | not null, 150 |
-| `dbSchema` | db_schema | not null, 255 |
-| `dbType` | db_type | not null, 20 |
-| `dbUserName` | db_user_name | not null, 20 |
-| `dbPassword` | db_password | Connection password |
-| `dbPort` | db_port | Port |
-| `dbHostnameIp` | db_hostname_ip | Host address |
-| `enableStatus` | enable_status | Enabled status |
-
-The `$gl.sql` kit locates physical databases through this chain: table → EntityMeta → connectId → this row's host/port/db.
+| Attribute | Meaning |
+| --- | --- |
+| `appId` | Application id |
+| `dbConnectName` | Connection name |
+| `dbName` | Database name |
+| `dbSchema` | Schema |
+| `dbType` | Database type |
+| `dbUserName` | User name |
+| `dbPassword` | Connection password |
+| `dbPort` | Port |
+| `dbHostnameIp` | Host address |
+| `enableStatus` | Enabled status |
 
 ## Outward-Facing Models
 
@@ -274,7 +237,7 @@ These slim models never enter the MetaManager registry; they are the "export for
 
 ### SimpleFieldMeta
 
-Produced by `EntityMeta.getSimpleFieldMetas` / `getAllSimpleFieldMetas`, filtered of table/schema/connection information — the contract with which the low-code frontend renders forms and tables:
+Produced by `EntityMeta.getSimpleFieldMetas` / `getAllSimpleFieldMetas`, filtered of structure/schema/storage-layer information — the contract with which the low-code frontend renders forms and tables:
 
 | Attribute | Type | Source (ColumnMeta) |
 | --- | --- | --- |
@@ -294,7 +257,7 @@ Produced by `EntityMeta.getSimpleFieldMetas` / `getAllSimpleFieldMetas`, filtere
 
 ### EntityLiteMeta
 
-Slim entity list item (returned by `/api/meta/entityLiteMetas`): `entityName`, `entityTitle`, `entityType` (String).
+Slim entity list item (exposed via MetaManager.getAllEntityLiteMetas): `entityName`, `entityTitle`, `entityType` (String).
 
 ### DictDataSource
 
@@ -302,14 +265,14 @@ Dictionary source declaration (from `@DictDataSrc`): `group` (dictionary group),
 
 ## Annotation → Metadata Mapping
 
-Annotations live in the `cn.geelato.lang.meta` package of `geelato-lang` and are parsed into FieldMeta/ColumnMeta by `MetaReflex#getColumnFieldMetas`. Usage and examples are in [ORM Annotations](../orm/annotations.md); this section lists only the attribute contracts.
+Read these annotations together with the ORM chapter: they are at once ORM's entity-mapping declarations and the declaration form of metadata — metadata and ORM share the same annotation set; declaring is mapping. Annotations live in the `cn.geelato.lang.meta` package of `geelato-lang` and are parsed into FieldMeta/ColumnMeta by `MetaReflex#getColumnFieldMetas`. Usage and examples are in [ORM Annotations](../orm/annotations.md); this section lists only the attribute contracts.
 
 ### @Entity (on the class)
 
 | Attribute | Default | Maps to |
 | --- | --- | --- |
-| `name` | `""` (empty → class name) | `entityName`; table-name resolution order table→name→simpleName |
-| `table` | `""` | Table name |
+| `name` | `""` (empty → class name) | `entityName`; structure-name resolution order table→name→simpleName |
+| `table` | `""` | Structure name |
 | `catalog` | `""` | `EntityMeta.catalog`; participates in datasource routing |
 | `schema` | `""` | Schema |
 | `connectId` | `""` | Explicit datasource key, taking precedence over the catalog mapping |
@@ -330,7 +293,7 @@ Annotations live in the `cn.geelato.lang.meta` package of `geelato-lang` and are
 | `isRefColumn` | false | Foreign-field column |
 | `refLocalCol` | `""` | Local reference field |
 | `refColName` | `""` | Foreign field |
-| `refTables` | `""` | Foreign table(s) |
+| `refTables` | `""` | Foreign structure name(s) |
 
 ### Other Annotations
 
@@ -353,9 +316,9 @@ Annotations live in the `cn.geelato.lang.meta` package of `geelato-lang` and are
 
 Parsing details: fields are scanned before get/is methods; without `@Col` a column name is generated from the field name (camelCase → snake_case); boolean defaults are read from the bean instance and normalized to "1"/"0"; an empty dataType goes through `TypeConverter.toSqlTypeString(fieldType)`; finally every column passes `ColumnMeta.afterSet()`.
 
-## DB Reflection Models (schema package)
+## Physical-Structure Reflection Models (schema package)
 
-The `cn.geelato.core.meta.schema` package maps `information_schema` and `SHOW INDEX` results directly, for physical-database reflection and comparison:
+The `cn.geelato.core.meta.schema` package collects structure definitions **backwards from physical storage**, supporting "physical structure ↔ metadata" comparison and consistency checks. The current adaptation targets MySQL's `information_schema` and `SHOW INDEX`; per the framework abstraction the physical carrier is not limited — reflection over other media is an extension direction.
 
 | Class | Source | Notes |
 | --- | --- | --- |
@@ -371,5 +334,5 @@ There is no class named `IndexMeta` or `RelationMeta` in the framework: indexes 
 
 - [Metadata Loading](./loading.md) — how these models are constructed and registered into MetaManager
 - [Runtime Operations](./operations.md) — runtime query, registration and refresh APIs
-- [Persistence and Interfaces](./interfaces.md) — the platform_dev_* tables behind ColumnMeta/TableMeta
+- [Where Metadata Extends](./extensions.md) — the panorama of upper-layer capabilities consuming these models
 - [ORM Annotations](../orm/annotations.md) — annotation usage and complete examples

@@ -29,7 +29,7 @@ Paginated responses carry `data` as:
 { "page": 1, "pageSize": 10, "total": 42, "data": [ "..." ] }
 ```
 
-Authentication and headers: see [Business Integration](integration.md).
+Authentication (local login / OAuth2 / auth-client contract): see [Geelato AuthServer](../authentication/overview.md).
 
 ## Save Definition Version
 

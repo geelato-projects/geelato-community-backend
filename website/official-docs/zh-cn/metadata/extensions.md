@@ -17,13 +17,13 @@ sidebar_label: 元数据的上层延伸
 
 | 消费入口 | 拿什么 | 干什么 |
 | --- | --- | --- |
-| `MetaInsertSqlProvider#buildOneSql` | tableName、`getColumnName(field)`、ColumnMeta.dataType | 拼 INSERT 表名/列名,按列类型定 JDBC type |
+| `MetaInsertSqlProvider#buildOneSql` | tableName、`getColumnName(field)`、ColumnMeta.dataType | 拼 INSERT 结构名/列名,按列类型定 JDBC type |
 | `MetaUpdateSqlProvider#buildOneSql` | tableName、`isIgnoreUpdateField()` | 拼 UPDATE SET 子句,跳过创建类字段与主键 |
 | `MetaDeleteSqlProvider#buildOneSql` | tableName、deleteMode(经 `DeleteCommands.resolve`) | 逻辑删除生成 update,物理删除生成 delete |
 | `MetaQuerySqlProvider#buildOneSql/buildForeignJoins` | 字段列映射、TableForeign、ViewMeta.viewConstruct、dbType | 拼 SELECT、按外键元数据自动 left join 并选展示列、按 dbType 加方言引用符 |
 | `MetaBaseSqlProvider#requireFilterFieldMeta` | FieldMeta + dataType | 过滤字段校验(不存在抛 InvalidFilterFieldException)、参数 SQL 类型绑定、JSON 列禁用比较 |
 | `EntitySaveParser#parse` | 全部 fieldMetas、主键、newDefaultEntityMap | 实体对象→SaveCommand:按主键判 insert/update、生成主键、触发字段填充 SPI |
-| `Dao#convert` / `CommonRowMapper` | getJsonFieldKeys、字段列映射 | ResultSet 行→实体/Map 映射 + JSON 列反序列化 + 加密列解密 |
+| `Dao#convert` / `CommonRowMapper` | getJsonFieldKeys、字段列映射 | 行数据→实体/Map 映射 + JSON 列反序列化 + 加密列解密 |
 | `EncryptedColumns#resolve` | getEncryptedColumnNames | 查询列解密(含 join 实体的列并集) |
 | `PageTotalStrategy#uniqueKeyBounded` | `getId()` 主键 | 主键等值条件命中时跳过 count SQL |
 | `SaveCommandAdapter` / `DeleteCommandAdapter`(Fluent API) | 主键、默认值、deleteMode | MetaInsert/MetaUpdate/MetaDelete → SaveCommand/DeleteCommand 适配 |
@@ -41,7 +41,7 @@ MQL 报文里写的实体名与字段名,必须先通过元数据校验才有资
 | `MqlQueryProcessor#applyViewTemplateParams` | ViewMeta.viewType | 仅虚拟(VIRTUAL)视图允许注入 `@pf` 模板参数 |
 | `MqlFuzzymatchRouteResolver` | getFieldMetaByColumn | 模糊搜索路由 Lucene 时做列名↔字段名换算 |
 
-## 数据源路由:实体→库的归属判定
+## 数据源路由:实体→数据源的归属判定
 
 | 消费入口 | 拿什么 | 干什么 |
 | --- | --- | --- |
@@ -78,41 +78,51 @@ MQL 报文里写的实体名与字段名,必须先通过元数据校验才有资
 
 详见[物化视图](../dynamic-datasource/materialized-view.md)。
 
+## 脚本引擎与 AI 通道
+
+脚本引擎没有 `$gl.meta` kit,元数据能力通过以下通道暴露给脚本与外部工具:
+
+| 通道 | 入口 | 说明 |
+| --- | --- | --- |
+| `$gl.mql` | MqlKit(`list/multiList/save/batchSave/multiSave/delete/deleteByGql/explain`) | 以 MQL 报文驱动的元数据查询通道;内部经 MqlQueryProcessor/MetaQLManager 消费元数据生成 SQL;`entityConnectId(entityName)` 取 `TableMeta.connectId` 做数据源路由;写方法受 `dao.write-enabled` 门控 |
+| `$gl.sql` 跨库定位 | MetaTableLocationResolver | 遍历注册表按结构名(精确→忽略大小写)找 EntityMeta,取 `resolveConnectId` + 连接定义(`ConnectMeta`)定位物理库;结果缓存 LocalBoundedCache(60s/4096) |
+| MQL 函数参数 | GFunction(increment/findinset/fuzzymatch) | `$实体.字段` 经 MetaManager 翻译为真实列名,生成 `gfn_xxx(...)` 函数 |
+| MCP 工具 | MetaModelTool(geelato-mcp) | 向 AI 暴露 getAllEntityNames/getEntityMeta(字段清单),供模型理解数据模型 |
+
 ## 归档:以元数据为前置条件
 
-`ArchivePolicyService#enableArchiveForEntity` 经 `MetaManager.get(entityName)` 取表名与标题生成归档策略——**无元数据的裸表拒绝归档**。归档查询模式下,按实体归属判定引导到 `/api/meta/list`。详见[归档特性](../archive/overview.md)。
+`ArchivePolicyService#enableArchiveForEntity` 经 `MetaManager.get(entityName)` 取结构名与标题生成归档策略——**无元数据的裸结构拒绝归档**。归档查询模式下,按实体归属判定引导到通用元数据查询通道。详见[归档特性](../archive/overview.md)。
 
 ## 工程链路:设计态与运维
 
 | 消费入口 | 拿什么 | 干什么 |
 | --- | --- | --- |
-| `DevTableController` / `DevTableColumnController` / `DevViewController` | refreshDBMeta、getTableUpgradeList、getClassSourceEntity | 表/列/视图设计器保存后刷新元数据、生成 DDL 升级清单、双源冲突校验 |
-| `MetaDdlService#createOrUpdateTableByEntityMeta` | EntityMeta | 按实体元数据建表/升表 |
+| 表/列/视图设计器(`DevTableController` / `DevTableColumnController` / `DevViewController`) | refreshDBMeta、getTableUpgradeList、getClassSourceEntity | 设计器保存后刷新元数据、生成结构升级清单、双源冲突校验 |
+| `MetaDdlService#createOrUpdateTableByEntityMeta` | EntityMeta | 按实体元数据建结构/升结构(DDL) |
 | `EntityJavaSourceGenerator` | 实体名/标题/字段/列/主键 | 反向生成带 `@Entity/@Col/@Title/@Id` 的 Java 源码 |
-| `PackageService#assertColumnsConsistent` + `PackageUtils.validatePackageData` | getAll() | 打包前校验"物理表列 ⊆ 实体 FieldMeta 列",不一致禁止打包 |
+| `PackageService#assertColumnsConsistent` + `PackageUtils.validatePackageData` | getAll() | 打包前校验"物理结构列 ⊆ 实体 FieldMeta 列",不一致禁止打包 |
 | `ImportExcelService` | getFieldMeta/ColumnMeta | Excel 导入的列定位、类型转换、值校验、唯一列检测 |
 | `AuditBusinessNamer` / `DictDisplayResolver` | entityTitle、FieldMeta.title、dictDataSourceMap | 审计日志把字段值翻译成"实体.字段(字典标签)" |
 | `OcrUtils` | EntityMeta 列映射 | OCR 结果按元数据落库 |
-| `ConsistencyChecker`(geelato-maintenance) | 三方 EntityMeta | Java 类源 / 元数据库源 / 物理库源逐字段 diff 与修复 |
+| `ConsistencyChecker`(geelato-maintenance) | 三方 EntityMeta | ORM 注解源 / 在线定义源 / 物理库源逐字段 diff 与修复 |
 | `MqlTestModelRegistrar` / `MqlExplainService` | MetaManager | 把测试模型注册进注册表,供 MQL explain/试跑 |
 | `PlatformMetaMonitorEndPoint` | getAll() | 运维端点输出全部实体元数据快照 |
-| `MetaModelTool`(geelato-mcp) | getEntityMeta | 向 AI 暴露实体清单与字段定义 |
 
 ## 总表:去掉元数据会失去什么
 
 | 若无元数据 | 失去的能力 |
 | --- | --- |
-| 无表名/列映射 | ORM 的 insert/update/delete/query 全部无法生成 SQL |
-| 无字段校验 | MQL 任何报文都无法判定实体与字段合法性,通用接口无入口 |
-| 无 connectId/dbType | 多数据源路由与逐实体方言判定失效,动态数据源失去"实体→库"依据 |
+| 无结构名/列映射 | ORM 的 insert/update/delete/query 全部无法生成 SQL |
+| 无字段校验 | MQL 任何报文都无法判定实体与字段合法性,通用数据接口无入口 |
+| 无 connectId/dbType | 多数据源路由与逐实体方言判定失效,动态数据源失去"实体→数据源"依据 |
 | 无实体名挂接点 | 行级数据权限、租户过滤无从注入 |
 | 无 containsField | 逻辑删除、审计字段填充失去按实体开关的能力 |
 | 无 SimpleFieldMeta | 低码前端失去表单渲染契约,通用接口退化为裸 SQL 通道 |
 | 无设计器回写+refreshDBMeta | 模型变更须重启生效,设计态与运行态割裂 |
-| 无打包列一致性校验 | 部署期才暴露 unfound FieldMeta,故障后移到最坏时机 |
+| 无打包结构一致性校验 | 部署期才暴露 unfound FieldMeta,故障后移到最坏时机 |
 
 ## 延伸阅读
 
 - [元数据模型](./model.md)——消费方拿到的属性从哪里来
 - [元数据加载机制](./loading.md)——消费方查询的注册表如何建立
-- [元数据的持久化与接口](./interfaces.md)——前端契约与端点细节
+- [元数据运行期操作](./operations.md)——消费方调用的查询与刷新 API

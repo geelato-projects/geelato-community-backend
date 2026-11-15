@@ -93,9 +93,9 @@ Spring 容器完成初始化后执行 `BootApplication.run(String... args)`，�
 
 ## 阶段四：数据源定义加载
 
-`run(...)` 处理 `DataSourceDefinitionLoader`（若容器中存在自定义实现），将主数据源注册为 `primary`，通过 `definitionLoader.load(dao)` 读取动态数据源定义并缓存连接定义。
+`run(...)` 处理 `DataSourceDefinitionLoader`（若容器中存在自定义实现），将主数据源注册为 `primary`，通过 `definitionLoader.load(dao)` 读取动态数据源定义并缓存连接配置。
 
-此阶段仅缓存连接定义，不在启动时立即建立所有动态数据源。真正访问某个 `connectId` 时，由 `DataSourceManager.getDataSource(connectId)` 按需延迟创建真实数据源。即：启动时缓存定义，运行时按需建连。
+此阶段仅缓存连接定义，不在启动时立即建立所有动态数据源。真正访问某个 `connectId` 时，由 orm 侧 `DynamicDataSourceRegistry` 按需延迟建池（`DynamicRoutingDataSource` 路由时兜底触发）。即：启动时缓存定义，运行时按需建连。
 
 ## 阶段五：SQL 脚本与数据库脚本加载
 
@@ -159,7 +159,7 @@ Spring 容器完成初始化后执行 `BootApplication.run(String... args)`，�
 以上为面向使用者的概念性说明。若需深入内部实现，以下管理器维护了对应的内部缓存与数据结构：
 
 - `MetaManager`：分别维护来自类（`entityMetadataMapFromClass`）与来自数据库（`entityMetadataMapFromDatabase`）的元数据，并在统一的 `entityMetadataMap` 中对外提供访问。
-- `DataSourceManager`：动态数据源连接定义缓存在 `lazyDynamicDataSourceMap`。
+- `DataSourceManager`：纯注册表——已注册数据源实例缓存在 `dataSourceMap`，连接定义快照缓存在 `dataSourceConfigMap`（快照 miss 时经 `loadOne` 实时补载）；建池与路由归 orm 侧 `DynamicDataSourceRegistry` / `DynamicRoutingDataSource`。
 - `EnvManager`：系统配置缓存在 `sysConfigMap` 与 `sysConfigClassifyMap`。
 
 建议按以下顺序阅读源码以区分"Spring 启动"与"Geelato Runtime 初始化"：`BootApplication` → `MetaConfiguration` → `MetaManager` → `DataSourceManager` → `SqlScriptManager` / `DbScriptManager` → `GraalManager` → `EnvManager`。

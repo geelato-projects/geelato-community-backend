@@ -113,31 +113,36 @@ entityDataSourceResolver.clearCache();
 2. **`catalog` 在 `catalog-mapping` 中的映射值** —— 实体未声明 connectId 时按逻辑分组路由
 3. 都没有 → 返回 null，交由 Dao 调用期的兜底链决定（见下节）
 
-解析结果还要通过一道**存在性校验**：`EntityDataSourceResolver` 会确认解析出的 key 在 `DynamicDataSourceRegistry` 中真实注册（对应 `platform_dev_db_connect` 中启用状态的连接，或其他注册途径）。如果数据源不存在，视为未解析，继续走兜底链——不会路由到一个不存在的库上。
+解析结果还要通过一道**存在性校验**：`EntityDataSourceResolver` 会确认解析出的 key 在 `DynamicDataSourceRegistry` 中真实注册（对应 `platform_dev_db_connect` 中启用状态的连接，或其他注册途径）。解析出 key 但数据源未注册时**直接硬失败**——抛出 `IllegalStateException`（提示"实体 xxx 显式归属数据源 yyy 未注册，拒绝静默回退主库"），既不会路由到一个不存在的库上，也不会悄悄落到别的库造成数据错乱。遇到此异常请检查 `platform_dev_db_connect` 中该连接是否已登记且启用。
 
 ## Dao 调用期的完整优先级链
 
 实体级解析只回答"这个实体有没有明确归属"。一次完整的 `Dao` 调用由 `DataSourceInterceptor` 切面裁决最终数据源 key，完整优先级（高 → 低）：
 
 ```text
-1. 实体映射        实体声明了 connectId / 命中 catalog 映射，且该数据源真实存在
+1. 实体映射        实体声明了 connectId / 命中 catalog 映射，且该数据源真实存在（未注册直接硬失败）
 2. 注解作用域默认  当前调用处于类/方法级 @UseDynamicDataSource 作用域内，取注解 value()
-3. 外层已显式 key  当前线程已被外层 switchDbByConnectId / withDataSource 等设置过 key
-4. 平台默认 key    启动时写入 DataSourceManager 的默认数据源 key
-5. primary        所有兜底均失效时的最终硬兜底
+3. 外层已显式 key  当前线程已被外层 DynamicDataSourceScope.switchTo / withDataSource 设置过 key
+4. 请求级覆盖      仅对无显式归属实体生效（DataSourceOverrideContext，如归档查询请求头）
+5. 平台默认 key    启动时写入 DataSourceManager 的默认数据源 key
+6. primary        所有兜底均失效时的最终硬兜底
 ```
 
 各级的细节：
 
-**第 1 级：实体映射。** 切面先从 `Dao` 方法参数中识别实体名（识别规则见[切换方式](switching.md)），能识别到且实体解析出有效 key，直接采用。这是绝大多数业务调用命中的路径。
+**第 1 级：实体映射。** 切面先从 `Dao` 方法参数中识别实体名（识别规则见[切换方式](switching.md)），能识别到且实体解析出有效 key，直接采用。这是绝大多数业务调用命中的路径。解析出的 key 未注册时由 `EntityDataSourceResolver` 硬失败（见上文存在性校验）。
 
 **第 2 级：注解作用域默认。** 服务类或方法上标注了类/方法级 `@UseDynamicDataSource("xxx")` 时，进入方法前注解值被写入线程上下文作为"作用域默认源"。注意：**字段级** `@UseDynamicDataSource` 仅作为 `dynamicDao` 的注入标记，不产生作用域默认值。
 
-**第 3 级：外层已显式设置的 key。** 外层代码通过 `switchDbByConnectId`、Fluent DSL 的 `useDataSource(...)` 等方式在线程上下文设置了 key，且当前不在注解作用域内，则沿用该 key。这一级保护嵌套切库语义——外层切好的库，内层未明确声明的操作继续沿用。
+**第 3 级：外层已显式设置的 key。** 外层代码通过 `DynamicDataSourceScope.switchTo(...)`（平台 `BaseController` / `BaseService` 的 `switchDbByConnectId(...)` 即其薄委托）、`DynamicDataSourceScope.withDataSource(...)` 代码块作用域等方式在线程上下文设置了 key，且当前不在注解作用域内，则沿用该 key。这一级保护嵌套切库语义——外层切好的库，内层未明确声明的操作继续沿用。
 
-**第 4 级：平台默认 key。** 启动时由 ORM 自动解析并写入 `DataSourceManager`，规则：配置了 `geelato.orm.default-data-source-key` 则取配置值；否则容器中存在 `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` 任一 bean 时取 `"primary"`。
+**第 4 级：请求级覆盖。** 当前线程存在请求级数据源覆盖上下文（`DataSourceOverrideContext`）且实体**无显式归属**（无 `connectId` 且 catalog 未映射）时，路由到覆盖指定的数据源。典型驱动方是归档数据在线查询：请求头携带 `X-Gl-Archive-Query: true` 时，该请求内无归属实体的读操作自动切到归档库。任何显式指定（实体归属 / 注解 / DSL / 代码块作用域）都不被请求级覆盖劫持。完整语义见[归档数据在线查询](../archive/overview.md)。
 
-**第 5 级：primary 硬兜底。** 以上全部为空时，回落到常量 `"primary"`。`primary` 由路由数据源强制注册且不可为空，因此这条链**永远解析出一个确定的数据源 key**，不会以 null 结束。
+**第 5 级：平台默认 key。** 启动时由 ORM 自动解析并写入 `DataSourceManager`，规则：配置了 `geelato.orm.default-data-source-key` 则取配置值；否则容器中存在 `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` 任一 bean 时取 `"primary"`。
+
+**第 6 级：primary 硬兜底。** 以上全部为空时，回落到常量 `"primary"`。`primary` 由路由数据源强制注册且不可为空，因此这条链**永远解析出一个确定的数据源 key**，不会以 null 结束。
+
+以上是 `Dao` 切面链。MQL / Fluent DSL 执行器走另一条消费链（`AbstractExecutionStrategySupport`），顺序略有不同：**DSL 显式 `useDataSource(...)` > 实体显式归属 > 请求级覆盖 > 平台默认 key > `primary`**——显式 DSL 指定排在实体归属之前，单次调用可覆盖实体声明；其余各级与切面链一致。
 
 ## 一条 SQL 的完整决策流程
 
@@ -147,16 +152,18 @@ flowchart TD
     B -- 是 --> C{TableMeta.connectId 非空?}
     C -- 是 --> D{该 key 在 Registry 中已注册?}
     D -- 是 --> E[路由到该数据源]
-    D -- 否 --> F[视为未解析, 走兜底链]
+    D -- 否 --> X[硬失败, 拒绝静默回退主库]
     C -- 否 --> G{catalog 命中 catalog-mapping?}
     G -- 是 --> D
-    G -- 否 --> F
+    G -- 否 --> F[进入兜底链]
     B -- 否 --> F
     F --> H{处于 @UseDynamicDataSource 作用域?}
     H -- 是 --> I[取注解 value]
     H -- 否 --> J{线程上下文已有显式 key?}
     J -- 是 --> K[沿用外层 key]
-    J -- 否 --> L{平台默认 key 非空?}
+    J -- 否 --> O{请求级覆盖生效且实体无归属?}
+    O -- 是 --> P[路由到覆盖数据源]
+    O -- 否 --> L{平台默认 key 非空?}
     L -- 是 --> M[取平台默认 key]
     L -- 否 --> N[primary 硬兜底]
 ```
@@ -173,7 +180,7 @@ catalog 映射在查询期即时解析，框架启动后再补配置同样生效
 
 **误区三：实体绑定了 connectId 就一定会切过去。**
 
-还依赖两个前提：一是执行入口必须是能消费路由 key 的 `dynamicDao`（`primaryDao` 直连物理主库，恒不路由，见[切换方式](switching.md)）；二是该 key 对应的数据源真实存在且已启用，否则按未解析处理走兜底链。
+还依赖两个前提：一是执行入口必须是能消费路由 key 的 `dynamicDao`（`primaryDao` 直连物理主库，恒不路由，见[切换方式](switching.md)）；二是该 key 对应的数据源真实存在且已启用——未注册时首次解析即硬失败（抛出 `IllegalStateException`，拒绝静默回退主库），请检查 `platform_dev_db_connect` 中该连接的登记与启用状态。
 
 **误区四：把 platform 实体登记到其他库。**
 

@@ -49,6 +49,7 @@ IAM / 组织中心 / Redis"]
     DB --> L3
     EXT -. 替换 Loader 实现 .-> L1
     EXT -. 替换 Loader 实现 .-> L2
+    EXT -. 替换 Loader 实现 .-> L3
     L1 --> S1
     L2 --> S2
     L3 --> S3
@@ -60,6 +61,7 @@ IAM / 组织中心 / Redis"]
     P3 --> P4
     P1 --> C
     P2 --> C
+    P3 --> C
     P4 --> C
 ```
 

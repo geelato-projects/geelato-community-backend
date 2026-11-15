@@ -135,9 +135,9 @@ Then:
 does two things:
 
 - registers the primary data source as `primary`
-- loads dynamic data source definitions into a lazy cache
+- loads dynamic data source definitions into a snapshot cache (`DataSourceManager`: registered instances in `dataSourceMap`, connection definitions in `dataSourceConfigMap`, reloaded on demand via `loadOne` on a snapshot miss)
 
-The important point is that dynamic data sources are usually not created eagerly at startup. Their definitions are cached first, and real `HikariDataSource` instances are created lazily when a specific `connectId` is used.
+The important point is that dynamic data sources are usually not created eagerly at startup. Their definitions are cached first, and real pools are built lazily by the orm-side `DynamicDataSourceRegistry` when a specific `connectId` is routed (with `DynamicRoutingDataSource` triggering creation as a fallback). `DataSourceManager` itself is a pure registry — registered instances, connection-config snapshots and the default key; it builds no pools.
 
 ## SQL Resource and DB Script Loading
 

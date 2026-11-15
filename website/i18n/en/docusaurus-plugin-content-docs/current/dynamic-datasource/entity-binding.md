@@ -111,31 +111,36 @@ The first three styles are adjudicated by `MetaManager.resolveConnectId` with th
 2. **the mapping of `catalog` in `catalog-mapping`** — routes by logical group when no connectId is declared
 3. neither → return null and hand over to the fallback chain at Dao-call time (next section)
 
-The resolution result also passes an **existence check**: `EntityDataSourceResolver` confirms the resolved key is actually registered in `DynamicDataSourceRegistry` (an enabled connection in `platform_dev_db_connect`, or another registration channel). If the datasource does not exist, the result is treated as unresolved and the fallback chain continues — it never routes to a nonexistent database.
+The resolution result also passes an **existence check**: `EntityDataSourceResolver` confirms the resolved key is actually registered in `DynamicDataSourceRegistry` (an enabled connection in `platform_dev_db_connect`, or another registration channel). If the resolved key's datasource is not registered, resolution **fails hard** — an `IllegalStateException` is thrown ("entity xxx explicitly owns datasource yyy which is not registered; refusing to silently fall back to the primary") — it never routes to a nonexistent database, nor quietly lands on a different one. When you hit this exception, check whether the connection is registered and enabled in `platform_dev_db_connect`.
 
 ## The Full Priority Chain at Dao-Call Time
 
 Entity-level resolution only answers "does this entity have an explicit owner". A complete `Dao` call is adjudicated by the `DataSourceInterceptor` aspect, whose full priority (high → low) is:
 
 ```text
-1. Entity mapping      the entity declares connectId / hits a catalog mapping, and that datasource exists
+1. Entity mapping      the entity declares connectId / hits a catalog mapping, and that datasource exists (hard-fails when unregistered)
 2. Annotation default  the call is inside a class/method-level @UseDynamicDataSource scope, use value()
-3. Outer explicit key   the thread already has a key set by an outer switchDbByConnectId / withDataSource
-4. Platform default    the default datasource key written into DataSourceManager at startup
-5. primary             the final hard fallback when everything else is absent
+3. Outer explicit key   the thread already has a key set by an outer DynamicDataSourceScope.switchTo / withDataSource
+4. Request-level override  applies only to entities without an explicit owner (DataSourceOverrideContext, e.g. the archive-query header)
+5. Platform default    the default datasource key written into DataSourceManager at startup
+6. primary             the final hard fallback when everything else is absent
 ```
 
 Details of each level:
 
-**Level 1: entity mapping.** The aspect first resolves the entity name from the `Dao` method arguments (recognition rules in [Switching](switching.md)); if it resolves and yields a valid key, that key is used. This is the path most business calls take.
+**Level 1: entity mapping.** The aspect first resolves the entity name from the `Dao` method arguments (recognition rules in [Switching](switching.md)); if it resolves and yields a valid key, that key is used. This is the path most business calls take. When the resolved key is not registered, `EntityDataSourceResolver` fails hard (see the existence check above).
 
 **Level 2: annotation-scoped default.** When a service class or method carries a class/method-level `@UseDynamicDataSource("xxx")`, the annotation value is written into the thread context as the scoped default before the method runs. Note: a **field-level** `@UseDynamicDataSource` is only an injection marker for `dynamicDao` and produces no scoped default.
 
-**Level 3: outer explicit key.** If outer code set a key in the thread context via `switchDbByConnectId`, the Fluent DSL's `useDataSource(...)`, etc., and no annotation scope is active, that key is reused. This level protects nested switching semantics — an inner operation without an explicit declaration continues on the database the outer scope selected.
+**Level 3: outer explicit key.** If outer code set a key in the thread context via `DynamicDataSourceScope.switchTo(...)` (the platform `BaseController` / `BaseService` `switchDbByConnectId(...)` is a thin delegate of it), a `DynamicDataSourceScope.withDataSource(...)` block, etc., and no annotation scope is active, that key is reused. This level protects nested switching semantics — an inner operation without an explicit declaration continues on the database the outer scope selected.
 
-**Level 4: platform default key.** Resolved automatically by the ORM at startup and written into `DataSourceManager`: if `geelato.orm.default-data-source-key` is configured, that value is used; otherwise `"primary"` when any of `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` beans exists.
+**Level 4: request-level override.** When the current thread carries a request-level datasource override context (`DataSourceOverrideContext`) and the entity has **no explicit owner** (no `connectId` and no mapped catalog), the call routes to the overridden datasource. The typical driver is online archive querying: with the request header `X-Gl-Archive-Query: true`, read operations on owner-less entities within that request automatically go to the archive database. No explicit designation (entity ownership / annotation / DSL / scoped block) is ever hijacked by the request-level override. See [Online Archive Querying](../archive/overview.md) for the full semantics.
 
-**Level 5: primary hard fallback.** When all of the above are empty, the constant `"primary"` is used. `primary` is forcibly registered by the routing datasource and can never be null, so this chain **always resolves to a concrete datasource key** and never ends with null.
+**Level 5: platform default key.** Resolved automatically by the ORM at startup and written into `DataSourceManager`: if `geelato.orm.default-data-source-key` is configured, that value is used; otherwise `"primary"` when any of `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` beans exists.
+
+**Level 6: primary hard fallback.** When all of the above are empty, the constant `"primary"` is used. `primary` is forcibly registered by the routing datasource and can never be null, so this chain **always resolves to a concrete datasource key** and never ends with null.
+
+The above is the Dao aspect chain. The MQL / Fluent DSL executor follows a different consumption chain (`AbstractExecutionStrategySupport`) with a slightly different order: **explicit DSL `useDataSource(...)` > explicit entity ownership > request-level override > platform default key > `primary`** — an explicit DSL designation ranks before entity ownership, so a single call can override the entity's declaration; the remaining levels match the aspect chain.
 
 ## The Complete Decision Flow of One SQL Statement
 
@@ -145,16 +150,18 @@ flowchart TD
     B -- yes --> C{TableMeta.connectId non-blank?}
     C -- yes --> D{Key registered in Registry?}
     D -- yes --> E[Route to that datasource]
-    D -- no --> F[Treated as unresolved, fallback chain]
+    D -- no --> X[Hard fail, refuse silent fallback to primary]
     C -- no --> G{catalog hits catalog-mapping?}
     G -- yes --> D
-    G -- no --> F
+    G -- no --> F[Enter fallback chain]
     B -- no --> F
     F --> H{Inside @UseDynamicDataSource scope?}
     H -- yes --> I[Use annotation value]
     H -- no --> J{Thread context has explicit key?}
     J -- yes --> K[Reuse outer key]
-    J -- no --> L{Platform default key non-blank?}
+    J -- no --> O{Request-level override active and entity owner-less?}
+    O -- yes --> P[Route to the overridden datasource]
+    O -- no --> L{Platform default key non-blank?}
     L -- yes --> M[Use platform default]
     L -- no --> N[primary hard fallback]
 ```
@@ -171,7 +178,7 @@ Catalog mapping is resolved on demand at query time; configuring it after startu
 
 **Misconception 3: a bound connectId always routes.**
 
-Two preconditions also apply: the execution entry must be `dynamicDao`, the only Dao that consumes routing keys (`primaryDao` connects straight to the physical primary and never routes — see [Switching](switching.md)); and the key must correspond to an existing, enabled datasource, otherwise it is treated as unresolved and the fallback chain applies.
+Two preconditions also apply: the execution entry must be `dynamicDao`, the only Dao that consumes routing keys (`primaryDao` connects straight to the physical primary and never routes — see [Switching](switching.md)); and the key must correspond to an existing, enabled datasource — when unregistered, the first resolution fails hard (an `IllegalStateException` is thrown, refusing silent fallback to primary); check the connection's registration and enabled status in `platform_dev_db_connect`.
 
 **Misconception 4: platform entities can be registered to another database.**
 

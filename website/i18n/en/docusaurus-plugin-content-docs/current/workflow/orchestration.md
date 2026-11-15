@@ -257,4 +257,3 @@ Return-type buttons (return to previous / initiator / any node) are not availabl
 - [Workflow Runtime](runtime.md): full lifecycle from start to end
 - [Define Integration](integration-define.md): definition save, version, publish, edit lock APIs
 - [Runtime Integration](integration-runtime.md): start, submit, handling, withdraw/reject APIs
-- [Business Integration](integration.md): deployment, authentication and configuration

@@ -28,7 +28,7 @@ sidebar_label: 流程定义集成
 { "page": 1, "pageSize": 10, "total": 42, "data": [ "..." ] }
 ```
 
-认证方式与请求头见[业务接入](integration.md)。
+认证接入（本地登录 / OAuth2 / auth-client 契约）见 [Geelato AuthServer](../authentication/overview.md)。
 
 ## 保存定义版本
 

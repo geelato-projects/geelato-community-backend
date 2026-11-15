@@ -18,6 +18,7 @@ sidebar_label: ORM / 数据源扩展
 修改配置前，先明确要处理的场景，避免按错入口：
 
 - 仅让 Fluent DSL 某条查询走指定数据源：使用 `.useDataSource(...)`。
+- 让一段代码或整个请求切到某个动态数据源：使用 `DynamicDataSourceScope.withDataSource(...)` / `switchTo(...)`。
 - 让一个 Service 或方法整体切到某个动态数据源：使用 `@UseDynamicDataSource`。
 - 替换动态数据源定义来源：实现 `DynamicDataSourceDefinitionLoader`。
 - 给查询自动加租户/权限条件，或给保存自动补默认字段：实现对应 SPI。
@@ -207,13 +208,28 @@ public class SyncService {
 
 若需某类方法整体使用同一数据源，或需注入 `dynamicDao` 体系，`@UseDynamicDataSource` 比每条查询都写 `.useDataSource(...)` 更简洁。
 
-### 方式 3：让 ORM 默认绑定动态源的 `Dao`
+### 方式 3：代码级切库 `DynamicDataSourceScope`
+
+需要"这一段代码 / 这个请求整体切到某个库"时，使用切换唯一出入口 `cn.geelato.datasource.DynamicDataSourceScope`（业务代码不应直接读写底层的 `DynamicDataSourceHolder`）：
+
+```java
+// 代码块作用域：块内生效，正常/异常结束都恢复原值
+List<Map<String, Object>> rows = DynamicDataSourceScope.withDataSource("portal", () ->
+        dao.querys(SomeEntity.class));
+
+// 请求内默认库：设置后持续生效，请求结束由清理安全网统一回收
+DynamicDataSourceScope.switchTo("portal");
+```
+
+平台 `BaseController` / `BaseService` 保留的 `switchDbByConnectId(...)` 即 `switchTo` 的薄委托，Controller 场景直接调用即可。嵌套语义、清理安全网与事务内限制的完整说明见[切换方式](../dynamic-datasource/switching.md)。
+
+### 方式 4：让 ORM 默认绑定动态源的 `Dao`
 
 若业务工程中大多数 ORM 操作都应落到动态源链路，无需任何配置：只要容器中存在 `dynamicDao`，ORM 会自动绑定它，Fluent DSL 默认就会走动态源能力（`useDataSource` 切库生效），无需每次手工指定。
 
-### 方式 4：用 `@Entity` 注解声明实体所属数据源
+### 方式 5：用 `@Entity` 注解声明实体所属数据源
 
-前三种方式都是在“调用时”或“组件级”决定走哪个数据源。若需实体的数据源归属**固定、写在实体声明里**，则使用 `@Entity` 注解声明。
+前四种方式都是在"调用时"、"代码块内"或"组件级"决定走哪个数据源。若需实体的数据源归属**固定、写在实体声明里**，则使用 `@Entity` 注解声明。
 
 它适合：
 
@@ -221,7 +237,7 @@ public class SyncService {
 - 一批实体按模块归到不同库（如 `email` 分组统一走邮件库）
 - 不想在每个 Service 或每条查询上重复指定数据源
 
-这种方式与前三种属于不同层级，可以叠加：注解声明的是实体“默认归属”，`.useDataSource(...)` 仍可在单次调用时覆盖。
+这种方式与前几种属于不同层级，可以叠加：注解声明的是实体"默认归属"，`.useDataSource(...)` 仍可在单次调用时覆盖。
 
 #### 路径 A：用 `connectId` 显式指定
 
@@ -275,13 +291,13 @@ geelato:
 
 1. `TableMeta.connectId` 非空——`@Entity(connectId)` 显式指定与 `platform_dev_table.connect_id` 登记值写入的是**同一个槽位**（运行期登记后到合并，非 platform 实体可覆盖注解值），它们不是两级优先级
 2. `@Entity(catalog)` 在 `catalog-mapping` 中的映射值
-3. 都没有则交由 Dao 调用期兜底链决定（注解默认 > 外层显式 key > 平台默认 > `primary`）
+3. 都没有则交由 Dao 调用期兜底链决定（注解默认 > 外层显式 key > 请求级覆盖 > 平台默认 > `primary`）
 
 优先级在运行期由 `MetaManager.resolveConnectId` 即时解析，因此配置何时注入都不影响结果。完整优先级链与决策流程见[实体绑定与优先级](../dynamic-datasource/entity-binding.md)。
 
 #### 注意事项
 
-- 映射指向的数据源 key 必须是已注册的动态数据源（即在 `platform_dev_db_connect` 中登记，或通过自定义加载器提供）。
+- 映射指向的数据源 key 必须是已注册的动态数据源（即在 `platform_dev_db_connect` 中登记，或通过自定义加载器提供）；未注册时首次解析即硬失败（抛出 `IllegalStateException`，拒绝静默回退主库）。
 - `catalog` 值为 `platform` 的系统实体，其既有保护逻辑不变（强制以 Java 类为准、禁止刷新、禁止移交）；建议在 `catalog-mapping` 中将 `platform` 映射到 `primary`，保持与系统库一致。
 - 解析在查询期即时完成，与实体扫描时序无关，无需关心框架启动阶段的先后顺序。
 
@@ -719,6 +735,7 @@ geelato.datasource.dynamic.enable-jta-transaction=true
 - 多 `Dao` 场景无需配置，ORM 自动优先绑定 `dynamicDao`；仅绑定其他自定义 `Dao` 时配置 `geelato.orm.dao-bean-name`
 - 除非明确需要，否则不要默认开启 JTA / Seata
 - 单条链路切源优先用 `.useDataSource(...)`
+- 代码块 / 请求内整段切库用 `DynamicDataSourceScope.withDataSource(...)` / `switchTo(...)`，不要直接读写 `DynamicDataSourceHolder`
 - 组件级切源再考虑 `@UseDynamicDataSource`
 - 实体数据源归属固定时，优先用 `@Entity(connectId/catalog)` 在实体上声明，而非每次调用切源
 - 平台级查询规则和字段规则优先用 SPI，不要散落在业务代码里

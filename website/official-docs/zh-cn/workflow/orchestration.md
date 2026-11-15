@@ -256,4 +256,3 @@ sidebar_label: 流程编排
 - [流程运转](runtime.md)：发起、求解、办理、结束的全生命周期行为
 - [流程定义集成](integration-define.md)：定义保存、版本、发布、编辑锁接口
 - [流程运行集成](integration-runtime.md)：发起、提交、办理、撤回驳回等接口
-- [业务接入](integration.md)：部署形态、认证与配置

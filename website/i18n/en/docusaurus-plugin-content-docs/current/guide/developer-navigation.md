@@ -16,7 +16,7 @@ Different scenarios have different entry points. Choose based on your needs:
 | --- | --- |
 | **I want to start from scratch and quickly generate a complete CRUD backend project** | Recommended to use the **App Scaffold**. See: [Scaffold Project Guide](app-scaffold-starter-project-guide) |
 | **I have an existing Spring Boot project and want to integrate Geelato core capabilities** | Recommended **Minimal Integration**. See: [Minimal Integration](minimal-integration) |
-| **I want to learn the architecture design and the relationship between Runtime and Designer** | Read the architecture docs. See: [PlatformWebRuntime](../runtime/platform-web-runtime) |
+| **I want to learn the platform's Runtime and Designer app shells** | Read the app shell docs. See: [PlatformWebRuntime](../runtime/platform-web-runtime) |
 | **I want to quickly integrate Single Sign-On (SSO) and authentication** | See the authentication overview. See: [Authentication Overview](../authentication/overview) |
 
 ---

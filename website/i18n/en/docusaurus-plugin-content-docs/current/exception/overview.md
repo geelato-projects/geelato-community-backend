@@ -6,7 +6,7 @@ sidebar_label: Business Exception
 
 # Business Exception (geelato-exception)
 
-The business exception center is a **rule-based judging → one-instance-per-person → resolution-loop** engine: business semantics like "booking acceptance stuck" or "billed beyond credit" become configurable exception rules; script pipelines detect hits in batch or on change, and a unique exception instance is maintained per "rule × business object × participant" until resolved.
+The business exception center is a **rule-based judging → one-instance-per-person → resolution-loop** engine: business semantics like "booking acceptance stuck" or "billed beyond credit" become configurable exception rules; judging pipelines built on the framework's script engine (geelato-script) detect hits in batch or on change, and a unique exception instance is maintained per "rule × business object × participant" until resolved.
 
 Module: `cn.geelato:geelato-exception`. **The engine is off by default** (`geelato.exception.engine.enabled`, default false); rule-management REST works regardless of the switch — engine beans (scan/event/submit chain) are wired only when enabled.
 

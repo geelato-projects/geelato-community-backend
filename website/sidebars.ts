@@ -27,11 +27,7 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: '🧠 框架架构设计说明',
-          items: [
-            'reference/core-modules',
-            'runtime/platform-web-runtime',
-            'designer/platform-desginer',
-          ],
+          items: ['reference/core-modules'],
         },
         {
           type: 'category',
@@ -58,8 +54,6 @@ const sidebars: SidebarsConfig = {
                 'dynamic-datasource/configuration',
                 'dynamic-datasource/switching',
                 'dynamic-datasource/host-mapping',
-                'dynamic-datasource/materialized-view',
-                'dynamic-datasource/risingwave-engine',
                 'orm/datasource-extension',
               ],
             },
@@ -124,6 +118,11 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
+          label: '平台应用壳',
+          items: ['runtime/platform-web-runtime', 'designer/platform-desginer'],
+        },
+        {
+          type: 'category',
           label: '平台实体',
           items: [
             'entities/overview',
@@ -156,6 +155,14 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: '事件总线与 SSE 订阅推送',
           items: ['platform-capabilities/event-bus', 'platform-capabilities/sse-subscription'],
+        },
+        {
+          type: 'category',
+          label: '物化视图',
+          items: [
+            'platform-capabilities/materialized-view',
+            'platform-capabilities/risingwave-engine',
+          ],
         },
         {
           type: 'category',

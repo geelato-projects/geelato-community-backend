@@ -76,7 +76,7 @@ MQL 报文里写的实体名与字段名,必须先通过元数据校验才有资
 | `MetaQuerySqlProvider#buildFromSql` | ViewMeta.viewConstruct + viewType | 虚拟视图以 viewConstruct + `@pf` 渲染为派生表;物化视图按物理名直查 |
 | `MetaViewQuerySqlProvider` | ViewMeta 列映射 | 命名视图命令的查询 SQL 构建 |
 
-详见[物化视图](../dynamic-datasource/materialized-view.md)。
+详见[物化视图（平台）](../platform-capabilities/materialized-view.md)。
 
 ## 脚本引擎与 AI 通道
 

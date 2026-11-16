@@ -15,7 +15,7 @@ In day-to-day use of the dynamic datasource capability, most scenarios need no m
 |---|---|---|---|
 | `@Entity(connectId)` | Java entity annotation | The entity inherently belongs to one database, fixed in code | Backfilled at scan time |
 | `@Entity(catalog)` + `catalog-mapping` | Entity annotation + YAML/properties | A group of entities belongs to one logical database group | Resolved at query time |
-| `platform_dev_table.connect_id` | Registered online via platform designer | Online entities registered at runtime | Merged when registered |
+| Runtime registration | Runtime governance channel (the platform provides the online registration entry) | Online entities registered at runtime | Merged when registered |
 | `addEntityMapping(...)` | `EntityDataSourceResolver` API | In-memory correction or override at runtime | Immediate (lost on restart) |
 
 The first three are adjudicated uniformly by `MetaManager.resolveConnectId`; the fourth writes directly into the resolver cache.
@@ -31,7 +31,7 @@ public class DemoOrder {
 }
 ```
 
-- the value of `connectId` is the dynamic datasource key, i.e. the primary key `id` of the `platform_dev_db_connect` table
+- the value of `connectId` is the dynamic datasource routing key, i.e. the `id` of the definition Map in the datasource-definition SPI contract
 - at startup scan time, `MetaReflex.getTableMeta` backfills the annotation value into `TableMeta.connectId` on the entity metadata
 - this is the most direct declaration of entity ownership; it wins over catalog mapping within the same slot (see Style 3 below)
 
@@ -62,27 +62,23 @@ geelato:
 - catalog mapping is **not** resolved at scan time; `MetaManager.resolveConnectId` resolves it on demand at query time, so it does not matter when the configuration is injected
 - if an entity declares both `connectId` and `catalog`, `connectId` wins (see priority below)
 
-## Style 3: Platform Table Registration via `connect_id`
+## Style 3: Runtime Registration of Ownership
 
-For entities registered online through the platform designer, datasource ownership is recorded in the platform metadata table:
-
-- `platform_dev_table.connect_id` (database connection id)
-
-Registered values are merged into entity metadata at runtime. There is a **key mechanism you must understand** here:
+The runtime governance channel (the platform provides the online registration entry) can register a datasource owner for an entity after it has gone live; the registered value is merged into entity metadata at runtime. There is a **key mechanism you must understand** here:
 
 :::note The annotation value and the registered value share one slot
 
-The `@Entity(connectId)` annotation value and the `platform_dev_table.connect_id` registered value both end up in the same field of the entity metadata: `TableMeta.connectId`. They are **not two priority levels — they are two write paths into the same slot**:
+The `@Entity(connectId)` annotation value and the runtime-registered value both end up in the same field of the entity metadata: `TableMeta.connectId`. They are **not two priority levels — they are two write paths into the same slot**:
 
 - at startup, the explicit annotation value is backfilled into `TableMeta.connectId` first
-- when the platform table is registered at runtime, the DB-sourced `TableMeta` (including the registered `connect_id`) is merged into the existing entity metadata — for non-platform entities, the registered value **overwrites** the previous annotation value
-- entities with `catalog = "platform"` are protected: the Java class definition always wins, DB registration never overwrites, and runtime refresh is forbidden
+- when a registration happens at runtime, the registration source's (DB-sourced) `TableMeta` (including the registered connection id) is merged into the existing entity metadata — for non-platform entities, the registered value **overwrites** the previous annotation value
+- entities with `catalog = "platform"` are protected: the Java class definition always wins, registration never overwrites, and runtime refresh is forbidden
 
 So for ordinary (non-platform) entities: **whichever declaration arrives later owns `TableMeta.connectId`**. In practice, pick a single declaration channel per entity to avoid confusion between annotations and online registration.
 
 :::
 
-This style suits runtime governance scenarios where "the entity goes live first, its ownership is adjusted later", together with the platform table management UI.
+This style suits runtime governance scenarios where "the entity goes live first, its ownership is adjusted later", operated through the platform's online governance UI.
 
 ## Style 4: Manual Mapping at Runtime
 
@@ -111,7 +107,7 @@ The first three styles are adjudicated by `MetaManager.resolveConnectId` with th
 2. **the mapping of `catalog` in `catalog-mapping`** — routes by logical group when no connectId is declared
 3. neither → return null and hand over to the fallback chain at Dao-call time (next section)
 
-The resolution result also passes an **existence check**: `EntityDataSourceResolver` confirms the resolved key is actually registered in `DynamicDataSourceRegistry` (an enabled connection in `platform_dev_db_connect`, or another registration channel). If the resolved key's datasource is not registered, resolution **fails hard** — an `IllegalStateException` is thrown ("entity xxx explicitly owns datasource yyy which is not registered; refusing to silently fall back to the primary") — it never routes to a nonexistent database, nor quietly lands on a different one. When you hit this exception, check whether the connection is registered and enabled in `platform_dev_db_connect`.
+The resolution result also passes an **existence check**: `EntityDataSourceResolver` confirms the resolved key is actually registered in `DynamicDataSourceRegistry` (an enabled connection provided by the definition source, or another registration channel). If the resolved key's datasource is not registered, resolution **fails hard** — an `IllegalStateException` is thrown ("entity xxx explicitly owns datasource yyy which is not registered; refusing to silently fall back to the primary") — it never routes to a nonexistent database, nor quietly lands on a different one. When you hit this exception, check whether the key has been provided by the definition source (or registered through another channel).
 
 ## The Full Priority Chain at Dao-Call Time
 
@@ -178,7 +174,7 @@ Catalog mapping is resolved on demand at query time; configuring it after startu
 
 **Misconception 3: a bound connectId always routes.**
 
-Two preconditions also apply: the execution entry must be `dynamicDao`, the only Dao that consumes routing keys (`primaryDao` connects straight to the physical primary and never routes — see [Switching](switching.md)); and the key must correspond to an existing, enabled datasource — when unregistered, the first resolution fails hard (an `IllegalStateException` is thrown, refusing silent fallback to primary); check the connection's registration and enabled status in `platform_dev_db_connect`.
+Two preconditions also apply: the execution entry must be `dynamicDao`, the only Dao that consumes routing keys (`primaryDao` connects straight to the physical primary and never routes — see [Switching](switching.md)); and the key must correspond to an existing, enabled datasource — when unregistered, the first resolution fails hard (an `IllegalStateException` is thrown, refusing silent fallback to primary); check whether the key has been provided by the definition source and is enabled.
 
 **Misconception 4: platform entities can be registered to another database.**
 

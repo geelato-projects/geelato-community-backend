@@ -17,7 +17,7 @@ sidebar_label: 实体绑定与优先级
 |---|---|---|---|
 | `@Entity(connectId)` | Java 实体类注解 | 实体天然属于某个库，代码里写死 | 启动扫描期回填 |
 | `@Entity(catalog)` + `catalog-mapping` | 实体注解 + YAML/properties 配置 | 一批实体按逻辑分组归属同一个库 | 查询期即时解析 |
-| `platform_dev_table.connect_id` | 平台设计器在线登记 | 运行期动态登记的在线实体 | 运行期登记时合并 |
+| 运行期登记 | 运行期治理渠道（平台提供在线登记入口） | 运行期动态登记的在线实体 | 运行期登记时合并 |
 | `addEntityMapping(...)` | `EntityDataSourceResolver` API | 运行期内存级修正或覆盖 | 调用即生效（重启失效） |
 
 四种方式互相独立，前三种由 `MetaManager.resolveConnectId` 统一裁决，第四种直接写入解析器缓存。
@@ -33,7 +33,7 @@ public class DemoOrder {
 }
 ```
 
-- `connectId` 的值就是动态数据源的 key，对应 `platform_dev_db_connect` 表的主键 `id`
+- `connectId` 的值就是动态数据源的路由 key，即数据源定义 SPI 契约中定义 Map 的 `id`
 - 启动扫描期由 `MetaReflex.getTableMeta` 把注解值回填到实体元数据的 `TableMeta.connectId` 字段
 - 这是实体归属最直接的声明，在同槽位（见下文"方式三"）且 catalog 映射之前裁决
 
@@ -64,27 +64,23 @@ geelato:
 - catalog 映射**不在启动扫描期解析**，而是查询期由 `MetaManager.resolveConnectId` 即时解析——因此配置何时注入都不影响结果
 - 同一实体若同时声明了 `connectId` 和 `catalog`，`connectId` 胜出（见下文优先级）
 
-## 方式三：平台表登记 `connect_id`
+## 方式三：运行期登记归属
 
-通过平台设计器在线登记的实体，其数据源归属记录在平台元数据表：
-
-- `platform_dev_table.connect_id`（数据库连接 id）
-
-登记值在运行期合并进实体元数据。这里有一个**必须理解的关键机制**：
+运行期治理渠道（平台提供在线登记入口）可以在实体上线后为其登记数据源归属，登记值在运行期合并进实体元数据。这里有一个**必须理解的关键机制**：
 
 :::note 注解值与登记值是同一个槽位
 
-`@Entity(connectId)` 注解值和 `platform_dev_table.connect_id` 登记值，最终都写入实体元数据的同一个字段 `TableMeta.connectId`。它们**不是两级优先级，而是同一槽位的两条写入路径**：
+`@Entity(connectId)` 注解值和运行期登记值，最终都写入实体元数据的同一个字段 `TableMeta.connectId`。它们**不是两级优先级，而是同一槽位的两条写入路径**：
 
 - 启动时，注解显式值先回填到 `TableMeta.connectId`
-- 运行期平台表登记时，DB 源的 `TableMeta`（含登记的 `connect_id`）整体合并进已有实体元数据——对非 platform 实体，登记值会**覆盖**此前的注解值
-- `catalog = "platform"` 的系统内置实体受保护：Java 类定义始终优先，DB 登记不覆盖，也禁止运行期刷新
+- 运行期登记时，登记源（DB 源）的 `TableMeta`（含登记的连接 id）整体合并进已有实体元数据——对非 platform 实体，登记值会**覆盖**此前的注解值
+- `catalog = "platform"` 的系统内置实体受保护：Java 类定义始终优先，登记不覆盖，也禁止运行期刷新
 
 因此对于普通（非 platform）实体：**谁的声明后到，`TableMeta.connectId` 就是谁的值**。实践中建议一个实体的归属只选一种声明途径，避免注解与在线登记不一致带来的困惑。
 
 :::
 
-这种方式适合"实体先上线、归属后调整"的运行期治理场景，配合平台的表管理界面使用。
+这种方式适合"实体先上线、归属后调整"的运行期治理场景，由平台的在线治理界面操作。
 
 ## 方式四：运行期手工映射
 
@@ -113,7 +109,7 @@ entityDataSourceResolver.clearCache();
 2. **`catalog` 在 `catalog-mapping` 中的映射值** —— 实体未声明 connectId 时按逻辑分组路由
 3. 都没有 → 返回 null，交由 Dao 调用期的兜底链决定（见下节）
 
-解析结果还要通过一道**存在性校验**：`EntityDataSourceResolver` 会确认解析出的 key 在 `DynamicDataSourceRegistry` 中真实注册（对应 `platform_dev_db_connect` 中启用状态的连接，或其他注册途径）。解析出 key 但数据源未注册时**直接硬失败**——抛出 `IllegalStateException`（提示"实体 xxx 显式归属数据源 yyy 未注册，拒绝静默回退主库"），既不会路由到一个不存在的库上，也不会悄悄落到别的库造成数据错乱。遇到此异常请检查 `platform_dev_db_connect` 中该连接是否已登记且启用。
+解析结果还要通过一道**存在性校验**：`EntityDataSourceResolver` 会确认解析出的 key 在 `DynamicDataSourceRegistry` 中真实注册（定义来源已提供且启用的连接，或其他注册途径）。解析出 key 但数据源未注册时**直接硬失败**——抛出 `IllegalStateException`（提示"实体 xxx 显式归属数据源 yyy 未注册，拒绝静默回退主库"），既不会路由到一个不存在的库上，也不会悄悄落到别的库造成数据错乱。遇到此异常请检查该 key 是否已由定义来源提供（或经其他途径注册）。
 
 ## Dao 调用期的完整优先级链
 
@@ -180,7 +176,7 @@ catalog 映射在查询期即时解析，框架启动后再补配置同样生效
 
 **误区三：实体绑定了 connectId 就一定会切过去。**
 
-还依赖两个前提：一是执行入口必须是能消费路由 key 的 `dynamicDao`（`primaryDao` 直连物理主库，恒不路由，见[切换方式](switching.md)）；二是该 key 对应的数据源真实存在且已启用——未注册时首次解析即硬失败（抛出 `IllegalStateException`，拒绝静默回退主库），请检查 `platform_dev_db_connect` 中该连接的登记与启用状态。
+还依赖两个前提：一是执行入口必须是能消费路由 key 的 `dynamicDao`（`primaryDao` 直连物理主库，恒不路由，见[切换方式](switching.md)）；二是该 key 对应的数据源真实存在且已启用——未注册时首次解析即硬失败（抛出 `IllegalStateException`，拒绝静默回退主库），请检查该 key 是否已由定义来源提供且处于启用状态。
 
 **误区四：把 platform 实体登记到其他库。**
 

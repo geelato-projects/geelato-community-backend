@@ -5,7 +5,7 @@ sidebar_label: 脚本引擎
 
 # 脚本引擎
 
-geelato-script 是 Geelato Framework 的通用脚本执行引擎 SDK，基于 GraalVM Polyglot 沙箱提供安全的脚本计算能力，供异常规则判定管道、告警模板渲染等场景嵌入使用。
+geelato-script 是 Geelato Framework 的通用脚本执行引擎 SDK，基于 GraalVM Polyglot 沙箱提供安全的脚本计算能力。
 
 ## 执行模型
 

@@ -44,6 +44,8 @@ Alert record state machine: `PENDING → READY → SENT / PARTIAL / FAIL / SILEN
 
 ## Rendering (structurally no data access)
 
+Template rendering is built on the framework's script engine (geelato-script):
+
 - Template table `platform_alert_template`: `templateCode` + channel variants (titleScript/contentScript js); missing or disabled variants fall back to `(code, default)`.
 - Three context shapes: SINGLE=`$source` / GROUP=list+stats / SCHEDULE=dataset injection.
 - **Data access is structurally forbidden**: rendering runs under the `alert-render` profile — frozen read-only bindings, no SQL kit or datasource wired; template scripts can only transform `$ctx`/`$source`. Per-script timeout 2s; title ≤120, content ≤32KB truncated.

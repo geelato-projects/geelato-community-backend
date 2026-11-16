@@ -15,7 +15,7 @@ sidebar_label: 开发者与 AI 导航手册
 | --- | --- |
 | 从零开始，快速生成一个完整的后台增删改查项目 | **App Scaffold** 脚手架。详见 [Scaffold 项目接入指南](app-scaffold-starter-project-guide.md) |
 | 现有 Spring Boot 项目，需接入 Geelato 核心能力 | **最小化接入**。详见 [新项目最小接入](minimal-integration.md) |
-| 了解框架架构设计、Runtime 与 Designer 的关系 | 阅读架构说明。详见 [PlatformWebRuntime](../runtime/platform-web-runtime.md) |
+| 了解平台的 Runtime 与 Designer 应用壳 | 阅读平台应用壳说明。详见 [PlatformWebRuntime](../runtime/platform-web-runtime.md) |
 | 对接单点登录 (SSO) 与认证 | 统一认证方案。详见 [统一认证总览](../authentication/overview.md) |
 
 ## 能力速查矩阵

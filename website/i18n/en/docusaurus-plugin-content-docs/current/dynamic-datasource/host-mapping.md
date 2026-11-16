@@ -8,7 +8,7 @@ sidebar_label: Host Mapping (Local Debug)
 
 ## 1. Background
 
-The connection information for the dynamic datasource comes from the table `platform_dev_db_connect`, where `db_hostname_ip` / `db_port` might store intranet addresses. When developers connect directly to the production main database locally (to access table data), they often don't have the same network segment environment, causing the dynamic datasource to fail to connect upon first use.
+The `db_hostname_ip` / `db_port` in the dynamic datasource connection definitions might store intranet addresses (depending on the definition provider). When developers connect directly to the production main database locally (to access table data), they often don't have the same network segment environment, causing the dynamic datasource to fail to connect upon first use.
 
 This feature is used to: Under the premise of **not modifying database table data**, do a "local mapping rewrite" for the intranet host/port through an independent text file, allowing the dynamic datasource to connect in the local environment (e.g., via public network, VPN, or SSH Tunnel).
 
@@ -16,7 +16,7 @@ This feature is used to: Under the premise of **not modifying database table dat
 
 - Only affects the `host/port` used during the creation of the JDBC URL by the dynamic datasource.
 - Does not affect fields like database name, username, password, etc.
-- When the mapping file is not enabled/configured, the behavior remains the same as before (still connecting directly according to the host/port in the table).
+- When the mapping file is not enabled/configured, the behavior remains the same as before (still connecting directly according to the host/port in the connection definition).
 
 ## 3. Usage
 

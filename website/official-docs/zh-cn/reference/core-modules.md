@@ -49,4 +49,4 @@ sidebar_label: 核心模块说明
 - [ORM 注解说明](../orm/annotations.md)
 - [Fluent DSL 指引](../orm/fluent-dsl.md)
 - 最小样例：`geelato-sample-quickstart`（在 geelato-hello-example 中）
-- 运行时 / 设计时拆分：[PlatformWebRuntime](../runtime/platform-web-runtime.md)、[PlatformDesginer](../designer/platform-desginer.md)
+- 平台应用壳（运行时 / 设计器）：[PlatformWebRuntime](../runtime/platform-web-runtime.md)、[PlatformDesginer](../designer/platform-desginer.md)

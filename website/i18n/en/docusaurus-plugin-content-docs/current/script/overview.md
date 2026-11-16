@@ -1,6 +1,6 @@
 # Script Engine
 
-geelato-script is the general-purpose script execution engine SDK of Geelato Framework. Built on the GraalVM Polyglot sandbox, it provides safe embedded scripting for scenarios such as exception-rule judgment pipelines and alert template rendering.
+geelato-script is the general-purpose script execution engine SDK of Geelato Framework. Built on the GraalVM Polyglot sandbox, it provides safe script computation.
 
 ## Execution Model
 

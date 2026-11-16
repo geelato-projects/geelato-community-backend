@@ -9,34 +9,20 @@ sidebar_label: 配置方式
 
 配置分为三层：
 
-- **连接定义**：每一条物理库连接的信息，存在平台表 `platform_dev_db_connect` 中
+- **连接定义**：每一条物理库连接的信息，由定义来源 SPI 提供（平台提供默认实现）
 - **模块参数**：连接池、懒加载、catalog 映射等，配置前缀 `geelato.datasource.dynamic.*`
 - **ORM 侧参数**：默认数据源与 Dao 绑定，配置前缀 `geelato.orm.*`
 
-## 连接定义：`platform_dev_db_connect` 表
+## 连接定义：SPI 契约
 
-动态数据源定义的默认事实来源是平台主库中的连接表，对应实体 `ConnectMeta`：
-
-| 字段 | 列名 | 说明 |
-|---|---|---|
-| `id` | `id` | 主键，即**路由 key**——实体绑定、切库 API 传的 connectId 都是它 |
-| `appId` | `app_id` | 归属应用 |
-| `dbConnectName` | `db_connect_name` | 连接名称（必填） |
-| `dbName` | `db_name` | 数据库名（必填） |
-| `dbSchema` | `db_schema` | 数据库 schema（必填） |
-| `dbType` | `db_type` | 数据库类型（必填），内置支持 `mysql` / `postgresql`；`risingwave` 由物化视图引擎适配注册（见[物化视图加速](materialized-view.md)） |
-| `dbUserName` | `db_user_name` | 用户名（必填） |
-| `dbPassword` | `db_password` | 密码（必填，**加密存储**，建池时自动解密） |
-| `dbPort` | `db_port` | 连接端口 |
-| `dbHostnameIp` | `db_hostname_ip` | 主机名或 IP（必填） |
-| `enableStatus` | `enable_status` | 启用状态，1 启用 / 0 停用 |
+连接定义由 `DynamicDataSourceDefinitionLoader` SPI 提供，每个定义是一个 Map，其 `id` 即**路由 key**——实体绑定、切库 API 传的 connectId 都是它。字段契约（`db_type` / `db_hostname_ip` / `db_port` / `db_user_name` / `db_name` / `db_password`，snake_case）与密码加密约定的完整说明见 [ORM / 数据源扩展](../orm/datasource-extension.md)。
 
 几个要点：
 
-- **路由 key 与主键对齐**。`@Entity(connectId = "xxx")`、`useDataSource("xxx")`、`switchDbByConnectId("xxx")` 里的 `xxx` 都是这张表的 `id`
-- 建池由 `DataSourceFactory` 统一完成：按 `dbType` 选择方言（仅 MySQL / PostgreSQL），使用 HikariCP，解密密码，套用统一连接池参数
+- `dbType` 内置支持 `mysql` / `postgresql`；其他类型可经 `Dialects` 方言家族别名注册接入（平台物化视图引擎 `risingwave` 即此方式，见[物化视图加速（平台）](../platform-capabilities/materialized-view.md)）
+- 建池由 `DataSourceFactory` 统一完成：按 `dbType` 归一方言家族，使用 HikariCP，解密密码，套用统一连接池参数
 - 开发环境需要把内网主机地址映射到本地时，见[主机地址映射](host-mapping.md)
-- 想换成从配置中心、YAML 或外部服务加载连接定义，属扩展能力，见 [ORM / 数据源扩展](../orm/datasource-extension.md)
+- 想把定义来源换成配置中心、YAML 或外部服务，属扩展能力，见 [ORM / 数据源扩展](../orm/datasource-extension.md)
 
 ## 模块参数：`geelato.datasource.dynamic.*`
 
@@ -104,12 +90,12 @@ Bean 拓扑与"只有 `dynamicDao` 能切库"的完整说明，见[切换方式]
 
 ## 连接变更后的刷新
 
-连接定义存在数据库里，修改后无需重启应用，通过平台接口刷新：
+连接定义变更后无需重启应用。框架提供两个刷新入口，**两步缺一不可**（完整代码见扩展页「运行时热刷新」）：
 
-- `POST /model/connect/refresh/{id}` —— 刷新单个连接（重新读取定义、重建该 key 的数据源）
-- `POST /model/connect/refreshAll` —— 全量刷新
+- `DynamicDataSourceRegistry.refreshDataSource(key)` / `refreshAllDataSources()` —— 更新注册器中的定义与实例（必要时重建连接池）；已被删除或停用的连接会被移出注册
+- `DynamicRoutingDataSource.refreshDataSource(key)` / `refreshAllDataSources()` —— 重组路由表
 
-刷新由 `DevDbConnectService` 完成：先更新注册器中的定义与实例，再刷新路由数据源的映射表；已被删除或停用的连接会被移出路由。懒加载模式下，未建过池的连接只更新定义，仍等到首次路由时才建池。
+懒加载模式下，未建过池的连接只更新定义，仍等到首次路由时才建池。
 
 :::note 实体映射缓存与连接配置快照
 
@@ -122,3 +108,4 @@ Bean 拓扑与"只有 `dynamicDao` 能切库"的完整说明，见[切换方式]
 - [实体绑定与优先级](entity-binding.md) —— 四种绑定方式与完整优先级链
 - [切换方式](switching.md) —— 自动切库、手工切换与事务限制
 - [主机地址映射](host-mapping.md) —— 开发环境内网地址本地映射
+- [ORM / 数据源扩展](../orm/datasource-extension.md) —— 定义来源 SPI、字段契约与热刷新

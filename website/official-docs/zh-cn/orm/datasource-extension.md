@@ -289,7 +289,7 @@ geelato:
 
 实体最终走哪个数据源，按以下顺序确定（高 → 低）：
 
-1. `TableMeta.connectId` 非空——`@Entity(connectId)` 显式指定与 `platform_dev_table.connect_id` 登记值写入的是**同一个槽位**（运行期登记后到合并，非 platform 实体可覆盖注解值），它们不是两级优先级
+1. `TableMeta.connectId` 非空——`@Entity(connectId)` 显式指定与运行期登记值（登记入口由平台提供）写入的是**同一个槽位**（运行期登记后到合并，非 platform 实体可覆盖注解值），它们不是两级优先级
 2. `@Entity(catalog)` 在 `catalog-mapping` 中的映射值
 3. 都没有则交由 Dao 调用期兜底链决定（注解默认 > 外层显式 key > 请求级覆盖 > 平台默认 > `primary`）
 
@@ -297,7 +297,7 @@ geelato:
 
 #### 注意事项
 
-- 映射指向的数据源 key 必须是已注册的动态数据源（即在 `platform_dev_db_connect` 中登记，或通过自定义加载器提供）；未注册时首次解析即硬失败（抛出 `IllegalStateException`，拒绝静默回退主库）。
+- 映射指向的数据源 key 必须是已注册的动态数据源（已由定义来源提供该 key，或通过自定义加载器等注册途径提供）；未注册时首次解析即硬失败（抛出 `IllegalStateException`，拒绝静默回退主库）。
 - `catalog` 值为 `platform` 的系统实体，其既有保护逻辑不变（强制以 Java 类为准、禁止刷新、禁止移交）；建议在 `catalog-mapping` 中将 `platform` 映射到 `primary`，保持与系统库一致。
 - 解析在查询期即时完成，与实体扫描时序无关，无需关心框架启动阶段的先后顺序。
 
@@ -307,7 +307,7 @@ geelato:
 
 ### 之前：数据源定义硬绑平台表
 
-早期版本里，动态数据源的连接信息写死在 `platform_dev_db_connect` 表里——默认加载器直接 `select * from platform_dev_db_connect`，把每行转成一个数据源定义。这把框架层（`geelato-orm`）与具体表结构耦合在一起，带来三个真实痛点：
+早期版本里，动态数据源的连接信息硬绑在平台的一张连接表里——默认加载器直接全表读取，把每行转成一个数据源定义。这把框架层（`geelato-orm`）与具体表结构耦合在一起，带来三个真实痛点：
 
 | 痛点 | 场景 |
 | --- | --- |
@@ -331,7 +331,7 @@ geelato:
 
 ## 默认数据源定义来源
 
-当前默认动态数据源定义加载器是 `PlatformDynamicDataSourceDefinitionLoader`（业务层 `geelato-web-platform`），它从 `platform_dev_db_connect` 表读取连接信息。
+当前默认动态数据源定义加载器是 `PlatformDynamicDataSourceDefinitionLoader`（业务层 `geelato-web-platform`），它从平台侧维护的连接定义中加载。
 
 因为加载器是可选注入的，**不提供自定义实现时默认走它；提供了就替换它**。
 
@@ -370,7 +370,7 @@ public interface DynamicDataSourceDefinitionLoader {
 }
 ```
 
-`loadAll()` 返回的每个 `Map<String, Object>` 必须包含以下字段（snake_case，与 `platform_dev_db_connect` 表字段一致）：
+`loadAll()` 返回的每个 `Map<String, Object>` 必须包含以下字段（字段约定为 snake_case，平台默认实现按此约定提供）：
 
 | 字段 | 必需 | 说明 |
 | --- | --- | --- |

@@ -43,6 +43,8 @@ AlertEngineScheduler（自管理单线程，宿主不开全局调度）
 
 ## 渲染（结构性禁取数）
 
+模板渲染基于框架脚本引擎（geelato-script）执行：
+
 - 模板表 `platform_alert_template`：`templateCode` + 渠道变体（titleScript/contentScript js 脚本）；变体缺失或停用回退 `(code, default)`。
 - 上下文三形态：SINGLE=`$source`（源实例快照）/ GROUP=清单+统计 / SCHEDULE=数据集注入。
 - **禁取数是结构性的**：渲染运行在 `alert-render` profile——上下文只读绑定（frozenBindings）、不注册 SQL kit 与数据源，模板脚本只能加工 `$ctx`/`$source`，不能查库；单脚本超时 2s，title≤120、content≤32KB 超长截断。

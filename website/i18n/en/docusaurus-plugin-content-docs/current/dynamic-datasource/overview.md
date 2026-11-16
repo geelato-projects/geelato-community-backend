@@ -20,11 +20,9 @@ If your goal is not just to understand the built-in behavior but to replace the 
 This page is the overview; the other pages expand by topic:
 
 - [Binding & Priority](entity-binding.md) — how entities bind to datasources and the full priority chain
-- [Configuration](configuration.md) — connection definitions, module properties, the default datasource and refresh
+- [Configuration](configuration.md) — the connection-definition contract, module properties and the default datasource
 - [Switching](switching.md) — automatic/manual switching, the request-level override, nested semantics and transaction limits
 - [Host Mapping](host-mapping.md) — local mapping of intranet addresses during development
-- [Materialized View Acceleration](materialized-view.md) — slow queries served by engine-maintained materialized views
-- [RisingWave Engine](risingwave-engine.md) — the first materialized-view engine integration
 
 ## Module Position
 
@@ -78,25 +76,18 @@ So the core chain is a combination of:
 
 ## Where Definitions Come From
 
-The current default definition loader is:
+The framework abstracts "where datasource definitions come from" into one SPI:
 
-- `PlatformDynamicDataSourceDefinitionLoader`
+- `DynamicDataSourceDefinitionLoader` (`loadAll()` / `loadOne(key)`)
 
-It reads from the primary database table:
+The rules:
 
-- `platform_dev_db_connect`
+- when the host or the platform provides an implementation, all connection definitions are loaded from it; each definition Map's `id` is the routing key
+- with no implementation at all, the framework only uses `primary` / `secondary` and still runs standalone
 
-using:
+The platform layer provides the default implementation (`PlatformDynamicDataSourceDefinitionLoader`, in the business layer `geelato-web-platform`), which loads from the connection definitions maintained platform-side.
 
-- `SELECT * FROM platform_dev_db_connect`
-- `SELECT * FROM platform_dev_db_connect WHERE id = ?`
-
-This means the current default design is:
-
-- dynamic datasource definitions are centrally managed in a platform table
-- the routing key aligns with the connection definition primary key `id`
-
-If you do not want the platform table to remain the source of truth, and instead want to use a configuration center, YAML, external service, or registry, do not modify the built-in implementation directly. Read:
+If you want to switch the source of truth to a configuration center, YAML, an external service, or a registry, do not modify the built-in implementation directly. Read:
 
 - [ORM / Datasource Extension](../orm/datasource-extension.md)
 
@@ -205,7 +196,7 @@ This means once an entity is bound with `connectId`, ORM execution can route to 
 
 Besides reading `connectId` from database metadata, an entity can also declare its datasource via the `@Entity` annotation, adjudicated uniformly by `MetaManager.resolveConnectId`. The resolution rules (high → low) are:
 
-1. `TableMeta.connectId` is non-blank — note that an explicit `@Entity(connectId)` and a registered `platform_dev_table.connect_id` value write into the **same slot** (runtime registration merges later and can overwrite the annotation value for non-platform entities); they are not two priority levels
+1. `TableMeta.connectId` is non-blank — note that an explicit `@Entity(connectId)` and a runtime-registered value (the registration entry is provided by the platform) write into the **same slot** (runtime registration merges later and can overwrite the annotation value for non-platform entities); they are not two priority levels
 2. the mapping of `@Entity(catalog)` in `catalog-mapping`
 3. neither → null, handed over to the fallback chain at Dao-call time
 
@@ -355,7 +346,7 @@ So for ordinary business applications, it is better to understand the current st
 The recommended mental model is:
 
 - treat the primary datasource as the stable fallback
-- treat `platform_dev_db_connect` as the default dynamic definition center
+- leave the source of truth for connection definitions to the definition-source SPI (the platform provides the default implementation)
 - treat `connectId` in entity metadata as the core entity-to-datasource binding
 - treat `dynamicDao` as the preferred ORM execution entry for routed access
 - do all manual switching through `DynamicDataSourceScope`: `withDataSource(...)` for block scope, `switchTo(...)` for a request-scoped default (the platform `switchDbByConnectId(...)` is a thin delegate)
@@ -390,4 +381,6 @@ then continue with:
 - [Switching](switching.md)
 - [ORM / Datasource Extension](../orm/datasource-extension.md)
 - [ORM Overview](../orm/overview.md)
+- [Fluent DSL Guide](../orm/fluent-dsl.md)
+- [Materialized View Acceleration (Platform)](../platform-capabilities/materialized-view.md) — slow queries served by engine-maintained materialized views (platform capability)
 - [Fluent DSL Guide](../orm/fluent-dsl.md)

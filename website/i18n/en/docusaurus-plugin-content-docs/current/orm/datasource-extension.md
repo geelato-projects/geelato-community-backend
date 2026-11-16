@@ -290,7 +290,7 @@ The benefit: switching databases means changing configuration only, not code. Al
 
 Which datasource an entity finally uses is determined in this order (high → low):
 
-1. `TableMeta.connectId` is non-blank — an explicit `@Entity(connectId)` and a registered `platform_dev_table.connect_id` value write into the **same slot** (runtime registration merges later and can overwrite the annotation value for non-platform entities); they are not two priority levels
+1. `TableMeta.connectId` is non-blank — an explicit `@Entity(connectId)` and a runtime-registered value (the registration entry is provided by the platform) write into the **same slot** (runtime registration merges later and can overwrite the annotation value for non-platform entities); they are not two priority levels
 2. the mapping of `@Entity(catalog)` in `catalog-mapping`
 3. neither → handed over to the Dao-call-time fallback chain (annotation default > outer explicit key > request-level override > platform default > `primary`)
 
@@ -298,7 +298,7 @@ Resolution happens on demand at runtime via `MetaManager.resolveConnectId`, so i
 
 #### Notes
 
-- The datasource key a mapping points to must be a registered dynamic datasource (registered in `platform_dev_db_connect`, or provided through a custom loader); when unregistered, the first resolution fails hard (an `IllegalStateException` is thrown, refusing silent fallback to primary).
+- The datasource key a mapping points to must be a registered dynamic datasource (the key has been provided by the definition source, or supplied through a custom loader or another registration channel); when unregistered, the first resolution fails hard (an `IllegalStateException` is thrown, refusing silent fallback to primary).
 - System entities with `catalog = "platform"` keep their existing protection (Java class definition always wins, refresh and hand-over forbidden); mapping `platform` to `primary` in `catalog-mapping` is recommended to stay consistent with the system database.
 - Resolution completes on demand at query time, independent of entity scan order — no need to worry about framework startup sequencing.
 
@@ -308,7 +308,7 @@ Just like the metadata source (`MetaStore`), the dynamic datasource **definition
 
 ### Before: Definitions Hard-Bound to the Platform Table
 
-In earlier versions, the connection details of dynamic datasources were hard-coded into the `platform_dev_db_connect` table — the default loader simply ran `select * from platform_dev_db_connect` and turned each row into a datasource definition. This coupled the framework layer (`geelato-orm`) to a specific table structure, with three real pain points:
+In earlier versions, the connection details of dynamic datasources were hard-bound to a single connection table on the platform side — the default loader simply read the whole table and turned each row into a datasource definition. This coupled the framework layer (`geelato-orm`) to a specific table structure, with three real pain points:
 
 | Pain point | Scenario |
 | --- | --- |
@@ -332,7 +332,7 @@ Key design: `DynamicDataSourceRegistry` injects the loader with `@Nullable` — 
 
 ## The Default Definition Source
 
-The current default dynamic datasource definition loader is `PlatformDynamicDataSourceDefinitionLoader` (business layer `geelato-web-platform`), which reads connection details from the `platform_dev_db_connect` table.
+The current default dynamic datasource definition loader is `PlatformDynamicDataSourceDefinitionLoader` (business layer `geelato-web-platform`), which loads from the connection definitions maintained platform-side.
 
 Because the loader is optional-injected, **it is used when you provide no custom implementation; providing one replaces it**.
 
@@ -371,7 +371,7 @@ public interface DynamicDataSourceDefinitionLoader {
 }
 ```
 
-Every `Map<String, Object>` returned by `loadAll()` must contain the following fields (snake_case, aligned with the `platform_dev_db_connect` table):
+Every `Map<String, Object>` returned by `loadAll()` must contain the following fields (the field convention is snake_case; the platform default implementation provides rows in this shape):
 
 | Field | Required | Description |
 | --- | --- | --- |

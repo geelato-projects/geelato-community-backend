@@ -9,34 +9,20 @@ This page covers every configuration entry of the dynamic datasource: where conn
 
 Configuration spans three layers:
 
-- **Connection definitions**: the information of each physical database connection, stored in the platform table `platform_dev_db_connect`
+- **Connection definitions**: the information of each physical database connection, provided by the definition-source SPI (the platform provides the default implementation)
 - **Module properties**: pool sizing, lazy loading, catalog mapping, etc., under the prefix `geelato.datasource.dynamic.*`
 - **ORM properties**: default datasource and Dao binding, under the prefix `geelato.orm.*`
 
-## Connection Definitions: the `platform_dev_db_connect` Table
+## Connection Definitions: the SPI Contract
 
-The default source of truth for dynamic datasource definitions is the connection table in the platform primary database, mapped by the entity `ConnectMeta`:
-
-| Field | Column | Description |
-|---|---|---|
-| `id` | `id` | primary key, i.e. the **routing key** — the connectId used by entity binding and switching APIs is this id |
-| `appId` | `app_id` | owning application |
-| `dbConnectName` | `db_connect_name` | connection name (required) |
-| `dbName` | `db_name` | database name (required) |
-| `dbSchema` | `db_schema` | database schema (required) |
-| `dbType` | `db_type` | database type (required), built-in `mysql` / `postgresql`; `risingwave` is registered by the materialized view engine adapter (see [Materialized View Acceleration](materialized-view.md)) |
-| `dbUserName` | `db_user_name` | username (required) |
-| `dbPassword` | `db_password` | password (required, **stored encrypted**, decrypted automatically when the pool is built) |
-| `dbPort` | `db_port` | connection port |
-| `dbHostnameIp` | `db_hostname_ip` | hostname or IP (required) |
-| `enableStatus` | `enable_status` | enable status, 1 enabled / 0 disabled |
+Connection definitions are provided by the `DynamicDataSourceDefinitionLoader` SPI; each definition is a Map whose `id` is the **routing key** — the connectId used by entity binding and switching APIs. The full field contract (`db_type` / `db_hostname_ip` / `db_port` / `db_user_name` / `db_name` / `db_password`, snake_case) and the password encryption convention are covered in [ORM / Datasource Extension](../orm/datasource-extension.md).
 
 A few key points:
 
-- **routing key aligns with the primary key**. The `xxx` in `@Entity(connectId = "xxx")`, `useDataSource("xxx")` and `switchDbByConnectId("xxx")` is always the `id` of this table
-- pool construction is centralized in `DataSourceFactory`: it picks the dialect by `dbType` (MySQL / PostgreSQL only), uses HikariCP, decrypts the password and applies unified pool properties
+- `dbType` is built-in for `mysql` / `postgresql`; other types can plug in via a `Dialects` dialect-family alias registration (the platform materialized-view engine `risingwave` works this way, see [Materialized View Acceleration (Platform)](../platform-capabilities/materialized-view.md))
+- pool construction is centralized in `DataSourceFactory`: it normalizes `dbType` into a dialect family, uses HikariCP, decrypts the password and applies unified pool properties
 - for mapping intranet host addresses to local ones in development, see [Host Mapping](host-mapping.md)
-- to load definitions from a config center, YAML or an external service instead, see [ORM / Datasource Extension](../orm/datasource-extension.md)
+- to switch the definition source to a config center, YAML or an external service, see [ORM / Datasource Extension](../orm/datasource-extension.md)
 
 ## Module Properties: `geelato.datasource.dynamic.*`
 
@@ -104,12 +90,12 @@ The bean topology and "only `dynamicDao` can switch" are covered fully in [Switc
 
 ## Refreshing After a Connection Change
 
-Connection definitions live in the database; after changing them there is no restart needed — refresh through the platform endpoints:
+No restart is needed after connection definitions change. The framework provides two refresh entries, and **both steps are required** (full code in the extension page, "Runtime Hot Refresh"):
 
-- `POST /model/connect/refresh/{id}` — refresh a single connection (reload the definition, rebuild that key's datasource)
-- `POST /model/connect/refreshAll` — refresh everything
+- `DynamicDataSourceRegistry.refreshDataSource(key)` / `refreshAllDataSources()` — update the definitions and instances in the registry (rebuilding the pool when necessary); deleted or disabled connections are removed from registration
+- `DynamicRoutingDataSource.refreshDataSource(key)` / `refreshAllDataSources()` — reassemble the routing table
 
-Refreshing is done by `DevDbConnectService`: definitions and instances are updated in the registry first, then the routing map of the routing datasource is refreshed; deleted or disabled connections are removed from routing. Under lazy loading, connections that never built a pool only get their definition updated and still build lazily on first route.
+Under lazy loading, connections that never built a pool only get their definition updated and still build lazily on first route.
 
 :::note Entity mapping cache and connection config snapshot
 
@@ -122,3 +108,4 @@ Refreshing is done by `DevDbConnectService`: definitions and instances are updat
 - [Binding & Priority](entity-binding.md) — the four binding styles and the full priority chain
 - [Switching](switching.md) — automatic switching, manual APIs and transaction limits
 - [Host Mapping](host-mapping.md) — mapping intranet addresses locally for development
+- [ORM / Datasource Extension](../orm/datasource-extension.md) — the definition-source SPI, the field contract and hot refresh

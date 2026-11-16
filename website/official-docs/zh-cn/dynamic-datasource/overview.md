@@ -10,11 +10,9 @@ sidebar_label: 动态数据源
 本页是总览，其余各页按主题展开：
 
 - [实体绑定与优先级](entity-binding.md) —— 实体如何与数据源绑定，完整优先级链
-- [配置方式](configuration.md) —— 连接定义、模块参数、默认数据源与刷新
+- [配置方式](configuration.md) —— 连接定义契约、模块参数、默认数据源
 - [切换方式](switching.md) —— 自动/手工切换、请求级覆盖、嵌套语义与事务限制
 - [主机地址映射](host-mapping.md) —— 开发环境内网地址本地映射
-- [物化视图加速](materialized-view.md) —— 外部引擎物化视图承接慢查询
-- [RisingWave 引擎](risingwave-engine.md) —— 首个物化视图引擎的接入
 
 如需替换默认定义来源或做深度扩展，请阅读 [ORM / 数据源扩展](../orm/datasource-extension.md)。
 
@@ -72,25 +70,18 @@ sidebar_label: 动态数据源
 
 ## 数据源定义从哪里来
 
-当前默认定义加载器是：
+框架把"数据源定义从哪来"抽象成一个 SPI：
 
-- `PlatformDynamicDataSourceDefinitionLoader`
+- `DynamicDataSourceDefinitionLoader`（`loadAll()` / `loadOne(key)`）
 
-它默认从主库读取：
+规则是：
 
-- `platform_dev_db_connect`
+- 宿主或平台提供了实现，就从它加载全部连接定义；每个定义 Map 的 `id` 即路由 key
+- 不提供任何实现时，框架只走 `primary` / `secondary`，仍可独立运行
 
-对应 SQL 是：
+平台层提供了默认实现（`PlatformDynamicDataSourceDefinitionLoader`，位于业务层 `geelato-web-platform`），从平台侧维护的连接定义中加载。
 
-- `SELECT * FROM platform_dev_db_connect`
-- `SELECT * FROM platform_dev_db_connect WHERE id = ?`
-
-这说明当前默认设计是：
-
-- 动态数据源定义由平台表统一维护
-- 路由 key 和平台连接定义主键 `id` 对齐
-
-若需将事实来源由平台表改为配置中心、YAML、外部服务或其他注册中心，不要修改默认实现，请参阅：
+若需把事实来源换成配置中心、YAML、外部服务或其他注册中心，不要修改默认实现，请参阅：
 
 - [ORM / 数据源扩展](../orm/datasource-extension.md)
 
@@ -199,7 +190,7 @@ sidebar_label: 动态数据源
 
 除了从数据库元数据读取 `connectId`，实体还可以通过 `@Entity` 注解声明数据源，并由 `MetaManager.resolveConnectId` 统一解析。解析规则（高 → 低）是：
 
-1. `TableMeta.connectId` 非空——注意 `@Entity(connectId)` 显式指定与数据库元数据表 `platform_dev_table.connect_id` 登记值写入的是**同一个槽位**（运行期登记后到合并，非 platform 实体可覆盖注解值），它们不是两级优先级
+1. `TableMeta.connectId` 非空——注意 `@Entity(connectId)` 显式指定与运行期登记值（登记入口由平台提供）写入的是**同一个槽位**（运行期登记后到合并，非 platform 实体可覆盖注解值），它们不是两级优先级
 2. `@Entity(catalog)` 在 `catalog-mapping` 配置中的映射值
 3. 都没有则返回 null，交由 Dao 调用期的兜底链决定
 
@@ -350,7 +341,7 @@ geelato.datasource.dynamic.*
 当前更推荐这样理解和使用动态数据源：
 
 - 把主库当作稳定保底源
-- 把 `platform_dev_db_connect` 当作默认动态源定义中心
+- 把连接定义的事实来源交给定义来源 SPI（平台提供默认实现）
 - 把实体元数据里的 `connectId` 当作实体到库的核心绑定点
 - 把 `dynamicDao` 作为 ORM 优先使用的动态路由执行入口
 - 手工切库统一走 `DynamicDataSourceScope`：代码块作用域用 `withDataSource(...)`，请求内默认库用 `switchTo(...)`（平台 `switchDbByConnectId(...)` 为其薄委托）
@@ -386,3 +377,4 @@ geelato.datasource.dynamic.*
 - [ORM / 数据源扩展](../orm/datasource-extension.md)
 - [ORM 总览](../orm/overview.md)
 - [Fluent DSL 指引](../orm/fluent-dsl.md)
+- [物化视图加速（平台）](../platform-capabilities/materialized-view.md) —— 外部引擎物化视图承接慢查询（平台能力）

@@ -76,7 +76,7 @@ Permission rules are organized by entity name — without the stable entity name
 | `MetaQuerySqlProvider#buildFromSql` | ViewMeta.viewConstruct + viewType | Virtual views render viewConstruct + `@pf` as a derived table; materialized views query the physical name directly |
 | `MetaViewQuerySqlProvider` | ViewMeta column mapping | Builds query SQL for named-view commands |
 
-See [Materialized View](../dynamic-datasource/materialized-view.md).
+See [Materialized View (Platform)](../platform-capabilities/materialized-view.md).
 
 ## Script Engine and AI Channels
 

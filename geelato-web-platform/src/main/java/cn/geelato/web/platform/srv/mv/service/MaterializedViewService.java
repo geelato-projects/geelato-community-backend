@@ -695,7 +695,15 @@ public class MaterializedViewService extends BaseService {
         if (key.startsWith("cdc:")) {
             String originTable = key.substring("cdc:".length());
             MaterializedViewEngine.CdcTableDdl cdc = plan.cdcTableOf(originTable);
-            return "2. 建立 CDC 摄取表 " + originTable
+            // 多张摄取表按计划顺序编号为 2.1、2.2、…
+            String seq = "";
+            for (int i = 0; i < plan.cdcTables().size(); i++) {
+                if (plan.cdcTables().get(i).originTable().equalsIgnoreCase(originTable)) {
+                    seq = (i + 1) + ". ";
+                    break;
+                }
+            }
+            return "2." + seq + "建立 CDC 摄取表 " + originTable
                     + (cdc == null ? "" : " → " + cdc.engineTable());
         }
         return key;
@@ -1210,13 +1218,16 @@ public class MaterializedViewService extends BaseService {
             }
 
             // 物化视图级对比：原视图查询行数 vs 引擎同名物化视图行数（引擎 MV 与原视图同名）
+            // MySQL 侧不依赖源库存在真实视图对象（视图可能未同步/同步到其他库）：
+            // 直接用展开后的视图 SQL 做子查询，与引擎 MV 的计算口径完全一致
             long viewStartAt = System.currentTimeMillis();
             Map<String, Object> viewResult = new LinkedHashMap<>();
             viewResult.put("table", viewName);
             viewResult.put("type", "view");
+            String expandedSql = stripTrailingSemicolon(expansion.expandedSql());
             String q = idQuote(originConn);
             try (var st = originConn.createStatement();
-                 var rs = st.executeQuery("SELECT COUNT(*) FROM " + q + viewName + q)) {
+                 var rs = st.executeQuery("SELECT COUNT(*) FROM (" + expandedSql + ") " + q + "_mv_cmp" + q)) {
                 rs.next();
                 long originViewCount = rs.getLong(1);
                 long mvCount;
@@ -1233,9 +1244,9 @@ public class MaterializedViewService extends BaseService {
                 log.info("[MV-Compare]   视图对比 {}：原视图={} 行, 物化视图={} 行, {} 耗时={}ms",
                         viewName, originViewCount, mvCount, countMatch ? "一致" : "不一致", System.currentTimeMillis() - viewStartAt);
 
-                // 视图最新行对比：原视图与引擎物化视图各自取 update_at 最晚的一条记录对比
+                // 视图最新行对比：原视图查询（展开 SQL）与引擎物化视图各自取 update_at 最晚的一条记录对比
                 try {
-                    Map<String, Object> mysqlLatest = queryLatestRow(originConn, viewName);
+                    Map<String, Object> mysqlLatest = queryLatestRowBySql(originConn, expandedSql);
                     Map<String, Object> rwLatest;
                     try (Connection rwConn = engineDs.getConnection()) {
                         rwLatest = queryLatestRow(rwConn, viewName);
@@ -1337,6 +1348,20 @@ public class MaterializedViewService extends BaseService {
         try (var st = conn.createStatement(); var rs = st.executeQuery(sql)) {
             return rs.next() ? readRowAsMap(rs) : null;
         }
+    }
+
+    /** 按查询 SQL 取 update_at 最晚的一条记录（包一层子查询）；查询无 update_at 列时抛 SQLException 由调用方跳过 */
+    private Map<String, Object> queryLatestRowBySql(Connection conn, String sql) throws SQLException {
+        String q = idQuote(conn);
+        String wrapped = "SELECT * FROM (" + sql + ") " + q + "_mv_cmp" + q + " ORDER BY " + q + "update_at" + q + " DESC LIMIT 1";
+        try (var st = conn.createStatement(); var rs = st.executeQuery(wrapped)) {
+            return rs.next() ? readRowAsMap(rs) : null;
+        }
+    }
+
+    /** 去掉 SQL 末尾的分号与空白（包子查询时末尾分号会破坏语法） */
+    private static String stripTrailingSemicolon(String sql) {
+        return sql == null ? "" : sql.replaceAll("[;\\s]+$", "");
     }
 
     /** 对比两侧最新一行，返回列级差异（沿用 valueEquals 归一化，兼容不同 JDBC 驱动的类型表示） */

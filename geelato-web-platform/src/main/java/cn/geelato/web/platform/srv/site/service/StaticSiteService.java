@@ -3,7 +3,6 @@ package cn.geelato.web.platform.srv.site.service;
 import cn.geelato.web.platform.srv.platform.service.BaseService;
 import cn.geelato.web.platform.srv.site.entity.StaticSite;
 import cn.geelato.web.platform.srv.site.utils.FolderUtils;
-import net.sf.sevenzipjbinding.*;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
@@ -12,52 +11,32 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+/**
+ * 静态站点解压/发布服务。
+ * <p>RAR / 7z 分支需要 sevenzipjbinding（上游声明为 optional，不向下传递），
+ * 相关实现已下沉到 {@link SevenZipProcessor}：本类字节码不再引用任何 sevenzip 类型，
+ * 缺少该 jar 时 Spring 仍能正常反射装配 staticSiteService Bean，仅在实际上传 rar/7z
+ * 时由 {@link #requireSevenZip()} 提示恢复方式。</p>
+ */
 @Component
 public class StaticSiteService extends BaseService {
     private static final String[] allowedExtensions = new String[]{"zip", "rar", "tar", "7z", "gz", "bz2", "xz", "tar.gz", "tar.bz2", "tar.xz"};
-    private static final Object SEVEN_ZIP_INIT_LOCK = new Object();
-    private static volatile boolean sevenZipInitialized = false;
-
-    private static boolean isMacOs() {
-        String osName = System.getProperty("os.name", "");
-        return osName.toLowerCase(Locale.ROOT).contains("mac");
-    }
-
-    private static void ensureSevenZipInitialized() {
-        if (isMacOs() || sevenZipInitialized) {
-            return;
-        }
-        synchronized (SEVEN_ZIP_INIT_LOCK) {
-            if (sevenZipInitialized) {
-                return;
-            }
-            try {
-                // 为每个站点实例分配独立的 native 库临时目录，避免多 JVM 抢占同一 DLL
-                String appName = System.getProperty("spring.application.name", "geelato-site")
-                        .replaceAll("[^a-zA-Z0-9._-]", "_");
-                String runtimeName = java.lang.management.ManagementFactory.getRuntimeMXBean()
-                        .getName()
-                        .replace('@', '-')
-                        .replaceAll("[^a-zA-Z0-9._-]", "_");
-                Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"), "sevenzipjbinding", appName + "-" + runtimeName);
-                Files.createDirectories(tmpDir);
-                SevenZip.initSevenZipFromPlatformJAR(tmpDir.toFile());
-                sevenZipInitialized = true;
-            } catch (IOException | SevenZipNativeInitializationException e) {
-                throw new RuntimeException("初始化7-Zip库失败", e);
-            }
-        }
-    }
 
     /** rar/7z 分支专用守卫：sevenzipjbinding 为 optional 依赖，缺失时硬失败并提示恢复方式（zip/tar/gz 不受影响）。 */
     private static void requireSevenZip() {
@@ -140,11 +119,11 @@ public class StaticSiteService extends BaseService {
                 break;
             case "rar":
                 requireSevenZip();
-                processRarFile(compressedFile, rootPath, isByStep, isExist);
+                SevenZipProcessor.extractRar(compressedFile, rootPath, isByStep, isExist);
                 break;
             case "7z":
                 requireSevenZip();
-                process7zFile(compressedFile, rootPath, isByStep, isExist);
+                SevenZipProcessor.extract7z(compressedFile, rootPath, isByStep, isExist);
                 break;
             default:
                 throw new IllegalArgumentException("未知的压缩格式: " + fileExt);
@@ -225,146 +204,10 @@ public class StaticSiteService extends BaseService {
         }
     }
 
-    // 处理RAR格式的压缩文件
-    private void processRarFile(File rarFile, Path rootPath, boolean isByStep, int isExist) throws IOException {
-        ensureSevenZipInitialized();
-        try (IInArchive archive = SevenZip.openInArchive(null, (IInStream) new RandomAccessFile(rarFile, "r"))) {
-            int[] in = new int[archive.getNumberOfItems()];
-            for (int i = 0; i < in.length; i++) {
-                in[i] = i;
-            }
-
-            archive.extract(in, false, new IArchiveExtractCallback() {
-                private Path currentPath;
-
-                @Override
-                public ISequentialOutStream getStream(int index, ExtractAskMode extractAskMode) throws SevenZipException {
-                    String itemPath = archive.getStringProperty(index, PropID.PATH);
-                    boolean isFolder = (boolean) archive.getProperty(index, PropID.IS_FOLDER);
-
-                    currentPath = buildSafePath(rootPath, itemPath, isByStep);
-
-                    if (isFolder) {
-                        try {
-                            Files.createDirectories(currentPath);
-                        } catch (IOException e) {
-                            throw new SevenZipException("创建目录失败: " + currentPath, e);
-                        }
-                        return null;
-                    } else {
-                        try {
-                            currentPath = handleFileConflict(currentPath, isExist);
-                            Files.createDirectories(currentPath.getParent());
-                            return new ISequentialOutStream() {
-                                @Override
-                                public int write(byte[] data) throws SevenZipException {
-                                    try (OutputStream os = new FileOutputStream(currentPath.toFile(), true)) {
-                                        os.write(data);
-                                    } catch (IOException e) {
-                                        throw new SevenZipException("写入文件失败: " + currentPath, e);
-                                    }
-                                    return data.length;
-                                }
-                            };
-                        } catch (IOException e) {
-                            throw new SevenZipException("处理文件冲突失败", e);
-                        }
-                    }
-                }
-
-                @Override
-                public void prepareOperation(ExtractAskMode extractAskMode) throws SevenZipException {
-                }
-
-                @Override
-                public void setOperationResult(ExtractOperationResult extractOperationResult) throws SevenZipException {
-                    if (extractOperationResult != ExtractOperationResult.OK) {
-                        throw new SevenZipException("解压失败: " + extractOperationResult);
-                    }
-                }
-
-                @Override
-                public void setCompleted(long complete) throws SevenZipException {
-                }
-
-                @Override
-                public void setTotal(long total) throws SevenZipException {
-                }
-            });
-        }
-    }
-
-    // 处理7Z格式的压缩文件
-    private void process7zFile(File sevenZFile, Path rootPath, boolean isByStep, int isExist) throws IOException {
-        ensureSevenZipInitialized();
-        try (IInArchive archive = SevenZip.openInArchive(null, (IInStream) new RandomAccessFile(sevenZFile, "r"))) {
-            int[] in = new int[archive.getNumberOfItems()];
-            for (int i = 0; i < in.length; i++) {
-                in[i] = i;
-            }
-
-            archive.extract(in, false, new IArchiveExtractCallback() {
-                private Path currentPath;
-
-                @Override
-                public ISequentialOutStream getStream(int index, ExtractAskMode extractAskMode) throws SevenZipException {
-                    String itemPath = archive.getStringProperty(index, PropID.PATH);
-                    boolean isFolder = (boolean) archive.getProperty(index, PropID.IS_FOLDER);
-
-                    currentPath = buildSafePath(rootPath, itemPath, isByStep);
-
-                    if (isFolder) {
-                        try {
-                            Files.createDirectories(currentPath);
-                        } catch (IOException e) {
-                            throw new SevenZipException("创建目录失败: " + currentPath, e);
-                        }
-                        return null;
-                    } else {
-                        try {
-                            currentPath = handleFileConflict(currentPath, isExist);
-                            Files.createDirectories(currentPath.getParent());
-                            return new ISequentialOutStream() {
-                                @Override
-                                public int write(byte[] data) throws SevenZipException {
-                                    try (OutputStream os = new FileOutputStream(currentPath.toFile(), true)) {
-                                        os.write(data);
-                                    } catch (IOException e) {
-                                        throw new SevenZipException("写入文件失败: " + currentPath, e);
-                                    }
-                                    return data.length;
-                                }
-                            };
-                        } catch (IOException e) {
-                            throw new SevenZipException("处理文件冲突失败", e);
-                        }
-                    }
-                }
-
-                @Override
-                public void prepareOperation(ExtractAskMode extractAskMode) throws SevenZipException {
-                }
-
-                @Override
-                public void setOperationResult(ExtractOperationResult extractOperationResult) throws SevenZipException {
-                    if (extractOperationResult != ExtractOperationResult.OK) {
-                        throw new SevenZipException("解压失败: " + extractOperationResult);
-                    }
-                }
-
-                @Override
-                public void setCompleted(long complete) throws SevenZipException {
-                }
-
-                @Override
-                public void setTotal(long total) throws SevenZipException {
-                }
-            });
-        }
-    }
+    // RAR / 7z 解压已下沉到 SevenZipProcessor，避免本类字节码引用 sevenzipjbinding 类型（见类 Javadoc）。
 
     // 构建安全路径（包含ZipSlip防护）
-    private Path buildSafePath(Path rootPath, String entryName, boolean isByStep) {
+    static Path buildSafePath(Path rootPath, String entryName, boolean isByStep) {
         entryName = entryName.replace('\\', '/');
         Path entryPath = isByStep ? rootPath.resolve(entryName).normalize() : rootPath.resolve(Paths.get(entryName).getFileName());
         if (!entryPath.startsWith(rootPath)) {
@@ -373,7 +216,7 @@ public class StaticSiteService extends BaseService {
         return entryPath;
     }
 
-    private Path handleFileConflict(Path path, int isExist) throws IOException {
+    static Path handleFileConflict(Path path, int isExist) throws IOException {
         if (Files.exists(path)) {
             if (isExist == 1) {
                 Files.deleteIfExists(path);
@@ -391,7 +234,7 @@ public class StaticSiteService extends BaseService {
         return handleFileConflict(targetPath, isExist);
     }
 
-    private Path generateUniquePath(Path originalPath) {
+    static Path generateUniquePath(Path originalPath) {
         String baseName = FilenameUtils.getBaseName(originalPath.toString());
         String extension = FilenameUtils.getExtension(originalPath.toString());
         String timestamp = String.valueOf(System.currentTimeMillis());

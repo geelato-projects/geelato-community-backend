@@ -1,6 +1,7 @@
 package cn.geelato.core.meta;
 
 
+import cn.geelato.core.enums.ColumnEncryptedEnum;
 import cn.geelato.core.enums.MysqlDataTypeEnum;
 import cn.geelato.core.enums.MysqlToJavaEnum;
 import cn.geelato.core.mql.TypeConverter;
@@ -119,7 +120,7 @@ public class MetaReflex {
         em.setTableMeta(getTableMeta(clazz));
         em.setEntityName(em.getTableMeta().getEntityName());
         em.setEntityTitle(em.getTableMeta().getTitle());
-        em.setEntityType(EntityType.Class);
+        em.setEntityType(ColumnEncryptedEnum.EntityType.Class);
         em.setClassType(clazz);
         Entity entity = (Entity) clazz.getAnnotation(Entity.class);
         String catalog = entity != null && StringUtils.hasText(entity.catalog()) ? entity.catalog() : "none";
@@ -148,7 +149,7 @@ public class MetaReflex {
         em.setTableMeta(tableMeta);
         em.setEntityName(tableMeta.getEntityName());
         em.setEntityTitle(tableMeta.getTitle());
-        em.setEntityType(EntityType.Table);
+        em.setEntityType(ColumnEncryptedEnum.EntityType.Table);
         // if (tableMeta.getVersionControl() != null) {
         //     em.setVersionControl(tableMeta.getVersionControl());
         // }
@@ -235,7 +236,7 @@ public class MetaReflex {
         em.setTableMeta(tableMeta);
         em.setEntityName(viewName);
         em.setEntityTitle(view.getTitle());
-        em.setEntityType(EntityType.View);
+        em.setEntityType(ColumnEncryptedEnum.EntityType.View);
         ViewMeta viewMeta = buildViewMeta(view);
         if (viewMeta != null) {
             em.setViewMetas(Collections.singletonList(viewMeta));

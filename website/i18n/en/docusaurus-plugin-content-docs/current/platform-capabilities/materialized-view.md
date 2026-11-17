@@ -37,7 +37,7 @@ Placement and semantics:
 A materialized view is an acceleration copy of an existing view, not a new view: the original view row keeps the full definition and rollback capability; the same-name dual rows make entity registration a natural "materialized-first" routing takeover with zero caller changes. The view type options in the view management UI remain default/custom/virtual only — materialized views are managed via a switch in the "Materialized View" tab of the original view's editor.
 :::
 
-**Freshness semantics**: ingestion is incremental CDC (seconds to minutes); queries read **eventually consistent** data, and results are incomplete while the initial backfill is running (status=BACKFILLING). Queries that cannot tolerate this should disable the materialized view (queries immediately fall back to the original database view).
+**Freshness semantics**: ingestion is incremental CDC (seconds to minutes); queries read **eventually consistent** data, and results are incomplete while the initial backfill is running (status=BACKFILLING). Queries that cannot tolerate this should disable the materialized view (queries immediately fall back to the original view).
 
 **Read-only hard failure**: while enabled, write operations (save/insert/update/delete, etc.) on the view entity throw an explicit exception at the Dao layer; write to the source tables instead.
 
@@ -95,7 +95,7 @@ POST /api/model/mv/view/disable
 { "viewName": "v_order_summary" }
 ```
 
-Soft-deletes the materialized copy row — queries **immediately fall back to the original database view**; the engine-side materialized view and ingestion channel are kept, and re-enabling (view/create with recreate=false) reuses them without backfill. The cost of a misoperation is near zero.
+Soft-deletes the materialized copy row — queries **immediately fall back to the original view**; the engine-side materialized view and ingestion channel are kept, and re-enabling (view/create with recreate=false) reuses them without backfill. The cost of a misoperation is near zero.
 
 ### 5. view/drop — full cleanup
 

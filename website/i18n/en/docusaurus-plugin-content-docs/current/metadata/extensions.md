@@ -73,8 +73,7 @@ Permission rules are organized by entity name — without the stable entity name
 | Entry | What it reads | What it does |
 | --- | --- | --- |
 | `MetaReflex#getEntityMetaByView` | the subject entity's TableMeta.dbType | A view without its own connection inherits the subject's dbType (dialect resolved by the subject); a materialized copy with its own connection does not inherit |
-| `MetaQuerySqlProvider#buildFromSql` | ViewMeta.viewConstruct + viewType | Virtual views render viewConstruct + `@pf` as a derived table; materialized views query the physical name directly |
-| `MetaViewQuerySqlProvider` | ViewMeta column mapping | Builds query SQL for named-view commands |
+| `MetaQuerySqlProvider#buildFromSql` | ViewMeta.viewConstruct + viewType | FROM is dispatched by viewType: default queries the physical view name directly (must exist in the database); custom wraps viewConstruct verbatim as a subquery; virtual views render viewConstruct + `@pf` as a derived table; materialized views query the physical name directly |
 
 See [Materialized View (Platform)](../platform-capabilities/materialized-view.md).
 

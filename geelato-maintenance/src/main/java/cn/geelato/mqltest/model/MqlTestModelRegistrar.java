@@ -56,7 +56,7 @@ public class MqlTestModelRegistrar {
     }
 
     /**
-     * 编程式注册视图实体 mql_test_order_view（DEFAULT 类型，带 @pf 模板）。
+     * 编程式注册视图实体 mql_test_order_view（VIRTUAL 虚拟视图，带 @pf 模板）。
      * <p>
      * 通过 {@link MetaManager#parseViewEntity(TableView)} 注册，
      * 提供 view_column 列定义（JSON 字符串）与 view_construct 模板。

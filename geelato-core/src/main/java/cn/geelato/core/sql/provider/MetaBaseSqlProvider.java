@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -634,5 +635,56 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         String res = s;
         res = res.replaceAll("--.*?(\\r?\\n|$)", "");
         return res;
+    }
+
+    private static final Pattern TEMPLATE_SEGMENT_PATTERN = Pattern.compile("#([\\s\\S]*?)#");
+    private static final Pattern TEMPLATE_PARAM_PATTERN = Pattern.compile("\\{([A-Za-z0-9_]+)}");
+
+    protected String renderViewConstruct(String viewConstruct, Map<String, Object> params) {
+        if (!StringUtils.hasText(viewConstruct)) {
+            return viewConstruct;
+        }
+        Map<String, Object> safeParams = params == null ? Collections.emptyMap() : params;
+        Matcher segmentMatcher = TEMPLATE_SEGMENT_PATTERN.matcher(viewConstruct);
+        StringBuffer sb = new StringBuffer();
+        while (segmentMatcher.find()) {
+            String segmentContent = segmentMatcher.group(1);
+            String rendered = renderSegment(segmentContent, safeParams);
+            segmentMatcher.appendReplacement(sb, Matcher.quoteReplacement(rendered));
+        }
+        segmentMatcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    private String renderSegment(String segment, Map<String, Object> params) {
+        Matcher paramMatcher = TEMPLATE_PARAM_PATTERN.matcher(segment);
+        StringBuffer segmentBuffer = new StringBuffer();
+        boolean hasPlaceholder = false;
+        while (paramMatcher.find()) {
+            hasPlaceholder = true;
+            String key = paramMatcher.group(1);
+            Object value = params.get(key);
+            if (isBlankValue(value)) {
+                return "";
+            }
+            paramMatcher.appendReplacement(segmentBuffer, Matcher.quoteReplacement(formatTemplateValue(value)));
+        }
+        if (!hasPlaceholder) {
+            return segment;
+        }
+        paramMatcher.appendTail(segmentBuffer);
+        return segmentBuffer.toString();
+    }
+
+    private String formatTemplateValue(Object value) {
+        if (value instanceof Number || value instanceof Boolean) {
+            return value.toString();
+        }
+        String text = value.toString().replace("'", "''");
+        return "'" + text + "'";
+    }
+
+    private boolean isBlankValue(Object value) {
+        return value == null || !StringUtils.hasText(value.toString());
     }
 }

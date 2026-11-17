@@ -140,12 +140,10 @@ the request can be written as:
 Rules:
 
 - `@pf` is extracted before standard MQL parsing, so it does not participate in normal keyword validation
-- template rendering is applied only for view entities
+- template rendering is applied only for virtual (VIRTUAL) views; non-view entities or other view types receiving a non-empty `@pf` fail with an error instead of silently dropping it
 - if `{orderType}` has a value, the fragment becomes `and order_type=123`
 - if `{orderType}` is missing, `null`, or an empty string, the whole `#...#` fragment is removed
-- parameters are replaced using raw value text and are not automatically quoted
-
-Therefore, if a string value is passed, ensure that the template and parameter content match the expected SQL semantics.
+- parameter values: numbers and booleans are inserted as-is; strings are wrapped in single quotes with internal `'` escaped to `''`
 
 ## Save Syntax
 
@@ -356,5 +354,6 @@ Save or delete requests usually return `ApiResult`:
 ## Suggested Next Reading
 
 - [MQL Overview](overview.md)
+- [MQL Details](details.md): how an MQL payload becomes the final SQL
 - [API Reference](../api/reference.md)
 - [Fluent DSL Guide](../orm/fluent-dsl.md)

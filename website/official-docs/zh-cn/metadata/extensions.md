@@ -73,8 +73,7 @@ MQL 报文里写的实体名与字段名,必须先通过元数据校验才有资
 | 消费入口 | 拿什么 | 干什么 |
 | --- | --- | --- |
 | `MetaReflex#getEntityMetaByView` | 主体实体的 TableMeta.dbType | 视图自身无连接时继承主体 dbType(方言按主体解析);物化副本有自身连接则不继承 |
-| `MetaQuerySqlProvider#buildFromSql` | ViewMeta.viewConstruct + viewType | 虚拟视图以 viewConstruct + `@pf` 渲染为派生表;物化视图按物理名直查 |
-| `MetaViewQuerySqlProvider` | ViewMeta 列映射 | 命名视图命令的查询 SQL 构建 |
+| `MetaQuerySqlProvider#buildFromSql` | ViewMeta.viewConstruct + viewType | FROM 按 viewType 四路分派:default 按物理视图名直查(需库中已创建);custom 以 viewConstruct 原样构造子查询;虚拟视图以 viewConstruct + `@pf` 渲染为派生表;物化视图按物理名直查 |
 
 详见[物化视图（平台）](../platform-capabilities/materialized-view.md)。
 

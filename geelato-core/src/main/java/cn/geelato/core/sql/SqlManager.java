@@ -26,7 +26,6 @@ public class SqlManager extends AbstractManager {
     private static SqlManager instance;
     private final MetaManager metaManager = MetaManager.singleInstance();
     private final MetaQuerySqlProvider metaQuerySqlProvider = new MetaQuerySqlProvider();
-    private final MetaViewQuerySqlProvider metaViewQuerySqlProvider = new MetaViewQuerySqlProvider();
     private final MetaInsertSqlProvider metaInsertSqlProvider = new MetaInsertSqlProvider();
     private final MetaUpdateSqlProvider metaUpdateSqlProvider = new MetaUpdateSqlProvider();
     private final MetaDeleteSqlProvider metaDeleteSqlProvider = new MetaDeleteSqlProvider();
@@ -186,16 +185,5 @@ public class SqlManager extends AbstractManager {
         }
         deleteCommand.setWhere(filterGroup);
         return metaDeleteSqlProvider.generate(deleteCommand);
-    }
-
-
-
-    public <T> BoundSql generatePageQuerySql(QueryViewCommand queryCommand, String entityName, boolean isArray, FilterGroup filterGroup, String[] fields) {
-        EntityMeta em = metaManager.getByEntityName(entityName);
-        queryCommand.setEntityName(em.getEntityName());
-        queryCommand.setFields(fields != null && fields.length > 0 ? fields : em.getFieldNames());
-        queryCommand.setQueryForList(isArray);
-        queryCommand.setWhere(filterGroup);
-        return metaViewQuerySqlProvider.generate(queryCommand);
     }
 }

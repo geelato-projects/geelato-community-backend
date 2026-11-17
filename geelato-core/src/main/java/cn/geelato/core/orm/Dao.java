@@ -6,7 +6,6 @@ import cn.geelato.core.orm.event.OrmEventOperations;
 import cn.geelato.core.orm.event.QueryEventContext;
 import cn.geelato.core.orm.event.SaveEventContext;
 import cn.geelato.core.mql.command.QueryCommand;
-import cn.geelato.core.mql.command.QueryViewCommand;
 import cn.geelato.core.mql.command.SaveCommand;
 import cn.geelato.core.mql.command.CommandType;
 import cn.geelato.core.mql.command.DeleteCommand;
@@ -689,25 +688,6 @@ public class Dao extends SqlKeyDao {
             return BigInteger.ZERO.compareTo(bigInteger) == 0;
         }
         return number.doubleValue() == 0D;
-    }
-
-    public List<Map<String, Object>> queryListByView(String entityName, String viewName, int pageNum, int pageSize, Map<String, Object> params) {
-        FilterGroup filterGroup = new FilterGroup();
-        for (Map.Entry<String, Object> entry : params.entrySet()) {
-            if (entry.getValue() != null && Strings.isNotBlank(entry.getValue().toString())) {
-                filterGroup.addFilter(entry.getKey(), entry.getValue().toString());
-            }
-        }
-        QueryViewCommand command = new QueryViewCommand();
-        command.setPageNum(pageNum);
-        command.setPageSize(pageSize);
-        command.setViewName(viewName);
-        BoundSql boundSql = sqlManager.generatePageQuerySql(command, entityName, true, filterGroup, null);
-        try{
-            return JdbcRetryExecutor.execute(() -> jdbcTemplate.queryForList(boundSql.getSql()));
-        }catch (DataAccessException dataAccessException){
-            throw SqlExecuteException.of(dataAccessException, boundSql.getSql(), boundSql.getParams());
-        }
     }
 
     public int delete(Class entityType, String fieldName, Object value) {

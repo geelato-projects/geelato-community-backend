@@ -37,6 +37,8 @@ public abstract class MqlTestSupport {
     public static final String ENTITY_ORDER = "mql_test_order";
     public static final String ENTITY_ORDER_ITEM = "mql_test_order_item";
     public static final String ENTITY_ORDER_VIEW = "mql_test_order_view";
+    public static final String ENTITY_DEFAULT_VIEW = "mql_test_default_view";
+    public static final String ENTITY_CUSTOM_VIEW = "mql_test_custom_view";
 
     /**
      * 容器启动时（整个测试类）注册一次元数据。
@@ -52,8 +54,9 @@ public abstract class MqlTestSupport {
         mm.parseOne(MqlTestUser.class);
         mm.parseOne(MqlTestOrder.class);
         mm.parseOne(MqlTestOrderItem.class);
-        // 注册 1 个视图实体
+        // 注册 3 个视图实体
         registerOrderView(mm);
+        registerDispatchViews(mm);
     }
 
     /**
@@ -98,6 +101,35 @@ public abstract class MqlTestSupport {
         EntityMeta em = mm.getByEntityName(viewName);
         if (em != null && em.getTableMeta() != null) {
             em.getTableMeta().setDbType("mysql");
+        }
+    }
+
+    /**
+     * 编程式注册 FROM 分派测试视图：mql_test_default_view（DEFAULT，应直查物理视图名）
+     * 与 mql_test_custom_view（CUSTOM，应原样内联 viewConstruct，不渲染模板段）。
+     */
+    private static void registerDispatchViews(MetaManager mm) {
+        String viewColumn = "["
+                + "{\"field_name\":\"id\",\"column_name\":\"id\",\"title\":\"ID\",\"data_type\":\"BIGINT\",\"column_key\":true}"
+                + "]";
+        if (!mm.containsEntity(ENTITY_DEFAULT_VIEW)) {
+            cn.geelato.core.meta.model.view.TableView view = new cn.geelato.core.meta.model.view.TableView();
+            view.setViewName(ENTITY_DEFAULT_VIEW);
+            view.setTitle("默认视图(测试)");
+            view.setViewType(ViewTypeEnum.DEFAULT.getCode());
+            view.setViewConstruct("select id from " + ENTITY_ORDER);
+            view.setViewColumn(viewColumn);
+            mm.parseViewEntity(view);
+        }
+        if (!mm.containsEntity(ENTITY_CUSTOM_VIEW)) {
+            cn.geelato.core.meta.model.view.TableView view = new cn.geelato.core.meta.model.view.TableView();
+            view.setViewName(ENTITY_CUSTOM_VIEW);
+            view.setTitle("自定义视图(测试)");
+            view.setViewType(ViewTypeEnum.CUSTOM.getCode());
+            // 含字面 #..# 段，固化 custom 原样内联、不做模板渲染的语义
+            view.setViewConstruct("select id from " + ENTITY_ORDER + " # remark #");
+            view.setViewColumn(viewColumn);
+            mm.parseViewEntity(view);
         }
     }
 

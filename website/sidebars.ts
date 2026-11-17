@@ -144,7 +144,7 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'MQL 使用和语法',
-          items: ['mql/overview', 'mql/usage'],
+          items: ['mql/overview', 'mql/usage', 'mql/details'],
         },
         {
           type: 'category',

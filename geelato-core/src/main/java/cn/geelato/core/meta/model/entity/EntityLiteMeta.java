@@ -1,6 +1,6 @@
 package cn.geelato.core.meta.model.entity;
 
-import cn.geelato.core.meta.EntityType;
+import cn.geelato.core.enums.ColumnEncryptedEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,7 +21,7 @@ public class EntityLiteMeta {
     private String entityType;
 
 
-    public EntityLiteMeta(String entityName, String entityTitle, EntityType entityType) {
+    public EntityLiteMeta(String entityName, String entityTitle, ColumnEncryptedEnum.EntityType entityType) {
         this.entityName = entityName;
         this.entityTitle = entityTitle;
         this.entityType = entityType.toString();

@@ -1,5 +1,7 @@
 # Geelato MQL 到 SQL 执行时序图
 
+> 本文为历史参考。最新权威链路以文档站《[MQL 详细说明](../website/official-docs/zh-cn/mql/details.md)》为准；本文入口类名（MetaRuntimeController，现为 MetaController）、URL 传参方式（`?gql=`，现为 body 即 MQL）与租户过滤注入位置（现经 SPI 注入器在解析末尾执行）的描述已过时。
+
 ## 目标
 
 本文说明 `geelato-community` 中一条典型 MQL 查询请求，从 Web 入口进入后，如何逐步完成：

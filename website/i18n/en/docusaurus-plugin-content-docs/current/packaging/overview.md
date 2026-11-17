@@ -6,15 +6,11 @@ sidebar_label: Application Packaging
 
 # Application Packaging
 
-Low-code applications are delivered through three parallel paths, covering different granularities:
+This chapter covers the packaged delivery of low-code applications only: an **application package** is the designer-produced app data bundle (`.gdp` / `.zgdp`), carrying metadata and business data between environments through pack → transfer → deploy → rollback; module `cn.geelato:geelato-package` + the `/package` service in web-platform.
 
-| Mechanism | Artifact | Granularity | Description |
-| --- | --- | --- | --- |
-| **Application package** (this chapter) | `.gdp` / `.zgdp` | Whole app (metadata + business data) | Designer-produced data package: pack → transfer → deploy → rollback; module `geelato-package` + the `/package` service in web-platform |
-| Plugin package (pf4j) | plugin jar | Code-level extension | Hot-start/stop Java plugins; see [Plugin Mechanism](../plugin-mechanism/overview.md) |
-| Scaffold / launcher artifacts | Spring Boot fat jar | Host project | Regular build & deploy of scaffold projects or the runtime/designer launchers; see [Deployment Guide](../operations/runtime-designer-deployment.md) |
-
-They combine naturally: the host ships via scaffold/launcher, low-code configuration migrates between environments via application packages, and code-level extensions hot-plug via plugin packages.
+:::note Not in this chapter
+Plugin jars and host/launcher artifacts are different deliverables and are not part of application packaging: see [Plugin Mechanism](../plugin-mechanism/overview.md) for plugins, and the [Deployment Guide](../operations/runtime-designer-deployment.md) for host builds.
+:::
 
 ## What an Application Package Is
 
@@ -85,9 +81,7 @@ flowchart LR
 | Partial-pack semantics | `appointMetas` is a whitelist: unlisted tables are excluded entirely | `appointMetas` selects rows: unlisted tables are still packed in full |
 | Data cleansing | — | platform-table whitelist + table-name guard + batch 500 |
 
-## Boundary with Plugin Packages and Scaffolds
-
-Application packages move **data-form** low-code configuration (page/model/dict/permission metadata and business data); plugin packages (pf4j) deploy **code-form** extensions (Java jars implementing `PluginExtensionPoint`). To sync code-level capabilities across environments, build a plugin package and copy it into the plugin directory (no HTTP upload/install endpoints yet — see [Plugin Mechanism](../plugin-mechanism/overview.md)); low-code configuration changes travel via application packages.
+## Commercial Delivery
 
 Commercial delivery across tenants/apps adds placeholder reset and id regeneration on top of application packages — see the app market docs ([System Modules: Market](../system-config/market.md)).
 

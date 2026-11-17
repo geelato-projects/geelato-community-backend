@@ -1,8 +1,8 @@
 package cn.geelato.core.mql;
 
 import cn.geelato.core.Fn;
+import cn.geelato.core.enums.ColumnEncryptedEnum;
 import cn.geelato.core.enums.ViewTypeEnum;
-import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.execute.BoundPageSql;
 import cn.geelato.core.mql.spi.support.MqlFuzzymatchRouteResolver;
@@ -150,7 +150,7 @@ public class MqlQueryProcessor {
      * 将视图模板参数设到 QueryCommand（仅对虚拟视图 VIRTUAL 生效）。
      * <p>
      * 虚拟视图不落库（见 MetaDdlService：虚拟视图无需创建），查询时由 view_construct
-     * 动态构造派生表，@pf 模板参数因此可注入；其他视图（DEFAULT/COMPLEX/CUSTOM，或无
+     * 动态构造派生表，@pf 模板参数因此可注入；其他视图（DEFAULT/CUSTOM，或无
      * 视图元数据的物理 DB 视图）已被物化或不含模板，收到非空 @pf 参数时抛出
      * {@link ViewTemplateParamException}，不静默丢弃。
      */
@@ -166,7 +166,7 @@ public class MqlQueryProcessor {
         if (entityMeta == null || entityMeta.getTableMeta() == null) {
             throw new ViewTemplateParamException(command.getEntityName(), params.keySet(), "实体元数据缺失");
         }
-        if (EntityType.View != entityMeta.getEntityType()) {
+        if (ColumnEncryptedEnum.EntityType.View != entityMeta.getEntityType()) {
             throw new ViewTemplateParamException(command.getEntityName(), params.keySet(), "该实体不是视图实体");
         }
         ViewMeta viewMeta = entityMeta.getViewMeta(entityMeta.getTableName());

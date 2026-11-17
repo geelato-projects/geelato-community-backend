@@ -18,4 +18,10 @@ public enum ColumnEncryptedEnum {
         this.label = label;
         this.value = value;
     }
+
+    public enum EntityType {
+        Table,
+        View,
+        Class
+    }
 }

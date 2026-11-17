@@ -98,14 +98,15 @@ The client can send:
 
 Rules:
 
-- if `@pf.orderType` has a value, `{orderType}` is replaced with the raw value text and the fragment body is kept
+- if `@pf.orderType` has a value, the fragment body is kept and rendered from the parameter value: numbers and booleans are inserted as-is, strings are wrapped in single quotes and escaped
 - if `@pf.orderType` is missing, `null`, or an empty string, the whole `#...#` fragment is removed
-- non-view entities do not apply `@pf` template rendering and keep the existing behavior
+- `@pf` applies to virtual (VIRTUAL) views only; non-view entities or other view types receiving a non-empty `@pf` fail with an error
 
 So `@pf` should be understood as a view-query template parameter container rather than a generic MQL filter keyword.
 
 ## Suggested Reading Order
 
 1. Start with [MQL Usage Guide](usage.md)
-2. Then read [API Reference](../api/reference.md) for the OpenAPI and `SrvExplain` dual-track model
-3. If you need backend Java-side data access, continue with [Fluent DSL Guide](../orm/fluent-dsl.md)
+2. To understand how an MQL payload becomes the final SQL, continue with [MQL Details](details.md)
+3. Then read [API Reference](../api/reference.md) for the OpenAPI and `SrvExplain` dual-track model
+4. If you need backend Java-side data access, continue with [Fluent DSL Guide](../orm/fluent-dsl.md)

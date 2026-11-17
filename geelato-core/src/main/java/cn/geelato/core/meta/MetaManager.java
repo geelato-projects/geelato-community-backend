@@ -2,10 +2,7 @@ package cn.geelato.core.meta;
 
 import cn.geelato.core.AbstractManager;
 import cn.geelato.core.constants.ColumnDefault;
-import cn.geelato.core.enums.DataTypeRadiusEnum;
-import cn.geelato.core.enums.MysqlToJavaEnum;
-import cn.geelato.core.enums.TableTypeEnum;
-import cn.geelato.core.enums.ViewTypeEnum;
+import cn.geelato.core.enums.*;
 import cn.geelato.core.meta.spi.MetaDefinitionBundle;
 import cn.geelato.core.meta.spi.MetaResourceProvider;
 import cn.geelato.core.meta.spi.MetaStore;
@@ -282,7 +279,7 @@ public class MetaManager extends AbstractManager {
                 && TableTypeEnum.MATERIALIZED.getValue().equalsIgnoreCase(entityMeta.getTableMeta().getTableType())) {
             return true;
         }
-        if (EntityType.View == entityMeta.getEntityType() && entityMeta.getViewMetas() != null) {
+        if (ColumnEncryptedEnum.EntityType.View == entityMeta.getEntityType() && entityMeta.getViewMetas() != null) {
             for (ViewMeta viewMeta : entityMeta.getViewMetas()) {
                 if (entityName.equalsIgnoreCase(viewMeta.getViewName())
                         && ViewTypeEnum.MATERIALIZED.getCode().equalsIgnoreCase(viewMeta.getViewType())) {
@@ -424,7 +421,7 @@ public class MetaManager extends AbstractManager {
         }
         if (Strings.isNotBlank(entityName) && !entityMetadataMap.containsKey(entityName)) {
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
-            entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Class));
+            entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), ColumnEncryptedEnum.EntityType.Class));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
             if (log.isDebugEnabled()) {
                 log.debug("success in parsing class:{}", clazz.getName());
@@ -458,7 +455,7 @@ public class MetaManager extends AbstractManager {
             if (!entityMetadataMap.containsKey(entityName)) {
                 entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
                 removeLiteMeta(entityMeta.getEntityName());
-                entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
+                entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), ColumnEncryptedEnum.EntityType.Table));
                 tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
             } else if (entityMetadataMap.containsKey(entityName)) {
                 entityMeta = entityMetadataMap.get(entityName);
@@ -482,7 +479,7 @@ public class MetaManager extends AbstractManager {
             removeOne(entityName);
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
             removeLiteMeta(entityMeta.getEntityName());
-            entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
+            entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), ColumnEncryptedEnum.EntityType.Table));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
             return;
         }
@@ -490,7 +487,7 @@ public class MetaManager extends AbstractManager {
         if (!entityMetadataMap.containsKey(entityName)) {
             entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
             removeLiteMeta(entityMeta.getEntityName());
-            entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.Table));
+            entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), ColumnEncryptedEnum.EntityType.Table));
             tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
         }
     }
@@ -519,7 +516,7 @@ public class MetaManager extends AbstractManager {
         EntityMeta entityMeta = MetaReflex.getEntityMetaByView(view);
         entityMetadataMap.put(entityMeta.getEntityName(), entityMeta);
         removeLiteMeta(entityMeta.getEntityName());
-        entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), EntityType.View));
+        entityLiteMetaList.add(new EntityLiteMeta(entityMeta.getEntityName(), entityMeta.getEntityTitle(), ColumnEncryptedEnum.EntityType.View));
         tableNameMetadataMap.put(entityMeta.getTableName(), entityMeta);
     }
 

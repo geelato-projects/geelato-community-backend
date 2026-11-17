@@ -210,14 +210,15 @@ MQL 的主体是一段 JSON，围绕"实体名 + 关键字 + 条件表达式"展
 
 处理规则是：
 
-- 如果 `@pf.orderType` 有值，则把 `{orderType}` 按原值文本替换，并保留该片段正文
+- 如果 `@pf.orderType` 有值，则按参数值渲染并保留该片段正文：数字、布尔按原值写入，字符串包单引号并转义
 - 如果 `@pf.orderType` 缺失、为 `null` 或空串，则整段 `#...#` 会被移除
-- 非视图实体不处理 `@pf` 模板渲染，保持现有行为
+- `@pf` 仅对虚拟视图（VIRTUAL）生效；非视图实体或其他视图类型收到非空 `@pf` 会直接报错
 
-因此，`@pf` 可以理解为“视图查询专用的模板参数容器”，而不是普通 MQL 过滤关键字。
+因此，`@pf` 可以理解为“虚拟视图查询专用的模板参数容器”，而不是普通 MQL 过滤关键字。
 
 ## 推荐阅读顺序
 
 1. 先看 [MQL 使用指引](usage.md)
-2. 再看 [API 参考](../api/reference.md)，理解 OpenAPI 与 `SrvExplain` 的双轨关系
-3. 如需服务端 Java 侧写法，再看 [ORM Fluent DSL 指引](../orm/fluent-dsl.md)
+2. 想了解一段 MQL 如何转成最终 SQL，再看 [MQL 详细说明](details.md)
+3. 再看 [API 参考](../api/reference.md)，理解 OpenAPI 与 `SrvExplain` 的双轨关系
+4. 如需服务端 Java 侧写法，再看 [ORM Fluent DSL 指引](../orm/fluent-dsl.md)

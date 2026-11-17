@@ -1182,22 +1182,84 @@ public class MaterializedViewService extends BaseService {
                 log.info("[MV-Compare]   {}.{} MySQL={} 行, RW={} 行, {} 耗时={}ms",
                         database, table, mysqlCount, rwCount, countMatch ? "一致" : "不一致", System.currentTimeMillis() - tableStart);
 
-                if (countMatch && mysqlCount > 0) {
-                    List<String> pkColumns = getPrimaryKey(originConn, database, table);
-                    if (!pkColumns.isEmpty()) {
-                        List<Map<String, Object>> mismatches = sampleAndCompare(originConn, engineDs, table, cdcTable, pkColumns, mysqlCount);
-                        tableResult.put("sampleMismatches", mismatches);
+                // 最新行对比：两侧各自取 update_at 最晚的一条记录，逐列归一化对比
+                if (mysqlCount > 0 || rwCount > 0) {
+                    try {
+                        Map<String, Object> mysqlLatest = queryLatestRow(originConn, table);
+                        Map<String, Object> rwLatest;
+                        try (Connection rwConn = engineDs.getConnection()) {
+                            rwLatest = queryLatestRow(rwConn, cdcTable);
+                        }
+                        List<Map<String, Object>> mismatches = diffLatestRows(mysqlLatest, rwLatest);
+                        tableResult.put("latestMismatches", mismatches);
                         tableResult.put("sampleMatch", mismatches.isEmpty());
                         if (!mismatches.isEmpty()) {
                             allMatch = false;
-                            log.warn("[MV-Compare]   {}.{} 抽样不一致 {} 条", database, table, mismatches.size());
+                            log.warn("[MV-Compare]   {}.{} 最新行不一致 {} 处", database, table, mismatches.size());
                         }
+                    } catch (SQLException e) {
+                        // 表无 update_at 列等情况：跳过最新行对比，不判定失败
+                        tableResult.put("sampleMatch", null);
+                        tableResult.put("latestSkipped", e.getMessage());
+                        log.info("[MV-Compare]   {}.{} 跳过最新行对比：{}", database, table, e.getMessage());
                     }
                 }
 
                 tableResult.put("elapsedMs", System.currentTimeMillis() - tableStart);
                 results.add(tableResult);
             }
+
+            // 物化视图级对比：原视图查询行数 vs 引擎同名物化视图行数（引擎 MV 与原视图同名）
+            long viewStartAt = System.currentTimeMillis();
+            Map<String, Object> viewResult = new LinkedHashMap<>();
+            viewResult.put("table", viewName);
+            viewResult.put("type", "view");
+            String q = idQuote(originConn);
+            try (var st = originConn.createStatement();
+                 var rs = st.executeQuery("SELECT COUNT(*) FROM " + q + viewName + q)) {
+                rs.next();
+                long originViewCount = rs.getLong(1);
+                long mvCount;
+                try (Connection rwConn = engineDs.getConnection()) {
+                    mvCount = queryCount(rwConn, viewName);
+                }
+                viewResult.put("mysqlCount", originViewCount);
+                viewResult.put("rwCount", mvCount);
+                boolean countMatch = originViewCount == mvCount;
+                viewResult.put("countMatch", countMatch);
+                if (!countMatch) {
+                    allMatch = false;
+                }
+                log.info("[MV-Compare]   视图对比 {}：原视图={} 行, 物化视图={} 行, {} 耗时={}ms",
+                        viewName, originViewCount, mvCount, countMatch ? "一致" : "不一致", System.currentTimeMillis() - viewStartAt);
+
+                // 视图最新行对比：原视图与引擎物化视图各自取 update_at 最晚的一条记录对比
+                try {
+                    Map<String, Object> mysqlLatest = queryLatestRow(originConn, viewName);
+                    Map<String, Object> rwLatest;
+                    try (Connection rwConn = engineDs.getConnection()) {
+                        rwLatest = queryLatestRow(rwConn, viewName);
+                    }
+                    List<Map<String, Object>> mismatches = diffLatestRows(mysqlLatest, rwLatest);
+                    viewResult.put("latestMismatches", mismatches);
+                    viewResult.put("sampleMatch", mismatches.isEmpty());
+                    if (!mismatches.isEmpty()) {
+                        allMatch = false;
+                        log.warn("[MV-Compare]   视图 {} 最新行不一致 {} 处", viewName, mismatches.size());
+                    }
+                } catch (SQLException e) {
+                    // 视图无 update_at 列等情况：跳过最新行对比
+                    viewResult.put("sampleMatch", null);
+                    viewResult.put("latestSkipped", e.getMessage());
+                    log.info("[MV-Compare]   视图 {} 跳过最新行对比：{}", viewName, e.getMessage());
+                }
+            } catch (SQLException e) {
+                viewResult.put("error", "物化视图对比失败：" + e.getMessage());
+                allMatch = false;
+                log.warn("[MV-Compare]   视图对比 {} 失败：{}", viewName, e.getMessage());
+            }
+            viewResult.put("elapsedMs", System.currentTimeMillis() - viewStartAt);
+            results.add(viewResult);
         } catch (SQLException e) {
             throw new IllegalStateException("数据对比连接失败：" + e.getMessage(), e);
         }
@@ -1222,58 +1284,6 @@ public class MaterializedViewService extends BaseService {
             rs.next();
             return rs.getLong(1);
         }
-    }
-
-    private List<String> getPrimaryKey(Connection conn, String database, String table) throws SQLException {
-        List<String> pks = new ArrayList<>();
-        try (var ps = conn.prepareStatement(
-                "SELECT column_name FROM information_schema.key_column_usage WHERE table_schema=? AND lower(table_name)=? AND constraint_name='PRIMARY' ORDER BY ordinal_position")) {
-            ps.setString(1, database);
-            ps.setString(2, table.toLowerCase(Locale.ROOT));
-            try (var rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    pks.add(rs.getString(1));
-                }
-            }
-        }
-        return pks;
-    }
-
-    private List<Map<String, Object>> sampleAndCompare(Connection origin, DataSource engineDs,
-                                                        String table, String cdcTable,
-                                                        List<String> pkColumns, long totalRows) throws SQLException {
-        List<Map<String, Object>> mismatches = new ArrayList<>();
-        String pkCol = pkColumns.get(0);
-        long[] offsets = totalRows <= 3 ? new long[]{0} : new long[]{0, totalRows / 2, totalRows - 1};
-        for (long offset : offsets) {
-            Map<String, Object> mysqlRow = queryRowByOffset(origin, table, pkCol, offset);
-            if (mysqlRow == null) continue;
-            Object pkValue = mysqlRow.get(pkCol.toLowerCase(Locale.ROOT));
-            if (pkValue == null) continue;
-            Map<String, Object> rwRow;
-            try (Connection rwConn = engineDs.getConnection()) {
-                rwRow = queryRowByPk(rwConn, cdcTable, pkCol, pkValue);
-            }
-            if (rwRow == null) {
-                mismatches.add(Map.of("pk", String.valueOf(pkValue), "issue", "RW 侧缺失该行"));
-                continue;
-            }
-            // 值归一化比较（不同 JDBC 驱动对同一时间戳/数值的字符串表示不同）
-            for (Map.Entry<String, Object> entry : mysqlRow.entrySet()) {
-                String col = entry.getKey();
-                Object mysqlVal = entry.getValue();
-                if (mysqlVal == null) continue;
-                Object rwVal = rwRow.get(col);
-                if (rwVal == null) {
-                    mismatches.add(Map.of("pk", String.valueOf(pkValue), "column", col,
-                            "mysql", String.valueOf(mysqlVal), "rw", "NULL"));
-                } else if (!valueEquals(mysqlVal, rwVal)) {
-                    mismatches.add(Map.of("pk", String.valueOf(pkValue), "column", col,
-                            "mysql", String.valueOf(mysqlVal), "rw", String.valueOf(rwVal)));
-                }
-            }
-        }
-        return mismatches;
     }
 
     private boolean valueEquals(Object mysqlVal, Object rwVal) {
@@ -1320,28 +1330,37 @@ public class MaterializedViewService extends BaseService {
         return s;
     }
 
-    private Map<String, Object> queryRowByOffset(Connection conn, String table, String pkCol, long offset) throws SQLException {
+    /** 取 update_at 最晚的一条记录（两侧各自取最新后对比内容）；表/视图无 update_at 列时抛 SQLException 由调用方跳过 */
+    private Map<String, Object> queryLatestRow(Connection conn, String table) throws SQLException {
         String q = idQuote(conn);
-        String sql = String.format("SELECT * FROM %s%s%s ORDER BY %s%s%s LIMIT 1 OFFSET %d", q, table, q, q, pkCol, q, offset);
+        String sql = "SELECT * FROM " + q + table + q + " ORDER BY " + q + "update_at" + q + " DESC LIMIT 1";
         try (var st = conn.createStatement(); var rs = st.executeQuery(sql)) {
-            if (rs.next()) {
-                return readRowAsMap(rs);
-            }
+            return rs.next() ? readRowAsMap(rs) : null;
         }
-        return null;
     }
 
-    private Map<String, Object> queryRowByPk(Connection conn, String cdcTable, String pkCol, Object pkValue) throws SQLException {
-        String sql = String.format("SELECT * FROM \"%s\" WHERE \"%s\" = ?", cdcTable, pkCol.toLowerCase(Locale.ROOT));
-        try (var ps = conn.prepareStatement(sql)) {
-            ps.setObject(1, pkValue);
-            try (var rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return readRowAsMap(rs);
-                }
+    /** 对比两侧最新一行，返回列级差异（沿用 valueEquals 归一化，兼容不同 JDBC 驱动的类型表示） */
+    private List<Map<String, Object>> diffLatestRows(Map<String, Object> mysqlRow, Map<String, Object> rwRow) {
+        List<Map<String, Object>> mismatches = new ArrayList<>();
+        if (mysqlRow == null && rwRow == null) {
+            return mismatches;
+        }
+        if (mysqlRow == null || rwRow == null) {
+            mismatches.add(Map.of("issue", mysqlRow == null ? "MySQL 侧无记录" : "RW 侧无记录"));
+            return mismatches;
+        }
+        for (Map.Entry<String, Object> entry : mysqlRow.entrySet()) {
+            String col = entry.getKey();
+            Object mysqlVal = entry.getValue();
+            if (mysqlVal == null) continue;
+            Object rwVal = rwRow.get(col);
+            if (rwVal == null) {
+                mismatches.add(Map.of("column", col, "mysql", String.valueOf(mysqlVal), "rw", "NULL"));
+            } else if (!valueEquals(mysqlVal, rwVal)) {
+                mismatches.add(Map.of("column", col, "mysql", String.valueOf(mysqlVal), "rw", String.valueOf(rwVal)));
             }
         }
-        return null;
+        return mismatches;
     }
 
     private Map<String, Object> readRowAsMap(java.sql.ResultSet rs) throws SQLException {

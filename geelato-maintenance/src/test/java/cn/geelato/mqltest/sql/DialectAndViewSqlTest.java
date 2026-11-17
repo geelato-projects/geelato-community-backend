@@ -113,8 +113,8 @@ class DialectAndViewSqlTest extends MqlTestSupport {
     class ViewTemplate {
 
         @Test
-        @DisplayName("视图查询：DEFAULT 视图生成派生表")
-        void defaultViewDerivedTable() {
+        @DisplayName("视图查询：VIRTUAL 视图生成派生表")
+        void virtualViewDerivedTable() {
             BoundSql sql = generateSql(parse("{\"mql_test_order_view\":{}}"));
             // 视图应生成 from (viewSql) vt
             assertSqlContains("from (", sql);
@@ -145,6 +145,32 @@ class DialectAndViewSqlTest extends MqlTestSupport {
             String normalized = MqlSqlAssertions.normalize(sql.getSql());
             assertTrue(normalized.contains("from ("), "应生成派生表: " + normalized);
             assertTrue(!normalized.contains("{statusFilter}"), "未渲染的占位符应被消除: " + normalized);
+        }
+    }
+
+    // ==================== 视图 FROM 分派 ====================
+
+    @Nested
+    @DisplayName("视图 FROM 分派（按 viewType）")
+    class ViewFromDispatch {
+
+        @Test
+        @DisplayName("DEFAULT 视图按物理视图名直查，不包派生表")
+        void defaultViewQueriesByPhysicalName() {
+            BoundSql sql = generateSql(parse("{\"mql_test_default_view\":{}}"));
+            String normalized = MqlSqlAssertions.normalize(sql.getSql());
+            assertTrue(normalized.contains("from mql_test_default_view"), "应直查视图名: " + normalized);
+            assertTrue(!normalized.contains("from ("), "不应包成派生表: " + normalized);
+        }
+
+        @Test
+        @DisplayName("CUSTOM 视图原样内联 viewConstruct，模板段字面保留")
+        void customViewInlinesConstructVerbatim() {
+            BoundSql sql = generateSql(parse("{\"mql_test_custom_view\":{}}"));
+            String normalized = MqlSqlAssertions.normalize(sql.getSql());
+            assertTrue(normalized.contains("from (select id from mql_test_order"), "应原样内联构造子查询: " + normalized);
+            assertTrue(normalized.contains(") vt"), "派生表应带 vt 别名: " + normalized);
+            assertTrue(normalized.contains("# remark #"), "字面 #..# 不应被渲染静默消除: " + normalized);
         }
     }
 

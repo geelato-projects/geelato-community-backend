@@ -1,14 +1,10 @@
 package cn.geelato.mqltest.mql;
 
-import cn.geelato.core.enums.ViewTypeEnum;
-import cn.geelato.core.meta.MetaManager;
-import cn.geelato.core.meta.model.view.TableView;
 import cn.geelato.core.mql.MqlQueryProcessor;
 import cn.geelato.core.mql.ViewTemplateParamException;
 import cn.geelato.mqltest.support.MqlTestSupport;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,41 +21,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 回归背景：/meta/list 的 Controller 预提取 @pf 后调 process(gql)（不传外部参数），
  * process 内部二次提取拿到空 map，视图模板段被静默消除（修复：process(cleanGql, paramsByEntity)）。
  * <p>
- * @pf 仅对虚拟视图（VIRTUAL，不落库、查询时动态构造）生效；DEFAULT/COMPLEX/CUSTOM
+ * @pf 仅对虚拟视图（VIRTUAL，不落库、查询时动态构造）生效；DEFAULT/CUSTOM
  * 视图及非视图实体收到 @pf 时硬失败。
  */
 @DisplayName("MqlQueryProcessor：@pf 参数链路")
 class MqlQueryProcessorPfTest extends MqlTestSupport {
 
-    private static final String ENTITY_COMPLEX_VIEW = "mql_test_complex_view";
-    private static final String ENTITY_DEFAULT_VIEW = "mql_test_default_view";
 
     private static final String MQL_WITH_PF = "{\"" + ENTITY_ORDER_VIEW + "\":{"
             + "\"@fs\":\"id,orderNo,status\","
             + "\"@pf\":{\"statusFilter\":\"pending\"},"
             + "\"@p\":\"1,15\"}}";
-
-    @BeforeAll
-    protected static void registerExtraViews() {
-        MetaManager mm = MetaManager.singleInstance();
-        if (!mm.containsEntity(ENTITY_COMPLEX_VIEW)) {
-            mm.parseViewEntity(buildView(ENTITY_COMPLEX_VIEW, ViewTypeEnum.COMPLEX.getCode()));
-        }
-        if (!mm.containsEntity(ENTITY_DEFAULT_VIEW)) {
-            mm.parseViewEntity(buildView(ENTITY_DEFAULT_VIEW, ViewTypeEnum.DEFAULT.getCode()));
-        }
-    }
-
-    private static TableView buildView(String viewName, String viewType) {
-        String viewColumn = "[{\"field_name\":\"id\",\"column_name\":\"id\",\"title\":\"ID\",\"data_type\":\"BIGINT\",\"column_key\":true}]";
-        TableView view = new TableView();
-        view.setViewName(viewName);
-        view.setTitle("测试视图(" + viewType + ")");
-        view.setViewType(viewType);
-        view.setViewConstruct("select id from " + ENTITY_ORDER);
-        view.setViewColumn(viewColumn);
-        return view;
-    }
 
     @Test
     @DisplayName("虚拟视图（VIRTUAL）Controller 预提取后经外部参数注入，@pf 渲染进视图构造 SQL")
@@ -121,16 +93,16 @@ class MqlQueryProcessorPfTest extends MqlTestSupport {
     }
 
     @Test
-    @DisplayName("COMPLEX 视图收到 @pf 时硬失败，不静默丢弃")
-    void complexViewPfThrows() {
-        String mql = "{\"" + ENTITY_COMPLEX_VIEW + "\":{\"@fs\":\"id\",\"@pf\":{\"statusFilter\":\"pending\"}}}";
+    @DisplayName("CUSTOM 视图收到 @pf 时硬失败，不静默丢弃")
+    void customViewPfThrows() {
+        String mql = "{\"" + ENTITY_CUSTOM_VIEW + "\":{\"@fs\":\"id\",\"@pf\":{\"statusFilter\":\"pending\"}}}";
         Map<String, Map<String, Object>> paramsByEntity = new HashMap<>();
         JSONObject root = JSON.parseObject(mql);
         String cleanGql = MqlQueryProcessor.getInstance().extractPfAndSerialize(root, paramsByEntity);
 
         ViewTemplateParamException ex = assertThrows(ViewTemplateParamException.class,
                 () -> MqlQueryProcessor.getInstance().process(cleanGql, paramsByEntity));
-        assertTrue(ex.getMessage().contains(ENTITY_COMPLEX_VIEW), "错误信息应含实体名: " + ex.getMessage());
+        assertTrue(ex.getMessage().contains(ENTITY_CUSTOM_VIEW), "错误信息应含实体名: " + ex.getMessage());
         assertTrue(ex.getMessage().contains("statusFilter"), "错误信息应含参数名: " + ex.getMessage());
     }
 

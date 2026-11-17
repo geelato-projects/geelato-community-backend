@@ -5,15 +5,11 @@ sidebar_label: 应用打包
 
 # 应用打包
 
-低代码应用在平台上的交付有三条并行路径，覆盖不同粒度与场景：
+本章只覆盖低代码应用的打包交付：**应用包**是设计器产出的应用数据包（`.gdp` / `.zgdp`），承载元数据与业务数据，在环境间打包→传输→部署→回滚；对应模块 `cn.geelato:geelato-package` 与 web-platform 的 `/package` 服务。
 
-| 机制 | 产物 | 粒度 | 说明 |
-| --- | --- | --- | --- |
-| **应用包（本章主题）** | `.gdp` / `.zgdp` | 整个应用（元数据 + 业务数据） | 设计器产出的应用数据包，打包→传输→部署→回滚；对应模块 `geelato-package` 与 web-platform 的 `/package` 服务 |
-| 插件包（pf4j） | 插件 jar | 代码级扩展能力 | 运行期启停的 Java 插件；见[插件机制](../plugin-mechanism/overview.md) |
-| 脚手架 / 启动壳制品 | Spring Boot fat jar | 宿主工程 | `geelato-app-scaffold` 生成的工程或 runtime/designer 启动壳的常规构建部署；见[平台部署指南](../operations/runtime-designer-deployment.md) |
-
-三者常组合使用：宿主用脚手架/启动壳交付运行时，低代码配置用应用包在环境间迁移，二方代码能力用插件包热插拔。
+:::note 本章不含
+插件 jar 与宿主/启动壳制品是另外的交付物，不属于应用打包：插件见[插件机制](../plugin-mechanism/overview.md)，宿主工程的构建部署见[平台部署指南](../operations/runtime-designer-deployment.md)。
+:::
 
 ## 应用包是什么
 
@@ -84,9 +80,7 @@ flowchart LR
 | 指定范围打包语义 | `appointMetas` 为白名单：未列出的表整张排除 | `appointMetas` 为选行修饰：未列出的表仍全量打包 |
 | 数据清洗 | — | 平台表白名单 + 表名防注入 + 分批 500 |
 
-## 与插件包、脚手架的边界
-
-应用包搬移的是**数据形态**的低代码配置（页面/模型/字典/权限等元数据与业务数据）；插件包（pf4j）部署的是**代码形态**的扩展（Java jar，实现 `PluginExtensionPoint`）。需要"环境间同步代码级能力"时打插件包并拷入插件目录（HTTP 上传/安装端点暂未提供，见[插件机制](../plugin-mechanism/overview.md)），低代码配置变更则走应用包。
+## 商品化交付
 
 跨租户/跨应用的商品化交付在应用包基础上另有占位符重置与主键重生成逻辑，见应用市场相关文档（[系统模块配置：Market](../system-config/market.md)）。
 

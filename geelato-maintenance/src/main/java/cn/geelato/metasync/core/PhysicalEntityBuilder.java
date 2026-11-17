@@ -1,6 +1,6 @@
 package cn.geelato.metasync.core;
 
-import cn.geelato.core.meta.EntityType;
+import cn.geelato.core.enums.ColumnEncryptedEnum;
 import cn.geelato.core.meta.model.column.ColumnMeta;
 import cn.geelato.core.meta.model.entity.EntityMeta;
 import cn.geelato.core.meta.model.entity.TableMeta;
@@ -32,7 +32,7 @@ public class PhysicalEntityBuilder {
         EntityMeta em = new EntityMeta();
         em.setEntityName(tableName);
         em.setEntityTitle(tableName);
-        em.setEntityType(EntityType.Table);
+        em.setEntityType(ColumnEncryptedEnum.EntityType.Table);
         em.setCatalog("none");
 
         TableMeta tm = new TableMeta();

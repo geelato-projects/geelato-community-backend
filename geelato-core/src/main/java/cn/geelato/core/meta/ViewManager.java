@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ViewManager {
     private static final Lock lock = new ReentrantLock();
     private static ViewManager instance;
-    private final HashMap<String, ViewMeta> viewMetadataMap = new HashMap<String, ViewMeta>();
+    private final HashMap<String, ViewMeta> viewMetadataMap = new HashMap<>();
 
     public static ViewManager singleInstance() {
         lock.lock();

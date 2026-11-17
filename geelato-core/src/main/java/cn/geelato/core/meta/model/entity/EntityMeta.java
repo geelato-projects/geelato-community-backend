@@ -1,9 +1,9 @@
 package cn.geelato.core.meta.model.entity;
 
 
+import cn.geelato.core.enums.ColumnEncryptedEnum;
 import cn.geelato.core.meta.DictDataSource;
 import cn.geelato.core.meta.EntityCacheType;
-import cn.geelato.core.meta.EntityType;
 import cn.geelato.lang.meta.DeleteMode;
 import cn.geelato.core.meta.model.field.FieldMeta;
 import cn.geelato.core.meta.model.field.SimpleFieldMeta;
@@ -29,7 +29,7 @@ public class EntityMeta {
     private Class classType;
     @Setter
     @Getter
-    private EntityType entityType;
+    private ColumnEncryptedEnum.EntityType entityType;
     @Setter
     @Getter
     private String catalog = "none";

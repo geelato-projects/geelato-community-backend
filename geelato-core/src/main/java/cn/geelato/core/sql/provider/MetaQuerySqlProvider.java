@@ -1,7 +1,7 @@
 package cn.geelato.core.sql.provider;
 
+import cn.geelato.core.enums.ColumnEncryptedEnum;
 import cn.geelato.core.enums.ViewTypeEnum;
-import cn.geelato.core.meta.EntityType;
 import cn.geelato.core.mql.command.QueryCommand;
 import cn.geelato.core.mql.command.QueryJoin;
 import cn.geelato.core.mql.command.QueryJoinCondition;
@@ -16,11 +16,9 @@ import cn.geelato.core.meta.model.view.ViewMeta;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.util.StringUtils;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -28,8 +26,6 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
-    private static final Pattern TEMPLATE_SEGMENT_PATTERN = Pattern.compile("#([\\s\\S]*?)#");
-    private static final Pattern TEMPLATE_PARAM_PATTERN = Pattern.compile("\\{([A-Za-z0-9_]+)}");
     @Override
     protected Object[] buildParams(QueryCommand command) {
         return buildWhereParams(command);
@@ -157,21 +153,6 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         }
         sb.append(") t");
         return sb.toString();
-    }
-
-    private void buildSelectCountField(StringBuilder sb, EntityMeta md, String[] fields) {
-        if (fields == null || fields.length == 0) {
-            sb.append("*");
-            return;
-        } else if (fields.length == 1 && "*".equals(fields[0])) {
-            sb.append("*");
-            return;
-        }
-        if (md.getId() != null) {
-            tryAppendKeywords(sb, md.getId().getColumnName());
-        } else {
-            FieldMeta fm = md.getFieldMeta(fields[0]);
-        }
     }
 
     private void buildSelectFields(StringBuilder sb, EntityMeta md, QueryCommand command) {
@@ -423,12 +404,13 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         if (md.getTableMeta() == null) {
             return md.getTableName();
         }
-        if (EntityType.View != md.getEntityType()) {
+        if (ColumnEncryptedEnum.EntityType.View != md.getEntityType()) {
             return md.getTableName();
         }
         String viewSql = resolveViewSql(md);
         if (StringUtils.hasText(viewSql)) {
-            return "(" + renderViewConstruct(viewSql, command.getViewTemplateParams()) + ")";
+            // 模板渲染仅对 virtual 生效；custom 原样内联，#..# 字面不静默消除
+            return "(" + (isVirtualView(md) ? renderViewConstruct(viewSql, command.getViewTemplateParams()) : viewSql) + ")";
         }
         return md.getTableName();
     }
@@ -452,7 +434,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
     }
 
     private boolean isViewDerivedTable(EntityMeta md) {
-        if (md == null || EntityType.View != md.getEntityType()) {
+        if (md == null || ColumnEncryptedEnum.EntityType.View != md.getEntityType()) {
             return false;
         }
         return StringUtils.hasText(resolveViewSql(md));
@@ -465,71 +447,33 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
         return md.getViewMeta(md.getTableName());
     }
 
+    // FROM 分派：default/materialized 按物理视图名直查（default 需库中已创建，DDL 经 /api/meta/ddl/views 批量执行；materialized 由引擎保证对象存在）；custom 原样内联 viewConstruct；virtual 渲染 @pf 模板参数后内联
     private String resolveViewSql(EntityMeta md) {
         if (md == null) {
             return null;
         }
         ViewMeta viewMeta = resolveViewMeta(md);
-        if (isMaterializedView(viewMeta)) {
-            // 物化视图按物理视图名直查引擎；viewConstruct 仅存原始建表语句，不参与 SQL 构建
+        if (viewMeta == null || isDefaultView(viewMeta) || isMaterializedView(viewMeta)) {
             return null;
         }
-        if (viewMeta != null && StringUtils.hasText(viewMeta.getViewConstruct())) {
-            return viewMeta.getViewConstruct();
+        // custom/virtual 以 viewConstruct 内联；空构造属元数据缺陷，硬失败
+        if (!StringUtils.hasText(viewMeta.getViewConstruct())) {
+            throw new IllegalArgumentException(String.format("视图[%s]类型[%s]的 viewConstruct 为空，无法构造查询", md.getEntityName(), viewMeta.getViewType()));
         }
-        return md.getTableMeta() == null ? null : md.getTableMeta().getViewSql();
+        return viewMeta.getViewConstruct();
+    }
+
+    private boolean isDefaultView(ViewMeta viewMeta) {
+        return viewMeta != null && ViewTypeEnum.DEFAULT.getCode().equalsIgnoreCase(viewMeta.getViewType());
+    }
+
+    private boolean isVirtualView(EntityMeta md) {
+        ViewMeta viewMeta = resolveViewMeta(md);
+        return viewMeta != null && ViewTypeEnum.VIRTUAL.getCode().equalsIgnoreCase(viewMeta.getViewType());
     }
 
     private boolean isMaterializedView(ViewMeta viewMeta) {
         return viewMeta != null && ViewTypeEnum.MATERIALIZED.getCode().equalsIgnoreCase(viewMeta.getViewType());
-    }
-
-    private String renderViewConstruct(String viewConstruct, Map<String, Object> params) {
-        if (!StringUtils.hasText(viewConstruct)) {
-            return viewConstruct;
-        }
-        Map<String, Object> safeParams = params == null ? Collections.emptyMap() : params;
-        Matcher segmentMatcher = TEMPLATE_SEGMENT_PATTERN.matcher(viewConstruct);
-        StringBuffer sb = new StringBuffer();
-        while (segmentMatcher.find()) {
-            String segmentContent = segmentMatcher.group(1);
-            String rendered = renderSegment(segmentContent, safeParams);
-            segmentMatcher.appendReplacement(sb, Matcher.quoteReplacement(rendered));
-        }
-        segmentMatcher.appendTail(sb);
-        return sb.toString();
-    }
-
-    private String renderSegment(String segment, Map<String, Object> params) {
-        Matcher paramMatcher = TEMPLATE_PARAM_PATTERN.matcher(segment);
-        StringBuffer segmentBuffer = new StringBuffer();
-        boolean hasPlaceholder = false;
-        while (paramMatcher.find()) {
-            hasPlaceholder = true;
-            String key = paramMatcher.group(1);
-            Object value = params.get(key);
-            if (isBlankValue(value)) {
-                return "";
-            }
-            paramMatcher.appendReplacement(segmentBuffer, Matcher.quoteReplacement(formatTemplateValue(value)));
-        }
-        if (!hasPlaceholder) {
-            return segment;
-        }
-        paramMatcher.appendTail(segmentBuffer);
-        return segmentBuffer.toString();
-    }
-
-    private String formatTemplateValue(Object value) {
-        if (value instanceof Number || value instanceof Boolean) {
-            return value.toString();
-        }
-        String text = value.toString().replace("'", "''");
-        return "'" + text + "'";
-    }
-
-    private boolean isBlankValue(Object value) {
-        return value == null || !StringUtils.hasText(value.toString());
     }
 
     private void buildJoinCondition(StringBuilder sb, EntityMeta mainMeta, EntityMeta joinMeta, QueryCommand command, QueryJoin join, QueryJoinCondition condition) {

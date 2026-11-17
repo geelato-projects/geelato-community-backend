@@ -443,12 +443,10 @@ ORDER BY status ASC, createAt DESC
 处理规则：
 
 - `@pf` 会在进入标准 MQL 解析前被提取，不参与普通关键字校验
-- 只有视图实体才会启用模板渲染
+- 模板渲染仅对虚拟视图（VIRTUAL）生效；非视图实体或其他视图类型收到非空 `@pf` 会直接报错，不静默丢弃
 - 当 `{orderType}` 有值时，模板片段会渲染为 `and order_type=123`
 - 当 `{orderType}` 缺失、为 `null` 或空串时，整段 `#...#` 会被移除
-- 参数按原值文本直接替换，不自动补单引号
-
-因此若传入字符串值，需自行保证模板与参数值均符合预期 SQL 语义。
+- 参数值：数字、布尔按原值写入；字符串包单引号并将内部 `'` 转义为 `''`
 
 ## 保存语法
 
@@ -662,6 +660,7 @@ MQL 内置了几类常用变量：
 ## 推荐继续阅读
 
 - [MQL 总览](overview.md)
+- [MQL 详细说明](details.md)：一段 MQL 如何转成最终 SQL
 - [API 参考](../api/reference.md)
 - [Fluent DSL 指引](../orm/fluent-dsl.md)
 - [查询过滤与字段填充 SPI 扩展](../reference/spi-query-filter-and-save-fill-extension.md)

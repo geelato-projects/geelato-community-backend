@@ -158,7 +158,7 @@ Geelato Web 平台的运行时应用壳，基于共享底座 `geelato-web-platfo
 
 从源码静态扫描控制器、生成逐 Controller Markdown 的接口补充说明，用于补充尚未完全 OpenAPI 化的端点。与 OpenAPI、MQL 构成"标准契约 / 静态补充 / 平台协议"的双轨/三轨关系。
 
-详见 [API 参考](../api/reference)、[SrvExplain API 目录](../api/srvexplain-catalog)。
+详见 [API Reference](../api/reference)。
 
 ### CoreException
 

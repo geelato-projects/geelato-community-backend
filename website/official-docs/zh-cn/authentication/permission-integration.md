@@ -7,7 +7,7 @@ sidebar_label: 权限接入
 
 > 面向平台子系统和第三方系统开发者。本文档说明如何接入统一认证中心的权限管理能力，使本系统具备**菜单权限、元素权限、功能/接口权限、模型权限、字段权限、数据权限**，并支持跨系统、跨数据库的权限下发与生效。
 >
-> 前置阅读：请先完成 [OAuth2 业务系统接入](oauth2-integration.md) 或 [机器对机器接入（client_credentials）](client-credentials-integration.md)，获得应用凭证与令牌能力。
+> 前置阅读：请先完成 [OAuth2 业务系统接入](oauth2-integration.md) 或 [OAuth2 协议接入（含机器对机器 client_credentials）](oauth2-integration.md)，获得应用凭证与令牌能力。
 
 ## 一、架构概览
 

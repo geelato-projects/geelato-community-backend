@@ -1,13 +1,15 @@
 ---
-title: Open Management API (Integrator Self-Service)
-sidebar_label: Open Management API
+title: Management Integration (Integrator Self-Service)
+sidebar_label: Management Integration
 ---
 
-# Open Management API (Integrator Self-Service)
+# Management Integration (Integrator Self-Service)
 
 While the unified auth server centrally manages data for all connected systems (roles, menus, permissions, grants, users, organizations, and sessions), it also exposes a set of **HTTP management APIs (`/api/open/v1/**`)** for each integrator: using its own machine token, an integrator can self-manage **the data that belongs to it** and build its own admin UI on top.
 
-> Prerequisite: calling the open API requires a client_credentials machine token — see the [Machine-to-Machine Integration Guide](client-credentials-integration.md). User tokens (issued via the authorization code or password grant) **cannot** call the open API.
+> Prerequisite: calling the open API requires a client_credentials machine token — see [OAuth2 Protocol Integration](oauth2-integration.md#mode-2-machine-to-machineclient_credentials). User tokens (issued via the authorization code or password grant) **cannot** call the open API.
+>
+> For an overview of "how org / user / role data is synced into your system and which channels exist", start with [Data Integration](data-integration.md); this page is the full endpoint reference.
 
 ## Key Characteristics
 
@@ -57,7 +59,7 @@ Gateway-level error codes (raw JSON, not wrapped in `ApiResult`):
 | 403 | `403` | Not a client_credentials machine token, or the client is disabled / not enrolled for the client_credentials grant |
 
 :::tip Separate endpoint
-`client_credentials` uses a dedicated endpoint `/oauth2/client_token` (built into sa-token 1.46+) — `/oauth2/token` does **not** support this grant type. See the [Machine-to-Machine Integration Guide](client-credentials-integration.md) for full token-handling details (secret storage, leak response, etc.).
+`client_credentials` uses a dedicated endpoint `/oauth2/client_token` (built into sa-token 1.46+) — `/oauth2/token` does **not** support this grant type. See [OAuth2 Protocol Integration](oauth2-integration.md#mode-2-machine-to-machineclient_credentials) for full token-handling details (secret storage, leak response, etc.). The `expires_in` value depends on the actual deployment configuration (example values are illustrative only).
 :::
 
 ## Response Conventions
@@ -72,14 +74,18 @@ Endpoint prefix: `/api/open/v1/roles`
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/page?keyword=&enableStatus=&pageNum=1&pageSize=10` | Paginated query (own system + global) |
+| GET | `/by-code/{code}` | Query by role code (skips the id lookup) |
+| POST | `/list-by-ids` | Batch query by IDs, body: `["roleId1", "roleId2"]` |
 | GET | `/{id}` | Detail (another system's resources are treated as not found) |
-| POST | `/` | Create, body: `{code, name, seqNo?, remark?}` (`code` unique per tenant) |
+| POST | `/` | Create, body: `{code, name, seqNo?, remark?}` (`code` unique per tenant, auto-bound to the own appCode) |
 | PUT | `/{id}` | Update `{name, seqNo, remark}` (appCode immutable) |
 | POST | `/{id}/enable`, `/{id}/disable` | Enable / disable |
 | DELETE | `/{id}` | Soft delete |
 | GET / PUT | `/{id}/permissions` | List / replace-set assign permissions |
 | GET / PUT | `/{id}/menus` | List (returns menu tree) / replace-set assign menus |
 | GET / PUT | `/{id}/users` | List / replace-set assign users |
+| GET | `/{roleId}/users-detail` | Detailed user list under the role (paginated) |
+| GET | `/{roleId}/permissions-detail` | Detailed permission list assigned to the role |
 
 **Replace-set assignment**: the PUT body is `{"ids": ["permission/menu/user ID", ...]}` — after saving, the ids become the role's final association set. Assigned permissions / menus may include `__global__` resources (such as the four data-scope presets `&all` / `&myself`).
 
@@ -112,22 +118,31 @@ Endpoint prefix: `/api/open/v1/permissions`
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/page?keyword=&type=&object=&pageNum=&pageSize=` | Paginated query; `type` filters the four kinds |
+| GET | `/page?keyword=&type=&object=&pageNum=&pageSize=` | Paginated query; `type` filters the five kinds |
 | GET | `/{id}` | Detail |
 | POST | `/` | Create, body: `{code, name, type, object?, rule?, seqNo?, remark?}` |
 | PUT | `/{id}` | Update (same fields as create) |
 | DELETE | `/{id}` | Soft delete |
 
-Permissions use a unified four-type model:
+Permissions use a unified five-type model:
 
 | Type | Meaning | `object` / `rule` usage |
 | --- | --- | --- |
 | `dp` | Data permission | `object` is the entity table; `rule` is an SQL fragment supporting `#currentUser.xxx#` whitelisted placeholders |
 | `mp` | Model permission | `object` is the entity name (entity CRUD operations) |
 | `cp` | Field permission | `object` is the entity name; `rule` may describe visible / hidden fields |
+| `ep` | Element permission | `object` is an element identifier / component path (page element and button level control) |
 | `fp` | Functional / API permission | `object` is an API path or functional identifier |
 
-`seq_no` acts as the data-permission weight; when multiple rules coexist, the **largest** one (widest scope) wins. See the [Permission Integration Guide](permission-integration.md) for how data permissions are distributed and injected into subsystem queries.
+`seq_no` acts as the data-permission weight; when multiple rules coexist, the **largest** one (widest scope) wins. See [Permission Integration](permission-integration.md) for how data permissions are distributed and injected into subsystem queries.
+
+## Dictionary Lookup
+
+Endpoint prefix: `/api/open/v1/dictionaries`. Read-only; useful for rendering dropdowns in admin UIs:
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/{dictCode}/items` | Enabled items of the given dictionary; built-in dictionaries: `permission_type` (five permission types), `org_type` (org types), `menu_type` (menu types) |
 
 ## User Management
 
@@ -144,6 +159,7 @@ Endpoint prefix: `/api/open/v1/users`. The user directory is maintained by the a
 | DELETE | `/{id}` | Soft delete and force logout |
 | POST | `/list-by-ids` | Batch query by IDs (user pickers), body: `["userId1", "userId2"]` |
 | GET / PUT | `/{userId}/roles` | List / replace-set assign roles **under the own system** |
+| GET | `/{userId}/permissions` | The user's effective permissions **under the own system** (caller's appCode): five permission types + menus + roles, same structure as the provisioning API |
 
 The user-role assignment body is also `{"ids": [...]}`; the roles must belong to the own system or `__global__`, and the grant only lands under the own appCode — it does **not** affect the user's roles in other systems.
 
@@ -155,12 +171,20 @@ Endpoint prefix: `/api/open/v1/orgs`. The org tree is tenant-level shared (`auth
 | --- | --- | --- |
 | GET | `/tree?enableStatus=` | Org tree (with `children`) |
 | GET | `/page?keyword=&enableStatus=` | Paginated flat query |
+| POST | `/list-by-ids` | Batch query by IDs, body: `["orgId1", "orgId2"]` |
+| GET | `/{id}` | Detail |
 | POST | `/` | Create, body: `{code, name, pid?, type?, seqNo?, remark?}` (`code` unique per tenant, empty `pid` = root) |
 | PUT | `/{id}` | Update (code immutable; server-side cycle check) |
 | POST | `/{id}/enable`, `/{id}/disable` | Enable / disable |
 | DELETE | `/{id}` | Delete; refused while child organizations exist |
+| GET | `/{orgId}/roles` | Dept roles attached to the org |
+| GET | `/{orgId}/users` | Member users of the org (paginated) |
+| GET | `/{orgId}/roles/{roleId}/users` | Users effective with the given dept role in the org (paginated) |
+| GET | `/{orgId}/users-tree` | Users of the org and its whole subtree |
+| GET | `/{orgId}/ancestors` | Ancestor org chain |
+| GET | `/{orgId}/descendants` | All descendant orgs |
 
-`type`: `company` / `dept` / `group`, etc., customized by the integrator.
+`type`: `company` / `dept` / `group`, etc., customized by the integrator (see the built-in `org_type` dictionary for suggestions).
 
 ## Session Management
 
@@ -181,6 +205,25 @@ Two `scope` values:
 | `client` | Sessions produced by logins through the own client's token | Exact match on `SessionInfo.clientId` |
 
 Before per-user operations, the server verifies that the user has a grant relation under the calling system, otherwise 403.
+
+## Account Provision (Approval-Flow Integration)
+
+Endpoint prefix: `/api/open/v1/account-provisions`. Designed for process / approval platforms: once an approval is passed, provision the account automatically per request. Three endpoints — provision, query, regenerate password:
+
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/` | Provision an account, body: `{requestId, loginName, name, mobilePrefix?, mobilePhone?, email?, roleCodes or roleIds, orgId?, tenantCode?}` |
+| GET | `/{requestId}` | Query the provisioning result and status by request id |
+| POST | `/{requestId}/regenerate-password` | Regenerate the initial password for a provisioned account |
+
+Key semantics:
+
+- **Idempotent resume**: `requestId` is the caller's idempotency key (persisted in the `auth_account_request` table). Calling a COMPLETED request again returns `repeated=true` and no longer returns the password; `PENDING` / `FAILED` requests resume automatically.
+- **One-time password delivery**: the initial password is 12 strong-random characters, returned once in the success response only, never stored server-side; a lost initial password can only be regenerated via `regenerate-password`.
+- **Forced first-login password change**: provisioned users get `must_change_password=1`; the login response carries `user.mustChangePassword=true` so the frontend guides the change.
+- **Roles fail-closed**: pass exactly one of `roleCodes` / `roleIds` (both → 400); if any role cannot be resolved / belongs to another system / is disabled, the whole request is marked `FAILED` — no partially-authorized accounts.
+
+For the full scenario walkthrough see the "Account Provision API" section in [Data Integration](data-integration.md).
 
 ## End-to-End Example
 
@@ -213,10 +256,11 @@ curl -s -X POST "$BASE/api/open/v1/roles" -H "Authorization: Bearer $TOKEN" \
 ## Relationship with the Admin Console and Distribution API
 
 - The **auth server admin console** (`/api/roles`, `/api/users`, etc., guarded by the administrator whitelist) and the open API operate on **the same data**, with the open API applying caller isolation automatically; writes on either side trigger permission-change notifications and version increments.
-- The **read-only distribution API** (`/api/permission-sync/**`) is equally hardened: a machine token can only pull data of its own appCode (a mismatched `appCode` parameter returns 403). See the [Permission Integration Guide](permission-integration.md) for the full mirror-table and data-permission injection story.
+- The **read-only distribution API** (`/api/provisioning/**`) is equally hardened: a machine token can only pull data of its own appCode (a mismatched `appCode` parameter returns 403). See [Permission Integration](permission-integration.md) for the full mirror-table and data-permission injection story.
 
 ## Companion Resources
 
+- **Scenario guide**: for channel selection and typical org / user / role sync scenarios, see [Data Integration](data-integration.md).
 - **Sample data**: the auth server's Flyway `V8`/`V9` seeds idempotently insert sample data (org tree, sample users, roles, menus, permissions and grants); the sample users share the password `geelato123`.
 - **Reference implementation**: `gl-open-demo/` at the auth server repository root is a standalone lightweight Vue 3 demo site implementing a complete admin console on this API (with per-tab API descriptions), usable as reference code for integrators building their own UI.
 - **CORS**: when an integrator's admin UI is hosted on a different origin, the auth server allows it via `geelato.auth.open-api.allowed-origins` (comma-separated, default `*`); tokens travel in the `Authorization` header, no cookies involved.

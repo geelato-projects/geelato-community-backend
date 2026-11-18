@@ -65,7 +65,7 @@ flowchart LR
 | `engine` | `v1` | Pack/deploy engine version: `v1` (original) or `v2` (evolved, below); backup and rollback are v2-only |
 
 :::note Default engine is v1
-`engine` defaults to `v1`. Backup, rollback and table-name guarding only take effect with `v2`; production environments should set `geelato.package.engine=v2` explicitly. The three base keys are also described in [System Modules: Package](../system-config/package.md).
+`engine` defaults to `v1`. Backup, rollback and table-name guarding only take effect with `v2`; production environments should set `geelato.package.engine=v2` explicitly. The three base keys are also described in [System Configuration: Package Module](../system-config/overview.md#package-module).
 :::
 
 ## v1 vs v2 Engine
@@ -83,7 +83,7 @@ flowchart LR
 
 ## Commercial Delivery
 
-Commercial delivery across tenants/apps adds placeholder reset and id regeneration on top of application packages — see the app market docs ([System Modules: Market](../system-config/market.md)).
+Commercial delivery across tenants/apps adds placeholder reset and id regeneration on top of application packages — see the app market docs ([System Configuration: Market Module](../system-config/overview.md#market-module)).
 
 ## Further Reading
 

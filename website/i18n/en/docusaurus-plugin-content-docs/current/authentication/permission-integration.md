@@ -7,7 +7,7 @@ sidebar_label: Permission Integration
 
 > This document is for platform subsystem and third-party system developers. It explains how to integrate with the Auth Center's permission management capability, so that your system gains **menu, element, function/API, model, column and data permissions**, with cross-system, cross-database permission provisioning.
 >
-> Prerequisites: complete the [OAuth2 Integration](oauth2-integration.md) or [Machine-to-Machine Integration (client_credentials)](client-credentials-integration.md) guide first to obtain application credentials and token capabilities.
+> Prerequisites: complete the [OAuth2 Integration](oauth2-integration.md) or [OAuth2 Protocol Integration (incl. machine-to-machine client_credentials)](oauth2-integration.md) guide first to obtain application credentials and token capabilities.
 
 ## 1. Architecture Overview
 

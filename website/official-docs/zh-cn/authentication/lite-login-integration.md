@@ -73,6 +73,32 @@ https://<auth-host>/lite-login
 
 但这个 `/login` 只作为第三方应用自己的承接页，不自己实现用户名密码认证。
 
+## 登录方式
+
+`lite-login` 登录页内置支持以下登录方式，业务系统无需额外开发：
+
+- **账号密码登录**：支持图形验证码 / 滑块验证码 / 旋转验证码（按认证中心配置启用）。
+- **短信验证码登录**：手机号 + 验证码登录，验证码与找回密码通道隔离。
+- **第三方登录**：登录页自动展示当前租户已启用的第三方提供方（微信、企业微信、飞书、钉钉），点击后跳转对应平台授权；未绑定用户走「验证账号密码后绑定」流程。
+- **找回密码 / 重置密码**：登录页自带忘记密码与重置入口。
+- **首登强制改密**：账号开通（见[数据集成](data-integration.md)）下发的用户首次登录后，登录结果会携带强制改密标记，前端据此引导改密。
+
+底层支撑的 Lite 认证 API（认证中心 `geelato-auth-login` 提供，构建自有登录 UI 时也可直接调用）：
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/auth/login` | 账密或短信登录，body：`{username, password?, captchaToken?, scene?, loginType?, authCode?}`；`loginType=sms` 时走短信验证码 |
+| POST | `/api/auth/login/sms/send` | 发送登录短信验证码（手机号未注册直接拒绝） |
+| POST | `/api/auth/refresh` | 刷新令牌，body：`{refreshToken}` |
+| POST | `/api/auth/logout` | 登出当前会话 |
+| GET | `/api/auth/captcha`、`/slider`、`/rotate` 等 | 各类验证码取图与校验 |
+| GET | `/api/oauth2/providers` | 当前租户已启用的第三方登录提供方列表 |
+| GET | `/api/oauth2/authorize/{provider}` | 发起第三方授权（302 跳转对应平台） |
+| POST | `/api/oauth2/callback` | 第三方回调（未绑定返回 `2001 needBind` + 有效期 5 分钟的 `bindToken`） |
+| POST | `/api/oauth2/bind` | 凭 `bindToken` + 账号密码完成绑定并登录 |
+
+> 登录有风控保护：连续失败会触发账号锁定（`423`）与限流（`429`），前端按响应码提示即可。
+
 ## 前端接入流程
 
 ### 交互时序图
@@ -168,7 +194,16 @@ iframe 地址统一构造为：
     "expireInSeconds": 7199,
     "tokenType": "Bearer",
     "issuer": "auth-server",
-    "user": {}
+    "user": {
+      "id": "123",
+      "username": "zhangsan",
+      "nickname": "张三",
+      "email": "zhangsan@example.com",
+      "mustChangePassword": false,
+      "mobilePrefix": "+86",
+      "mobilePhone": "13800000000",
+      "phone": "+8613800000000"
+    }
   }
 }
 ```
@@ -177,6 +212,8 @@ iframe 地址统一构造为：
 
 1. `accessToken`
 2. `token`
+
+**首登强制改密**：`user.mustChangePassword === true` 时，说明该账号由账号开通流程下发、首次登录需修改密码。前端应在收到 `LOGIN_SUCCESS` 后引导用户进入改密流程（可跳转认证中心自带的重置页 `/oauth2/lite-reset`，或宿主自定义改密页），改密所需的验证码参数可直接使用契约中的 `mobilePrefix` / `mobilePhone`。改密完成前不要进入业务系统主页。
 
 ### 嵌入态语言控制
 
@@ -464,6 +501,7 @@ public CurrentUser resolveCurrentUser(HttpServletRequest request) {
 - 是否能正确提取 `accessToken/token`
 - 是否能在后续请求中自动带上 `Authorization`
 - 是否能在 token 失效后清理本地状态
+- 是否处理了 `user.mustChangePassword=true` 的首登改密引导
 
 ### 后端检查
 
@@ -474,6 +512,16 @@ public CurrentUser resolveCurrentUser(HttpServletRequest request) {
 - 是否已建立本应用自己的用户映射逻辑
 
 ## 常见问题
+
+### `mustChangePassword=true` 时应怎么处理
+
+该用户由账号开通流程（审批流）创建，首次登录必须修改初始密码。标准处理：
+
+1. 收到 `LOGIN_SUCCESS` 后读取 `user.mustChangePassword`
+2. 为 `true` 时跳转改密页（认证中心自带 `/oauth2/lite-reset`，或宿主自定义改密页），用契约中的 `mobilePrefix` / `mobilePhone` 发送验证码完成改密
+3. 改密成功后再进入业务系统；在此之前不要放行业务页面
+
+账号开通的完整语义见[数据集成](data-integration.md)。
 
 ### 登录成功后又回到登录页
 

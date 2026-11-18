@@ -47,12 +47,6 @@ Currently, the message center natively supports the enqueue and sending of the f
 
 ## 4. Integration Methods
 
-The message center supports two enqueue methods. Please choose according to your actual scenario:
-
-1. **HTTP API Enqueue (Recommended for routine business)**:
-   Business systems call the `/message/enqueue` API, sending a lightweight JSON. The message center automatically completes the remaining internal fields (such as Primary Key ID, Status, Route, etc.).
-   
-2. **Database Direct Enqueue (Recommended for offline/batch scripts)**:
-   Insert data directly into the `platform_msg` table. This method requires the business side to generate Snowflake IDs themselves and complete all required business fields.
+Business systems call the `/message/enqueue` API to enqueue messages, sending a lightweight JSON. The message center automatically completes the remaining internal fields (such as Primary Key ID, Status, Route, etc.).
 
 For detailed integration message formats and sequence, please read the next section [《Business System Message Integration Guide》](./integration.md).

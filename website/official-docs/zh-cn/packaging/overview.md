@@ -64,7 +64,7 @@ flowchart LR
 | `engine` | `v1` | 打包/部署引擎版本：`v1`（原始实现）或 `v2`（演进版，见下）；备份与回滚仅 v2 支持 |
 
 :::note 默认引擎是 v1
-`engine` 缺省为 `v1`。备份、回滚、表名防注入等能力只在 `v2` 生效，生产环境建议显式配置 `geelato.package.engine=v2`。三个基础键的含义另见[系统模块配置：Package](../system-config/package.md)。
+`engine` 缺省为 `v1`。备份、回滚、表名防注入等能力只在 `v2` 生效，生产环境建议显式配置 `geelato.package.engine=v2`。三个基础键的含义另见[系统配置：Package 模块](../system-config/overview.md#package-模块)。
 :::
 
 ## v1 与 v2 引擎
@@ -82,7 +82,7 @@ flowchart LR
 
 ## 商品化交付
 
-跨租户/跨应用的商品化交付在应用包基础上另有占位符重置与主键重生成逻辑，见应用市场相关文档（[系统模块配置：Market](../system-config/market.md)）。
+跨租户/跨应用的商品化交付在应用包基础上另有占位符重置与主键重生成逻辑，见应用市场相关文档（[系统配置：Market 模块](../system-config/overview.md#market-模块)）。
 
 ## 推荐继续阅读
 

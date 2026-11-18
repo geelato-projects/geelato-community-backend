@@ -101,4 +101,4 @@ sidebar_label: 打包流程
 
 - [应用包部署](deployment-flow.md)：包到达目标环境后的校验、落库与生效
 - [打包内容与运行作用](contents.md)：包内每类内容与运行期作用
-- [系统模块配置：Package](../system-config/package.md)：`geelato.package.*` 配置键
+- [系统配置：Package 模块](../system-config/overview.md#package-模块)：`geelato.package.*` 配置键

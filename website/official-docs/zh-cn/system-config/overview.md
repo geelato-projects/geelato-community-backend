@@ -4,7 +4,7 @@ sidebar_label: 系统配置
 ---
 # 系统配置
 
-本页说明 `geelato-web-quickstart` 的主配置入口，以及如何将各业务模块的配置拆分到独立的 `properties/*.properties` 文件中。
+本页说明 `geelato-web-quickstart` 的主配置入口、各业务模块的配置文件，以及每个模块的关键配置含义。
 
 主配置文件位于：
 
@@ -171,6 +171,509 @@ sidebar_label: 系统配置
 - 容器化部署
 - 不同环境通过环境变量切换
 
+下面按导入顺序逐个说明各模块配置文件。
+
+## Seata 模块
+
+对应配置文件：
+
+- `properties/seata.properties`
+
+### 作用
+
+这个文件用于承载与分布式事务相关的预留配置。
+
+当前主要配置包括：
+
+- `geelato.svcp`
+- `seata.enabled`
+- `seata.application-id`
+- `seata.tx-service-group`
+
+### 关键含义
+
+#### 服务能力开关
+
+- `geelato.svcp`
+
+这是一个模块级能力开关，通常用于控制相关服务能力是否参与当前部署。
+
+#### Seata 开关
+
+- `seata.enabled`
+
+默认仍然是关闭的，说明 quickstart 当前设计不是默认把 Seata 当成必选依赖。
+
+#### 应用与事务组
+
+- `seata.application-id`
+- `seata.tx-service-group`
+
+用于标识当前应用在 Seata 事务体系中的身份和事务组归属。
+
+### 使用建议
+
+- 普通单库或轻量多库场景下，不建议默认开启
+- 只有明确需要分布式事务时，再结合动态数据源与 Seata 能力一起配置
+- 若要进一步做多库事务扩展，继续阅读 [ORM / 数据源扩展](../orm/datasource-extension.md)
+
+### 推荐继续阅读
+
+- [动态数据源](../dynamic-datasource/overview.md)
+- [ORM / 数据源扩展](../orm/datasource-extension.md)
+
+## OSS 模块
+
+对应配置文件：
+
+- `properties/oss.properties`
+
+### 作用
+
+这个文件承载阿里云 OSS 的访问配置，主要用于对象存储接入。
+
+### 关键配置
+
+前缀：
+
+- `geelato.oss.*`
+
+当前包括：
+
+- `accessKeyId`
+- `accessKeySecret`
+- `endPoint`
+- `bucketName`
+- `region`
+
+### 使用说明
+
+这组配置决定：
+
+- 上传文件最终落到哪个 OSS 账号和 Bucket
+- 访问哪个地域的 OSS 端点
+- 后端对象存储能力如何完成鉴权
+
+### 使用建议
+
+- 密钥信息必须通过环境变量注入，不要直接在源码里写死
+- `bucketName` 和 `region` 需要与实际 OSS 资源保持一致
+- 如果未配置 OSS，宿主工程应确保上传能力有合理的本地或其他存储兜底
+
+## Package 模块
+
+对应配置文件：
+
+- `properties/package.properties`
+
+### 作用
+
+这个文件承载打包发布相关的基础路径配置。
+
+### 关键配置
+
+- `geelato.package.env`
+- `geelato.package.path`
+- `geelato.package.uploadFolder`
+
+### 配置含义
+
+#### 环境标识
+
+- `geelato.package.env`
+
+用于标识当前打包逻辑运行在哪个环境。
+
+#### 包输出路径
+
+- `geelato.package.path`
+
+用于指定打包产物或中间文件的存放根路径。
+
+#### 上传目录
+
+- `geelato.package.uploadFolder`
+
+用于指定打包相关上传临时目录。
+
+### 使用建议
+
+- 部署环境应根据机器目录结构显式覆盖默认路径
+- 上传临时目录与正式产物目录建议区分开
+- 如果后续需要更复杂的发布链路，可在此基础上继续扩展
+
+## SC 模块
+
+对应配置文件：
+
+- `properties/sc.properties`
+
+### 作用
+
+这个文件承载 SC 相关能力的开关与站点目录配置。
+
+### 关键配置
+
+- `geelato.sc`
+- `geelato.sc.folder`
+- `geelato.sc.path`
+
+### 配置含义
+
+#### 模块开关
+
+- `geelato.sc`
+
+用于控制 SC 能力是否启用。
+
+#### 目录与访问路径
+
+- `geelato.sc.folder`
+- `geelato.sc.path`
+
+分别用于：
+
+- 指定本地站点文件目录
+- 指定站点对外访问的路径片段
+
+### 使用建议
+
+- 本地目录应与部署机真实文件结构保持一致
+- 若作为静态站点或资源站点目录使用，需要同时考虑 Web 层映射
+- 生产环境建议不要依赖硬编码磁盘路径，优先通过环境变量覆盖
+
+## Auth 模块
+
+对应配置文件：
+
+- `properties/auth.properties`
+
+### 作用
+
+这个文件承载统一认证、微信相关登录以及 `sa-token` 的基础配置。
+
+### 关键配置
+
+#### OAuth2
+
+前缀：
+
+- `geelato.oauth2.*`
+
+当前包括：
+
+- `url`
+- `clientId`
+- `clientSecret`
+
+它们用于：
+
+- 指向统一认证中心地址
+- 标识当前客户端身份
+- 完成客户端鉴权
+
+#### 微信
+
+前缀：
+
+- `geelato.wx.*`
+
+当前包括：
+
+- `url`
+- `appId`
+- `secret`
+- `gzh-appId`
+- `gzh-secret`
+
+它们主要服务于：
+
+- 微信开放能力接入
+- 公众号或相关微信身份能力接入
+
+#### `sa-token`
+
+当前包括：
+
+- `sa-token.token-name`
+- `sa-token.is-share`
+- `sa-token.is-log`
+
+用于控制：
+
+- token 名称
+- 是否共享
+- 是否打印日志
+
+### 使用建议
+
+- `clientSecret`、微信密钥等敏感项必须走环境变量
+- OAuth2 地址应与统一认证部署地址保持一致
+- 如果只是消费统一认证中心 token，还需结合“认证鉴权”章节理解运行时后端如何消费这些凭证
+
+### 推荐继续阅读
+
+- [认证鉴权](../authentication/security-authentication.md)
+- [统一认证](../authentication/overview.md)
+
+## Market 模块
+
+对应配置文件：
+
+- `properties/market.properties`
+
+### 作用
+
+这个文件承载 Market 模块自己的数据源与调试日志配置。
+
+### 关键配置
+
+#### 模块数据源
+
+前缀：
+
+- `spring.datasource.market.*`
+
+包括：
+
+- JDBC URL
+- 用户名
+- 密码
+- 驱动
+
+以及 Hikari 连接池参数：
+
+- `pool-name`
+- `minimum-idle`
+- `maximum-pool-size`
+- `connection-timeout`
+- `idle-timeout`
+- `max-lifetime`
+- `connection-test-query`
+
+#### 日志级别
+
+包括：
+
+- `logging.level.cn.geelato.market`
+- `logging.level.cn.geelato.orm`
+- `logging.level.org.springframework.jdbc`
+
+用于强化：
+
+- Market 模块调试
+- ORM 执行过程观察
+- JDBC 调试输出
+
+### 使用建议
+
+- 如果 Market 使用独立数据库，需显式配置 `GEELATO_MARKET_JDBCURL`
+- 生产环境不建议长期保持 DEBUG 级别
+- 该模块与主库凭据当前复用了主库用户名密码占位变量，部署时要注意是否真的共用同一账号
+
+### 推荐继续阅读
+
+- [动态数据源](../dynamic-datasource/overview.md)
+
+## Message 模块
+
+对应配置文件：
+
+- `properties/message.properties`
+
+### 作用
+
+这个文件承载消息模块的：
+
+- 调度处理参数
+- 消息专用数据源
+- RabbitMQ 连接参数
+
+### 关键配置
+
+#### 调度处理
+
+- `geelato.message.schedule.enabled`
+- `geelato.message.schedule.process-interval`
+- `geelato.message.schedule.batch-size`
+
+用于控制：
+
+- 是否启动消息调度处理
+- 轮询间隔
+- 每批处理数量
+
+#### 模块数据源
+
+前缀：
+
+- `spring.datasource.message.*`
+
+包括：
+
+- JDBC URL
+- 用户名
+- 密码
+- 驱动
+
+以及 Hikari 连接池参数。
+
+#### RabbitMQ
+
+包括：
+
+- `spring.rabbitmq.host`
+- `spring.rabbitmq.port`
+- `spring.rabbitmq.username`
+- `spring.rabbitmq.password`
+- `spring.rabbitmq.virtual-host`
+
+用于连接消息中间件。
+
+### 使用建议
+
+- 如果消息模块独立用库，应显式设置 `GEELATO_MESSAGE_JDBCURL`
+- 若只本地验证，可使用默认 RabbitMQ guest 账号；生产环境必须替换
+- `process-interval` 和 `batch-size` 应根据消息积压量与处理能力调优
+
+## 企业微信模块
+
+对应配置文件：
+
+- `properties/weixin_work.properties`
+
+### 作用
+
+这个文件承载企业微信服务端验签相关参数。
+
+### 关键配置
+
+- `wework.validate.token`
+- `wework.validate.aeskey`
+- `wework.validate.corpid`
+
+### 配置含义
+
+#### Token
+
+- `wework.validate.token`
+
+用于企业微信回调校验时的 token。
+
+#### AES Key
+
+- `wework.validate.aeskey`
+
+用于消息体加解密。
+
+#### CorpId
+
+- `wework.validate.corpid`
+
+用于校验当前企业微信企业身份。
+
+### 使用建议
+
+- 这些参数都属于敏感配置，应优先通过环境变量覆盖
+- 必须与企业微信后台配置保持一致，否则会出现验签失败或消息解密失败
+- 如同时使用微信与企业微信能力，应注意和 `auth.properties` 中的普通微信配置区分，普通微信配置见上文 [Auth 模块](#auth-模块)
+
+## Elasticsearch 模块
+
+对应配置文件：
+
+- `properties/elasticsearch.properties`
+
+### 作用
+
+这个文件承载 Elasticsearch 连接参数。
+
+### 关键配置
+
+- `geelato.es.url`
+- `geelato.es.username`
+- `geelato.es.password`
+
+### 配置含义
+
+这组配置决定：
+
+- 连接哪个 Elasticsearch 服务
+- 使用哪个账号鉴权
+
+同时在主配置里还存在：
+
+- `geelato.es.debug`
+- `geelato.es.debug-max-length`
+
+它们用于控制调试输出。
+
+### 使用建议
+
+- 生产环境不要把明文密码直接保留在源码默认值中
+- 调试开关开启时，要关注日志量和敏感信息暴露
+- 地址中不要保留多余空格，避免部署环境下解析异常
+
+## Monitor 模块
+
+对应配置文件：
+
+- `properties/monitor.properties`
+
+### 作用
+
+这个文件承载辅助套件监控能力配置。
+
+### 关键配置
+
+前缀：
+
+- `geelato.monitor.auxiliary-suites.*`
+
+当前包括：
+
+- `enabled`
+- `poll-interval-seconds`
+- `connect-timeout-seconds`
+- `read-timeout-seconds`
+- `suites-json`
+
+### 配置含义
+
+#### 开关
+
+- `enabled`
+
+用于控制辅助套件监控是否启用。
+
+#### 轮询与超时
+
+- `poll-interval-seconds`
+- `connect-timeout-seconds`
+- `read-timeout-seconds`
+
+用于控制：
+
+- 监控检查频率
+- HTTP 连接超时
+- 响应读取超时
+
+#### 监控目标
+
+- `suites-json`
+
+用于定义被监控的外部套件列表。
+
+当前默认示例里包含：
+
+- OpenAPI 健康检查地址
+
+### 使用建议
+
+- 若监控目标较多，应根据实际情况调整轮询频率
+- `suites-json` 建议保持结构化和可读性，避免把过多复杂逻辑堆在单个字符串里
+- 外部监控地址应优先使用可稳定访问的健康接口
+
 ## 分模块配置如何理解
 
 `properties/` 目录下的每个文件都对应一个专项能力模块。
@@ -184,7 +687,7 @@ sidebar_label: 系统配置
 
 - `auth.properties` 负责认证相关参数
 - `message.properties` 负责消息模块和 RabbitMQ
-- `workflow.properties` 负责工作流和 Druid
+- `workflow.properties` 负责工作流和 Druid（配置文档见 [Workflow 模块](workflow.md)）
 - `oss.properties` 负责对象存储
 
 这种拆分方式有利于：
@@ -201,11 +704,3 @@ sidebar_label: 系统配置
 - 模块专项能力尽量放到 `properties/*.properties`
 - 环境差异优先通过环境变量覆盖，而不是直接改源码默认值
 - 敏感信息如密钥、密码、仓库地址优先走环境变量
-
-## 推荐继续阅读
-
-- [Workflow 模块](workflow.md)
-- [Auth 模块](auth.md)
-- [Message 模块](message.md)
-- [OSS 模块](oss.md)
-- [Monitor 模块](monitor.md)

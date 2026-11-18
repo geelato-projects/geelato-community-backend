@@ -231,4 +231,4 @@ sidebar_label: 文件下载
 ## 推荐继续阅读
 
 - [文件上传](upload.md)
-- [OSS 模块](../system-config/oss.md)
+- [OSS 模块](../system-config/overview.md#oss-模块)

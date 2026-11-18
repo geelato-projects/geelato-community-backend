@@ -1,77 +1,89 @@
+---
+title: API Reference
+sidebar_label: API Reference
+---
 # API Reference
 
-The official API documentation follows a dual-track model.
+Static reference for all REST endpoints under the platform package `cn.geelato.web.platform.srv` — 90 controllers and 500+ endpoints.
 
-## Standard Contract
+This chapter is organized by business domain: one page per domain (srv sub-package), sections per controller, and one table per endpoint covering URL, parameters, and result. The information is extracted directly from source signatures and kept in sync with the code.
 
-**OpenAPI** is the official external contract standard.
+## Conventions
 
-It should become the default entry for:
+### URL prefix
 
-- external integrators
-- runtime API consumers
-- interface contract review
-- future gateway or client generation
+- Controllers annotated with the custom `@ApiRestController` family (including `@DesignTimeApiRestController` and `@ApiRuntimeRestController`) automatically get an `/api` prefix at runtime: actual URL = `/api` + class-level path + method-level path.
+- A few controllers using the plain `@Controller` / `@RestController` annotations do not get the `/api` prefix (e.g. the `/package` endpoints of app packaging); always follow the URL shown on each endpoint.
+- The prefix is registered by `ApiPrefixAutoConfiguration` and only applies to the quickstart host.
 
-## Static Supplement
+### Common headers
 
-**SrvExplain** remains valuable as a generated static supplement because it can:
+- `appId`: application identifier; accepts `appId` / `AppId` / `App-Id`.
+- `tenantCode`: tenant code; accepts `tenantCode` / `TenantCode` / `Tenant-Code`, falling back to the current session when absent.
 
-- scan current controllers directly from source
-- expose undocumented controller endpoints during transition
-- provide controller-level markdown references
+These apply to every endpoint and are not repeated in per-endpoint parameter tables.
 
-## Current State
+### Pagination parameters
 
-At the moment:
+Shared by list/paged endpoints:
 
-- OpenAPI support exists in the quickstart side through `springdoc`
-- `SrvExplain` is already generated and available in the repository
-- the platform still relies heavily on `MetaController + MQL` for internal generic data access
+- `pageNum`: page number, aliases `current` and `page`. When absent in a GET request it defaults to `-1`, meaning no pagination (full result); when absent in a POST body it defaults to `1`; values `< 1` fail hard.
+- `pageSize`: page size, alias `limit`. When absent in a GET request it defaults to `-1` (full result); when absent in a POST body it defaults to `10`; values are clamped to `[1, 1000]`.
+- `orderBy`: sorting, alias `order`; default `seq_no ASC,update_at DESC`.
 
-## Relationship with MQL
+### Filter conditions
 
-`MQL` is not the official external contract. It is the platform's internal metadata access protocol.
+Query or body keys support the `fieldName|operator` syntax (e.g. `name|like`); only keys matching existing entity fields are kept. The default operator is `eq`; `bt` (between, two values), `nil` (is null) and others are supported.
 
-It is mainly used for:
+### Design-time endpoints
 
-- frontend pages that access entities through JSON payloads
-- generic platform data endpoints
-- low-code or metadata-driven configuration scenarios
+Controllers marked with ⚙ are design-time endpoints (`@DesignTimeApiRestController`), mainly consumed by the designer / IDE; the rest are runtime endpoints (`@ApiRestController`). Controllers annotated with `@ApiRuntimeRestController` whose category is `platform-design` are also marked as design-time.
 
-Recommended interpretation:
+## Unified result structure
 
-- OpenAPI: official external contract
-- `SrvExplain`: source-derived static supplement
-- MQL: internal platform data protocol
+| Field | ApiResult | ApiPagedResult | ApiMetaResult | Description |
+| --- | --- | --- | --- | --- |
+| `code` | ✓ | ✓ | ✓ | Result code, `200` for success |
+| `msg` | ✓ | ✓ | ✓ | Message |
+| `status` | ✓ | ✓ | ✓ | Status |
+| `data` | ✓ | ✓ | ✓ | Data |
+| `cache` | ✓ | ✓ | ✓ | Cache flag |
+| `total` / `page` / `size` / `dataSize` | — | ✓ | — | Total / page / size / row count of current page |
+| `meta` | — | ✓ | ✓ | Metadata |
 
-## Recommended Official Presentation
+`ApiMultiPagedResult` returns `data` as `Map<String, PageData>`, where `PageData` contains `total` / `page` / `size` / `dataSize` / `data` / `meta`, used when one request pages multiple entities.
 
-- Primary entry: OpenAPI
-- Supplementary entry: `SrvExplain/index.md`
-- Platform protocol entry: see [MQL](../mql/overview.md)
-- Static controller catalog: see [SrvExplain API Catalog](srvexplain-catalog.md)
+## Domain index
 
-## Repository Entry Points
+| Domain | Controllers | Endpoints |
+| --- | --- | --- |
+| [AI Assistant](./srv/ai.md) | 1 | 1 |
+| [Announcements](./srv/announcement.md) | 1 | 2 |
+| [Arco Components](./srv/arco.md) ⚙ | 1 | 1 |
+| [Authentication](./srv/auth.md) | 2 | 18 |
+| [Platform Basics](./srv/base.md) | 15 | 46 |
+| [Excel Import/Export](./srv/excel.md) | 3 | 17 |
+| [Files & Attachments](./srv/file.md) | 3 | 21 |
+| [Gray Release Rules](./srv/gray.md) | 1 | 2 |
+| [Metadata](./srv/meta.md) | 2 | 26 |
+| [Data Modeling](./srv/model.md) ⚙ | 7 | 48 |
+| [Materialized Views](./srv/mv.md) ⚙ | 1 | 13 |
+| [Notifications](./srv/notification.md) | 1 | 9 |
+| [OCR](./srv/ocr.md) | 6 | 24 |
+| [ORM Hooks](./srv/ormhook.md) | 1 | 7 |
+| [App Packaging](./srv/pack.md) | 2 | 12 |
+| [Apps & Platform Config](./srv/platform.md) | 13 | 80 |
+| [Periodic Reports](./srv/report.md) | 1 | 5 |
+| [Script & External Services](./srv/script.md) | 5 | 16 |
+| [Security & Permissions](./srv/security.md) | 19 | 125 |
+| [App Settings](./srv/settings.md) | 1 | 3 |
+| [Static Sites](./srv/site.md) ⚙ | 1 | 13 |
+| [Tenants](./srv/tenant.md) ⚙ | 1 | 8 |
+| [WeCom](./srv/weixin.md) | 1 | 5 |
+| [Barcode](./srv/zxing.md) | 1 | 9 |
 
-- `SrvExplain/README.md`
-- `SrvExplain/index.md`
-- `geelato-web-quickstart/src/main/java/cn/geelato/web/swagger/SwaggerConfig.java`
+## Standard contract and supplementary entries
 
-## Full SrvExplain Catalog
-
-The official site now includes a static API catalog grouped by module:
-
-- [SrvExplain API Catalog](srvexplain-catalog.md)
-
-This catalog pulls the currently generated controller documents from `SrvExplain/` into the API chapter for easier browsing and navigation.
-
-## Migration Direction (Evolution, Not Current State)
-
-> The following is the target-state direction for the API documentation model. It is not a description of the current delivery.
-
-The long-term direction is not to remove `SrvExplain`, but to reposition it as:
-
-- static source-derived supplement
-- migration aid
-- internal completeness checker
+- **OpenAPI** is the official standard contract for external integrations, runtime API consumption, API review, and gateway / client generation; the capability lives in the `springdoc` setup of the quickstart host.
+- This static reference is extracted directly from source and serves as the supplementary entry for browsing by controller.
+- `MQL` is not an external standard contract but the platform-internal universal metadata access protocol; see [MQL](../mql/overview.md).

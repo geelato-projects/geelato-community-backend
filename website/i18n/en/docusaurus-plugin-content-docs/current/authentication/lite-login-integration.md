@@ -1,8 +1,12 @@
+---
+id: lite-login-integration
+title: lite-login Third-Party Integration
+sidebar_label: lite-login Integration
+---
+
 # lite-login Third-Party Integration
 
-This page explains how any third-party application can integrate with the `lite-login` lightweight login facade provided by the unified authentication center.
-
-This guide focuses on two things:
+This page explains how any third-party application can integrate with the `lite-login` lightweight login facade provided by the unified authentication center, focusing on two things:
 
 - how the frontend obtains the token issued by `auth-server`
 - how the third-party backend uses that token to call OAuth endpoints and confirm user identity
@@ -69,6 +73,32 @@ Each third-party application should keep its own:
 ```
 
 That page is only the third-party handoff page and should not implement username-password authentication itself.
+
+## Login Methods
+
+The `lite-login` page ships with the following login methods — business systems need no extra development:
+
+- **Username-password login**: with graphic / slider / rotate captchas (as configured in the auth center).
+- **SMS verification-code login**: mobile phone + code; the code channel is isolated from the forgot-password channel.
+- **Third-party login**: the page automatically renders the third-party providers enabled for the current tenant (WeChat, WeCom, Feishu, DingTalk); clicking redirects to the corresponding platform for authorization; unbound users go through an "verify account-password then bind" flow.
+- **Forgot / reset password**: built into the login page.
+- **First-login forced password change**: users created through account provisioning (see [Data Integration](data-integration.md)) carry a forced-change flag in the login result; the frontend guides them through the change accordingly.
+
+Underlying Lite authentication APIs (provided by the auth center's `geelato-auth-login`; you can also call them directly to build your own login UI):
+
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/api/auth/login` | Password or SMS login; body: `{username, password?, captchaToken?, scene?, loginType?, authCode?}`; `loginType=sms` switches to SMS verification |
+| POST | `/api/auth/login/sms/send` | Send the login SMS code (unregistered numbers are rejected) |
+| POST | `/api/auth/refresh` | Refresh the token; body: `{refreshToken}` |
+| POST | `/api/auth/logout` | Log out the current session |
+| GET | `/api/auth/captcha`, `/slider`, `/rotate`, etc. | Captcha image and verification endpoints |
+| GET | `/api/oauth2/providers` | Third-party providers enabled for the current tenant |
+| GET | `/api/oauth2/authorize/{provider}` | Start third-party authorization (302 to the platform) |
+| POST | `/api/oauth2/callback` | Third-party callback (unbound users get `2001 needBind` plus a `bindToken` valid for 5 minutes) |
+| POST | `/api/oauth2/bind` | Complete binding with `bindToken` + account-password, then log in |
+
+> Login is risk-controlled: repeated failures trigger account locking (`423`) and rate limiting (`429`); surface these response codes as hints.
 
 ## Frontend Integration Flow
 
@@ -147,6 +177,9 @@ The frontend should at least handle:
   - the token payload exists in `data`
 - `LOGIN_CLOSE`
   - the user closes or cancels login
+- `SET_LOCALE`
+  - the parent page controls the display language of the embedded `lite-login`
+  - mainly for host pages that manage multi-language state centrally
 
 ### `LOGIN_SUCCESS` Payload
 
@@ -162,7 +195,16 @@ The frontend should at least be compatible with this structure:
     "expireInSeconds": 7199,
     "tokenType": "Bearer",
     "issuer": "auth-server",
-    "user": {}
+    "user": {
+      "id": "123",
+      "username": "zhangsan",
+      "nickname": "Zhang San",
+      "email": "zhangsan@example.com",
+      "mustChangePassword": false,
+      "mobilePrefix": "+86",
+      "mobilePhone": "13800000000",
+      "phone": "+8613800000000"
+    }
   }
 }
 ```
@@ -171,6 +213,86 @@ Use this priority when extracting the token:
 
 1. `accessToken`
 2. `token`
+
+**First-login forced password change**: when `user.mustChangePassword === true`, the account was created by the account-provision flow and its initial password must be changed on first login. After receiving `LOGIN_SUCCESS`, guide the user to the change-password flow (the auth center ships a reset page at `/oauth2/lite-reset`, or build a custom one); the verification-code parameters can be taken directly from `mobilePrefix` / `mobilePhone` in the contract. Do not let the user into the business system before the change completes.
+
+### Embedded Language Control
+
+When `lite-login` is embedded in a third-party application via iframe with `display=embedded`, the language switcher is no longer exposed by the embedded page itself — the parent page controls it centrally.
+
+This design has two purposes:
+
+- the host page maintains its own language state without a second switch inside the iframe
+- embedded login is usually just part of the host's login flow, so following the host's language feels natural
+
+Current constraints:
+
+- applies only to `/oauth2/lite-login?display=embedded`
+- supported locale values are `zh-CN` and `en-US`
+- invalid values fall back to the default locale via the system's existing logic
+
+### How the Parent Page Switches the Embedded Page's Language
+
+Depending on whether the parent page and the auth center share the same origin, use one of two approaches:
+
+#### Approach 1: same-origin iframe direct call
+
+If the parent page and `lite-login` are same-origin, call the global method exposed by the child page directly:
+
+```ts
+iframe.contentWindow?.setLiteLoginLocale?.('en-US')
+```
+
+This fits:
+
+- host page and `lite-login` sharing the same domain
+- or both being unified under one origin via a reverse proxy
+
+#### Approach 2: cross-origin iframe via `postMessage`
+
+If the parent page and `lite-login` have different origins, the parent cannot access `contentWindow.setLiteLoginLocale`; send a language-switch message via `postMessage` instead:
+
+```ts
+iframe.contentWindow?.postMessage(
+  {
+    type: 'SET_LOCALE',
+    data: {locale: 'en-US'}
+  },
+  targetOrigin
+)
+```
+
+Recommendations:
+
+- write `targetOrigin` explicitly as the auth center domain — never `*`
+- after the parent completes its own language switch, notify the embedded page to follow
+
+### `SET_LOCALE` Message Contract
+
+In cross-origin scenarios, the message the parent page sends to `lite-login` looks like:
+
+```json
+{
+  "type": "SET_LOCALE",
+  "data": {
+    "locale": "en-US"
+  }
+}
+```
+
+Field notes:
+
+- `type`
+  - fixed value `SET_LOCALE`
+- `data.locale`
+  - target locale
+  - recommended values: `zh-CN`, `en-US`
+
+Security requirements:
+
+- `lite-login` still validates the message origin
+- the parent page must not rely on "any origin may send messages"
+- for cross-origin deployments, make sure the auth center side has configured trusted origins
 
 ### Correct Action After Login Success
 
@@ -320,6 +442,38 @@ const handleSsoMessage = (event: MessageEvent) => {
 
 If the application wants the backend to confirm identity immediately, it may call any of its own backend endpoints right after login success, but that is not a mandatory platform rule.
 
+### Parent-Page Language Control Pseudocode
+
+If the host page supports switching between Chinese and English, fold the iframe language sync into the same switch action:
+
+```ts
+const syncLiteLoginLocale = (iframe: HTMLIFrameElement, locale: 'zh-CN' | 'en-US') => {
+  const childWindow = iframe.contentWindow
+  if (!childWindow) return
+
+  try {
+    childWindow.setLiteLoginLocale?.(locale)
+    return
+  } catch (error) {
+    // cross-origin falls into message mode
+  }
+
+  childWindow.postMessage(
+    {
+      type: 'SET_LOCALE',
+      data: {locale}
+    },
+    liteSsoOrigin
+  )
+}
+```
+
+Recommended wiring:
+
+1. the host page updates its own i18n state first
+2. then calls `syncLiteLoginLocale(iframe, locale)`
+3. if the iframe has not finished loading, re-send the current locale after its `load` event
+
 ## Backend Pseudocode
 
 ```java
@@ -348,6 +502,7 @@ If old-structure compatibility is required, keep the parsing logic inside a shar
 - can it extract `accessToken/token` correctly
 - can it attach `Authorization` automatically in later requests
 - can it clear local state when the token expires
+- does it handle the first-login forced password change when `user.mustChangePassword=true`
 
 ### Backend Checklist
 
@@ -359,6 +514,16 @@ If old-structure compatibility is required, keep the parsing logic inside a shar
 
 ## FAQ
 
+### What should I do when `mustChangePassword=true`
+
+The user was created by the account-provision flow (approval platform) and must change the initial password on first login. Standard handling:
+
+1. read `user.mustChangePassword` from `LOGIN_SUCCESS`
+2. when it is `true`, redirect to the change-password page (the auth center ships `/oauth2/lite-reset`, or build a custom one) and complete the change using `mobilePrefix` / `mobilePhone` from the contract to send the verification code
+3. only let the user into the business system after the change succeeds
+
+For the full account-provision semantics, see [Data Integration](data-integration.md).
+
 ### Why does the app return to the login page right after successful login
 
 Check these first:
@@ -366,6 +531,34 @@ Check these first:
 - whether the request sent to the third-party backend actually includes the Bearer token
 - whether `/oauth2/userinfo` is still parsed as the old structure
 - whether the unauthenticated frontend fallback mistakenly treats `lite-login` as a normal business page
+
+### Why is there no language switcher in embedded mode
+
+This is expected behavior.
+
+In `display=embedded` mode, language switching is controlled by the parent page; the embedded page no longer exposes its own switcher to avoid a language-state mismatch between host and embedded page.
+
+### Why can't the parent call `contentWindow.setLiteLoginLocale` directly across origins
+
+Because the browser's same-origin policy blocks the parent from accessing runtime objects of a cross-origin iframe.
+
+In that case use:
+
+```ts
+iframe.contentWindow?.postMessage(
+  {
+    type: 'SET_LOCALE',
+    data: {locale: 'en-US'}
+  },
+  liteSsoOrigin
+)
+```
+
+### Why must `SET_LOCALE` also validate its origin
+
+Because it is still a cross-window control message.
+
+Without origin validation, any page could forge language-switch messages, making integration behavior uncontrollable. Even though such messages carry no sensitive credentials, they should satisfy the same security requirements as the login messages.
 
 ### Why can't we trust the token and user returned directly to the frontend
 
@@ -389,7 +582,7 @@ Use this pattern consistently:
 
 - the authentication center provides a unified `lite-login`
 - each third-party application keeps its own `/login`
-- each third-party frontend follows embedded login, `postMessage`, token storage, and automatic Bearer propagation
+- each third-party frontend follows embedded login, `postMessage`, parent-controlled embedded language, token storage, and automatic Bearer propagation
 - each third-party backend follows Bearer extraction, `/oauth2/userinfo`, `data.user`, and application-specific identity mapping
 
 With this pattern, onboarding a new third-party application only requires changing:

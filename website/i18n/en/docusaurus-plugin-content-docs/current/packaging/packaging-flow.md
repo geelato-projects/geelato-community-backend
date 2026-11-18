@@ -102,4 +102,4 @@ After upload and registration the version can be deployed from the target enviro
 
 - [Deploying Application Packages](deployment-flow.md): validation, persistence and activation on the target environment
 - [Packaged Contents & Runtime Roles](contents.md): what each table in the package does at runtime
-- [System Modules: Package](../system-config/package.md): the `geelato.package.*` keys
+- [System Configuration: Package Module](../system-config/overview.md#package-module): the `geelato.package.*` keys

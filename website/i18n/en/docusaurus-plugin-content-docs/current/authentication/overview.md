@@ -1,26 +1,34 @@
+---
+id: overview
+title: Independent Service — Unified Authentication Center
+sidebar_label: Unified Auth Center
+---
+
 # Independent Service: Unified Authentication Center
 
 > **Note: Unified Authentication is not considered a built-in core framework capability. It is essentially an independent Unified Authentication Center (Auth Server) service.**
 >
-> It primarily provides three integration capabilities:
-> 1. **Standardized OAuth2 integration**
-> 2. **Lightweight lite-login integration**
-> 3. **Machine-to-machine integration (client_credentials)**
+> It provides three integration blocks to the outside:
+> 1. **Login Integration** — business systems adopt unified login: Lite lightweight integration, OAuth2 protocol integration (including machine-to-machine), and Data Integration (org / user / role sync)
+> 2. **Permission Integration** — adopt unified permission management (five-type permission distribution, mirrors, data-permission injection)
+> 3. **Management Integration** — integrators self-manage their own business data via the Open API
 >
-> This chapter focuses on how internal and external business systems integrate with this independent auth center, delegating user login and identity recognition to it.
+> This chapter focuses on how internal and external business systems integrate with this independent auth center, delegating user login, identity recognition, and permission data to it.
 
-## Integration Methods: Comparison & Selection
+## Login Integration: comparison of the three methods
 
-The Auth Center provides three integration methods. External business systems can choose flexibly based on their tech stack and frontend interaction requirements:
+Login integration offers three methods. External business systems can choose flexibly based on their tech stack and frontend interaction requirements:
 
-| Dimension | Method 1: Lightweight `lite-login` | Method 2: Standard OAuth2 | Method 3: Machine-to-Machine |
+| Dimension | Method 1: Lite lightweight integration | Method 2: OAuth2 protocol integration (incl. M2M) | Method 3: Data integration |
 | --- | --- | --- | --- |
-| **Core Mechanism** | The Auth Center provides a ready-to-use frontend login facade (`lite-login`), pushing the token to the business frontend via cross-domain `postMessage`. | Uses the standard OAuth2 Authorization Code Flow, exchanging tokens via server-to-server redirects. | Exchanges `client_id` + `client_secret` directly for a machine token (client_credentials), with no user interaction. |
-| **Frontend Interaction** | The business system embeds `lite-login` via iframe or opens it in a new window. **No need** for the business system to write a login UI; the UX is seamless. | A **full-page browser redirect** occurs, jumping to the Auth Center's unified login page, then redirecting back to the business system. | No frontend involvement; pure server-side calls. |
-| **Integration Complexity** | **Very Low**. Primarily frontend integration. The business backend only needs an interceptor to validate the Bearer token. | **Medium**. Requires the business backend to support a complete OAuth2 client protocol stack. | **Very Low**. A single HTTP call to obtain a token. |
-| **Use Cases** | 1. Modern frontend-backend separated architectures (Vue/React, etc.)<br/>2. Wanting to pop up a login box directly within the business system (without leaving the page)<br/>3. Pure frontend SPA applications | 1. **Any application with an independent backend**<br/>2. Strict security requirements where tokens must never be exposed to the browser<br/>3. Existing external systems with built-in standard OAuth2 Client modules | 1. Server-to-server integration and scheduled jobs without user participation<br/>2. Integrators self-managing roles/users/permissions via the Open API (`/api/open/v1/**`) |
-| **Token Identity** | Logged-in user | Logged-in user | The application itself (`client_id`), representing no user |
-| **How to Integrate** | [Read the lite-login Integration Guide](lite-login-integration.md) | [Read the Standard OAuth2 Integration Guide](oauth2-integration.md) | [Read the Machine-to-Machine Integration Guide](client-credentials-integration.md) |
+| **Core Mechanism** | The Auth Center provides a ready-to-use frontend login facade (`lite-login`), pushing the token to the business frontend via cross-domain `postMessage`. | Standard OAuth2: with user involvement use the Authorization Code Flow (token exchange via server-side redirects); without user involvement use `client_credentials` (machine-to-machine) to obtain a machine token directly. | Sync org, user, role and relationship data into your system — or provision user data into the auth center — via the Open API / SDK / account-provision API. |
+| **Frontend Interaction** | The business system embeds `lite-login` via iframe or opens it in a new window. **No need** for the business system to write a login UI; the UX is seamless; in embedded mode the host page can control the display language. | Authorization code: a **full-page browser redirect** to the unified login page, then redirecting back. Machine-to-machine: no frontend involvement; pure server-side calls. | No login interaction involved. |
+| **Integration Complexity** | **Very Low**. Primarily frontend integration. The business backend only needs an interceptor to validate the Bearer token. | Authorization code: **Medium**, requires a standard OAuth2 client protocol stack in the backend; machine-to-machine: **Very Low**, a single HTTP call to obtain a token. | **Low**. REST APIs or a Java SDK, ready to use. |
+| **Use Cases** | 1. Modern frontend-backend separated architectures (Vue/React, etc.)<br/>2. Wanting to pop up a login box directly within the business system (without leaving the page)<br/>3. Pure frontend SPA applications | Authorization code: 1. **Any application with an independent backend** 2. Strict security where tokens must never be exposed to the browser 3. Existing systems with built-in standard OAuth2 Client modules. Machine-to-machine: service-to-service integration, scheduled jobs, Open API calls. | 1. Initializing org / user / role data for a new system<br/>2. Business backends querying user / org data (picker components)<br/>3. Approval flows auto-provisioning accounts per request |
+| **Token Identity** | Logged-in user | Logged-in user (authorization code) / the application itself (machine token, `client_id`) | The calling application itself (machine token) |
+| **How to Integrate** | [Read the Lite Login Integration Guide](lite-login-integration.md) | [Read the OAuth2 Protocol Integration Guide](oauth2-integration.md) | [Read the Data Integration Guide](data-integration.md) |
+
+Login capability checklist (supported by both the unified login page and the Lite API): username-password login, SMS verification-code login, graphic / slider / rotate captchas, forgot-password, third-party login (WeChat, WeCom, Feishu, DingTalk), first-login forced password change guidance.
 
 ## What Unified Authentication Solves
 
@@ -28,10 +36,10 @@ The main goal is to decouple authentication from each business system's own sess
 
 - `auth-server` issues tokens independently and centrally, acting as the only trusted identity source.
 - `lite-login` provides the lightweight, cross-domain embeddable login frontend facade.
-- The business system frontend (third-party application) receives the token and passes it to its own backend business service.
-- The business system backend confirms the real user identity against the independent authentication center using the token.
+- The business system frontend (the third-party application) obtains the token and passes it to its own backend.
+- The business system backend takes the token and confirms the user's real identity with the independent auth center.
 
-With this model, whenever a new portal, SaaS application, or customer-owned system is added, there is no need for each system to repeat a "username + password" login flow. It can delegate this entirely to the independent authentication center service.
+This way, whether it is a new portal, a SaaS, or a customer-owned system, none of them needs to re-implement its own "username + password" authentication flow — everything is delegated to the independent auth center.
 
 ## Core Components
 
@@ -41,78 +49,80 @@ With this model, whenever a new portal, SaaS application, or customer-owned syst
 
 It is responsible for:
 
-- issuing access tokens
-- exposing OAuth endpoints such as `/oauth2/userinfo`
-- acting as the trusted identity source for third-party backends
+- Issuing access tokens (OAuth2 protocol endpoints: authorize / token / client_token / introspect / userinfo, etc.)
+- Centrally managing org / user / role / menu / permission data
+- Distributing users' effective permissions and visible menus
+- Acting as the trusted source for third-party application backends to confirm user identity
 
 ### `lite-login`
 
-`lite-login` is the lightweight login facade exposed by the unified authentication center.
+`lite-login` is the lightweight login facade provided by the unified auth center.
 
 It is responsible for:
 
-- hosting the login interaction
-- supporting iframe embedding or popup-based integration
-- returning login results to the third-party frontend through `postMessage`
+- Hosting the login interaction (password / SMS / third-party login)
+- Supporting embedding via iframe or a new window in third-party applications
+- Returning the login result to the third-party frontend via `postMessage`
+- In `display=embedded` mode, letting the parent page control language switching
 
-## Scope
+## Scope of Application
 
 Recommended for:
 
-- third-party portals
-- third-party SaaS systems
-- customer-owned systems
-- frontend-backend separated applications that need embedded login
-- independently deployed systems that want to reuse the central authentication service
+- Third-party portals
+- Third-party SaaS
+- Customer-owned systems
+- Frontend-backend separated applications that need to embed the unified login page
+- Externally deployed systems that want to reuse the unified auth center
 
-Not intended for:
+Not applicable to:
 
-- the original platform-internal `admin-sso` hosted login mode
-- monolithic login pages hosted directly inside `auth-server templates`
+- The platform's internal `admin-sso` original login page hosting mode
+- Traditional all-in-one login pages hosted directly in `auth-server templates`
 
-## Responsibility Boundary
+## Responsibility Boundaries
 
-### Authentication Center
+### Auth center responsibilities
 
 - `auth-server` is the only token issuer
 - `lite-login` is the lightweight login facade
-- `lite-login` returns the token after login succeeds
-- the final trusted user identity still comes from backend confirmation through `/oauth2/userinfo`
+- After login succeeds, `lite-login` returns the token
+- The user's real identity is ultimately determined by the backend calling `/oauth2/userinfo`
 
-### Third-Party Frontend
+### Third-party application frontend responsibilities
 
-- opens or embeds `lite-login`
-- listens to `postMessage`
-- extracts `accessToken` or `token`
-- stores the token temporarily
-- passes `Authorization: Bearer <token>` to its own backend
+- Open or embed `lite-login`
+- Listen to `postMessage`
+- Extract `accessToken` or `token`
+- Temporarily store the token
+- Attach `Authorization: Bearer <token>` when calling its own backend
 
-### Third-Party Backend
+### Third-party application backend responsibilities
 
-- reads the Bearer token from request headers
-- calls `/oauth2/userinfo`
-- extracts `data.user`
-- establishes account mapping, permission context, or local session state
+- Read the Bearer token from the request header
+- Call the auth center's `/oauth2/userinfo`
+- Extract `data.user` from the response
+- Build its own account mapping, permission context, or local session
 
-## Boundary between Independent Service, Framework and Platform Capabilities
+## Boundaries with the Framework and Platform Capabilities
 
-Recommended boundaries between the independent Auth Server and the Geelato framework and platform capabilities:
+Suggested boundaries between the independent Auth Server and Geelato framework / platform capabilities:
 
-- **Auth Server (Independent Service)**: How the business system integrates, gets the central token, and confirms user identity.
-- **Security Authentication (Framework Capability)**: How the business system consumes the token in the platform runtime and establishes the authenticated subject for the current request.
-- **Runtime Security Chain (Framework Capability)**: How to establish backend security context after authentication succeeds.
-- **MQL (Platform Capability)**: How the frontend and the platform protocol side access business data after identity is confirmed.
-- **ORM (Framework Capability)**: How backend Java services access business data.
+- **Auth Server (independent service)**: solves "how business systems integrate, obtain a unified token, confirm user identity, and sync master data & permissions".
+- **Security authentication (framework capability)**: solves "how the platform runtime consumes the token and establishes the request's auth principal".
+- **Runtime chain (framework capability)**: solves "how the backend establishes the security context after authentication".
+- **MQL (platform capability)**: solves "how the frontend and the platform protocol side access business data after identity is confirmed".
+- **ORM (framework capability)**: solves "how backend Java services access business data".
 
-Important note:
+Special notes:
 
-- the `user` returned in `LOGIN_SUCCESS` is only auxiliary display data on the frontend
-- the final trusted identity must be confirmed by the backend
-- `SecurityContext` must only be written from the internal authenticated security flow
+- The `user` obtained from `LOGIN_SUCCESS` on the frontend is display-auxiliary information only
+- The trusted identity must always be the backend-confirmed result
+- `SecurityContext` can only be set inside the security chain after successful authentication
 
-## Entry Constraint
+## Unified Entry Constraint
 
-Use the explicit lightweight login entry:
+The recommended unified entry is:
 
 ```text
 https://<auth-host>/lite-login
@@ -124,14 +134,15 @@ Do not reuse:
 /login?display=embedded
 ```
 
-Each third-party application should still keep its own `/login` page as the entry handoff page, but it should not implement username-password authentication itself.
+Each third-party application should still keep its own `/login` page, but only as a landing page — it should not perform username-password authentication itself.
 
 ## Recommended Reading Order
 
-1. [lite-login Integration Guide](lite-login-integration.md)
-2. [Standard OAuth2 Integration Guide](oauth2-integration.md)
-3. For server-side scenarios without user interaction, see the [Machine-to-Machine Integration Guide](client-credentials-integration.md)
-4. To integrate unified permission management (mirror tables / data-permission injection), see the [Permission Integration Guide](permission-integration.md)
-5. To self-manage your system's data (roles / users / organizations / sessions) and build your own admin UI via the Open API, see the [Open Management API](open-api-management.md)
-6. To understand how the framework consumes Tokens, see [Platform Capabilities: Authentication](security-authentication.md)
-7. To understand the security context, see [Security Contract: Security Context](../security/context.md)
+1. Decide the **login integration method** and follow its guide:
+   - [Lite Login Integration](lite-login-integration.md) (ready-made login page, iframe / popup embedding, postMessage return)
+   - [OAuth2 Protocol Integration](oauth2-integration.md) (authorization code flow / machine-to-machine client_credentials)
+2. To **sync org / user / role data**: [Data Integration](data-integration.md) (Open API / SDK / account provision / SQL scripts)
+3. To adopt **unified permission management** (five-type permission distribution / mirror tables / data-permission injection): [Permission Integration](permission-integration.md)
+4. To **self-manage your own system's data** and build your own admin UI: [Management Integration](open-api-management.md) (Open API endpoint reference)
+5. How the framework consumes tokens: [Platform Capability: Authentication](security-authentication.md)
+6. Security context: [Security Contract: Security Context](../security/context.md)

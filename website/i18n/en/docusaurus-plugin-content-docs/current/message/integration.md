@@ -136,30 +136,3 @@ curl -X POST "http://localhost:8080/message/enqueue" \
     "receiver": "{\"type\":\"weixinWorkUserId\",\"list\":[\"zhangsan\",\"lisi\"]}"
   }'
 ```
-
----
-
-## 4. Database Direct Enqueue
-
-For batch data filling or offline scripts, you can insert data directly into the `platform_msg` table.
-
-**Note:**
-1. The primary key `id` must be generated using the Snowflake algorithm.
-2. Database enqueue **will not** automatically fill in the `route` field. You must hardcode the corresponding RouteHandler Name (e.g., `tenantSmsRouteHandler`) based on the `type`.
-3. The database will not validate input parameters. Please ensure the JSON formats of `receiver` and `content` are completely correct before writing.
-
-**SQL Template Example (SMS):**
-```sql
-INSERT INTO platform_msg
-(id, title, content, sender, receiver, type, status, channel, route, tenant_code,
- idempotency_key, biz_key, priority, source_system, del_status, update_at, updater,
- create_at, creator, buss, plan_send_time, retry_count, max_retry_count, archive_status,
- trace_id, channel_detail, receiver_snapshot)
-VALUES
-('331286567354241051', 'Test Message', 'Message Content', 'sender_001',
- '{"type":"mobilePhone","list":["13800138000"]}', 'sms', 'ready', 'default',
- 'tenantSmsRouteHandler', 'demo_tenant', 'biz_demo_001', 'biz_demo_001', 0, 'demo-script', 0,
- NOW(), 'system', NOW(), 'system', 'demo', NOW(), 0, 5, 'hot',
- 'trace_demo_001', 'route=tenantSmsRouteHandler',
- '{"type":"mobilePhone","list":["13800138000"]}');
-```

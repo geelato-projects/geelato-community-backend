@@ -135,30 +135,3 @@ curl -X POST "http://localhost:8080/message/enqueue" \
     "receiver": "{\"type\":\"weixinWorkUserId\",\"list\":[\"zhangsan\",\"lisi\"]}"
   }'
 ```
-
----
-
-## 4. 数据库直接入队
-
-对于批量补数或离线脚本，可以直接向 `platform_msg` 表中插入数据。
-
-**注意：**
-1. 主键 `id` 必须使用雪花算法生成。
-2. 数据库入队**不会**自动补齐 `route` 字段，必须根据 `type` 自行硬编码写入对应的 RouteHandler Name（如 `tenantSmsRouteHandler`）。
-3. 数据库不会做入参校验，写入前请确保 `receiver` 和 `content` 的 JSON 格式完全正确。
-
-**SQL 模板示例 (短信)：**
-```sql
-INSERT INTO platform_msg
-(id, title, content, sender, receiver, type, status, channel, route, tenant_code,
- idempotency_key, biz_key, priority, source_system, del_status, update_at, updater,
- create_at, creator, buss, plan_send_time, retry_count, max_retry_count, archive_status,
- trace_id, channel_detail, receiver_snapshot)
-VALUES
-('331286567354241051', '测试消息', '消息内容', 'sender_001',
- '{"type":"mobilePhone","list":["13800138000"]}', 'sms', 'ready', 'default',
- 'tenantSmsRouteHandler', 'demo_tenant', 'biz_demo_001', 'biz_demo_001', 0, 'demo-script', 0,
- NOW(), 'system', NOW(), 'system', 'demo', NOW(), 0, 5, 'hot',
- 'trace_demo_001', 'route=tenantSmsRouteHandler',
- '{"type":"mobilePhone","list":["13800138000"]}');
-```

@@ -39,7 +39,7 @@ Effective permissions = user roles ∪ effective dept roles ∪ direct grants; s
 
 ### Channel 1: Open Management API (CRUD)
 
-With a machine token ([how to obtain](oauth2-integration.md#mode-2-machine-to-machineclient_credentials)), call `/api/open/v1/**` to create, read, update, and delete orgs, users, roles, and their relationships:
+With a machine token ([how to obtain](oauth2-integration.md#mode-2-machine-to-machine-client_credentials)), call `/api/open/v1/**` to create, read, update, and delete orgs, users, roles, and their relationships:
 
 - Orgs: `POST /api/open/v1/orgs` create, `GET /tree` fetch the org tree, `GET /{orgId}/users-tree` fetch an org with its users, `GET /{orgId}/ancestors|descendants` ancestor / descendant chains;
 - Users: `POST /api/open/v1/users` create (pass `orgId` in the body to attach to an org), `PUT /{userId}/roles` overwrite-style role assignment;

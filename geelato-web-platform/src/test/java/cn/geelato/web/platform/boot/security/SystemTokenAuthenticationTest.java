@@ -2,11 +2,12 @@ package cn.geelato.web.platform.boot.security;
 
 import cn.geelato.security.SecurityContext;
 import cn.geelato.web.common.interceptor.DefaultSecurityInterceptor;
-import cn.geelato.web.common.interceptor.OAuthConfigurationProperties;
 import cn.geelato.web.common.interceptor.SystemTokenProperties;
 import cn.geelato.web.common.interceptor.UnauthorizedException;
 import cn.geelato.web.common.interceptor.annotation.AllowSystemAccess;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
+import cn.geelato.web.common.security.auth.SystemTokenAuthenticator;
+import cn.geelato.web.common.security.spi.support.TokenAuthenticatorRegistry;
 import cn.geelato.web.common.shiro.SystemTokenRealm;
 import cn.geelato.web.common.shiro.SystemTokenToken;
 import org.apache.shiro.authc.UsernamePasswordToken;
@@ -20,6 +21,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.method.HandlerMethod;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -50,12 +52,11 @@ class SystemTokenAuthenticationTest {
     }
 
     private final SystemTokenProperties properties = new SystemTokenProperties();
-    private final DefaultSecurityInterceptor interceptor =
-            new DefaultSecurityInterceptor(new OAuthConfigurationProperties(), null);
+    private final DefaultSecurityInterceptor interceptor = new DefaultSecurityInterceptor(
+            null, new TokenAuthenticatorRegistry(List.of(new SystemTokenAuthenticator(properties))));
 
     @BeforeEach
     void setUp() {
-        interceptor.setSystemTokenProperties(properties);
         ThreadContext.bind(new DefaultSecurityManager(new SystemTokenRealm(properties)));
     }
 

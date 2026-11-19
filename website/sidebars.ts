@@ -139,11 +139,11 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: '认证鉴权',
-          items: ['authentication/security-authentication'],
+          items: ['authentication/security-authentication', 'authentication/authenticator-spi'],
         },
         {
           type: 'category',
-          label: 'MQL 使用和语法',
+          label: 'MQL 表达式',
           items: ['mql/overview', 'mql/usage', 'mql/details'],
         },
         {
@@ -153,7 +153,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: '事件总线与 SSE 订阅推送',
+          label: '事件机制',
           items: ['platform-capabilities/event-bus', 'platform-capabilities/sse-subscription'],
         },
         {
@@ -268,15 +268,16 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'authentication/overview',
+        'authentication/features',
         {
           type: 'category',
           label: '登录集成',
           items: [
             'authentication/lite-login-integration',
             'authentication/oauth2-integration',
-            'authentication/data-integration',
           ],
         },
+        'authentication/data-integration',
         'authentication/permission-integration',
         'authentication/open-api-management',
       ],
@@ -330,7 +331,16 @@ const sidebars: SidebarsConfig = {
       label: '📖 帮助中心',
       collapsible: false,
       collapsed: false,
-      items: ['help/glossary', 'help/faq', 'help/troubleshooting'],
+      items: [
+        'help/glossary',
+        'help/faq',
+        'help/troubleshooting',
+        {
+          type: 'category',
+          label: '异常查阅',
+          items: ['reference/error-codes', 'reference/error-codes/sql-execute'],
+        },
+      ],
     },
   ],
 };

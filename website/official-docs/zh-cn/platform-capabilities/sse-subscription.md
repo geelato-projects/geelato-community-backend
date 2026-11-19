@@ -23,7 +23,7 @@ sidebar_label: SSE 订阅推送
 
 ### 认证
 
-订阅端点受 `DefaultSecurityInterceptor` 保护，请求头需携带有效的 `Authorization`，支持的凭证形式包括 `JWTBearer`、`Bearer`（OAuth2）、`Anonymous` 等。订阅本身不区分主题权限——任意已认证用户均可订阅任意主题或全量主题流。
+订阅端点受 `DefaultSecurityInterceptor` 保护，请求头需携带有效的 `Authorization`，支持的凭证形式包括 `JWTBearer`、`Bearer`（OAuth2）、`Anonymous`、`WeixinCode`（微信小程序备用通道）等。订阅本身不区分主题权限——任意已认证用户均可订阅任意主题或全量主题流。
 
 ### 连接生命周期
 

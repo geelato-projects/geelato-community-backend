@@ -1,4 +1,4 @@
-package cn.geelato.web.platform.utils;
+package cn.geelato.web.common.security;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
@@ -8,8 +8,11 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 
 import java.util.Calendar;
 import java.util.Map;
+
 /**
- * @author geemeta
+ * 平台自签 JWT（HMAC256 + payload 前后半段对调混淆）的唯一实现。
+ * 签发（JWTAuthController 等）与校验（JwtTokenAuthenticator）共用本类，
+ * 原拦截器嵌套版与 cn.geelato.web.platform.utils 版为同源双拷贝，已合并于此。
  */
 public class JWTUtil {
 
@@ -28,6 +31,8 @@ public class JWTUtil {
      */
     private static final Integer DEFAULT_TOKEN_SIZE = 3;
 
+    private JWTUtil() {
+    }
 
     /**
      * 生成令牌
@@ -36,21 +41,11 @@ public class JWTUtil {
      * @param expires 过期时间，单位(秒)
      */
     public static String getToken(Map<String, String> map, Integer expires) throws Exception {
-
-        //创建日历
         Calendar instance = Calendar.getInstance();
-        //设置过期时间
         instance.add(Calendar.SECOND, expires);
-
-        //创建jwt builder对象
         JWTCreator.Builder builder = JWT.create();
-
-        //payload
         map.forEach(builder::withClaim);
-
-        //指定过期时间
         String token = builder.withExpiresAt(instance.getTime())
-                //设置加密方式
                 .sign(Algorithm.HMAC256(SIGN_KEY));
         return confoundPayload(token);
     }
@@ -88,19 +83,13 @@ public class JWTUtil {
      * @param token 混淆payload前的token
      */
     private static String confoundPayload(String token) throws Exception {
-        //分割token
         String[] split = token.split("\\.");
-        //如果token不符合规范
         if (split.length != DEFAULT_TOKEN_SIZE) {
             throw new JWTDecodeException("签名不正确");
         }
-        //取出payload
         String payload = split[1];
-        //获取长度
         int length = payload.length() / 2;
-        //指定截取点
         int index = payload.length() % 2 != 0 ? length + 1 : length;
-        //混淆处理后的token
         return split[0] + "." + reversePayload(payload, index) + "." + split[2];
     }
 
@@ -110,15 +99,11 @@ public class JWTUtil {
      * @param token 混淆后的token
      */
     private static String deConfoundPayload(String token) throws Exception {
-        //分割token
         String[] split = token.split("\\.");
-        //如果token不符合规范
         if (split.length != DEFAULT_TOKEN_SIZE) {
             throw new JWTDecodeException("签名不正确");
         }
-        //取出payload
         String payload = split[1];
-        //返回解析后的token
         return split[0] + "." + reversePayload(payload, payload.length() / 2) + "." + split[2];
     }
 
@@ -131,6 +116,5 @@ public class JWTUtil {
     private static String reversePayload(String payload, Integer index) {
         return payload.substring(index) + payload.substring(0, index);
     }
-
 
 }

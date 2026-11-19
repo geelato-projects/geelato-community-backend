@@ -2,17 +2,22 @@ package cn.geelato.web.common.interceptor;
 
 import cn.geelato.core.GlobalContext;
 import cn.geelato.core.env.EnvManager;
-import cn.geelato.security.*;
-
+import cn.geelato.logging.LogContext;
+import cn.geelato.security.OrgProvider;
+import cn.geelato.security.SecurityContext;
+import cn.geelato.security.Tenant;
+import cn.geelato.security.User;
 import cn.geelato.utils.LocalBoundedCache;
 import cn.geelato.utils.StringUtils;
-import cn.geelato.logging.LogContext;
 import cn.geelato.web.common.online.OnlineUserTracker;
-import cn.geelato.web.common.interceptor.annotation.AllowSystemAccess;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
-import cn.geelato.web.common.oauth2.OAuth2Helper;
 import cn.geelato.web.common.security.delegate.DelegateSession;
 import cn.geelato.web.common.security.delegate.DelegateSessionStore;
+import cn.geelato.web.common.security.spi.LoginCredential;
+import cn.geelato.web.common.security.spi.TokenAuthentication;
+import cn.geelato.web.common.security.spi.TokenAuthenticationContext;
+import cn.geelato.web.common.security.spi.TokenAuthenticator;
+import cn.geelato.web.common.security.spi.support.TokenAuthenticatorRegistry;
 import cn.geelato.web.common.shiro.OAuth2Token;
 import cn.geelato.web.common.shiro.SystemTokenToken;
 import cn.geelato.web.common.shiro.WeixinUnionIdToken;
@@ -21,16 +26,13 @@ import cn.geelato.web.common.traffic.TrafficColoringProperties;
 import cn.geelato.web.common.traffic.TrafficTagContext;
 import cn.geelato.web.common.traffic.TrafficTagResolver;
 import cn.geelato.traffic.TrafficTagStrategy;
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTCreator;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.jetbrains.annotations.NotNull;
@@ -38,62 +40,41 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.AuthenticationToken;
-
-import java.util.Calendar;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
+/**
+ * 安全拦截器：按 Authorization 头前缀经 {@link TokenAuthenticatorRegistry} 路由到
+ * 对应 {@link TokenAuthenticator} SPI 实现完成「凭证校验 + 用户解析」，本类统一负责
+ * SecurityContext 填充、Shiro 会话建立、上下文缓存、委托代办、流量染色与在线打点。
+ * 新增认证方式只需实现 {@link TokenAuthenticator} 并注册为 Spring Bean，无需改动本类。
+ */
 @Slf4j
 public class DefaultSecurityInterceptor implements HandlerInterceptor {
-    private static final String __AuthorizationTag__="Authorization";
-    private static final String __JWTTokenTag__="JWTBearer ";
-    private static final String __OAuthTokenTag__="Bearer ";
-    private static final String __AnonymousTokenTag__="Anonymous ";
-    private static final String __WeixinUnionIdTokenTag__ = "WeixinUnionId ";
-    private static final String __WeixinWorkUserIdTokenTag__ = "WeixinWorkUserId ";
-    private static final String __SystemTokenTag__ = "SystemToken ";
-    private static final String anonymousFixedPassword = GlobalContext.getAnonymousPwd();
-    private static final long CACHE_TTL_MILLIS = 30 * 60 * 1000L;
-    private final OAuthConfigurationProperties oAuthConfigurationProperties;
-    private final OrgProvider orgProvider;
-    private final UserProvider userProvider;
-    @Setter
-    private OnlineUserTracker onlineUserTracker;
-    private TrafficColoringProperties trafficColoringProperties;
-    private TrafficTagResolver trafficTagResolver;
-    private TrafficTagStrategy trafficTagStrategy;
-    @Setter
-    private DelegateSessionStore delegateSessionStore;
-    @Setter
-    private SystemTokenProperties systemTokenProperties;
 
-    public static final LocalBoundedCache<String, cn.geelato.meta.User> tokenUserCache =
-            new LocalBoundedCache<>("token-user", CACHE_TTL_MILLIS, 100_000);
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String ANONYMOUS_FIXED_PASSWORD = GlobalContext.getAnonymousPwd();
+    private static final long CONTEXT_CACHE_TTL_MILLIS = 30 * 60 * 1000L;
 
     private static final LocalBoundedCache<String, UserContextCacheEntry> tokenContextCache =
-            new LocalBoundedCache<>("token-context", CACHE_TTL_MILLIS, 100_000);
+            new LocalBoundedCache<>("token-context", CONTEXT_CACHE_TTL_MILLIS, 100_000);
 
     private record UserContextCacheEntry(User user, Tenant tenant, String password, AuthenticationToken authToken) {
     }
 
-    public DefaultSecurityInterceptor(OAuthConfigurationProperties config, OrgProvider orgProvider) {
-        this(config, orgProvider, null);
-    }
+    private final OrgProvider orgProvider;
+    private final TokenAuthenticatorRegistry registry;
 
-    public DefaultSecurityInterceptor(OAuthConfigurationProperties config, OrgProvider orgProvider, UserProvider userProvider) {
-        oAuthConfigurationProperties = config;
+    @Setter
+    private OnlineUserTracker onlineUserTracker;
+    @Setter
+    private DelegateSessionStore delegateSessionStore;
+    private TrafficColoringProperties trafficColoringProperties;
+    private TrafficTagStrategy trafficTagStrategy;
+    private TrafficTagResolver trafficTagResolver;
+
+    public DefaultSecurityInterceptor(OrgProvider orgProvider, TokenAuthenticatorRegistry registry) {
         this.orgProvider = orgProvider;
-        this.userProvider = userProvider;
-    }
-
-    public DefaultSecurityInterceptor(OAuthConfigurationProperties config,
-                                      OrgProvider orgProvider,
-                                      UserProvider userProvider,
-                                      OnlineUserTracker onlineUserTracker) {
-        this(config, orgProvider, userProvider);
-        this.onlineUserTracker = onlineUserTracker;
+        this.registry = registry;
     }
 
     public void setTrafficColoringProperties(TrafficColoringProperties trafficColoringProperties) {
@@ -106,53 +87,136 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         rebuildTrafficTagResolver();
     }
 
+    // ========== 认证主流程 ==========
+
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) {
         applyTrafficTag(request, response);
         if (!(handler instanceof HandlerMethod handlerMethod)
-        ||handlerMethod.getMethod().isAnnotationPresent(IgnoreVerify.class)) {
+                || handlerMethod.getMethod().isAnnotationPresent(IgnoreVerify.class)) {
             return true;
         }
 
-        String token = request.getHeader(__AuthorizationTag__);
+        String token = request.getHeader(AUTHORIZATION_HEADER);
         if (token == null) {
-            log.warn("unauthorized request without authorization header, method:{}, url:{}", request.getMethod(), buildRequestUrl(request));
-            throw new UnauthorizedException();
-        }
-        log.info("handle token:{}",token);
-
-        if (token.startsWith(__SystemTokenTag__)
-                && !handlerMethod.getMethod().isAnnotationPresent(AllowSystemAccess.class)) {
-            log.warn("unauthorized system token request, method not annotated with @AllowSystemAccess, method:{}, url:{}",
+            log.warn("unauthorized request without authorization header, method:{}, url:{}",
                     request.getMethod(), buildRequestUrl(request));
             throw new UnauthorizedException();
         }
+        log.info("handle token scheme:{}", schemeOf(token));
 
+        TokenAuthenticator authenticator = registry.resolve(token);
+        TokenAuthenticationContext authContext = new TokenAuthenticationContext(token, request, handlerMethod);
+        // 方法级门禁（如 SystemToken 的 @AllowSystemAccess）先于缓存还原，防止借缓存绕过
+        authenticator.preAuthCheck(authContext);
         if (tryRestoreFromCache(token, request, response)) {
             return true;
         }
 
-        boolean authenticated;
-        authenticated = tryAnonymousAuthenticate(token, request, response);
-        if (!authenticated) {
-            authenticated = tryJwtAuthenticate(token, request, response);
-        }
-        if (!authenticated) {
-            authenticated = tryExtendKeyAuthenticate(token, request, response);
-        }
-        if (!authenticated) {
-            authenticated = trySystemTokenAuthenticate(token, request, response);
-        }
-        if (!authenticated) {
-            authenticated = tryOAuth2Authenticate(token, request, response);
-        }
-        if (!authenticated) {
-            log.warn("unauthorized request, method:{}, url:{}", request.getMethod(), buildRequestUrl(request));
-            throw new UnauthorizedException();
-        }
+        TokenAuthentication result = authenticator.authenticate(authContext);
+        establishSession(token, result, request, response);
         applyDelegation(token);
         return true;
     }
+
+    @Override
+    public void afterCompletion(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler, Exception ex) {
+        try {
+            if (trafficColoringProperties != null) {
+                LogContext.remove(trafficColoringProperties.getMdcKey());
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            TrafficTagContext.clear();
+        } catch (Exception ignored) {
+        }
+    }
+
+    /**
+     * 统一会话建立：SecurityContext 填充 → Shiro 登录（按凭证类型路由既有 Realm）
+     * → 上下文缓存 → 认证后流量染色 → 在线打点。认证器不再各自重复此流程。
+     */
+    private void establishSession(String rawToken, TokenAuthentication result,
+                                  HttpServletRequest request, HttpServletResponse response) {
+        User user = result.user();
+        SecurityContext.setCurrentUser(user);
+        SecurityContext.setCurrentTenant(new Tenant(user.getTenantCode()));
+        SecurityContext.setCurrentPassword(result.password());
+        AuthenticationToken authToken = createShiroToken(result.login());
+        try {
+            SecurityUtils.getSubject().login(authToken);
+        } catch (AuthenticationException e) {
+            log.warn("Shiro login failed, scheme:{}, principal:{}, url:{}, error:{}",
+                    result.login().type(), result.login().principal(), buildRequestUrl(request), e.getMessage());
+            throw new UnauthorizedException("认证失败: " + e.getMessage());
+        }
+        cacheUserContext(rawToken, user, result.password(), authToken);
+        applyTrafficTagAfterAuthenticated(user, request, response);
+        if (result.trackOnline()) {
+            touchOnline(user, request);
+        }
+    }
+
+    /** 凭证类型 → 既有 Shiro Token/Realm 路由。未知类型属装配错误，硬失败。 */
+    private AuthenticationToken createShiroToken(LoginCredential login) {
+        return switch (login.type()) {
+            case LoginCredential.TYPE_USERNAME_PASSWORD ->
+                    new UsernamePasswordToken(login.principal(), login.credential());
+            case LoginCredential.TYPE_WEIXIN_UNION_ID -> new WeixinUnionIdToken(login.principal());
+            case LoginCredential.TYPE_WEIXIN_WORK_USER_ID -> new WeixinWorkUserIdToken(login.principal());
+            case LoginCredential.TYPE_OAUTH2 -> new OAuth2Token(login.principal());
+            case LoginCredential.TYPE_SYSTEM_TOKEN -> new SystemTokenToken(login.principal());
+            default -> throw new IllegalStateException("未支持的登录凭证类型: " + login.type()
+                    + "，请扩展 DefaultSecurityInterceptor#createShiroToken");
+        };
+    }
+
+    private String schemeOf(String token) {
+        int spaceIdx = token.indexOf(' ');
+        return spaceIdx > 0 ? token.substring(0, spaceIdx) : "unknown";
+    }
+
+    // ========== 上下文缓存（token → 已建立会话的还原） ==========
+
+    private boolean tryRestoreFromCache(String rawToken, HttpServletRequest request, HttpServletResponse response) {
+        UserContextCacheEntry entry = tokenContextCache.get(rawToken);
+        if (entry == null) {
+            return false;
+        }
+        SecurityContext.setCurrentUser(entry.user);
+        SecurityContext.setCurrentTenant(entry.tenant);
+        SecurityContext.setCurrentPassword(entry.password);
+        try {
+            SecurityUtils.getSubject().login(entry.authToken);
+        } catch (AuthenticationException e) {
+            // 缓存的凭证已失效（如用户修改密码后，基于旧密码生成的令牌无法通过校验）。
+            // 清理失效缓存并落回全量认证链，避免向外泄漏 Shiro 原始异常。
+            tokenContextCache.remove(rawToken);
+            log.warn("cached credential invalidated, maybe password changed, url:{}", buildRequestUrl(request));
+            return false;
+        }
+        applyTrafficTagAfterAuthenticated(entry.user, request, response);
+        touchOnline(entry.user, request);
+        return true;
+    }
+
+    private void cacheUserContext(String rawToken, User user, String password, AuthenticationToken authToken) {
+        tokenContextCache.put(rawToken, new UserContextCacheEntry(user, SecurityContext.getCurrentTenant(), password, authToken));
+    }
+
+    /**
+     * 失效指定凭证 key 的上下文缓存。供委托代办切换/退出接口调用，
+     * 确保下一次请求重新认证并应用最新的委托态（而非被旧缓存还原成原身份）。
+     */
+    public static void invalidateTokenContextCache(String rawToken) {
+        if (rawToken == null || rawToken.isEmpty()) {
+            return;
+        }
+        tokenContextCache.remove(rawToken);
+    }
+
+    // ========== 委托代办（token 不变，服务端换身份） ==========
 
     /**
      * 应用委托代办态：若当前凭证存在委托代办会话，则用目标身份（委托人）重新加载
@@ -175,12 +239,14 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         try {
             User actUser = copyOf(EnvManager.singleInstance().InitCurrentUser(session.getTargetLoginName(), session.getTenantCode()));
             if (actUser == null) {
-                log.warn("applyDelegation: target user not found, loginName:{}, fallback to origin identity", session.getTargetLoginName());
+                log.warn("applyDelegation: target user not found, loginName:{}, fallback to origin identity",
+                        session.getTargetLoginName());
                 return;
             }
             actUser.setupOrgInfo(orgProvider);
             actUser.setDelegateUserId(session.getOriginUserId());
-            actUser.setDelegateUserName(session.getOriginUserName() != null ? session.getOriginUserName() : session.getOriginLoginName());
+            actUser.setDelegateUserName(session.getOriginUserName() != null
+                    ? session.getOriginUserName() : session.getOriginLoginName());
             SecurityContext.setCurrentUser(actUser);
             SecurityContext.setCurrentTenant(new Tenant(session.getTenantCode()));
             cacheUserContext(rawToken, actUser, SecurityContext.getCurrentPassword(), buildShiroToken(actUser));
@@ -190,47 +256,29 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
         }
     }
 
-    private org.apache.shiro.authc.AuthenticationToken buildShiroToken(User user) {
-        String pwd = SecurityContext.getCurrentPassword();
-        if (pwd == null || pwd.isEmpty()) {
-            pwd = anonymousFixedPassword;
+    private AuthenticationToken buildShiroToken(User user) {
+        String password = SecurityContext.getCurrentPassword();
+        if (password == null || password.isEmpty()) {
+            password = ANONYMOUS_FIXED_PASSWORD;
         }
-        return new org.apache.shiro.authc.UsernamePasswordToken(user.getLoginName(), pwd);
+        return new UsernamePasswordToken(user.getLoginName(), password);
     }
 
-    /**
-     * 失效指定凭证 key 的上下文缓存。供委托代办切换/退出接口调用，
-     * 确保下一次请求重新认证并应用最新的委托态（而非被旧缓存还原成原身份）。
-     */
-    public static void invalidateTokenContextCache(String rawToken) {
-        if (rawToken == null || rawToken.isEmpty()) {
-            return;
+    /** EnvManager 缓存的是共享实例，切换身份等修改前必须先克隆，防止多 token 互相覆盖。 */
+    private User copyOf(User source) {
+        if (source == null) {
+            return null;
         }
-        tokenContextCache.remove(rawToken);
+        User copy = new User();
+        BeanUtils.copyProperties(source, copy);
+        // BeanUtils 对 Map 只拷引用：隔离 extendInfo，防止会话副本变更污染共享快照
+        if (source.getExtendInfo() != null) {
+            copy.setExtendInfo(new LinkedHashMap<>(source.getExtendInfo()));
+        }
+        return copy;
     }
 
-    private String buildRequestUrl(HttpServletRequest request) {
-        if (request == null) {
-            return "";
-        }
-        String url = request.getRequestURL().toString();
-        String queryString = request.getQueryString();
-        return StringUtils.isNotEmpty(queryString) ? url + "?" + queryString : url;
-    }
-
-    @Override
-    public void afterCompletion(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler, Exception ex) {
-        try {
-            if (trafficColoringProperties != null) {
-                LogContext.remove(trafficColoringProperties.getMdcKey());
-            }
-        } catch (Exception ignored) {
-        }
-        try {
-            TrafficTagContext.clear();
-        } catch (Exception ignored) {
-        }
-    }
+    // ========== 流量染色 ==========
 
     private void applyTrafficTag(HttpServletRequest request, HttpServletResponse response) {
         if (trafficTagResolver == null) {
@@ -255,389 +303,11 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
     }
 
     private void rebuildTrafficTagResolver() {
-        this.trafficTagResolver = trafficColoringProperties == null ? null : new TrafficTagResolver(trafficColoringProperties, trafficTagStrategy);
+        this.trafficTagResolver = trafficColoringProperties == null
+                ? null : new TrafficTagResolver(trafficColoringProperties, trafficTagStrategy);
     }
 
-    private boolean tryRestoreFromCache(String rawToken, HttpServletRequest request, HttpServletResponse response) {
-        UserContextCacheEntry entry = tokenContextCache.get(rawToken);
-        if (entry == null) {
-            return false;
-        }
-        SecurityContext.setCurrentUser(entry.user);
-        SecurityContext.setCurrentTenant(entry.tenant);
-        SecurityContext.setCurrentPassword(entry.password);
-        Subject subject = SecurityUtils.getSubject();
-        try {
-            subject.login(entry.authToken);
-        } catch (AuthenticationException e) {
-            // 缓存的凭证已失效（如用户修改密码后，基于旧密码生成的令牌无法通过校验）。
-            // 清理失效缓存并按未授权处理，交由上层统一抛出 401 异常，避免向外泄漏 Shiro 原始异常。
-            tokenContextCache.remove(rawToken);
-            log.warn("cached credential invalidated, maybe password changed, url:{}", buildRequestUrl(request));
-            return false;
-        }
-        applyTrafficTagAfterAuthenticated(entry.user, request, response);
-        touchOnline(entry.user, request);
-        return true;
-    }
-
-    private void cacheUserContext(String rawToken, User user, String password, AuthenticationToken authToken) {
-        tokenContextCache.put(rawToken, new UserContextCacheEntry(user, SecurityContext.getCurrentTenant(), password, authToken));
-    }
-
-    private boolean tryAnonymousAuthenticate(String rawToken, HttpServletRequest request, HttpServletResponse response) {
-        String token = rawToken;
-        if (!token.startsWith(__AnonymousTokenTag__)) {
-            return false;
-        }
-        token = token.replace(__AnonymousTokenTag__, "");
-        try {
-            DecodedJWT verify = JWTUtil.verify(token);
-            String anonymous = verify.getClaim("anonymous").asString();
-            if (!StringUtils.isNotEmpty(anonymous) || !anonymousFixedPassword.equals(anonymous)) {
-                return false;
-            }
-            String loginName = verify.getClaim("loginName").asString();
-            String orgId = verify.getClaim("orgId").asString();
-            String tenantCode = verify.getClaim("tenantCode").asString();
-            User currentUser = copyOf(EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode));
-            currentUser.setupOrgInfo(orgProvider);
-            setupOrgInfo(currentUser, orgId);
-            SecurityContext.setCurrentUser(currentUser);
-            SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
-            SecurityContext.setCurrentPassword(anonymousFixedPassword);
-            UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, anonymousFixedPassword);
-            Subject subject = SecurityUtils.getSubject();
-            subject.login(userToken);
-            cacheUserContext(rawToken, currentUser, anonymousFixedPassword, userToken);
-            applyTrafficTagAfterAuthenticated(currentUser, request, response);
-            touchOnline(currentUser, request);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean tryJwtAuthenticate(String rawToken, HttpServletRequest request, HttpServletResponse response) {
-        String token = rawToken;
-        if (!token.startsWith(__JWTTokenTag__)) {
-            return false;
-        }
-        token = token.replace(__JWTTokenTag__, "");
-        try {
-            DecodedJWT verify = JWTUtil.verify(token);
-            String loginName = verify.getClaim("loginName").asString();
-            String passWord = verify.getClaim("passWord").asString();
-            String orgId = verify.getClaim("orgId").asString();
-            String tenantCode = verify.getClaim("tenantCode").asString();
-            if (StringUtils.isEmpty(loginName)) {
-                return false;
-            }
-            User currentUser = copyOf(EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode));
-            currentUser.setupOrgInfo(orgProvider);
-            setupOrgInfo(currentUser, orgId);
-            SecurityContext.setCurrentUser(currentUser);
-            SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
-            SecurityContext.setCurrentPassword(passWord);
-            UsernamePasswordToken userToken = new UsernamePasswordToken(loginName, passWord);
-            Subject subject = SecurityUtils.getSubject();
-            subject.login(userToken);
-            cacheUserContext(rawToken, currentUser, passWord, userToken);
-            applyTrafficTagAfterAuthenticated(currentUser, request, response);
-            touchOnline(currentUser, request);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean tryExtendKeyAuthenticate(String rawToken, HttpServletRequest request, HttpServletResponse response) {
-        if (userProvider == null) {
-            return false;
-        }
-        String extendKey = null;
-        String extendType = null;
-        Subject subject = SecurityUtils.getSubject();
-        if (rawToken.startsWith(__WeixinUnionIdTokenTag__)) {
-            extendKey = rawToken.replace(__WeixinUnionIdTokenTag__, "");
-            extendType = "weixinUnionId";
-        } else if (rawToken.startsWith(__WeixinWorkUserIdTokenTag__)) {
-            extendKey = rawToken.replace(__WeixinWorkUserIdTokenTag__, "");
-            extendType = "weixinWorkUserId";
-        }
-        if (StringUtils.isEmpty(extendKey) || StringUtils.isEmpty(extendType)) {
-            return false;
-        }
-        try {
-            User user = userProvider.getUserByExtendKey(extendKey, extendType);
-            User currentUser = copyOf(EnvManager.singleInstance().InitCurrentUser(user.getLoginName(), user.getTenantCode()));
-            if (currentUser == null || StringUtils.isEmpty(currentUser.getLoginName())) {
-                return false;
-            }
-            currentUser.setupOrgInfo(orgProvider);
-            SecurityContext.setCurrentUser(currentUser);
-            SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
-            SecurityContext.setCurrentPassword(anonymousFixedPassword);
-            AuthenticationToken authToken;
-            if ("weixinUnionId".equals(extendType)) {
-                authToken = new WeixinUnionIdToken(extendKey);
-            } else {
-                authToken = new WeixinWorkUserIdToken(extendKey);
-            }
-            subject.login(authToken);
-            cacheUserContext(rawToken, currentUser, anonymousFixedPassword, authToken);
-            applyTrafficTagAfterAuthenticated(currentUser, request, response);
-            touchOnline(currentUser, request);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * 外部系统固定令牌认证：Authorization: SystemToken <固定密钥>。
-     * <p>
-     * 适用于既能给前端调用、也能给不具备用户 token 的外部系统调用的接口
-     * （如 dyn 模块发送站内信）。仅对标注了 {@link AllowSystemAccess} 的方法生效，
-     * 注解校验已在 preHandle 前置完成。认证通过后以虚拟系统主体
-     * （systemPrincipal=true，userId=system）运行，不关联平台用户、不计入在线用户。
-     */
-    private boolean trySystemTokenAuthenticate(String rawToken, HttpServletRequest request, HttpServletResponse response) {
-        if (!rawToken.startsWith(__SystemTokenTag__) || systemTokenProperties == null) {
-            return false;
-        }
-        String token = rawToken.replace(__SystemTokenTag__, "");
-        if (!systemTokenProperties.matches(token)) {
-            return false;
-        }
-        try {
-            User currentUser = new User();
-            currentUser.setUserId("system");
-            currentUser.setLoginName("system");
-            currentUser.setUserName("system");
-            currentUser.setTenantCode(GlobalContext.getDefaultTenantCode());
-            currentUser.setSystemPrincipal(true);
-            SecurityContext.setCurrentUser(currentUser);
-            SecurityContext.setCurrentTenant(new Tenant(currentUser.getTenantCode()));
-            SecurityContext.setCurrentPassword(token);
-            SystemTokenToken authToken = new SystemTokenToken(token);
-            Subject subject = SecurityUtils.getSubject();
-            subject.login(authToken);
-            cacheUserContext(rawToken, currentUser, token, authToken);
-            applyTrafficTagAfterAuthenticated(currentUser, request, response);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean tryOAuth2Authenticate(String rawToken, HttpServletRequest request, HttpServletResponse response) {
-        String token = rawToken;
-        if (!token.startsWith(__OAuthTokenTag__)) {
-            return false;
-        }
-        token = token.replace(__OAuthTokenTag__, "");
-
-        UserContextCacheEntry cachedEntry = tokenContextCache.get(rawToken);
-        if (cachedEntry != null) {
-            SecurityContext.setCurrentUser(cachedEntry.user);
-            SecurityContext.setCurrentTenant(cachedEntry.tenant);
-            SecurityContext.setCurrentPassword(cachedEntry.password);
-            Subject subject = SecurityUtils.getSubject();
-            subject.login(cachedEntry.authToken);
-            applyTrafficTagAfterAuthenticated(cachedEntry.user, request, response);
-            return true;
-        }
-
-        cn.geelato.meta.User user = tokenUserCache.get(token);
-        if (user != null) {
-            User currentUser = performOAuth2Login(user, token, rawToken);
-            applyTrafficTagAfterAuthenticated(currentUser, request, response);
-            touchOnline(currentUser, request);
-            return true;
-        }
-        try {
-            user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(), token);
-            if (user != null) {
-                tokenUserCache.put(token, user);
-                User currentUser = performOAuth2Login(user, token, rawToken);
-                applyTrafficTagAfterAuthenticated(currentUser, request, response);
-                touchOnline(currentUser, request);
-                return true;
-            }
-        } catch (Exception e) {
-            return false;
-        }
-        return false;
-    }
-
-    private void setupOrgInfo(User currentUser, String orgId) {
-        if (currentUser == null || StringUtils.isEmpty(orgId)) {
-            return;
-        }
-        currentUser.setOrgId(orgId);
-        currentUser.setOrgName(orgProvider.getOrgName(orgId));
-        currentUser.setDeptId(orgProvider.getDeptId(orgId));
-        currentUser.setCompanyId(orgProvider.getCompanyId(orgId));
-        String companyName = orgProvider.getCompanyName(orgId);
-        currentUser.setCompanyName(companyName);
-        currentUser.setBuId(orgProvider.getBuId(orgId));
-        currentUser.setBuName(companyName);
-        currentUser.setExtendId(orgProvider.getCompanyExtendId(orgId));
-    }
-
-    /** EnvManager 缓存的是共享实例，切换身份等修改前必须先克隆，防止多 token 互相覆盖。 */
-    private User copyOf(User source) {
-        if (source == null) {
-            return null;
-        }
-        User copy = new User();
-        BeanUtils.copyProperties(source, copy);
-        // BeanUtils 对 Map 只拷引用：隔离 extendInfo，防止会话副本变更污染共享快照
-        if (source.getExtendInfo() != null) {
-            copy.setExtendInfo(new LinkedHashMap<>(source.getExtendInfo()));
-        }
-        return copy;
-    }
-
-    private User resolveLocalUser(String weixinUnionId, String weixinWorkUserId) {
-        if (userProvider == null) {
-            return null;
-        }
-        User user = null;
-        if (StringUtils.isNotEmpty(weixinUnionId)) {
-            user = userProvider.getUserByExtendKey(weixinUnionId, "weixinUnionId");
-        }
-        if (user == null && StringUtils.isNotEmpty(weixinWorkUserId)) {
-            user = userProvider.getUserByExtendKey(weixinWorkUserId, "weixinWorkUserId");
-        }
-        return user;
-    }
-
-    /**
-     * @author geemeta
-     */
-    public static class JWTUtil {
-
-        /**
-         * 签名 此签名为 16位 大写 MD5
-         */
-        private static final String SIGN_KEY = "5A1332068BA9FD17";
-
-        /**
-         * 默认的过期时间，43200分钟
-         */
-        private static final Integer DEFAULT_EXPIRES = 60 * 43200;
-
-        /**
-         * token默认的长度
-         */
-        private static final Integer DEFAULT_TOKEN_SIZE = 3;
-
-
-        /**
-         * 生成令牌
-         *
-         * @param map     数据正文
-         * @param expires 过期时间，单位(秒)
-         */
-        public static String getToken(Map<String, String> map, Integer expires) throws Exception {
-            Calendar instance = Calendar.getInstance();
-            instance.add(Calendar.SECOND, expires);
-            JWTCreator.Builder builder = JWT.create();
-            map.forEach(builder::withClaim);
-            String token = builder.withExpiresAt(instance.getTime())
-                    .sign(Algorithm.HMAC256(SIGN_KEY));
-            return confoundPayload(token);
-        }
-
-        /**
-         * 解析token
-         *
-         * @param token 输入混淆payload后的token
-         */
-        public static DecodedJWT verify(String token) throws Exception {
-            //如果token无效
-            if (token == null || token.isEmpty()) {
-                throw new JWTDecodeException("无效的token！");
-            }
-            //解析token
-            String dToken = deConfoundPayload(token);
-            //创建返回结果
-            return JWT.require(Algorithm.HMAC256(SIGN_KEY)).build().verify(dToken);
-        }
-
-        /**
-         * 重载getToken 此方法为获取默认30分钟有效期的token
-         *
-         * @param map 数据正文
-         */
-        public static String getToken(Map<String, String> map) throws Exception {
-            return getToken(map, DEFAULT_EXPIRES);
-        }
-
-
-        /**
-         * 对一个base64编码进行混淆  此处还可以进行replace混淆，考虑到效率问题，这里就不做啦~
-         * 对于加密的思路还有位移、字符替换等~
-         *
-         * @param token 混淆payload前的token
-         */
-        private static String confoundPayload(String token) throws Exception {
-            String[] split = token.split("\\.");
-            if (split.length != DEFAULT_TOKEN_SIZE) {
-                throw new JWTDecodeException("签名不正确");
-            }
-            String payload = split[1];
-            int length = payload.length() / 2;
-            int index = payload.length() % 2 != 0 ? length + 1 : length;
-            return split[0] + "." + reversePayload(payload, index) + "." + split[2];
-        }
-
-        /**
-         * 对一个混淆后的base编码进行解析
-         *
-         * @param token 混淆后的token
-         */
-        private static String deConfoundPayload(String token) throws Exception {
-            String[] split = token.split("\\.");
-            if (split.length != DEFAULT_TOKEN_SIZE) {
-                throw new JWTDecodeException("签名不正确");
-            }
-            String payload = split[1];
-            return split[0] + "." + reversePayload(payload, payload.length() / 2) + "." + split[2];
-        }
-
-        /**
-         * 将md5编码位移
-         *
-         * @param payload payload编码
-         * @param index   位移处
-         */
-        private static String reversePayload(String payload, Integer index) {
-            return payload.substring(index) + payload.substring(0, index);
-        }
-
-
-    }
-
-
-    private User performOAuth2Login(cn.geelato.meta.User user, String accessToken, String rawToken) {
-        String loginName = user.getLoginName();
-        String tenantCode = user.getTenantCode();
-        if (tenantCode == null || tenantCode.trim().isEmpty()) {
-            tenantCode = GlobalContext.getDefaultTenantCode();
-        }
-        User currentUser = copyOf(EnvManager.singleInstance().InitCurrentUser(loginName, tenantCode));
-        currentUser.setupOrgInfo(orgProvider);
-        SecurityContext.setCurrentUser(currentUser);
-        SecurityContext.setCurrentTenant(new Tenant(user.getTenantCode()));
-        OAuth2Token oauth2Token = new OAuth2Token(accessToken);
-        Subject subject = SecurityUtils.getSubject();
-        subject.login(oauth2Token);
-        cacheUserContext(rawToken, currentUser, anonymousFixedPassword, oauth2Token);
-        return currentUser;
-    }
+    // ========== 辅助 ==========
 
     private void touchOnline(User user, HttpServletRequest request) {
         if (onlineUserTracker == null || user == null || request == null) {
@@ -647,5 +317,14 @@ public class DefaultSecurityInterceptor implements HandlerInterceptor {
             onlineUserTracker.touch(user, request);
         } catch (Exception ignored) {
         }
+    }
+
+    private String buildRequestUrl(HttpServletRequest request) {
+        if (request == null) {
+            return "";
+        }
+        String url = request.getRequestURL().toString();
+        String queryString = request.getQueryString();
+        return StringUtils.isNotEmpty(queryString) ? url + "?" + queryString : url;
     }
 }

@@ -21,7 +21,7 @@ import cn.geelato.web.platform.srv.auth.service.CurrentUserProfileService;
 import cn.geelato.web.platform.srv.auth.service.UserAccountCommandService;
 import cn.geelato.web.platform.srv.auth.service.UserAuthorizationQueryService;
 import cn.geelato.web.platform.srv.auth.service.UserIdentityQueryService;
-import cn.geelato.web.platform.utils.JWTUtil;
+import cn.geelato.web.common.security.JWTUtil;
 import cn.geelato.web.platform.utils.EncryptUtil;
 import cn.geelato.web.common.security.delegate.DelegateSession;
 import cn.geelato.web.common.security.delegate.DelegateSessionStore;

@@ -7,6 +7,11 @@
       "sourceType": "cn.geelato.web.platform.srv.security.WXConfiguration"
     },
     {
+      "name": "geelato.wx.miniapp",
+      "description": "微信小程序（用户绑定与鉴权）配置。appid/secret 为小程序自有凭据，与 geelato.wx（网站应用微信 OAuth2）不是同一套。",
+      "sourceType": "cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties"
+    },
+    {
       "name": "geelato.platform.monitoring",
       "description": "平台 OpenMetrics 监控（actuator + micrometer）。引入依赖即生效，绝大多数参数已由 PlatformMetricsEnvironmentPostProcessor 注入默认值，无需配置。",
       "sourceType": "cn.geelato.web.platform.run.monitor.metrics.PlatformMetricsProperties"
@@ -19,6 +24,45 @@
       "description": "微信认证服务地址",
       "sourceType": "cn.geelato.web.platform.srv.security.WXConfiguration",
       "defaultValue": "https://api.weixin.qq.com"
+    },
+    {
+      "name": "geelato.wx.miniapp.enabled",
+      "type": "java.lang.Boolean",
+      "description": "小程序登录/绑定端点总开关。false 时 /api/weixin/miniapp/** 统一返回 404（紧急下线收口）。默认 true。",
+      "sourceType": "cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "geelato.wx.miniapp.app-id",
+      "type": "java.lang.String",
+      "description": "小程序 AppID",
+      "sourceType": "cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties"
+    },
+    {
+      "name": "geelato.wx.miniapp.secret",
+      "type": "java.lang.String",
+      "description": "小程序 AppSecret",
+      "sourceType": "cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties"
+    },
+    {
+      "name": "geelato.wx.miniapp.ticket-key",
+      "type": "java.lang.String",
+      "description": "preBindTicket 签名密钥（HMAC-SHA256）。未配置时 pre-bind 端点不可用。建议 openssl rand -hex 32 生成，勿复用 system-token。",
+      "sourceType": "cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties"
+    },
+    {
+      "name": "geelato.wx.miniapp.ticket-ttl-seconds",
+      "type": "java.lang.Integer",
+      "description": "preBindTicket 有效期（秒）。默认 300。",
+      "sourceType": "cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties",
+      "defaultValue": 300
+    },
+    {
+      "name": "geelato.wx.miniapp.token-ttl-seconds",
+      "type": "java.lang.Integer",
+      "description": "会话 token（JWTBearer）有效期（秒）。默认 604800（7 天）；本地验签无服务端吊销，不宜过长。",
+      "sourceType": "cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties",
+      "defaultValue": 604800
     },
     {
       "name": "geelato.platform.monitoring.enabled",

@@ -46,7 +46,7 @@ sidebar_label: 安全上下文
 - `SecurityContext` 是线程级上下文,生命周期与请求一致。
 - 安全主体只能在鉴权成功后由安全链路内部设置。
 
-当前真正负责认证与主体写入的是平台侧的 `DefaultSecurityInterceptor`:它在 `preHandle()` 中按顺序尝试缓存恢复、Anonymous、JWT、扩展键、OAuth2 认证,鉴权成功才把当前用户、租户和密码写入 `SecurityContext`(链路细节见[认证鉴权](../authentication/security-authentication.md))。
+当前真正负责认证与主体写入的是平台侧的 `DefaultSecurityInterceptor`:它在 `preHandle()` 中按 `Authorization` 前缀路由到对应的 `TokenAuthenticator` 认证器,经方案门禁、缓存恢复与凭证校验后,统一把当前用户、租户和密码写入 `SecurityContext`(链路细节见[认证鉴权](../authentication/security-authentication.md))。
 
 通用 `SecurityContextFilter` 不设置主体,只在请求结束的 `finally` 中执行 `SecurityContext.clear()`。原因:
 
@@ -58,7 +58,7 @@ sidebar_label: 安全上下文
 
 - 控制器和服务层只读取 `SecurityContext`,不要在业务代码中自行拼装伪主体塞入;
 - 不要在通用 Filter 中解析 header 后直接写入上下文;
-- 如需扩展认证链路,应在 Interceptor / 安全链路内部完成。
+- 如需新增认证方式,实现 `TokenAuthenticator` SPI 即可,见[认证器扩展(SPI)](../authentication/authenticator-spi.md)。
 
 ## 跨线程传播
 

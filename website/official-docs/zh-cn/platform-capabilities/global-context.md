@@ -43,40 +43,44 @@ sidebar_label: 全局上下文
 
 ### 系统密级
 
-当前代码内置：
+系统密级是部署级防护能力分级，通过环境变量配置：
 
-- `__SecurityLevel__ = 2`
+- `GEELATO_SECURITY_LEVEL`
+- 取值 0-10 的整数，缺省 `2`
+- 非法值（非整数或超出 0-10）启动期即失败
+- 类加载时读取一次固化，运行期不可变
 
-注释里说明它用于：
+等级定义：
 
-- 控制一些方便运维的特殊越权手段
+| 码值 | 名称 | 列级加密 | API 报文加密 | 匿名登录通道 |
+|---|---|---|---|---|
+| 0 | 开发级 | 关 | 关 | 开 |
+| 1 | 基础级 | 开 | 关 | 开 |
+| 2（默认） | 标准级 | 开 | 开 | 开 |
+| 3 | 增强级 | 开 | 开 | 开 |
+| 4-9 | 预留（视同 3） | 开 | 开 | 开 |
+| 10 | 严格级 | 开 | 开 | 关 |
 
-但代码中也基于它派生了两个关键开关：
+派生规则：
 
-- `__ColumnEncrypt__ = __SecurityLevel__ > 0`
-- `__ApiEncrypt__ = __SecurityLevel__ > 1`
-
-也就是说，当前默认行为下：
-
-- 字段级加密开启
-- API 加密语义开启
+- 列级加密：密级 ≥ 1 开启（`getColumnEncryptOption()`）
+- API 报文加密：密级 ≥ 2 开启（`getApiEncryptOption()`）
 
 ### 匿名访问与缓存
 
-当前还派生了：
+匿名登录通道由两部分决定：
 
-- `getAnonymousOption()`
-- `__CACHE__`
+- 环境变量 `GEELATO_ANONYMOUS_ENABLED` 显式指定优先，取值 `true` / `false`（忽略大小写），非法值启动期即失败
+- 未设置时按密级判定：密级 < 10 开启，≥ 10 关闭（`getAnonymousOption()`）
 
-其中：
-
-- `getAnonymousOption()` 取决于密级
-- `__CACHE__` 取决于是否是 `product` 环境
+缓存开关 `__CACHE__` 取决于是否是 `product` 环境。
 
 ## 当前哪些项支持环境变量
 
 `GlobalContext` 当前显式支持通过环境变量覆盖的是：
 
+- `GEELATO_SECURITY_LEVEL`
+- `GEELATO_ANONYMOUS_ENABLED`
 - `GEELATO_ENCRYPT_TYPE`
 - `GEELATO_AES_KEY`
 - `GEELATO_SM4_KEY`
@@ -97,16 +101,15 @@ sidebar_label: 全局上下文
 当前 `GlobalContext` 里下面这些值仍然是代码常量，并没有像加密密钥那样从环境变量读取：
 
 - `__Environment__`
-- `__SecurityLevel__`
-- `__ColumnEncrypt__`
-- `__ApiEncrypt__`
+- `__ColumnEncrypt__`（由密级派生）
+- `__ApiEncrypt__`（由密级派生）
 
 因此就当前仓库状态来说：
 
 - 加密算法与密钥支持环境变量
-- 环境和密级目前不支持直接通过环境变量切换
-
-若需环境、密级同样支持环境变量读取，需进一步扩展 `GlobalContext` 的读取逻辑。
+- 密级与匿名访问开关支持环境变量（`GEELATO_SECURITY_LEVEL` / `GEELATO_ANONYMOUS_ENABLED`）
+- 环境标识仍是代码常量
+- 列加密与 API 加密开关由密级派生，不可独立设置
 
 ## 如何配置采用什么加密
 
@@ -182,6 +185,19 @@ sm4:xxxx
 
 ## 环境变量配置示例
 
+密级与匿名通道示例（生产高保密部署）：
+
+```powershell
+$env:GEELATO_SECURITY_LEVEL="3"
+$env:GEELATO_ANONYMOUS_ENABLED="false"
+```
+
+涉密部署关闭匿名通道：
+
+```powershell
+$env:GEELATO_SECURITY_LEVEL="10"
+```
+
 PowerShell 示例：
 
 ```powershell
@@ -206,6 +222,8 @@ $env:GEELATO_SM4_KEY="your-sm4-key"
 
 部署时的原则是：
 
+- 密级通过 `GEELATO_SECURITY_LEVEL` 按部署场景设定（缺省 2 即一般商用生产）
+- 生产环境建议显式关闭匿名通道（`GEELATO_ANONYMOUS_ENABLED="false"`）
 - 算法通过 `GEELATO_ENCRYPT_TYPE` 指定
 - 密钥通过对应环境变量注入
 - 不要把真实密钥保留在源码默认值中
@@ -220,15 +238,13 @@ $env:GEELATO_SM4_KEY="your-sm4-key"
 
 控制。
 
-当前实现里，它由：
+当前实现里，它由系统密级派生：
 
-- `__SecurityLevel__ > 0`
+- 密级 ≥ 1 时开启
 
-推导而来。
+按照默认密级：
 
-按照当前仓库默认值：
-
-- `__SecurityLevel__ = 2`
+- `GEELATO_SECURITY_LEVEL` 缺省 `2`（标准级）
 
 所以列加密默认是开启的。
 
@@ -292,13 +308,12 @@ $env:GEELATO_SM4_KEY="your-sm4-key"
 - 密级
 - API 加密
 
-这些概念，但就当前代码状态来说，它们还是编译期常量，不是完整外部化配置。
+这些概念，但外部化程度并不相同：
 
-所以更准确的说法是：
-
-- 加密算法和密钥已经支持环境变量
-- 环境与密级目前只是全局常量
-- 若要做到完全外部化，需要继续扩展 `GlobalContext`
+- 加密算法和密钥支持环境变量
+- 密级与匿名访问开关支持环境变量（`GEELATO_SECURITY_LEVEL` / `GEELATO_ANONYMOUS_ENABLED`）
+- 环境标识仍是代码常量
+- 列加密与 API 加密开关由密级派生，不可独立设置
 
 ## 推荐继续阅读
 

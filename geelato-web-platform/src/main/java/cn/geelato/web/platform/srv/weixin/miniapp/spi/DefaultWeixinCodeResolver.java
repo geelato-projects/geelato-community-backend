@@ -1,0 +1,96 @@
+package cn.geelato.web.platform.srv.weixin.miniapp.spi;
+
+import cn.geelato.utils.StringUtils;
+import cn.geelato.web.common.security.spi.WeixinCodeResolver;
+import cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppCredentialInvalidException;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppCredentialUsedException;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppIdentityUnavailableException;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppRateLimitException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 平台默认 js_code 解析实现：读 {@code geelato.wx.miniapp} 配置直调微信 jscode2session。
+ * <p>
+ * 宿主应用可注册自己的 {@code WeixinCodeResolver} Bean 覆盖（如需独立配置来源或走代理）；
+ * 微信 errcode 映射：40029→20006、40163→20007、45011→20015、其他非 0→20006、
+ * 成功但 unionid 缺失→20010。WeixinCodeTokenAuthenticator 会把这些 CoreException 统一
+ * 包装为 UnauthorizedException(20005)——符合备用通道"统一 401"定位；登录 4 接口则透传精确码。
+ */
+@Slf4j
+public class DefaultWeixinCodeResolver implements WeixinCodeResolver {
+
+    private static final String JSCODE2SESSION_URL =
+            "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code";
+
+    private final WeixinMiniAppConfigurationProperties properties;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final OkHttpClient httpClient;
+
+    public DefaultWeixinCodeResolver(WeixinMiniAppConfigurationProperties properties) {
+        this.properties = properties;
+        this.httpClient = new OkHttpClient.Builder()
+                .connectTimeout(3, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS)
+                .build();
+    }
+
+    /** 供测试覆写：发起 HTTP 调用并返回响应体（隔离静态外呼）。 */
+    protected String fetchSessionResponse(String jsCode) throws IOException {
+        String url = String.format(JSCODE2SESSION_URL, properties.getAppId(), properties.getSecret(), jsCode);
+        Request request = new Request.Builder().url(url).get().build();
+        try (Response response = httpClient.newCall(request).execute()) {
+            if (!response.isSuccessful() || response.body() == null) {
+                throw new IOException("微信接口 HTTP " + response.code());
+            }
+            return response.body().string();
+        }
+    }
+
+    @Override
+    public String resolveUnionId(String jsCode) {
+        String body;
+        try {
+            body = fetchSessionResponse(jsCode);
+        } catch (IOException e) {
+            log.error("jscode2session 调用异常", e);
+            throw new MiniAppCredentialInvalidException();
+        }
+        if (StringUtils.isEmpty(body)) {
+            throw new MiniAppCredentialInvalidException();
+        }
+        JsonNode root;
+        try {
+            root = objectMapper.readTree(body);
+        } catch (IOException e) {
+            log.error("jscode2session 响应解析失败: {}", body);
+            throw new MiniAppCredentialInvalidException();
+        }
+        int errcode = root.path("errcode").asInt(0);
+        if (errcode == 40163) {
+            throw new MiniAppCredentialUsedException();
+        }
+        if (errcode == 45011) {
+            throw new MiniAppRateLimitException();
+        }
+        if (errcode != 0) {
+            // 40029（code 无效）及其他：统一按凭证无效处理
+            log.warn("jscode2session 失败: {} - {}", errcode, root.path("errmsg").asText());
+            throw new MiniAppCredentialInvalidException();
+        }
+        String unionId = root.path("unionid").asText(null);
+        if (StringUtils.isEmpty(unionId)) {
+            // openid 正常但无 unionid：小程序未绑定微信开放平台
+            throw new MiniAppIdentityUnavailableException();
+        }
+        return unionId;
+    }
+}

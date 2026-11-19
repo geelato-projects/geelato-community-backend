@@ -24,7 +24,7 @@ Core of login and current-user self-service operations: account/anonymous login,
 | --- | --- |
 | URL | `POST /api/user/login/anonymous` |
 | Params | `username`: body, string, required, anonymous account login name.<br />`password`: body, string, required, must equal the platform-configured anonymous fixed password.<br />Other fields are the same as `login`. |
-| Returns | `ApiResult<LoginResult>`: same as `login`; the JWT payload additionally carries an `anonymous` field. The platform anonymous-login option must be enabled, otherwise the call fails. |
+| Returns | `ApiResult<LoginResult>`: same as `login`; the JWT payload additionally carries an `anonymous` field. The platform anonymous-login option must be enabled, otherwise the call fails.<br />The anonymous channel is decided by the global context: the environment variable `GEELATO_ANONYMOUS_ENABLED` (true/false) takes precedence when set; otherwise it follows the security level (on when level < 10, off when level ≥ 10). See [Global Context](../../platform-capabilities/global-context). |
 
 ### switchIdentity Switch identity
 

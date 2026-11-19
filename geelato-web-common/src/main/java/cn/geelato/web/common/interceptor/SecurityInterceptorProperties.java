@@ -136,7 +136,11 @@ public class SecurityInterceptorProperties {
                 "/search-ops",
                 "/api/search-ops/**",
                 // 运维页调用重建触发与进度轮询（domains/health/debug 等其余管理接口仍走鉴权）
-                "/api/search/reindex/**"
+                "/api/search/reindex/**",
+                // Controller 方法调用统计页（纯内存观测，跟随其余运维页免登录惯例）
+                "/method-stats.html",
+                "/method-stats",
+                "/api/method-stats/**"
         ));
     }
 }

@@ -14,7 +14,8 @@ public class AppScaffoldControllerCatalog {
 
         map.put(AppScaffoldCapability.LOGIN, new LinkedHashSet<>(Set.of(
                 "cn.geelato.web.platform.srv.auth.JWTAuthController",
-                "cn.geelato.web.platform.srv.auth.OAuth2Controller"
+                "cn.geelato.web.platform.srv.auth.OAuth2Controller",
+                "cn.geelato.web.platform.srv.weixin.miniapp.WeixinMiniAppController"
         )));
 
         map.put(AppScaffoldCapability.MQL, new LinkedHashSet<>(Set.of(

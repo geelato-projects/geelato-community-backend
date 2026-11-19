@@ -7,7 +7,7 @@ sidebar_label: Management Integration
 
 While the unified auth server centrally manages data for all connected systems (roles, menus, permissions, grants, users, organizations, and sessions), it also exposes a set of **HTTP management APIs (`/api/open/v1/**`)** for each integrator: using its own machine token, an integrator can self-manage **the data that belongs to it** and build its own admin UI on top.
 
-> Prerequisite: calling the open API requires a client_credentials machine token — see [OAuth2 Protocol Integration](oauth2-integration.md#mode-2-machine-to-machineclient_credentials). User tokens (issued via the authorization code or password grant) **cannot** call the open API.
+> Prerequisite: calling the open API requires a client_credentials machine token — see [OAuth2 Protocol Integration](oauth2-integration.md#mode-2-machine-to-machine-client_credentials). User tokens (issued via the authorization code or password grant) **cannot** call the open API.
 >
 > For an overview of "how org / user / role data is synced into your system and which channels exist", start with [Data Integration](data-integration.md); this page is the full endpoint reference.
 
@@ -59,7 +59,7 @@ Gateway-level error codes (raw JSON, not wrapped in `ApiResult`):
 | 403 | `403` | Not a client_credentials machine token, or the client is disabled / not enrolled for the client_credentials grant |
 
 :::tip Separate endpoint
-`client_credentials` uses a dedicated endpoint `/oauth2/client_token` (built into sa-token 1.46+) — `/oauth2/token` does **not** support this grant type. See [OAuth2 Protocol Integration](oauth2-integration.md#mode-2-machine-to-machineclient_credentials) for full token-handling details (secret storage, leak response, etc.). The `expires_in` value depends on the actual deployment configuration (example values are illustrative only).
+`client_credentials` uses a dedicated endpoint `/oauth2/client_token` (built into sa-token 1.46+) — `/oauth2/token` does **not** support this grant type. See [OAuth2 Protocol Integration](oauth2-integration.md#mode-2-machine-to-machine-client_credentials) for full token-handling details (secret storage, leak response, etc.). The `expires_in` value depends on the actual deployment configuration (example values are illustrative only).
 :::
 
 ## Response Conventions

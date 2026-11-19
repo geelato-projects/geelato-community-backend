@@ -27,9 +27,9 @@
     "message": "ORM & Datasource",
     "description": "The label for category 'ORM 与数据源' in sidebar 'frameworkSidebar'"
   },
-  "sidebar.frameworkSidebar.category.MQL 语法": {
-    "message": "MQL Syntax",
-    "description": "The label for category 'MQL 语法' in sidebar 'frameworkSidebar'"
+  "sidebar.frameworkSidebar.category.MQL 表达式": {
+    "message": "MQL Expressions",
+    "description": "The label for category 'MQL 表达式' in sidebar 'frameworkSidebar'"
   },
   "sidebar.frameworkSidebar.category.脚本引擎": {
     "message": "Script Engine",
@@ -38,6 +38,10 @@
   "sidebar.frameworkSidebar.category.文件处理": {
     "message": "File Processing",
     "description": "The label for category '文件处理' in sidebar 'frameworkSidebar'"
+  },
+  "sidebar.frameworkSidebar.category.事件机制": {
+    "message": "Event Mechanism",
+    "description": "The label for category '事件机制' in sidebar 'frameworkSidebar'"
   },
   "sidebar.frameworkSidebar.category.🔌 开发指南：高级特性": {
     "message": "🔌 Developer Guide: Advanced",

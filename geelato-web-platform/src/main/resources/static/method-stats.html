@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Controller 方法调用统计</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; font-size: 13px; color: #333; background: #f5f7fa; }
+  header { background: #1f2d3d; color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 16px; font-weight: 500; }
+  header .actions { display: flex; gap: 8px; align-items: center; }
+  .desc { color: #97a8be; font-size: 12px; margin-left: 12px; }
+  button { cursor: pointer; border: 1px solid #dcdfe6; background: #fff; color: #606266; padding: 6px 14px; border-radius: 4px; font-size: 13px; transition: all .2s; }
+  button:hover { color: #409eff; border-color: #c6e2ff; background: #ecf5ff; }
+  button.primary { background: #409eff; border-color: #409eff; color: #fff; }
+  button.primary:hover { background: #66b1ff; }
+  button.danger { color: #f56c6c; border-color: #fbc4c4; }
+  button.danger:hover { background: #fef0f0; border-color: #f56c6c; }
+  label.auto { color: #97a8be; font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .container { padding: 16px 20px; }
+  .summary { display: flex; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
+  .stat { background: #fff; border-radius: 4px; padding: 12px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); min-width: 110px; }
+  .stat .num { font-size: 22px; font-weight: 600; }
+  .stat .label { color: #909399; font-size: 12px; }
+  .alert { background: #fdf6ec; color: #e6a23c; border: 1px solid #faecd8; border-radius: 4px; padding: 8px 14px; margin-bottom: 12px; font-size: 12px; }
+  .hidden { display: none; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #ebeef5; vertical-align: top; }
+  th { background: #fafafa; font-weight: 500; color: #909399; font-size: 12px; white-space: nowrap; }
+  tr:hover td { background: #f5f7fa; }
+  td.count { font-weight: 600; font-family: Consolas, "Courier New", monospace; white-space: nowrap; }
+  td.count.zero { color: #c0c4cc; font-weight: 400; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; white-space: nowrap; margin-right: 4px; }
+  .badge.get { background: #f0f9eb; color: #67c23a; }
+  .badge.post { background: #ecf5ff; color: #409eff; }
+  .badge.put { background: #fdf6ec; color: #e6a23c; }
+  .badge.delete { background: #fef0f0; color: #f56c6c; }
+  .badge.patch { background: #f4f4f5; color: #909399; }
+  .badge.any { background: #f4f4f5; color: #909399; }
+  .mono { font-family: Consolas, "Courier New", monospace; }
+  .empty { color: #c0c4cc; text-align: center; padding: 20px; }
+  .err-msg { color: #f56c6c; padding: 12px 20px; }
+  .updated { color: #909399; font-size: 12px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Controller 方法调用统计<span class="desc">仅统计 /api 接口方法 · 纯内存记录 · 重启清零 · 未调用的显示 0</span></h1>
+  </div>
+  <div class="actions">
+    <label class="auto"><input type="checkbox" id="autoRefresh" checked>自动刷新</label>
+    <button class="primary" onclick="load()">刷新</button>
+    <button class="danger" onclick="resetAll()">清零</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="summary">
+    <div class="stat"><div class="num" id="sEndpoints">-</div><div class="label">API 方法总数</div></div>
+    <div class="stat"><div class="num" id="sCalled">-</div><div class="label">已被调用</div></div>
+    <div class="stat"><div class="num" id="sCalls">-</div><div class="label">总调用次数</div></div>
+  </div>
+
+  <div id="overflowAlert" class="alert hidden"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Controller</th>
+        <th>方法</th>
+        <th>HTTP</th>
+        <th>路径</th>
+        <th>调用次数</th>
+      </tr>
+    </thead>
+    <tbody id="body">
+      <tr><td colspan="5" class="empty">加载中...</td></tr>
+    </tbody>
+  </table>
+
+  <div class="updated" id="updatedAt"></div>
+</div>
+
+<script>
+const API = '/api/method-stats';
+
+function api(path, options) { return fetch(path, options).then(r => r.json()); }
+function unwrap(r) {
+  if (r && (r.status === 'fail' || (typeof r.code === 'number' && r.code < 0))) {
+    throw new Error(r.msg || '接口返回失败');
+  }
+  return r && r.data !== undefined ? r.data : r;
+}
+function esc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function methodBadges(httpMethods) {
+  return String(httpMethods || '').split(',')
+    .filter(s => s)
+    .map(m => {
+      const cls = ['get','post','put','delete','patch','any'].includes(m.toLowerCase()) ? m.toLowerCase() : 'any';
+      return `<span class="badge ${cls}">${esc(m)}</span>`;
+    })
+    .join('');
+}
+
+async function load() {
+  try {
+    const d = unwrap(await api(API));
+    document.getElementById('sEndpoints').textContent = d.totalEndpoints;
+    document.getElementById('sCalled').textContent = d.calledEndpoints;
+    document.getElementById('sCalls').textContent = d.totalCalls;
+
+    const alert = document.getElementById('overflowAlert');
+    if (d.overflow > 0) {
+      alert.textContent = `条目数超出内存上限，超出部分未记录：${d.overflow} 条`;
+      alert.classList.remove('hidden');
+    } else {
+      alert.classList.add('hidden');
+    }
+
+    const items = d.items || [];
+    document.getElementById('body').innerHTML = items.length === 0
+      ? '<tr><td colspan="5" class="empty">暂无数据</td></tr>'
+      : items.map(it => `
+        <tr>
+          <td class="mono">${esc(it.controller)}</td>
+          <td class="mono">${esc(it.method)}</td>
+          <td>${methodBadges(it.httpMethods)}</td>
+          <td class="mono">${esc(it.path)}</td>
+          <td class="count ${it.count === 0 ? 'zero' : ''}">${it.count}</td>
+        </tr>`).join('');
+    document.getElementById('updatedAt').textContent = `更新于 ${new Date().toLocaleTimeString()}`;
+  } catch (e) {
+    document.getElementById('body').innerHTML = `<tr><td colspan="5" class="err-msg">加载失败：${esc(e.message)}</td></tr>`;
+  }
+}
+
+async function resetAll() {
+  if (!confirm('确认将全部计数清零？（条目保留，未调用的仍显示 0）')) return;
+  try {
+    await api(API + '/reset', { method: 'POST' });
+    load();
+  } catch (e) {
+    alert('清零失败：' + e.message);
+  }
+}
+
+load();
+setInterval(() => { if (document.getElementById('autoRefresh').checked) load(); }, 5000);
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 package cn.geelato.web.common.shiro;
 
-import cn.geelato.web.common.interceptor.DefaultSecurityInterceptor;
+import cn.geelato.web.common.security.auth.OAuth2TokenAuthenticator;
 import cn.geelato.web.common.oauth2.InvalidTokenException;
 import cn.geelato.web.common.interceptor.OAuthConfigurationProperties;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
@@ -42,8 +42,8 @@ public class OAuth2Realm extends AuthorizingRealm {
         String accessToken = oauth2Token.getAccessToken();
         try{
             User user;
-            if(DefaultSecurityInterceptor.tokenUserCache.get(accessToken)!=null){
-                user= DefaultSecurityInterceptor.tokenUserCache.get(accessToken);
+            if(OAuth2TokenAuthenticator.tokenUserCache.get(accessToken)!=null){
+                user= OAuth2TokenAuthenticator.tokenUserCache.get(accessToken);
             }else {
                 user = OAuth2Helper.getUserInfo(oAuthConfigurationProperties.getUrl(),accessToken);
             }

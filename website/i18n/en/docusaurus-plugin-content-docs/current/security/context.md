@@ -46,7 +46,7 @@ sidebar_label: Security Context
 - It is a thread-level context whose lifetime matches the request.
 - The security principal can only be set inside the security chain after successful authentication.
 
-Today, authentication and principal writing belong to the platform-side `DefaultSecurityInterceptor`: in `preHandle()` it tries cache recovery, Anonymous, JWT, extended-key, and OAuth2 authentication in order, and only after success writes the current user, tenant, and password into `SecurityContext` (flow details in [Authentication & Authorization](../authentication/security-authentication.md)).
+Today, authentication and principal writing belong to the platform-side `DefaultSecurityInterceptor`: in `preHandle()` it routes by the `Authorization` prefix to the matching `TokenAuthenticator`, and after the scheme gate, cache restore, and credential check succeed, it uniformly writes the current user, tenant, and password into `SecurityContext` (flow details in [Authentication & Authorization](../authentication/security-authentication.md)).
 
 The generic `SecurityContextFilter` never sets the principal; it only runs `SecurityContext.clear()` in a `finally` block when the request ends. Why:
 
@@ -58,7 +58,7 @@ Usage constraints:
 
 - Controllers and services only read `SecurityContext`; never fabricate a pseudo-principal in business code;
 - Never parse headers in a generic filter and write them straight into the context;
-- To extend the authentication chain, do it inside the interceptor / security chain.
+- To add a new authentication method, implement the `TokenAuthenticator` SPI — see [Authenticator Extension (SPI)](../authentication/authenticator-spi.md).
 
 ## Cross-Thread Propagation
 

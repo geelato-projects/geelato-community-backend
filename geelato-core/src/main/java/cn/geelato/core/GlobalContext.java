@@ -1,9 +1,12 @@
 package cn.geelato.core;
 
+import cn.geelato.core.enums.SecurityLevelEnum;
 import cn.geelato.lang.meta.DeleteMode;
 
 @SuppressWarnings("ALL")
 public class GlobalContext {
+    protected final static String __ENV_SECURITY_LEVEL__ = "GEELATO_SECURITY_LEVEL";
+    protected final static String __ENV_ANONYMOUS_ENABLED__ = "GEELATO_ANONYMOUS_ENABLED";
     protected final static String __ENV_ENCRYPT_TYPE__ = "GEELATO_ENCRYPT_TYPE";
     protected final static String __ENV_AES_KEY__ = "GEELATO_AES_KEY";
     protected final static String __ENV_SM4_KEY__ = "GEELATO_SM4_KEY";
@@ -13,11 +16,15 @@ public class GlobalContext {
     protected final static String __ENV_RSA_PRIVATE_KEY__ = "GEELATO_RSA_PRIVATE_KEY";
 
     /*
-    __SecurityLevel__代表系统密级，用于控制一些特殊的用于方便运维的越权手段等。
+    __SecurityLevel__代表系统密级：0 开发级/1 基础级/2 标准级(默认)/3 增强级/10 严格级，4-9 预留视同 3。
+    环境变量 GEELATO_SECURITY_LEVEL 类加载时读取一次固化，运行期不可变。
      */
-    protected final static Integer __SecurityLevel__ = 2;
-    protected final static Boolean __ColumnEncrypt__ = __SecurityLevel__ > 0;
-    protected final static Boolean __ApiEncrypt__ = __SecurityLevel__ > 1;
+    protected final static Integer __SecurityLevel__ = resolveSecurityLevel(
+            getEnvOrDefault(__ENV_SECURITY_LEVEL__, "2"));
+    protected final static SecurityLevelEnum __SecurityLevelOption__ = SecurityLevelEnum.fromCode(__SecurityLevel__);
+    protected final static Boolean __ColumnEncrypt__ = __SecurityLevelOption__.hasColumnEncrypt();
+    protected final static Boolean __ApiEncrypt__ = __SecurityLevelOption__.hasApiEncrypt();
+    protected final static Boolean __AnonymousEnabled__ = resolveAnonymousEnabled(System.getenv(__ENV_ANONYMOUS_ENABLED__));
     protected final static String __EncryptType__ = "aes";
     protected final static String __AesKey__ = "b76278495b7f4df3";
     protected final static String __Sm4Key__ = "b76278495b7f4df3";
@@ -66,6 +73,14 @@ public class GlobalContext {
         return __ApiEncrypt__;
     }
 
+    public static Integer getSecurityLevel() {
+        return __SecurityLevel__;
+    }
+
+    public static SecurityLevelEnum getSecurityLevelOption() {
+        return __SecurityLevelOption__;
+    }
+
     public static String getEncryptType() {
         return getEnvOrDefault(__ENV_ENCRYPT_TYPE__, __EncryptType__);
     }
@@ -94,8 +109,11 @@ public class GlobalContext {
         return getEnvOrDefault(__ENV_RSA_PRIVATE_KEY__, __RsaPrivateKey__);
     }
 
+    /**
+     * 匿名登录通道：环境变量 GEELATO_ANONYMOUS_ENABLED 显式指定优先，未设置时按密级判定（10 关闭）。
+     */
     public static Boolean getAnonymousOption() {
-        return __SecurityLevel__ < 10;
+        return __AnonymousEnabled__ != null ? __AnonymousEnabled__ : __SecurityLevelOption__.anonymousAllowedByLevel();
     }
 
     public static String getAnonymousPwd() {
@@ -160,6 +178,43 @@ public class GlobalContext {
             throw new IllegalStateException(String.format("环境变量 %s 不支持 auto，仅支持 logic|physical。", __ENV_DELETE_MODE__));
         }
         return mode;
+    }
+
+    /**
+     * 解析系统密级（包私有便于单测注入）：null/空白默认 2；仅接受 0-10 整数，非法值启动期即失败。
+     */
+    static Integer resolveSecurityLevel(String value) {
+        if (value == null || value.isBlank()) {
+            return 2;
+        }
+        int level;
+        try {
+            level = Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalStateException(String.format("环境变量 %s 的值[%s]非法，仅支持 0-10 的整数。", __ENV_SECURITY_LEVEL__, value));
+        }
+        if (level < 0 || level > 10) {
+            throw new IllegalStateException(String.format("环境变量 %s 的值[%s]超出范围，仅支持 0-10。", __ENV_SECURITY_LEVEL__, value));
+        }
+        return level;
+    }
+
+    /**
+     * 解析匿名登录通道开关（包私有便于单测注入）：null/空白返回 null 表示未指定、回落按密级判定；
+     * 仅接受 true|false（忽略大小写），非法值启动期即失败。
+     */
+    static Boolean resolveAnonymousEnabled(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.trim();
+        if ("true".equalsIgnoreCase(normalized)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(normalized)) {
+            return false;
+        }
+        throw new IllegalStateException(String.format("环境变量 %s 的值[%s]非法，仅支持 true|false。", __ENV_ANONYMOUS_ENABLED__, value));
     }
 
     private static String getEnvOrDefault(String envName, String defaultValue) {

@@ -34,6 +34,7 @@ sidebar_label: 常见问题
 
 - JWT 登录：`Authorization: JWTBearer {token}`
 - OAuth2 登录：`Authorization: Bearer {accessToken}`
+- 微信小程序备用通道：`Authorization: WeixinCode {wx.login 的 code}`
 
 详见 [脚手架快速启动指南](../guide/app-scaffold-starter-project-guide)。
 

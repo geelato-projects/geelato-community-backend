@@ -24,7 +24,7 @@ sidebar_label: 认证登录
 | --- | --- |
 | URL | `POST /api/user/login/anonymous` |
 | 参数 | `username`：body，string，必填，匿名账号登录名。<br />`password`：body，string，必填，须等于平台配置的匿名固定密码。<br />其余字段同 `login`。 |
-| 返回 | `ApiResult<LoginResult>`：同 `login`；JWT 载荷额外携带 `anonymous` 字段。需平台开启匿名登录选项，未开启时返回失败。 |
+| 返回 | `ApiResult<LoginResult>`：同 `login`；JWT 载荷额外携带 `anonymous` 字段。需平台开启匿名登录选项，未开启时返回失败。<br />匿名登录通道由全局上下文决定：环境变量 `GEELATO_ANONYMOUS_ENABLED`（true/false）显式配置优先，未设置时按系统密级判定（密级 < 10 开启，≥ 10 关闭），详见[全局上下文](../../platform-capabilities/global-context)。 |
 
 ### switchIdentity 切换身份
 

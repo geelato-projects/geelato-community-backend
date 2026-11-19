@@ -178,8 +178,7 @@ public class WeixinWorkController extends BaseController {
                 groupSummary.put("chat_id", chatId);
 
                 Object groupChatDetail = groupDetailResult.get("group_chat");
-                if (groupChatDetail instanceof Map) {
-                    Map<?, ?> groupChatMap = (Map<?, ?>) groupChatDetail;
+                if (groupChatDetail instanceof Map<?, ?> groupChatMap) {
                     groupSummary.put("name", groupChatMap.get("name"));
                     groupSummary.put("owner", groupChatMap.get("owner"));
                 } else {

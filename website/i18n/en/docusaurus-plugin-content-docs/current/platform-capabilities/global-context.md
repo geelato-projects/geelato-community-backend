@@ -38,24 +38,44 @@ and exposes it through:
 
 ### Security Level
 
-The code currently defines:
+The security level is a deployment-level protection grading, configured through an environment variable:
 
-- `__SecurityLevel__ = 2`
+- `GEELATO_SECURITY_LEVEL`
+- an integer from 0 to 10, default `2`
+- illegal values (non-numeric or out of range) fail at startup
+- read once at class-loading time and fixed afterwards
 
-and derives:
+Level definitions:
 
-- `__ColumnEncrypt__ = __SecurityLevel__ > 0`
-- `__ApiEncrypt__ = __SecurityLevel__ > 1`
+| Code | Name | Column Encryption | API Encryption | Anonymous Login |
+|---|---|---|---|---|
+| 0 | Development | off | off | on |
+| 1 | Basic | on | off | on |
+| 2 (default) | Standard | on | on | on |
+| 3 | Enhanced | on | on | on |
+| 4-9 | Reserved (same as 3) | on | on | on |
+| 10 | Strict | on | on | off |
 
-So under the current default:
+Derived rules:
 
-- column encryption is enabled
-- API encryption semantics are enabled
+- column encryption: enabled when level ≥ 1 (`getColumnEncryptOption()`)
+- API encryption: enabled when level ≥ 2 (`getApiEncryptOption()`)
+
+### Anonymous Access and Cache
+
+The anonymous login channel is decided by:
+
+- the environment variable `GEELATO_ANONYMOUS_ENABLED` when set explicitly, accepting `true` / `false` (case-insensitive); illegal values fail at startup
+- otherwise by the security level: on when level < 10, off when level ≥ 10 (`getAnonymousOption()`)
+
+The cache switch `__CACHE__` depends on whether the environment is `product`.
 
 ## What Is Already Environment-Variable Driven
 
 The following items are explicitly supported through environment variables:
 
+- `GEELATO_SECURITY_LEVEL`
+- `GEELATO_ANONYMOUS_ENABLED`
 - `GEELATO_ENCRYPT_TYPE`
 - `GEELATO_AES_KEY`
 - `GEELATO_SM4_KEY`
@@ -74,16 +94,15 @@ The rule is:
 The following items are still static constants in the current code:
 
 - `__Environment__`
-- `__SecurityLevel__`
-- `__ColumnEncrypt__`
-- `__ApiEncrypt__`
+- `__ColumnEncrypt__` (derived from the security level)
+- `__ApiEncrypt__` (derived from the security level)
 
 So the accurate statement for the current repository state is:
 
 - encryption algorithm and keys already support environment variables
-- environment and security level do not yet switch directly through environment variables
-
-If you want environment and security level to be externalized too, `GlobalContext` needs to be extended further.
+- security level and the anonymous switch support environment variables (`GEELATO_SECURITY_LEVEL` / `GEELATO_ANONYMOUS_ENABLED`)
+- the environment flag is still a static constant
+- column-encryption and API-encryption switches are derived from the security level and cannot be set independently
 
 ## How To Choose the Encryption Algorithm
 
@@ -139,6 +158,19 @@ The current implementation requires both keys for SM2 operations.
 
 ## Environment Variable Examples
 
+Security level and anonymous channel example (production with heightened confidentiality):
+
+```powershell
+$env:GEELATO_SECURITY_LEVEL="3"
+$env:GEELATO_ANONYMOUS_ENABLED="false"
+```
+
+Classified deployment closing the anonymous channel:
+
+```powershell
+$env:GEELATO_SECURITY_LEVEL="10"
+```
+
 PowerShell example for RSA:
 
 ```powershell
@@ -162,11 +194,9 @@ Column encryption is first guarded by:
 
 - `GlobalContext.getColumnEncryptOption()`
 
-which is currently derived from:
+which is derived from the security level (on when level ≥ 1).
 
-- `__SecurityLevel__ > 0`
-
-Under the current default code, it is enabled.
+Under the default level `2`, it is enabled.
 
 ### Step 2: Column Metadata
 
@@ -203,6 +233,8 @@ So:
 
 ## Recommended Practice
 
+- set `GEELATO_SECURITY_LEVEL` according to the deployment scenario (the default 2 suits general commercial production)
+- explicitly close the anonymous channel in production (`GEELATO_ANONYMOUS_ENABLED="false"`)
 - inject real keys through environment variables in production
 - define `GEELATO_ENCRYPT_TYPE` explicitly
 - mark only truly sensitive columns as `encrypted=true`
@@ -210,13 +242,12 @@ So:
 
 ## Current Boundary
 
-Although `GlobalContext` exposes concepts such as environment, security level, and API encryption, they are still compile-time constants in the current codebase.
+Although `GlobalContext` exposes concepts such as environment, security level, and API encryption, their externalization levels differ:
 
-So the most accurate summary is:
-
-- algorithm and keys are already externalized
-- environment and security level are still static
-- full externalization requires further extension of `GlobalContext`
+- algorithm and keys are externalized through environment variables
+- security level and the anonymous switch are externalized (`GEELATO_SECURITY_LEVEL` / `GEELATO_ANONYMOUS_ENABLED`)
+- the environment flag is still a static constant
+- column-encryption and API-encryption switches are derived from the security level and cannot be set independently
 
 ## Suggested Reading
 

@@ -111,7 +111,7 @@ Geelato Web 平台的运行时应用壳，基于共享底座 `geelato-web-platfo
 
 ### GlobalContext
 
-`cn.geelato.core.GlobalContext`，平台底层全局运行参数入口，承载环境标识、密级、列加密/API 加密开关、加密算法与密钥读取等。
+`cn.geelato.core.GlobalContext`，平台底层全局运行参数入口，承载环境标识、系统密级（环境变量 `GEELATO_SECURITY_LEVEL`，五档：0 开发级/1 基础级/2 标准级（默认）/3 增强级/10 严格级，4-9 预留视同 3）、匿名登录开关（环境变量 `GEELATO_ANONYMOUS_ENABLED`）、列加密/API 加密开关、加密算法与密钥读取等。
 
 详见 [全局上下文](../platform-capabilities/global-context)。
 

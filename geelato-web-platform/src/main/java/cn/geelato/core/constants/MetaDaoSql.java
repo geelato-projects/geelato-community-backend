@@ -22,9 +22,13 @@ public class MetaDaoSql {
      */
     public static final String SQL_COLUMN_LIST_BY_TABLE = String.format("select * from platform_dev_column where del_status=%d", ColumnDefault.DEL_STATUS_VALUE);
     /**
-     * 查询 platform_dev_view
+     * 查询 platform_dev_view。
+     * <p>物化副本行（view_type=materialized）仅在启用时参与元数据注册（禁用行不注册，
+     * 查询路由回原视图行）；停用为保留行置 enable_status=0，不软删。</p>
      */
-    public static final String SQL_VIEW_LIST_BY_TABLE = String.format("select * from platform_dev_view where del_status=%d", ColumnDefault.DEL_STATUS_VALUE);
+    public static final String SQL_VIEW_LIST_BY_TABLE = String.format(
+            "select * from platform_dev_view where del_status=%d and (view_type <> 'materialized' or ifnull(enable_status, %d) = %d)",
+            ColumnDefault.DEL_STATUS_VALUE, ColumnDefault.ENABLE_STATUS_VALUE, ColumnDefault.ENABLE_STATUS_VALUE);
     /**
      * 查询 platform_dev_table_foreign
      */

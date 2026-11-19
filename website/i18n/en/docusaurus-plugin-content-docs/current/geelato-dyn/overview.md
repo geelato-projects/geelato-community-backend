@@ -10,7 +10,7 @@ sidebar_label: Overview
 The problem it solves: business integration units (scheduled jobs, third-party callbacks, outbound integrations) are added and removed frequently and released independently — they should not force repeated restarts of the platform process. Each functional unit is an OSGi bundle that is installed, updated and uninstalled independently through Karaf features, without affecting other bundles at runtime.
 
 :::note Unrelated to the "dynamic datasource"
-This framework (geelato-dyn) has nothing to do with the Spring-side dynamic datasource module (geelato-dynamic-datasource, see the [Datasource chapter](../dynamic-datasource/overview.md)) despite the similar name. The dynamic datasource handles multi-database routing inside the Spring host; geelato-dyn is a separate runtime inside Karaf.
+This framework (geelato-dyn) has nothing to do with the dynamic datasource capability in geelato-orm (see the [Datasource chapter](../dynamic-datasource/overview.md)) despite the similar name. The dynamic datasource handles multi-database routing inside the Spring host; geelato-dyn is a separate runtime inside Karaf.
 :::
 
 ## Technology Stack

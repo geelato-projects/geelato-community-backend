@@ -165,5 +165,5 @@ Switching itself goes through the mechanisms above (entity binding / manual swit
 ## Suggested Reading
 
 - [Binding & Priority](entity-binding.md) — how entity ownership is declared and the full priority chain
-- [Configuration](configuration.md) — connection definitions, module properties and refresh operations
+- [Configuration](configuration.md) — connection definitions, configuration properties and refresh operations
 - [Fluent DSL Guide](../orm/fluent-dsl.md) — the query DSL that `useDataSource` belongs to

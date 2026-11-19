@@ -165,5 +165,5 @@ dao.querys(ThirdEntity.class, ...);        // ThirdEntity 未声明归属 → �
 ## 推荐继续阅读
 
 - [实体绑定与优先级](entity-binding.md) —— 实体归属的声明方式与完整优先级链
-- [配置方式](configuration.md) —— 连接定义、模块参数与刷新操作
+- [配置方式](configuration.md) —— 连接定义、配置参数与刷新操作
 - [Fluent DSL 指引](../orm/fluent-dsl.md) —— `useDataSource` 所在的查询 DSL 全貌

@@ -5,20 +5,20 @@ sidebar_label: 动态数据源
 
 # 动态数据源
 
-本页说明 `geelato-dynamic-datasource` 模块提供的动态数据源能力及其运行机制，包括数据源定义加载、实例构建、路由切换、实体到数据源的解析以及事务相关预留能力。
+本页说明 geelato-orm 提供的动态数据源能力（`cn.geelato.datasource` 包）及其运行机制，包括数据源定义加载、实例构建、路由切换、实体到数据源的解析以及事务相关预留能力。
 
 本页是总览，其余各页按主题展开：
 
 - [实体绑定与优先级](entity-binding.md) —— 实体如何与数据源绑定，完整优先级链
-- [配置方式](configuration.md) —— 连接定义契约、模块参数、默认数据源
+- [配置方式](configuration.md) —— 连接定义契约、配置参数、默认数据源
 - [切换方式](switching.md) —— 自动/手工切换、请求级覆盖、嵌套语义与事务限制
 - [主机地址映射](host-mapping.md) —— 开发环境内网地址本地映射
 
 如需替换默认定义来源或做深度扩展，请阅读 [ORM / 数据源扩展](../orm/datasource-extension.md)。
 
-## 模块定位
+## 能力定位
 
-`geelato-dynamic-datasource` 不是一个孤立的数据源池工具，而是框架里围绕 ORM / `Dao` 执行链路提供的动态路由模块。
+动态数据源能力不是一个孤立的数据源池工具，而是 geelato-orm 围绕 ORM / `Dao` 执行链路提供的动态路由组件。
 
 它的职责可以概括为：
 
@@ -149,7 +149,7 @@ sidebar_label: 动态数据源
 - 写回路由映射
 - 刷新内部 targetDataSources
 
-这也是当前模块支持“懒加载动态源”的关键。
+这也是当前实现支持“懒加载动态源”的关键。
 
 ## 为什么默认主库一定存在
 
@@ -315,7 +315,7 @@ geelato.datasource.dynamic.*
 
 ## JTA / Seata 现状
 
-当前模块确实预留了：
+当前实现预留了：
 
 - JTA
 - Seata

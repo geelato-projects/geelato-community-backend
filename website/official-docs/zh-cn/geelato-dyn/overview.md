@@ -10,7 +10,7 @@ sidebar_label: 框架总览
 它解决的问题是：业务集成模块（定时任务、第三方回调、出站集成等）频繁增删、独立发版，不应反复重启平台进程。每个功能单元是一个 OSGi bundle，通过 Karaf feature 独立安装、更新、卸载，运行期互不影响。
 
 :::note 与"动态数据源"无关
-本框架（geelato-dyn）与 Spring 侧的动态数据源模块（geelato-dynamic-datasource，见[数据源章节](../dynamic-datasource/overview.md)）名字相近但毫无关系。动态数据源解决 Spring 宿主内的多库路由；geelato-dyn 是 Karaf 里的独立运行时。
+本框架（geelato-dyn）与 geelato-orm 的动态数据源能力（见[数据源章节](../dynamic-datasource/overview.md)）名字相近但毫无关系。动态数据源解决 Spring 宿主内的多库路由；geelato-dyn 是 Karaf 里的独立运行时。
 :::
 
 ## 技术栈

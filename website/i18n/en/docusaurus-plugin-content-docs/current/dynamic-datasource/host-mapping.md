@@ -67,7 +67,7 @@ The table has `172.20.10.8:3306`, the actual reachable public network is `47.xx.
 
 ## 4. Implementation Details
 
-- The mapping file is read and cached by the dynamic datasource module, and automatically refreshes based on the "file last modified time".
+- The mapping file is read and cached by the dynamic datasource component, and automatically refreshes based on the "file last modified time".
 - Before creating the `HikariDataSource` and assembling the JDBC URL, the mapping result is used to rewrite the host/port.
 
 ## 5. Notes

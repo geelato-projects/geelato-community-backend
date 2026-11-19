@@ -10,7 +10,7 @@ This page covers every configuration entry of the dynamic datasource: where conn
 Configuration spans three layers:
 
 - **Connection definitions**: the information of each physical database connection, provided by the definition-source SPI (the platform provides the default implementation)
-- **Module properties**: pool sizing, lazy loading, catalog mapping, etc., under the prefix `geelato.datasource.dynamic.*`
+- **Configuration properties**: pool sizing, lazy loading, catalog mapping, etc., under the prefix `geelato.datasource.dynamic.*`
 - **ORM properties**: default datasource and Dao binding, under the prefix `geelato.orm.*`
 
 ## Connection Definitions: the SPI Contract
@@ -24,7 +24,7 @@ A few key points:
 - for mapping intranet host addresses to local ones in development, see [Host Mapping](host-mapping.md)
 - to switch the definition source to a config center, YAML or an external service, see [ORM / Datasource Extension](../orm/datasource-extension.md)
 
-## Module Properties: `geelato.datasource.dynamic.*`
+## Configuration Properties: `geelato.datasource.dynamic.*`
 
 ### Catalog Mapping
 

@@ -5,7 +5,7 @@ sidebar_label: Dynamic Datasource
 
 # Dynamic Datasource
 
-This page explains the current dynamic datasource capability provided by `geelato-dynamic-datasource`, including how the runtime handles:
+This page explains the dynamic datasource capability provided by geelato-orm (the `cn.geelato.datasource` package), including how the runtime handles:
 
 - datasource definition loading
 - datasource instance construction
@@ -20,13 +20,13 @@ If your goal is not just to understand the built-in behavior but to replace the 
 This page is the overview; the other pages expand by topic:
 
 - [Binding & Priority](entity-binding.md) — how entities bind to datasources and the full priority chain
-- [Configuration](configuration.md) — the connection-definition contract, module properties and the default datasource
+- [Configuration](configuration.md) — the connection-definition contract, configuration properties and the default datasource
 - [Switching](switching.md) — automatic/manual switching, the request-level override, nested semantics and transaction limits
 - [Host Mapping](host-mapping.md) — local mapping of intranet addresses during development
 
-## Module Position
+## Capability Position
 
-`geelato-dynamic-datasource` is not just a standalone connection-pool helper. It is the framework module that provides dynamic routing around the ORM and `Dao` execution chain.
+The dynamic datasource capability is not just a standalone connection-pool helper. It is the component inside geelato-orm that provides dynamic routing around the ORM and `Dao` execution chain.
 
 Its responsibility can be summarized as:
 
@@ -320,7 +320,7 @@ The default direction is:
 
 ## Current JTA / Seata Status
 
-The module does reserve extension points for:
+The implementation reserves extension points for:
 
 - JTA
 - Seata

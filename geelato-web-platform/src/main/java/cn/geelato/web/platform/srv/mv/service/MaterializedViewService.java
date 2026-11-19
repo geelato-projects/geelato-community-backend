@@ -176,8 +176,8 @@ public class MaterializedViewService extends BaseService {
         materializedView.setViewName(viewName);
         materializedView.setViewType(ViewTypeEnum.MATERIALIZED.getCode());
         materializedView.setViewConstruct(originSql);
-        // JSON 列不能存空串
-        materializedView.setViewColumn("[]");
+        // viewColumn 始终与原视图行保持一致（含标题、引用/字典配置等）；原视图为空时 JSON 列兜底存 "[]"
+        materializedView.setViewColumn(syncOriginViewColumn(originView));
         materializedView.setDescription(String.format("物化视图（引擎 %s，原视图 %s；待初始化）", engine.engineType(), viewName));
         materializedView.setEnableStatus(EnableStatusEnum.ENABLED.getValue());
         materializedView.setLinked(0);
@@ -475,7 +475,7 @@ public class MaterializedViewService extends BaseService {
         materializedView.setViewType(ViewTypeEnum.MATERIALIZED.getCode());
         // viewConstruct 由 persistDdlToViewConstruct 写入引擎 DDL JSON；定义 SQL 与列元数据（viewColumn）以同名原视图行为准，
         // 原样继承，保证物化视图实体的字段元数据与原视图完全一致（含标题、引用/字典配置等）
-        materializedView.setViewColumn(originView.getViewColumn());
+        materializedView.setViewColumn(syncOriginViewColumn(originView));
         materializedView.setDescription(String.format("物化视图（引擎 %s，源 %s.%s，原视图 %s）",
                 engine.engineType(), database, tables, viewName));
         materializedView.setEnableStatus(EnableStatusEnum.ENABLED.getValue());
@@ -797,13 +797,14 @@ public class MaterializedViewService extends BaseService {
         if ("created".equals(mode)) {
             materializedView.setDelStatus(cn.geelato.core.enums.DeleteStatusEnum.NO.getValue());
             materializedView.setDeleteAt(null);
-            materializedView.setViewColumn("[]");
+            // viewColumn 始终与原视图行保持一致；原视图为空时 JSON 列兜底存 "[]"
+            materializedView.setViewColumn(syncOriginViewColumn(requireOriginView(viewName)));
         }
         materializedView.setConnectId(engineConnectId);
         materializedView.setViewName(viewName);
         materializedView.setViewType(ViewTypeEnum.MATERIALIZED.getCode());
         materializedView.setViewConstruct(ddlJson);
-        // 更新已有行时不动 viewColumn：保留 syncMaterializedRow 同步的列元数据（清空会导致实体查询报过滤字段不存在）
+        // 更新已有行时不动 viewColumn：该值始终与原视图行保持一致，由 enable/syncMaterializedRow/syncColumnsIfMissing 统一同步
         materializedView.setEnableStatus(EnableStatusEnum.ENABLED.getValue());
         materializedView.afterSet();
         if ("created".equals(mode)) {
@@ -1030,10 +1031,11 @@ public class MaterializedViewService extends BaseService {
         String viewName = normalizeViewName(str(params, "viewName"));
         TableView materializedView = requireMaterializedView(viewName);
         materializedView.setEnableStatus(EnableStatusEnum.DISABLED.getValue());
-        // 通用软删；DevViewService 特化版的 MySQL DDL 在引擎连接上不可执行
-        this.isDeleteModel(materializedView);
+        // 停用为保留行置禁用（不软删）：元数据加载 SQL 跳过禁用的物化副本行，查询路由回原视图行；
+        // 引擎内物化视图保留，再次启用时复用副本行（免回填）
+        devViewService.updateModel(materializedView);
         refreshMetaAndCache(viewName);
-        log.info("[MV] 停用：view={}（副本行已软删，查询回原库视图；引擎物化视图保留）", viewName);
+        log.info("[MV] 停用：view={}（副本行保留并置禁用，查询回原库视图；引擎物化视图保留）", viewName);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("viewName", viewName);
         result.put("enabled", false);
@@ -1133,7 +1135,7 @@ public class MaterializedViewService extends BaseService {
             return -1;
         }
         // 列元数据与原视图行保持一致：原样继承原视图 viewColumn（含标题、引用/字典配置等）
-        materializedView.setViewColumn(requireOriginView(viewName).getViewColumn());
+        materializedView.setViewColumn(syncOriginViewColumn(requireOriginView(viewName)));
         devViewService.updateModel(materializedView);
         log.info("[MV] 列元数据补同步完成：view={}, 共 {} 列", viewName, columns.size());
         return columns.size();
@@ -1518,6 +1520,15 @@ public class MaterializedViewService extends BaseService {
             }
         }
         throw new IllegalArgumentException("原视图不存在（物化视图是既有视图的加速副本，请先创建 default/custom/virtual 视图）：" + viewName);
+    }
+
+    /**
+     * 物化副本行 viewColumn 始终与原视图行保持一致（含标题、引用/字典配置等）；
+     * 原视图为空/空白时兜底存 "[]"（JSON 列不能存空串）。
+     */
+    private String syncOriginViewColumn(TableView originView) {
+        String viewColumn = originView.getViewColumn();
+        return StringUtils.isBlank(viewColumn) ? "[]" : viewColumn;
     }
 
     private TableView findMaterializedView(String viewName) {

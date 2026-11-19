@@ -10,7 +10,7 @@ sidebar_label: 配置方式
 配置分为三层：
 
 - **连接定义**：每一条物理库连接的信息，由定义来源 SPI 提供（平台提供默认实现）
-- **模块参数**：连接池、懒加载、catalog 映射等，配置前缀 `geelato.datasource.dynamic.*`
+- **配置参数**：连接池、懒加载、catalog 映射等，配置前缀 `geelato.datasource.dynamic.*`
 - **ORM 侧参数**：默认数据源与 Dao 绑定，配置前缀 `geelato.orm.*`
 
 ## 连接定义：SPI 契约
@@ -24,7 +24,7 @@ sidebar_label: 配置方式
 - 开发环境需要把内网主机地址映射到本地时，见[主机地址映射](host-mapping.md)
 - 想把定义来源换成配置中心、YAML 或外部服务，属扩展能力，见 [ORM / 数据源扩展](../orm/datasource-extension.md)
 
-## 模块参数：`geelato.datasource.dynamic.*`
+## 配置参数：`geelato.datasource.dynamic.*`
 
 ### catalog 映射
 

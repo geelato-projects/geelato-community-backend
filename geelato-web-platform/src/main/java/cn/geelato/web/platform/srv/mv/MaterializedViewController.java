@@ -16,7 +16,7 @@ import java.util.Map;
  * 物化视图加速管理（引擎中立）。
  * <p>双记录架构：precheck →（可选 source/create 预建摄取通道）→ view/create 新增同名 materialized
  * 副本行（元数据加载物化优先，查询路由引擎）→ view/status 确认回填 READY → view/disable 停用
- * （软删副本行回原视图，引擎保留）→ view/drop 彻底删除。
+ * （副本行保留并置禁用，查询回原视图，引擎保留）→ view/drop 彻底删除。
  * <p>引擎（如 RisingWave）由连接的 db_type 决定，框架按适配器分发。
  */
 @DesignTimeApiRestController("/model/mv")

@@ -232,7 +232,7 @@ public class MaterializedViewService extends BaseService {
         }
 
         // P2. 计算目标 CDC 表名（不创建），改写 SQL
-        String sourceName = sourceName(originConnect.getId(), database);
+        String sourceName = sourceName(originConnect.getId());
         Map<String, String> plannedMapping = new LinkedHashMap<>();
         for (String table : tables) {
             plannedMapping.put(table, (sourceName + "_" + table).toLowerCase(Locale.ROOT));
@@ -584,7 +584,7 @@ public class MaterializedViewService extends BaseService {
         if (tables.isEmpty()) {
             throw new IllegalArgumentException("建表语句未解析到任何物理表（mysql-cdc 只能摄取物理表，MySQL 视图会被自动展开）");
         }
-        String sourceName = sourceName(originConnect.getId(), database);
+        String sourceName = sourceName(originConnect.getId());
         Map<String, String> plannedMapping = new LinkedHashMap<>();
         for (String table : tables) {
             plannedMapping.put(table, (sourceName + "_" + table).toLowerCase(Locale.ROOT));
@@ -1454,7 +1454,7 @@ public class MaterializedViewService extends BaseService {
                 database,
                 originConnect.getDbUserName(),
                 EncryptUtils.decrypt(originConnect.getDbPassword()),
-                sourceName(originConnect.getId(), database),
+                sourceName(originConnect.getId()),
                 tables,
                 snapshotEnabled);
     }
@@ -1585,12 +1585,11 @@ public class MaterializedViewService extends BaseService {
         throw new IllegalArgumentException("database 不能为空（源连接未登记 db_name）");
     }
 
-    /** 共享 CDC 通道按源库隔离：gl_{连接id}_{库名}，同一源库在引擎内只建一个 source；超长截断加哈希后缀 */
-    static String sourceName(String originConnectId, String database) {
-        String name = ("gl_" + IDENT_PART_PATTERN.matcher(originConnectId == null ? "" : originConnectId).replaceAll("_")
-                + "_" + IDENT_PART_PATTERN.matcher(database == null ? "" : database).replaceAll("_")).toLowerCase(Locale.ROOT);
+    /** 共享 CDC 通道按源连接隔离：gl_{连接id}，同一源连接在引擎内只建一个 source；超长截断加哈希后缀 */
+    static String sourceName(String originConnectId) {
+        String name = ("gl_" + IDENT_PART_PATTERN.matcher(originConnectId == null ? "" : originConnectId).replaceAll("_")).toLowerCase(Locale.ROOT);
         if (name.length() > 63) {
-            String hash = Integer.toHexString((originConnectId + ":" + database).hashCode());
+            String hash = Integer.toHexString((originConnectId == null ? "" : originConnectId).hashCode());
             name = name.substring(0, 63 - hash.length() - 1) + "_" + hash;
         }
         return name;

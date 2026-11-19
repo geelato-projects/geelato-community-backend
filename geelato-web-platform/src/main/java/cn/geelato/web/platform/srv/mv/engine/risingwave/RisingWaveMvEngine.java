@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 /**
  * RisingWave 物化视图引擎适配器（PG 协议）。
  * 摄取：两段式（CREATE SOURCE 连接定义 + CREATE TABLE ... FROM source TABLE (*)）。
- * CDC source 与摄取表按源库共享：同一源库在引擎内只建一个 source（gl_{连接id}_{库名}），
+ * CDC source 与摄取表按源连接共享：同一源连接在引擎内只建一个 source（gl_{连接id}），
  * 同一源表只建一张摄取表，多视图复用；删除由编排层引用计数保护。
  * 引擎目录：rw_relations / rw_materialized_views，回退 information_schema。
  */
@@ -217,8 +217,8 @@ public class RisingWaveMvEngine implements MaterializedViewEngine {
         try {
             boolean exists = relationExists(spec.engineConnectId(), spec.sourceName());
             items.add(new CheckResult("source-exists", true, exists
-                    ? "引擎内已存在同名 source（按源库共享的通道，将复用；对本段的修改不会重建已存在的 source）"
-                    : "引擎内不存在同名 source（按源库共享，初始化时创建；同库其他视图将复用）"));
+                    ? "引擎内已存在同名 source（按源连接共享的通道，将复用；对本段的修改不会重建已存在的 source）"
+                    : "引擎内不存在同名 source（按源连接共享，初始化时创建；同连接其他视图将复用）"));
         } catch (Exception e) {
             items.add(new CheckResult("source-exists", false, "无法检查引擎内 source 是否存在：" + e.getMessage()));
         }

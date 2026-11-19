@@ -1,5 +1,6 @@
 package cn.geelato.web.common.security;
 
+import cn.geelato.core.GlobalContext;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -11,15 +12,11 @@ import java.util.Map;
 
 /**
  * 平台自签 JWT（HMAC256 + payload 前后半段对调混淆）的唯一实现。
+ * 签名密钥取自 {@link GlobalContext#getJwtSignKey()}（环境变量 GEELATO_JWT_SIGN_KEY 优先，未设置时沿用内置默认值）。
  * 签发（JWTAuthController 等）与校验（JwtTokenAuthenticator）共用本类，
  * 原拦截器嵌套版与 cn.geelato.web.platform.utils 版为同源双拷贝，已合并于此。
  */
 public class JWTUtil {
-
-    /**
-     * 签名 此签名为 16位 大写 MD5
-     */
-    private static final String SIGN_KEY = "5A1332068BA9FD17";
 
     /**
      * 默认的过期时间，43200分钟
@@ -46,7 +43,7 @@ public class JWTUtil {
         JWTCreator.Builder builder = JWT.create();
         map.forEach(builder::withClaim);
         String token = builder.withExpiresAt(instance.getTime())
-                .sign(Algorithm.HMAC256(SIGN_KEY));
+                .sign(Algorithm.HMAC256(GlobalContext.getJwtSignKey()));
         return confoundPayload(token);
     }
 
@@ -63,7 +60,7 @@ public class JWTUtil {
         //解析token
         String dToken = deConfoundPayload(token);
         //创建返回结果
-        return JWT.require(Algorithm.HMAC256(SIGN_KEY)).build().verify(dToken);
+        return JWT.require(Algorithm.HMAC256(GlobalContext.getJwtSignKey())).build().verify(dToken);
     }
 
     /**

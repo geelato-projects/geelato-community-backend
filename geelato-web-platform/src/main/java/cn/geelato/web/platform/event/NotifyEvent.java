@@ -2,6 +2,7 @@ package cn.geelato.web.platform.event;
 
 import cn.geelato.web.common.event.BusinessEvent;
 import cn.geelato.web.platform.srv.notification.dto.NotifyRequest;
+import lombok.Getter;
 
 /**
  * 通知发起事件。
@@ -19,6 +20,7 @@ import cn.geelato.web.platform.srv.notification.dto.NotifyRequest;
  *
  * @author geelato
  */
+@Getter
 public class NotifyEvent extends BusinessEvent {
 
     private final NotifyRequest request;
@@ -26,10 +28,6 @@ public class NotifyEvent extends BusinessEvent {
     public NotifyEvent(Object source, NotifyRequest request) {
         super(source);
         this.request = request;
-    }
-
-    public NotifyRequest getRequest() {
-        return request;
     }
 
     @Override

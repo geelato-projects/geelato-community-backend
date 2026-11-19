@@ -14,6 +14,8 @@ public class GlobalContext {
     protected final static String __ENV_SM2_PRIVATE_KEY__ = "GEELATO_SM2_PRIVATE_KEY";
     protected final static String __ENV_RSA_PUBLIC_KEY__ = "GEELATO_RSA_PUBLIC_KEY";
     protected final static String __ENV_RSA_PRIVATE_KEY__ = "GEELATO_RSA_PRIVATE_KEY";
+    protected final static String __ENV_JWT_SIGN_KEY__ = "GEELATO_JWT_SIGN_KEY";
+    protected final static String __ENV_ANONYMOUS_PWD__ = "GEELATO_ANONYMOUS_PWD";
 
     /*
     __SecurityLevel__代表系统密级：0 开发级/1 基础级/2 标准级(默认)/3 增强级/10 严格级，4-9 预留视同 3。
@@ -32,6 +34,13 @@ public class GlobalContext {
     protected final static String __Sm2PrivateKey__ = "";
     protected final static String __RsaPublicKey__ = "";
     protected final static String __RsaPrivateKey__ = "";
+    /**
+     * 平台自签 JWT 签名密钥默认值（{@link #getJwtSignKey()} 的兜底）。
+     * 生产环境应通过环境变量 {@code GEELATO_JWT_SIGN_KEY} 注入强随机长串。
+     */
+    protected final static String __JwtSignKey__ = "5A1332068BA9FD17";
+    /** 匿名登录通道固定密码默认值（{@link #getAnonymousPwd()} 的兜底），可被环境变量 {@code GEELATO_ANONYMOUS_PWD} 覆盖。 */
+    protected final static String __AnonymousPwd__ = "H2k9ZpQ3@geElAto";
     protected final static String __Environment__ = "development";
     protected final static Boolean __CACHE__ = __Environment__.equals("product");
     /**
@@ -110,14 +119,26 @@ public class GlobalContext {
     }
 
     /**
+     * 平台自签 JWT 签名密钥：环境变量 {@code GEELATO_JWT_SIGN_KEY} 优先，未设置时沿用内置默认值。
+     * 签发（JWTUtil）与校验（JwtTokenAuthenticator）共用本值；更换后存量 token 验签失败，用户需重新登录。
+     */
+    public static String getJwtSignKey() {
+        return getEnvOrDefault(__ENV_JWT_SIGN_KEY__, __JwtSignKey__);
+    }
+
+    /**
      * 匿名登录通道：环境变量 GEELATO_ANONYMOUS_ENABLED 显式指定优先，未设置时按密级判定（10 关闭）。
      */
     public static Boolean getAnonymousOption() {
         return __AnonymousEnabled__ != null ? __AnonymousEnabled__ : __SecurityLevelOption__.anonymousAllowedByLevel();
     }
 
+    /**
+     * 匿名登录通道固定密码：环境变量 {@code GEELATO_ANONYMOUS_PWD} 优先，未设置时沿用内置默认值。
+     * 签发侧（anonymous 登录/JWT claim）与校验侧（各 TokenAuthenticator/Realm）共用本值，更换需两侧同步。
+     */
     public static String getAnonymousPwd() {
-        return "H2k9ZpQ3@geElAto";
+        return getEnvOrDefault(__ENV_ANONYMOUS_PWD__, __AnonymousPwd__);
     }
     public static Boolean getLogStack(){
         return __LogStack__;

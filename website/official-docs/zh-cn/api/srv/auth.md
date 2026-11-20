@@ -16,7 +16,7 @@ sidebar_label: 认证登录
 | --- | --- |
 | URL | `POST /api/user/login` |
 | 参数 | `username`：body，string，必填，登录名（最长 64）。<br />`password`：body，string，必填，登录密码（最长 128）。<br />`tenant`：body，string，可选，租户编码。<br />`suffix`：body，string，可选，登录名后缀（形如 `@租户`，非空时优先于 `tenant` 解析租户）。<br />`org`：body，string，可选，预留字段（当前登录逻辑未使用）。 |
-| 返回 | `ApiResult<LoginResult>`：登录成功返回用户基本信息与 `token`；JWT 载荷字段为 `id`、`loginName`、`passWord`、`orgId`、`tenantCode`。登录名在多租户下不唯一时返回失败（code 为多租户异常码），`data.tenants` 携带候选租户列表供前端选择。 |
+| 返回 | `ApiResult<LoginResult>`：登录成功返回与[当前用户信息](#getuserinfo-当前用户信息)同构的完整身份（用户基本信息、组织/公司信息、组织列表 `orgs`、租户列表 `tenants`、角色串 `roleCodes`/`roleIds`）与 `token`；JWT 载荷字段为 `id`、`loginName`、`passWord`、`orgId`、`tenantCode`。登录名在多租户下不唯一时返回失败（code 为多租户异常码），`data.tenants` 携带候选租户列表供前端选择。 |
 
 ### loginAnonymous 匿名登录
 
@@ -32,7 +32,7 @@ sidebar_label: 认证登录
 | --- | --- |
 | URL | `GET /api/user/switchIdentity` |
 | 参数 | `org`：query，string，可选，目标组织 ID。<br />`tenant`：query，string，可选，目标租户编码。 |
-| 返回 | `ApiResult<LoginResult>`：按新 `orgId`/`tenantCode` 重签 JWT 并返回登录结果；传入的组织或租户不在当前用户可选范围时回退为用户默认值。 |
+| 返回 | `ApiResult<LoginResult>`：按新 `orgId`/`tenantCode` 重签 JWT 并返回完整登录结果（同[当前用户信息](#getuserinfo-当前用户信息)结构）；传入的组织或租户不在当前用户可选范围时回退为用户默认值。重签后代办态随旧凭证失效。 |
 
 ### delegators 可代办委托人列表
 
@@ -48,7 +48,7 @@ sidebar_label: 认证登录
 | --- | --- |
 | URL | `GET /api/user/delegateAs` |
 | 参数 | `targetUserId`：query，string，目标委托人用户 ID。 |
-| 返回 | `ApiResult<User>`：不重签 token，仅在服务端写入「凭证 → 委托目标」会话映射，返回目标委托人信息。校验：须存在有效的委托代办关系，禁止嵌套代办、不能代办自己。 |
+| 返回 | `ApiResult<LoginResult>`：不重签 token，仅在服务端写入「凭证 → 委托目标」会话映射，返回目标委托人的用户基本信息（白名单 DTO，不含凭据字段）。校验：须存在有效的委托代办关系，禁止嵌套代办、不能代办自己。 |
 
 ### exitDelegate 退出代办身份
 
@@ -148,7 +148,7 @@ OAuth2 对接登录：以授权码到 OAuth 服务端换取令牌并拉取用户
 | --- | --- |
 | URL | `POST /api/oauth2/login` |
 | 参数 | `code`：query，string，OAuth2 授权码。 |
-| 返回 | `ApiResult<LoginResult>`：以平台配置的 OAuth 服务端地址与客户端凭证换取访问令牌、拉取用户信息，存储 access/refresh 令牌映射后返回登录结果（`token` 为 OAuth 访问令牌）。换取或拉取用户信息失败时返回失败信息。 |
+| 返回 | `ApiResult<LoginResult>`：以平台配置的 OAuth 服务端地址与客户端凭证换取访问令牌、拉取用户信息，存储 access/refresh 令牌映射后，按用户 ID 读取平台落库数据组装完整登录结果（`token` 为 OAuth 访问令牌）。换取或拉取用户信息失败、SSO 数据缺少用户标识或对应平台账号不存在时返回失败信息。 |
 
 ### refreshToken 刷新访问令牌
 

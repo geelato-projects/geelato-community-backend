@@ -16,7 +16,7 @@ Core of login and current-user self-service operations: account/anonymous login,
 | --- | --- |
 | URL | `POST /api/user/login` |
 | Params | `username`: body, string, required, login name (max 64).<br />`password`: body, string, required, login password (max 128).<br />`tenant`: body, string, optional, tenant code.<br />`suffix`: body, string, optional, login-name suffix (e.g. `@tenant`; when non-empty it takes precedence over `tenant` for tenant resolution).<br />`org`: body, string, optional, reserved field (not used by the current login logic). |
-| Returns | `ApiResult<LoginResult>`: on success returns basic user info plus a `token`; the JWT payload fields are `id`, `loginName`, `passWord`, `orgId`, `tenantCode`. When the login name exists under multiple tenants, the call fails with a multi-tenant exception code and `data.tenants` carries the candidate tenant list for you to choose from. |
+| Returns | `ApiResult<LoginResult>`: on success returns a full identity isomorphic to [Current user info](#getuserinfo-current-user-info) (basic user info, org/company info, org list `orgs`, tenant list `tenants`, role strings `roleCodes`/`roleIds`) plus a `token`; the JWT payload fields are `id`, `loginName`, `passWord`, `orgId`, `tenantCode`. When the login name exists under multiple tenants, the call fails with a multi-tenant exception code and `data.tenants` carries the candidate tenant list for you to choose from. |
 
 ### loginAnonymous Anonymous login
 
@@ -32,7 +32,7 @@ Core of login and current-user self-service operations: account/anonymous login,
 | --- | --- |
 | URL | `GET /api/user/switchIdentity` |
 | Params | `org`: query, string, optional, target org ID.<br />`tenant`: query, string, optional, target tenant code. |
-| Returns | `ApiResult<LoginResult>`: re-issues the JWT with the new `orgId`/`tenantCode` and returns the login result; if the given org or tenant is not among your options, it falls back to the user's default value. |
+| Returns | `ApiResult<LoginResult>`: re-issues the JWT with the new `orgId`/`tenantCode` and returns the full login result (same structure as [Current user info](#getuserinfo-current-user-info)); if the given org or tenant is not among your options, it falls back to the user's default value. Delegate mode ends with the old credential when the token is re-issued. |
 
 ### delegators Delegatable principals
 
@@ -48,7 +48,7 @@ Core of login and current-user self-service operations: account/anonymous login,
 | --- | --- |
 | URL | `GET /api/user/delegateAs` |
 | Params | `targetUserId`: query, string, target principal user ID. |
-| Returns | `ApiResult<User>`: does not re-issue any token; it only writes a server-side "credential → delegation target" session mapping and returns the target principal's info. Checks: a valid delegation relationship must exist; nested delegation and delegating to yourself are forbidden. |
+| Returns | `ApiResult<LoginResult>`: does not re-issue any token; it only writes a server-side "credential → delegation target" session mapping and returns the target principal's basic user info (whitelist DTO, credential fields excluded). Checks: a valid delegation relationship must exist; nested delegation and delegating to yourself are forbidden. |
 
 ### exitDelegate Exit delegate mode
 
@@ -148,7 +148,7 @@ OAuth2 integration login: exchanges an authorization code for tokens at the OAut
 | --- | --- |
 | URL | `POST /api/oauth2/login` |
 | Params | `code`: query, string, OAuth2 authorization code. |
-| Returns | `ApiResult<LoginResult>`: exchanges the code for tokens using the platform-configured OAuth server URL and client credentials, fetches user info, stores the access/refresh token mapping, and returns the login result (`token` is the OAuth access token). Fails when token exchange or user-info fetching fails. |
+| Returns | `ApiResult<LoginResult>`: exchanges the code for tokens using the platform-configured OAuth server URL and client credentials, fetches user info, stores the access/refresh token mapping, and assembles the full login result from the platform's stored user record matched by user ID (`token` is the OAuth access token). Fails when token exchange or user-info fetching fails, when the SSO data lacks a user ID, or when the matching platform account does not exist. |
 
 ### refreshToken Refresh access token
 

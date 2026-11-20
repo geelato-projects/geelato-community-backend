@@ -11,7 +11,6 @@ import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.constants.MediaTypes;
 import cn.geelato.web.common.interceptor.annotation.IgnoreVerify;
-import cn.geelato.meta.Org;
 import cn.geelato.meta.User;
 import cn.geelato.web.common.shiro.ShiroUser;
 import cn.geelato.web.platform.srv.BaseController;
@@ -72,6 +71,7 @@ public class JWTAuthController extends BaseController {
         return doLogin(loginParams, false);
     }
 
+    @IgnoreVerify
     @RequestMapping(value = "/login/anonymous", method = RequestMethod.POST, produces = {MediaTypes.APPLICATION_JSON_UTF_8})
     public ApiResult<LoginResult> loginAnonymous(@Valid @RequestBody LoginParams loginParams) {
         return doLogin(loginParams, true);
@@ -79,11 +79,11 @@ public class JWTAuthController extends BaseController {
 
     private ApiResult<LoginResult> doLogin(LoginParams loginParams, boolean anonymousMode) {
 
-        if(!GlobalContext.getAnonymousOption()){
-            return ApiResult.fail("不允许匿名登录");
-        }
         try {
             if (anonymousMode) {
+                if (!GlobalContext.getAnonymousOption()) {
+                    return ApiResult.fail("不允许匿名登录");
+                }
                 if (!anonymousFixedPassword.equals(loginParams.getPassword())) {
                     return ApiResult.fail("固定密码不正确");
                 }
@@ -131,8 +131,8 @@ public class JWTAuthController extends BaseController {
             }
             String token = JWTUtil.getToken(payload);
 
-            LoginResult loginResult = LoginResult.formatLoginResult(loginUser);
-            loginResult.setToken(token);
+            LoginResult loginResult = currentUserProfileService.buildProfile(
+                    loginUser, loginUser.getOrgId(), loginUser.getTenantCode(), token, null, null);
             return ApiResult.success(loginResult, anonymousMode ? "匿名认证成功!" : "认证成功!");
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
@@ -156,21 +156,7 @@ public class JWTAuthController extends BaseController {
         payload.put("orgId", orgId);
         payload.put("tenantCode", tenantCode);
         String token = JWTUtil.getToken(payload);
-        LoginResult loginResult = LoginResult.formatLoginResult(loginUser);
-        loginResult.setToken(token);
-        userOrgList.stream()
-                .filter(userOrg -> userOrg.getOrgId() != null && userOrg.getOrgId().equals(orgId))
-                .findFirst()
-                .ifPresent(userOrg -> {
-                    loginResult.setOrgId(userOrg.getOrgId());
-                    loginResult.setOrgName(userOrg.getName());
-                    loginResult.setCompanyId(userOrg.getCompanyId());
-                    loginResult.setCompanyExtendId(userOrg.getExtendId());
-                    if (StringUtils.isNotBlank(userOrg.getCompanyId())) {
-                        Org company = dao.queryForObject(Org.class, userOrg.getCompanyId());
-                        loginResult.setCompanyName(company == null ? null : company.getName());
-                    }
-                });
+        LoginResult loginResult = currentUserProfileService.buildProfile(loginUser, orgId, tenantCode, token, null, null);
         return ApiResult.success(loginResult, "切换身份成功，请使用新令牌!");
     }
 
@@ -204,7 +190,7 @@ public class JWTAuthController extends BaseController {
      * @param targetUserId 目标委托人用户ID
      */
     @RequestMapping(value = "/delegateAs", method = RequestMethod.GET)
-    public ApiResult<User> delegateAs(String targetUserId) {
+    public ApiResult<LoginResult> delegateAs(String targetUserId) {
         if (userDelegateMapService == null || delegateSessionStore == null) {
             return ApiResult.fail("委托代办能力未启用");
         }
@@ -237,7 +223,8 @@ public class JWTAuthController extends BaseController {
                 targetUser.getId(), targetUser.getLoginName(), targetUser.getName(),
                 targetUser.getTenantCode());
         delegateSessionStore.put(rawToken, session);
-        return ApiResult.success(targetUser, "已切换为委托代办身份");
+        // 白名单 DTO：裸 User 实体会带出 password/salt
+        return ApiResult.success(LoginResult.formatLoginResult(targetUser), "已切换为委托代办身份");
     }
 
     /**

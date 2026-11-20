@@ -32,18 +32,30 @@ public class CurrentUserProfileService {
         if (user == null) {
             throw new UnauthorizedException("用户不存在或已失效");
         }
+        // 委托代办态：securityUser 已由 applyDelegation 注入 delegateUserId（导师），回填供前端展示
+        return buildProfile(user, securityUser.getOrgId(), securityUser.getTenantCode(), token,
+                securityUser.getDelegateUserId(), securityUser.getDelegateUserName());
+    }
+
+    /**
+     * 组装与 /api/user/info 同构的完整用户身份（各登录端点复用，字段只增不减）。
+     *
+     * @param user             落库用户（调用方自查，本方法不回查）
+     * @param sessionOrgId     会话主组织（登录/切换身份传所选 org；为空或不在用户组织列表时回落 user.orgId）
+     * @param sessionTenantCode 会话租户（同上回落 user.tenantCode）
+     */
+    public LoginResult buildProfile(User user, String sessionOrgId, String sessionTenantCode, String token,
+                                    String delegateUserId, String delegateUserName) {
         LoginResult loginResult = LoginResult.formatLoginResult(user);
         loginResult.setToken(token);
-        loginResult.setRoles(null);
-        // 委托代办态：securityUser 已由 applyDelegation 注入 delegateUserId（导师），回填供前端展示
-        loginResult.setDelegateUserId(securityUser.getDelegateUserId());
-        loginResult.setDelegateUserName(securityUser.getDelegateUserName());
+        loginResult.setDelegateUserId(delegateUserId);
+        loginResult.setDelegateUserName(delegateUserName);
 
         List<UserOrg> userOrgList = userIdentityQueryService.queryOrgListByUserId(user.getId());
         if (!userOrgList.isEmpty()) {
             loginResult.setOrgs(userOrgList);
-            String orgId = userIdentityQueryService.containsOrg(userOrgList, securityUser.getOrgId())
-                    ? securityUser.getOrgId() : user.getOrgId();
+            String orgId = userIdentityQueryService.containsOrg(userOrgList, sessionOrgId)
+                    ? sessionOrgId : user.getOrgId();
             UserOrg userOrg = userOrgList.stream()
                     .filter(org -> org.getOrgId().equals(orgId))
                     .findFirst()
@@ -69,8 +81,8 @@ public class CurrentUserProfileService {
 
         List<Tenant> tenantList = userIdentityQueryService.queryTenantListByUserId(user.getId());
         loginResult.setTenants(tenantList);
-        String tenantCode = userIdentityQueryService.containsTenant(tenantList, securityUser.getTenantCode())
-                ? securityUser.getTenantCode() : user.getTenantCode();
+        String tenantCode = userIdentityQueryService.containsTenant(tenantList, sessionTenantCode)
+                ? sessionTenantCode : user.getTenantCode();
         loginResult.setTenantCode(tenantCode);
         userIdentityQueryService.populateRoleInfo(loginResult, user.getId(), null, user.getTenantCode());
         return loginResult;

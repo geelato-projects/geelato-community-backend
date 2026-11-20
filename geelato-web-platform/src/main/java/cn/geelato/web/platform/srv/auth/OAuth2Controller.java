@@ -1,6 +1,8 @@
 package cn.geelato.web.platform.srv.auth;
 
+import cn.geelato.core.orm.Dao;
 import cn.geelato.lang.api.ApiResult;
+import cn.geelato.utils.StringUtils;
 import cn.geelato.web.common.annotation.ApiRestController;
 import cn.geelato.web.common.interceptor.OAuthConfigurationProperties;
 import cn.geelato.web.common.oauth2.OAuth2Helper;
@@ -8,11 +10,13 @@ import cn.geelato.web.common.oauth2.OAuth2ServerResult;
 import cn.geelato.web.common.oauth2.OAuth2ServerTokenResult;
 import cn.geelato.web.common.oauth2.OAuth2Service;
 import cn.geelato.web.common.oauth2.TokenManager;
+import cn.geelato.web.platform.srv.auth.service.CurrentUserProfileService;
 import cn.geelato.web.platform.srv.security.entity.LoginResult;
 import cn.geelato.meta.User;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -25,10 +29,15 @@ public class OAuth2Controller {
 
     private final OAuthConfigurationProperties oAuthConfigurationProperties;
     private final OAuth2Service oAuthService;
+    private final Dao dao;
+    private final CurrentUserProfileService currentUserProfileService;
     @Autowired
-    private OAuth2Controller(OAuthConfigurationProperties oAuthConfigurationProperties, OAuth2Service oAuthService) {
+    private OAuth2Controller(OAuthConfigurationProperties oAuthConfigurationProperties, OAuth2Service oAuthService,
+                             @Qualifier("primaryDao") Dao dao, CurrentUserProfileService currentUserProfileService) {
         this.oAuthConfigurationProperties = oAuthConfigurationProperties;
         this.oAuthService = oAuthService;
+        this.dao = dao;
+        this.currentUserProfileService = currentUserProfileService;
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
@@ -44,10 +53,18 @@ public class OAuth2Controller {
             if (userInfoResult.getCode().equals("200")) {
                 // 存储token映射关系
                 TokenManager.storeTokens(oAuthServerTokenResult.getAccess_token(), oAuthServerTokenResult.getRefresh_token());
-                
-                User user = OAuth2Helper.parseUserInfoData(userInfoResult.getData());
-                LoginResult loginResult = LoginResult.formatLoginResult(user);
-                loginResult.setToken(oAuthServerTokenResult.getAccess_token());
+
+                User remoteUser = OAuth2Helper.parseUserInfoData(userInfoResult.getData());
+                if (remoteUser == null || StringUtils.isBlank(remoteUser.getId())) {
+                    return ApiResult.fail("SSO 返回数据缺少用户标识，无法登录");
+                }
+                // 以落库数据为准组装完整身份，远程载荷仅提供 id
+                User user = dao.queryForObject(User.class, "id", remoteUser.getId());
+                if (user == null) {
+                    return ApiResult.fail("SSO 用户在平台不存在或已失效");
+                }
+                LoginResult loginResult = currentUserProfileService.buildProfile(
+                        user, user.getOrgId(), user.getTenantCode(), oAuthServerTokenResult.getAccess_token(), null, null);
                 return ApiResult.success(loginResult);
             }
         }

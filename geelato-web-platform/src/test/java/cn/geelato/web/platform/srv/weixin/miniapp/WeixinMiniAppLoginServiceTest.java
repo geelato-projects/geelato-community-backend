@@ -2,6 +2,8 @@ package cn.geelato.web.platform.srv.weixin.miniapp;
 
 import cn.geelato.meta.User;
 import cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties;
+import cn.geelato.web.platform.srv.auth.service.CurrentUserProfileService;
+import cn.geelato.web.platform.srv.security.entity.LoginResult;
 import cn.geelato.web.platform.srv.security.service.UserService;
 import cn.geelato.web.platform.srv.weixin.miniapp.entity.MiniAppAccount;
 import cn.geelato.web.platform.srv.weixin.miniapp.entity.MiniAppBoundEvent;
@@ -98,6 +100,14 @@ class WeixinMiniAppLoginServiceTest {
                 return "13812341234";
             }
         };
+        // 身份组装桩：单测无 DB，覆写 buildProfile 退化为白名单拷贝（隔离组织/租户/角色查询）
+        CurrentUserProfileService profileService = new CurrentUserProfileService(null, null) {
+            @Override
+            public LoginResult buildProfile(User user, String sessionOrgId, String sessionTenantCode, String token,
+                                            String delegateUserId, String delegateUserName) {
+                return LoginResult.formatLoginResult(user);
+            }
+        };
         // 匿名子类桩替 protected 写库方法（隔离 MetaFactory/真实数据源），捕获写库参数供断言
         return new WeixinMiniAppLoginService(
                 userService,
@@ -108,6 +118,7 @@ class WeixinMiniAppLoginServiceTest {
                 apiClient,
                 properties,
                 publishedEvents::add,
+                profileService,
                 null /* 快照刷新协调器：单测环境无安全快照，跳过刷新 */) {
             @Override
             protected String updateBindingInDb(String unionId, String userId) {

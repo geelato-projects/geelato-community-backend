@@ -8,6 +8,7 @@ import cn.geelato.security.SecurityDataRefreshCoordinator;
 import cn.geelato.web.common.security.JWTUtil;
 import cn.geelato.web.common.security.spi.WeixinCodeResolver;
 import cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties;
+import cn.geelato.web.platform.srv.auth.service.CurrentUserProfileService;
 import cn.geelato.web.platform.srv.security.entity.LoginResult;
 import cn.geelato.web.platform.srv.security.service.UserService;
 import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppAccountDisabledException;
@@ -56,6 +57,7 @@ public class WeixinMiniAppLoginService {
     private final WeixinMiniAppApiClient apiClient;
     private final WeixinMiniAppConfigurationProperties properties;
     private final ApplicationEventPublisher eventPublisher;
+    private final CurrentUserProfileService currentUserProfileService;
     /** 用户快照刷新协调器（可缺席：直连式实现自行管理数据面时）；bind/unbind 后刷新使 unionid extend 索引即时生效 */
     private final SecurityDataRefreshCoordinator refreshCoordinator;
 
@@ -67,6 +69,7 @@ public class WeixinMiniAppLoginService {
                                      WeixinMiniAppApiClient apiClient,
                                      WeixinMiniAppConfigurationProperties properties,
                                      ApplicationEventPublisher eventPublisher,
+                                     CurrentUserProfileService currentUserProfileService,
                                      @Autowired(required = false) SecurityDataRefreshCoordinator refreshCoordinator) {
         this.userService = userService;
         this.weixinCodeResolver = weixinCodeResolver;
@@ -76,6 +79,7 @@ public class WeixinMiniAppLoginService {
         this.apiClient = apiClient;
         this.properties = properties;
         this.eventPublisher = eventPublisher;
+        this.currentUserProfileService = currentUserProfileService;
         this.refreshCoordinator = refreshCoordinator;
     }
 
@@ -287,30 +291,10 @@ public class WeixinMiniAppLoginService {
     // ===== [DEBUG-REMOVE-END] =====
 
     private MiniAppLoginResult buildLoginResult(User user) {
-        LoginResult formatted = LoginResult.formatLoginResult(user);
-        MiniAppLoginResult result = new MiniAppLoginResult();
-        // 平台标准字段拷贝（formatLoginResult 返回 LoginResult，字段逐项搬入子类）
-        result.setId(formatted.getId());
-        result.setJobNumber(formatted.getJobNumber());
-        result.setName(formatted.getName());
-        result.setLoginName(formatted.getLoginName());
-        result.setAvatar(formatted.getAvatar());
-        result.setMobilePrefix(formatted.getMobilePrefix());
-        result.setMobilePhone(formatted.getMobilePhone());
-        result.setEmail(formatted.getEmail());
-        result.setRegistrationDate(formatted.getRegistrationDate());
-        result.setOrgId(formatted.getOrgId());
-        result.setOrgName(formatted.getOrgName());
-        result.setNationCode(formatted.getNationCode());
-        result.setProvinceCode(formatted.getProvinceCode());
-        result.setCityCode(formatted.getCityCode());
-        result.setAddress(formatted.getAddress());
-        result.setDescription(formatted.getDescription());
-        result.setTenantCode(formatted.getTenantCode());
-        result.setCooperatingOrgId(formatted.getCooperatingOrgId());
-        result.setEnableStatus(formatted.getEnableStatus());
-        result.setCompanyId(formatted.getCompanyId());
-        result.setWeixinUnionId(formatted.getWeixinUnionId());
+        // 与 /api/user/info 同构的完整身份（roles/orgs/tenants/companyName 等）
+        LoginResult full = currentUserProfileService.buildProfile(
+                user, user.getOrgId(), user.getTenantCode(), null, null, null);
+        MiniAppLoginResult result = MiniAppLoginResult.of(full);
 
         int ttlSeconds = properties.getTokenTtlSeconds();
         try {

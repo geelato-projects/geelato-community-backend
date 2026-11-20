@@ -3,6 +3,7 @@ package cn.geelato.web.platform.srv.weixin.miniapp.entity;
 import cn.geelato.web.platform.srv.security.entity.LoginResult;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.BeanUtils;
 
 /**
  * 微信小程序登录/绑定成功返回的用户身份：平台标准 {@link LoginResult}（身份对象内含 token，
@@ -23,4 +24,11 @@ public class MiniAppLoginResult extends LoginResult {
 
     /** 会话 token 有效期（秒）。非扩展字段：与 Web 端身份对象既有惯例一致（前端缺失兜底 604800） */
     private Integer expiresIn;
+
+    /** 以平台标准身份为基础构造小程序身份（token 由调用方随后签发覆盖） */
+    public static MiniAppLoginResult of(LoginResult base) {
+        MiniAppLoginResult result = new MiniAppLoginResult();
+        BeanUtils.copyProperties(base, result);
+        return result;
+    }
 }

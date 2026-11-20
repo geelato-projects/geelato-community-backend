@@ -1,8 +1,9 @@
 package cn.geelato.web.platform.srv.weixin.miniapp.service;
 
 import cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties;
-import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppCredentialInvalidException;
-import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppPhoneAuthException;
+import cn.geelato.web.platform.srv.weixin.miniapp.DebugLoginCode;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppErrorCodes;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnauthorizedException;
 import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppRateLimitException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,6 +60,15 @@ public class WeixinMiniAppApiClient {
      * access_token 无效（40001）时强制刷新重试 1 次；其余非 0 errcode 抛 20008。
      */
     public String getPhoneNumber(String phoneCode) {
+        // ===== [DEBUG-REMOVE-BEGIN] 联调调试（debug-enabled=true）：phoneCode 传 test_{手机号} 直接返回该手机号，不外呼微信。未来整体删除本段 =====
+        if (properties.isDebugEnabled()) {
+            var debugPhone = DebugLoginCode.parsePhone(phoneCode);
+            if (debugPhone.isPresent()) {
+                log.warn("[调试] phoneCode 使用模拟手机号 {}（debug-enabled=true，生产严禁开启）", debugPhone.get());
+                return debugPhone.get();
+            }
+        }
+        // ===== [DEBUG-REMOVE-END] =====
         JsonNode phoneInfo = postForPhoneInfo(phoneCode, false);
         if (phoneInfo == null) {
             // 40001 access_token 失效：强刷一次再试
@@ -66,11 +76,11 @@ public class WeixinMiniAppApiClient {
             phoneInfo = postForPhoneInfo(phoneCode, true);
         }
         if (phoneInfo == null) {
-            throw new MiniAppPhoneAuthException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.PHONE_AUTH_FAILED, "手机号授权失败，请重新授权");
         }
         String purePhoneNumber = phoneInfo.path("purePhoneNumber").asText(null);
         if (purePhoneNumber == null || purePhoneNumber.isEmpty()) {
-            throw new MiniAppPhoneAuthException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.PHONE_AUTH_FAILED, "手机号授权失败，请重新授权");
         }
         return purePhoneNumber;
     }
@@ -92,12 +102,10 @@ public class WeixinMiniAppApiClient {
             }
             String errmsg = root.path("errmsg").asText();
             log.warn("getuserphonenumber 失败: {} - {}", errcode, errmsg);
-            throw new MiniAppPhoneAuthException();
-        } catch (MiniAppPhoneAuthException e) {
-            throw e;
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.PHONE_AUTH_FAILED, "手机号授权失败，请重新授权");
         } catch (Exception e) {
             log.error("getuserphonenumber 调用异常", e);
-            throw new MiniAppPhoneAuthException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.PHONE_AUTH_FAILED, "手机号授权失败，请重新授权");
         }
     }
 

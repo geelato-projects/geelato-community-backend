@@ -317,7 +317,3 @@ Examples:
 - keep module-specific settings inside `properties/*.properties`
 - prefer environment variables for environment differences
 - keep secrets out of source defaults whenever possible
-
-## Suggested Reading
-
-- [Workflow Module](workflow.md)

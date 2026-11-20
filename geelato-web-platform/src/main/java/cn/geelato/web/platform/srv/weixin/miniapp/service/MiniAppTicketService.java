@@ -2,7 +2,8 @@ package cn.geelato.web.platform.srv.weixin.miniapp.service;
 
 import cn.geelato.utils.LocalBoundedCache;
 import cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties;
-import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppTicketInvalidException;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppErrorCodes;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnauthorizedException;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -55,19 +56,23 @@ public class MiniAppTicketService {
         return base64Url(payload) + "." + base64Url(hmacSha256(payload));
     }
 
+    /** 已验签票据的解构结果：bind 据此做账号定位与手机号摘要一致性校验。 */
+    public record VerifiedTicket(String userId, String phoneDigest) {
+    }
+
     /**
      * 校验票据并消费（一次性）。
      *
-     * @return 目标账号 userId
-     * @throws MiniAppTicketInvalidException 签名不匹配 / 已过期 / nonce 已消费
+     * @return 已验签的票据详情（目标账号 userId + 手机号摘要）
+     * @throws MiniAppUnauthorizedException(TICKET_INVALID) 签名不匹配 / 已过期 / nonce 已消费
      */
-    public String verifyAndConsume(String ticket) {
+    public VerifiedTicket verifyAndConsume(String ticket) {
         if (ticket == null || ticket.isEmpty()) {
-            throw new MiniAppTicketInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.TICKET_INVALID, "绑定确认已过期，请重新发起绑定");
         }
         int dot = ticket.indexOf('.');
         if (dot <= 0 || dot == ticket.length() - 1) {
-            throw new MiniAppTicketInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.TICKET_INVALID, "绑定确认已过期，请重新发起绑定");
         }
         String payload;
         String signature;
@@ -75,33 +80,34 @@ public class MiniAppTicketService {
             payload = new String(Base64.getUrlDecoder().decode(ticket.substring(0, dot)), StandardCharsets.UTF_8);
             signature = new String(Base64.getUrlDecoder().decode(ticket.substring(dot + 1)), StandardCharsets.UTF_8);
         } catch (IllegalArgumentException e) {
-            throw new MiniAppTicketInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.TICKET_INVALID, "绑定确认已过期，请重新发起绑定");
         }
         if (!MessageDigest.isEqual(signature.getBytes(StandardCharsets.UTF_8),
                 hmacSha256(payload).getBytes(StandardCharsets.UTF_8))) {
-            throw new MiniAppTicketInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.TICKET_INVALID, "绑定确认已过期，请重新发起绑定");
         }
         String[] parts = payload.split("\\|", -1);
         if (parts.length != 4) {
-            throw new MiniAppTicketInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.TICKET_INVALID, "绑定确认已过期，请重新发起绑定");
         }
         String userId = parts[0];
+        String phoneDigest = parts[1];
         long expireAt;
         try {
             expireAt = Long.parseLong(parts[2]);
         } catch (NumberFormatException e) {
-            throw new MiniAppTicketInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.TICKET_INVALID, "绑定确认已过期，请重新发起绑定");
         }
         long now = System.currentTimeMillis() / 1000L;
         if (now > expireAt) {
-            throw new MiniAppTicketInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.TICKET_INVALID, "绑定确认已过期，请重新发起绑定");
         }
         String nonce = parts[3];
         long remainSeconds = Math.max(1, expireAt - now);
         if (!consumeNonce(nonce, remainSeconds)) {
-            throw new MiniAppTicketInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.TICKET_INVALID, "绑定确认已过期，请重新发起绑定");
         }
-        return userId;
+        return new VerifiedTicket(userId, phoneDigest);
     }
 
     /** 校验票据内手机号摘要与目标账号当前手机号是否一致（防票据签发后账号手机号已变更）。 */
@@ -141,7 +147,7 @@ public class MiniAppTicketService {
         String key = properties.getTicketKey();
         if (key == null || key.isEmpty()) {
             log.error("geelato.wx.miniapp.ticket-key 未配置，无法签发/校验绑定票据");
-            throw new MiniAppTicketInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.TICKET_INVALID, "绑定确认已过期，请重新发起绑定");
         }
         try {
             Mac mac = Mac.getInstance("HmacSHA256");

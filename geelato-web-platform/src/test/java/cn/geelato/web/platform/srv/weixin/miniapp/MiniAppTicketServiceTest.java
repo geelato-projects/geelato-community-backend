@@ -1,12 +1,15 @@
 package cn.geelato.web.platform.srv.weixin.miniapp;
 
 import cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppErrorCodes;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnauthorizedException;
 import cn.geelato.web.platform.srv.weixin.miniapp.service.MiniAppTicketService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -27,10 +30,11 @@ class MiniAppTicketServiceTest {
     }
 
     @Test
-    void issue_verifyAndConsume_roundTripReturnsUserId() {
+    void issue_verifyAndConsume_roundTripReturnsTicketDetail() {
         String ticket = ticketService.issue("user-001", "13812341234");
-        String userId = ticketService.verifyAndConsume(ticket);
-        assertEquals("user-001", userId);
+        MiniAppTicketService.VerifiedTicket verified = ticketService.verifyAndConsume(ticket);
+        assertEquals("user-001", verified.userId());
+        assertNotNull(verified.phoneDigest());
     }
 
     @Test
@@ -42,7 +46,7 @@ class MiniAppTicketServiceTest {
         String forgedPayload = payload.replace("user-001", "user-999");
         String forgedTicket = java.util.Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(forgedPayload.getBytes()) + ticket.substring(dot);
-        assertThrows(MiniAppTicketInvalidException.class, () -> ticketService.verifyAndConsume(forgedTicket));
+        assertThrows(MiniAppUnauthorizedException.class, () -> ticketService.verifyAndConsume(forgedTicket));
     }
 
     @Test
@@ -50,14 +54,14 @@ class MiniAppTicketServiceTest {
         String ticket = ticketService.issue("user-001", "13812341234");
         assertDoesNotThrow(() -> ticketService.verifyAndConsume(ticket));
         // 同一票据第二次消费：nonce 已拉黑
-        assertThrows(MiniAppTicketInvalidException.class, () -> ticketService.verifyAndConsume(ticket));
+        assertThrows(MiniAppUnauthorizedException.class, () -> ticketService.verifyAndConsume(ticket));
     }
 
     @Test
     void verify_malformedTicketRejected() {
-        assertThrows(MiniAppTicketInvalidException.class, () -> ticketService.verifyAndConsume(null));
-        assertThrows(MiniAppTicketInvalidException.class, () -> ticketService.verifyAndConsume(""));
-        assertThrows(MiniAppTicketInvalidException.class, () -> ticketService.verifyAndConsume("not-a-ticket"));
+        assertThrows(MiniAppUnauthorizedException.class, () -> ticketService.verifyAndConsume(null));
+        assertThrows(MiniAppUnauthorizedException.class, () -> ticketService.verifyAndConsume(""));
+        assertThrows(MiniAppUnauthorizedException.class, () -> ticketService.verifyAndConsume("not-a-ticket"));
     }
 
     @Test
@@ -65,7 +69,7 @@ class MiniAppTicketServiceTest {
         properties.setTicketKey(null);
         WeixinMiniAppConfigurationProperties noKey = properties;
         MiniAppTicketService noKeyService = new MiniAppTicketService(noKey);
-        assertThrows(MiniAppTicketInvalidException.class, () -> noKeyService.issue("user-001", "13812341234"));
+        assertThrows(MiniAppUnauthorizedException.class, () -> noKeyService.issue("user-001", "13812341234"));
     }
 
     @Test

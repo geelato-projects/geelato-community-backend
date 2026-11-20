@@ -687,7 +687,7 @@ sidebar_label: 系统配置
 
 - `auth.properties` 负责认证相关参数
 - `message.properties` 负责消息模块和 RabbitMQ
-- `workflow.properties` 负责工作流和 Druid（配置文档见 [Workflow 模块](workflow.md)）
+- `workflow.properties` 负责工作流和 Druid
 - `oss.properties` 负责对象存储
 
 这种拆分方式有利于：

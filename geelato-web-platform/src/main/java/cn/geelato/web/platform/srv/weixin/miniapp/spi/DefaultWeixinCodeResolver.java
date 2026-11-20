@@ -1,12 +1,13 @@
 package cn.geelato.web.platform.srv.weixin.miniapp.spi;
 
 import cn.geelato.utils.StringUtils;
+import cn.geelato.web.common.interceptor.UnauthorizedException;
 import cn.geelato.web.common.security.spi.WeixinCodeResolver;
+import cn.geelato.web.platform.srv.weixin.miniapp.DebugLoginCode;
 import cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties;
-import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppCredentialInvalidException;
-import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppCredentialUsedException;
-import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppIdentityUnavailableException;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppErrorCodes;
 import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppRateLimitException;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnauthorizedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -57,39 +58,53 @@ public class DefaultWeixinCodeResolver implements WeixinCodeResolver {
 
     @Override
     public String resolveUnionId(String jsCode) {
+        // ===== [DEBUG-REMOVE-BEGIN] 联调调试通道（debug-enabled=true）：test_{账号}_bind → 确定性假 unionid；test_{账号}_unbind → 模拟未绑定。未来整体删除本段 =====
+        if (properties.isDebugEnabled()) {
+            var debug = DebugLoginCode.parse(jsCode);
+            if (debug.isPresent()) {
+                if (debug.get().mode() == DebugLoginCode.Mode.UNBIND) {
+                    log.info("[调试] WeixinCode 通道模拟未绑定场景, account={}", debug.get().account());
+                    throw new UnauthorizedException("微信身份未绑定平台账号");
+                }
+                String unionId = DebugLoginCode.debugUnionId(debug.get().account());
+                log.warn("[调试] WeixinCode 通道使用假 unionid {}（debug-enabled=true，生产严禁开启）", unionId);
+                return unionId;
+            }
+        }
+        // ===== [DEBUG-REMOVE-END] =====
         String body;
         try {
             body = fetchSessionResponse(jsCode);
         } catch (IOException e) {
             log.error("jscode2session 调用异常", e);
-            throw new MiniAppCredentialInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.CREDENTIAL_INVALID, "登录凭证无效，请重新进入小程序");
         }
         if (StringUtils.isEmpty(body)) {
-            throw new MiniAppCredentialInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.CREDENTIAL_INVALID, "登录凭证无效，请重新进入小程序");
         }
         JsonNode root;
         try {
             root = objectMapper.readTree(body);
         } catch (IOException e) {
             log.error("jscode2session 响应解析失败: {}", body);
-            throw new MiniAppCredentialInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.CREDENTIAL_INVALID, "登录凭证无效，请重新进入小程序");
         }
         int errcode = root.path("errcode").asInt(0);
         if (errcode == 40163) {
-            throw new MiniAppCredentialUsedException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.CREDENTIAL_USED, "登录凭证已被使用，请重新获取");
         }
         if (errcode == 45011) {
-            throw new MiniAppRateLimitException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.RATE_LIMITED, "操作过于频繁，请稍后再试");
         }
         if (errcode != 0) {
             // 40029（code 无效）及其他：统一按凭证无效处理
             log.warn("jscode2session 失败: {} - {}", errcode, root.path("errmsg").asText());
-            throw new MiniAppCredentialInvalidException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.CREDENTIAL_INVALID, "登录凭证无效，请重新进入小程序");
         }
         String unionId = root.path("unionid").asText(null);
         if (StringUtils.isEmpty(unionId)) {
             // openid 正常但无 unionid：小程序未绑定微信开放平台
-            throw new MiniAppIdentityUnavailableException();
+            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.IDENTITY_UNAVAILABLE, "无法获取微信身份标识，请联系管理员");
         }
         return unionId;
     }

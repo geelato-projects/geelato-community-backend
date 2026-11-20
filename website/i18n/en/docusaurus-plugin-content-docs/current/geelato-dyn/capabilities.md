@@ -14,8 +14,8 @@ This page summarizes the framework capabilities that ship with geelato-dyn and h
 | Logical name | Database |
 |---|---|
 | `platform` | geelato platform database |
-| `portal` | ob_portal portal database |
-| `integration` | ob_integrate integration database |
+| `portal` | Portal database |
+| `integration` | Integration database |
 | `buss` | Business database |
 
 Two-step integration:
@@ -54,7 +54,7 @@ SPI: `cn.geelato.dyn.common.health.ModuleHealthReporter` (`module()` / `snapshot
 - REST: `GET /cxf/health`, `GET /cxf/health/modules`, `GET /cxf/health/modules/{module}` (no auth);
 - Snapshots carry `runtime` / `business` status levels plus `items` detail; after `ttlMs()` expires the aggregator marks the entry `ttl expired` (for scheduled jobs use maxSilenceMs or 2–3× the schedule interval).
 
-Built-in reporters cover datasource / unified-api / consumer-main / each consumer / shipping / periodic-report, etc.
+Framework modules (datasource / unified-api / consumer-main, etc.) ship built-in reporters; business modules implement the SPI as needed to join the aggregation.
 
 ## Security Contracts and User/Org Lookup
 

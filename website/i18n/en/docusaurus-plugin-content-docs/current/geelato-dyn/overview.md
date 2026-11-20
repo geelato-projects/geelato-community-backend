@@ -53,16 +53,9 @@ See [Built-in Capabilities](capabilities.md) for how to consume each capability.
 | `geelato-dyn-manage` | Health aggregation REST + visual management console | Optional (operations) |
 | `geelato-dyn-unified-api` | Unified callback north-bound entry + capture/processed persistence | Optional (callback scenarios) |
 | `geelato-dyn-unified-consumer-main` | Unified consumer bus (Camel `vm:` dispatch) | Optional (pairs with unified-api; its feature installs unified-api transitively) |
-| `geelato-dyn-unified-consumer-*` | Callback consumer implementations (ocean tracking / ocean tracking warning / GSF declaration status) | Business modules, as needed |
-| `geelato-ob-integrate` | Outbound integration engine (with ChannelAdapter / PayloadBuilder SPIs) | Business module, as needed |
-| `geelato-dyn-ob-integrate-status-support` | Status-mapping support library for outbound integration | Business support library, as needed |
-| `geelato-dyn-bus-shipping` | Scheduled-job business module example | Business module, as needed |
-| `geelato-dyn-bus-periodic-report` | Periodic report module example (five-stage report SPI) | Business module, as needed |
-| `geelato-dyn-demo` | Demos for messaging / security / **community ORM integration** | Demo, as needed |
 | `geelato-dyn-template` | Scaffold for new modules (not deployed) | Not deployed |
-| `examples/geelato-karaf-showcase` | Standalone OSGi example project and ADR docs | Not deployed |
 
-The concrete business logic of consumer and bus modules is out of scope for this chapter; these docs cover the framework and integration only.
+This chapter covers only the generic and abstract framework modules above. Concrete business implementations (business consumers, `bus-*` scheduled modules, `*-integrate` modules, etc.) are out of scope; refer to each module's own documentation in the repository.
 
 ## Module Dependency Topology
 
@@ -70,15 +63,12 @@ The concrete business logic of consumer and bus modules is out of scope for this
 geelato-dyn-common (foundation: messaging / security / users / health / IDs)
    ├── geelato-dyn-datasource (central datasources; required by DB-backed modules)
    ├── geelato-dyn-manage (operations aggregation, installed independently)
-   ├── geelato-dyn-unified-api (callback entry)
-   │       └── geelato-dyn-unified-consumer-main (consumer bus; its feature installs unified-api)
-   │               ├── unified-consumer-ocean-tracking
-   │               ├── unified-consumer-ocean-tracking-warning
-   │               └── unified-consumer-ob-integrate-gsf-status
-   ├── geelato-ob-integrate (outbound integration, depends on status-support)
-   ├── geelato-dyn-bus-shipping / geelato-dyn-bus-periodic-report (scheduled business)
-   └── geelato-dyn-demo (demos; also embeds the community ORM)
+   └── geelato-dyn-unified-api (callback entry)
+           └── geelato-dyn-unified-consumer-main (consumer bus; its feature installs unified-api)
+                   └── business consumer modules (publish a UnifiedConsumerBinding to join)
 ```
+
+Business modules (scheduled jobs, callback consumers, external-system integrations) all sit at the leaves of this topology: implement the corresponding SPI and declare the feature dependency to join, without touching any framework module.
 
 There is no single-starter integration entry point: the minimal runtime set is `geelato-dyn-common` (plus `geelato-dyn-datasource` when a database is needed). Everything else is installed on demand and fully pluggable.
 
@@ -90,7 +80,7 @@ There is no single-starter integration entry point: the minimal runtime set is `
 | User / org data | Direct platform DB access | `DBUserProvider` / `DBOrgProvider` query `platform_user` / `platform_org` and related tables in real time, no cache |
 | Message sending | REST | Outbox submits to the geelato-message center via `POST /message/enqueue`; the center persists and delivers |
 | In-app message | Direct REST | The `inapp` channel calls the community platform directly (fixed `Authorization: SystemToken` key), bypassing the message center |
-| ORM (optional) | Spring Context embedded in a bundle | The demo hosts the community `OrmAutoConfiguration` inside a bundle, enabling the Fluent DSL (see [Developing a New Module](develop-module.md)) |
+| ORM (optional) | Spring Context embedded in a bundle | A business module can host the community `OrmAutoConfiguration` inside a bundle, enabling the Fluent DSL (see [Developing a New Module](develop-module.md)) |
 
 ## Recommended Reading
 

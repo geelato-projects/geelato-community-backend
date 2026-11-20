@@ -233,7 +233,6 @@ public class BaseService {
      */
     public <T extends BaseEntity> T updateModel(T model) {
         model.setDelStatus(ColumnDefault.DEL_STATUS_VALUE);
-       // model.setDeleteAt(DateUtils.defaultDeleteAt());
         if (Strings.isBlank(model.getTenantCode())) {
             model.setTenantCode(getSessionTenantCode());
         }

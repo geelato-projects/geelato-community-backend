@@ -20,6 +20,15 @@ public class WeixinMiniAppConfigurationProperties {
     /** 总开关：false 时 /api/weixin/miniapp/** 统一返回 404（紧急下线收口） */
     private boolean enabled = true;
 
+    // ===== [DEBUG-REMOVE-BEGIN] 联调调试开关：未来删除本字段（同时删除 DebugLoginCode.java 及全部 [DEBUG-REMOVE] 标记处）=====
+    /**
+     * 联调调试开关：true 时 code 支持 {@code test_{账号}_bind / test_{账号}_unbind} 格式，
+     * 绕过微信直接模拟"已绑定/未绑定"场景（详见 DebugLoginCode）。
+     * ⚠️ 生产环境必须保持 false（默认）：开启后任何人可伪造任意账号登录。
+     */
+    private boolean debugEnabled = false;
+    // ===== [DEBUG-REMOVE-END] =====
+
     /** 小程序 AppID */
     private String appId;
 

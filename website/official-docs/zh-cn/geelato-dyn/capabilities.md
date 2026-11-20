@@ -14,8 +14,8 @@ sidebar_label: 内置能力
 | 逻辑名 | 库 |
 |---|---|
 | `platform` | geelato 平台库 |
-| `portal` | ob_portal 门户库 |
-| `integration` | ob_integrate 集成库 |
+| `portal` | 门户库 |
+| `integration` | 集成库 |
 | `buss` | 业务库 |
 
 接入两步：
@@ -54,7 +54,7 @@ SPI：`cn.geelato.dyn.common.health.ModuleHealthReporter`（`module()` / `snapsh
 - REST：`GET /cxf/health`、`GET /cxf/health/modules`、`GET /cxf/health/modules/{module}`（无鉴权）；
 - 快照分 `runtime` / `business` 两级状态与 `items` 明细；`ttlMs()` 过期后聚合端标记 `ttl expired`（定时任务建议取 maxSilenceMs 或调度间隔的 2~3 倍）。
 
-内置实现覆盖 datasource / unified-api / consumer-main / 各 consumer / shipping / periodic-report 等。
+框架模块（datasource / unified-api / consumer-main 等）内置了 reporter 实现；业务模块按需实现 SPI 接入聚合。
 
 ## 安全契约与用户/组织查询
 

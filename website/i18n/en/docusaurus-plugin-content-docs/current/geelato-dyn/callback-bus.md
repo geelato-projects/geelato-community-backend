@@ -46,7 +46,7 @@ Call example:
 ```bash
 curl -X POST "http://localhost:8181/cxf/unified/callback/o4c8n1t6r?source=test" \
   -H "Content-Type: application/json" \
-  -d '{"orderNo":"A2001","status":"IN_TRANSIT"}'
+  -d '{"bizNo":"A2001","status":"UPDATED"}'
 ```
 
 ## Persistence and Troubleshooting

@@ -301,7 +301,6 @@ const sidebars: SidebarsConfig = {
         'workflow/integration-define',
         'workflow/integration-runtime',
         'workflow/integration-my',
-        'system-config/workflow',
       ],
     },
     {

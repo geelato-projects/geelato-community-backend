@@ -49,10 +49,7 @@ The Blueprint of `geelato-dyn-common` declares `HikariDataSource`, `JdbcTemplate
 |---|---|---|
 | Health aggregation + management console | `feature:install geelato-dyn-manage` | common |
 | Unified callback + consumer bus | `feature:install geelato-dyn-unified-consumer-main` | common; **this feature installs unified-api transitively** |
-| Adding a callback consumer | `feature:install geelato-dyn-unified-consumer-ocean-tracking` (other consumers likewise) | consumer-main |
-| Outbound integration engine | `feature:install geelato-ob-integrate` | common + status-support |
-| Scheduled business modules | `feature:install geelato-dyn-bus-shipping` / `geelato-dyn-bus-periodic-report` | common (bus-shipping also needs datasource) |
-| Demo | `feature:install geelato-dyn-demo` | common + datasource |
+| Adding a callback consumer | `feature:install geelato-dyn-unified-consumer-{your-module}` | consumer-main |
 
 When installing a module, Karaf resolves and installs the feature dependencies declared in its features.xml. `<reference>` service dependencies are strong (GracePeriod): a business bundle waits instead of starting in a broken state when its prerequisite module is not ready.
 

@@ -40,7 +40,8 @@ class WeixinMiniAppLoginServiceTest {
     private List<Object> publishedEvents;
     private User boundUser;
     private List<User> boundUsers;
-    private User updatedUser;
+    private String capturedBindingUnionId;
+    private String capturedUpdaterId;
 
     @BeforeEach
     void setUp() {
@@ -73,13 +74,6 @@ class WeixinMiniAppLoginServiceTest {
                 return null;
             }
 
-            @Override
-            public <T extends cn.geelato.core.meta.model.entity.BaseEntity> T updateModel(T model) {
-                if (model instanceof User u) {
-                    updatedUser = u;
-                }
-                return model;
-            }
         };
     }
 
@@ -104,6 +98,7 @@ class WeixinMiniAppLoginServiceTest {
                 return "13812341234";
             }
         };
+        // 匿名子类桩替 protected 写库方法（隔离 MetaFactory/真实数据源），捕获写库参数供断言
         return new WeixinMiniAppLoginService(
                 userService,
                 jsCode -> UNION_ID,
@@ -112,7 +107,22 @@ class WeixinMiniAppLoginServiceTest {
                 ticketService,
                 apiClient,
                 properties,
-                publishedEvents::add);
+                publishedEvents::add,
+                null /* 快照刷新协调器：单测环境无安全快照，跳过刷新 */) {
+            @Override
+            protected String updateBindingInDb(String unionId, String userId) {
+                capturedBindingUnionId = unionId;
+                capturedUpdaterId = userId;
+                return userId;
+            }
+
+            @Override
+            protected String clearBindingInDb(String userId) {
+                capturedBindingUnionId = null;
+                capturedUpdaterId = userId;
+                return userId;
+            }
+        };
     }
 
     private static User user(String id, String loginName, String name, int enableStatus) {
@@ -133,8 +143,8 @@ class WeixinMiniAppLoginServiceTest {
     @Test
     void login_notBound_throws20011() {
         WeixinMiniAppLoginService service = newService(stubUserService(), p -> Optional.empty());
-        MiniAppNotBoundException e = assertThrows(MiniAppNotBoundException.class, () -> service.login("any-code"));
-        assertEquals(20011, e.getErrorCode());
+        MiniAppUnauthorizedException e = assertThrows(MiniAppUnauthorizedException.class, () -> service.login("any-code"));
+        assertEquals(MiniAppErrorCodes.NOT_BOUND, e.getErrorCode());
     }
 
     @Test
@@ -143,7 +153,7 @@ class WeixinMiniAppLoginServiceTest {
         boundUsers.add(boundUser);
         WeixinMiniAppLoginService service = newService(stubUserService(), p -> Optional.empty());
         MiniAppAccountDisabledException e = assertThrows(MiniAppAccountDisabledException.class, () -> service.login("any-code"));
-        assertEquals(20012, e.getErrorCode());
+        assertEquals(MiniAppErrorCodes.ACCOUNT_DISABLED, e.getErrorCode());
     }
 
     @Test
@@ -165,9 +175,9 @@ class WeixinMiniAppLoginServiceTest {
         boundUsers.add(user("user-other", "cs_other", "其他", 1));
         WeixinMiniAppLoginService service = newService(stubUserService(), p -> Optional.empty());
         String ticket = ticketOf("user-001");
-        MiniAppUnionIdOccupiedException e = assertThrows(MiniAppUnionIdOccupiedException.class,
+        MiniAppBindConflictException e = assertThrows(MiniAppBindConflictException.class,
                 () -> service.bind("any-code", ticket));
-        assertEquals(20013, e.getErrorCode());
+        assertEquals(MiniAppErrorCodes.UNION_ID_OCCUPIED, e.getErrorCode());
     }
 
     @Test
@@ -175,9 +185,9 @@ class WeixinMiniAppLoginServiceTest {
         boundUser.setWeixinUnionId("union-other");
         WeixinMiniAppLoginService service = newService(stubUserService(), p -> Optional.empty());
         String ticket = ticketOf("user-001");
-        MiniAppAccountBoundException e = assertThrows(MiniAppAccountBoundException.class,
+        MiniAppBindConflictException e = assertThrows(MiniAppBindConflictException.class,
                 () -> service.bind("any-code", ticket));
-        assertEquals(20014, e.getErrorCode());
+        assertEquals(MiniAppErrorCodes.ACCOUNT_ALREADY_BOUND, e.getErrorCode());
     }
 
     @Test
@@ -186,7 +196,9 @@ class WeixinMiniAppLoginServiceTest {
         String ticket = ticketOf("user-001");
         MiniAppLoginResult result = service.bind("any-code", ticket);
         assertEquals("user-001", result.getId());
-        assertEquals(UNION_ID, updatedUser.getWeixinUnionId());
+        assertEquals(UNION_ID, capturedBindingUnionId);
+        // 精确列更新自带审计字段（updater=账号自身，platform_user.updater NOT NULL）
+        assertEquals("user-001", capturedUpdaterId);
         assertEquals(1, publishedEvents.size());
         assertTrue(publishedEvents.get(0) instanceof MiniAppBoundEvent);
         assertEquals("user-001", ((MiniAppBoundEvent) publishedEvents.get(0)).getUserId());
@@ -197,8 +209,8 @@ class WeixinMiniAppLoginServiceTest {
     @Test
     void unbind_notBound_throws20011() {
         WeixinMiniAppLoginService service = newService(stubUserService(), p -> Optional.empty());
-        MiniAppNotBoundException e = assertThrows(MiniAppNotBoundException.class, () -> service.unbind("any-code"));
-        assertEquals(20011, e.getErrorCode());
+        MiniAppUnauthorizedException e = assertThrows(MiniAppUnauthorizedException.class, () -> service.unbind("any-code"));
+        assertEquals(MiniAppErrorCodes.NOT_BOUND, e.getErrorCode());
     }
 
     @Test
@@ -207,7 +219,8 @@ class WeixinMiniAppLoginServiceTest {
         boundUsers.add(boundUser);
         WeixinMiniAppLoginService service = newService(stubUserService(), p -> Optional.empty());
         service.unbind("any-code");
-        assertNull(updatedUser.getWeixinUnionId());
+        assertNull(capturedBindingUnionId);
+        assertEquals("user-001", capturedUpdaterId);
         assertEquals(1, publishedEvents.size());
         assertTrue(publishedEvents.get(0) instanceof MiniAppUnboundEvent);
     }
@@ -242,9 +255,144 @@ class WeixinMiniAppLoginServiceTest {
         assertNotNull(result.getPreBindTicket());
     }
 
+    // ===== [DEBUG-REMOVE-BEGIN] phoneCode 调试与票据摘要一致性校验用例 =====
+
+    @Test
+    void debugPhoneCode_preBind_matchedDirectlyWithoutWeChatCall() {
+        properties.setDebugEnabled(true);
+        MiniAppAccountResolver resolver = p -> {
+            MiniAppAccount account = new MiniAppAccount();
+            account.setUserId("user-001");
+            account.setLoginName("cs_zhangsan");
+            account.setUserName("张三");
+            account.setMobile(p);
+            account.setOrgName("某某国际贸易有限公司");
+            return Optional.of(account);
+        };
+        WeixinMiniAppLoginService service = newService(stubUserService(), resolver);
+        // phoneCode 用调试格式（真实 ApiClient 的 debug 分支行为在 ApiClient 层，这里 resolver 命中同手机号）
+        var result = service.preBind("test_13812341234");
+        assertTrue(result.isMatched());
+        assertEquals("138****1234", result.getAccount().getMobile());
+    }
+
+    @Test
+    void bind_phoneDigestMismatch_throws20009() {
+        // 票据签发后账号手机号已变更：摘要不一致 → 20009
+        WeixinMiniAppLoginService service = newService(stubUserService(), p -> Optional.empty());
+        MiniAppTicketService ticketService = new MiniAppTicketService(properties);
+        String staleTicket = ticketService.issue("user-001", "13900000000"); // 与账号当前手机号不一致
+        MiniAppUnauthorizedException e = assertThrows(MiniAppUnauthorizedException.class,
+                () -> service.bind("any-code", staleTicket));
+        assertEquals(MiniAppErrorCodes.TICKET_INVALID, e.getErrorCode());
+    }
+    // ===== [DEBUG-REMOVE-END] =====
+
     /** 独立签发一张指向 user-001 的有效票据（走真实 TicketService，手机号与桩一致）。 */
     private String ticketOf(String userId) {
         MiniAppTicketService ticketService = new MiniAppTicketService(properties);
         return ticketService.issue(userId, "13812341234");
     }
+
+    // ===== [DEBUG-REMOVE-BEGIN] 联调调试通道用例：随调试功能整体删除（含 debugLogin/debugBind/debugUnbind/debugCode 开头的用例）=====
+
+    @Test
+    void debugLogin_bindMode_logsInDirectlyByLoginName() {
+        properties.setDebugEnabled(true);
+        // 桩：按 loginName 查询返回 user-001
+        UserService userService = new UserService() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> List<T> queryModel(Class<T> entity, Map<String, Object> params) {
+                if ("cs_zhangsan".equals(params.get("loginName"))) {
+                    return (List<T>) new ArrayList<>(List.of(boundUser));
+                }
+                return java.util.Collections.emptyList();
+            }
+
+            @Override
+            public <T> T getModel(Class<T> entity, String id) {
+                return null;
+            }
+        };
+        WeixinMiniAppLoginService service = newService(userService, p -> Optional.empty());
+        MiniAppLoginResult result = service.login("test_cs_zhangsan_bind");
+        assertEquals("user-001", result.getId());
+        assertNotNull(result.getToken());
+    }
+
+    @Test
+    void debugLogin_unbindMode_simulatesNotBound() {
+        properties.setDebugEnabled(true);
+        WeixinMiniAppLoginService service = newService(stubUserService(), p -> Optional.empty());
+        MiniAppUnauthorizedException e = assertThrows(MiniAppUnauthorizedException.class,
+                () -> service.login("test_user001_unbind"));
+        assertEquals(MiniAppErrorCodes.NOT_BOUND, e.getErrorCode());
+    }
+
+    @Test
+    void debugBind_usesDeterministicFakeUnionId() {
+        properties.setDebugEnabled(true);
+        WeixinMiniAppLoginService service = newService(stubUserService(), p -> Optional.empty());
+        String ticket = ticketOf("user-001");
+        service.bind("test_user001_bind", ticket);
+        assertEquals("debug-union-user001", capturedBindingUnionId);
+    }
+
+    @Test
+    void debugUnbind_bindMode_clearsBindingByLoginName() {
+        properties.setDebugEnabled(true);
+        boundUser.setWeixinUnionId("debug-union-user001");
+        UserService userService = new UserService() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> List<T> queryModel(Class<T> entity, Map<String, Object> params) {
+                if ("cs_zhangsan".equals(params.get("loginName"))) {
+                    return (List<T>) new ArrayList<>(List.of(boundUser));
+                }
+                return java.util.Collections.emptyList();
+            }
+
+            @Override
+            public <T> T getModel(Class<T> entity, String id) {
+                return null;
+            }
+
+        };
+        WeixinMiniAppLoginService service = newService(userService, p -> Optional.empty());
+        service.unbind("test_cs_zhangsan_bind");
+        assertNull(capturedBindingUnionId);
+        assertTrue(publishedEvents.get(0) instanceof MiniAppUnboundEvent);
+    }
+
+    @Test
+    void debugCode_ignoredWhenSwitchOff() {
+        // 开关关闭（默认）：test_ 格式走正常解析 → resolver 返回 unionid → 按绑定查询
+        WeixinMiniAppLoginService service = newService(stubUserService(), p -> Optional.empty());
+        MiniAppUnauthorizedException e = assertThrows(MiniAppUnauthorizedException.class,
+                () -> service.login("test_user001_bind"));
+        assertEquals(MiniAppErrorCodes.NOT_BOUND, e.getErrorCode());
+    }
+
+    @Test
+    void debugLogin_accountNotFound_throws20011() {
+        properties.setDebugEnabled(true);
+        UserService emptyByName = new UserService() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> List<T> queryModel(Class<T> entity, Map<String, Object> params) {
+                return java.util.Collections.emptyList();
+            }
+
+            @Override
+            public <T> T getModel(Class<T> entity, String id) {
+                return null;
+            }
+        };
+        WeixinMiniAppLoginService service = newService(emptyByName, p -> Optional.empty());
+        MiniAppUnauthorizedException e = assertThrows(MiniAppUnauthorizedException.class,
+                () -> service.login("test_nobody_bind"));
+        assertEquals(MiniAppErrorCodes.NOT_BOUND, e.getErrorCode());
+    }
+    // ===== [DEBUG-REMOVE-END] =====
 }

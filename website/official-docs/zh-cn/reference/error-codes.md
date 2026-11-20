@@ -114,15 +114,15 @@ public class UnauthorizedException extends CoreException {
 | <a id="20003"></a>20003 | `cn.geelato.web.platform.srv.auth.AuthBadRequestException` | 400 | 请求参数错误（文案为具体原因，如"头像文件不能为空"） | 鉴权链路参数缺失或非法。按文案补齐/修正参数后重试 |
 | <a id="20004"></a>20004 | `cn.geelato.web.platform.srv.auth.AccountOperationForbiddenException` | 403 | 无权操作该用户 | 操作目标不是当前登录用户自身可管理的账号。切换到对应账号或由管理员操作 |
 | <a id="20005"></a>20005 | `cn.geelato.web.common.interceptor.UnauthorizedException` | 401 | 未授权访问，请登录 | 未登录或会话已失效。重新登录；前端自动跳转登录页 |
-| <a id="20006"></a>20006 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppCredentialInvalidException` | 401 | 登录凭证无效，请重新进入小程序 | 微信登录凭证（js_code）无效或已过期。重新进入小程序触发登录 |
-| <a id="20007"></a>20007 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppCredentialUsedException` | 401 | 登录凭证已被使用，请重新获取 | js_code 一次性凭证被重复消费。重新调用 `wx.login` 获取新凭证 |
-| <a id="20008"></a>20008 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppPhoneAuthException` | 401 | 手机号授权失败，请重新授权 | 手机号授权凭证无效或过期。重新发起手机号授权 |
-| <a id="20009"></a>20009 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppTicketInvalidException` | 401 | 绑定确认已过期，请重新发起绑定 | 绑定确认票据过期、签名不匹配或已消费。重新发起绑定流程 |
-| <a id="20010"></a>20010 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppIdentityUnavailableException` | 401 | 无法获取微信身份标识，请联系管理员 | 小程序未绑定微信开放平台，拿不到 unionid。管理员在微信开放平台完成绑定配置 |
-| <a id="20011"></a>20011 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppNotBoundException` | 401 | 请先绑定工作台账号 | 微信身份尚未绑定平台账号。先完成账号绑定 |
+| <a id="20006"></a>20006 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnauthorizedException` | 401 | 登录凭证无效，请重新进入小程序 | 微信登录凭证（js_code）无效或已过期。重新进入小程序触发登录 |
+| <a id="20007"></a>20007 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnauthorizedException` | 401 | 登录凭证已被使用，请重新获取 | js_code 一次性凭证被重复消费。重新调用 `wx.login` 获取新凭证 |
+| <a id="20008"></a>20008 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnauthorizedException` | 401 | 手机号授权失败，请重新授权 | 手机号授权凭证无效或过期。重新发起手机号授权 |
+| <a id="20009"></a>20009 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnauthorizedException` | 401 | 绑定确认已过期，请重新发起绑定 | 绑定确认票据过期、签名不匹配或已消费。重新发起绑定流程 |
+| <a id="20010"></a>20010 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnauthorizedException` | 401 | 无法获取微信身份标识，请联系管理员 | 小程序未绑定微信开放平台，拿不到 unionid。管理员在微信开放平台完成绑定配置 |
+| <a id="20011"></a>20011 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnauthorizedException` | 401 | 请先绑定账号 | 微信身份尚未绑定平台账号。先完成账号绑定 |
 | <a id="20012"></a>20012 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppAccountDisabledException` | 403 | 账号已停用，请联系业务员 | 目标账号已停用。联系管理员启用账号 |
-| <a id="20013"></a>20013 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppUnionIdOccupiedException` | 409 | 该微信已绑定其他账号，请先解绑 | 同一微信只能绑定一个账号（一对一约束）。先解绑旧账号再绑定 |
-| <a id="20014"></a>20014 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppAccountBoundException` | 409 | 该账号已绑定其他微信，请先解绑 | 同一账号只能绑定一个微信。先解绑旧微信再绑定 |
+| <a id="20013"></a>20013 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppBindConflictException` | 409 | 该微信已绑定其他账号，请先解绑 | 同一微信只能绑定一个账号（一对一约束）。先解绑旧账号再绑定 |
+| <a id="20014"></a>20014 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppBindConflictException` | 409 | 该账号已绑定其他微信，请先解绑 | 同一账号只能绑定一个微信。先解绑旧微信再绑定 |
 | <a id="20015"></a>20015 | `cn.geelato.web.platform.srv.weixin.miniapp.MiniAppRateLimitException` | 429 | 操作过于频繁，请稍后再试 | 登录/绑定链路触发防撞库限流。稍后重试 |
 
 ## 30xxx 文件处理类

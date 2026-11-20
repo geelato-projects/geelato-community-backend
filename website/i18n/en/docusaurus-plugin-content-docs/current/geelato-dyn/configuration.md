@@ -28,7 +28,7 @@ Key points:
 |---|---|---|
 | `cn.geelato.dyn.datasource` | geelato-dyn-datasource | Connection and pool settings for the 4 logical databases |
 | `cn.geelato.dyn.manage` | geelato-dyn-manage | Console access token |
-| Business modules | bus-* / ob-integrate etc. | See each module's Blueprint `cm:property-placeholder` |
+| Business modules | custom business modules | See each module's Blueprint `cm:property-placeholder` |
 
 ### `cn.geelato.dyn.datasource`
 
@@ -82,9 +82,9 @@ The baseline file and push script are in the repo under `karaf/`: `karaf/etc/org
 ### Runtime Level Changes
 
 ```bash
-karaf@root()> log:set DEBUG cn.geelato.dyn.bus.shipping
-karaf@root()> log:get cn.geelato.dyn.bus.shipping
-karaf@root()> log:set INFO cn.geelato.dyn.bus.shipping    # revert
+karaf@root()> log:set DEBUG cn.geelato.dyn.{module}
+karaf@root()> log:get cn.geelato.dyn.{module}
+karaf@root()> log:set INFO cn.geelato.dyn.{module}    # revert
 ```
 
 `log:set` writes the change back into the instance's `org.ops4j.pax.logging.cfg`, so the instance file diverging from the repo baseline afterwards is expected; the instance file is authoritative.

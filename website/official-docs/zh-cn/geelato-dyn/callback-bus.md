@@ -46,7 +46,7 @@ geelato-dyn-unified-consumer-main（消费总线）
 ```bash
 curl -X POST "http://localhost:8181/cxf/unified/callback/o4c8n1t6r?source=test" \
   -H "Content-Type: application/json" \
-  -d '{"orderNo":"A2001","status":"IN_TRANSIT"}'
+  -d '{"bizNo":"A2001","status":"UPDATED"}'
 ```
 
 ## 落库与排障

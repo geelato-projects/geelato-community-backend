@@ -53,16 +53,9 @@ sidebar_label: 框架总览
 | `geelato-dyn-manage` | 健康聚合 REST + 可视化管理控制台 | 可选（运维） |
 | `geelato-dyn-unified-api` | 统一回调北向入口 + 捕获/处理落库 | 可选（回调场景） |
 | `geelato-dyn-unified-consumer-main` | 统一消费端总线（Camel `vm:` 分发） | 可选（与 unified-api 配套，其 feature 会连带安装 unified-api） |
-| `geelato-dyn-unified-consumer-*` | 回调消费者实现（海运跟踪 / 海运预警 / GSF 申报状态） | 业务模块，按需 |
-| `geelato-ob-integrate` | 出站集成引擎（含 ChannelAdapter / PayloadBuilder 等 SPI） | 业务模块，按需 |
-| `geelato-dyn-ob-integrate-status-support` | 出站集成的状态映射支持库 | 业务支持库，按需 |
-| `geelato-dyn-bus-shipping` | 定时任务业务模块示例 | 业务模块，按需 |
-| `geelato-dyn-bus-periodic-report` | 周期报告模块示例（报告五段式 SPI） | 业务模块，按需 |
-| `geelato-dyn-demo` | 消息 / 安全 / **community ORM 集成**演示 | 演示，按需 |
 | `geelato-dyn-template` | 新模块脚手架（不进入部署） | 不部署 |
-| `examples/geelato-karaf-showcase` | OSGi 独立示例工程与 ADR 文档 | 不部署 |
 
-业务 consumer 与 bus 模块的具体业务逻辑不在本章节范围内，文档只覆盖框架与集成。
+本章节只覆盖上述通用与抽象框架模块；具体业务实现（业务 consumer、`bus-*` 定时业务模块、`*-integrate` 集成模块等）不在文档范围内，请参阅仓库内各模块自己的文档。
 
 ## 模块依赖拓扑
 
@@ -70,15 +63,12 @@ sidebar_label: 框架总览
 geelato-dyn-common（基石：消息 / 安全 / 用户 / 健康 / ID）
    ├── geelato-dyn-datasource（中央数据源，需要数据库的模块依赖它）
    ├── geelato-dyn-manage（运维聚合，独立安装）
-   ├── geelato-dyn-unified-api（回调入口）
-   │       └── geelato-dyn-unified-consumer-main（消费总线，feature 连带安装 unified-api）
-   │               ├── unified-consumer-ocean-tracking
-   │               ├── unified-consumer-ocean-tracking-warning
-   │               └── unified-consumer-ob-integrate-gsf-status
-   ├── geelato-ob-integrate（出站集成，依赖 status-support）
-   ├── geelato-dyn-bus-shipping / geelato-dyn-bus-periodic-report（定时业务）
-   └── geelato-dyn-demo（演示，另内嵌 community ORM）
+   └── geelato-dyn-unified-api（回调入口）
+           └── geelato-dyn-unified-consumer-main（消费总线，feature 连带安装 unified-api）
+                   └── 各业务 consumer 模块（发布 UnifiedConsumerBinding 即动态接入）
 ```
+
+业务模块（定时任务、回调消费者、外部系统集成等）全部挂在这棵拓扑的叶子位置：实现对应 SPI、声明 feature 依赖即可接入，不改任何框架模块。
 
 没有"一个 starter"式的集成入口：最小运行集 = `geelato-dyn-common`（+ 需要数据库时 `geelato-dyn-datasource`），其余模块全部按需安装、可插拔。
 
@@ -90,7 +80,7 @@ geelato-dyn-common（基石：消息 / 安全 / 用户 / 健康 / ID）
 | 用户 / 组织数据 | 平台库直连 | `DBUserProvider` / `DBOrgProvider` 直查 `platform_user` / `platform_org` 等表，实时无缓存 |
 | 消息发送 | REST | 出箱经 geelato-message 消息中心 `POST /message/enqueue`，由消息中心落库与分发 |
 | 站内信 | REST 直连 | `inapp` 渠道直连社区平台（`Authorization: SystemToken` 固定密钥），不经消息中心 |
-| ORM（可选） | bundle 内嵌 Spring Context | demo 演示在 bundle 内承载 community `OrmAutoConfiguration`，Fluent DSL 可用（见[新模块开发](develop-module.md)） |
+| ORM（可选） | bundle 内嵌 Spring Context | 业务模块可在 bundle 内承载 community `OrmAutoConfiguration`，Fluent DSL 可用（见[新模块开发](develop-module.md)） |
 
 ## 推荐继续阅读
 

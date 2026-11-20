@@ -28,7 +28,7 @@ Karaf etc/<PID>.cfg（环境差异值；修改后 Config Admin 自动重建 bean
 |---|---|---|
 | `cn.geelato.dyn.datasource` | geelato-dyn-datasource | 4 个逻辑库的连接与池参数 |
 | `cn.geelato.dyn.manage` | geelato-dyn-manage | 管理台访问令牌 |
-| 各业务模块 | bus-* / ob-integrate 等 | 见各模块 Blueprint 中的 `cm:property-placeholder` |
+| 各业务模块 | 自定义业务模块 | 见各模块 Blueprint 中的 `cm:property-placeholder` |
 
 ### `cn.geelato.dyn.datasource`
 
@@ -82,9 +82,9 @@ Karaf（pax-logging-log4j2）基线配置为 13 个模块的根包名各配独�
 ### 运行期调整级别
 
 ```bash
-karaf@root()> log:set DEBUG cn.geelato.dyn.bus.shipping
-karaf@root()> log:get cn.geelato.dyn.bus.shipping
-karaf@root()> log:set INFO cn.geelato.dyn.bus.shipping    # 调回
+karaf@root()> log:set DEBUG cn.geelato.dyn.{module}
+karaf@root()> log:get cn.geelato.dyn.{module}
+karaf@root()> log:set INFO cn.geelato.dyn.{module}    # 调回
 ```
 
 `log:set` 会把变更回写到实例的 `org.ops4j.pax.logging.cfg`，之后与仓库基线出现差异属预期，以实例文件为准。

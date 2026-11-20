@@ -3,6 +3,7 @@ package cn.geelato.web.platform.boot;
 import cn.geelato.web.common.security.spi.WeixinCodeResolver;
 import cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties;
 import cn.geelato.web.platform.srv.security.service.UserService;
+import cn.geelato.web.platform.srv.weixin.miniapp.MiniAppAnonymousContextInterceptor;
 import cn.geelato.web.platform.srv.weixin.miniapp.spi.DefaultMiniAppAccountResolver;
 import cn.geelato.web.platform.srv.weixin.miniapp.spi.DefaultWeixinCodeResolver;
 import cn.geelato.web.platform.srv.weixin.miniapp.spi.MiniAppAccountResolver;
@@ -11,6 +12,8 @@ import cn.geelato.web.platform.srv.weixin.miniapp.spi.NoopMiniAppLoginResultEnha
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * 微信小程序（用户绑定与鉴权）SPI 装配：平台提供默认实现，宿主应用定义同类型 Bean 即覆盖
@@ -43,5 +46,19 @@ public class WeixinMiniAppConfiguration {
     @ConditionalOnMissingBean(MiniAppLoginResultEnhancer.class)
     public MiniAppLoginResultEnhancer miniAppLoginResultEnhancer() {
         return new NoopMiniAppLoginResultEnhancer();
+    }
+
+    /**
+     * 匿名安全上下文拦截器注册：仅拦截 /api/weixin/miniapp/**，为免登录端点强制指定虚拟安全主体
+     * （userId=miniapp），使 ORM 保存链的审计字段填充（PlatformFieldValueFillSupport）可取到操作人。
+     */
+    @Bean
+    public WebMvcConfigurer weixinMiniAppInterceptorConfigurer(MiniAppAnonymousContextInterceptor interceptor) {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addInterceptors(InterceptorRegistry registry) {
+                registry.addInterceptor(interceptor).addPathPatterns("/api/weixin/miniapp/**");
+            }
+        };
     }
 }

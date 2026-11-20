@@ -33,6 +33,13 @@
       "defaultValue": true
     },
     {
+      "name": "geelato.wx.miniapp.debug-enabled",
+      "type": "java.lang.Boolean",
+      "description": "[DEBUG-REMOVE] 联调调试开关（上线可随调试功能整体移除本条目）。true 时 code 支持 test_{账号}_bind / test_{账号}_unbind 格式，绕过微信直接模拟已绑定/未绑定场景。⚠️ 生产环境必须保持 false（默认）：开启后任何人可伪造任意账号登录。",
+      "sourceType": "cn.geelato.web.platform.boot.properties.WeixinMiniAppConfigurationProperties",
+      "defaultValue": false
+    },
+    {
       "name": "geelato.wx.miniapp.app-id",
       "type": "java.lang.String",
       "description": "小程序 AppID",

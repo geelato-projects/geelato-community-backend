@@ -49,10 +49,7 @@ feature:install geelato-dyn-datasource
 |---|---|---|
 | 健康聚合 + 管理控制台 | `feature:install geelato-dyn-manage` | common |
 | 统一回调 + 消费总线 | `feature:install geelato-dyn-unified-consumer-main` | common；**该 feature 会连带安装 unified-api** |
-| 新增一个回调消费者 | `feature:install geelato-dyn-unified-consumer-ocean-tracking`（其余 consumer 同理） | consumer-main |
-| 出站集成引擎 | `feature:install geelato-ob-integrate` | common + status-support |
-| 定时业务模块 | `feature:install geelato-dyn-bus-shipping` / `geelato-dyn-bus-periodic-report` | common（bus-shipping 另依赖 datasource） |
-| 演示 | `feature:install geelato-dyn-demo` | common + datasource |
+| 新增一个回调消费者 | `feature:install geelato-dyn-unified-consumer-{your-module}` | consumer-main |
 
 安装某个模块时，其 features.xml 声明的依赖 feature 会由 Karaf 自动解析安装；`<reference>` 服务依赖为强依赖（GracePeriod），被依赖模块未就绪时业务 bundle 会等待而不是带病启动。
 

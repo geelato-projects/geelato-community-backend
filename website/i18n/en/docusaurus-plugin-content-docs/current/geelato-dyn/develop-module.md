@@ -67,7 +67,6 @@ To appear in health aggregation, add a `ModuleHealthReporter` (see [Built-in Cap
 | `cn.geelato.dyn.common.message.channel.MessageChannelAdapter` | common | Add a message channel (outbox or direct style) |
 | `cn.geelato.dyn.unified.api.service.UnifiedConsumerBinding` | unified-api | Register callback token → bizCode routing and self-check endpoints |
 | `...processor.AbstractCallbackProcessor` | unified-api | Add a callback processing style beyond persistence / MQ / bus |
-| Outbound integration engine: `ChannelAdapter` / `PayloadBuilder` / `IntegrationTaskDataValidator` | geelato-ob-integrate | Plug in new external systems / payload types / validation scenarios |
 
 ## Integrating with the geelato Platform (community)
 
@@ -77,15 +76,13 @@ Three options, choose as needed:
 
 **Message REST (recommended)**: `<reference>` the `MessageDispatcher`; delivery is handled by the message center (see [Unified Message Dispatch](message-dispatch.md)).
 
-**community ORM (advanced, see the demo)**: `geelato-dyn-demo` demonstrates hosting the community `OrmAutoConfiguration` inside an embedded Spring Context in a bundle, making the Fluent DSL (`MetaFactory.query/insert/...`) usable (ADR 0002). Key points:
+**community ORM (advanced)**: a business module can host the community `OrmAutoConfiguration` inside an embedded Spring Context in a bundle, making the Fluent DSL (`MetaFactory.query/insert/...`) usable (decision record: the ADR docs under the repo's `examples/`). Key points:
 
 - Embedded dependencies: `geelato-orm` / `geelato-core` / `geelato-lang` / `geelato-utils` + spring-boot(autoconfigure);
 - Blueprint injects the central datasource OSGi service, registered as a singleton in the embedded Context before `context.refresh()`;
 - **TCCL switch**: the Blueprint extender thread's contextClassLoader is Karaf's root classloader — temporarily switch it to the bundle classloader around refresh, otherwise `@ConditionalOnBean` handler classes cannot be loaded;
 - **Disable entity auto-scan**: scanning is unreliable under OSGi's multiple classloaders; set `geelato.orm.entity-auto-scan-enabled=false` and register entities explicitly with `MetaManager.parseOne(clazz)`;
 - Do not manually register `OrmProperties` again (`OrmAutoConfiguration` already provides it; a duplicate causes `NoUniqueBeanDefinitionException`).
-
-Reference implementation: `geelato-dyn-demo/.../orm/DemoOrmBootstrap.java` and the ADR docs under `examples/geelato-karaf-showcase`.
 
 ## Build and Deploy
 

@@ -67,7 +67,6 @@ sidebar_label: 新模块开发
 | `cn.geelato.dyn.common.message.channel.MessageChannelAdapter` | common | 新增消息渠道（出箱式或直连式） |
 | `cn.geelato.dyn.unified.api.service.UnifiedConsumerBinding` | unified-api | 注册回调 token → bizCode 路由与自检端点 |
 | `...processor.AbstractCallbackProcessor` | unified-api | 新增回调处理方式（落库 / MQ / 总线之外的） |
-| 出站集成引擎：`ChannelAdapter` / `PayloadBuilder` / `IntegrationTaskDataValidator` | geelato-ob-integrate | 接入新的外部系统 / 报文 / 校验场景 |
 
 ## 对接 geelato 平台（community）
 
@@ -77,15 +76,13 @@ sidebar_label: 新模块开发
 
 **消息 REST（推荐）**：`<reference>` 引用 `MessageDispatcher`，出箱由消息中心完成（见[统一消息分发](message-dispatch.md)）。
 
-**community ORM（高级，参考 demo）**：`geelato-dyn-demo` 演示了在 bundle 内嵌 Spring Context 承载 community `OrmAutoConfiguration`、让 Fluent DSL（`MetaFactory.query/insert/...`）可用的模式（ADR 0002），要点：
+**community ORM（高级）**：业务模块可在 bundle 内嵌 Spring Context 承载 community `OrmAutoConfiguration`、让 Fluent DSL（`MetaFactory.query/insert/...`）可用（决策记录见仓库 `examples/` 的 ADR 文档），要点：
 
 - 内嵌依赖：`geelato-orm` / `geelato-core` / `geelato-lang` / `geelato-utils` + spring-boot(autoconfigure)；
 - Blueprint 注入中央数据源 OSGi 服务，`context.refresh()` 前以 singleton 注册进内嵌 Context；
 - **TCCL 切换**：Blueprint extender 线程的 contextClassLoader 是 Karaf root classloader，refresh 前必须临时换成 bundle classloader，否则 `@ConditionalOnBean` 等注解处理类加载不到；
 - **关闭实体自动扫描**：OSGi 多 ClassLoader 下扫描不可靠，设 `geelato.orm.entity-auto-scan-enabled=false`，改用 `MetaManager.parseOne(clazz)` 显式注册实体；
 - 不重复手动注册 `OrmProperties`（`OrmAutoConfiguration` 已自带，重复会 `NoUniqueBeanDefinitionException`）。
-
-参考实现：`geelato-dyn-demo/.../orm/DemoOrmBootstrap.java` 与 `examples/geelato-karaf-showcase` 的 ADR 文档。
 
 ## 构建与部署
 

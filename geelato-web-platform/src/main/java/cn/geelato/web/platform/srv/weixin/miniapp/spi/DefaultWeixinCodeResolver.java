@@ -94,7 +94,7 @@ public class DefaultWeixinCodeResolver implements WeixinCodeResolver {
             throw new MiniAppUnauthorizedException(MiniAppErrorCodes.CREDENTIAL_USED, "登录凭证已被使用，请重新获取");
         }
         if (errcode == 45011) {
-            throw new MiniAppUnauthorizedException(MiniAppErrorCodes.RATE_LIMITED, "操作过于频繁，请稍后再试");
+            throw new MiniAppRateLimitException();
         }
         if (errcode != 0) {
             // 40029（code 无效）及其他：统一按凭证无效处理

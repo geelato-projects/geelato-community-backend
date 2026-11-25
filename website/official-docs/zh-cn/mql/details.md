@@ -268,9 +268,34 @@ sequenceDiagram
 | `nin`（`notin` 别名） | `col not in(?,?,…)` | N | 按列类型 |
 | `nil` | 值为 `1`/`true` 时 `col is NULL`，否则 `col is NOT NULL` | 0 | — |
 | `bt` | `col between '起' and '止'` | 0，值直接写入 SQL 文本 | — |
-| `fis` | `FIND_IN_SET('v', col) > 0` 的 or 组合 | 0，值直接写入 SQL 文本 | — |
-| JSON 列 + 比较类 | `JSON_CONTAINS(col->'$',"v") > 0` | 0，值直接写入 SQL 文本 | — |
-| 函数条件 | 函数表达式 + 比较符 + `?`；fuzzymatch 在实验开关下等价改写为 `(col <> '' AND col REGEXP ?)` | 1 | VARCHAR |
+| `fis` | 见下方「fis 方言差异」 | 0，值直接写入 SQL 文本 | — |
+| JSON 列 + 比较类 | `JSON_CONTAINS(col->'$',"v") > 0`（仅 mysql） | 0，值直接写入 SQL 文本 | — |
+| 函数条件 | 函数表达式 + 比较符 + `?`；fuzzymatch 在实验开关下等价改写为 `(col <> '' AND col REGEXP ?)`（方言形态见下） | 1 | VARCHAR |
+
+#### fis 方言差异
+
+`fis`（集合成员匹配）按当前数据源方言生成等价 SQL，值直接写入 SQL 文本：
+
+| 方言 | 非 JSON 列 | JSON 列 |
+| :--- | :--- | :--- |
+| mysql | `FIND_IN_SET('v', col) > 0` 的 or 组合 | `JSON_CONTAINS(col->'$','"v"') > 0` |
+| postgresql | `(',' \|\| col \|\| ',') LIKE '%,v,%' ESCAPE '\'` 的 or 组合（值已做 LIKE 通配符与单引号转义） | `(col)::jsonb @> ('"v"')::jsonb` |
+| sqlserver | `CONCAT(',', col, ',') LIKE '%,v,%' ESCAPE '\'` 的 or 组合 | 不支持，生成阶段明确报错 |
+| oracle | `(',' \|\| col \|\| ',') LIKE '%,v,%' ESCAPE '\'` 的 or 组合 | 不支持，生成阶段明确报错 |
+
+未识别方言按 postgresql 形态（ANSI `\|\|` 连接）生成；经 `Dialects.registerAlias` 注册的 PG 协议引擎自动落入 postgresql 分支。
+
+#### gfn_* 自定义函数方言改写
+
+MQL 内置函数（`increment` / `findinset` / `fuzzymatch`）经解析器归一为 `gfn_*` 表达式后，默认调用 `geelato.gfn_*` 存储函数（需按方言预建函数脚本）。已知语义的内置函数在生成阶段按方言改写为等价 SQL，无需存储函数：
+
+| 函数 | 改写 | 说明 |
+| :--- | :--- | :--- |
+| `gfn_increment(a,b)` | 全方言全上下文 → `(a + b)` | 纯算术等价 |
+| `gfn_findinset(x,set)` | 仅条件上下文：postgresql → `position(...)`、sqlserver → `CHARINDEX(...)`、oracle → `INSTR(...)`；mysql 保留存储函数路径 | 保留 FIND_IN_SET 数值位置语义，外层比较符行为不变 |
+| `gfn_fuzzymatch(col,'kw')>0` | mysql → `REGEXP ?`、postgresql → `~ ?`、oracle → `REGEXP_LIKE(col, ?)`；sqlserver 无原生正则，明确报错 | 仅实验开关开启时改写 |
+
+未注册的 `gfn_*` 函数不改写，保留 `geelato.` 前缀存储函数路径（`geelato.` 前缀在四种方言上均为合法 schema 限定语法）。
 
 类型映射：`int` → INTEGER、`bigint` → BIGINT、`decimal` → DECIMAL、`datetime` → TIMESTAMP、`blob` → BLOB，其余默认 VARCHAR；like 三件套一律 VARCHAR。
 

@@ -175,6 +175,7 @@ public class MetaQuerySqlProvider extends MetaBaseSqlProvider<QueryCommand> {
                     String afterRefaceExpression = FunctionParser.reconstruct(fieldName, md.getEntityName());
                     FunctionFieldValue ffv = new FunctionFieldValue(afterRefaceExpression);
                     String func = ffv.getMysqlFunction();
+                    func = rewriteFunction(func, md, CustomFunctionRewrites.Context.SELECT);
                     func = qualifyFunction(func);
                     if (md.getTableAlias() != null) {
                         func = decorateExpressionWithAlias(md, func);

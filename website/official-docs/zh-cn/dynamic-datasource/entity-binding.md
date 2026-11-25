@@ -33,7 +33,7 @@ public class DemoOrder {
 }
 ```
 
-- `connectId` 的值就是动态数据源的路由 key，即数据源定义 SPI 契约中定义 Map 的 `id`
+- `connectId` 的值就是动态数据源的路由 key，即数据源定义中 Map 的 `id`（契约见[装载与注册](definition-loading.md)）
 - 启动扫描期由 `MetaReflex.getTableMeta` 把注解值回填到实体元数据的 `TableMeta.connectId` 字段
 - 这是实体归属最直接的声明，在同槽位（见下文"方式三"）且 catalog 映射之前裁决
 
@@ -109,7 +109,7 @@ entityDataSourceResolver.clearCache();
 2. **`catalog` 在 `catalog-mapping` 中的映射值** —— 实体未声明 connectId 时按逻辑分组路由
 3. 都没有 → 返回 null，交由 Dao 调用期的兜底链决定（见下节）
 
-解析结果还要通过一道**存在性校验**：`EntityDataSourceResolver` 会确认解析出的 key 在 `DynamicDataSourceRegistry` 中真实注册（定义来源已提供且启用的连接，或其他注册途径）。解析出 key 但数据源未注册时**直接硬失败**——抛出 `IllegalStateException`（提示"实体 xxx 显式归属数据源 yyy 未注册，拒绝静默回退主库"），既不会路由到一个不存在的库上，也不会悄悄落到别的库造成数据错乱。遇到此异常请检查该 key 是否已由定义来源提供（或经其他途径注册）。
+解析结果还要通过一道**存在性校验**：`EntityDataSourceResolver` 会确认解析出的 key 在 `DynamicDataSourceRegistry` 中真实注册（加载器返回的定义，或运行期直接登记的连接池）。解析出 key 但数据源未注册时**直接硬失败**——抛出 `IllegalStateException`（提示"实体 xxx 显式归属数据源 yyy 未注册，拒绝静默回退主库"），既不会路由到一个不存在的库上，也不会悄悄落到别的库造成数据错乱。遇到此异常请检查加载器是否返回了这个 key，或者是否已通过运行期直接登记（见[装载与注册](definition-loading.md)）。
 
 ## Dao 调用期的完整优先级链
 
@@ -134,7 +134,7 @@ entityDataSourceResolver.clearCache();
 
 **第 4 级：请求级覆盖。** 当前线程存在请求级数据源覆盖上下文（`DataSourceOverrideContext`）且实体**无显式归属**（无 `connectId` 且 catalog 未映射）时，路由到覆盖指定的数据源。典型驱动方是归档数据在线查询：请求头携带 `X-Gl-Archive-Query: true` 时，该请求内无归属实体的读操作自动切到归档库。任何显式指定（实体归属 / 注解 / DSL / 代码块作用域）都不被请求级覆盖劫持。完整语义见[归档数据在线查询](../archive/overview.md)。
 
-**第 5 级：平台默认 key。** 启动时由 ORM 自动解析并写入 `DataSourceManager`，规则：配置了 `geelato.orm.default-data-source-key` 则取配置值；否则容器中存在 `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` 任一 bean 时取 `"primary"`。
+**第 5 级：平台默认 key。** 启动时由 ORM 自动解析并写入 `DataSourceManager`，规则：配置了 `geelato.orm.default-data-source-key` 则取配置值；否则容器中存在 `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` 任一 bean 时取 `"primary"`。`DataSourceManager` 是方言快照与默认 key 的持有者，不是数据源注册中心，区别见[装载与注册](definition-loading.md)。
 
 **第 6 级：primary 硬兜底。** 以上全部为空时，回落到常量 `"primary"`。`primary` 由路由数据源强制注册且不可为空，因此这条链**永远解析出一个确定的数据源 key**，不会以 null 结束。
 
@@ -176,7 +176,7 @@ catalog 映射在查询期即时解析，框架启动后再补配置同样生效
 
 **误区三：实体绑定了 connectId 就一定会切过去。**
 
-还依赖两个前提：一是执行入口必须是能消费路由 key 的 `dynamicDao`（`primaryDao` 直连物理主库，恒不路由，见[切换方式](switching.md)）；二是该 key 对应的数据源真实存在且已启用——未注册时首次解析即硬失败（抛出 `IllegalStateException`，拒绝静默回退主库），请检查该 key 是否已由定义来源提供且处于启用状态。
+还依赖两个前提：一是执行入口必须是能消费路由 key 的 `dynamicDao`（`primaryDao` 直连物理主库，恒不路由，见[切换方式](switching.md)）；二是该 key 对应的数据源已在注册器中登记——未登记时首次解析即硬失败（抛出 `IllegalStateException`，拒绝静默回退主库），请检查加载器是否返回了这个 key。
 
 **误区四：把 platform 实体登记到其他库。**
 
@@ -184,6 +184,7 @@ catalog 映射在查询期即时解析，框架启动后再补配置同样生效
 
 ## 推荐继续阅读
 
+- [装载与注册](definition-loading.md) —— 数据源从哪里来、注册到哪个类、应用如何自定义装载
 - [动态数据源总览](overview.md) —— 能力整体链路与核心 Bean
-- [配置方式](configuration.md) —— 连接表、YAML 参数与默认数据源的完整配置说明
+- [配置方式](configuration.md) —— 连接定义、YAML 参数与默认数据源的完整配置说明
 - [切换方式](switching.md) —— 自动切库的识别规则、手工切换 API 与事务限制

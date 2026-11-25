@@ -31,7 +31,7 @@ public class DemoOrder {
 }
 ```
 
-- the value of `connectId` is the dynamic datasource routing key, i.e. the `id` of the definition Map in the datasource-definition SPI contract
+- the value of `connectId` is the dynamic datasource routing key, i.e. the `id` of the definition Map (contract in [Loading & Registration](definition-loading.md))
 - at startup scan time, `MetaReflex.getTableMeta` backfills the annotation value into `TableMeta.connectId` on the entity metadata
 - this is the most direct declaration of entity ownership; it wins over catalog mapping within the same slot (see Style 3 below)
 
@@ -107,7 +107,7 @@ The first three styles are adjudicated by `MetaManager.resolveConnectId` with th
 2. **the mapping of `catalog` in `catalog-mapping`** — routes by logical group when no connectId is declared
 3. neither → return null and hand over to the fallback chain at Dao-call time (next section)
 
-The resolution result also passes an **existence check**: `EntityDataSourceResolver` confirms the resolved key is actually registered in `DynamicDataSourceRegistry` (an enabled connection provided by the definition source, or another registration channel). If the resolved key's datasource is not registered, resolution **fails hard** — an `IllegalStateException` is thrown ("entity xxx explicitly owns datasource yyy which is not registered; refusing to silently fall back to the primary") — it never routes to a nonexistent database, nor quietly lands on a different one. When you hit this exception, check whether the key has been provided by the definition source (or registered through another channel).
+The resolution result also passes an **existence check**: `EntityDataSourceResolver` confirms the resolved key is actually registered in `DynamicDataSourceRegistry` (a definition returned by the loader, or a pool registered directly at runtime). If the resolved key's datasource is not registered, resolution **fails hard** — an `IllegalStateException` is thrown ("entity xxx explicitly owns datasource yyy which is not registered; refusing to silently fall back to the primary") — it never routes to a nonexistent database, nor quietly lands on a different one. When you hit this exception, check whether the loader returns this key, or whether the pool was registered directly at runtime (see [Loading & Registration](definition-loading.md)).
 
 ## The Full Priority Chain at Dao-Call Time
 
@@ -132,7 +132,7 @@ Details of each level:
 
 **Level 4: request-level override.** When the current thread carries a request-level datasource override context (`DataSourceOverrideContext`) and the entity has **no explicit owner** (no `connectId` and no mapped catalog), the call routes to the overridden datasource. The typical driver is online archive querying: with the request header `X-Gl-Archive-Query: true`, read operations on owner-less entities within that request automatically go to the archive database. No explicit designation (entity ownership / annotation / DSL / scoped block) is ever hijacked by the request-level override. See [Online Archive Querying](../archive/overview.md) for the full semantics.
 
-**Level 5: platform default key.** Resolved automatically by the ORM at startup and written into `DataSourceManager`: if `geelato.orm.default-data-source-key` is configured, that value is used; otherwise `"primary"` when any of `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` beans exists.
+**Level 5: platform default key.** Resolved automatically by the ORM at startup and written into `DataSourceManager`: if `geelato.orm.default-data-source-key` is configured, that value is used; otherwise `"primary"` when any of `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` beans exists. `DataSourceManager` holds the dialect snapshot and the default key; it is not the datasource registry — see [Loading & Registration](definition-loading.md) for the difference.
 
 **Level 6: primary hard fallback.** When all of the above are empty, the constant `"primary"` is used. `primary` is forcibly registered by the routing datasource and can never be null, so this chain **always resolves to a concrete datasource key** and never ends with null.
 
@@ -174,7 +174,7 @@ Catalog mapping is resolved on demand at query time; configuring it after startu
 
 **Misconception 3: a bound connectId always routes.**
 
-Two preconditions also apply: the execution entry must be `dynamicDao`, the only Dao that consumes routing keys (`primaryDao` connects straight to the physical primary and never routes — see [Switching](switching.md)); and the key must correspond to an existing, enabled datasource — when unregistered, the first resolution fails hard (an `IllegalStateException` is thrown, refusing silent fallback to primary); check whether the key has been provided by the definition source and is enabled.
+Two preconditions also apply: the execution entry must be `dynamicDao`, the only Dao that consumes routing keys (`primaryDao` connects straight to the physical primary and never routes — see [Switching](switching.md)); and the key must be registered in the registry — when not registered, the first resolution fails hard (an `IllegalStateException` is thrown, refusing silent fallback to primary); check whether the loader returns this key.
 
 **Misconception 4: platform entities can be registered to another database.**
 
@@ -182,6 +182,7 @@ Entities with `catalog = "platform"` are protected: the Java class definition wi
 
 ## Suggested Reading
 
+- [Loading & Registration](definition-loading.md) — where datasources come from, which class they are registered into, and how an application implements custom loading
 - [Dynamic Datasource Overview](overview.md) — overall chain and core beans
-- [Configuration](configuration.md) — connection table, YAML properties and the default datasource
+- [Configuration](configuration.md) — connection definitions, YAML properties and the default datasource
 - [Switching](switching.md) — automatic switching rules, manual APIs and transaction limits

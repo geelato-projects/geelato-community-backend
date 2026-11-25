@@ -13,16 +13,15 @@ This page explains the dynamic datasource capability provided by geelato-orm (th
 - entity-to-datasource resolution
 - reserved transaction-related capabilities
 
-If your goal is not just to understand the built-in behavior but to replace the default definition source or deeply customize the strategy, continue with:
-
-- [ORM / Datasource Extension](../orm/datasource-extension.md)
-
 This page is the overview; the other pages expand by topic:
 
+- [Loading & Registration](definition-loading.md) — where datasources come from, which class they are registered into, and how an application implements custom loading
 - [Binding & Priority](entity-binding.md) — how entities bind to datasources and the full priority chain
 - [Configuration](configuration.md) — the connection-definition contract, configuration properties and the default datasource
 - [Switching](switching.md) — automatic/manual switching, the request-level override, nested semantics and transaction limits
 - [Host Mapping](host-mapping.md) — local mapping of intranet addresses during development
+
+For deeper ORM extension (`Dao` binding, the query-filter SPIs and so on), see [ORM / Datasource Extension](../orm/datasource-extension.md).
 
 ## Capability Position
 
@@ -31,38 +30,28 @@ The dynamic datasource capability is not just a standalone connection-pool helpe
 Its responsibility can be summarized as:
 
 - letting `dynamicDao` and `dynamicJdbcTemplate` switch connections by entity or context
-- converting platform-managed datasource definitions into real `DataSource` instances
+- converting datasource definitions into real `DataSource` instances
 - allowing host applications to adopt multiple datasources without changing the `Dao` calling style
 
 So business code focuses more on "which datasource should this entity use" than on manually managing pool instances.
 
 ## Core Beans Created
 
-The configuration entry is:
+The wiring entry of the dynamic datasource stack is `OrmDynamicDataSourceAutoConfiguration`: when a bean named `primaryJdbcTemplate` exists, it imports the registry `DynamicDataSourceRegistry`, the factory `DataSourceFactory`, the routing datasource `DynamicRoutingDataSource`, the entity ownership resolver `EntityDataSourceResolver` and the aspect `DataSourceInterceptor`.
 
-- `DynamicDataSourceConfiguration`
-
-It currently creates:
-
-- `dynamicDataSource`
-- `dynamicJdbcTemplate`
-- `DynamicDataSourceDefinitionLoader`
-
-Where:
+Among them:
 
 - `dynamicDataSource` is the real routing datasource
 - `dynamicJdbcTemplate` is a `JdbcTemplate` built on top of it
-- `DynamicDataSourceDefinitionLoader` is the definition source abstraction
+- `DynamicDataSourceRegistry` is the registry that keeps datasource definitions and pools
 
-If the host application does not provide its own `DynamicDataSourceDefinitionLoader`, the default bean is:
-
-- `PlatformDynamicDataSourceDefinitionLoader`
+The definition loader `DynamicDataSourceDefinitionLoader` is not wired here. The host application provides it: the framework module `geelato-orm` ships no implementation, while a platform host ships `PlatformDynamicDataSourceDefinitionLoader`. See [Loading & Registration](definition-loading.md) for the full picture.
 
 ## Overall Flow
 
 The runtime flow can be understood as:
 
-1. `DynamicDataSourceRegistry` loads datasource definitions at startup
+1. at startup `DynamicDataSourceRegistry` calls the definition loader's `loadAll()` while it is being constructed
 2. the registry keeps datasource configs and builds `DataSource` instances on demand
 3. `DataSourceInterceptor` resolves the entity owner before `Dao` execution; `DynamicDataSourceScope` (the single switching entry point) writes the datasource key into the thread context
 4. `DynamicRoutingDataSource` selects the real datasource by the current thread key
@@ -76,20 +65,20 @@ So the core chain is a combination of:
 
 ## Where Definitions Come From
 
-The framework abstracts "where datasource definitions come from" into one SPI:
+Datasources have three sources:
 
-- `DynamicDataSourceDefinitionLoader` (`loadAll()` / `loadOne(key)`)
+- the primary and secondary pools from Spring configuration: `primary` / `secondary`, which bypass the registry
+- the definition loader bean `DynamicDataSourceDefinitionLoader`: `loadAll()` is called once when the registry is constructed, and the `id` of each definition Map is the routing key
+- a direct `DynamicDataSourceRegistry.registerDataSource(...)` call at runtime, which registers an already-built pool
 
-The rules:
+Two rules about the definition loader decide how a host application plugs in:
 
-- when the host or the platform provides an implementation, all connection definitions are loaded from it; each definition Map's `id` is the routing key
-- with no implementation at all, the framework only uses `primary` / `secondary` and still runs standalone
+- exactly **one** loader is picked up by type. A host application customizes the datasource source by providing its own implementation; a platform host already has one, so `@Primary` is required for the new one to take effect.
+- with no implementation at all, the framework only uses `primary` / `secondary` and still runs standalone.
 
-The platform layer provides the default implementation (`PlatformDynamicDataSourceDefinitionLoader`, in the business layer `geelato-web-platform`), which loads from the connection definitions maintained platform-side.
+The implementation a platform host ships is `PlatformDynamicDataSourceDefinitionLoader` (in the business layer `geelato-web-platform`), which loads from the connection definitions maintained by the platform.
 
-If you want to switch the source of truth to a configuration center, YAML, an external service, or a registry, do not modify the built-in implementation directly. Read:
-
-- [ORM / Datasource Extension](../orm/datasource-extension.md)
+The startup sequence, the registry methods, the field contract and custom examples are collected in one page: [Loading & Registration](definition-loading.md).
 
 ## How Datasource Instances Are Built
 
@@ -256,38 +245,23 @@ So the current priority is (high → low):
 - the class/method-level `@UseDynamicDataSource` default
 - the outer explicit key (thread-context value set by `DynamicDataSourceScope.switchTo` / `withDataSource`)
 - the request-level override (only for entities without an explicit owner, driven e.g. by the archive-query header)
-- the platform default key (written into `DataSourceManager` at startup by `OrmAutoConfiguration`)
+- the platform default key (written into `DataSourceManager` at startup by `OrmAutoConfiguration`; it holds the dialect snapshot and the default key, not the datasource registry — see [Loading & Registration](definition-loading.md))
 - the `primary` hard fallback
 
 See [Switching](switching.md) for the dedicated coverage of switching styles and transaction limits.
 
 ## Lazy Loading and Refresh
 
-The registry is:
+The registry `DynamicDataSourceRegistry` keeps two maps:
 
-- `DynamicDataSourceRegistry`
+- definition snapshots in `dataSourceConfigMap`
+- built pools in `dataSourceMap`
 
-It maintains:
-
-- datasource instance cache `dataSourceMap`
-- datasource config cache `dataSourceConfigMap`
-
-It supports:
-
-- full refresh at startup
-- refresh of one datasource by key
-- datasource removal
-- direct registration of an already-built datasource
-
-If:
-
-```properties
-geelato.datasource.dynamic.delay-load-data-source=true
-```
-
-is enabled, startup loads only definitions and not every physical pool instance. The real `DataSource` is created only when the route first needs that key.
+Lazy loading is on by default (`geelato.datasource.dynamic.delay-load-data-source=true`): startup stores definitions only and creates no pools; the `DataSource` for a key is built the first time a call is routed to it. Setting it to `false` builds the pool when the definition is registered.
 
 This is more suitable when there are many configured datasources but only a small subset is active at the same time.
+
+For every registry method and the two-step refresh and removal operations, see [Loading & Registration](definition-loading.md).
 
 ## Pool and Runtime Properties
 
@@ -311,6 +285,8 @@ Key properties include:
 - `keepalive-time-ms`
 - `initialization-fail-timeout-ms`
 - `connection-test-query`
+- `connect-timeout-ms`
+- `socket-timeout-ms`
 
 The default direction is:
 
@@ -364,18 +340,18 @@ this page is enough.
 
 If you want to do things such as:
 
-- replacing `DynamicDataSourceDefinitionLoader`
-- loading datasource definitions from a config center or files
-- overriding the default ORM `Dao` binding
-- customizing a multi-`Dao` strategy
-- enabling JTA or Seata and integrating further
+- replacing `DynamicDataSourceDefinitionLoader` to load datasource definitions from a config center or files: see Loading & Registration
+- overriding the default ORM `Dao` binding, or customizing a multi-`Dao` strategy: see ORM / Datasource Extension
+- enabling JTA or Seata and integrating further: see ORM / Datasource Extension
 
 then continue with:
 
+- [Loading & Registration](definition-loading.md)
 - [ORM / Datasource Extension](../orm/datasource-extension.md)
 
 ## Suggested Reading
 
+- [Loading & Registration](definition-loading.md)
 - [Binding & Priority](entity-binding.md)
 - [Configuration](configuration.md)
 - [Switching](switching.md)
@@ -383,4 +359,3 @@ then continue with:
 - [ORM Overview](../orm/overview.md)
 - [Fluent DSL Guide](../orm/fluent-dsl.md)
 - [Materialized View Acceleration (Platform)](../platform-capabilities/materialized-view.md) — slow queries served by engine-maintained materialized views (platform capability)
-- [Fluent DSL Guide](../orm/fluent-dsl.md)

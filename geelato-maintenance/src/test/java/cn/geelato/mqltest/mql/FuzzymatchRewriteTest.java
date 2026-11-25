@@ -16,6 +16,7 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -150,5 +151,54 @@ class FuzzymatchRewriteTest extends MqlTestSupport {
         String main = sql.getBoundSql().getSql();
         assertTrue(main.contains("like CONCAT('%',?,'%')"), main);
         assertEquals("ABC", Arrays.asList(sql.getBoundSql().getParams()).get(0));
+    }
+
+    // ==================== 方言改写 ====================
+
+    @Test
+    @DisplayName("postgresql：改写为 col ~ ?")
+    void postgresqlDialectUsesTildeOperator() {
+        cn.geelato.core.meta.model.entity.EntityMeta em =
+                cn.geelato.core.meta.MetaManager.singleInstance().getByEntityName(ENTITY_ORDER);
+        em.getTableMeta().setDbType("postgresql");
+        try {
+            BoundPageSql sql = process(mql("{\"fuzzymatch($mql_test_order.orderNo,'ABC123')|gt\":\"0\",\"@p\":\"1,15\"}"));
+            String main = sql.getBoundSql().getSql();
+            assertTrue(main.contains("order_no ~ ?"), main);
+            assertFalse(main.contains("REGEXP ?"), main);
+            assertFalse(main.contains("gfn_fuzzymatch"), main);
+        } finally {
+            em.getTableMeta().setDbType(null);
+        }
+    }
+
+    @Test
+    @DisplayName("oracle：改写为 REGEXP_LIKE(col, ?)")
+    void oracleDialectUsesRegexpLike() {
+        cn.geelato.core.meta.model.entity.EntityMeta em =
+                cn.geelato.core.meta.MetaManager.singleInstance().getByEntityName(ENTITY_ORDER);
+        em.getTableMeta().setDbType("oracle");
+        try {
+            BoundPageSql sql = process(mql("{\"fuzzymatch($mql_test_order.orderNo,'ABC123')|gt\":\"0\",\"@p\":\"1,15\"}"));
+            String main = sql.getBoundSql().getSql();
+            assertTrue(main.contains("REGEXP_LIKE(order_no, ?)"), main);
+            assertFalse(main.contains("REGEXP ?"), main);
+        } finally {
+            em.getTableMeta().setDbType(null);
+        }
+    }
+
+    @Test
+    @DisplayName("sqlserver：无原生正则，改写明确抛异常")
+    void sqlserverDialectThrows() {
+        cn.geelato.core.meta.model.entity.EntityMeta em =
+                cn.geelato.core.meta.MetaManager.singleInstance().getByEntityName(ENTITY_ORDER);
+        em.getTableMeta().setDbType("sqlserver");
+        try {
+            assertThrows(IllegalStateException.class, () ->
+                    process(mql("{\"fuzzymatch($mql_test_order.orderNo,'ABC123')|gt\":\"0\",\"@p\":\"1,15\"}")));
+        } finally {
+            em.getTableMeta().setDbType(null);
+        }
     }
 }

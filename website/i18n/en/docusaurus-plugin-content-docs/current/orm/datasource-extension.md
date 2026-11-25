@@ -11,7 +11,7 @@ This page covers the ORM's datasource binding, runtime datasource switching, and
 - Switching datasources at runtime.
 - Extending query filtering and field-filling rules through SPIs.
 
-To understand how the dynamic datasource capability itself works first, read [Dynamic Datasource](../dynamic-datasource/overview.md).
+To understand how the dynamic datasource capability itself works first, read [Dynamic Datasource](../dynamic-datasource/overview.md). For where datasources come from and how to implement custom loading, see [Definition Loading and Registration](../dynamic-datasource/definition-loading.md).
 
 ## Clarify Your Scenario
 
@@ -20,7 +20,7 @@ Before changing any configuration, identify the scenario so you don't reach for 
 - Route a single Fluent DSL query to a specific datasource: use `.useDataSource(...)`.
 - Switch a block of code or an entire request to a dynamic datasource: use `DynamicDataSourceScope.withDataSource(...)` / `switchTo(...)`.
 - Switch a whole service or method to a dynamic datasource: use `@UseDynamicDataSource`.
-- Replace the dynamic datasource definition source: implement `DynamicDataSourceDefinitionLoader`.
+- Replace the dynamic datasource definition source: implement `DynamicDataSourceDefinitionLoader`, see [Definition Loading and Registration](../dynamic-datasource/definition-loading.md).
 - Automatically add tenant/permission conditions to queries, or fill default fields on save: implement the corresponding SPI.
 
 These capabilities are related but not interchangeable; picking the wrong entry point leads to configuration confusion.
@@ -99,7 +99,9 @@ If `spring.datasource.secondary.jdbc-url` is also configured, it additionally cr
 
 ## Dynamic Datasource Extension Points
 
-The explicit configuration prefix for the dynamic datasource is:
+The real extension point of the dynamic datasource is the definition loader `DynamicDataSourceDefinitionLoader`, through which the host application supplies datasource definitions; see [Definition Loading and Registration](../dynamic-datasource/definition-loading.md).
+
+The explicit configuration prefix is:
 
 ```properties
 geelato.datasource.dynamic.*
@@ -302,317 +304,17 @@ Resolution happens on demand at runtime via `MetaManager.resolveConnectId`, so i
 - System entities with `catalog = "platform"` keep their existing protection (Java class definition always wins, refresh and hand-over forbidden); mapping `platform` to `primary` in `catalog-mapping` is recommended to stay consistent with the system database.
 - Resolution completes on demand at query time, independent of entity scan order — no need to worry about framework startup sequencing.
 
-## Why the Definition Source Is Abstracted
+## Datasource Definition Source: Loading and Registration
 
-Just like the metadata source (`MetaStore`), the dynamic datasource **definition source** is abstracted as an SPI. Understanding the motivation helps you decide whether to replace it.
+"Where datasource definitions come from" is the job of the SPI `DynamicDataSourceDefinitionLoader` (in the `cn.geelato.datasource.spi` package of `geelato-orm`), and definitions are registered in `DynamicDataSourceRegistry`. Because the source is an SPI, connection details can come from a config center, files or an external service, and a host application does not need an extra table structure just to use multiple datasources. The framework module ships no implementation; with no implementation at all, only `primary` / `secondary` are used.
 
-### Before: Definitions Hard-Bound to the Platform Table
+Three points matter when customizing the datasource source in a host application:
 
-In earlier versions, the connection details of dynamic datasources were hard-bound to a single connection table on the platform side — the default loader simply read the whole table and turned each row into a datasource definition. This coupled the framework layer (`geelato-orm`) to a specific table structure, with three real pain points:
+- The registry picks up exactly **one** loader by type. When the container already has one (a platform host ships `PlatformDynamicDataSourceDefinitionLoader`), the custom implementation must be marked `@Primary`, otherwise startup fails with `NoUniqueBeanDefinitionException`.
+- Marking it `@Primary` is a complete replacement: connections from the existing source are no longer registered. To keep the existing source and add your own, write a merged loader.
+- Refreshing after a definition change has two steps: refresh `DynamicDataSourceRegistry` first, then `DynamicRoutingDataSource`.
 
-| Pain point | Scenario |
-| --- | --- |
-| **Hard to manage across environments** | Datasource configurations for dev / test / prod are scattered across their own databases; changing one connection means editing SQL in a database — no audit, no versioning. |
-| **Configuration centers unusable** | Wanting Nacos / Apollo to centrally manage and push datasource lists meant bypassing the framework and building your own. |
-| **Lightweight projects forced onto platform tables** | A small service that only wants multi-datasource support had to adopt the whole platform table set — too costly. |
-
-### Design Decision: Abstract "Where Datasources Come From" into an SPI
-
-The framework abstracted the loading logic into the `DynamicDataSourceDefinitionLoader` SPI (in the `cn.geelato.datasource.spi` package of `geelato-orm`), and "read from the platform table" was demoted to a default implementation, `PlatformDynamicDataSourceDefinitionLoader` (moved to the business layer `geelato-web-platform`).
-
-Key design: `DynamicDataSourceRegistry` injects the loader with `@Nullable` — **when no loader is provided at all, the framework only uses `primary` / `secondary` and still runs standalone**. This matches the MetaStore philosophy of "runs without a database".
-
-## What the Abstraction Buys You
-
-1. **Centralized management in a configuration center**: Nacos / Apollo manages multi-environment datasources; changing configuration takes effect immediately (with the hot refresh below) — no SQL editing in a database.
-2. **Zero framework changes**: implement the interface + `@Primary`, without touching a single line of framework code.
-3. **No platform tables required**: start from files / in-memory definitions, upgrade when needed.
-4. **Operations friendly**: change or expand databases without code changes or restarts (host mapping + two-step hot refresh).
-5. **Everything is inherited**: lazy pool creation, pool tuning, Seata / JTA, entity→datasource auto-routing — after switching the source, **all of it is reused automatically**.
-
-## The Default Definition Source
-
-The current default dynamic datasource definition loader is `PlatformDynamicDataSourceDefinitionLoader` (business layer `geelato-web-platform`), which loads from the connection definitions maintained platform-side.
-
-Because the loader is optional-injected, **it is used when you provide no custom implementation; providing one replaces it**.
-
-## Overriding the Definition Source
-
-The host application only needs to provide its own `DynamicDataSourceDefinitionLoader` to replace the default loading logic.
-
-### Making Your Implementation Take Effect: `@Primary` Is Required
-
-This is **exactly isomorphic** to the override mechanism in [MetaStore Extension](../reference/metastore-extension.md), and it is the most frequent misuse:
-
-- the default `PlatformDynamicDataSourceDefinitionLoader` is a `@Component` and has **no** `@Primary`;
-- the injection point on `DynamicDataSourceRegistry` is a constructor parameter `@Nullable DynamicDataSourceDefinitionLoader definitionLoader`, **without `@Qualifier`**;
-- writing `@Component implements DynamicDataSourceDefinitionLoader` directly → two candidates in the container → startup fails with `NoUniqueBeanDefinitionException`.
-
-The correct way is to add `@Primary` on your implementation:
-
-```java
-@Component
-@Primary
-public class MyDataSourceDefinitionLoader implements DynamicDataSourceDefinitionLoader {
-    // ...
-}
-```
-
-:::warning
-Do not rely on same-name bean overriding (`spring.main.allow-bean-definition-overriding` is `false` by default). Enabling global overriding has side effects and is not recommended.
-:::
-
-### Contract: Interface and Map Field Conventions
-
-```java
-public interface DynamicDataSourceDefinitionLoader {
-    List<Map<String, Object>> loadAll();   // all datasource definitions; each Map's "id" is the routing key
-    Map<String, Object> loadOne(String key); // load a single one by routing key (for hot refresh)
-}
-```
-
-Every `Map<String, Object>` returned by `loadAll()` must contain the following fields (the field convention is snake_case; the platform default implementation provides rows in this shape):
-
-| Field | Required | Description |
-| --- | --- | --- |
-| `id` | **required** | datasource routing key (what `.useDataSource(id)` and `@Entity(connectId)` use) |
-| `db_type` | **required** | database type, see the table below |
-| `db_hostname_ip` | **required** | host address (can be redirected by [host mapping](../dynamic-datasource/host-mapping.md)) |
-| `db_port` | **required** | port |
-| `db_user_name` | **required** | username |
-| `db_name` | **required** | database / schema name |
-| `db_password` | optional | password, see the encryption convention below |
-
-**Supported `db_type` values**:
-
-| db_type | Driver | Notes |
-| --- | --- | --- |
-| `mysql` | `com.mysql.cj.jdbc.Driver` | case-insensitive |
-| `postgresql` / `postgres` | `org.postgresql.Driver` | both spellings are equivalent |
-| others | — | throws `UnsupportedOperationException: unsupported database type` |
-
-**Password encryption convention**: plain text works as-is; to encrypt, the format must be `algorithm:ciphertext` where the algorithm is `aes` / `rsa` / `sm2` / `sm4` (the framework picks the decryption algorithm by prefix). Values without an `algorithm:` prefix are passed through as plain text.
-
-### Example A: In-Memory Construction (Minimal Demo)
-
-> **Use case**: quickly verify that "a custom source gets wired", or build a minimal runnable demo.
-
-```java
-package com.acme.platform.ds;
-
-import cn.geelato.datasource.spi.DynamicDataSourceDefinitionLoader;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-@Component
-@Primary
-public class InMemoryDataSourceLoader implements DynamicDataSourceDefinitionLoader {
-
-    @Override
-    public List<Map<String, Object>> loadAll() {
-        Map<String, Object> ds = new HashMap<>();
-        ds.put("id", "biz-mysql");            // routing key (required)
-        ds.put("db_type", "mysql");           // required
-        ds.put("db_hostname_ip", "10.0.0.10");// required
-        ds.put("db_port", 3306);              // required
-        ds.put("db_user_name", "biz_user");   // required
-        ds.put("db_name", "biz_db");          // required
-        ds.put("db_password", "biz@psd");     // optional; plain text here
-        return List.of(ds);
-    }
-
-    @Override
-    public Map<String, Object> loadOne(String key) {
-        return loadAll().stream()
-                .filter(m -> key.equals(String.valueOf(m.get("id"))))
-                .findFirst().orElse(null);
-    }
-}
-```
-
-**Expected result**: after startup, `.useDataSource("biz-mysql")` routes to a HikariCP pool; the log shows `HikariPool-... poolName=biz-mysql`.
-
-### Example B: Loading from JSON / YAML Files (Most Common)
-
-> **Use case**: manage the datasource list with files shipped with the application; use different files per environment profile.
-
-First prepare `src/main/resources/datasource/biz-mysql.json`:
-
-```json
-{
-  "id": "biz-mysql",
-  "dbType": "mysql",
-  "host": "10.0.0.10",
-  "port": 3306,
-  "userName": "biz_user",
-  "dbName": "biz_db",
-  "password": "sm4:Y3yK9+...ciphertext..."
-}
-```
-
-Then implement a loader that reads all of `classpath:datasource/*.json` at startup:
-
-```java
-package com.acme.platform.ds;
-
-import cn.geelato.datasource.spi.DynamicDataSourceDefinitionLoader;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
-import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.stereotype.Component;
-
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-
-@Component
-@Primary
-public class JsonFileDataSourceLoader implements DynamicDataSourceDefinitionLoader {
-
-    private final List<Map<String, Object>> definitions = new ArrayList<>();
-
-    public JsonFileDataSourceLoader() throws Exception {
-        var resolver = new PathMatchingResourcePatternResolver();
-        for (Resource res : resolver.getResources("classpath:datasource/*.json")) {
-            try (InputStream in = res.getInputStream()) {
-                String text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-                JSONObject json = JSON.parseObject(text);
-
-                // note: the Map keys must follow the framework's snake_case convention
-                Map<String, Object> ds = new HashMap<>();
-                ds.put("id", json.getString("id"));
-                ds.put("db_type", json.getString("dbType"));
-                ds.put("db_hostname_ip", json.getString("host"));
-                ds.put("db_port", json.getIntValue("port"));
-                ds.put("db_user_name", json.getString("userName"));
-                ds.put("db_name", json.getString("dbName"));
-                ds.put("db_password", json.getString("password")); // supports encrypted forms like sm4:xxx
-                definitions.add(ds);
-            }
-        }
-    }
-
-    @Override
-    public List<Map<String, Object>> loadAll() {
-        return definitions;
-    }
-
-    @Override
-    public Map<String, Object> loadOne(String key) {
-        return definitions.stream()
-                .filter(m -> key.equals(String.valueOf(m.get("id"))))
-                .findFirst().orElse(null);
-    }
-}
-```
-
-**Expected result**: dropping a new `*.json` into the `datasource/` directory makes it an available datasource automatically.
-
-### Example C: Loading from an External HTTP API
-
-> **Use case**: the enterprise runs a central "database connection registry"; the application pulls the list at startup and keeps a single source of truth.
-
-```java
-package com.acme.platform.ds;
-
-import cn.geelato.datasource.spi.DynamicDataSourceDefinitionLoader;
-import org.springframework.context.annotation.Primary;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
-
-import java.util.List;
-import java.util.Map;
-
-/**
- * The agreed endpoint returns an array conforming to the field conventions:
- * [{ "id": "biz-mysql", "db_type": "mysql", "db_hostname_ip": "...", ... }]
- */
-@Component
-@Primary
-public class HttpApiDataSourceLoader implements DynamicDataSourceDefinitionLoader {
-
-    private final RestClient client = RestClient.builder()
-            .baseUrl("http://ds-registry.internal.svc")
-            .build();
-
-    @Override
-    public List<Map<String, Object>> loadAll() {
-        return client.get()
-                .uri("/api/datasources")
-                .retrieve()
-                .body(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
-    }
-
-    @Override
-    public Map<String, Object> loadOne(String key) {
-        return loadAll().stream()
-                .filter(m -> key.equals(String.valueOf(m.get("id"))))
-                .findFirst().orElse(null);
-    }
-}
-```
-
-**Expected result**: after a new datasource is added and published in the registry, it becomes usable after an application restart or a hot refresh.
-
-### Verification: Trigger a Real Query
-
-After implementing a loader, don't stop at a successful Spring startup — run a real query right away:
-
-```java
-List<Map<String, Object>> rows = MetaFactory.query("DevDbConnect")
-        .useDataSource("biz-mysql")
-        .page(1, 1)
-        .list();
-```
-
-If this executes successfully, "definition loading + datasource switching + the ORM execution chain" is working end to end.
-
-## Runtime Hot Refresh
-
-After datasource definitions change, **no restart is needed**. The framework provides two refresh entries, and **both steps are required**:
-
-```java
-@Autowired(required = false)
-private cn.geelato.datasource.DynamicDataSourceRegistry dynamicDataSourceRegistry;
-
-@Autowired(required = false)
-@org.springframework.beans.factory.annotation.Qualifier("dynamicDataSource")
-private cn.geelato.datasource.DynamicRoutingDataSource dynamicRoutingDataSource;
-
-public void refresh(String key) {
-    // step 1: rebuild the config and the connection pool for that key
-    boolean ok = dynamicDataSourceRegistry.refreshDataSource(key);
-    // step 2: refresh the routing table so DynamicRoutingDataSource notices the change
-    if (ok) {
-        dynamicRoutingDataSource.refreshDataSource(key);
-    }
-}
-```
-
-- `DynamicDataSourceRegistry.refreshDataSource(key)` / `refreshAllDataSources()`: rebuild the configuration (and the pool when necessary).
-- `DynamicRoutingDataSource.refreshDataSource(key)` / `refreshAllDataSources()`: reassemble the routing table and make Spring recompute it.
-
-:::warning
-Calling only the first step and not the second is the most common cause of "the source changed but switching doesn't take effect" — the configuration changed while the routing table still points at the old pool.
-:::
-
-### Don't Want to Replace the Loader? Register an Already-Built DataSource Directly
-
-If you only need to register a datasource temporarily in code (e.g. built from `application.properties`, or obtained from a pool factory), you can bypass the loader and register directly:
-
-```java
-dynamicDataSourceRegistry.registerDataSource("my-key", alreadyBuiltDataSource);
-dynamicRoutingDataSource.refreshAllDataSources();
-```
-
-This approach depends on no loader implementation and suits "a few, static, known-at-startup" datasources.
+The interface contract, the registry methods, the startup sequence, complete examples and runtime refresh are all in [Definition Loading and Registration](../dynamic-datasource/definition-loading.md).
 
 ## Implementing the SPIs
 
@@ -727,6 +429,8 @@ When "switching doesn't take effect" or "the SPI doesn't fire", check in this or
 8. `UnsupportedOperationException: unsupported database type` → the Map's `db_type` is neither the built-in `mysql` / `postgresql` nor a dialect family registered via `Dialects.registerAlias`
 9. the source changed but switching doesn't take effect → only `DynamicDataSourceRegistry` was refreshed, not `DynamicRoutingDataSource` (both steps are required)
 
+The full troubleshooting for definition loaders is in [Definition Loading and Registration](../dynamic-datasource/definition-loading.md).
+
 ## Practical Recommendations
 
 - prefer the ORM for regular backend CRUD
@@ -742,6 +446,7 @@ When "switching doesn't take effect" or "the SPI doesn't fire", check in this or
 ## Suggested Reading
 
 - [Dynamic Datasource](../dynamic-datasource/overview.md)
+- [Definition Loading and Registration](../dynamic-datasource/definition-loading.md)
 - [ORM Overview](overview.md)
 - [MetaStore Extension](../reference/metastore-extension.md)
 - [Query Filter and Field Fill SPI](../reference/spi-query-filter-and-save-fill-extension.md)

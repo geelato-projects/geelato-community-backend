@@ -9,12 +9,13 @@ sidebar_label: 动态数据源
 
 本页是总览，其余各页按主题展开：
 
+- [装载与注册](definition-loading.md) —— 数据源从哪里来、注册到哪个类、应用如何自定义装载
 - [实体绑定与优先级](entity-binding.md) —— 实体如何与数据源绑定，完整优先级链
 - [配置方式](configuration.md) —— 连接定义契约、配置参数、默认数据源
 - [切换方式](switching.md) —— 自动/手工切换、请求级覆盖、嵌套语义与事务限制
 - [主机地址映射](host-mapping.md) —— 开发环境内网地址本地映射
 
-如需替换默认定义来源或做深度扩展，请阅读 [ORM / 数据源扩展](../orm/datasource-extension.md)。
+更深一层的 ORM 扩展（`Dao` 绑定、查询过滤 SPI 等）见 [ORM / 数据源扩展](../orm/datasource-extension.md)。
 
 ## 能力定位
 
@@ -23,38 +24,28 @@ sidebar_label: 动态数据源
 它的职责可以概括为：
 
 - 让 `dynamicDao` / `dynamicJdbcTemplate` 可以按实体或上下文切换连接
-- 让平台表中的动态库定义转成可用的 `DataSource`
+- 让连接定义转成可用的 `DataSource`
 - 让宿主工程在不改 `Dao` 调用方式的前提下接入多数据源
 
 也就是说，业务代码更关心“当前实体应该落到哪个数据源”，而不是手工管理每个连接池实例。
 
 ## 当前装配了哪些核心 Bean
 
-动态数据源配置入口是：
-
-- `DynamicDataSourceConfiguration`
-
-它当前会装配：
-
-- `dynamicDataSource`
-- `dynamicJdbcTemplate`
-- `DynamicDataSourceDefinitionLoader`
+动态数据源的装配入口是 `OrmDynamicDataSourceAutoConfiguration`：容器中存在名为 `primaryJdbcTemplate` 的 Bean 时，它导入注册器 `DynamicDataSourceRegistry`、工厂 `DataSourceFactory`、路由数据源 `DynamicRoutingDataSource`、实体归属解析器 `EntityDataSourceResolver` 和切面 `DataSourceInterceptor`。
 
 其中：
 
 - `dynamicDataSource` 是真正的路由数据源
 - `dynamicJdbcTemplate` 是基于路由数据源构建的 `JdbcTemplate`
-- `DynamicDataSourceDefinitionLoader` 是动态数据源定义来源
+- `DynamicDataSourceRegistry` 是注册中心，保存数据源定义与连接池
 
-如果宿主工程没有自定义 `DynamicDataSourceDefinitionLoader`，默认会创建：
-
-- `PlatformDynamicDataSourceDefinitionLoader`
+定义加载器 `DynamicDataSourceDefinitionLoader` 不在这里装配。它由宿主应用自己提供：框架模块 `geelato-orm` 不带实现，平台宿主自带 `PlatformDynamicDataSourceDefinitionLoader`。装载与注册的完整说明见[装载与注册](definition-loading.md)。
 
 ## 整体工作链路
 
 当前动态数据源的大致工作顺序可以理解为：
 
-1. 启动时由 `DynamicDataSourceRegistry` 加载数据源定义
+1. 启动时 `DynamicDataSourceRegistry` 在构造过程中调用定义加载器的 `loadAll()`，加载数据源定义
 2. `DynamicDataSourceRegistry` 保存数据源配置，并按需构建 `DataSource`
 3. `DataSourceInterceptor` 在 `Dao` 调用前解析实体归属，由 `DynamicDataSourceScope`（切换唯一出入口）将数据源 key 写入线程上下文
 4. `DynamicRoutingDataSource` 在执行时根据当前线程中的 key 选择真实数据源
@@ -70,20 +61,20 @@ sidebar_label: 动态数据源
 
 ## 数据源定义从哪里来
 
-框架把"数据源定义从哪来"抽象成一个 SPI：
+数据源有三个来源：
 
-- `DynamicDataSourceDefinitionLoader`（`loadAll()` / `loadOne(key)`）
+- Spring 配置的主库与副库：`primary` / `secondary`，不经过注册器
+- 定义加载器 Bean `DynamicDataSourceDefinitionLoader`：注册器构造时调用一次 `loadAll()`，每条定义 Map 的 `id` 就是路由 key
+- 运行期直接调用 `DynamicDataSourceRegistry.registerDataSource(...)`，登记一个已建好的连接池
 
-规则是：
+关于定义加载器，两条规则决定了宿主应用如何接入：
 
-- 宿主或平台提供了实现，就从它加载全部连接定义；每个定义 Map 的 `id` 即路由 key
-- 不提供任何实现时，框架只走 `primary` / `secondary`，仍可独立运行
+- 容器中按类型只认**一个**加载器。宿主应用提供自己的实现即可自定义数据源来源；平台宿主已经有一个，需要加 `@Primary` 才能生效。
+- 不提供任何实现时，框架只走 `primary` / `secondary`，仍可独立运行。
 
-平台层提供了默认实现（`PlatformDynamicDataSourceDefinitionLoader`，位于业务层 `geelato-web-platform`），从平台侧维护的连接定义中加载。
+平台宿主自带的实现是 `PlatformDynamicDataSourceDefinitionLoader`（位于业务层 `geelato-web-platform`），从平台维护的连接定义中加载。
 
-若需把事实来源换成配置中心、YAML、外部服务或其他注册中心，不要修改默认实现，请参阅：
-
-- [ORM / 数据源扩展](../orm/datasource-extension.md)
+装载时序、注册器的方法、字段契约和自定义示例集中在一页：[装载与注册](definition-loading.md)。
 
 ## 数据源实例如何构建
 
@@ -250,38 +241,23 @@ sidebar_label: 动态数据源
 - 类/方法级 `@UseDynamicDataSource` 指定的默认源
 - 外层已显式设置的 key（`DynamicDataSourceScope.switchTo` / `withDataSource` 设置的线程上下文值）
 - 请求级覆盖（仅对无显式归属实体生效，由归档查询请求头等驱动）
-- 平台默认 key（启动时由 `OrmAutoConfiguration` 写入 `DataSourceManager`）
+- 平台默认 key（启动时由 `OrmAutoConfiguration` 写入 `DataSourceManager`；它是方言快照与默认 key 的持有者，不是数据源注册中心，区别见[装载与注册](definition-loading.md)）
 - `primary` 硬兜底
 
 切换方式与事务限制的专门说明见 [切换方式](switching.md)。
 
 ## 懒加载和刷新机制
 
-动态数据源注册器是：
+注册器 `DynamicDataSourceRegistry` 维护两张表：
 
-- `DynamicDataSourceRegistry`
+- 定义快照 `dataSourceConfigMap`
+- 已建连接池 `dataSourceMap`
 
-它同时维护：
-
-- 数据源实例缓存 `dataSourceMap`
-- 数据源配置缓存 `dataSourceConfigMap`
-
-当前支持：
-
-- 启动时全量刷新
-- 按 key 刷新单个数据源
-- 移除数据源
-- 外部直接注册一个已经构建好的数据源
-
-如果配置了：
-
-```properties
-geelato.datasource.dynamic.delay-load-data-source=true
-```
-
-那么启动时只缓存定义，不立即创建所有连接池；只有真正路由到某个 key 时，才延迟创建对应 `DataSource`。
+默认开启懒加载（`geelato.datasource.dynamic.delay-load-data-source=true`）：启动时只保存定义，不创建连接池；真正路由到某个 key 时才建对应的 `DataSource`。设为 `false` 则在登记定义的同时建池。
 
 这对“动态源很多，但同时活跃的源不多”的场景更友好。
+
+注册器的全部方法、运行期刷新与移除的两步操作，见[装载与注册](definition-loading.md)。
 
 ## 连接池与运行参数
 
@@ -305,6 +281,8 @@ geelato.datasource.dynamic.*
 - `keepalive-time-ms`
 - `initialization-fail-timeout-ms`
 - `connection-test-query`
+- `connect-timeout-ms`
+- `socket-timeout-ms`
 - `catalog-mapping`：`catalog`（逻辑数据库分组）到数据源 key 的映射，配合 `@Entity(catalog)` 使用，详见 [ORM / 数据源扩展](../orm/datasource-extension.md)
 
 默认设计偏向：
@@ -359,18 +337,18 @@ geelato.datasource.dynamic.*
 
 若需进一步执行以下事项，请跳转至：
 
+- [装载与注册](definition-loading.md)
 - [ORM / 数据源扩展](../orm/datasource-extension.md)
 
 典型场景包括：
 
-- 替换 `DynamicDataSourceDefinitionLoader`
-- 改成从配置中心或文件加载数据源定义
-- 覆盖默认 ORM 绑定的 `Dao`
-- 自定义多 `Dao` 策略
-- 打开 JTA / Seata 并做进一步集成
+- 替换 `DynamicDataSourceDefinitionLoader`，改成从配置中心或文件加载数据源定义：见装载与注册
+- 覆盖默认 ORM 绑定的 `Dao`，或自定义多 `Dao` 策略：见 ORM / 数据源扩展
+- 打开 JTA / Seata 并做进一步集成：见 ORM / 数据源扩展
 
 ## 推荐继续阅读
 
+- [装载与注册](definition-loading.md)
 - [实体绑定与优先级](entity-binding.md)
 - [配置方式](configuration.md)
 - [切换方式](switching.md)

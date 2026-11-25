@@ -5,24 +5,24 @@ sidebar_label: Configuration
 
 # Dynamic Datasource Configuration
 
-This page covers every configuration entry of the dynamic datasource: where connection definitions live, what YAML can tune, how the default datasource is determined, and how to refresh after a connection change.
+This page covers the configuration properties and wiring conditions of the dynamic datasource: what YAML can tune, how the default datasource is determined, and how to refresh after a connection change. For where connection definitions come from and who loads them, see [Loading & Registration](definition-loading.md).
 
 Configuration spans three layers:
 
-- **Connection definitions**: the information of each physical database connection, provided by the definition-source SPI (the platform provides the default implementation)
+- **Connection definitions**: the information of each physical database connection, provided by the definition loader bean; see [Loading & Registration](definition-loading.md) for the sources and the loading mechanism
 - **Configuration properties**: pool sizing, lazy loading, catalog mapping, etc., under the prefix `geelato.datasource.dynamic.*`
 - **ORM properties**: default datasource and Dao binding, under the prefix `geelato.orm.*`
 
 ## Connection Definitions: the SPI Contract
 
-Connection definitions are provided by the `DynamicDataSourceDefinitionLoader` SPI; each definition is a Map whose `id` is the **routing key** — the connectId used by entity binding and switching APIs. The full field contract (`db_type` / `db_hostname_ip` / `db_port` / `db_user_name` / `db_name` / `db_password`, snake_case) and the password encryption convention are covered in [ORM / Datasource Extension](../orm/datasource-extension.md).
+Connection definitions are provided by the `DynamicDataSourceDefinitionLoader` SPI; each definition is a Map whose `id` is the **routing key** — the connectId used by entity binding and switching APIs. The full field contract (`db_type` / `db_hostname_ip` / `db_port` / `db_user_name` / `db_name` / `db_password`, snake_case) and the password encryption convention are covered in [Loading & Registration](definition-loading.md).
 
 A few key points:
 
 - `dbType` is built-in for `mysql` / `postgresql`; other types can plug in via a `Dialects` dialect-family alias registration (the platform materialized-view engine `risingwave` works this way, see [Materialized View Acceleration (Platform)](../platform-capabilities/materialized-view.md))
 - pool construction is centralized in `DataSourceFactory`: it normalizes `dbType` into a dialect family, uses HikariCP, decrypts the password and applies unified pool properties
 - for mapping intranet host addresses to local ones in development, see [Host Mapping](host-mapping.md)
-- to switch the definition source to a config center, YAML or an external service, see [ORM / Datasource Extension](../orm/datasource-extension.md)
+- to switch the definition source to a config center, YAML or an external service, see [Loading & Registration](definition-loading.md)
 
 ## Configuration Properties: `geelato.datasource.dynamic.*`
 
@@ -73,7 +73,7 @@ JTA / Seata are reserved capabilities; ordinary business applications do not nee
 
 | Property | Default | Description |
 |---|---|---|
-| `default-data-source-key` | auto-inferred | the platform default datasource key (level 4 of the priority chain). When unset: `primary` if any of `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` beans exists |
+| `default-data-source-key` | auto-inferred | the platform default datasource key (level 5 of the priority chain). When unset: `primary` if any of `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` beans exists |
 | `dao-bean-name` | auto-resolved | the Dao bean bound to the ORM. Resolution order: `dynamicDao` > `primaryDao` > the single Dao bean; usually no configuration needed |
 
 `default-data-source-key` is resolved in the late startup phase (after all singleton beans are ready) by `OrmAutoConfiguration` and written into `DataSourceManager`. How the runtime priority chain consumes it is covered in [Entity Binding](entity-binding.md).
@@ -83,29 +83,29 @@ JTA / Seata are reserved capabilities; ordinary business applications do not nee
 Knowing which beans appear under which conditions helps diagnose "why didn't it switch":
 
 - **Starter side** (when `spring.datasource.primary.jdbc-url` is present): `primaryDataSource` → `primaryJdbcTemplate` → `primaryDao`; with `spring.datasource.secondary.*` configured, `secondaryDataSource` and friends appear too. `primaryDao` connects straight to the physical primary and **bypasses routing**
-- **Dynamic datasource stack** (auto-configured when `primaryJdbcTemplate` exists in the container): `dynamicDataSource` (routing) → `dynamicJdbcTemplate` → `dynamicDao`, plus the definition loader, registry and aspects
+- **Dynamic datasource stack** (auto-configured when `primaryJdbcTemplate` exists in the container): `dynamicDataSource` (routing) → `dynamicJdbcTemplate` → `dynamicDao`, plus the registry `DynamicDataSourceRegistry`, the factory `DataSourceFactory`, the aspect `DataSourceInterceptor` and others. The definition loader is not among them; the host application provides it
 - applications not using the Starter can trigger the dynamic datasource stack by providing a bean named `primaryJdbcTemplate` themselves
 
 The bean topology and "only `dynamicDao` can switch" are covered fully in [Switching](switching.md).
 
 ## Refreshing After a Connection Change
 
-No restart is needed after connection definitions change. The framework provides two refresh entries, and **both steps are required** (full code in the extension page, "Runtime Hot Refresh"):
+No restart is needed after connection definitions change. The operation has two steps, and **both steps are required** (full operations in [Loading & Registration](definition-loading.md)):
 
-- `DynamicDataSourceRegistry.refreshDataSource(key)` / `refreshAllDataSources()` — update the definitions and instances in the registry (rebuilding the pool when necessary); deleted or disabled connections are removed from registration
+- `DynamicDataSourceRegistry.refreshDataSource(key)` / `refreshAllDataSources()` — update the definitions and pools in the registry. A full refresh follows what the loader returns: keys not returned this time are removed
 - `DynamicRoutingDataSource.refreshDataSource(key)` / `refreshAllDataSources()` — reassemble the routing table
 
-Under lazy loading, connections that never built a pool only get their definition updated and still build lazily on first route.
+A refresh by key rebuilds that key's pool immediately in step 2. Under lazy loading, a full refresh updates definitions only and the pools are rebuilt on the first route.
 
 :::note Entity mapping cache and connection config snapshot
 
-`EntityDataSourceResolver` keeps an in-memory cache of "entity → datasource" resolutions, but every hit re-checks that the target datasource is still registered; the cache invalidates itself when a datasource is removed. No extra cleanup of entity mappings is needed after refreshing connection definitions. On the core side, `DataSourceManager` also holds a snapshot of connection definitions (used by readers such as dbType resolution); on a snapshot miss it loads the row on demand via the definition loader's `loadOne` — connections created at runtime (e.g. a materialized-view engine connection) become visible to dbType resolution immediately, with no extra refresh.
+`EntityDataSourceResolver` keeps an in-memory cache of "entity → datasource" resolutions, but every hit re-checks that the target datasource is still registered; the cache invalidates itself when a datasource is removed. No extra cleanup of entity mappings is needed after refreshing connection definitions. On the core side, `DataSourceManager` also holds a snapshot of connection definitions (used by readers such as dbType resolution; how it differs from the registry is covered in [Loading & Registration](definition-loading.md)); on a snapshot miss it loads the row on demand via the definition loader's `loadOne` — connections created at runtime (e.g. a materialized-view engine connection) become visible to dbType resolution immediately, with no extra refresh.
 
 :::
 
 ## Suggested Reading
 
+- [Loading & Registration](definition-loading.md) — where datasources come from, registry methods, the field contract and runtime refresh
 - [Binding & Priority](entity-binding.md) — the four binding styles and the full priority chain
 - [Switching](switching.md) — automatic switching, manual APIs and transaction limits
 - [Host Mapping](host-mapping.md) — mapping intranet addresses locally for development
-- [ORM / Datasource Extension](../orm/datasource-extension.md) — the definition-source SPI, the field contract and hot refresh

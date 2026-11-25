@@ -23,9 +23,9 @@
     "message": "🛠️ Developer Guide: Basics",
     "description": "The label for category '🛠️ 开发指南：基础能力' in sidebar 'frameworkSidebar'"
   },
-  "sidebar.frameworkSidebar.category.ORM 与数据源": {
-    "message": "ORM & Datasource",
-    "description": "The label for category 'ORM 与数据源' in sidebar 'frameworkSidebar'"
+  "sidebar.frameworkSidebar.category.数据源": {
+    "message": "Datasource",
+    "description": "The label for category '数据源' in sidebar 'frameworkSidebar'"
   },
   "sidebar.frameworkSidebar.category.MQL 表达式": {
     "message": "MQL Expressions",

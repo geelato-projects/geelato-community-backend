@@ -188,6 +188,101 @@ class ConditionOperatorSqlTest extends MqlTestSupport {
         }
     }
 
+    // ==================== fis 方言改写 ====================
+
+    @Nested
+    @DisplayName("fis 跨方言改写（postgresql/sqlserver/oracle）")
+    class FisDialect {
+
+        /**
+         * 按指定方言生成 SQL（临时覆盖实体 dbType，生成后恢复 mysql，避免污染单例元数据）。
+         */
+        private BoundSql genWithDbType(String entity, String dbType, String mqlBody) {
+            cn.geelato.core.meta.model.entity.EntityMeta em =
+                    cn.geelato.core.meta.MetaManager.singleInstance().getByEntityName(entity);
+            em.getTableMeta().setDbType(dbType);
+            try {
+                return newProvider().generate(parse("{\"" + entity + "\":" + mqlBody + "}"));
+            } finally {
+                em.getTableMeta().setDbType("mysql");
+            }
+        }
+
+        @Test
+        void fis_postgresql_singleValue() {
+            BoundSql sql = genWithDbType(ENTITY_USER, "postgresql", "{\"name|fis\":\"vip\"}");
+            assertSqlEquals("select * from mql_test_user where ( (',' || name || ',') LIKE '%,vip,%' ESCAPE '\\' )", sql);
+            assertParams(new Object[0], sql);
+            assertTypes(new int[0], sql);
+        }
+
+        @Test
+        void fis_postgresql_multiValue() {
+            BoundSql sql = genWithDbType(ENTITY_USER, "postgresql", "{\"name|fis\":\"vip,svip\"}");
+            MqlSqlAssertions.assertSqlContains("(',' || name || ',') LIKE '%,vip,%' ESCAPE '\\'", sql);
+            MqlSqlAssertions.assertSqlContains("(',' || name || ',') LIKE '%,svip,%' ESCAPE '\\'", sql);
+        }
+
+        @Test
+        void fis_oracle_singleValue() {
+            BoundSql sql = genWithDbType(ENTITY_USER, "oracle", "{\"name|fis\":\"vip\"}");
+            assertSqlEquals("select * from mql_test_user where ( (',' || name || ',') LIKE '%,vip,%' ESCAPE '\\' )", sql);
+        }
+
+        @Test
+        void fis_sqlserver_singleValue() {
+            BoundSql sql = genWithDbType(ENTITY_USER, "sqlserver", "{\"name|fis\":\"vip\"}");
+            assertSqlEquals("select * from mql_test_user where ( CONCAT(',', name, ',') LIKE '%,vip,%' ESCAPE '\\' )", sql);
+        }
+
+        @Test
+        void fis_sqlserver_multiValue() {
+            BoundSql sql = genWithDbType(ENTITY_USER, "sqlserver", "{\"name|fis\":\"vip,svip\"}");
+            MqlSqlAssertions.assertSqlContains("CONCAT(',', name, ',') LIKE '%,vip,%' ESCAPE '\\'", sql);
+            MqlSqlAssertions.assertSqlContains("CONCAT(',', name, ',') LIKE '%,svip,%' ESCAPE '\\'", sql);
+        }
+
+        @Test
+        void fis_postgresql_likeWildcardsEscaped() {
+            // LIKE 通配符与转义符需字面量转义，保证与 FIND_IN_SET 精确匹配语义一致
+            BoundSql sql = genWithDbType(ENTITY_USER, "postgresql", "{\"name|fis\":\"a%b_c\\\\d\"}");
+            MqlSqlAssertions.assertSqlContains("LIKE '%,a\\%b\\_c\\\\d,%' ESCAPE '\\'", sql);
+        }
+
+        @Test
+        void fis_postgresql_singleQuoteEscaped() {
+            BoundSql sql = genWithDbType(ENTITY_USER, "postgresql", "{\"name|fis\":\"it's\"}");
+            MqlSqlAssertions.assertSqlContains("LIKE '%,it''s,%' ESCAPE '\\'", sql);
+        }
+
+        @Test
+        void fis_postgresql_onJsonColumn_generatesJsonbContainment() {
+            BoundSql sql = genWithDbType(ENTITY_ORDER, "postgresql", "{\"tags|fis\":\"red\"}");
+            MqlSqlAssertions.assertSqlContains("(tags)::jsonb @> ('\"red\"')::jsonb", sql);
+            assertParams(new Object[0], sql);
+        }
+
+        @Test
+        void fis_postgresql_onJsonColumn_multiValue() {
+            BoundSql sql = genWithDbType(ENTITY_ORDER, "postgresql", "{\"tags|fis\":\"red,blue\"}");
+            MqlSqlAssertions.assertSqlContains("(tags)::jsonb @> ('\"red\"')::jsonb", sql);
+            MqlSqlAssertions.assertSqlContains("(tags)::jsonb @> ('\"blue\"')::jsonb", sql);
+            MqlSqlAssertions.assertSqlContains("or", sql);
+        }
+
+        @Test
+        void fis_sqlserver_onJsonColumn_throws() {
+            assertThrows(IllegalStateException.class, () ->
+                    genWithDbType(ENTITY_ORDER, "sqlserver", "{\"tags|fis\":\"red\"}"));
+        }
+
+        @Test
+        void fis_oracle_onJsonColumn_throws() {
+            assertThrows(IllegalStateException.class, () ->
+                    genWithDbType(ENTITY_ORDER, "oracle", "{\"tags|fis\":\"red\"}"));
+        }
+    }
+
     // ==================== JSON 列特殊处理 ====================
 
     @Nested

@@ -268,9 +268,34 @@ sequenceDiagram
 | `nin` (alias of `notin`) | `col not in(?,?,…)` | N | per column type |
 | `nil` | `col is NULL` when the value is `1`/`true`, otherwise `col is NOT NULL` | 0 | — |
 | `bt` | `col between 'start' and 'end'` | 0, values written into the SQL text | — |
-| `fis` | or-chain of `FIND_IN_SET('v', col) > 0` | 0, values written into the SQL text | — |
-| JSON column + comparison | `JSON_CONTAINS(col->'$',"v") > 0` | 0, value written into the SQL text | — |
-| Function condition | function expression + comparison sign + `?`; fuzzymatch under the experiment gate rewrites to `(col <> '' AND col REGEXP ?)` | 1 | VARCHAR |
+| `fis` | see "fis dialect differences" below | 0, values written into the SQL text | — |
+| JSON column + comparison | `JSON_CONTAINS(col->'$',"v") > 0` (mysql only) | 0, value written into the SQL text | — |
+| Function condition | function expression + comparison sign + `?`; fuzzymatch under the experiment gate rewrites to a regex predicate (dialect forms below) | 1 | VARCHAR |
+
+#### fis dialect differences
+
+The `fis` (set membership) operator generates equivalent SQL per the current datasource dialect, with values written into the SQL text:
+
+| Dialect | Non-JSON column | JSON column |
+| :--- | :--- | :--- |
+| mysql | or-chain of `FIND_IN_SET('v', col) > 0` | `JSON_CONTAINS(col->'$','"v"') > 0` |
+| postgresql | or-chain of `(',' \|\| col \|\| ',') LIKE '%,v,%' ESCAPE '\'` (values escaped for LIKE wildcards and single quotes) | `(col)::jsonb @> ('"v"')::jsonb` |
+| sqlserver | or-chain of `CONCAT(',', col, ',') LIKE '%,v,%' ESCAPE '\'` | not supported, fails fast at generation time |
+| oracle | or-chain of `(',' \|\| col \|\| ',') LIKE '%,v,%' ESCAPE '\'` | not supported, fails fast at generation time |
+
+Unrecognized dialects fall back to the postgresql form (ANSI `\|\|` concatenation); PG-protocol engines registered via `Dialects.registerAlias` automatically take the postgresql branch.
+
+#### gfn_* custom function dialect rewrites
+
+MQL built-in functions (`increment` / `findinset` / `fuzzymatch`) are normalized by the parser into `gfn_*` expressions and by default invoke `geelato.gfn_*` stored functions (per-dialect install scripts required). Built-in functions with known semantics are rewritten into equivalent SQL at generation time, removing the stored-function dependency:
+
+| Function | Rewrite | Notes |
+| :--- | :--- | :--- |
+| `gfn_increment(a,b)` | all dialects, all contexts → `(a + b)` | pure arithmetic equivalence |
+| `gfn_findinset(x,set)` | condition context only: postgresql → `position(...)`, sqlserver → `CHARINDEX(...)`, oracle → `INSTR(...)`; mysql keeps the stored-function path | preserves FIND_IN_SET numeric position semantics; outer comparison signs behave unchanged |
+| `gfn_fuzzymatch(col,'kw')>0` | mysql → `REGEXP ?`, postgresql → `~ ?`, oracle → `REGEXP_LIKE(col, ?)`; sqlserver has no native regex and fails fast | rewritten only when the experiment gate is on |
+
+Unregistered `gfn_*` functions are not rewritten and keep the `geelato.`-prefixed stored-function path (the `geelato.` prefix is a valid schema qualifier on all four dialects).
 
 Type mapping: `int` → INTEGER, `bigint` → BIGINT, `decimal` → DECIMAL, `datetime` → TIMESTAMP, `blob` → BLOB, everything else defaults to VARCHAR; the three like-family operators are always VARCHAR.
 

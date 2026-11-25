@@ -482,7 +482,7 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
         }
     }
 
-    private String resolveEffectiveDbType(EntityMeta em) {
+    protected String resolveEffectiveDbType(EntityMeta em) {
         String dbType = (em != null && em.getTableMeta() != null) ? em.getTableMeta().getDbType() : null;
         dbType = normalizeDbType(dbType);
         if (StringUtils.hasText(dbType)) {
@@ -606,6 +606,19 @@ public abstract class MetaBaseSqlProvider<E extends BaseCommand> {
             }
         }
         return expr;
+    }
+
+    /**
+     * gfn_* 函数的方言改写入口（见 {@link CustomFunctionRewrites}）：
+     * 已注册函数且改写成功时返回改写结果（不含 schema 前缀，{@link #qualifyFunction}
+     * 对非 gfn_ 前缀结果自然跳过）；否则返回原函数表达式，保留存储函数路径。
+     */
+    protected String rewriteFunction(String func, EntityMeta em, CustomFunctionRewrites.Context ctx) {
+        if (func == null) {
+            return null;
+        }
+        String rewritten = CustomFunctionRewrites.rewrite(resolveEffectiveDbType(em), func, ctx);
+        return rewritten != null ? rewritten : func;
     }
     
     private String sanitizeSql(String sql) {

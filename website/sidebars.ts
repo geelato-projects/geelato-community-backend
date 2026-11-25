@@ -50,6 +50,7 @@ const sidebars: SidebarsConfig = {
               label: '数据源',
               items: [
                 'dynamic-datasource/overview',
+                'dynamic-datasource/definition-loading',
                 'dynamic-datasource/entity-binding',
                 'dynamic-datasource/configuration',
                 'dynamic-datasource/switching',

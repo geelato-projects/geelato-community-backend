@@ -243,38 +243,26 @@ enum ConditionOperator implements ConditionAppender {
         }
         @Override
         public void appendField(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, FieldMeta fm, FilterGroup.Filter filter) {
-            if ("JSON".equals(fm.getColumnMeta().getDataType())) {
-                String[] parts;
-                if (Pattern.matches("^\\[(\".+\")(,(\".+\"))*]$", filter.getValue())) {
-                    JSONArray jsonArray= JSONArray.parse(filter.getValue());
-                    parts=jsonArray.toArray(String.class);
-                } else {
-                    parts =  filter.getValue().split(",");
-                }
-                sb.append("(  ");
-                for (int i=0;i<parts.length;i++){
-                    sb.append(String.format(" JSON_CONTAINS( %s->'$','%s') >0", fm.getColumnName(), "\"" + parts[i] + "\""));
-                    if(i<parts.length-1) {
-                        sb.append("  or  ");
-                    }
-                }
-                sb.append("  )");
+            String[] parts;
+            if (Pattern.matches("^\\[(\".+\")(,(\".+\"))*]$", filter.getValue())) {
+                JSONArray jsonArray = JSONArray.parse(filter.getValue());
+                parts = jsonArray.toArray(String.class);
             } else {
-                String[] parts;
-                if (Pattern.matches("^\\[(\".+\")(,(\".+\"))*]$", filter.getValue())) {
-                    JSONArray jsonArray = JSONArray.parse(filter.getValue());
-                    parts = jsonArray.toArray(String.class);
-                } else {
-                    parts = filter.getValue().split(",");
-                }
+                parts = filter.getValue().split(",");
+            }
+            if ("JSON".equals(fm.getColumnMeta().getDataType())) {
+                String dbType = provider.resolveEffectiveDbType(em);
                 sb.append("(  ");
                 for (int i = 0; i < parts.length; i++) {
-                    sb.append(String.format(" FIND_IN_SET( '%s',%s) >0",  parts[i] , fm.getColumnName()));
+                    sb.append(DialectConditionSql.renderJsonContains(fm.getColumnName(), parts[i], dbType));
                     if (i < parts.length - 1) {
                         sb.append("  or  ");
                     }
                 }
                 sb.append("  )");
+            } else {
+                String dbType = provider.resolveEffectiveDbType(em);
+                sb.append(DialectConditionSql.renderSetMembership(parts, fm.getColumnName(), dbType));
             }
         }
     };
@@ -313,11 +301,33 @@ enum ConditionOperator implements ConditionAppender {
             colExpr = em.getTableAlias() + "." + colExpr;
         }
         String pattern = FuzzymatchSupport.buildRegexPattern(ps[1]);
-        sb.append("(").append(colExpr).append(" <> '' AND ").append(colExpr).append(" REGEXP ?)");
+        String regexPredicate = renderRegexPredicate(provider.resolveEffectiveDbType(em), colExpr);
+        sb.append("(").append(colExpr).append(" <> '' AND ").append(regexPredicate).append(")");
         // 绑定值经 rawValue 传递（recombine 中 rawValue 优先）；value 保持 "0" 不动，
         // 保证主查询与 count 两次生成均满足触发条件（幂等），也不改变非 0 比较值的原语义。
         filter.setValue(filter.getValue(), pattern);
         return true;
+    }
+
+    /**
+     * 按方言生成正则匹配谓词（绑定 pattern）：
+     * mysql {@code col REGEXP ?}（现状）；postgresql {@code col ~ ?}；
+     * oracle {@code REGEXP_LIKE(col, ?)}；sqlserver 无原生正则，明确抛异常
+     * （需安装 gfn_fuzzymatch 存储函数或关闭 [experiment:search] 实验开关）。
+     */
+    private static String renderRegexPredicate(String dbType, String colExpr) {
+        if ("postgresql".equalsIgnoreCase(dbType)) {
+            return colExpr + " ~ ?";
+        }
+        if ("oracle".equalsIgnoreCase(dbType)) {
+            return "REGEXP_LIKE(" + colExpr + ", ?)";
+        }
+        if ("sqlserver".equalsIgnoreCase(dbType)) {
+            throw new IllegalStateException(
+                    "SQL Server 无原生正则匹配，gfn_fuzzymatch 条件改写不支持当前方言：" + dbType
+                            + "，请安装 gfn_fuzzymatch 存储函数或关闭 [experiment:search] 实验开关");
+        }
+        return colExpr + " REGEXP ?";
     }
 
     private static void appendFunctionOrField(MetaBaseSqlProvider<?> provider, StringBuilder sb, EntityMeta em, String fm) {        if (FunctionParser.isFunction(fm)) {
@@ -329,6 +339,7 @@ enum ConditionOperator implements ConditionAppender {
                 FunctionFieldValue fv = new FunctionFieldValue(after);
                 func = fv.getMysqlFunction();
             }
+            func = provider.rewriteFunction(func, em, CustomFunctionRewrites.Context.CONDITION);
             func = provider.qualifyFunction(func);
             if (em.getTableAlias() != null) {
                 func = provider.decorateExpressionWithAlias(em, func);

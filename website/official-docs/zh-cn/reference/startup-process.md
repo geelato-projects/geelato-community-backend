@@ -97,6 +97,8 @@ Spring 容器完成初始化后执行 `BootApplication.run(String... args)`，�
 
 此阶段仅缓存连接定义，不在启动时立即建立所有动态数据源。真正访问某个 `connectId` 时，由 orm 侧 `DynamicDataSourceRegistry` 按需延迟建池（`DynamicRoutingDataSource` 路由时兜底触发）。即：启动时缓存定义，运行时按需建连。
 
+这里的 `DataSourceDefinitionLoader` 是 core 侧接口，只负责缓存方言解析要读取的连接定义；建池与路由用的是 orm 侧的另一套接口 `DynamicDataSourceDefinitionLoader`。两者的区别见[数据源定义的装载与注册](../dynamic-datasource/definition-loading.md)。
+
 ## 阶段五：SQL 脚本与数据库脚本加载
 
 `resolveSqlScript(args)` 根据运行形态分两条路径：

@@ -106,6 +106,7 @@ public class MetaUpdateSqlProvider extends MetaBaseSqlProvider<SaveCommand> {
             var fieldValue= command.getValueMap().get(fieldName);
             if(fieldValue instanceof FunctionFieldValue fvm){
                 String func = fvm.getMysqlFunction();
+                func = rewriteFunction(func, em, CustomFunctionRewrites.Context.SET);
                 func = qualifyFunction(func);
                 sb.append(String.format("=%s,", func));
             }else{

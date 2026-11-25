@@ -139,6 +139,8 @@ does two things:
 
 The important point is that dynamic data sources are usually not created eagerly at startup. Their definitions are cached first, and real pools are built lazily by the orm-side `DynamicDataSourceRegistry` when a specific `connectId` is routed (with `DynamicRoutingDataSource` triggering creation as a fallback). `DataSourceManager` itself is a pure registry — registered instances, connection-config snapshots and the default key; it builds no pools.
 
+The loader used here is the core-side interface and only caches the connection definitions that dialect resolution reads. Pooling and routing use the separate orm-side `DynamicDataSourceDefinitionLoader`. See [Definition Loading and Registration](../dynamic-datasource/definition-loading.md) for the difference.
+
 ## SQL Resource and DB Script Loading
 
 Next, `BootApplication` loads runtime SQL scripts.

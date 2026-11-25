@@ -515,5 +515,6 @@ public class HttpApiMetaStore implements MetaStore {
 
 - [核心模块说明](core-modules.md)
 - [新项目最小接入](../guide/minimal-integration.md)
+- [数据源定义的装载与注册](../dynamic-datasource/definition-loading.md)
 - [ORM / 数据源扩展](../orm/datasource-extension.md)
 - [查询过滤与字段填充 SPI 扩展](spi-query-filter-and-save-fill-extension.md)

@@ -103,9 +103,9 @@ JDBC 驱动由业务工程自行引入。动态数据源层（`DataSourceFactory
 
 ### Q14. 动态数据源热刷新改了配置却不生效？
 
-需同时完成两步：`DynamicDataSourceRegistry.refreshDataSource(key)` 重建配置与连接池，再 `DynamicRoutingDataSource.refreshDataSource(key)` 重建路由表。漏掉第二步是"配置已改但路由仍指向旧池"的最常见原因。
+需同时完成两步：`DynamicDataSourceRegistry.refreshDataSource(key)` 重建配置与连接池，再 `DynamicRoutingDataSource.refreshDataSource(key)` 重建路由表。第 1 步会关闭旧连接池，漏掉第 2 步时该 key 上的查询会直接失败。
 
-详见 [ORM / 数据源扩展](../orm/datasource-extension)。
+详见 [数据源定义的装载与注册](../dynamic-datasource/definition-loading)。
 
 ## 建表与升级
 

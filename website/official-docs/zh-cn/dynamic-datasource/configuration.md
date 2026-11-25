@@ -5,24 +5,24 @@ sidebar_label: 配置方式
 
 # 动态数据源配置
 
-本页说明动态数据源的全部配置入口：连接定义存在哪里、YAML 能调什么、默认数据源如何确定，以及连接变更后的刷新操作。
+本页说明动态数据源的配置参数与装配条件：YAML 能调什么、默认数据源如何确定，以及连接变更后的刷新操作。连接定义从哪里来、由谁装载，见[装载与注册](definition-loading.md)。
 
 配置分为三层：
 
-- **连接定义**：每一条物理库连接的信息，由定义来源 SPI 提供（平台提供默认实现）
+- **连接定义**：每一条物理库连接的信息，由定义加载器 Bean 提供，来源与装载方式见[装载与注册](definition-loading.md)
 - **配置参数**：连接池、懒加载、catalog 映射等，配置前缀 `geelato.datasource.dynamic.*`
 - **ORM 侧参数**：默认数据源与 Dao 绑定，配置前缀 `geelato.orm.*`
 
 ## 连接定义：SPI 契约
 
-连接定义由 `DynamicDataSourceDefinitionLoader` SPI 提供，每个定义是一个 Map，其 `id` 即**路由 key**——实体绑定、切库 API 传的 connectId 都是它。字段契约（`db_type` / `db_hostname_ip` / `db_port` / `db_user_name` / `db_name` / `db_password`，snake_case）与密码加密约定的完整说明见 [ORM / 数据源扩展](../orm/datasource-extension.md)。
+连接定义由 `DynamicDataSourceDefinitionLoader` SPI 提供，每个定义是一个 Map，其 `id` 即**路由 key**——实体绑定、切库 API 传的 connectId 都是它。字段契约（`db_type` / `db_hostname_ip` / `db_port` / `db_user_name` / `db_name` / `db_password`，snake_case）与密码加密约定的完整说明见[装载与注册](definition-loading.md)。
 
 几个要点：
 
 - `dbType` 内置支持 `mysql` / `postgresql`；其他类型可经 `Dialects` 方言家族别名注册接入（平台物化视图引擎 `risingwave` 即此方式，见[物化视图加速（平台）](../platform-capabilities/materialized-view.md)）
 - 建池由 `DataSourceFactory` 统一完成：按 `dbType` 归一方言家族，使用 HikariCP，解密密码，套用统一连接池参数
 - 开发环境需要把内网主机地址映射到本地时，见[主机地址映射](host-mapping.md)
-- 想把定义来源换成配置中心、YAML 或外部服务，属扩展能力，见 [ORM / 数据源扩展](../orm/datasource-extension.md)
+- 想把定义来源换成配置中心、YAML 或外部服务，见[装载与注册](definition-loading.md)
 
 ## 配置参数：`geelato.datasource.dynamic.*`
 
@@ -73,7 +73,7 @@ JTA / Seata 属于预留能力，普通业务工程无需开启，详见[总览]
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
-| `default-data-source-key` | 自动推断 | 平台默认数据源 key（优先级链第 4 级）。未配置时：容器中存在 `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` 任一 bean 则取 `primary` |
+| `default-data-source-key` | 自动推断 | 平台默认数据源 key（优先级链第 5 级）。未配置时：容器中存在 `primaryDataSource` / `primaryJdbcTemplate` / `primaryDao` 任一 bean 则取 `primary` |
 | `dao-bean-name` | 自动解析 | ORM 绑定的 Dao Bean。自动解析顺序：`dynamicDao` > `primaryDao` > 唯一的 Dao Bean，通常无需配置 |
 
 `default-data-source-key` 的解析发生在启动完成阶段（所有单例 Bean 就绪后），由 `OrmAutoConfiguration` 写入 `DataSourceManager`。运行期的优先级链如何消费它，见[实体绑定](entity-binding.md)。
@@ -83,29 +83,29 @@ JTA / Seata 属于预留能力，普通业务工程无需开启，详见[总览]
 理解哪些 Bean 在什么条件下出现，有助于排查"为什么没切库"：
 
 - **Starter 侧**（`spring.datasource.primary.jdbc-url` 存在时）：`primaryDataSource` → `primaryJdbcTemplate` → `primaryDao`；配置了 `spring.datasource.secondary.*` 时另有 `secondaryDataSource` 等。`primaryDao` 直连物理主库，**不经过路由**
-- **动态数据源体系**（容器中存在 `primaryJdbcTemplate` 时自动装配）：`dynamicDataSource`（路由数据源）→ `dynamicJdbcTemplate` → `dynamicDao`，以及定义加载器、注册器、切面等
+- **动态数据源体系**（容器中存在 `primaryJdbcTemplate` 时自动装配）：`dynamicDataSource`（路由数据源）→ `dynamicJdbcTemplate` → `dynamicDao`，以及注册器 `DynamicDataSourceRegistry`、工厂 `DataSourceFactory`、切面 `DataSourceInterceptor` 等。定义加载器不在此列，它由宿主应用提供
 - 未使用 Starter 的工程，只要自行提供一个名为 `primaryJdbcTemplate` 的 Bean，同样能触发动态数据源体系装配
 
 Bean 拓扑与"只有 `dynamicDao` 能切库"的完整说明，见[切换方式](switching.md)。
 
 ## 连接变更后的刷新
 
-连接定义变更后无需重启应用。框架提供两个刷新入口，**两步缺一不可**（完整代码见扩展页「运行时热刷新」）：
+连接定义变更后无需重启应用。操作分两步，**两步缺一不可**（完整操作见[装载与注册](definition-loading.md)）：
 
-- `DynamicDataSourceRegistry.refreshDataSource(key)` / `refreshAllDataSources()` —— 更新注册器中的定义与实例（必要时重建连接池）；已被删除或停用的连接会被移出注册
+- `DynamicDataSourceRegistry.refreshDataSource(key)` / `refreshAllDataSources()` —— 更新注册器中的定义与连接池。全量刷新以加载器的返回为准：本次没有返回的 key 会被移除
 - `DynamicRoutingDataSource.refreshDataSource(key)` / `refreshAllDataSources()` —— 重组路由表
 
-懒加载模式下，未建过池的连接只更新定义，仍等到首次路由时才建池。
+按 key 刷新时，第 2 步会立即重建该 key 的连接池；全量刷新在懒加载模式下只更新定义，连接池在首次路由时重建。
 
 :::note 实体映射缓存与连接配置快照
 
-`EntityDataSourceResolver` 对"实体 → 数据源"的解析结果有内存缓存，但每次命中都会校验目标数据源仍然注册在案，数据源被移除时缓存自动失效，因此刷新连接定义后无需额外清理实体映射。core 侧 `DataSourceManager` 另持有一份连接定义快照（dbType 解析等读取方使用），快照未命中时会经定义加载器 `loadOne` 实时补载——运行期新建的连接（如物化视图引擎连接）对 dbType 解析立即可见，无需额外刷新。
+`EntityDataSourceResolver` 对"实体 → 数据源"的解析结果有内存缓存，但每次命中都会校验目标数据源仍然注册在案，数据源被移除时缓存自动失效，因此刷新连接定义后无需额外清理实体映射。core 侧 `DataSourceManager` 另持有一份连接定义快照（dbType 解析等读取方使用，它与注册器的区别见[装载与注册](definition-loading.md)），快照未命中时会经定义加载器 `loadOne` 实时补载——运行期新建的连接（如物化视图引擎连接）对 dbType 解析立即可见，无需额外刷新。
 
 :::
 
 ## 推荐继续阅读
 
+- [装载与注册](definition-loading.md) —— 数据源从哪里来、注册器方法、字段契约与运行期刷新
 - [实体绑定与优先级](entity-binding.md) —— 四种绑定方式与完整优先级链
 - [切换方式](switching.md) —— 自动切库、手工切换与事务限制
 - [主机地址映射](host-mapping.md) —— 开发环境内网地址本地映射
-- [ORM / 数据源扩展](../orm/datasource-extension.md) —— 定义来源 SPI、字段契约与热刷新

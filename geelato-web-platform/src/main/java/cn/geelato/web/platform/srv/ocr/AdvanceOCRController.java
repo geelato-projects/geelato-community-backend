@@ -31,7 +31,8 @@ import java.util.zip.ZipInputStream;
 @Slf4j
 public class AdvanceOCRController extends BaseController {
 
-    private static final String CONTENT_LIST_FILE = "content_list_v2.json";
+  
+    private static final String CONTENT_LIST_FILE = "content_list.json";
     private static final String FULL_MD_FILE = "full.md";
     private static final int CONNECT_TIMEOUT = 30000;
     private static final int READ_TIMEOUT = 60000;
@@ -356,6 +357,10 @@ public class AdvanceOCRController extends BaseController {
 
             if ("done".equals(state)) {
                 String fullZipUrl = data.getString("full_zip_url");
+                if (fullZipUrl == null || fullZipUrl.isEmpty()) {
+                    log.error("Task {} is done but full_zip_url is empty", taskId);
+                    throw new IOException("Task done but full_zip_url is empty");
+                }
                 log.info("Task {} completed successfully, zip URL: {}", taskId, fullZipUrl);
                 return fullZipUrl;
             } else if ("failed".equals(state)) {
@@ -390,21 +395,25 @@ public class AdvanceOCRController extends BaseController {
             throw new IOException("Failed to download zip, HTTP code: " + responseCode);
         }
 
+        List<String> entryNames = new ArrayList<>();
         try (ZipInputStream zipIn = new ZipInputStream(connection.getInputStream())) {
             ZipEntry entry;
             while ((entry = zipIn.getNextEntry()) != null) {
-                log.debug("Reading zip entry: {}, size: {}", entry.getName(), entry.getSize());
-                if (fileName.equals(entry.getName())) {
+                String entryName = entry.getName();
+                entryNames.add(entryName);
+                log.debug("Reading zip entry: {}, size: {}", entryName, entry.getSize());
+                String baseName = entryName.substring(entryName.lastIndexOf('/') + 1);
+                if (baseName.equals(fileName) || baseName.endsWith("_" + fileName)) {
                     byte[] content = zipIn.readAllBytes();
-                    log.info("File extracted successfully, name: {}, content length: {}", fileName, content.length);
+                    log.info("File extracted successfully, name: {}, content length: {}", entryName, content.length);
                     return new String(content, StandardCharsets.UTF_8);
                 }
                 zipIn.closeEntry();
             }
         }
 
-        log.error("File not found in zip: {}", fileName);
-        throw new IOException("File not found in zip: " + fileName);
+        log.error("File not found in zip: {}, actual entries: {}", fileName, entryNames);
+        throw new IOException("File not found in zip: " + fileName + ", actual entries: " + entryNames);
     }
 
     @Getter
